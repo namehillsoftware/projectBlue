@@ -1,0 +1,11 @@
+<resources>
+
+    <string name="app_name">jrMediaStreamer</string>
+    <string name="artist_section">Artists</string>
+    <string name="album_section">Albums</string>
+    <string name="genre_section">Genres</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_stream_media">StreamMedia</string>
+
+</resources>
