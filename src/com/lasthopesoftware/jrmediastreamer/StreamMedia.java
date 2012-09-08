@@ -14,6 +14,11 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import jrAccess.GetJrResponse;
+import jrAccess.JrAccessDao;
+import jrAccess.JrLookUpResponseHandler;
+import jrAccess.JrSession;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -61,8 +66,6 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
-    
-    JrAccessDao accessDao;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,7 +77,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         
         
         try {
-			accessDao = new GetMcAccess().execute("oTWRti").get();
+			JrSession.accessDao = new GetMcAccess().execute("oTWRti").get();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -83,7 +86,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 			e.printStackTrace();
 		}
         
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), accessDao);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -141,18 +144,16 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      * sections of the app.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
-    	private JrAccessDao mAccessDao;
     	private Integer mCount;
     	private SparseArray<String> mSections;
     	
-        public SectionsPagerAdapter(FragmentManager fm, JrAccessDao accessDao) {
-            super(fm);
-            mAccessDao = accessDao;
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);           
         }
 
         @Override
         public Fragment getItem(int i) {
-            Fragment fragment = new CategoryFragment(mAccessDao);
+            Fragment fragment = new CategoryFragment(getSections().keyAt(i));
             Bundle args = new Bundle();
             args.putInt(CategoryFragment.ARG_SECTION_NUMBER, i + 1);
             fragment.setArguments(args);
@@ -179,7 +180,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         	if (mSections == null) {
         		mSections = new SparseArray<String>();
 				try {
-					Map<String, String> serverSections = (new GetJrResponse()).execute(new String[] { mAccessDao.getValidUrl(), "Browse/Children", "ID=1" }).get().getItems();
+					Map<String, String> serverSections = (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=1" }).get().getItems();
 					for (Map.Entry<String, String> item : serverSections.entrySet())
 						mSections.put(Integer.parseInt(item.getValue()), item.getKey());
 				} catch (Exception e) {
@@ -195,9 +196,9 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      * A dummy fragment representing a section of the app, but that simply displays dummy text.
      */
     public static class CategoryFragment extends Fragment {
-    	private JrAccessDao mAcccessDao;
-        public CategoryFragment(JrAccessDao accessDao) {
-        	mAcccessDao = accessDao;
+    	private int mSectionId;
+        public CategoryFragment(int sectionId) {
+        	mSectionId = sectionId;
         }
 
         public static final String ARG_SECTION_NUMBER = "section_number";
@@ -206,7 +207,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
         	ExpandableListView listView = new ExpandableListView(getActivity());
-        	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity());
+        	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), mSectionId);
         	listView.setAdapter(adapter);
             return listView;
         }
@@ -214,9 +215,19 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     
     public static class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
+    	SparseArray<String> mGroups;
     	
-    	public CategoryExpandableListAdapter(Context context) {
+    	public CategoryExpandableListAdapter(Context context, int sectionId) {
     		mContext = context;
+    		try {
+				Map<String, String> serverGroups = (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(sectionId) }).get().getItems();
+				
+				for (Map.Entry<String, String> item : serverGroups.entrySet())
+					mGroups.put(Integer.parseInt(item.getValue()), item.getKey());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
     	}
     	
 		@Override
@@ -265,8 +276,12 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 		@Override
 		public View getGroupView(int groupPosition, boolean isExpanded,
 				View convertView, ViewGroup parent) {
-			// TODO Auto-generated method stub
-			return null;
+
+			TextView tv = new TextView(mContext);
+			tv.setGravity(Gravity.LEFT);
+			tv.setText(mGroups.valueAt(groupPosition));
+			
+			return tv;
 		}
 
 		@Override

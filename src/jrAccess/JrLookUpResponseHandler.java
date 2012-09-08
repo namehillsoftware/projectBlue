@@ -1,4 +1,4 @@
-package com.lasthopesoftware.jrmediastreamer;
+package jrAccess;
 
 import java.util.ArrayList;
 import java.util.List;

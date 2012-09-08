@@ -1,7 +1,9 @@
-package com.lasthopesoftware.jrmediastreamer;
+package jrAccess;
 
-public class JrAuth {
+public class JrSession {
 	public static String UserName = "david";
 	public static String Password = "coleyh";
 	public static String token = "";
+	
+	public static JrAccessDao accessDao;
 }

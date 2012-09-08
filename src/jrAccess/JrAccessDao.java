@@ -1,4 +1,4 @@
-package com.lasthopesoftware.jrmediastreamer;
+package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

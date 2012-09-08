@@ -1,4 +1,4 @@
-package com.lasthopesoftware.jrmediastreamer;
+package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -23,12 +23,12 @@ public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 		String url = params[0];
 		
 		// Get authentication token
-		if (JrAuth.token.isEmpty()) {
+		if (JrSession.token.isEmpty()) {
 			try {
 				URLConnection authConn = (new URL(url + "Authenticate")).openConnection();
 				
-				if (!JrAuth.UserName.isEmpty() || !JrAuth.Password.isEmpty())
-					authConn.setRequestProperty("Authorization", "basic " + Base64.encodeToString((JrAuth.UserName + ":" + JrAuth.Password).getBytes(), Base64.DEFAULT));
+				if (!JrSession.UserName.isEmpty() || !JrSession.Password.isEmpty())
+					authConn.setRequestProperty("Authorization", "basic " + Base64.encodeToString((JrSession.UserName + ":" + JrSession.Password).getBytes(), Base64.DEFAULT));
 				
 				System.out.println(authConn.getRequestProperty("Authorization"));
 				
@@ -36,7 +36,7 @@ public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 				SAXParser sp = parserFactory.newSAXParser();
 		    	JrResponseHandler jrResponseHandler = new JrResponseHandler();
 		    	sp.parse(authConn.getInputStream(), jrResponseHandler);
-		    	JrAuth.token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
+		    	JrSession.token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -46,7 +46,7 @@ public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 		url += params[1];
 		
 		// Add token
-		url += "?Token=" + JrAuth.token;
+		url += "?Token=" + JrSession.token;
 		
 		// add arguments
 		if (params.length > 2) {
