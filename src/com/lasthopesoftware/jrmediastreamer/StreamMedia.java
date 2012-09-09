@@ -217,7 +217,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     	Context mContext;
     	SparseArray<String> mGroups;
     	
-    	public CategoryExpandableListAdapter(Context context, int sectionId) {
+    	public CategoryExpandableListAdapter(Context context) {
     		mContext = context;
     		try {
 				Map<String, String> serverGroups = (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(sectionId) }).get().getItems();

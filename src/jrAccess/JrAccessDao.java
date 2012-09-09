@@ -1,18 +1,8 @@
 package jrAccess;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.SAXException;
 
 public class JrAccessDao {
 	private boolean status;
@@ -21,7 +11,6 @@ public class JrAccessDao {
 	private int port;
 	private List<String> localIps = new ArrayList<String>();
 	private List<String> macAddresses = new ArrayList<String>();
-	private String token;
 	private int urlIndex = -1;
 	
 	public JrAccessDao(String status) {
@@ -108,19 +97,6 @@ public class JrAccessDao {
 		}
 		
 		return validUrl;
-	}
-	
-	public String getToken() {
-		if (token.equals("")) {
-			try {
-				JrResponseDao response = new GetJrResponse().execute(new String[] { getValidUrl(), "Authenticate"}).get();
-				token = response.getItems().get("Token");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return token;
 	}
 	
 	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
