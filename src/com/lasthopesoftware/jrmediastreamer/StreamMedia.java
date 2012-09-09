@@ -226,64 +226,62 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     
     public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
-    	private List<jrItem> mCategoryItems;
+    	private List<jrItem> mItems;
     	
     	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
     		mContext = context;
-    		mCategoryItems = jrChosenPage.getCategories().get(CategoryPosition).getCategoryItems();
-    		try {
-				
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
+    		mItems = jrChosenPage.getCategories().get(CategoryPosition).getCategoryItems();
     	}
     	
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).getFiles().get(childPosition);
+			return mItems.get(groupPosition).getSubItems().get(childPosition);
 		}
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).getFiles().get(childPosition).key;
+			return mItems.get(groupPosition).getSubItems().get(childPosition).key;
 		}
 
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
 				boolean isLastChild, View convertView, ViewGroup parent) {
 			// TODO Auto-generated method stub
-			TextView tv = new TextView(mContext);
-			tv.setGravity(Gravity.LEFT);
-			tv.setText(mCategoryItems.get(groupPosition).getFiles().get(childPosition).value);
-			
-			return tv;
+			if (mItems.get(groupPosition).getSubItems().size() > 0) {
+				ExpandableListView returnView = new ExpandableListView(mContext);
+				return returnView;
+			} else {
+				TextView returnView = new TextView(mContext);
+		//			tv.setGravity(Gravity.LEFT);
+				returnView.setText(mItems.get(groupPosition).getSubItems().get(childPosition).value);
+				return returnView;
+			}
 		}
 
 		@Override
 		public int getChildrenCount(int groupPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).getFiles().size();
+			return mItems.get(groupPosition).getSubItems().size();
 		}
 
 		@Override
 		public Object getGroup(int groupPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition);
+			return mItems.get(groupPosition);
 		}
 
 		@Override
 		public int getGroupCount() {
 			// TODO Auto-generated method stub
-			return mCategoryItems.size();
+			return mItems.size();
 		}
 
 		@Override
 		public long getGroupId(int groupPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).key;
+			return mItems.get(groupPosition).key;
 		}
 
 		@Override
@@ -291,8 +289,8 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 				View convertView, ViewGroup parent) {
 
 			TextView tv = new TextView(mContext);
-			tv.setGravity(Gravity.LEFT);
-			tv.setText(mCategoryItems.get(groupPosition).value);
+//			tv.setGravity(Gravity.LEFT);
+			tv.setText(mItems.get(groupPosition).value);
 			
 			return tv;
 		}
