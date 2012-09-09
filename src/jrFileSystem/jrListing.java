@@ -27,7 +27,7 @@ public class jrListing {
 			for (Map.Entry<String, String> item : listing.entrySet()) {
 				T newItem = c.newInstance();
 				newItem.key = Integer.parseInt(item.getValue());
-				newItem.value = item.getValue();
+				newItem.value = item.getKey();
 				returnList.add(newItem);
 			}
 		} catch (Exception e) {

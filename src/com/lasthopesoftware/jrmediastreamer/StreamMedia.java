@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,11 @@ import jrAccess.GetJrResponse;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;
+import jrFileSystem.jrCategory;
+import jrFileSystem.jrItem;
+import jrFileSystem.jrFile;
+import jrFileSystem.jrFileSystem;
+import jrFileSystem.jrPage;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -61,7 +67,9 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      * to switch to a {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
-
+    jrFileSystem jrFs;
+    jrPage jrChosenPage;
+    
     /**
      * The {@link ViewPager} that will host the section contents.
      */
@@ -85,6 +93,8 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        
+        jrFs = new jrFileSystem();
         
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the action bar.
@@ -145,17 +155,17 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
     	private Integer mCount;
-    	private SparseArray<String> mSections;
+    	private List<jrCategory> mCategories;
     	
         public SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);           
+            super(fm);
         }
 
         @Override
         public Fragment getItem(int i) {
-            Fragment fragment = new CategoryFragment(getSections().keyAt(i));
+            Fragment fragment = new CategoryFragment();
             Bundle args = new Bundle();
-            args.putInt(CategoryFragment.ARG_SECTION_NUMBER, i + 1);
+            args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
             fragment.setArguments(args);
             return fragment;
         }
@@ -163,7 +173,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         @Override
         public int getCount() {
             if (mCount == null) {
-	            mCount = getSections().size();
+	            mCount = getCategories().size();
             }
             return mCount;
         }
@@ -171,59 +181,58 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         @Override
         public CharSequence getPageTitle(int position) {
         	
-            return getSections().valueAt(position) != null ? getSections().valueAt(position).toUpperCase() : "";
+            return getCategories().get(position).value != null ? getCategories().get(position).value.toUpperCase() : "";
             
         }
         
-        public SparseArray<String> getSections() {
-        	
-        	if (mSections == null) {
-        		mSections = new SparseArray<String>();
-				try {
-					Map<String, String> serverSections = (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=1" }).get().getItems();
-					for (Map.Entry<String, String> item : serverSections.entrySet())
-						mSections.put(Integer.parseInt(item.getValue()), item.getKey());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+        public List<jrCategory> getCategories() {
+        	if (mCategories == null) {
+        		mCategories = new ArrayList<jrCategory>();
+        		for (jrPage page : jrFs.Pages) {
+        			if (page.key == 1) {
+        				jrChosenPage = page;
+        				mCategories = page.getCategories();
+        			}
+        		}
+        		
+        		// remove any categories that do not have any items
+//        		for (jrCategory category : mCategories)
+//        			if (category.getCategoryItems().size() < 1)
+//        				mCategories.remove(category);
         	}
         	
-        	return mSections;
+        	return mCategories;
         }
     }
 
     /**
      * A dummy fragment representing a section of the app, but that simply displays dummy text.
      */
-    public static class CategoryFragment extends Fragment {
-    	private int mSectionId;
-        public CategoryFragment(int sectionId) {
-        	mSectionId = sectionId;
+    public class CategoryFragment extends Fragment {
+        public CategoryFragment() {
         }
 
-        public static final String ARG_SECTION_NUMBER = "section_number";
+        public static final String ARG_CATEGORY_POSITION = "category_position";
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
         	ExpandableListView listView = new ExpandableListView(getActivity());
-        	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), mSectionId);
+        	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), getArguments().getInt(ARG_CATEGORY_POSITION));
         	listView.setAdapter(adapter);
             return listView;
         }
     }
     
-    public static class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
+    public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
-    	SparseArray<String> mGroups;
+    	private List<jrItem> mCategoryItems;
     	
-    	public CategoryExpandableListAdapter(Context context) {
+    	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
     		mContext = context;
+    		mCategoryItems = jrChosenPage.getCategories().get(CategoryPosition).getCategoryItems();
     		try {
-				Map<String, String> serverGroups = (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(sectionId) }).get().getItems();
 				
-				for (Map.Entry<String, String> item : serverGroups.entrySet())
-					mGroups.put(Integer.parseInt(item.getValue()), item.getKey());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -233,44 +242,48 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			// TODO Auto-generated method stub
-			return null;
+			return mCategoryItems.get(groupPosition).getFiles().get(childPosition);
 		}
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
 			// TODO Auto-generated method stub
-			return 0;
+			return mCategoryItems.get(groupPosition).getFiles().get(childPosition).key;
 		}
 
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
 				boolean isLastChild, View convertView, ViewGroup parent) {
 			// TODO Auto-generated method stub
-			return null;
+			TextView tv = new TextView(mContext);
+			tv.setGravity(Gravity.LEFT);
+			tv.setText(mCategoryItems.get(groupPosition).getFiles().get(childPosition).value);
+			
+			return tv;
 		}
 
 		@Override
 		public int getChildrenCount(int groupPosition) {
 			// TODO Auto-generated method stub
-			return 0;
+			return mCategoryItems.get(groupPosition).getFiles().size();
 		}
 
 		@Override
 		public Object getGroup(int groupPosition) {
 			// TODO Auto-generated method stub
-			return null;
+			return mCategoryItems.get(groupPosition);
 		}
 
 		@Override
 		public int getGroupCount() {
 			// TODO Auto-generated method stub
-			return 0;
+			return mCategoryItems.size();
 		}
 
 		@Override
 		public long getGroupId(int groupPosition) {
 			// TODO Auto-generated method stub
-			return 0;
+			return mCategoryItems.get(groupPosition).key;
 		}
 
 		@Override
@@ -279,7 +292,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 
 			TextView tv = new TextView(mContext);
 			tv.setGravity(Gravity.LEFT);
-			tv.setText(mGroups.valueAt(groupPosition));
+			tv.setText(mCategoryItems.get(groupPosition).value);
 			
 			return tv;
 		}

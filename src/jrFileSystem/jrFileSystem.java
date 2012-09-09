@@ -15,11 +15,11 @@ public class jrFileSystem extends jrListing {
 //		setPages();
 //	}
 	
-	public jrFileSystem(String value) {
-		super(value);
-		// TODO Auto-generated constructor stub
-		setPages();
-	}
+//	public jrFileSystem(String value) {
+//		super(value);
+//		// TODO Auto-generated constructor stub
+//		setPages();
+//	}
 	
 	public jrFileSystem() {
 		super();

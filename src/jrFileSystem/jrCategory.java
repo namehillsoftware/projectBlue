@@ -1,17 +1,16 @@
 package jrFileSystem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
 
 public class jrCategory extends jrListing {
-	public List<jrCategoryItem> CategoryItems;
+	private List<jrItem> mCategoryItems;
 	
 	public jrCategory(int key, String value) {
 		super(key, value);
-		// TODO Auto-generated constructor stub
-		setItems();
 	}
 	
 //	public jrPage(String value) {
@@ -22,17 +21,22 @@ public class jrCategory extends jrListing {
 	
 	public jrCategory() {
 		super();
-		setItems();
 	}
 	
-	public void setItems() {
-		if (JrSession.accessDao == null) return;
-		
-		try {
-			CategoryItems = jrListing.transformListing(jrCategoryItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
-		} catch (Exception e) {
-			e.printStackTrace();
+	public List<jrItem> getCategoryItems() {
+		if (mCategoryItems == null) {
+			mCategoryItems = new ArrayList<jrItem>();
+			
+			if (JrSession.accessDao == null) return mCategoryItems;
+			
+			try {
+				mCategoryItems = jrListing.transformListing(jrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		
+		return mCategoryItems;
 	}
 
 }
