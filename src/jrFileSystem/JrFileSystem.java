@@ -6,8 +6,8 @@ import jrAccess.JrSession;
 
 
 
-public class jrFileSystem extends jrListing {
-	public List<jrPage> Pages;
+public class JrFileSystem extends JrListing {
+	public List<JrPage> Pages;
 	
 //	public jrFileSystem(int key, String value) {
 //		super(key, value);
@@ -21,7 +21,7 @@ public class jrFileSystem extends jrListing {
 //		setPages();
 //	}
 	
-	public jrFileSystem() {
+	public JrFileSystem() {
 		super();
 		setPages();
 	}
@@ -30,7 +30,7 @@ public class jrFileSystem extends jrListing {
 		if (JrSession.accessDao == null) return;
 		
 		try {
-			Pages = jrListing.transformListing(jrPage.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children" }).get().getItems());
+			Pages = JrFileUtils.transformListing(JrPage.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children" }).get().getItems());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

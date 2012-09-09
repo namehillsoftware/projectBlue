@@ -6,10 +6,10 @@ import java.util.List;
 import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
 
-public class jrPage extends jrListing {
-	private List<jrCategory> mCategories;
+public class JrPage extends JrListing {
+	private List<JrCategory> mCategories;
 	
-	public jrPage(int key, String value) {
+	public JrPage(int key, String value) {
 		super(key, value);
 		// TODO Auto-generated constructor stub
 	}
@@ -20,18 +20,20 @@ public class jrPage extends jrListing {
 //		setCategories();
 //	}
 	
-	public jrPage() {
+	public JrPage() {
 		super();
 	}
 	
-	public List<jrCategory> getCategories() {
+	public List<JrCategory> getCategories() {
 		if (mCategories == null) {
-			mCategories = new ArrayList<jrCategory>();
+			mCategories = new ArrayList<JrCategory>();
 			
 			if (JrSession.accessDao == null) return mCategories;
 			
 			try {
-				mCategories = jrListing.transformListing(jrCategory.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
+				mCategories = JrFileUtils.transformListing(JrCategory.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
+				
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

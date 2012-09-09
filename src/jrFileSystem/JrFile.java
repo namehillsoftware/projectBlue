@@ -12,13 +12,13 @@ import jrAccess.JrSession;
 import android.os.AsyncTask;
 import android.util.Base64;
 
-public class jrFile extends jrListing {
+public class JrFile extends JrListing {
 
-	public jrFile(int key, String value) {
+	public JrFile(int key, String value) {
 		super(key, value);
 	}
 	
-	public jrFile() {
+	public JrFile() {
 		super();
 	}
 	

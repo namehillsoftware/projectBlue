@@ -6,10 +6,10 @@ import java.util.List;
 import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
 
-public class jrCategory extends jrListing {
-	private List<jrItem> mCategoryItems;
+public class JrCategory extends JrListing {
+	private List<JrItem> mCategoryItems;
 	
-	public jrCategory(int key, String value) {
+	public JrCategory(int key, String value) {
 		super(key, value);
 	}
 	
@@ -19,18 +19,19 @@ public class jrCategory extends jrListing {
 //		setCategories();
 //	}
 	
-	public jrCategory() {
+	public JrCategory() {
 		super();
 	}
 	
-	public List<jrItem> getCategoryItems() {
+	public List<JrItem> getCategoryItems() {
 		if (mCategoryItems == null) {
-			mCategoryItems = new ArrayList<jrItem>();
+			mCategoryItems = new ArrayList<JrItem>(0);
 			
 			if (JrSession.accessDao == null) return mCategoryItems;
 			
 			try {
-				mCategoryItems = jrListing.transformListing(jrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
+				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
+				JrFileUtils.sortList(mCategoryItems);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

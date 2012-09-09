@@ -19,11 +19,12 @@ import jrAccess.GetJrResponse;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;
-import jrFileSystem.jrCategory;
-import jrFileSystem.jrItem;
-import jrFileSystem.jrFile;
-import jrFileSystem.jrFileSystem;
-import jrFileSystem.jrPage;
+import jrFileSystem.JrCategory;
+import jrFileSystem.JrItem;
+import jrFileSystem.JrFile;
+import jrFileSystem.JrFileSystem;
+import jrFileSystem.JrListing;
+import jrFileSystem.JrPage;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -53,6 +54,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
@@ -67,8 +69,8 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      * to switch to a {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
-    jrFileSystem jrFs;
-    jrPage jrChosenPage;
+    JrFileSystem jrFs;
+    JrPage jrChosenPage;
     
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -94,7 +96,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 			e.printStackTrace();
 		}
         
-        jrFs = new jrFileSystem();
+        jrFs = new JrFileSystem();
         
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the action bar.
@@ -155,7 +157,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
     	private Integer mCount;
-    	private List<jrCategory> mCategories;
+    	private List<JrCategory> mCategories;
     	
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -185,10 +187,10 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
             
         }
         
-        public List<jrCategory> getCategories() {
+        public List<JrCategory> getCategories() {
         	if (mCategories == null) {
-        		mCategories = new ArrayList<jrCategory>();
-        		for (jrPage page : jrFs.Pages) {
+        		mCategories = new ArrayList<JrCategory>();
+        		for (JrPage page : jrFs.Pages) {
         			if (page.key == 1) {
         				jrChosenPage = page;
         				mCategories = page.getCategories();
@@ -205,11 +207,9 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         }
     }
 
-    /**
-     * A dummy fragment representing a section of the app, but that simply displays dummy text.
-     */
     public class CategoryFragment extends Fragment {
         public CategoryFragment() {
+        	super();
         }
 
         public static final String ARG_CATEGORY_POSITION = "category_position";
@@ -226,7 +226,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     
     public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
-    	private List<jrItem> mItems;
+    	private List<JrItem> mItems;
     	
     	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
     		mContext = context;
@@ -235,29 +235,36 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     	
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
-			// TODO Auto-generated method stub
 			return mItems.get(groupPosition).getSubItems().get(childPosition);
 		}
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
-			// TODO Auto-generated method stub
 			return mItems.get(groupPosition).getSubItems().get(childPosition).key;
 		}
 
+		public TextView getGenericView() {
+	        // Layout parameters for the ExpandableListView
+	        AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+	            ViewGroup.LayoutParams.MATCH_PARENT, 64);
+
+	        TextView textView = new TextView(mContext);
+	        textView.setLayoutParams(lp);
+	        // Center the text vertically
+	        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+//	        textView.setTextColor(getResources().getColor(marcyred));
+	        // Set the text starting position
+	        textView.setPadding(48, 0, 0, 0);
+	        return textView;
+	    }
+		
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
-				boolean isLastChild, View convertView, ViewGroup parent) {
-			// TODO Auto-generated method stub
-			if (mItems.get(groupPosition).getSubItems().size() > 0) {
-				ExpandableListView returnView = new ExpandableListView(mContext);
-				return returnView;
-			} else {
-				TextView returnView = new TextView(mContext);
-		//			tv.setGravity(Gravity.LEFT);
-				returnView.setText(mItems.get(groupPosition).getSubItems().get(childPosition).value);
-				return returnView;
-			}
+			boolean isLastChild, View convertView, ViewGroup parent) {
+			TextView returnView = getGenericView();
+	//			tv.setGravity(Gravity.LEFT);
+			returnView.setText(mItems.get(groupPosition).getSubItems().get(childPosition).value);
+			return returnView;
 		}
 
 		@Override
@@ -288,7 +295,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 		public View getGroupView(int groupPosition, boolean isExpanded,
 				View convertView, ViewGroup parent) {
 
-			TextView tv = new TextView(mContext);
+			TextView tv = getGenericView();
 //			tv.setGravity(Gravity.LEFT);
 			tv.setText(mItems.get(groupPosition).value);
 			
