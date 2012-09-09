@@ -7,7 +7,7 @@ import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
 
 public class jrItem extends jrListing {
-	public List<jrFile> mFiles;
+	public List<jrItem> mSubItems;
 	
 	public jrItem(int key, String value) {
 		super(key, value);
@@ -24,17 +24,17 @@ public class jrItem extends jrListing {
 		super();		
 	}
 	
-	public List<jrFile> getFiles() {
-		mFiles = new ArrayList<jrFile>();
+	public List<jrItem> getSubItems() {
+		mSubItems = new ArrayList<jrItem>();
 		
-		if (mFiles.size() < 1 && JrSession.accessDao != null) {
+		if (mSubItems.size() < 1 && JrSession.accessDao != null) {
 			try {
-				mFiles = jrListing.transformListing(jrFile.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
+				mSubItems = jrListing.transformListing(jrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
-		return mFiles;
+		return mSubItems;
 	}
 }
