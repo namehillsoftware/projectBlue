@@ -8,6 +8,7 @@ import jrAccess.JrSession;
 
 public class JrCategory extends JrListing {
 	private List<JrItem> mCategoryItems;
+	private List<JrItem> mSortedCategoryItems;
 	
 	public JrCategory(int key, String value) {
 		super(key, value);
@@ -31,13 +32,21 @@ public class JrCategory extends JrListing {
 			
 			try {
 				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key) }).get().getItems());
-				JrFileUtils.sortSubItems(mCategoryItems);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
 		return mCategoryItems;
+	}
+	
+	public List<JrItem> getSortedCategoryItems() {
+		if (mSortedCategoryItems == null) {
+			mSortedCategoryItems = getCategoryItems();
+			JrFileUtils.sortSubItems(mSortedCategoryItems);
+		}
+		
+		return mSortedCategoryItems;
 	}
 
 }

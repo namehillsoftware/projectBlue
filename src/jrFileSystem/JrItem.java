@@ -33,19 +33,9 @@ public class JrItem extends JrListing {
 				List<JrItem> tempSubItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
 				mSubItems.addAll(tempSubItems);
 				
-				boolean itemAlreadyExists = false;
-				List<JrFile> tempFiles = JrFileUtils.transformListing(JrFile.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key)}).get().getItems());
-				for (JrFile file : tempFiles) {
-					itemAlreadyExists = false;
-					
-					for (JrItem item : tempSubItems) {
-						if (item.value.equals(file.value)) {
-							itemAlreadyExists = true;
-							break; 
-						}
-					}
-					
-					if (!itemAlreadyExists) mSubItems.add(file);
+				if (mSubItems.isEmpty()) {
+					List<JrFile> tempFiles = JrFileUtils.transformListing(JrFile.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Files", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Action=Serialize"}).get().getItems());
+					mSubItems.addAll(tempFiles);
 				}
 				
 				JrFileUtils.sortSubItems(mSubItems);

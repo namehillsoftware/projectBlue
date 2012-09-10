@@ -18,6 +18,7 @@ import jrAccess.JrSession;
 import jrFileSystem.JrCategory;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
+import jrFileSystem.JrListing;
 import jrFileSystem.JrPage;
 
 import org.apache.http.client.ClientProtocolException;
@@ -245,32 +246,36 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         		}
         		
         		// remove any categories that do not have any items
-        		for (int i = 0; i < mCategories.size(); i++)
-        			if (mCategories.get(i).getCategoryItems().size() < 1)
+        		int i = 0;
+        		while (i < mCategories.size()) {
+        			if (mCategories.get(i).getCategoryItems().size() < 1) {
         				mCategories.remove(i);
+        				continue;
+        			}
+        			i++;
+        		}
         	}
         	
         	return mCategories;
         }
     }
 
-	public class AlbumFragment extends Fragment {
+	public class SelectedFragment extends Fragment {
 		private ListView mListView;
 		private JrItem mAlbum;
-		public static final String ARG_ALBUM_ID = "album_id";   
+		public static final String ARG_SELECTED_POSITION = "selected_position";   
+		public static final String ARG_CATEGORY_POSITION = "category_position";
 		
-		public AlbumFragment() {
+		public SelectedFragment() {
 			super();
 		}
 		
-		public AlbumFragment(JrItem album) {
-			super();
-			mAlbum = album;
-		}
-		
+	
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+			mAlbum = jrChosenPage.getCategories().get(getArguments().getInt(ARG_CATEGORY_POSITION)).
+					getCategoryItems().get(getArguments().getInt(ARG_SELECTED_POSITION));
 			
 			mListView = new ListView(getActivity());
 			mListView.setAdapter(new AlbumListAdapter(getActivity(), mAlbum));
@@ -325,10 +330,18 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), getArguments().getInt(ARG_CATEGORY_POSITION));
         	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
         	    @Override
-        	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        	        JrItem item = (JrItem)((BaseExpandableListAdapter)parent.getAdapter()).getChild(groupPosition, childPosition);
-        	        setContentView(new AlbumFragment(item).getView());
-        	        return true;
+        	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
+        	    	JrListing selection = (JrListing)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
+        	    	if (selection.getClass() == JrItem.class) {
+	        	    	AlbumListAdapter albumAdapter = new AlbumListAdapter(getActivity(), (JrItem)selection);
+	        	    	        	    	
+	        	    	setContentView(R.layout.activity_album_view);
+	        	    	
+	        	    	ListView albumView = (ListView)findViewById(R.id.lvAlbum);
+	        	        albumView.setAdapter(albumAdapter);
+	        	        return true;
+        	    	}
+        	        return false;
         	    }
     	    });
         	listView.setAdapter(adapter);
@@ -342,7 +355,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     	
     	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
     		mContext = context;
-    		mCategoryItems = jrChosenPage.getCategories().get(CategoryPosition).getCategoryItems();
+    		mCategoryItems = jrChosenPage.getCategories().get(CategoryPosition).getSortedCategoryItems();
     	}
     	
 		@Override
