@@ -2,7 +2,6 @@ package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -12,7 +11,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
-import android.util.Base64;
 
 public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 
@@ -22,35 +20,16 @@ public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 		// Add base url
 		String url = params[0];
 		
-		// Get authentication token
-		if (JrSession.token.isEmpty()) {
-			try {
-				URLConnection authConn = (new URL(url + "Authenticate")).openConnection();
-				
-				if (!JrSession.UserName.isEmpty() || !JrSession.Password.isEmpty())
-					authConn.setRequestProperty("Authorization", "basic " + Base64.encodeToString((JrSession.UserName + ":" + JrSession.Password).getBytes(), Base64.DEFAULT));
-				
-				System.out.println(authConn.getRequestProperty("Authorization"));
-				
-				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-				SAXParser sp = parserFactory.newSAXParser();
-		    	JrResponseHandler jrResponseHandler = new JrResponseHandler();
-		    	sp.parse(authConn.getInputStream(), jrResponseHandler);
-		    	JrSession.token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
 		// Add action
 		url += params[1];
 		
 		// Add token
-		url += "?Token=" + JrSession.token;
+		if (params.length >= 3)
+			url += "?Token=" + params[2];
 		
 		// add arguments
-		if (params.length > 2) {
-			for (int i = 2; i < params.length; i++) {
+		if (params.length > 3) {
+			for (int i = 3; i < params.length; i++) {
 				url += "&" + params[i];
 			}
 		}
@@ -58,7 +37,7 @@ public class GetJrResponse extends AsyncTask<String, Void, JrResponseDao> {
 		URLConnection conn;
 		try {
 			conn = (new URL(url)).openConnection();
-			
+			conn.setConnectTimeout(5000);
 			
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();

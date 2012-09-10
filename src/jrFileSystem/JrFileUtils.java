@@ -20,9 +20,8 @@ public class JrFileUtils {
 		return returnList;
 	}
 	
-	public static <T extends JrListing> void sortList(List<T> list) {
-		if (list.size() > 0)
-			quickSort(list, 0, list.size() - 1);
+	public static <T extends JrListing> void sortSubItems(List<T> list) {
+		quickSort(list);
 	}
 	
 	private static <T extends JrListing> int partition(List<T> list, int left, int right) {
@@ -31,7 +30,7 @@ public class JrFileUtils {
 		String pivot = stripArticles(list.get((left + right) / 2).value);
 
 		while (i <= j) {
-			while (stripArticles(list.get(j).value).compareTo(pivot) < 0)
+			while (stripArticles(list.get(i).value).compareTo(pivot) < 0)
 				i++;
 			while (stripArticles(list.get(j).value).compareTo(pivot) > 0)
 				j--;
@@ -56,6 +55,11 @@ public class JrFileUtils {
 		if (lowerCaseInput.startsWith("the "))
 			return input.substring(4);
 		return input;
+	}
+	
+	private static <T extends JrListing> void quickSort(List<T> list) {
+		if (list.size() > 0)
+			quickSort(list, 0, list.size() - 1);
 	}
 	
 	private static <T extends JrListing> void quickSort(List<T> list, int left, int right) {

@@ -31,7 +31,7 @@ public class JrPage extends JrListing {
 			if (JrSession.accessDao == null) return mCategories;
 			
 			try {
-				mCategories = JrFileUtils.transformListing(JrCategory.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
+				mCategories = JrFileUtils.transformListing(JrCategory.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
 				
 				
 			} catch (Exception e) {

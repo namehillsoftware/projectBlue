@@ -5,12 +5,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.ExecutionException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import jrAccess.JrResponseHandler;
+
 import jrAccess.JrSession;
 import android.os.AsyncTask;
-import android.util.Base64;
 
 public class JrFile extends JrListing {
 
@@ -48,30 +45,30 @@ public class JrFile extends JrListing {
 			String url = params[0];
 			
 			// Get authentication token
-			if (JrSession.token.isEmpty()) {
-				try {
-					URLConnection authConn = (new URL(url + "Authenticate")).openConnection();
-					
-					if (!JrSession.UserName.isEmpty() || !JrSession.Password.isEmpty())
-						authConn.setRequestProperty("Authorization", "basic " + Base64.encodeToString((JrSession.UserName + ":" + JrSession.Password).getBytes(), Base64.DEFAULT));
-					
-					System.out.println(authConn.getRequestProperty("Authorization"));
-					
-					SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-					SAXParser sp = parserFactory.newSAXParser();
-			    	JrResponseHandler jrResponseHandler = new JrResponseHandler();
-			    	sp.parse(authConn.getInputStream(), jrResponseHandler);
-			    	JrSession.token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+//			if (JrSession.Token.isEmpty()) {
+//				try {
+//					URLConnection authConn = (new URL(url + "Authenticate")).openConnection();
+//					
+//					if (!JrSession.UserName.isEmpty() || !JrSession.Password.isEmpty())
+//						authConn.setRequestProperty("Authorization", "basic " + Base64.encodeToString((JrSession.UserName + ":" + JrSession.Password).getBytes(), Base64.DEFAULT));
+//					
+//					System.out.println(authConn.getRequestProperty("Authorization"));
+//					
+//					SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+//					SAXParser sp = parserFactory.newSAXParser();
+//			    	JrResponseHandler jrResponseHandler = new JrResponseHandler();
+//			    	sp.parse(authConn.getInputStream(), jrResponseHandler);
+//			    	JrSession.Token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
 			
 			// Add action
 			url += "File/GetFile";
 			
 			// Add token
-			url += "?Token=" + JrSession.token;
+			url += "?Token=" + JrSession.accessDao.getToken();
 			
 			// add arguments
 			url += "&File=" + params[0] + "&PlayBack=0&FileType=Key"; 

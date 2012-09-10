@@ -1,5 +1,6 @@
 package jrFileSystem;
 
+import java.util.ArrayList;
 import java.util.List;
 import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
@@ -7,7 +8,7 @@ import jrAccess.JrSession;
 
 
 public class JrFileSystem extends JrListing {
-	public List<JrPage> Pages;
+	private List<JrPage> mPages;
 	
 //	public jrFileSystem(int key, String value) {
 //		super(key, value);
@@ -23,17 +24,21 @@ public class JrFileSystem extends JrListing {
 	
 	public JrFileSystem() {
 		super();
-		setPages();
+//		setPages();
 	}
 	
-	public void setPages() {
-		if (JrSession.accessDao == null) return;
-		
-		try {
-			Pages = JrFileUtils.transformListing(JrPage.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children" }).get().getItems());
-		} catch (Exception e) {
-			e.printStackTrace();
+	public List<JrPage> getPages() {
+		if (mPages == null) {
+			mPages = new ArrayList<JrPage>();
+			if (JrSession.accessDao == null) return mPages;
+
+			try {
+				mPages = JrFileUtils.transformListing(JrPage.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken() }).get().getItems());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		return mPages;
 	}
 	
 }

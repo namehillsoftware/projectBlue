@@ -1,11 +1,15 @@
 <resources>
 
     <string name="app_name">jrMediaStreamer</string>
-    <string name="artist_section">Artists</string>
-    <string name="album_section">Albums</string>
-    <string name="genre_section">Genres</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_stream_media">StreamMedia</string>
+    <string name="title_activity_stream_media">Stream Media</string>
+    <string name="lblUserName">User Name:</string>
+    <string name="lblAccessCode">Access Code:</string>
+    <string name="lblPassword">Password:</string>
+    <string name="btnConnect">Connect!</string>
+    <string name="user_name_value"/>
+    <string name="password_value"></string>
+    <string name="access_code"></string>
 
 </resources>

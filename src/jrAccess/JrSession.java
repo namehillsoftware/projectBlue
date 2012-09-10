@@ -1,9 +1,8 @@
 package jrAccess;
 
 public class JrSession {
-	public static String UserName = "david";
-	public static String Password = "coleyh";
-	public static String token = "";
+	public static String UserAuthCode = "";
+	public static String AccessCode = "";
 	
 	public static JrAccessDao accessDao;
 }

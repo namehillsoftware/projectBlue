@@ -30,8 +30,8 @@ public class JrCategory extends JrListing {
 			if (JrSession.accessDao == null) return mCategoryItems;
 			
 			try {
-				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", "ID=" + String.valueOf(this.key) }).get().getItems());
-				JrFileUtils.sortList(mCategoryItems);
+				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key) }).get().getItems());
+				JrFileUtils.sortSubItems(mCategoryItems);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
