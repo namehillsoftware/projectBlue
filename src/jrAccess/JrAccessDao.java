@@ -14,7 +14,7 @@ import android.os.AsyncTask;
 public class JrAccessDao {
 	private String mToken;
 	private boolean status;
-	private String validUrl = "";
+	private String activeUrl = "";
 	private String remoteIp;
 	private int port;
 	private List<String> localIps = new ArrayList<String>();
@@ -78,39 +78,59 @@ public class JrAccessDao {
 		return "http://" + localIps.get(index) + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
 	
-	public String getValidUrl() {
+	public String getActiveUrl() {
 
-		if (validUrl.equals("")) {
+		if (activeUrl.equals("")) {
 			for (urlIndex = 0; urlIndex < localIps.size() - 1; urlIndex++) {
 				try {
-					validUrl = getLocalIpUrl(urlIndex);
-		        	if (testConnection(validUrl))
+					activeUrl = getLocalIpUrl(urlIndex);
+		        	if (testConnection(activeUrl))
 		        		break;
 		        	
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				
-				validUrl = "";
+				activeUrl = "";
 			}
 			
-			if (validUrl.equals("")) {
+			if (activeUrl.equals("")) {
 				try {
 		        	if (testConnection(getRemoteUrl()))
-		        		validUrl = getRemoteUrl();
+		        		activeUrl = getRemoteUrl();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		}
 		
-		return validUrl;
+		return activeUrl;
+	}
+	
+	public String getJrUrl(String... params) {
+		// Add base url
+		String url = getActiveUrl();
+		
+		// Add action
+		url += params[1];
+		
+		// Add token
+		url += "?Token=" + getToken();
+		
+		// add arguments
+		if (params.length > 2) {
+			for (int i = 3; i < params.length; i++) {
+				url += "&" + params[i];
+			}
+		}
+		
+		return url;
 	}
 	
 	public String getToken() {
 		if (mToken == null || mToken.isEmpty()) {
 			try {
-				mToken = new GetAuthToken().execute(getValidUrl()).get();
+				mToken = new GetAuthToken().execute().get();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -124,7 +144,7 @@ public class JrAccessDao {
 	}
 	
 	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
-		JrResponseDao response = new GetJrResponse().execute(new String[] { url, "Alive" }).get();
+		JrResponseDao response = new GetJrStdXmlResponse().execute(new String[] { "Alive" }).get();
 		return response != null && response.isStatus();
 	}
 	
@@ -135,14 +155,14 @@ public class JrAccessDao {
 			// Get authentication token
 			String token = null;
 			try {
-				URLConnection authConn = (new URL(params[0] + "Authenticate")).openConnection();
+				URLConnection authConn = (new URL(getActiveUrl() + "Authenticate")).openConnection();
 				authConn.setReadTimeout(5000);
 				if (!JrSession.UserAuthCode.isEmpty())
 					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
 				
 				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 				SAXParser sp = parserFactory.newSAXParser();
-		    	JrResponseHandler jrResponseHandler = new JrResponseHandler();
+		    	JrStdResponseHandler jrResponseHandler = new JrStdResponseHandler();
 		    	sp.parse(authConn.getInputStream(), jrResponseHandler);
 		    	if (jrResponseHandler.getResponse().get(0).getItems().containsKey("Token"))
 		    		token = jrResponseHandler.getResponse().get(0).getItems().get("Token");

@@ -14,21 +14,7 @@ public class GetJrNonXmlResponse extends AsyncTask<String, Void, InputStream> {
 	protected InputStream doInBackground(String... params) {
 		InputStream is = null;
 		// Add base url
-		String url = params[0];
-		
-		// Add action
-		url += params[1];
-		
-		// Add token
-		if (params.length >= 3)
-			url += "?Token=" + params[2];
-		
-		// add arguments
-		if (params.length > 3) {
-			for (int i = 3; i < params.length; i++) {
-				url += "&" + params[i];
-			}
-		}
+		String url = JrSession.accessDao.getJrUrl(params);
 		
 		URLConnection conn;
 		try {

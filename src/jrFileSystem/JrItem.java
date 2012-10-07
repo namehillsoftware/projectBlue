@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jrAccess.GetJrNonXmlResponse;
-import jrAccess.GetJrResponse;
+import jrAccess.GetJrStdXmlResponse;
 import jrAccess.JrSession;
 
 public class JrItem extends JrListing {
@@ -34,11 +34,11 @@ public class JrItem extends JrListing {
 			mSubItems = new ArrayList<JrListing>();
 			if (JrSession.accessDao == null) return mSubItems;
 			try {
-				List<JrItem> tempSubItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Skip=1" }).get().getItems());
+				List<JrItem> tempSubItems = JrFileUtils.transformListing(JrItem.class, (new GetJrStdXmlResponse()).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1" }).get().getItems());
 				mSubItems.addAll(tempSubItems);
 				
 				if (mSubItems.isEmpty()) {
-					BufferedReader fileResult = new BufferedReader(new InputStreamReader((new GetJrNonXmlResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Files", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Action=Serialize"}).get()));
+					BufferedReader fileResult = new BufferedReader(new InputStreamReader((new GetJrNonXmlResponse()).execute(new String[] { "Browse/Files", "ID=" + String.valueOf(this.mKey), "Action=Serialize"}).get()));
 					mSubItems = parseFileList(fileResult.toString());
 				}
 				

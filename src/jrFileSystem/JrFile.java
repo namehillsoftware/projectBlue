@@ -12,11 +12,24 @@ import android.os.AsyncTask;
 
 public class JrFile extends JrListing {
 
+	String mArtist;
+	String mAlbum;
+	String mGenre;
+	int mTrackNumber;
+	
 	public JrFile(int key) {
-		this.key = key;
+		this.mKey = key;
 	}
 	public JrFile(int key, String value) {
 		super(key, value);
+	}
+	
+	public JrFile(int key, String value, String Artist, String Album, int TrackNumber) {
+		super(key, value);
+		
+		mArtist = Artist;
+		mAlbum = Album;
+		mTrackNumber = TrackNumber;
 	}
 	
 	public JrFile() {
@@ -27,7 +40,7 @@ public class JrFile extends JrListing {
 		byte[] returnFile = null;
 		
 		try {
-			(new GetJrNonXmlResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "File/GetFile", JrSession.accessDao.getToken(), "File=" + String.valueOf(key), "PlayBack=0", "FileType=Key" }).get().read(returnFile);
+			(new GetJrNonXmlResponse()).execute(new String[] { "File/GetFile", "File=" + String.valueOf(mKey), "PlayBack=0", "FileType=Key" }).get().read(returnFile);
 			
 			
 		} catch (Exception e) {
@@ -37,6 +50,5 @@ public class JrFile extends JrListing {
 		
 		return returnFile;
 	}
-	
 	
 }

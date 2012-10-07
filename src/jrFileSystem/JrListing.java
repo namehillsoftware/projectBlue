@@ -1,17 +1,17 @@
 package jrFileSystem;
 
 public class JrListing {
-	public Integer key;
-	public String value;
+	public Integer mKey;
+	public String mValue;
 	
 	public JrListing(int key, String value) {
-		this.key = key;
-		this.value = value;
+		this.mKey = key;
+		this.mValue = value;
 	}
 	
 	public JrListing(String value) {
-		this.key = null;
-		this.value = value;
+		this.mKey = null;
+		this.mValue = value;
 	}
 	
 	public JrListing() {

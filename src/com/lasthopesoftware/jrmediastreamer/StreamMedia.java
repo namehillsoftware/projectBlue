@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import jrAccess.GetJrResponse;
+import jrAccess.GetJrStdXmlResponse;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;
@@ -231,7 +231,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         @Override
         public CharSequence getPageTitle(int position) {
         	
-            return getCategories().get(position).value != null ? getCategories().get(position).value.toUpperCase() : "";
+            return getCategories().get(position).mValue != null ? getCategories().get(position).mValue.toUpperCase() : "";
             
         }
         
@@ -239,7 +239,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         	if (mCategories == null) {
         		mCategories = new ArrayList<JrCategory>();
         		for (JrPage page : jrFs.getPages()) {
-        			if (page.key == 1) {
+        			if (page.mKey == 1) {
         				jrChosenPage = page;
         				mCategories = jrChosenPage.getCategories();
         			}
@@ -278,16 +278,16 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 					getCategoryItems().get(getArguments().getInt(ARG_SELECTED_POSITION));
 			
 			mListView = new ListView(getActivity());
-			mListView.setAdapter(new AlbumListAdapter(getActivity(), mAlbum));
+			mListView.setAdapter(new FileListAdapter(getActivity(), mAlbum));
 			return mListView;
 		}
 	}
 	   
-	public class AlbumListAdapter extends BaseAdapter {
+	public class FileListAdapter extends BaseAdapter {
 		private JrItem mAlbum;
 		private Context mContext;
 		
-		public AlbumListAdapter(Context context, JrItem album) {
+		public FileListAdapter(Context context, JrItem album) {
 			mAlbum = album;
 			mContext = context;
 		}
@@ -304,13 +304,13 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 	
 		@Override
 		public long getItemId(int position) {
-			return mAlbum.getSubItems().get(position).key;
+			return mAlbum.getSubItems().get(position).mKey;
 		}
 		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			TextView tv = getGenericView(mContext);
-			tv.setText(mAlbum.getSubItems().get(position).value);
+			tv.setText(mAlbum.getSubItems().get(position).mValue);
 			return tv;
 		}
 			   
@@ -333,12 +333,12 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
         	    	JrListing selection = (JrListing)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
         	    	if (selection.getClass() == JrItem.class) {
-	        	    	AlbumListAdapter albumAdapter = new AlbumListAdapter(getActivity(), (JrItem)selection);
+	        	    	FileListAdapter fileListAdapter = new FileListAdapter(getActivity(), (JrItem)selection);
 	        	    	        	    	
-	        	    	setContentView(R.layout.activity_album_view);
+	        	    	setContentView(R.layout.activity_file_view);
 	        	    	
-	        	    	ListView albumView = (ListView)findViewById(R.id.lvAlbum);
-	        	        albumView.setAdapter(albumAdapter);
+	        	    	ListView fileListView = (ListView)findViewById(R.id.lvFilelist);
+	        	    	fileListView.setAdapter(fileListAdapter);
 	        	        return true;
         	    	}
         	        return false;
@@ -365,7 +365,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
-			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition).key;
+			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mKey;
 		}
 		
 		@Override
@@ -373,7 +373,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 			boolean isLastChild, View convertView, ViewGroup parent) {
 			TextView returnView = getGenericView(mContext);
 	//			tv.setGravity(Gravity.LEFT);
-			returnView.setText(mCategoryItems.get(groupPosition).getSubItems().get(childPosition).value);
+			returnView.setText(mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mValue);
 			return returnView;
 		}
 
@@ -398,7 +398,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 		@Override
 		public long getGroupId(int groupPosition) {
 			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).key;
+			return mCategoryItems.get(groupPosition).mKey;
 		}
 
 		@Override
@@ -407,7 +407,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 
 			TextView tv = getGenericView(mContext);
 //			tv.setGravity(Gravity.LEFT);
-			tv.setText(mCategoryItems.get(groupPosition).value);
+			tv.setText(mCategoryItems.get(groupPosition).mValue);
 			
 			return tv;
 		}

@@ -8,7 +8,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class JrResponseHandler extends DefaultHandler {
+public class JrStdResponseHandler extends DefaultHandler {
 	
 	private List<JrResponseDao> response = new ArrayList<JrResponseDao>();
 	private JrResponseDao currentResponse;

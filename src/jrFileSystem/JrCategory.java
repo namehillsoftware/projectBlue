@@ -3,7 +3,7 @@ package jrFileSystem;
 import java.util.ArrayList;
 import java.util.List;
 
-import jrAccess.GetJrResponse;
+import jrAccess.GetJrStdXmlResponse;
 import jrAccess.JrSession;
 
 public class JrCategory extends JrListing {
@@ -31,7 +31,7 @@ public class JrCategory extends JrListing {
 			if (JrSession.accessDao == null) return mCategoryItems;
 			
 			try {
-				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Children", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key) }).get().getItems());
+				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrStdXmlResponse()).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey) }).get().getItems());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
