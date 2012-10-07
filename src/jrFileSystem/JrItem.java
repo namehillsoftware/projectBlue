@@ -1,8 +1,12 @@
 package jrFileSystem;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import jrAccess.GetJrNonXmlResponse;
 import jrAccess.GetJrResponse;
 import jrAccess.JrSession;
 
@@ -34,8 +38,8 @@ public class JrItem extends JrListing {
 				mSubItems.addAll(tempSubItems);
 				
 				if (mSubItems.isEmpty()) {
-					List<JrFile> tempFiles = JrFileUtils.transformListing(JrFile.class, (new GetJrResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Files", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Action=Serialize"}).get().getItems());
-					mSubItems.addAll(tempFiles);
+					BufferedReader fileResult = new BufferedReader(new InputStreamReader((new GetJrNonXmlResponse()).execute(new String[] { JrSession.accessDao.getValidUrl(), "Browse/Files", JrSession.accessDao.getToken(), "ID=" + String.valueOf(this.key), "Action=Serialize"}).get()));
+					mSubItems = parseFileList(fileResult.toString());
 				}
 				
 				JrFileUtils.sortSubItems(mSubItems);
@@ -45,5 +49,15 @@ public class JrItem extends JrListing {
 		}
 		
 		return mSubItems;
+	}
+	
+	private List<JrListing> parseFileList(String semiColonFileString) {
+		List<JrListing> returnFiles = new ArrayList<JrListing>();
+		String[] fileArray = semiColonFileString.split(";");
+		
+		for (int i = 0; i < fileArray.length; i++)
+			returnFiles.add(new JrFile(Integer.parseInt(fileArray[i])));
+		
+		return returnFiles;
 	}
 }
