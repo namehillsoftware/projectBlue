@@ -2,7 +2,7 @@ package jrFileSystem;
 
 import java.util.ArrayList;
 import java.util.List;
-import jrAccess.GetJrStdXmlResponse;
+import jrAccess.JrStdXmlResponse;
 import jrAccess.JrSession;
 
 
@@ -33,7 +33,7 @@ public class JrFileSystem extends JrListing {
 			if (JrSession.accessDao == null) return mPages;
 
 			try {
-				mPages = JrFileUtils.transformListing(JrPage.class, (new GetJrStdXmlResponse()).execute(new String[] { "Browse/Children" }).get().getItems());
+				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children" }).get().getItems());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

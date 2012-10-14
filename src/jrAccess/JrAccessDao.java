@@ -30,7 +30,7 @@ public class JrAccessDao {
 	 */
 	public boolean isStatus() {
 		return status;
-	}	
+	}
 	
 	/**
 	 * @return the remoteIp
@@ -112,15 +112,17 @@ public class JrAccessDao {
 		String url = getActiveUrl();
 		
 		// Add action
-		url += params[1];
+		url += params[0];
 		
+		url += "?";
 		// Add token
-		url += "?Token=" + getToken();
+		if (mToken != null)
+			url += "Token=" + getToken() + "&";
 		
 		// add arguments
-		if (params.length > 2) {
-			for (int i = 3; i < params.length; i++) {
-				url += "&" + params[i];
+		if (params.length > 1) {
+			for (int i = 1; i < params.length; i++) {
+				url += params[i] + "&";
 			}
 		}
 		
@@ -144,18 +146,24 @@ public class JrAccessDao {
 	}
 	
 	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
-		JrResponseDao response = new GetJrStdXmlResponse().execute(new String[] { "Alive" }).get();
+		JrResponseDao response = new JrStdXmlResponse().execute(new String[] { "Alive" }).get();
 		return response != null && response.isStatus();
 	}
 	
 	public class GetAuthToken extends AsyncTask<String, Void, String> {
-
+		private String mUrl;
+		
+		@Override
+		protected void onPreExecute() {
+			mUrl = getActiveUrl();
+		}
+		
 		@Override
 		protected String doInBackground(String... params) {
 			// Get authentication token
 			String token = null;
 			try {
-				URLConnection authConn = (new URL(getActiveUrl() + "Authenticate")).openConnection();
+				URLConnection authConn = (new URL(mUrl + "Authenticate")).openConnection();
 				authConn.setReadTimeout(5000);
 				if (!JrSession.UserAuthCode.isEmpty())
 					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);

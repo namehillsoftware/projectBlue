@@ -3,7 +3,7 @@ package jrFileSystem;
 import java.util.ArrayList;
 import java.util.List;
 
-import jrAccess.GetJrStdXmlResponse;
+import jrAccess.JrStdXmlResponse;
 import jrAccess.JrSession;
 
 public class JrCategory extends JrListing {
@@ -31,7 +31,7 @@ public class JrCategory extends JrListing {
 			if (JrSession.accessDao == null) return mCategoryItems;
 			
 			try {
-				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new GetJrStdXmlResponse()).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey) }).get().getItems());
+				mCategoryItems = JrFileUtils.transformListing(JrItem.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey) }).get().getItems());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -42,8 +42,11 @@ public class JrCategory extends JrListing {
 	
 	public List<JrItem> getSortedCategoryItems() {
 		if (mSortedCategoryItems == null) {
-			mSortedCategoryItems = getCategoryItems();
-			JrFileUtils.sortSubItems(mSortedCategoryItems);
+			try {
+				mSortedCategoryItems = (List<JrItem>) (new JrFileUtils.SortJrListAsync().execute(new List[] { getCategoryItems() }).get());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		
 		return mSortedCategoryItems;

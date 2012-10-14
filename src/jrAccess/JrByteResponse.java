@@ -1,17 +1,20 @@
 package jrAccess;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
 import android.os.AsyncTask;
 
-public class GetJrNonXmlResponse extends AsyncTask<String, Void, InputStream> {
+public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 
 	@Override
-	protected InputStream doInBackground(String... params) {
+	protected byte[] doInBackground(String... params) {
 		InputStream is = null;
 		// Add base url
 		String url = JrSession.accessDao.getJrUrl(params);
@@ -20,8 +23,15 @@ public class GetJrNonXmlResponse extends AsyncTask<String, Void, InputStream> {
 		try {
 			conn = (new URL(url)).openConnection();
 			conn.setConnectTimeout(5000);
+			is = conn.getInputStream();
+			int nRead = 0;
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			byte[] data = new byte[16384];
 			
-			return conn.getInputStream();
+			while ((nRead = is.read(data, 0, data.length)) != -1)
+				buffer.write(data, 0, nRead);
+			
+			return buffer.toByteArray();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -30,7 +40,7 @@ public class GetJrNonXmlResponse extends AsyncTask<String, Void, InputStream> {
 			e.printStackTrace();
 		}
 		
-		return is;
+		return new byte[0];
 	}
 
 }

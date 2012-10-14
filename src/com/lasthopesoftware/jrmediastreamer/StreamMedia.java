@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import jrAccess.GetJrStdXmlResponse;
+import jrAccess.JrStdXmlResponse;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;

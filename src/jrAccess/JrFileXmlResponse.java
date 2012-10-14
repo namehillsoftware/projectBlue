@@ -1,22 +1,28 @@
 package jrAccess;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
+import jrFileSystem.JrFile;
+
 import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
-public class GetJrStdXmlResponse extends GetJrResponse<JrResponseDao> {
+public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {
 
 	@Override
-	protected JrResponseDao doInBackground(String... params) {
-		JrResponseDao responseDao = null;
+	protected List<JrFile> doInBackground(String... params) {
+		List<JrFile> returnFiles = new ArrayList<JrFile>();
 		
 		// Add base url
 		String url = JrSession.accessDao.getJrUrl(params);
@@ -29,10 +35,10 @@ public class GetJrStdXmlResponse extends GetJrResponse<JrResponseDao> {
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();
-	    	JrStdResponseHandler jrResponseHandler = new JrStdResponseHandler();
-	    	sp.parse(conn.getInputStream(), jrResponseHandler);
+	    	JrFileXmlHandler jrFileXml = new JrFileXmlHandler();
+	    	sp.parse(conn.getInputStream(), jrFileXml);
 	    	
-	    	responseDao = jrResponseHandler.getResponse().get(0);
+	    	returnFiles = jrFileXml.getFiles();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -47,7 +53,7 @@ public class GetJrStdXmlResponse extends GetJrResponse<JrResponseDao> {
 			e.printStackTrace();
 		}
 		
-		return responseDao;
+		return returnFiles;
 	}
 
 }
