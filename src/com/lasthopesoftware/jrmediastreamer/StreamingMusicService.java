@@ -69,7 +69,7 @@ public class StreamingMusicService extends Service implements
 			e.printStackTrace();
 		}
         
-        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), StreamMedia.class), PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), BrowseLibrary.class), PendingIntent.FLAG_UPDATE_CURRENT);
         
         mNotification = new Notification();
 //        mNotification.tickerText = text;

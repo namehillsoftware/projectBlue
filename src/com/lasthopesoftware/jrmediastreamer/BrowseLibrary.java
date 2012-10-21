@@ -23,10 +23,13 @@ import jrFileSystem.JrPage;
 
 import org.apache.http.client.ClientProtocolException;
 
+import com.lasthopesoftware.jrmediastreamer.ViewFiles.FileListAdapter;
+
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -51,7 +54,7 @@ import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class StreamMedia extends FragmentActivity implements ActionBar.TabListener {
+public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments for each of the
@@ -61,7 +64,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
     JrFileSystem jrFs;
-    static JrPage jrChosenPage;
+    
     
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -132,9 +135,11 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     	
     	txtAccessCode.setText(prefs.getString("access_code", ""));
     	String decryptedUserAuth = new String(Base64.decode(prefs.getString("user_auth_code", ""), Base64.DEFAULT));
-    	String[] userDetails = decryptedUserAuth.split(":",1);
-    	txtUserName.setText(userDetails[0]);
-    	txtPassword.setText(userDetails[1]);
+    	if (!decryptedUserAuth.isEmpty()) {
+	    	String[] userDetails = decryptedUserAuth.split(":",1);
+	    	txtUserName.setText(userDetails[0]);
+	    	txtPassword.setText(userDetails[1]);
+    	}
 
     	Button connectionButton = (Button)findViewById(R.id.btnConnect);
     	connectionButton.setOnClickListener(mConnectionButtonListener);
@@ -240,8 +245,8 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         		mCategories = new ArrayList<JrCategory>();
         		for (JrPage page : jrFs.getPages()) {
         			if (page.mKey == 1) {
-        				jrChosenPage = page;
-        				mCategories = jrChosenPage.getCategories();
+        				JrSession.selectedLibrary = page;
+        				mCategories = JrSession.selectedLibrary.getCategories();
         			}
         		}
         		
@@ -274,47 +279,16 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-			mAlbum = jrChosenPage.getCategories().get(getArguments().getInt(ARG_CATEGORY_POSITION)).
+			mAlbum = JrSession.selectedLibrary.getCategories().get(getArguments().getInt(ARG_CATEGORY_POSITION)).
 					getCategoryItems().get(getArguments().getInt(ARG_SELECTED_POSITION));
 			
 			mListView = new ListView(getActivity());
-			mListView.setAdapter(new FileListAdapter(getActivity(), mAlbum));
+//			mListView.setAdapter(new FileListAdapter(getActivity(), mAlbum));
 			return mListView;
 		}
 	}
 	   
-	public class FileListAdapter extends BaseAdapter {
-		private JrItem mAlbum;
-		private Context mContext;
-		
-		public FileListAdapter(Context context, JrItem album) {
-			mAlbum = album;
-			mContext = context;
-		}
-		
-		@Override
-		public int getCount() {
-			return mAlbum.getSubItems().size();
-		}
 	
-		@Override
-		public Object getItem(int position) {
-			return mAlbum.getSubItems().get(position);
-		}
-	
-		@Override
-		public long getItemId(int position) {
-			return mAlbum.getSubItems().get(position).mKey;
-		}
-		
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			TextView tv = getGenericView(mContext);
-			tv.setText(mAlbum.getSubItems().get(position).mValue);
-			return tv;
-		}
-			   
-	}
     
     public class CategoryFragment extends Fragment {
         public CategoryFragment() {
@@ -333,13 +307,11 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
         	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
         	    	JrListing selection = (JrListing)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
         	    	if (selection.getClass() == JrItem.class) {
-	        	    	FileListAdapter fileListAdapter = new FileListAdapter(getActivity(), (JrItem)selection);
-	        	    	        	    	
-	        	    	setContentView(R.layout.activity_file_view);
 	        	    	
-	        	    	ListView fileListView = (ListView)findViewById(R.id.lvFilelist);
-	        	    	fileListView.setAdapter(fileListAdapter);
-	        	        return true;
+        	    		
+        	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+        	    		JrSession.selectedItem = selection;
+        	    		startActivity(intent);
         	    	}
         	        return false;
         	    }
@@ -355,7 +327,7 @@ public class StreamMedia extends FragmentActivity implements ActionBar.TabListen
     	
     	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
     		mContext = context;
-    		mCategoryItems = jrChosenPage.getCategories().get(CategoryPosition).getSortedCategoryItems();
+    		mCategoryItems = JrSession.selectedLibrary.getCategories().get(CategoryPosition).getCategoryItems();
     	}
     	
 		@Override

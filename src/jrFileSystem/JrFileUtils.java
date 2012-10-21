@@ -1,16 +1,19 @@
 package jrFileSystem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import android.os.AsyncTask;
 
 public class JrFileUtils {
-	public static <T extends JrListing> List<T> transformListing(Class<T> c, Map<String, String> listing) {
+	public static <T extends JrListing> List<T> transformListing(Class<T> c, HashMap<String, String> listing) {
 		List<T> returnList = new ArrayList<T>(listing.size());
 		try {
+			//for (int i = 0; i < listing.size(); i++) {
 			for (Map.Entry<String, String> item : listing.entrySet()) {
+				//Map.Entry<String, String> item = listing.entrySet().iterator().
 				T newItem = c.newInstance();
 				newItem.mKey = Integer.parseInt(item.getValue());
 				newItem.mValue = item.getKey();
@@ -21,6 +24,17 @@ public class JrFileUtils {
 		}
 		return returnList;
 	}
+	
+	public static <T extends JrListing> T createListing(Class<T> c) {
+		T newItem = null;
+		try {
+			newItem = c.newInstance();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return newItem;
+	}
+	
 	public static class SortJrListAsync<T extends JrListing> extends AsyncTask<List<T>, Void, List<T>> {
 	
 		private int partition(List<T> list, int left, int right) {

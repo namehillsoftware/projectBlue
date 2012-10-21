@@ -4,16 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jrFileSystem.JrFileUtils;
+import jrFileSystem.JrItem;
+import jrFileSystem.JrListing;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class JrStdResponseHandler extends DefaultHandler {
+public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
 	
-	private List<JrResponseDao> response = new ArrayList<JrResponseDao>();
 	private JrResponseDao currentResponse;
+	
 	private String currentValue;
 	private String currentKey;
+	
+	public List<T> items = new ArrayList<T>();
+	
+	private Class newClass;
+	
+	public JrFsResponseHandler(Class c) {
+		newClass = c;
+	}
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
@@ -33,24 +45,14 @@ public class JrStdResponseHandler extends DefaultHandler {
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		if (qName.equalsIgnoreCase("response"))
-			response.add(currentResponse);
+//		if (qName.equalsIgnoreCase("response"))
+//			response.add(currentResponse);
 		
-		if (qName.equalsIgnoreCase("item"))
-			currentResponse.items.put(currentKey, currentValue);
-	}
-	
-	/**
-	 * @return the response
-	 */
-	public List<JrResponseDao> getResponse() {
-		return response;
-	}
-
-	/**
-	 * @param response the response to set
-	 */
-	public void setResponse(List<JrResponseDao> response) {
-		this.response = response;
+		if (qName.equalsIgnoreCase("item")) {
+			T newItem = (T) JrFileUtils.createListing(newClass);
+			newItem.mKey = Integer.parseInt(currentValue);
+			newItem.mValue = currentKey;
+			items.add(newItem);
+		}
 	}
 }

@@ -33,7 +33,7 @@ public class JrFileSystem extends JrListing {
 			if (JrSession.accessDao == null) return mPages;
 
 			try {
-				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children" }).get().getItems());
+				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children" }).get().items);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

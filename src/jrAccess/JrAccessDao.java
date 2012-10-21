@@ -80,7 +80,7 @@ public class JrAccessDao {
 	
 	public String getActiveUrl() {
 
-		if (activeUrl.equals("")) {
+		if (activeUrl.isEmpty()) {
 			for (urlIndex = 0; urlIndex < localIps.size() - 1; urlIndex++) {
 				try {
 					activeUrl = getLocalIpUrl(urlIndex);
@@ -94,10 +94,11 @@ public class JrAccessDao {
 				activeUrl = "";
 			}
 			
-			if (activeUrl.equals("")) {
+			if (activeUrl.isEmpty()) {
 				try {
-		        	if (testConnection(getRemoteUrl()))
-		        		activeUrl = getRemoteUrl();
+					activeUrl = getRemoteUrl();
+		        	if (!testConnection(getRemoteUrl()))
+		        		activeUrl = "";
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -172,8 +173,8 @@ public class JrAccessDao {
 				SAXParser sp = parserFactory.newSAXParser();
 		    	JrStdResponseHandler jrResponseHandler = new JrStdResponseHandler();
 		    	sp.parse(authConn.getInputStream(), jrResponseHandler);
-		    	if (jrResponseHandler.getResponse().get(0).getItems().containsKey("Token"))
-		    		token = jrResponseHandler.getResponse().get(0).getItems().get("Token");
+		    	if (jrResponseHandler.getResponse().get(0).items.containsKey("Token"))
+		    		token = jrResponseHandler.getResponse().get(0).items.get("Token");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

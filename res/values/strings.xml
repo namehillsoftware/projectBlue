@@ -11,5 +11,6 @@
     <string name="user_name_value"/>
     <string name="password_value"></string>
     <string name="access_code"></string>
+    <string name="title_activity_file_view">File View</string>
 
 </resources>
