@@ -12,5 +12,5 @@
     <string name="password_value"></string>
     <string name="access_code"></string>
     <string name="title_activity_file_view">File View</string>
-
+    <string name="streaming_music_svc_started" />
 </resources>

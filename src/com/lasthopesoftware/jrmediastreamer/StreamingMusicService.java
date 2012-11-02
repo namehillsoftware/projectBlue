@@ -3,9 +3,8 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.io.IOException;
-
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -19,7 +18,6 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 
@@ -33,24 +31,40 @@ public class StreamingMusicService extends Service implements
 		OnCompletionListener,
 		OnAudioFocusChangeListener
 {
+	
 	//private final IBinder mBinder = 
-	private static final String ACTION_PLAY = "com.example.action.PLAY";
+	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
 	private int mId = 1;
 	private MediaPlayer mMediaPlayer = null;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
 	private Notification mNotification;
-		
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.getAction().equals(ACTION_PLAY)) {
-           initMediaPlayer();  
-        }
-		return START_STICKY;
+	private NotificationManager mNM;
+	private int NOTIFICATION = R.string.streaming_music_svc_started;
+	
+	public StreamingMusicService() {
+		super();
 	}
-//	
-//	public int onStopCommand() {
-//		
-//	}
+	
+	public StreamingMusicService(String url) {
+		super();
+		mUrl = url;
+	}
+	
+	private void showNotification() {
+		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), BrowseLibrary.class), PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification = new Notification();
+//      mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_launcher;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(), 
+				"Music Streamer for J. River Media Center", 
+				"Playing",
+				pi);
+		mNM.notify(NOTIFICATION, mNotification);
+	}
+	
+	
 	
 	private void initMediaPlayer() {
 		mMediaPlayer = new MediaPlayer(); // initialize it here
@@ -68,21 +82,11 @@ public class StreamingMusicService extends Service implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        
-        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), BrowseLibrary.class), PendingIntent.FLAG_UPDATE_CURRENT);
-        
-        mNotification = new Notification();
-//        mNotification.tickerText = text;
-        mNotification.icon = R.drawable.ic_launcher;
-        mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-        mNotification.setLatestEventInfo(getApplicationContext(), 
-        		"Music Streamer for J. River Media Center", 
-        		"Playing",
-        		pi);
         startForeground(mId, mNotification);
 	}
 	
 	private void releaseMediaPlayer() {
+		mNM.cancel(NOTIFICATION);
 		stopForeground(true);
 		mWifiLock.release();
 		mWifiLock = null;
@@ -95,6 +99,22 @@ public class StreamingMusicService extends Service implements
 	/* (non-Javadoc)
 	 * @see android.media.MediaPlayer.OnPreparedListener#onPrepared(android.media.MediaPlayer)
 	 */
+	
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		if (intent.getAction().equals(ACTION_PLAY)) {
+           initMediaPlayer();  
+        }
+		return START_STICKY;
+	}
+	
+	@Override
+    public void onCreate() {
+        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+        // Display a notification about us starting.  We put an icon in the status bar.
+        showNotification();
+    }
+	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		// TODO Auto-generated method stub
@@ -107,8 +127,8 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
-		return null;
-//		return mBinder;
+//		return null;
+		return mBinder;
 	}
 
 	@Override
@@ -164,4 +184,15 @@ public class StreamingMusicService extends Service implements
 
 	/* End Event Handlers */
 
+	/* Begin Binder Code */
+	
+	public class StreamingMusicServiceBinder extends Binder {
+        StreamingMusicService getService() {
+            return StreamingMusicService.this;
+        }
+    }
+
+    private final IBinder mBinder = new StreamingMusicServiceBinder();
+	
+	/* End Binder Code */
 }

@@ -154,6 +154,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        
 
         // Set up the ViewPager with the sections adapter.       
         mViewPager = (ViewPager) findViewById(R.id.pager);        
@@ -290,7 +291,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	   
 	
     
-    public class CategoryFragment extends Fragment {
+    public static class CategoryFragment extends Fragment {
         public CategoryFragment() {
         	super();
         }
@@ -300,15 +301,16 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+
         	ExpandableListView listView = new ExpandableListView(getActivity());
+        	
         	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), getArguments().getInt(ARG_CATEGORY_POSITION));
+        	
         	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
         	    @Override
         	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
         	    	JrListing selection = (JrListing)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
         	    	if (selection.getClass() == JrItem.class) {
-	        	    	
-        	    		
         	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
         	    		JrSession.selectedItem = selection;
         	    		startActivity(intent);
@@ -319,99 +321,103 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         	listView.setAdapter(adapter);
             return listView;
         }
+        
+        public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
+        	Context mContext;
+        	private List<JrItem> mCategoryItems;
+        	
+        	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
+        		mContext = context;
+        		mCategoryItems = JrSession.selectedLibrary.getCategories().get(CategoryPosition).getCategoryItems();
+        	}
+        	
+    		@Override
+    		public Object getChild(int groupPosition, int childPosition) {
+    			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
+    		}
+
+    		@Override
+    		public long getChildId(int groupPosition, int childPosition) {
+    			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mKey;
+    		}
+    		
+    		@Override
+    		public View getChildView(int groupPosition, int childPosition,
+    			boolean isLastChild, View convertView, ViewGroup parent) {
+    			TextView returnView = getGenericView(mContext);
+    	//			tv.setGravity(Gravity.LEFT);
+    			returnView.setText(mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mValue);
+    			return returnView;
+    		}
+
+    		@Override
+    		public int getChildrenCount(int groupPosition) {
+    			// TODO Auto-generated method stub
+    			return mCategoryItems.get(groupPosition).getSubItems().size();
+    		}
+
+    		@Override
+    		public Object getGroup(int groupPosition) {
+    			// TODO Auto-generated method stub
+    			return mCategoryItems.get(groupPosition);
+    		}
+
+    		@Override
+    		public int getGroupCount() {
+    			// TODO Auto-generated method stub
+    			return mCategoryItems.size();
+    		}
+
+    		@Override
+    		public long getGroupId(int groupPosition) {
+    			// TODO Auto-generated method stub
+    			return mCategoryItems.get(groupPosition).mKey;
+    		}
+
+    		@Override
+    		public View getGroupView(int groupPosition, boolean isExpanded,
+    				View convertView, ViewGroup parent) {
+
+    			TextView tv = getGenericView(mContext);
+//    			tv.setGravity(Gravity.LEFT);
+    			tv.setText(mCategoryItems.get(groupPosition).mValue);
+    			
+    			return tv;
+    		}
+
+    		@Override
+    		public boolean hasStableIds() {
+    			// TODO Auto-generated method stub
+    			return true;
+    		}
+
+    		@Override
+    		public boolean isChildSelectable(int groupPosition, int childPosition) {
+    			// TODO Auto-generated method stub
+    			return true;
+    		}
+        	
+        }
+        
+        public TextView getGenericView(Context context) {
+            // Layout parameters for the ExpandableListView
+            AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            TextView textView = new TextView(context);
+            textView.setTextAppearance(context, android.R.style.TextAppearance_Large);
+            textView.setLayoutParams(lp);
+            // Center the text vertically
+            textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+//            textView.setTextColor(getResources().getColor(marcyred));
+            // Set the text starting position        
+            textView.setPadding(64, 20, 20, 20);
+            //textView.setHeight(textView.getLineHeight() + 20);
+            return textView;
+        }
     }
     
-    public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
-    	Context mContext;
-    	private List<JrItem> mCategoryItems;
-    	
-    	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
-    		mContext = context;
-    		mCategoryItems = JrSession.selectedLibrary.getCategories().get(CategoryPosition).getCategoryItems();
-    	}
-    	
-		@Override
-		public Object getChild(int groupPosition, int childPosition) {
-			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
-		}
-
-		@Override
-		public long getChildId(int groupPosition, int childPosition) {
-			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mKey;
-		}
-		
-		@Override
-		public View getChildView(int groupPosition, int childPosition,
-			boolean isLastChild, View convertView, ViewGroup parent) {
-			TextView returnView = getGenericView(mContext);
-	//			tv.setGravity(Gravity.LEFT);
-			returnView.setText(mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mValue);
-			return returnView;
-		}
-
-		@Override
-		public int getChildrenCount(int groupPosition) {
-			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).getSubItems().size();
-		}
-
-		@Override
-		public Object getGroup(int groupPosition) {
-			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition);
-		}
-
-		@Override
-		public int getGroupCount() {
-			// TODO Auto-generated method stub
-			return mCategoryItems.size();
-		}
-
-		@Override
-		public long getGroupId(int groupPosition) {
-			// TODO Auto-generated method stub
-			return mCategoryItems.get(groupPosition).mKey;
-		}
-
-		@Override
-		public View getGroupView(int groupPosition, boolean isExpanded,
-				View convertView, ViewGroup parent) {
-
-			TextView tv = getGenericView(mContext);
-//			tv.setGravity(Gravity.LEFT);
-			tv.setText(mCategoryItems.get(groupPosition).mValue);
-			
-			return tv;
-		}
-
-		@Override
-		public boolean hasStableIds() {
-			// TODO Auto-generated method stub
-			return true;
-		}
-
-		@Override
-		public boolean isChildSelectable(int groupPosition, int childPosition) {
-			// TODO Auto-generated method stub
-			return true;
-		}
-    	
-    }
     
-    public TextView getGenericView(Context context) {
-        // Layout parameters for the ExpandableListView
-        AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 64);
-
-        TextView textView = new TextView(context);
-        textView.setLayoutParams(lp);
-        // Center the text vertically
-        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//        textView.setTextColor(getResources().getColor(marcyred));
-        // Set the text starting position
-        textView.setPadding(48, 0, 0, 0);
-        return textView;
-    }
     
     public class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
 
