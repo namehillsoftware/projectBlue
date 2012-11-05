@@ -39,8 +39,9 @@ public class StreamingMusicService extends Service implements
 	private WifiLock mWifiLock = null;
 	private String mUrl;
 	private Notification mNotification;
-	private NotificationManager mNM;
+	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
+	private Intent mIntent;
 	
 	public StreamingMusicService() {
 		super();
@@ -50,22 +51,7 @@ public class StreamingMusicService extends Service implements
 		super();
 		mUrl = url;
 	}
-	
-	private void showNotification() {
-		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), BrowseLibrary.class), PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification = new Notification();
-//      mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_launcher;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), 
-				"Music Streamer for J. River Media Center", 
-				"Playing",
-				pi);
-		mNM.notify(NOTIFICATION, mNotification);
-	}
-	
-	
-	
+
 	private void initMediaPlayer() {
 		mMediaPlayer = new MediaPlayer(); // initialize it here
         mMediaPlayer.setOnPreparedListener(this);
@@ -82,11 +68,21 @@ public class StreamingMusicService extends Service implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, StreamingMusicService.class), PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification = new Notification();
+//      mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_launcher;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(), 
+				"Music Streamer for J. River Media Center", 
+				"Playing",
+				pi);
+//		mNotificationMgr.notify(NOTIFICATION, mNotification);
         startForeground(mId, mNotification);
 	}
 	
 	private void releaseMediaPlayer() {
-		mNM.cancel(NOTIFICATION);
+		mNotificationMgr.cancel(NOTIFICATION);
 		stopForeground(true);
 		mWifiLock.release();
 		mWifiLock = null;
@@ -102,17 +98,18 @@ public class StreamingMusicService extends Service implements
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_PLAY)) {
-           initMediaPlayer();  
+			mUrl = intent.getDataString();
+			initMediaPlayer();  
         }
 		return START_STICKY;
 	}
 	
 	@Override
     public void onCreate() {
-        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        mNotificationMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
         // Display a notification about us starting.  We put an icon in the status bar.
-        showNotification();
+//        showNotification();
     }
 	
 	@Override
