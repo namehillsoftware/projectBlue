@@ -1,5 +1,6 @@
 package jrAccess;
 
+import android.media.MediaPlayer;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrListing;
@@ -14,4 +15,6 @@ public class JrSession {
     
     public static JrListing selectedItem;
     public static JrFile playingFile;
+    
+    public static MediaPlayer mMediaPlayer;
 }

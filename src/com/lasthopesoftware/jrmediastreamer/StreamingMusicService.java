@@ -3,6 +3,8 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
+import jrAccess.JrSession;
+import jrFileSystem.JrFile;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -35,7 +37,6 @@ public class StreamingMusicService extends Service implements
 	//private final IBinder mBinder = 
 	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
 	private int mId = 1;
-	private MediaPlayer mMediaPlayer = null;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
 	private Notification mNotification;
@@ -53,22 +54,22 @@ public class StreamingMusicService extends Service implements
 	}
 
 	private void initMediaPlayer() {
-		mMediaPlayer = new MediaPlayer(); // initialize it here
-        mMediaPlayer.setOnPreparedListener(this);
-        mMediaPlayer.setOnErrorListener(this);
-        mMediaPlayer.setOnCompletionListener(this);
-        mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+		JrSession.mMediaPlayer = new MediaPlayer(); // initialize it here
+		JrSession.mMediaPlayer.setOnPreparedListener(this);
+		JrSession.mMediaPlayer.setOnErrorListener(this);
+		JrSession.mMediaPlayer.setOnCompletionListener(this);
+		JrSession.mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
         try {
-        	mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			mMediaPlayer.setDataSource(mUrl);
-			mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+        	JrSession.mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        	JrSession.mMediaPlayer.setDataSource(mUrl);
+        	JrSession.mMediaPlayer.prepareAsync(); // prepare async to not block main thread
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, StreamingMusicService.class), PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
 		mNotification = new Notification();
 //      mNotification.tickerText = text;
 		mNotification.icon = R.drawable.ic_launcher;
@@ -77,7 +78,6 @@ public class StreamingMusicService extends Service implements
 				"Music Streamer for J. River Media Center", 
 				"Playing",
 				pi);
-//		mNotificationMgr.notify(NOTIFICATION, mNotification);
         startForeground(mId, mNotification);
 	}
 	
@@ -86,8 +86,8 @@ public class StreamingMusicService extends Service implements
 		stopForeground(true);
 		mWifiLock.release();
 		mWifiLock = null;
-		mMediaPlayer.release();
-		mMediaPlayer = null;
+		JrSession.mMediaPlayer.release();
+		JrSession.mMediaPlayer = null;
 	}
 
 	/* Begin Event Handlers */
@@ -115,7 +115,7 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		// TODO Auto-generated method stub
-		mMediaPlayer.start();
+		JrSession.mMediaPlayer.start();
 	}
 	
 	/* (non-Javadoc)
@@ -131,7 +131,7 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		// TODO Auto-generated method stub
-		mMediaPlayer.reset();
+		JrSession.mMediaPlayer.reset();
 		return false;
 	}
 
@@ -148,28 +148,28 @@ public class StreamingMusicService extends Service implements
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            if (mMediaPlayer == null) initMediaPlayer();
-	            else if (!mMediaPlayer.isPlaying()) mMediaPlayer.start();
-	            mMediaPlayer.setVolume(1.0f, 1.0f);
+	            if (JrSession.mMediaPlayer == null) initMediaPlayer();
+	            else if (!JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.start();
+	            JrSession.mMediaPlayer.setVolume(1.0f, 1.0f);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (mMediaPlayer.isPlaying()) releaseMediaPlayer();
-	            mMediaPlayer = null;
+	            if (JrSession.mMediaPlayer.isPlaying()) releaseMediaPlayer();
+	            JrSession.mMediaPlayer = null;
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (mMediaPlayer.isPlaying()) mMediaPlayer.pause();
+	            if (JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.pause();
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (mMediaPlayer.isPlaying()) mMediaPlayer.setVolume(0.1f, 0.1f);
+	            if (JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.setVolume(0.1f, 0.1f);
 	            break;
 	    }
 	}
