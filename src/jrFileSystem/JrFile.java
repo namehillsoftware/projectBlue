@@ -1,15 +1,5 @@
 package jrFileSystem;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.concurrent.ExecutionException;
-
-import jrAccess.JrStringResponse;
-import jrAccess.JrSession;
-import android.os.AsyncTask;
-
 public class JrFile extends JrListing {
 
 	String mArtist;

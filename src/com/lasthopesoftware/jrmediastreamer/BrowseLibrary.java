@@ -7,11 +7,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-
-import jrAccess.JrStdXmlResponse;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;
@@ -20,18 +17,12 @@ import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
 import jrFileSystem.JrListing;
 import jrFileSystem.JrPage;
-
 import org.apache.http.client.ClientProtocolException;
-
-import com.lasthopesoftware.jrmediastreamer.ViewFiles.FileListAdapter;
-
 import android.app.ActionBar;
-import android.app.ActionBar.Tab;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -47,7 +38,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.BaseAdapter;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
 import android.widget.EditText;

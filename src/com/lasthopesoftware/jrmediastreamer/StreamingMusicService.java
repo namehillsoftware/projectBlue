@@ -3,6 +3,10 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import android.app.Notification;
@@ -23,6 +27,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 
+
 /**
  * @author david
  *
@@ -31,7 +36,8 @@ public class StreamingMusicService extends Service implements
 		OnPreparedListener, 
 		OnErrorListener, 
 		OnCompletionListener,
-		OnAudioFocusChangeListener
+		OnAudioFocusChangeListener,
+		Runnable
 {
 	
 	//private final IBinder mBinder = 
@@ -43,9 +49,12 @@ public class StreamingMusicService extends Service implements
 	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
 	private Intent mIntent;
+	// experimental. using array of 1-2 media players to do precaching?
+	private LinkedList<MediaPlayer> mMediaPlayers;
 	
 	public StreamingMusicService() {
 		super();
+		mMediaPlayers = new LinkedList<MediaPlayer>();
 	}
 	
 	public StreamingMusicService(String url) {
@@ -53,41 +62,37 @@ public class StreamingMusicService extends Service implements
 		mUrl = url;
 	}
 
-	private void initMediaPlayer() {
-		JrSession.mMediaPlayer = new MediaPlayer(); // initialize it here
-		JrSession.mMediaPlayer.setOnPreparedListener(this);
-		JrSession.mMediaPlayer.setOnErrorListener(this);
-		JrSession.mMediaPlayer.setOnCompletionListener(this);
-		JrSession.mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+	private void initMediaPlayer(String url) {
+		MediaPlayer mediaPlayer;
+		
+		mediaPlayer = new MediaPlayer(); // initialize it here
+		mediaPlayer.setOnPreparedListener(this);
+		mediaPlayer.setOnErrorListener(this);
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
         try {
-        	JrSession.mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        	JrSession.mMediaPlayer.setDataSource(mUrl);
-        	JrSession.mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+        	mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        	mediaPlayer.setDataSource(url);
+        	mediaPlayer.prepareAsync(); // prepare async to not block main thread
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
-		mNotification = new Notification();
-//      mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_launcher;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), 
-				"Music Streamer for J. River Media Center", 
-				"Playing",
-				pi);
-        startForeground(mId, mNotification);
+        mMediaPlayers.offer(mediaPlayer);
 	}
 	
 	private void releaseMediaPlayer() {
+		for (MediaPlayer mp : mMediaPlayers) releaseMediaPlayer(mp);
+	}
+	
+	private void releaseMediaPlayer(MediaPlayer mp) {
 		mNotificationMgr.cancel(NOTIFICATION);
 		stopForeground(true);
 		mWifiLock.release();
 		mWifiLock = null;
-		JrSession.mMediaPlayer.release();
-		JrSession.mMediaPlayer = null;
+		mp.release();
+		mp = null;
 	}
 
 	/* Begin Event Handlers */
@@ -99,7 +104,7 @@ public class StreamingMusicService extends Service implements
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_PLAY)) {
 			mUrl = intent.getDataString();
-			initMediaPlayer();  
+			initMediaPlayer(intent.getDataString());  
         }
 		return START_STICKY;
 	}
@@ -114,8 +119,19 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		// TODO Auto-generated method stub
-		JrSession.mMediaPlayer.start();
+		mp.start();
+		
+		// Set the notification area
+		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
+		mNotification = new Notification();
+//      mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_launcher;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(), 
+				"Music Streamer for J. River Media Center", 
+				"Playing",
+				pi);
+        startForeground(mId, mNotification);
 	}
 	
 	/* (non-Javadoc)
@@ -123,23 +139,19 @@ public class StreamingMusicService extends Service implements
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
-//		return null;
 		return mBinder;
 	}
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		// TODO Auto-generated method stub
-		JrSession.mMediaPlayer.reset();
+		JrSession.mediaPlayer.reset();
 		return false;
 	}
 
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		// TODO Auto-generated method stub
-		releaseMediaPlayer();
+		releaseMediaPlayer(mp);
 	}
 
 
@@ -148,28 +160,28 @@ public class StreamingMusicService extends Service implements
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            if (JrSession.mMediaPlayer == null) initMediaPlayer();
-	            else if (!JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.start();
-	            JrSession.mMediaPlayer.setVolume(1.0f, 1.0f);
+	            if (JrSession.mediaPlayer == null) initMediaPlayer();
+	            else if (!JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.start();
+	            JrSession.mediaPlayer.setVolume(1.0f, 1.0f);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.mMediaPlayer.isPlaying()) releaseMediaPlayer();
-	            JrSession.mMediaPlayer = null;
+	            if (JrSession.mediaPlayer.isPlaying()) releaseMediaPlayer();
+	            JrSession.mediaPlayer = null;
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.pause();
+	            if (JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.pause();
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (JrSession.mMediaPlayer.isPlaying()) JrSession.mMediaPlayer.setVolume(0.1f, 0.1f);
+	            if (JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.setVolume(0.1f, 0.1f);
 	            break;
 	    }
 	}
@@ -190,6 +202,12 @@ public class StreamingMusicService extends Service implements
     }
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	/* End Binder Code */
 }

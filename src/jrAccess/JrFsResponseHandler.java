@@ -2,12 +2,8 @@ package jrAccess;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import jrFileSystem.JrFileUtils;
-import jrFileSystem.JrItem;
 import jrFileSystem.JrListing;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -21,9 +17,9 @@ public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
 	
 	public List<T> items = new ArrayList<T>();
 	
-	private Class newClass;
+	private Class<T> newClass;
 	
-	public JrFsResponseHandler(Class c) {
+	public JrFsResponseHandler(Class<T> c) {
 		newClass = c;
 	}
 	

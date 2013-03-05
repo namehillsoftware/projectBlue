@@ -36,7 +36,7 @@ public class JrItem extends JrListing {
 				//mSubItems = (List<JrListing>) (new JrFileUtils.SortJrListAsync().execute(new List[] { mSubItems }).get());
 				
 				if (mSubItems.isEmpty()) {
-					List<JrFile> tempFiles = (new JrFileXmlResponse()).execute(new String[] { "Browse/Files", "ID=" + String.valueOf(this.mKey)/*, "Action=Serialize"*/}).get(); 
+					List<JrFile> tempFiles = (new JrFileXmlResponse()).execute(new String[] { "Browse/Files", "ID=" + String.valueOf(this.mKey)}).get(); 
 					mSubItems.addAll(tempFiles);
 				}
 				

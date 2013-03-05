@@ -82,7 +82,7 @@ public class ViewFiles extends FragmentActivity {
 				@Override
 				public void onClick(View v) {
 					// TODO Auto-generated method stub
-					JrSession.playingFile = file;
+					JrSession.playingAlbum = mAlbum;
 					String fileUrl = JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(file.mKey), "conversion=2");
 					Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(fileUrl), mContext, StreamingMusicService.class);
 					mContext.startService(svcIntent);
