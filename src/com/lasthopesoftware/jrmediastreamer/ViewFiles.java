@@ -3,17 +3,10 @@ package com.lasthopesoftware.jrmediastreamer;
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrItem;
-import android.app.ActionBar.Tab;
-import android.app.ActionBar.TabListener;
-import android.app.FragmentTransaction;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.sax.StartElementListener;
 import android.support.v4.app.FragmentActivity;
 import android.view.Gravity;
 import android.view.View;
@@ -49,7 +42,6 @@ public class ViewFiles extends FragmentActivity {
 	public static class FileListAdapter extends BaseAdapter {
 		private JrItem mAlbum;
 		private Context mContext;
-		private StreamingMusicService ms;
 		
 		public FileListAdapter(Context context, JrItem album) {
 			mAlbum = album;
@@ -82,9 +74,8 @@ public class ViewFiles extends FragmentActivity {
 				@Override
 				public void onClick(View v) {
 					// TODO Auto-generated method stub
-					JrSession.playingAlbum = mAlbum;
-					String fileUrl = JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(file.mKey), "conversion=2");
-					Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(fileUrl), mContext, StreamingMusicService.class);
+					JrSession.playlist = mAlbum;
+					Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), mContext, StreamingMusicService.class);
 					mContext.startService(svcIntent);
 				}
 			});

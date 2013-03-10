@@ -24,6 +24,10 @@ public class JrPage extends JrListing {
 		super();
 	}
 	
+	public String getUrl() {
+		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1");
+	}
+	
 	public List<JrCategory> getCategories() {
 		if (mCategories == null) {
 			mCategories = new ArrayList<JrCategory>();
@@ -31,7 +35,7 @@ public class JrPage extends JrListing {
 			if (JrSession.accessDao == null) return mCategories;
 			
 			try {
-				mCategories = JrFileUtils.transformListing(JrCategory.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1" }).get().items);
+				mCategories = JrFileUtils.transformListing(JrCategory.class, (new JrStdXmlResponse()).execute("Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1").get().items);
 				
 				
 			} catch (Exception e) {

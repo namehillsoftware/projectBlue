@@ -23,6 +23,10 @@ public class JrCategory extends JrListing {
 		super();
 	}
 	
+	public String getUrl() {
+		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.mKey));
+	}
+	
 	public List<JrItem> getCategoryItems() {
 		if (mCategoryItems == null) {
 			mCategoryItems = new ArrayList<JrItem>(0);
@@ -30,7 +34,7 @@ public class JrCategory extends JrListing {
 			if (JrSession.accessDao == null) return mCategoryItems;
 			
 			try {
-				mCategoryItems = (List<JrItem>) (new JrFsResponse(JrItem.class)).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey) }).get();
+				mCategoryItems = (List<JrItem>) (new JrFsResponse<JrItem>(JrItem.class)).execute("Browse/Children", "ID=" + String.valueOf(this.mKey)).get();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -42,7 +46,7 @@ public class JrCategory extends JrListing {
 	public List<JrItem> getSortedCategoryItems() {
 		if (mSortedCategoryItems == null) {
 			try {
-				mSortedCategoryItems = (List<JrItem>) (new JrFileUtils.SortJrListAsync().execute(new List[] { getCategoryItems() }).get());
+				mSortedCategoryItems = (new JrFileUtils.SortJrListAsync<JrItem>().execute(getCategoryItems()).get());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

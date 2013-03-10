@@ -27,13 +27,17 @@ public class JrFileSystem extends JrListing {
 //		setPages();
 	}
 	
+	public String getUrl() {
+		return JrSession.accessDao.getJrUrl("Browse/Children");
+	}
+	
 	public List<JrPage> getPages() {
 		if (mPages == null) {
 			mPages = new ArrayList<JrPage>();
 			if (JrSession.accessDao == null) return mPages;
 
 			try {
-				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute(new String[] { "Browse/Children" }).get().items);
+				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute("Browse/Children").get().items);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

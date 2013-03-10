@@ -3,12 +3,11 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
+import jrFileSystem.JrListing;
+import jrFileSystem.OnJrFileCompleteListener;
+import jrFileSystem.OnJrFilePreparedListener;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -18,14 +17,11 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
-import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.PowerManager;
 
 
 /**
@@ -33,9 +29,9 @@ import android.os.PowerManager;
  *
  */
 public class StreamingMusicService extends Service implements
-		OnPreparedListener, 
+		OnJrFilePreparedListener, 
 		OnErrorListener, 
-		OnCompletionListener,
+		OnJrFileCompleteListener,
 		OnAudioFocusChangeListener,
 		Runnable
 {
@@ -48,51 +44,63 @@ public class StreamingMusicService extends Service implements
 	private Notification mNotification;
 	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
-	private Intent mIntent;
-	// experimental. using array of 1-2 media players to do precaching?
-	private LinkedList<MediaPlayer> mMediaPlayers;
 	
 	public StreamingMusicService() {
 		super();
-		mMediaPlayers = new LinkedList<MediaPlayer>();
 	}
 	
 	public StreamingMusicService(String url) {
 		super();
 		mUrl = url;
 	}
+	
+	private void initMediaPlayers() {
+		if (JrSession.playlist != null) {
+			for (JrListing listing : JrSession.playlist.getSubItems()) {
+				JrFile file = (JrFile) listing;
+				file.setOnFileCompletionListener(this);
+				file.setOnFilePreparedListener(this);
+				initMediaPlayer(file);
+			}
+		}
+	}
 
-	private void initMediaPlayer(String url) {
-		MediaPlayer mediaPlayer;
+	private void initMediaPlayer(JrFile file) {
+		file.initMediaPlayer(getApplicationContext());
+        if (file.getUrl() == mUrl) file.prepareMediaPlayer(); // prepare async to not block main thread
+	}
+	
+	private void startMediaPlayer(JrFile file) {
+		file.getMediaPlayer().start();
 		
-		mediaPlayer = new MediaPlayer(); // initialize it here
-		mediaPlayer.setOnPreparedListener(this);
-		mediaPlayer.setOnErrorListener(this);
-		mediaPlayer.setOnCompletionListener(this);
-		mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+		// Set the notification area
+		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
-        try {
-        	mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        	mediaPlayer.setDataSource(url);
-        	mediaPlayer.prepareAsync(); // prepare async to not block main thread
-		} catch (Exception e) {
-			e.printStackTrace();
+		mNotification = new Notification();
+//		      mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_launcher;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(), 
+				"Music Streamer for J. River Media Center", 
+				"Playing",
+				pi);
+        startForeground(mId, mNotification);
+	}
+	
+	private void releaseMediaPlayers() {
+		for (JrListing listing : JrSession.playlist.getSubItems()) {
+			JrFile file = (JrFile) listing;
+			releaseMediaPlayer(file);
 		}
-        mMediaPlayers.offer(mediaPlayer);
 	}
 	
-	private void releaseMediaPlayer() {
-		for (MediaPlayer mp : mMediaPlayers) releaseMediaPlayer(mp);
-	}
-	
-	private void releaseMediaPlayer(MediaPlayer mp) {
+	private void releaseMediaPlayer(JrFile file) {
 		mNotificationMgr.cancel(NOTIFICATION);
 		stopForeground(true);
 		mWifiLock.release();
 		mWifiLock = null;
-		mp.release();
-		mp = null;
+		file.releaseMediaPlayer();
 	}
 
 	/* Begin Event Handlers */
@@ -104,7 +112,7 @@ public class StreamingMusicService extends Service implements
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_PLAY)) {
 			mUrl = intent.getDataString();
-			initMediaPlayer(intent.getDataString());  
+			initMediaPlayers();
         }
 		return START_STICKY;
 	}
@@ -112,26 +120,11 @@ public class StreamingMusicService extends Service implements
 	@Override
     public void onCreate() {
         mNotificationMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-
-        // Display a notification about us starting.  We put an icon in the status bar.
-//        showNotification();
     }
 	
-	@Override
-	public void onPrepared(MediaPlayer mp) {
-		mp.start();
-		
-		// Set the notification area
-		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
-		mNotification = new Notification();
-//      mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_launcher;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), 
-				"Music Streamer for J. River Media Center", 
-				"Playing",
-				pi);
-        startForeground(mId, mNotification);
+	public void onJrFilePrepared(JrFile file) {
+		if (JrSession.mediaPlayer == null) JrSession.mediaPlayer = file.getMediaPlayer();
+		if (!JrSession.mediaPlayer.isPlaying()) startMediaPlayer(file);
 	}
 	
 	/* (non-Javadoc)
@@ -144,14 +137,19 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		JrSession.mediaPlayer.reset();
+		mp.reset();
 		return false;
 	}
 
 
 	@Override
-	public void onCompletion(MediaPlayer mp) {
-		releaseMediaPlayer(mp);
+	public void onJrFileComplete(JrFile file) {
+		if (JrSession.playlist.getSubItems().indexOf((JrListing)file) < JrSession.playlist.getSubItems().size() - 1) {
+			JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(file) + 1);
+			if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
+			else startMediaPlayer(nextFile);
+		}
+		releaseMediaPlayer(file);
 	}
 
 
@@ -160,15 +158,14 @@ public class StreamingMusicService extends Service implements
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            if (JrSession.mediaPlayer == null) initMediaPlayer();
-	            else if (!JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.start();
+	            if (JrSession.mediaPlayer == null) initMediaPlayers();
+	            else if (!JrSession.mediaPlayer.isPlaying()) startMediaPlayer(JrSession.playingFile);
 	            JrSession.mediaPlayer.setVolume(1.0f, 1.0f);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.mediaPlayer.isPlaying()) releaseMediaPlayer();
-	            JrSession.mediaPlayer = null;
+	            if (JrSession.mediaPlayer.isPlaying()) releaseMediaPlayers();
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
@@ -188,7 +185,7 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onDestroy() {
-		releaseMediaPlayer();
+		releaseMediaPlayers();
 	}
 
 	/* End Event Handlers */
@@ -205,8 +202,17 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
+		while (JrSession.mediaPlayer != null && JrSession.mediaPlayer.isPlaying()) {
+			try {
+				if (JrSession.mediaPlayer.getCurrentPosition() > (JrSession.mediaPlayer.getDuration() / 2)) {
+					JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1);
+					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
+				}
+				Thread.sleep(1000);
+			} catch (Exception e) {
+				return;
+			}
+		}
 	}
 	
 	/* End Binder Code */

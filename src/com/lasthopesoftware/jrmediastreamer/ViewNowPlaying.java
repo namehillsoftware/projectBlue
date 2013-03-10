@@ -1,7 +1,6 @@
 package com.lasthopesoftware.jrmediastreamer;
 
 import jrAccess.JrSession;
-import jrFileSystem.JrItem;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;

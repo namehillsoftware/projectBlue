@@ -1,6 +1,6 @@
 package jrFileSystem;
 
-public class JrListing {
+public abstract class JrListing {
 	public Integer mKey;
 	public String mValue;
 	
@@ -17,5 +17,5 @@ public class JrListing {
 	public JrListing() {
 	}
 	
-	
+	public abstract String getUrl();
 }

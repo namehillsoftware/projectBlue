@@ -25,13 +25,17 @@ public class JrItem extends JrListing {
 		super();		
 	}
 	
+	public String getUrl() {
+		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1");
+	}
+	
 	public List<JrListing> getSubItems() {
 		
 		if (mSubItems == null) {
 			mSubItems = new ArrayList<JrListing>();
 			if (JrSession.accessDao == null) return mSubItems;
 			try {
-				List<JrItem> tempSubItems = (List<JrItem>) (new JrFsResponse(JrItem.class)).execute(new String[] { "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1" }).get();
+				List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1").get();
 				mSubItems.addAll(tempSubItems);
 				//mSubItems = (List<JrListing>) (new JrFileUtils.SortJrListAsync().execute(new List[] { mSubItems }).get());
 				

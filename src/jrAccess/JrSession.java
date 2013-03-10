@@ -15,7 +15,7 @@ public class JrSession {
     
     public static JrListing selectedItem;
     public static JrFile playingFile;
-    public static JrItem playingAlbum;
+    public static JrItem playlist;
     
     public static MediaPlayer mediaPlayer;
 }
