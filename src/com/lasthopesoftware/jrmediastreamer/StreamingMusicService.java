@@ -215,9 +215,9 @@ public class StreamingMusicService extends Service implements
 	public void run() {
 		while (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer().isPlaying()) {
 			try {
-				int playingFilePosition = JrSession.playlist.getSubItems().indexOf(JrSession.playingFile);
-				if (playingFilePosition >= JrSession.playlist.getSubItems().size()) return;
-				JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(playingFilePosition + 1);
+				int nextFilePosition = JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1;
+				if (nextFilePosition >= JrSession.playlist.getSubItems().size()) return;
+				JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(nextFilePosition);
 				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() - 88000)) {
 					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
 				}
