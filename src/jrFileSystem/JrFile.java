@@ -20,8 +20,8 @@ public class JrFile extends JrListing implements
 	private String mAlbum;
 	private String mGenre;
 	private int mTrackNumber;
-	private boolean prepared;
-	private boolean preparing;
+	private boolean prepared = false;
+	private boolean preparing = false;
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners;
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners;

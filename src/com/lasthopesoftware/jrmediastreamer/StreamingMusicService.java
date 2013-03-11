@@ -3,6 +3,8 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.util.concurrent.FutureTask;
+
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrListing;
@@ -44,6 +46,7 @@ public class StreamingMusicService extends Service implements
 	private Notification mNotification;
 	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
+	private FutureTask trackProgressTask;
 	
 	public StreamingMusicService() {
 		super();
@@ -67,12 +70,14 @@ public class StreamingMusicService extends Service implements
 
 	private void initMediaPlayer(JrFile file) {
 		file.initMediaPlayer(getApplicationContext());
-        if (file.getUrl() == mUrl) file.prepareMediaPlayer(); // prepare async to not block main thread
+        if (file.getUrl().equalsIgnoreCase(mUrl)) file.prepareMediaPlayer(); // prepare async to not block main thread
 	}
 	
 	private void startMediaPlayer(JrFile file) {
 		file.getMediaPlayer().start();
-		
+		JrSession.playingFile = file;
+		trackProgressTask = new FutureTask(this, null);
+		trackProgressTask.run();
 		// Set the notification area
 		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
@@ -123,8 +128,8 @@ public class StreamingMusicService extends Service implements
     }
 	
 	public void onJrFilePrepared(JrFile file) {
-		if (JrSession.mediaPlayer == null) JrSession.mediaPlayer = file.getMediaPlayer();
-		if (!JrSession.mediaPlayer.isPlaying()) startMediaPlayer(file);
+		if (JrSession.playingFile == null) JrSession.playingFile = file;
+		if (!JrSession.playingFile.getMediaPlayer().isPlaying()) startMediaPlayer(file);
 	}
 	
 	/* (non-Javadoc)
@@ -132,6 +137,7 @@ public class StreamingMusicService extends Service implements
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
+		
 		return mBinder;
 	}
 
@@ -145,9 +151,12 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public void onJrFileComplete(JrFile file) {
 		if (JrSession.playlist.getSubItems().indexOf((JrListing)file) < JrSession.playlist.getSubItems().size() - 1) {
+			trackProgressTask.cancel(true);
 			JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(file) + 1);
-			if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
-			else startMediaPlayer(nextFile);
+			if (!nextFile.isPrepared())
+				nextFile.prepareMediaPlayer();
+			else
+				startMediaPlayer(nextFile);
 		}
 		releaseMediaPlayer(file);
 	}
@@ -158,27 +167,27 @@ public class StreamingMusicService extends Service implements
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            if (JrSession.mediaPlayer == null) initMediaPlayers();
-	            else if (!JrSession.mediaPlayer.isPlaying()) startMediaPlayer(JrSession.playingFile);
-	            JrSession.mediaPlayer.setVolume(1.0f, 1.0f);
+	            if (JrSession.playingFile == null) initMediaPlayers();
+	            else if (!JrSession.playingFile.getMediaPlayer().isPlaying()) startMediaPlayer(JrSession.playingFile);
+	            JrSession.playingFile.getMediaPlayer().setVolume(1.0f, 1.0f);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.mediaPlayer.isPlaying()) releaseMediaPlayers();
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) releaseMediaPlayers();
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.pause();
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().pause();
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (JrSession.mediaPlayer.isPlaying()) JrSession.mediaPlayer.setVolume(0.1f, 0.1f);
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().setVolume(0.1f, 0.1f);
 	            break;
 	    }
 	}
@@ -202,9 +211,9 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void run() {
-		while (JrSession.mediaPlayer != null && JrSession.mediaPlayer.isPlaying()) {
+		while (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer().isPlaying()) {
 			try {
-				if (JrSession.mediaPlayer.getCurrentPosition() > (JrSession.mediaPlayer.getDuration() / 2)) {
+				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() / 2)) {
 					JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1);
 					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
 				}
