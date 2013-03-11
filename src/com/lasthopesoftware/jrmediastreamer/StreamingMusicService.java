@@ -74,10 +74,8 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void startMediaPlayer(JrFile file) {
-		file.getMediaPlayer().start();
 		JrSession.playingFile = file;
-		trackProgressTask = new FutureTask(this, null);
-		trackProgressTask.run();
+		
 		// Set the notification area
 		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
@@ -91,6 +89,10 @@ public class StreamingMusicService extends Service implements
 				"Playing",
 				pi);
         startForeground(mId, mNotification);
+        
+        file.getMediaPlayer().start();
+        trackProgressTask = new FutureTask(this, null);
+		trackProgressTask.run();
 	}
 	
 	private void releaseMediaPlayers() {
@@ -101,11 +103,13 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void releaseMediaPlayer(JrFile file) {
-		mNotificationMgr.cancel(NOTIFICATION);
 		stopForeground(true);
+		mNotificationMgr.cancel(NOTIFICATION);
+		mNotification = null;
 		mWifiLock.release();
 		mWifiLock = null;
-		file.releaseMediaPlayer();
+		JrSession.playingFile = null;
+		trackProgressTask.cancel(true);
 	}
 
 	/* Begin Event Handlers */
@@ -128,8 +132,7 @@ public class StreamingMusicService extends Service implements
     }
 	
 	public void onJrFilePrepared(JrFile file) {
-		if (JrSession.playingFile == null) JrSession.playingFile = file;
-		if (!JrSession.playingFile.getMediaPlayer().isPlaying()) startMediaPlayer(file);
+		if (JrSession.playingFile == null && !file.getMediaPlayer().isPlaying()) startMediaPlayer(file);
 	}
 	
 	/* (non-Javadoc)
@@ -150,15 +153,14 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onJrFileComplete(JrFile file) {
+		releaseMediaPlayer(file);
 		if (JrSession.playlist.getSubItems().indexOf((JrListing)file) < JrSession.playlist.getSubItems().size() - 1) {
-			trackProgressTask.cancel(true);
 			JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(file) + 1);
 			if (!nextFile.isPrepared())
 				nextFile.prepareMediaPlayer();
 			else
 				startMediaPlayer(nextFile);
 		}
-		releaseMediaPlayer(file);
 	}
 
 
@@ -213,11 +215,13 @@ public class StreamingMusicService extends Service implements
 	public void run() {
 		while (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer().isPlaying()) {
 			try {
-				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() / 2)) {
-					JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1);
+				int playingFilePosition = JrSession.playlist.getSubItems().indexOf(JrSession.playingFile);
+				if (playingFilePosition >= JrSession.playlist.getSubItems().size()) return;
+				JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(playingFilePosition + 1);
+				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() - 88000)) {
 					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
 				}
-				Thread.sleep(1000);
+				Thread.sleep(5000);
 			} catch (Exception e) {
 				return;
 			}

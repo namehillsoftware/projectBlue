@@ -148,7 +148,7 @@ public class JrFile extends JrListing implements
 	}
 	
 	public void releaseMediaPlayer() {
-		mp.release();
+		if (mp != null) mp.release();
 		mp = null;
 		prepared = false;
 	}
