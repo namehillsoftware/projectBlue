@@ -218,7 +218,9 @@ public class StreamingMusicService extends Service implements
 				int nextFilePosition = JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1;
 				if (nextFilePosition >= JrSession.playlist.getSubItems().size()) return;
 				JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(nextFilePosition);
-				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() - 88000)) {
+				// figure out how much buffer time we need for this file if we're on the slowest 3G network
+				double bufferTime = ((nextFile.getDuration() * 128) / 384) * 1.2; 
+				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() - bufferTime)) {
 					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
 				}
 				Thread.sleep(5000);

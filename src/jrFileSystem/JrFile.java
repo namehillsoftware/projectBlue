@@ -20,6 +20,7 @@ public class JrFile extends JrListing implements
 	private String mAlbum;
 	private String mGenre;
 	private int mTrackNumber;
+	private double mDuration;
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private MediaPlayer mp;
@@ -105,6 +106,18 @@ public class JrFile extends JrListing implements
 	 */
 	public void setTrackNumber(int mTrackNumber) {
 		this.mTrackNumber = mTrackNumber;
+	}
+	/**
+	 * @return the mDuration
+	 */
+	public double getDuration() {
+		return mDuration;
+	}
+	/**
+	 * @param mDuration the mDuration to set
+	 */
+	public void setDuration(double mDuration) {
+		this.mDuration = mDuration;
 	}
 	/**
 	 * @return the prepared

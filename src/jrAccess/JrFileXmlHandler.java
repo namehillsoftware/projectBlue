@@ -51,6 +51,9 @@ public class JrFileXmlHandler extends DefaultHandler {
 			
 			if (currentKey.equalsIgnoreCase("Track #"))
 				currentFile.setTrackNumber(Integer.parseInt(currentValue));
+			
+			if (currentKey.equalsIgnoreCase("Duration"))
+				currentFile.setDuration(Double.parseDouble(currentValue) * 1000);
 		}
 			
 	}
