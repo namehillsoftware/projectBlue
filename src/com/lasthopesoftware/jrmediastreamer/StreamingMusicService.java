@@ -30,13 +30,8 @@ import android.os.IBinder;
  * @author david
  *
  */
-public class StreamingMusicService extends Service implements
-		OnJrFilePreparedListener, 
-		OnErrorListener, 
-		OnJrFileCompleteListener,
-		OnAudioFocusChangeListener,
-		Runnable
-{
+public class StreamingMusicService extends Service implements OnJrFilePreparedListener, OnErrorListener, 
+		OnJrFileCompleteListener, OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
 	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
@@ -46,10 +41,11 @@ public class StreamingMusicService extends Service implements
 	private Notification mNotification;
 	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
-	private FutureTask trackProgressTask;
+	private Thread trackProgressThread;
 	
 	public StreamingMusicService() {
 		super();
+		
 	}
 	
 	public StreamingMusicService(String url) {
@@ -59,6 +55,7 @@ public class StreamingMusicService extends Service implements
 	
 	private void initMediaPlayers() {
 		if (JrSession.playlist != null) {
+			
 			for (JrListing listing : JrSession.playlist.getSubItems()) {
 				JrFile file = (JrFile) listing;
 				file.setOnFileCompletionListener(this);
@@ -91,8 +88,9 @@ public class StreamingMusicService extends Service implements
         startForeground(mId, mNotification);
         
         file.getMediaPlayer().start();
-        trackProgressTask = new FutureTask(this, null);
-		trackProgressTask.run();
+        PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(file);
+        trackProgressThread = new Thread(backgroundPreparer);
+        trackProgressThread.start();
 	}
 	
 	private void releaseMediaPlayers() {
@@ -109,7 +107,6 @@ public class StreamingMusicService extends Service implements
 		mWifiLock.release();
 		mWifiLock = null;
 		JrSession.playingFile = null;
-		trackProgressTask.cancel(true);
 	}
 
 	/* Begin Event Handlers */
@@ -210,25 +207,6 @@ public class StreamingMusicService extends Service implements
     }
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
-
-	@Override
-	public void run() {
-		while (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer().isPlaying()) {
-			try {
-				int nextFilePosition = JrSession.playlist.getSubItems().indexOf(JrSession.playingFile) + 1;
-				if (nextFilePosition >= JrSession.playlist.getSubItems().size()) return;
-				JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(nextFilePosition);
-				// figure out how much buffer time we need for this file if we're on the slowest 3G network
-				double bufferTime = ((nextFile.getDuration() * 128) / 384) * 1.2; 
-				if (JrSession.playingFile.getMediaPlayer().getCurrentPosition() > (JrSession.playingFile.getMediaPlayer().getDuration() - bufferTime)) {
-					if (!nextFile.isPrepared()) nextFile.prepareMediaPlayer();
-				}
-				Thread.sleep(5000);
-			} catch (Exception e) {
-				return;
-			}
-		}
-	}
 	
 	/* End Binder Code */
 }

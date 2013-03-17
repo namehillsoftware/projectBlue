@@ -1,6 +1,8 @@
 package jrFileSystem;
 
 import java.util.LinkedList;
+import java.util.concurrent.FutureTask;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -13,7 +15,8 @@ import jrAccess.JrSession;
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
 	OnErrorListener, 
-	OnCompletionListener
+	OnCompletionListener,
+	Runnable
 {
 
 	private String mArtist;
@@ -26,6 +29,7 @@ public class JrFile extends JrListing implements
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners;
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners;
+	private volatile Thread mpThread;
 	
 	public JrFile(int key) {
 		this.mKey = key;
@@ -162,6 +166,7 @@ public class JrFile extends JrListing implements
 	
 	public void releaseMediaPlayer() {
 		if (mp != null) mp.release();
+		mpThread = null;
 		mp = null;
 		prepared = false;
 	}
@@ -184,5 +189,18 @@ public class JrFile extends JrListing implements
 		mp.reset();
 		return false;
 	}
+	@Override
+	public void run() {
+		mp.start();
+		// keep this thread active while the media player is playing
+		while (mp.isPlaying()) {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	
 }

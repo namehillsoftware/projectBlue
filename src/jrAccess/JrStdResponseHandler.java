@@ -8,8 +8,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class JrStdResponseHandler extends DefaultHandler {
 	
-	private List<JrResponseDao> response = new ArrayList<JrResponseDao>();
-	private JrResponseDao currentResponse;
+	private List<JrResponse> response = new ArrayList<JrResponse>();
+	private JrResponse currentResponse;
 	private String currentValue;
 	private String currentKey;
 	
@@ -18,7 +18,7 @@ public class JrStdResponseHandler extends DefaultHandler {
 		currentValue = "";
 		currentKey = "";
 		if (qName.equalsIgnoreCase("response"))
-			currentResponse = new JrResponseDao(attributes.getValue("Status"));
+			currentResponse = new JrResponse(attributes.getValue("Status"));
 		
 		if (qName.equalsIgnoreCase("item")) {
 			currentKey = attributes.getValue("Name");
@@ -41,14 +41,14 @@ public class JrStdResponseHandler extends DefaultHandler {
 	/**
 	 * @return the response
 	 */
-	public List<JrResponseDao> getResponse() {
+	public List<JrResponse> getResponse() {
 		return response;
 	}
 
 	/**
 	 * @param response the response to set
 	 */
-	public void setResponse(List<JrResponseDao> response) {
+	public void setResponse(List<JrResponse> response) {
 		this.response = response;
 	}
 }

@@ -104,7 +104,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     	boolean connectResult = false;
     	try {
 			JrSession.accessDao = new GetMcAccess().execute(JrSession.AccessCode).get();
-			connectResult = JrSession.accessDao.getToken() != null;
+			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
