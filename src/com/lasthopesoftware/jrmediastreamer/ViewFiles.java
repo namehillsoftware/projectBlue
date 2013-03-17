@@ -50,22 +50,22 @@ public class ViewFiles extends FragmentActivity {
 		
 		@Override
 		public int getCount() {
-			return mAlbum.getSubItems().size();
+			return mAlbum.getFiles().size();
 		}
 	
 		@Override
 		public Object getItem(int position) {
-			return mAlbum.getSubItems().get(position);
+			return mAlbum.getFiles().get(position);
 		}
 	
 		@Override
 		public long getItemId(int position) {
-			return mAlbum.getSubItems().get(position).mKey;
+			return mAlbum.getFiles().get(position).mKey;
 		}
 		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			final JrFile file = (JrFile) mAlbum.getSubItems().get(position);
+			final JrFile file = mAlbum.getFiles().get(position);
 			TextView tv = getGenericView(mContext);
 			tv.setText(file.mValue);
 			
@@ -74,7 +74,7 @@ public class ViewFiles extends FragmentActivity {
 				@Override
 				public void onClick(View v) {
 					// TODO Auto-generated method stub
-					JrSession.playlist = mAlbum;
+					JrSession.playlist = mAlbum.getFiles();
 					Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), mContext, StreamingMusicService.class);
 					mContext.startService(svcIntent);
 				}

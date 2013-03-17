@@ -1,8 +1,6 @@
 package jrFileSystem;
 
 import java.util.LinkedList;
-import java.util.concurrent.FutureTask;
-
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -29,7 +27,6 @@ public class JrFile extends JrListing implements
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners;
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners;
-	private volatile Thread mpThread;
 	
 	public JrFile(int key) {
 		this.mKey = key;
@@ -166,7 +163,6 @@ public class JrFile extends JrListing implements
 	
 	public void releaseMediaPlayer() {
 		if (mp != null) mp.release();
-		mpThread = null;
 		mp = null;
 		prepared = false;
 	}

@@ -259,7 +259,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 	public class SelectedFragment extends Fragment {
 		private ListView mListView;
-		private JrItem mAlbum;
 		public static final String ARG_SELECTED_POSITION = "selected_position";   
 		public static final String ARG_CATEGORY_POSITION = "category_position";
 		
@@ -271,8 +270,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-			mAlbum = JrSession.selectedLibrary.getCategories().get(getArguments().getInt(ARG_CATEGORY_POSITION)).
-					getCategoryItems().get(getArguments().getInt(ARG_SELECTED_POSITION));
 			
 			mListView = new ListView(getActivity());
 //			mListView.setAdapter(new FileListAdapter(getActivity(), mAlbum));

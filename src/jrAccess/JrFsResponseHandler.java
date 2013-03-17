@@ -10,8 +10,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
 	
-	private JrResponse currentResponse;
-	
 	private String currentValue;
 	private String currentKey;
 	
@@ -27,8 +25,6 @@ public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
 	{
 		currentValue = "";
 		currentKey = "";
-		if (qName.equalsIgnoreCase("response"))
-			currentResponse = new JrResponse(attributes.getValue("Status"));
 		
 		if (qName.equalsIgnoreCase("item")) {
 			currentKey = attributes.getValue("Name");

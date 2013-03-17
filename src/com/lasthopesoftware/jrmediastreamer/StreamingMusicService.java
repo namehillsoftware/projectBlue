@@ -3,8 +3,6 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.util.concurrent.FutureTask;
-
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrListing;
@@ -56,8 +54,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private void initMediaPlayers() {
 		if (JrSession.playlist != null) {
 			
-			for (JrListing listing : JrSession.playlist.getSubItems()) {
-				JrFile file = (JrFile) listing;
+			for (JrFile file : JrSession.playlist) {
 				file.setOnFileCompletionListener(this);
 				file.setOnFilePreparedListener(this);
 				initMediaPlayer(file);
@@ -94,8 +91,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayers() {
-		for (JrListing listing : JrSession.playlist.getSubItems()) {
-			JrFile file = (JrFile) listing;
+		for (JrFile file : JrSession.playlist) {
 			releaseMediaPlayer(file);
 		}
 	}
@@ -151,8 +147,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public void onJrFileComplete(JrFile file) {
 		releaseMediaPlayer(file);
-		if (JrSession.playlist.getSubItems().indexOf((JrListing)file) < JrSession.playlist.getSubItems().size() - 1) {
-			JrFile nextFile = (JrFile)JrSession.playlist.getSubItems().get(JrSession.playlist.getSubItems().indexOf(file) + 1);
+		if (JrSession.playlist.indexOf((JrListing)file) < JrSession.playlist.size() - 1) {
+			JrFile nextFile = JrSession.playlist.get(JrSession.playlist.indexOf(file) + 1);
 			if (!nextFile.isPrepared())
 				nextFile.prepareMediaPlayer();
 			else
