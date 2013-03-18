@@ -4,9 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-
 import android.os.AsyncTask;
 
 public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
@@ -15,11 +12,10 @@ public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 	protected byte[] doInBackground(String... params) {
 		InputStream is = null;
 		// Add base url
-		String url = JrSession.accessDao.getJrUrl(params);
-		
-		URLConnection conn;
+	
+		JrConnection conn;
 		try {
-			conn = (new URL(url)).openConnection();
+			conn = new JrConnection(params);
 			conn.setConnectTimeout(5000);
 			is = conn.getInputStream();
 			int nRead = 0;

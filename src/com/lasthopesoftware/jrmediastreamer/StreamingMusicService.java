@@ -106,6 +106,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_PLAY)) {
 			mUrl = intent.getDataString();
+			NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+	        builder.setSmallIcon(R.drawable.ic_launcher);
+			builder.setOngoing(true);
+			builder.setContentTitle("Starting Music Streamer");
+	        startForeground(mId, builder.build());
+	        
 			initMediaPlayers();
         }
 		return START_STICKY;
@@ -114,11 +120,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
     public void onCreate() {
 		mNotificationMgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_launcher);
-		builder.setOngoing(true);
-		builder.setContentTitle("Starting Music Streamer");
-        startForeground(mId, builder.build());
 	}
 	
 	public void onJrFilePrepared(JrFile file) {
@@ -152,7 +153,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				startMediaPlayer(nextFile);
 			return;
 		}
-		this.stopSelf();
+		stopForeground(true);
+		mNotificationMgr.cancel(mId);
 	}
 
 

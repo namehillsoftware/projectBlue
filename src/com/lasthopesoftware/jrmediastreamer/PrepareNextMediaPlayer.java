@@ -38,7 +38,6 @@ public class PrepareNextMediaPlayer implements Runnable {
 				return;
 			}
 		}
-
 	}
 
 }

@@ -7,8 +7,8 @@ import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
 import jrAccess.JrSession;
 
-public class JrItem extends JrListing {
-	private List<JrItem> mSubItems;
+public class JrItem extends JrListing implements IJrItem {
+	private ArrayList<JrItem> mSubItems;
 	private ArrayList<JrFile> mFiles;
 	
 	public JrItem(int key, String value) {
@@ -24,7 +24,8 @@ public class JrItem extends JrListing {
 		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1");
 	}
 	
-	public List<JrItem> getSubItems() {
+	@Override
+	public ArrayList<JrItem> getSubItems() {
 		if (mSubItems != null) return mSubItems;
 		
 		mSubItems = new ArrayList<JrItem>();
@@ -32,8 +33,6 @@ public class JrItem extends JrListing {
 		try {
 			List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1").get();
 			mSubItems.addAll(tempSubItems);
-			//mSubItems = (List<JrListing>) (new JrFileUtils.SortJrListAsync().execute(new List[] { mSubItems }).get());
-			if (mSubItems.isEmpty()) mSubItems.add(new JrItem(this.mKey, getFiles().get(0).getAlbum()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -41,6 +40,7 @@ public class JrItem extends JrListing {
 		return mSubItems;
 	}
 	
+	@Override
 	public ArrayList<JrFile> getFiles() {
 		if (mFiles != null) return mFiles;
 		

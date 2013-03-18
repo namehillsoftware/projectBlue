@@ -1,8 +1,6 @@
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.net.URL;
-import java.net.URLConnection;
-
+import jrAccess.JrConnection;
 import jrAccess.JrSession;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -59,7 +57,8 @@ public class ViewNowPlaying extends Activity {
 			Bitmap returnBmp = null;
 			
 	        try {
-	        	URLConnection conn = (new URL(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Medium"))).openConnection();
+	        	JrConnection conn = new JrConnection(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Medium"));
+	        	conn.setConnectTimeout(5000);
 	        	returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -81,6 +81,10 @@ public class JrAccessDao {
 		return "http://" + localIps.get(index) + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
 	
+	public void resetUrl() {
+		mActiveUrl = "";
+	}
+	
 	public String getActiveUrl() {
 		if (!mActiveUrl.isEmpty()) {
 			try {
@@ -167,15 +171,16 @@ public class JrAccessDao {
 	
 	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
 		if (getToken(url) == null) return false;
-		long currentTime = new Date().getTime();
-		if (currentTime > (nextConnectionCheck)) { 
-			FutureTask<Boolean> statusTask = new FutureTask<Boolean>(new JrTestXmlResponse(url));
-			Thread getStatusThread = new Thread(statusTask);
-			getStatusThread.start();
-			mConnectionStatus = statusTask.get().booleanValue();
-			nextConnectionCheck = new Date().getTime() + 1000;
-		}
-		return mConnectionStatus;
+		return true;
+//		long currentTime = new Date().getTime();
+//		if (currentTime > (nextConnectionCheck)) { 
+//			FutureTask<Boolean> statusTask = new FutureTask<Boolean>(new JrTestXmlResponse(url));
+//			Thread getStatusThread = new Thread(statusTask);
+//			getStatusThread.start();
+//			mConnectionStatus = statusTask.get().booleanValue();
+//			nextConnectionCheck = new Date().getTime() + 1000;
+//		}
+//		return mConnectionStatus;
 	}
 	
 	private class JrTestXmlResponse implements Callable<Boolean> {

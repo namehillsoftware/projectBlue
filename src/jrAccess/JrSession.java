@@ -15,4 +15,5 @@ public class JrSession {
     public static JrListing selectedItem;
     public static JrFile playingFile;
     public static ArrayList<JrFile> playlist;
+    
 }

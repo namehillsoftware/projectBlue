@@ -2,8 +2,6 @@ package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import android.os.AsyncTask;
 
 public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
@@ -12,12 +10,9 @@ public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 	protected JrResponse doInBackground(String... params) {
 		JrResponse responseDao = null;
 		
-		// Add base url
-		String url = JrSession.accessDao.getJrUrl(params);
-		
-		URLConnection conn;
+		JrConnection conn;
 		try {
-			conn = (new URL(url)).openConnection();
+			conn = new JrConnection(params);
 			conn.setConnectTimeout(5000);
 	    	
 	    	responseDao = JrResponse.fromInputStream(conn.getInputStream());

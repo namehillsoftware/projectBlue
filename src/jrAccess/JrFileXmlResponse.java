@@ -2,8 +2,6 @@ package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,12 +21,9 @@ public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {
 	protected List<JrFile> doInBackground(String... params) {
 		List<JrFile> returnFiles = new ArrayList<JrFile>();
 		
-		// Add base url
-		String url = JrSession.accessDao.getJrUrl(params);
-		
-		URLConnection conn;
+		JrConnection conn;
 		try {
-			conn = (new URL(url)).openConnection();
+			conn = new JrConnection(params);
 			conn.setConnectTimeout(5000);
 			
 			

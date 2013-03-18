@@ -294,16 +294,28 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         	
         	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), getArguments().getInt(ARG_CATEGORY_POSITION));
         	
+        	listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+				
+				@Override
+				public boolean onGroupClick(ExpandableListView parent, View v,
+						int groupPosition, long id) {
+					// TODO Auto-generated method stub
+					JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
+					if (selection.getSubItems().size() > 0) return false;
+    	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+    	    		JrSession.selectedItem = selection;
+    	    		startActivity(intent);
+    	    		return true;
+				}
+			});
         	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
         	    @Override
         	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
-        	    	JrListing selection = (JrListing)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
-        	    	if (selection.getClass() == JrItem.class) {
-        	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
-        	    		JrSession.selectedItem = selection;
-        	    		startActivity(intent);
-        	    	}
-        	        return false;
+        	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
+    	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+    	    		JrSession.selectedItem = selection;
+    	    		startActivity(intent);
+        	        return true;
         	    }
     	    });
         	listView.setAdapter(adapter);
@@ -416,7 +428,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			
 	        try {
 	        	URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
-	        	
 	        	SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 	        	SAXParser sp = parserFactory.newSAXParser();
 	        	JrLookUpResponseHandler responseHandler = new JrLookUpResponseHandler();
