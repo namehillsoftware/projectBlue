@@ -79,7 +79,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         builder.setSmallIcon(R.drawable.ic_launcher);
 		builder.setOngoing(true);
 		builder.setContentTitle("Music Streamer Now Playing");
-		builder.setContentText(file.getArtist() + " - " + file.getAlbum());
+		builder.setContentText(file.getArtist() + " - " + file.mValue);
 		builder.setContentIntent(pi);
 		mNotificationMgr.notify(mId, builder.build());        
         
@@ -148,13 +148,15 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public void onJrFileComplete(JrFile file) {
 		releaseMediaPlayer(file);
-		if (JrSession.playlist.indexOf((JrListing)file) < JrSession.playlist.size() - 1) {
+		if (JrSession.playlist.indexOf(file) < JrSession.playlist.size() - 1) {
 			JrFile nextFile = JrSession.playlist.get(JrSession.playlist.indexOf(file) + 1);
 			if (!nextFile.isPrepared())
 				nextFile.prepareMediaPlayer();
 			else
 				startMediaPlayer(nextFile);
+			return;
 		}
+		this.stopSelf();
 	}
 
 

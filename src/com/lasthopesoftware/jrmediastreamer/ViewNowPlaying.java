@@ -1,13 +1,25 @@
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.apache.http.client.ClientProtocolException;
+
+import jrAccess.JrAccessDao;
+import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrResponse;
 import jrAccess.JrSession;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
@@ -26,6 +38,11 @@ public class ViewNowPlaying extends Activity {
         tv.setText(JrSession.playingFile.mValue);
         
         ImageView iv = (ImageView)findViewById(R.id.imgNowPlaying);
+        try {
+        	iv.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.mKey.toString()).get());
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
     }
 
     @Override
@@ -45,27 +62,21 @@ public class ViewNowPlaying extends Activity {
         return super.onOptionsItemSelected(item);
     }
     
-    private class GetFileImage extends AsyncTask<String, Void, String> {
-		
+    private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
+
 		@Override
-		protected String doInBackground(String... params) {
-			// Get authentication token
-			String token = null;
-			try {
-				URLConnection authConn = (new URL(params[0] + "Authenticate")).openConnection();
-				authConn.setReadTimeout(5000);
-				authConn.setConnectTimeout(5000);
-				if (!JrSession.UserAuthCode.isEmpty())
-					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
-				
-		    	JrResponse response = JrResponse.fromInputStream(authConn.getInputStream());
-		    	if (response != null && response.items.containsKey("Token"))
-		    		token = response.items.get("Token");
+		protected Bitmap doInBackground(String... params) {
+			
+			Bitmap returnBmp = null;
+			
+	        try {
+	        	URLConnection conn = (new URL(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Medium"))).openConnection();
+	        	returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
-			return token;
+	        
+	        return returnBmp;
 		}
-	}
+    }
 }
