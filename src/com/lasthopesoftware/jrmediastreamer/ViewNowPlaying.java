@@ -1,20 +1,9 @@
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.apache.http.client.ClientProtocolException;
-
-import jrAccess.JrAccessDao;
-import jrAccess.JrLookUpResponseHandler;
-import jrAccess.JrResponse;
 import jrAccess.JrSession;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;

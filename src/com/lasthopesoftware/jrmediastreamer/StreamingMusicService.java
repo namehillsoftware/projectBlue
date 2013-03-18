@@ -6,10 +6,8 @@ package com.lasthopesoftware.jrmediastreamer;
 
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
-import jrFileSystem.JrListing;
 import jrFileSystem.OnJrFileCompleteListener;
 import jrFileSystem.OnJrFilePreparedListener;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -58,19 +56,17 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			for (JrFile file : JrSession.playlist) {
 				file.setOnFileCompletionListener(this);
 				file.setOnFilePreparedListener(this);
-				initMediaPlayer(file);
+				if (file.getUrl().equalsIgnoreCase(mUrl)) {
+		        	file.initMediaPlayer(this);
+		        	file.prepareMediaPlayer(); // prepare async to not block main thread
+		        }
 			}
 		}
 	}
 
-	private void initMediaPlayer(JrFile file) {
-		file.initMediaPlayer(getApplicationContext());
-        if (file.getUrl().equalsIgnoreCase(mUrl)) file.prepareMediaPlayer(); // prepare async to not block main thread
-	}
-	
 	private void startMediaPlayer(JrFile file) {
 		JrSession.playingFile = file;
-		
+		mUrl = file.getUrl();
 		// Set the notification area
 		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
@@ -84,7 +80,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		mNotificationMgr.notify(mId, builder.build());        
         
         file.getMediaPlayer().start();
-        PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(file);
+        PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(this, file);
         trackProgressThread = new Thread(backgroundPreparer);
         trackProgressThread.start();
 	}
