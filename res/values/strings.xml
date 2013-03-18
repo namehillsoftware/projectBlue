@@ -14,5 +14,5 @@
     <string name="title_activity_file_view">File View</string>
     <string name="streaming_music_svc_started" />
     <string name="title_activity_view_now_playing">ViewNowPlaying</string>
-
+    <string name="img_now_playing">Now Playing Album Image</string>
 </resources>

@@ -3,12 +3,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
+    <ImageView
+        android:id="@+id/imgNowPlaying"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/img_now_playing"
+        tools:context=".ViewNowPlaying" />
     <TextView
         android:id="@+id/tvNowPlaying"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
+        android:layout_centerVertical="false"
+        android:layout_alignParentBottom="true"
         android:text="@string/hello_world"
         tools:context=".ViewNowPlaying" />
 

@@ -3,6 +3,7 @@
  */
 package com.lasthopesoftware.jrmediastreamer;
 
+
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrListing;
@@ -22,6 +23,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 
 
 /**
@@ -36,9 +38,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private int mId = 1;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
-	private Notification mNotification;
-	private NotificationManager mNotificationMgr;
 	private int NOTIFICATION = R.string.streaming_music_svc_started;
+	private NotificationManager mNotificationMgr;
 	private Thread trackProgressThread;
 	
 	public StreamingMusicService() {
@@ -74,15 +75,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
-		mNotification = new Notification();
-//		      mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_launcher;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), 
-				"Music Streamer for J. River Media Center", 
-				"Playing",
-				pi);
-        startForeground(mId, mNotification);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_launcher);
+		builder.setOngoing(true);
+		builder.setContentTitle("Music Streamer Now Playing");
+		builder.setContentText(file.getArtist() + " - " + file.getAlbum());
+		builder.setContentIntent(pi);
+		mNotificationMgr.notify(mId, builder.build());        
         
         file.getMediaPlayer().start();
         PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(file);
@@ -97,9 +96,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayer(JrFile file) {
-		stopForeground(true);
-		mNotificationMgr.cancel(NOTIFICATION);
-		mNotification = null;
 		mWifiLock.release();
 		mWifiLock = null;
 		JrSession.playingFile = null;
@@ -121,8 +117,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	@Override
     public void onCreate() {
-        mNotificationMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-    }
+		mNotificationMgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_launcher);
+		builder.setOngoing(true);
+		builder.setContentTitle("Starting Music Streamer");
+        startForeground(mId, builder.build());
+	}
 	
 	public void onJrFilePrepared(JrFile file) {
 		if (JrSession.playingFile == null && !file.getMediaPlayer().isPlaying()) startMediaPlayer(file);
@@ -189,6 +190,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	@Override
 	public void onDestroy() {
+		stopForeground(true);
 		releaseMediaPlayers();
 	}
 
