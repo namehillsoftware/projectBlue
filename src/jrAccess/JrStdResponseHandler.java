@@ -8,7 +8,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class JrStdResponseHandler extends DefaultHandler {
 	
-	private List<JrResponse> response = new ArrayList<JrResponse>();
+	private JrResponse response;
 	private JrResponse currentResponse;
 	private String currentValue;
 	private String currentKey;
@@ -18,7 +18,7 @@ public class JrStdResponseHandler extends DefaultHandler {
 		currentValue = "";
 		currentKey = "";
 		if (qName.equalsIgnoreCase("response"))
-			currentResponse = new JrResponse(attributes.getValue("Status"));
+			response = new JrResponse(attributes.getValue("Status"));
 		
 		if (qName.equalsIgnoreCase("item")) {
 			currentKey = attributes.getValue("Name");
@@ -31,9 +31,6 @@ public class JrStdResponseHandler extends DefaultHandler {
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		if (qName.equalsIgnoreCase("response"))
-			response.add(currentResponse);
-		
 		if (qName.equalsIgnoreCase("item"))
 			currentResponse.items.put(currentKey, currentValue);
 	}
@@ -41,14 +38,7 @@ public class JrStdResponseHandler extends DefaultHandler {
 	/**
 	 * @return the response
 	 */
-	public List<JrResponse> getResponse() {
+	public JrResponse getResponse() {
 		return response;
-	}
-
-	/**
-	 * @param response the response to set
-	 */
-	public void setResponse(List<JrResponse> response) {
-		this.response = response;
 	}
 }

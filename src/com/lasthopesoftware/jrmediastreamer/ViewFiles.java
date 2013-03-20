@@ -60,14 +60,14 @@ public class ViewFiles extends FragmentActivity {
 	
 		@Override
 		public long getItemId(int position) {
-			return mAlbum.getFiles().get(position).mKey;
+			return mAlbum.getFiles().get(position).getKey();
 		}
 		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			final JrFile file = mAlbum.getFiles().get(position);
 			TextView tv = getGenericView(mContext);
-			tv.setText(file.mValue);
+			tv.setText(file.getValue());
 			
 			tv.setOnClickListener(new ListView.OnClickListener() {
 				

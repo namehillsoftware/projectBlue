@@ -42,8 +42,8 @@ public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
 		
 		if (qName.equalsIgnoreCase("item")) {
 			T newItem = (T) JrFileUtils.createListing(newClass);
-			newItem.mKey = Integer.parseInt(currentValue);
-			newItem.mValue = currentKey;
+			newItem.setKey(Integer.parseInt(currentValue));
+			newItem.setValue(currentKey);
 			items.add(newItem);
 		}
 	}

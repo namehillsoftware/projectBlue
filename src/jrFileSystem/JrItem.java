@@ -7,7 +7,7 @@ import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
 import jrAccess.JrSession;
 
-public class JrItem extends JrListing implements IJrItem {
+public class JrItem extends JrListing implements IJrItem<JrItem> {
 	private ArrayList<JrItem> mSubItems;
 	private ArrayList<JrFile> mFiles;
 	
@@ -21,7 +21,7 @@ public class JrItem extends JrListing implements IJrItem {
 	}
 	
 	public String getUrl() {
-		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1");
+		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1");
 	}
 	
 	@Override
@@ -31,7 +31,7 @@ public class JrItem extends JrListing implements IJrItem {
 		mSubItems = new ArrayList<JrItem>();
 		if (JrSession.accessDao == null) return mSubItems;
 		try {
-			List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.mKey), "Skip=1").get();
+			List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1").get();
 			mSubItems.addAll(tempSubItems);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -46,9 +46,9 @@ public class JrItem extends JrListing implements IJrItem {
 		
 		mFiles = new ArrayList<JrFile>();
 		try {
-			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Browse/Files", "ID=" + String.valueOf(this.mKey)).get(); 
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Browse/Files", "ID=" + String.valueOf(this.getKey())).get(); 
 			mFiles.addAll(tempFiles);
-			
+			for (JrFile file : mFiles) file.setSiblings(mFiles);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

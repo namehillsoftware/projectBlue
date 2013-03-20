@@ -15,8 +15,8 @@ public class JrFileUtils {
 			for (Map.Entry<String, String> item : listing.entrySet()) {
 				//Map.Entry<String, String> item = listing.entrySet().iterator().
 				T newItem = c.newInstance();
-				newItem.mKey = Integer.parseInt(item.getValue());
-				newItem.mValue = item.getKey();
+				newItem.setKey(Integer.parseInt(item.getValue()));
+				newItem.setValue(item.getKey());
 				returnList.add(newItem);
 			}
 		} catch (Exception e) {
@@ -40,12 +40,12 @@ public class JrFileUtils {
 		private int partition(List<T> list, int left, int right) {
 			int i = left, j = right;
 			T tmp;
-			String pivot = stripArticles(list.get((left + right) / 2).mValue);
+			String pivot = stripArticles(list.get((left + right) / 2).getValue());
 	
 			while (i <= j) {
-				while (stripArticles(list.get(i).mValue).compareTo(pivot) < 0)
+				while (stripArticles(list.get(i).getValue()).compareTo(pivot) < 0)
 					i++;
-				while (stripArticles(list.get(j).mValue).compareTo(pivot) > 0)
+				while (stripArticles(list.get(j).getValue()).compareTo(pivot) > 0)
 					j--;
 				if (i <= j) {
 					tmp = list.get(i);

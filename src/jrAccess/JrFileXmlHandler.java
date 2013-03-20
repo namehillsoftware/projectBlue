@@ -35,7 +35,7 @@ public class JrFileXmlHandler extends DefaultHandler {
 		
 		if (qName.equalsIgnoreCase("field")) {
 			if (currentKey.equalsIgnoreCase("Key"))
-				currentFile.mKey = Integer.parseInt(currentValue);
+				currentFile.setKey(Integer.parseInt(currentValue));
 			
 			if (currentKey.equalsIgnoreCase("Artist"))
 				currentFile.setArtist(currentValue);
@@ -44,7 +44,7 @@ public class JrFileXmlHandler extends DefaultHandler {
 				currentFile.setAlbum(currentValue);
 			
 			if (currentKey.equalsIgnoreCase("Name"))
-				currentFile.mValue = currentValue;
+				currentFile.setValue(currentValue);
 			
 			if (currentKey.equalsIgnoreCase("Genre"))
 				currentFile.setGenre(currentValue);
@@ -63,12 +63,5 @@ public class JrFileXmlHandler extends DefaultHandler {
 	 */
 	public List<JrFile> getFiles() {
 		return files;
-	}
-
-	/**
-	 * @param response the response to set
-	 */
-	public void setFiles(List<JrFile> files) {
-		this.files = files;
 	}
 }

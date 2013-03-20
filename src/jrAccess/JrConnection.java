@@ -6,11 +6,8 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.Permission;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.http.conn.ConnectTimeoutException;
 
 public class JrConnection extends URLConnection {
 

@@ -22,11 +22,11 @@ public class ViewNowPlaying extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
         TextView tv = (TextView)findViewById(R.id.tvNowPlaying);
-        tv.setText(JrSession.playingFile.mValue);
+        tv.setText(JrSession.playingFile.getValue());
         
         ImageView iv = (ImageView)findViewById(R.id.imgNowPlaying);
         try {
-        	iv.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.mKey.toString()).get());
+        	iv.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString()).get());
         } catch (Exception e) {
         	e.printStackTrace();
         }

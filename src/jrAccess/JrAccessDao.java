@@ -95,7 +95,7 @@ public class JrAccessDao {
 		}
 			
 		
-		for (urlIndex = 0; urlIndex < localIps.size() - 1; urlIndex++) {
+		for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
 			try {
 				mActiveUrl = getLocalIpUrl(urlIndex);
 	        	if (testConnection(mActiveUrl)) return mActiveUrl;
@@ -226,7 +226,7 @@ public class JrAccessDao {
 			try {
 				URLConnection authConn = (new URL(params[0] + "Authenticate")).openConnection();
 				authConn.setReadTimeout(5000);
-				authConn.setConnectTimeout(5000);
+				authConn.setConnectTimeout(10000);
 				if (!JrSession.UserAuthCode.isEmpty())
 					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
 				

@@ -12,11 +12,9 @@ import javax.xml.parsers.SAXParserFactory;
 import jrAccess.JrAccessDao;
 import jrAccess.JrLookUpResponseHandler;
 import jrAccess.JrSession;
-import jrFileSystem.JrCategory;
+import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
-import jrFileSystem.JrListing;
-import jrFileSystem.JrPage;
 import org.apache.http.client.ClientProtocolException;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
@@ -127,9 +125,9 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     	txtAccessCode.setText(prefs.getString("access_code", ""));
     	String decryptedUserAuth = new String(Base64.decode(prefs.getString("user_auth_code", ""), Base64.DEFAULT));
     	if (!decryptedUserAuth.isEmpty()) {
-	    	String[] userDetails = decryptedUserAuth.split(":",1);
+	    	String[] userDetails = decryptedUserAuth.split(":",2);
 	    	txtUserName.setText(userDetails[0]);
-	    	txtPassword.setText(userDetails[1]);
+	    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
     	}
 
     	Button connectionButton = (Button)findViewById(R.id.btnConnect);
@@ -202,7 +200,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
     	private Integer mCount;
-    	private List<JrCategory> mCategories;
+    	private ArrayList<IJrItem> mCategories;
     	
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -228,24 +226,24 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         @Override
         public CharSequence getPageTitle(int position) {
         	
-            return getCategories().get(position).mValue != null ? getCategories().get(position).mValue.toUpperCase() : "";
+            return getCategories().get(position).getValue() != null ? getCategories().get(position).getValue().toUpperCase() : "";
             
         }
         
-        public List<JrCategory> getCategories() {
+        public ArrayList<IJrItem> getCategories() {
         	if (mCategories == null) {
-        		mCategories = new ArrayList<JrCategory>();
-        		for (JrPage page : jrFs.getPages()) {
-        			if (page.mKey == 1) {
+        		mCategories = new ArrayList<IJrItem>();
+        		for (IJrItem<?> page : jrFs.getPages()) {
+        			if (page.getKey() == 1) {
         				JrSession.selectedLibrary = page;
-        				mCategories = JrSession.selectedLibrary.getCategories();
+        				mCategories = ((IJrItem)JrSession.selectedLibrary).getSubItems();
         			}
         		}
         		
         		// remove any categories that do not have any items
         		int i = 0;
         		while (i < mCategories.size()) {
-        			if (mCategories.get(i).getCategoryItems().size() < 1) {
+        			if (mCategories.get(i).getSubItems().size() < 1) {
         				mCategories.remove(i);
         				continue;
         			}
@@ -324,11 +322,11 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         
         public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
         	Context mContext;
-        	private List<JrItem> mCategoryItems;
+        	private ArrayList<IJrItem> mCategoryItems;
         	
         	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
         		mContext = context;
-        		mCategoryItems = JrSession.selectedLibrary.getCategories().get(CategoryPosition).getCategoryItems();
+        		mCategoryItems = ((IJrItem)JrSession.selectedLibrary.getSubItems().get(CategoryPosition)).getSubItems();
         	}
         	
     		@Override
@@ -338,7 +336,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
     		@Override
     		public long getChildId(int groupPosition, int childPosition) {
-    			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mKey;
+    			return ((IJrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
     		}
     		
     		@Override
@@ -346,7 +344,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     			boolean isLastChild, View convertView, ViewGroup parent) {
     			TextView returnView = getGenericView(mContext);
     	//			tv.setGravity(Gravity.LEFT);
-    			returnView.setText(mCategoryItems.get(groupPosition).getSubItems().get(childPosition).mValue);
+    			returnView.setText(((IJrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getValue());
     			return returnView;
     		}
 
@@ -371,7 +369,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     		@Override
     		public long getGroupId(int groupPosition) {
     			// TODO Auto-generated method stub
-    			return mCategoryItems.get(groupPosition).mKey;
+    			return mCategoryItems.get(groupPosition).getKey();
     		}
 
     		@Override
@@ -380,7 +378,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
     			TextView tv = getGenericView(mContext);
 //    			tv.setGravity(Gravity.LEFT);
-    			tv.setText(mCategoryItems.get(groupPosition).mValue);
+    			tv.setText(mCategoryItems.get(groupPosition).getValue());
     			
     			return tv;
     		}

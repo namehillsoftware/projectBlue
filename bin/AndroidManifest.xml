@@ -37,16 +37,6 @@
             </intent-filter>
         </receiver>
 
-        <!--
-        <activity
-            android:name=".StreamingMusicService">
-            
-            <intent-filter>
-                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_PLAY" />
-            </intent-filter>
-        </activity>
-        -->
-
         <service android:name=".StreamingMusicService" >
 
             <!--

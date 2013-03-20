@@ -21,7 +21,7 @@ public class JrResponse {
 			SAXParser sp = parserFactory.newSAXParser();
 	    	JrStdResponseHandler jrResponseHandler = new JrStdResponseHandler();
 			sp.parse(is, jrResponseHandler);
-			return jrResponseHandler.getResponse().get(0);
+			return jrResponseHandler.getResponse();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -1,5 +1,6 @@
 package jrFileSystem;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import android.content.Context;
 import android.media.AudioManager;
@@ -13,8 +14,7 @@ import jrAccess.JrSession;
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
 	OnErrorListener, 
-	OnCompletionListener,
-	Runnable
+	OnCompletionListener
 {
 
 	private String mArtist;
@@ -25,11 +25,12 @@ public class JrFile extends JrListing implements
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private MediaPlayer mp;
-	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners;
-	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners;
+	private ArrayList<OnJrFileCompleteListener> onJrFileCompleteListeners;
+	private ArrayList<OnJrFilePreparedListener> onJrFilePreparedListeners;
+	private JrFile mNextFile, mPreviousFile;
 	
 	public JrFile(int key) {
-		this.mKey = key;
+		this.setKey(key);
 	}
 	public JrFile(int key, String value) {
 		super(key, value);
@@ -48,17 +49,17 @@ public class JrFile extends JrListing implements
 	}
 	
 	public void setOnFileCompletionListener(OnJrFileCompleteListener listener) {
-		if (onJrFileCompleteListeners == null) onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
+		if (onJrFileCompleteListeners == null) onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();
 		onJrFileCompleteListeners.add(listener);
 	}
 	
 	public void setOnFilePreparedListener(OnJrFilePreparedListener listener) {
-		if (onJrFilePreparedListeners == null) onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
+		if (onJrFilePreparedListeners == null) onJrFilePreparedListeners = new ArrayList<OnJrFilePreparedListener>();
 		onJrFilePreparedListeners.add(listener);
 	}
 	
 	public String getUrl() {
-		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(mKey), "conversion=2");
+		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium");
 	}
 	/**
 	 * @return the mArtist
@@ -133,6 +134,21 @@ public class JrFile extends JrListing implements
 		this.prepared = prepared;
 	}
 	
+	public JrFile getNextFile() {
+		return mNextFile;
+	}
+	
+	public JrFile getPreviousFile() {
+		return mPreviousFile;
+	}
+	
+	public void setSiblings(ArrayList<JrFile> files) {
+		int position = files.indexOf(this);
+		if (position < 0) return;
+		if (position > 0 && files.size() > 1) mPreviousFile = files.get(position - 1);
+		if (position < files.size() - 1) mNextFile = files.get(position + 1);
+	}
+	
 	public void initMediaPlayer(Context context) {
 		if (mp != null) return;
 		
@@ -144,7 +160,6 @@ public class JrFile extends JrListing implements
         try {
         	mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
         	mp.setDataSource(getUrl());
-//        	if (url == mUrl) mp.prepareAsync(); // prepare async to not block main thread
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -185,18 +200,5 @@ public class JrFile extends JrListing implements
 		mp.reset();
 		return false;
 	}
-	@Override
-	public void run() {
-		mp.start();
-		// keep this thread active while the media player is playing
-		while (mp.isPlaying()) {
-			try {
-				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
 	
 }

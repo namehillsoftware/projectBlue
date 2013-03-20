@@ -7,20 +7,8 @@ import jrAccess.JrSession;
 
 
 
-public class JrFileSystem extends JrListing {
-	private List<JrPage> mPages;
-	
-//	public jrFileSystem(int key, String value) {
-//		super(key, value);
-//		// TODO Auto-generated constructor stub
-//		setPages();
-//	}
-	
-//	public jrFileSystem(String value) {
-//		super(value);
-//		// TODO Auto-generated constructor stub
-//		setPages();
-//	}
+public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
+	private ArrayList<JrItem> mPages;
 	
 	public JrFileSystem() {
 		super();
@@ -31,18 +19,39 @@ public class JrFileSystem extends JrListing {
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
 	
-	public List<JrPage> getPages() {
+	public List<JrItem> getPages() {
 		if (mPages == null) {
-			mPages = new ArrayList<JrPage>();
+			mPages = new ArrayList<JrItem>();
 			if (JrSession.accessDao == null) return mPages;
 
 			try {
-				mPages = JrFileUtils.transformListing(JrPage.class, (new JrStdXmlResponse()).execute("Browse/Children").get().items);
+				mPages.addAll(JrFileUtils.transformListing(JrItem.class, (new JrStdXmlResponse()).execute("Browse/Children").get().items));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		return mPages;
+	}
+
+	@Override
+	public ArrayList<JrItem> getSubItems() {
+		if (mPages == null) {
+			mPages = new ArrayList<JrItem>();
+			if (JrSession.accessDao == null) return mPages;
+
+			try {
+				mPages.addAll(JrFileUtils.transformListing(JrItem.class, (new JrStdXmlResponse()).execute("Browse/Children").get().items));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return mPages;
+	}
+
+	@Override
+	public ArrayList<JrFile> getFiles() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
