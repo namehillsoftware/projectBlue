@@ -1,7 +1,5 @@
 package jrAccess;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -9,7 +7,6 @@ import org.xml.sax.helpers.DefaultHandler;
 public class JrStdResponseHandler extends DefaultHandler {
 	
 	private JrResponse response;
-	private JrResponse currentResponse;
 	private String currentValue;
 	private String currentKey;
 	
@@ -32,7 +29,7 @@ public class JrStdResponseHandler extends DefaultHandler {
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if (qName.equalsIgnoreCase("item"))
-			currentResponse.items.put(currentKey, currentValue);
+			response.items.put(currentKey, currentValue);
 	}
 	
 	/**

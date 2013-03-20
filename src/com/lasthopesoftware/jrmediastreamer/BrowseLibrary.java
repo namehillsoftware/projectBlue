@@ -68,7 +68,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         	
         	SharedPreferences.Editor prefsEditor = getPreferences(0).edit();
         	prefsEditor.putString("access_code", txtAccessCode.getText().toString());
-        	prefsEditor.putString("user_auth_code", Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT));
+        	prefsEditor.putString("user_auth_code", Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
         	prefsEditor.commit();
         	
         	setConnectionValues();
