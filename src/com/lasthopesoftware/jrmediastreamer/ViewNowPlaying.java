@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.support.v4.app.NavUtils;
 
@@ -30,6 +31,12 @@ public class ViewNowPlaying extends Activity {
         } catch (Exception e) {
         	e.printStackTrace();
         }
+        
+        MediaController mediaController = new MediaController(this);
+        mediaController.setAnchorView(findViewById(R.layout.activity_view_now_playing));
+        mediaController.setMediaPlayer(JrSession.playingFile);
+        mediaController.setEnabled(true);
+        mediaController.show();
     }
 
     @Override
@@ -57,7 +64,7 @@ public class ViewNowPlaying extends Activity {
 			Bitmap returnBmp = null;
 			
 	        try {
-	        	JrConnection conn = new JrConnection(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Medium"));
+	        	JrConnection conn = new JrConnection(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Large"));
 	        	conn.setConnectTimeout(5000);
 	        	returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 			} catch (Exception e) {

@@ -16,8 +16,13 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public JrItem(int key) {
+		super();
+		this.setKey(key);
+	}
+	
 	public JrItem() {
-		super();		
+		super();
 	}
 	
 	public String getUrl() {

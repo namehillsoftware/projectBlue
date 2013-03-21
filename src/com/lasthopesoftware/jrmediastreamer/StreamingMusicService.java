@@ -85,7 +85,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(this, file);
         if (file.getNextFile() != null) {
 	        trackProgressThread = new Thread(backgroundPreparer);
-	        trackProgressThread.setName("Waiting to prepare file " + file.getNextFile().getValue());
+	        trackProgressThread.setName("Thread to prepare file " + file.getNextFile().getValue());
+	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
 	        trackProgressThread.start();
         }
 	}

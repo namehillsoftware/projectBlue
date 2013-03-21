@@ -226,7 +226,7 @@ public class JrAccessDao {
 			try {
 				URLConnection authConn = (new URL(params[0] + "Authenticate")).openConnection();
 				authConn.setReadTimeout(5000);
-				authConn.setConnectTimeout(10000);
+				authConn.setConnectTimeout(5000);
 				if (!JrSession.UserAuthCode.isEmpty())
 					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
 				

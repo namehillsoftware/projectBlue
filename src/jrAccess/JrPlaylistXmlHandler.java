@@ -3,6 +3,8 @@ package jrAccess;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+
 import jrFileSystem.JrFile;
 import jrFileSystem.JrPlaylist;
 
@@ -67,7 +69,12 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 	/**
 	 * @return the response
 	 */
-	public JrPlaylist[] getPlaylists() {
-		return (JrPlaylist[])playlists.values().toArray();
+	public ArrayList<JrPlaylist> getPlaylists() {
+		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(playlists.size());
+		for (JrPlaylist playlist : playlists.values()) {
+			if (playlist.getSubItems().isEmpty()) returnList.add(playlist);
+		}
+		
+		return returnList;
 	}
 }

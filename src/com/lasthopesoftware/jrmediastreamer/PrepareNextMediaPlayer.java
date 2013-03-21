@@ -29,7 +29,7 @@ public class PrepareNextMediaPlayer implements Runnable {
 			try {
 				if (mCurrentFile.getMediaPlayer().getCurrentPosition() > (mCurrentFile.getMediaPlayer().getDuration() - mBufferTime)) {
 					if (!mNextFile.isPrepared()) {
-						mNextFile.prepareMediaPlayer();
+						mNextFile.prepareMpSynchronously();
 						return;
 					}
 				}

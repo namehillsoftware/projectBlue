@@ -2,6 +2,8 @@ package jrAccess;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -12,11 +14,11 @@ import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
-public class JrPlaylistResponse extends AsyncTask<String, Void, JrPlaylist[]> {
+public class JrPlaylistResponse extends AsyncTask<String, Void, ArrayList<JrPlaylist>> {
 
 	@Override
-	protected JrPlaylist[] doInBackground(String... params) {
-		JrPlaylist[] returnFiles = {};
+	protected ArrayList<JrPlaylist> doInBackground(String... params) {
+		ArrayList<JrPlaylist> returnFiles = new ArrayList<JrPlaylist>();
 		
 		JrConnection conn;
 		try {

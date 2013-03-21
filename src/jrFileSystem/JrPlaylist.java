@@ -16,9 +16,14 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	private String mGroup;
 	
 	public JrPlaylist() {
-		
+		super();		
 	}
 	
+	public JrPlaylist(int key) {
+		super();
+		setKey(key);
+	}
+
 	@Override
 	public ArrayList<JrPlaylist> getSubItems() {
 		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();

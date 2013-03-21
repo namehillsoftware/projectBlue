@@ -3,17 +3,20 @@ package jrAccess;
 import java.util.ArrayList;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
-import jrFileSystem.JrListing;
+import jrFileSystem.JrFileSystem;
+import jrFileSystem.JrItem;
 
 public class JrSession {
 	public static String UserAuthCode = "";
 	public static String AccessCode = "";
 	
 	public static JrAccessDao accessDao;
-    public static IJrItem<?> selectedLibrary;
+    public static ArrayList<IJrItem> categories;
     
-    public static JrListing selectedItem;
+    public static IJrItem<?> selectedItem;
     public static JrFile playingFile;
     public static ArrayList<JrFile> playlist;
+    
+    public static JrFileSystem jrFs;
     
 }

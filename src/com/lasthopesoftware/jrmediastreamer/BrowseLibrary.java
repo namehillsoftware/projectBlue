@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -15,11 +14,11 @@ import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
+import jrFileSystem.JrPlaylists;
+
 import org.apache.http.client.ClientProtocolException;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,19 +28,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ExpandableListView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
 
@@ -52,7 +46,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
      * to switch to a {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
-    JrFileSystem jrFs;
+    
     
     
     /**
@@ -137,7 +131,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     private void displayLibrary() {
     	setContentView(R.layout.activity_stream_media);
         
-    	jrFs = new JrFileSystem();
+    	if (JrSession.jrFs == null) JrSession.jrFs = new JrFileSystem();
     	
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the action bar.
@@ -199,8 +193,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
      * sections of the app.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
-    	private Integer mCount;
-    	private ArrayList<IJrItem> mCategories;
+    	private Integer mCount;    	
     	
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -218,7 +211,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         @Override
         public int getCount() {
             if (mCount == null) {
-	            mCount = getCategories().size();
+                mCount = getPages().size();
             }
             return mCount;
         }
@@ -226,193 +219,52 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         @Override
         public CharSequence getPageTitle(int position) {
         	
-            return getCategories().get(position).getValue() != null ? getCategories().get(position).getValue().toUpperCase() : "";
+            return getPages().get(position).getValue() != null ? getPages().get(position).getValue().toUpperCase() : "";
             
         }
         
-        public ArrayList<IJrItem> getCategories() {
-        	if (mCategories == null) {
-        		mCategories = new ArrayList<IJrItem>();
-        		for (IJrItem<?> page : jrFs.getPages()) {
-        			if (page.getKey() == 1) {
-        				JrSession.selectedLibrary = page;
-        				mCategories = ((IJrItem)JrSession.selectedLibrary).getSubItems();
+        public ArrayList<IJrItem> getPages() {
+        	if (JrSession.categories == null) {
+        		JrSession.categories = new ArrayList<IJrItem>();
+        		for (JrItem page : JrSession.jrFs.getSubItems()) {
+        			if (page.getKey() == 1) {        				
+        				JrSession.categories = ((IJrItem)page).getSubItems();
         			}
         		}
-        		
         		// remove any categories that do not have any items
         		int i = 0;
-        		while (i < mCategories.size()) {
-        			if (mCategories.get(i).getSubItems().size() < 1) {
-        				mCategories.remove(i);
+        		while (i < JrSession.categories.size()) {
+        			if (JrSession.categories.get(i).getSubItems().size() < 1) {
+        				JrSession.categories.remove(i);
         				continue;
         			}
         			i++;
         		}
+        		
+        		JrSession.categories.add(new JrPlaylists(JrSession.categories.size()));
         	}
         	
-        	return mCategories;
+        	return JrSession.categories;
         }
     }
 
-	public class SelectedFragment extends Fragment {
-		private ListView mListView;
-		public static final String ARG_SELECTED_POSITION = "selected_position";   
-		public static final String ARG_CATEGORY_POSITION = "category_position";
-		
-		public SelectedFragment() {
-			super();
-		}
-		
-	
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-			
-			mListView = new ListView(getActivity());
-//			mListView.setAdapter(new FileListAdapter(getActivity(), mAlbum));
-			return mListView;
-		}
-	}
-	   
-	
-    
-    public static class CategoryFragment extends Fragment {
-        public CategoryFragment() {
-        	super();
-        }
+    public class SelectedItem extends Fragment {
+    	private ListView mListView;
+    	public static final String ARG_SELECTED_POSITION = "selected_position";   
+    	public static final String ARG_CATEGORY_POSITION = "category_position";
+    	
+    	public SelectedItem() {
+    		super();
+    	}
+    	
 
-        public static final String ARG_CATEGORY_POSITION = "category_position";
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-
-        	ExpandableListView listView = new ExpandableListView(getActivity());
-        	
-        	CategoryExpandableListAdapter adapter = new CategoryExpandableListAdapter(getActivity(), getArguments().getInt(ARG_CATEGORY_POSITION));
-        	
-        	listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-				
-				@Override
-				public boolean onGroupClick(ExpandableListView parent, View v,
-						int groupPosition, long id) {
-					// TODO Auto-generated method stub
-					JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
-					if (selection.getSubItems().size() > 0) return false;
-    	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
-    	    		JrSession.selectedItem = selection;
-    	    		startActivity(intent);
-    	    		return true;
-				}
-			});
-        	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-        	    @Override
-        	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
-        	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
-    	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
-    	    		JrSession.selectedItem = selection;
-    	    		startActivity(intent);
-        	        return true;
-        	    }
-    	    });
-        	listView.setAdapter(adapter);
-            return listView;
-        }
-        
-        public class CategoryExpandableListAdapter extends BaseExpandableListAdapter {
-        	Context mContext;
-        	private ArrayList<IJrItem> mCategoryItems;
-        	
-        	public CategoryExpandableListAdapter(Context context, int CategoryPosition) {
-        		mContext = context;
-        		mCategoryItems = ((IJrItem)JrSession.selectedLibrary.getSubItems().get(CategoryPosition)).getSubItems();
-        	}
-        	
-    		@Override
-    		public Object getChild(int groupPosition, int childPosition) {
-    			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
-    		}
-
-    		@Override
-    		public long getChildId(int groupPosition, int childPosition) {
-    			return ((IJrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
-    		}
+    	@Override
+    	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    		Bundle savedInstanceState) {
     		
-    		@Override
-    		public View getChildView(int groupPosition, int childPosition,
-    			boolean isLastChild, View convertView, ViewGroup parent) {
-    			TextView returnView = getGenericView(mContext);
-    	//			tv.setGravity(Gravity.LEFT);
-    			returnView.setText(((IJrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getValue());
-    			return returnView;
-    		}
-
-    		@Override
-    		public int getChildrenCount(int groupPosition) {
-    			// TODO Auto-generated method stub
-    			return mCategoryItems.get(groupPosition).getSubItems().size();
-    		}
-
-    		@Override
-    		public Object getGroup(int groupPosition) {
-    			// TODO Auto-generated method stub
-    			return mCategoryItems.get(groupPosition);
-    		}
-
-    		@Override
-    		public int getGroupCount() {
-    			// TODO Auto-generated method stub
-    			return mCategoryItems.size();
-    		}
-
-    		@Override
-    		public long getGroupId(int groupPosition) {
-    			// TODO Auto-generated method stub
-    			return mCategoryItems.get(groupPosition).getKey();
-    		}
-
-    		@Override
-    		public View getGroupView(int groupPosition, boolean isExpanded,
-    				View convertView, ViewGroup parent) {
-
-    			TextView tv = getGenericView(mContext);
-//    			tv.setGravity(Gravity.LEFT);
-    			tv.setText(mCategoryItems.get(groupPosition).getValue());
-    			
-    			return tv;
-    		}
-
-    		@Override
-    		public boolean hasStableIds() {
-    			// TODO Auto-generated method stub
-    			return true;
-    		}
-
-    		@Override
-    		public boolean isChildSelectable(int groupPosition, int childPosition) {
-    			// TODO Auto-generated method stub
-    			return true;
-    		}
-        	
-        }
-        
-        public TextView getGenericView(Context context) {
-            // Layout parameters for the ExpandableListView
-            AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-            TextView textView = new TextView(context);
-            textView.setTextAppearance(context, android.R.style.TextAppearance_Large);
-            textView.setLayoutParams(lp);
-            // Center the text vertically
-            textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//            textView.setTextColor(getResources().getColor(marcyred));
-            // Set the text starting position        
-            textView.setPadding(64, 20, 20, 20);
-            //textView.setHeight(textView.getLineHeight() + 20);
-            return textView;
-        }
+    		mListView = new ListView(getActivity());
+    		return mListView;
+    	}
     }
     
     

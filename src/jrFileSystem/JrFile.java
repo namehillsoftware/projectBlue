@@ -1,5 +1,6 @@
 package jrFileSystem;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import android.content.Context;
@@ -9,12 +10,14 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.PowerManager;
+import android.widget.MediaController.MediaPlayerControl;
 import jrAccess.JrSession;
 
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
 	OnErrorListener, 
-	OnCompletionListener
+	OnCompletionListener,
+	MediaPlayerControl
 {
 
 	private String mArtist;
@@ -59,7 +62,7 @@ public class JrFile extends JrListing implements
 	}
 	
 	public String getUrl() {
-		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium");
+		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android");
 	}
 	/**
 	 * @return the mArtist
@@ -112,8 +115,8 @@ public class JrFile extends JrListing implements
 	/**
 	 * @return the mDuration
 	 */
-	public double getDuration() {
-		return mDuration;
+	public int getDuration() {
+		return (int)mDuration;
 	}
 	/**
 	 * @param mDuration the mDuration to set
@@ -176,6 +179,18 @@ public class JrFile extends JrListing implements
 		}
 	}
 	
+	public void prepareMpSynchronously() {
+		if (!preparing && !prepared) {
+			try {
+				preparing = true;
+				mp.prepare();
+			} catch (Exception e) {
+				e.printStackTrace();
+				preparing = false;
+			}			
+		}
+	}
+	
 	public void releaseMediaPlayer() {
 		if (mp != null) mp.release();
 		mp = null;
@@ -199,6 +214,42 @@ public class JrFile extends JrListing implements
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mp.reset();
 		return false;
+	}
+	@Override
+	public boolean canPause() {
+		return true;
+	}
+	@Override
+	public boolean canSeekBackward() {
+		return true;
+	}
+	@Override
+	public boolean canSeekForward() {
+		return true;
+	}
+	@Override
+	public int getBufferPercentage() {
+		return 0;
+	}
+	@Override
+	public int getCurrentPosition() {
+		return 0;
+	}
+	@Override
+	public boolean isPlaying() {
+		return mp.isPlaying();
+	}
+	@Override
+	public void pause() {
+		mp.pause();
+	}
+	@Override
+	public void seekTo(int pos) {
+		mp.seekTo(pos);
+	}
+	@Override
+	public void start() {
+		mp.start();
 	}
 	
 }
