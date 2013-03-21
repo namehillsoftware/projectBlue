@@ -13,7 +13,7 @@ public class ViewPlaylists extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_view_files);       
+        setContentView(R.layout.activity_view_playlists);       
         int playlistKey = this.getIntent().getIntExtra(ViewPlaylists.KEY, -1);
         JrPlaylist playlist = new JrPlaylist(playlistKey);
         ListAdapter adapter;
@@ -23,6 +23,7 @@ public class ViewPlaylists extends FragmentActivity {
         	playlistView.setOnItemClickListener(new ClickPlaylist(this, playlist.getSubItems()));
         } else {
         	adapter = new FileListAdapter(this, playlist);
+        	playlistView.setOnItemClickListener(new ClickFile(this, playlist));
         }
         	
         

@@ -13,8 +13,7 @@ public class PrepareNextMediaPlayer implements Runnable {
 	
 	public PrepareNextMediaPlayer(Context context, JrFile currentFile) {
 		mCurrentFile = currentFile;
-		int nextFilePosition = JrSession.playlist.indexOf(mCurrentFile) + 1;
-		if (nextFilePosition >= JrSession.playlist.size()) return;
+		if (mCurrentFile.getNextFile() == null) return;
 		mContext = context;
 		mNextFile = mCurrentFile.getNextFile();
 		// figure out how much buffer time we need for this file if we're on the slowest 3G network

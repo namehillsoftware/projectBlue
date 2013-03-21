@@ -61,6 +61,8 @@ public class CategoryFragment extends Fragment {
     	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
     	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
 	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+	    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
+	    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 	    		JrSession.selectedItem = selection;
 	    		startActivity(intent);
     	        return true;

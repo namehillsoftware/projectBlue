@@ -22,9 +22,9 @@ public class ViewFiles extends FragmentActivity {
         super.onCreate(savedInstanceState);
          
         setContentView(R.layout.activity_view_files);
+        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(this.getIntent().getIntExtra(KEY, 1)) :
+        				new JrItem(this.getIntent().getIntExtra(KEY, 1));
         this.setTitle(mItem.getValue());
-        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrItem(this.getIntent().getIntExtra(KEY, 1))
-        				: new JrPlaylist(this.getIntent().getIntExtra(KEY, 1));
         FileListAdapter fileListAdapter = new FileListAdapter(this, mItem);
     	
     	ListView fileListView = (ListView)findViewById(R.id.lvFilelist);
