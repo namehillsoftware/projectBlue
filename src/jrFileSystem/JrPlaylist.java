@@ -44,7 +44,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 		try {
 			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey())).get(); 
 			mFiles.addAll(tempFiles);
-			
+			for (JrFile file : mFiles) file.setSiblings(mFiles);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
