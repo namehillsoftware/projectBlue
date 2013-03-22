@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  <View android:id="@+id/viewFileOptions" xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" > -->
+	<LinearLayout 
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    style="?android:attr/buttonBarStyle"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal"
+	    android:paddingTop="0dip"
+	    android:paddingLeft="2dip"
+	    android:paddingRight="2dip"
+	    android:measureWithLargestChild="true">
+	    <Button 
+	        android:id="@+id/btnPlayAll"
+	        style="?android:attr/buttonBarButtonStyle"
+	        android:layout_width="0dip"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:text="@string/btnPlayFiles"/>
+		<Button 
+	        android:id="@+id/btnShuffle"
+	        style="?android:attr/buttonBarButtonStyle"
+	        android:layout_width="0dip"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:text="@string/btnShuffleFiles"/>
+		<Button 
+	        android:id="@+id/btnViewFiles"
+	       	style="?android:attr/buttonBarButtonStyle"
+	        android:layout_width="0dip"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:text="@string/btnViewFiles"/>
+	</LinearLayout>
+<!--  </View> -->
