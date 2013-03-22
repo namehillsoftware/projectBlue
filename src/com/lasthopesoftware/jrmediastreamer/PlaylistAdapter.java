@@ -111,7 +111,7 @@ public class PlaylistAdapter extends BaseAdapter {
 		@Override
 		public void onClick(View v) {
 			JrSession.playlist = mPlaylist.getFiles(JrPlaylist.GET_SHUFFLED);
-			JrFile file = mPlaylist.getFiles().get(0);
+			JrFile file = JrSession.playlist.get(0);
 			Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), v.getContext(), StreamingMusicService.class);
 			v.getContext().startService(svcIntent);
 		}

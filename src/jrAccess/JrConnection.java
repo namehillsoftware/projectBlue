@@ -76,91 +76,76 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public String getContentEncoding() {
-		
 		return mUrlConnection.getContentEncoding();
 	}
 	
 	@Override
 	public int getContentLength() {
-		
 		return mUrlConnection.getContentLength();
 	}
 	
 	@Override
 	public String getContentType() {
-		
 		return mUrlConnection.getContentType();
 	}
 	
 	@Override
 	public long getDate() {
-		
 		return mUrlConnection.getDate();
 	}
 	
 	@Override
 	public boolean getDefaultUseCaches() {
-		
 		return mUrlConnection.getDefaultUseCaches();
 	}
 	
 	@Override
 	public boolean getDoInput() {
-		
 		return mUrlConnection.getDoInput();
 	}
 	
 	@Override
 	public boolean getDoOutput() {
-		
 		return mUrlConnection.getDoOutput();
 	}
 	
 	@Override
 	public long getExpiration() {
-		
 		return mUrlConnection.getExpiration();
 	}
 	
 	@Override
 	public String getHeaderField(int pos) {
-		
 		return mUrlConnection.getHeaderField(pos);
 	}
 	
 	@Override
 	public String getHeaderField(String key) {
-		
 		return mUrlConnection.getHeaderField(key);
 	}
 	
 	@Override
 	public long getHeaderFieldDate(String field, long defaultValue) {
-		
 		return mUrlConnection.getHeaderFieldDate(field, defaultValue);
 	}
 	
 	@Override
 	public int getHeaderFieldInt(String field, int defaultValue) {
-		
 		return mUrlConnection.getHeaderFieldInt(field, defaultValue);
 	}
 	
 	@Override
 	public String getHeaderFieldKey(int posn) {
-		
 		return mUrlConnection.getHeaderFieldKey(posn);
 	}
 	
 	@Override
 	public Map<String, List<String>> getHeaderFields() {
-		
 		return mUrlConnection.getHeaderFields();
 	}
 	
 	@Override
 	public long getIfModifiedSince() {
-		
 		return mUrlConnection.getIfModifiedSince();
 	}
 	
@@ -176,38 +161,32 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public long getLastModified() {
-		
 		return mUrlConnection.getLastModified();
 	}
 	
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		
 		return mUrlConnection.getOutputStream();
 		
 	}
 	
 	@Override
 	public Permission getPermission() throws IOException {
-		
 		return mUrlConnection.getPermission();
 	}
 	
 	@Override
 	public int getReadTimeout() {
-		
 		return mUrlConnection.getReadTimeout();
 	}
 	
 	@Override
 	public Map<String, List<String>> getRequestProperties() {
-		
 		return mUrlConnection.getRequestProperties();
 	}
 	
 	@Override
 	public String getRequestProperty(String field) {
-		
 		return mUrlConnection.getRequestProperty(field);
 	}
 	
@@ -218,61 +197,51 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public boolean getUseCaches() {
-		
 		return mUrlConnection.getUseCaches();
 	}
 	
 	@Override
 	public void setAllowUserInteraction(boolean newValue) {
-		
 		mUrlConnection.setAllowUserInteraction(newValue);
 	}
 	
 	@Override
 	public void setConnectTimeout(int timeoutMillis) {
-		
 		mUrlConnection.setConnectTimeout(timeoutMillis);
 	}
 	
 	@Override
 	public void setDefaultUseCaches(boolean newValue) {
-		
 		mUrlConnection.setDefaultUseCaches(newValue);
 	}
 	
 	@Override
 	public void setDoInput(boolean newValue) {
-		
 		mUrlConnection.setDoInput(newValue);
 	}
 	
 	@Override
 	public void setDoOutput(boolean newValue) {
-		
 		mUrlConnection.setDoOutput(newValue);
 	}
 	
 	@Override
 	public void setIfModifiedSince(long newValue) {
-		
 		mUrlConnection.setIfModifiedSince(newValue);
 	}
 	
 	@Override
 	public void setReadTimeout(int timeoutMillis) {
-		
 		mUrlConnection.setReadTimeout(timeoutMillis);
 	}
 	
 	@Override
 	public void setRequestProperty(String field, String newValue) {
-		
 		mUrlConnection.setRequestProperty(field, newValue);
 	}
 	
 	@Override
 	public void setUseCaches(boolean newValue) {
-		
 		mUrlConnection.setUseCaches(newValue);
 	}
 	

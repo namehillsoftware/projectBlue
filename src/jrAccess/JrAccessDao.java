@@ -1,16 +1,12 @@
 package jrAccess;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import android.os.AsyncTask;
 
 public class JrAccessDao {
 	private String mToken;
@@ -21,8 +17,6 @@ public class JrAccessDao {
 	private List<String> localIps = new ArrayList<String>();
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
-	private long nextConnectionCheck;
-	private boolean mConnectionStatus = false;
 	
 	public JrAccessDao(String status) {
 		this.status = status != null && status.equalsIgnoreCase("OK");
@@ -165,10 +159,10 @@ public class JrAccessDao {
 		mToken = null;
 	}
 	
-	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
+	private boolean testConnection(String url) {
 		return getToken(url) != null;
 	}
-
+	
 	private class GetAuthToken implements Callable<String> {
 		
 		private String mUrl;

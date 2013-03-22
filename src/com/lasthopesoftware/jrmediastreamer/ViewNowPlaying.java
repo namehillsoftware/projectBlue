@@ -31,12 +31,6 @@ public class ViewNowPlaying extends Activity {
         } catch (Exception e) {
         	e.printStackTrace();
         }
-        
-        MediaController mediaController = new MediaController(this);
-        mediaController.setAnchorView(findViewById(R.layout.activity_view_now_playing));
-        mediaController.setMediaPlayer(JrSession.playingFile);
-        mediaController.setEnabled(true);
-        mediaController.show();
     }
 
     @Override

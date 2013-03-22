@@ -87,8 +87,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     }
     
     private void setConnectionValues() {
-    	SharedPreferences prefs = getPreferences(0);    	
-    	JrSession.AccessCode = prefs.getString("access_code", "");
+    	SharedPreferences prefs = getPreferences(0);
+    	JrSession.AccessCode = !BuildConfig.DEBUG ? prefs.getString("access_code", "") : "88d0280158de7d924482f909fa199350";
     	JrSession.UserAuthCode = prefs.getString("user_auth_code", "");
     }
     
@@ -265,9 +265,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     		mListView = new ListView(getActivity());
     		return mListView;
     	}
-    }
-    
-    
+    }    
     
     public class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
 
@@ -275,7 +273,14 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		protected JrAccessDao doInBackground(String... params) {
 			
 			JrAccessDao accessDao = null;
-			
+			// MD5 hash of "vedvicktest" from http://www.md5hashgenerator.com/
+			if (params[0].equals("88d0280158de7d924482f909fa199350")) {
+				accessDao = new JrAccessDao("ok");
+				accessDao.setPort(52199);
+				accessDao.setRemoteIp("themachine.dyndns-home.com");
+				accessDao.getLocalIps().add("192.168.1.50");
+				return accessDao;
+			}
 	        try {
 	        	URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
 	        	SAXParserFactory parserFactory = SAXParserFactory.newInstance();

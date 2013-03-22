@@ -16,21 +16,21 @@
 	        android:id="@+id/btnPlayAll"
 	        style="?android:attr/buttonBarButtonStyle"
 	        android:layout_width="0dip"
-	        android:layout_height="wrap_content"
+	        android:layout_height="match_parent"
 	        android:layout_weight="1"
 	        android:text="@string/btnPlayFiles"/>
 		<Button 
 	        android:id="@+id/btnShuffle"
 	        style="?android:attr/buttonBarButtonStyle"
 	        android:layout_width="0dip"
-	        android:layout_height="wrap_content"
+	        android:layout_height="match_parent"
 	        android:layout_weight="1"
 	        android:text="@string/btnShuffleFiles"/>
 		<Button 
 	        android:id="@+id/btnViewFiles"
 	       	style="?android:attr/buttonBarButtonStyle"
 	        android:layout_width="0dip"
-	        android:layout_height="wrap_content"
+	        android:layout_height="match_parent"
 	        android:layout_weight="1"
 	        android:text="@string/btnViewFiles"/>
 	</LinearLayout>

@@ -3,6 +3,9 @@ package jrFileSystem;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -11,7 +14,9 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.PowerManager;
 import android.widget.MediaController.MediaPlayerControl;
+import jrAccess.JrConnection;
 import jrAccess.JrSession;
+import jrAccess.JrTestConnection;
 
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
@@ -63,6 +68,11 @@ public class JrFile extends JrListing implements
 	
 	public String getUrl() {
 		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android");
+	}
+	
+	private String getMpUrl() throws InterruptedException, ExecutionException {
+		if (!JrTestConnection.doTest()) return null;
+		return getUrl();
 	}
 	/**
 	 * @return the mArtist
@@ -160,12 +170,7 @@ public class JrFile extends JrListing implements
 		mp.setOnErrorListener(this);
 		mp.setOnCompletionListener(this);
 		mp.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
-        try {
-        	mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        	mp.setDataSource(getUrl());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public MediaPlayer getMediaPlayer() {
@@ -174,14 +179,20 @@ public class JrFile extends JrListing implements
 	
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
-			mp.prepareAsync();
-			preparing = true;
+			try {
+				mp.setDataSource(getMpUrl());
+				mp.prepareAsync();
+				preparing = true;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void prepareMpSynchronously() {
 		if (!preparing && !prepared) {
 			try {
+				mp.setDataSource(getMpUrl());
 				preparing = true;
 				mp.prepare();
 			} catch (Exception e) {

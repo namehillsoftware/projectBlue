@@ -1,10 +1,13 @@
 package jrFileSystem;
 
 import android.annotation.SuppressLint;
+
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import jrAccess.JrFileXmlResponse;
 import jrAccess.JrSession;
@@ -59,8 +62,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	public ArrayList<JrFile> getFiles(int option) {
 		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
 		returnFiles.addAll(getFiles());
-		
-		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles);
+		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
 		
 		return returnFiles;
 	}

@@ -151,8 +151,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public void onJrFileComplete(JrFile file) {
 		mAudioManager.abandonAudioFocus(this);
-		mWifiLock.release();
-		mWifiLock = null;
+		if (mWifiLock != null) {
+			mWifiLock.release();
+			mWifiLock = null;
+		}
 		releaseMediaPlayer(file);
 		if (file.getNextFile() != null) {
 			JrFile nextFile = file.getNextFile();
