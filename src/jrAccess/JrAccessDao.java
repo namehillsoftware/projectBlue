@@ -83,6 +83,7 @@ public class JrAccessDao {
 	
 	public void resetUrl() {
 		mActiveUrl = "";
+		clearToken();
 	}
 	
 	public String getActiveUrl() {
@@ -93,7 +94,6 @@ public class JrAccessDao {
 				e.printStackTrace();
 			}
 		}
-			
 		
 		for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
 			try {
@@ -137,10 +137,14 @@ public class JrAccessDao {
 		return url;
 	}
 	
-	public String getToken(String url) {
+	private String getToken(String url) {
 		if (!url.equals(mActiveUrl) || mToken == null || mToken.isEmpty()) {
 			try {
-				mToken = new GetAuthToken().execute(url).get();
+				FutureTask<String> getTokenTask = new FutureTask<String>(new GetAuthToken(url));
+				Thread getTokenThread = new Thread(getTokenTask);
+				getTokenThread.setName("Auth Token Retrieval Thread");
+				getTokenThread.start();
+				mToken = getTokenTask.get();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -153,78 +157,32 @@ public class JrAccessDao {
 		return mToken;
 	}
 	
-	public String getToken() {
-		if (mToken == null || mToken.isEmpty()) {
-			try {
-				mToken = new GetAuthToken().execute(getActiveUrl()).get();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		return mToken;
+	private String getToken() {
+		return getToken(getActiveUrl());
+	}
+	
+	private void clearToken() {
+		mToken = null;
 	}
 	
 	private boolean testConnection(String url) throws InterruptedException, ExecutionException {
-		if (getToken(url) == null) return false;
-		return true;
-//		long currentTime = new Date().getTime();
-//		if (currentTime > (nextConnectionCheck)) { 
-//			FutureTask<Boolean> statusTask = new FutureTask<Boolean>(new JrTestXmlResponse(url));
-//			Thread getStatusThread = new Thread(statusTask);
-//			getStatusThread.start();
-//			mConnectionStatus = statusTask.get().booleanValue();
-//			nextConnectionCheck = new Date().getTime() + 1000;
-//		}
-//		return mConnectionStatus;
+		return getToken(url) != null;
 	}
-	
-	private class JrTestXmlResponse implements Callable<Boolean> {
+
+	private class GetAuthToken implements Callable<String> {
+		
 		private String mUrl;
-		public JrTestXmlResponse(String url) {
+		
+		public GetAuthToken(String url) {
 			mUrl = url;
 		}
 		
 		@Override
-		public Boolean call() throws Exception {
-			Boolean result = Boolean.FALSE;
-			
-			// Add base url
-			String url = mUrl + "Alive?";
-			url += "Token=" + getToken();
-			
-			URLConnection conn;
-			try {
-				conn = (new URL(url)).openConnection();
-				conn.setConnectTimeout(5000);
-		    	
-				JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
-		    	
-		    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
-			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			return result;
-		}
-	}
-	
-	private class GetAuthToken extends AsyncTask<String, Void, String> {
-		
-		@Override
-		protected String doInBackground(String... params) {
+		public String call() throws InterruptedException, ExecutionException {
 			// Get authentication token
 			String token = null;
 			try {
-				URLConnection authConn = (new URL(params[0] + "Authenticate")).openConnection();
+				URLConnection authConn = (new URL(mUrl + "Authenticate")).openConnection();
 				authConn.setReadTimeout(5000);
 				authConn.setConnectTimeout(5000);
 				if (!JrSession.UserAuthCode.isEmpty())

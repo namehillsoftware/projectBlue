@@ -64,8 +64,8 @@ public class ViewNowPlaying extends Activity {
 			Bitmap returnBmp = null;
 			
 	        try {
-	        	JrConnection conn = new JrConnection(JrSession.accessDao.getJrUrl("File/GetImage", "File=" + params[0], "Size=Large"));
-	        	conn.setConnectTimeout(5000);
+	        	JrConnection conn = new JrConnection("File/GetImage", "File=" + params[0], "Size=Large");
+//	        	conn.setConnectTimeout(5000);
 	        	returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 			} catch (Exception e) {
 				e.printStackTrace();

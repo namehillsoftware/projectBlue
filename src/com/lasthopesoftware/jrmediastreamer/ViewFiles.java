@@ -28,7 +28,7 @@ public class ViewFiles extends FragmentActivity {
         FileListAdapter fileListAdapter = new FileListAdapter(this, mItem);
     	
     	ListView fileListView = (ListView)findViewById(R.id.lvFilelist);
-    	fileListView.setOnItemClickListener(new ClickFile(this, mItem));
+    	fileListView.setOnItemClickListener(new ClickFileListener(this, mItem));
     	fileListView.setAdapter(fileListAdapter);
 	}
 	

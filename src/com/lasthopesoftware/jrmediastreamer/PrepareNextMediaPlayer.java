@@ -1,7 +1,6 @@
 package com.lasthopesoftware.jrmediastreamer;
 
 import android.content.Context;
-import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 
 public class PrepareNextMediaPlayer implements Runnable {

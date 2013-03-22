@@ -52,13 +52,13 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 				// Add existing children
 				for (String key : playlists.keySet()) {
 					int lastKeyPathIndex = key.lastIndexOf('\\');
-					if (lastKeyPathIndex > -1 && key.indexOf(currentValue) == 0 && lastKeyPathIndex == key.length()) currentPlaylist.addPlaylist(playlists.get(key));
+					if (lastKeyPathIndex > -1 && key.indexOf(currentValue) == 0 && key.equals(currentValue + "\\" + key.substring(lastKeyPathIndex + 1))) currentPlaylist.addPlaylist(playlists.get(key));
 				}
 				
 				// Add to existing parent if it has a path
 				int lastPathIndex = currentValue.lastIndexOf('\\');
 				if (lastPathIndex > -1) {
-					String parent = currentValue.substring(0, lastPathIndex - 1);
+					String parent = currentValue.substring(0, lastPathIndex);
 					if (playlists.containsKey(parent)) playlists.get(parent).addPlaylist(currentPlaylist);
 				}
 			}
@@ -72,7 +72,7 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 	public ArrayList<JrPlaylist> getPlaylists() {
 		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(playlists.size());
 		for (JrPlaylist playlist : playlists.values()) {
-			if (playlist.getSubItems().isEmpty()) returnList.add(playlist);
+			if (!playlist.getSubItems().isEmpty()) returnList.add(playlist);
 		}
 		
 		return returnList;

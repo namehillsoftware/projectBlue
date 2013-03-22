@@ -5,6 +5,7 @@ import java.util.List;
 
 import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
+import jrAccess.JrFsResponseHandler;
 import jrAccess.JrSession;
 
 public class JrItem extends JrListing implements IJrItem<JrItem> {
@@ -24,6 +25,14 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 	public JrItem() {
 		super();
 	}
+	
+//	public JrItem(String url) {
+//		int idStartPos = url.indexOf("ID=");
+//		int idEndPos = url.indexOf("&", idStartPos);
+//		String key = idEndPos > -1 ? url.substring(idStartPos, idEndPos - idStartPos) : url.substring(idStartPos);
+//		this.setKey(key);
+//		(new JrFsResponseHandler<JrItem>(JrItem.class));
+//	}
 	
 	public String getUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1");

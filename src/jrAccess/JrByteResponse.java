@@ -16,7 +16,6 @@ public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			conn.setConnectTimeout(5000);
 			is = conn.getInputStream();
 			int nRead = 0;
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();

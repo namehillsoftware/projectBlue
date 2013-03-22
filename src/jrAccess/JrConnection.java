@@ -16,8 +16,7 @@ public class JrConnection extends URLConnection {
 	
 	protected JrConnection(URL url) throws IOException {
 		super(url);
-		mUrlConnection = url.openConnection();
-		mUrlConnection.setConnectTimeout(5000);
+		setConnection(url);
 	}
 
 	public JrConnection(String... params) throws IOException {
@@ -25,15 +24,17 @@ public class JrConnection extends URLConnection {
 		mParams = params;
 	}
 	
+	public void setConnection(URL url) throws IOException {
+		mUrlConnection = url.openConnection();
+		mUrlConnection.setConnectTimeout(5000);
+	}
+	
 	@Override
 	public void connect() throws IOException {
 		try {
 			mUrlConnection.connect();
 		} catch (IOException e) {
-			JrSession.accessDao.resetUrl();
-			String url = JrSession.accessDao.getJrUrl(mParams);
-			if (url.isEmpty()) throw e;
-			mUrlConnection = (new URL(url)).openConnection();
+			resetConnection(e);
 			this.connect();
 		}
 	}
@@ -55,12 +56,22 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public Object getContent() throws IOException {
-		return mUrlConnection.getContent();
+		try {
+			return mUrlConnection.getContent();
+		} catch (IOException e) {
+			resetConnection(e);
+			return this.getContent();
+		}
 	}
 	
 	@Override
 	public Object getContent(Class[] types) throws IOException {
-		return mUrlConnection.getContent(types);
+		try {
+			return mUrlConnection.getContent(types);
+		} catch (IOException e) {
+			resetConnection(e);
+			return this.getContent(types);
+		}
 	}
 	
 	@Override
@@ -155,8 +166,12 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
-		
-		return mUrlConnection.getInputStream();
+		try {
+			return mUrlConnection.getInputStream();
+		} catch (IOException e) {
+			resetConnection(e);
+			return this.getInputStream();
+		}
 	}
 	
 	@Override
@@ -169,6 +184,7 @@ public class JrConnection extends URLConnection {
 	public OutputStream getOutputStream() throws IOException {
 		
 		return mUrlConnection.getOutputStream();
+		
 	}
 	
 	@Override
@@ -264,5 +280,12 @@ public class JrConnection extends URLConnection {
 	public String toString() {
 		
 		return mUrlConnection.toString();
+	}
+	
+	private void resetConnection(IOException ioEx) throws IOException {
+		JrSession.accessDao.resetUrl();
+		String url = JrSession.accessDao.getJrUrl(mParams);
+		if (url == null || url.isEmpty()) throw ioEx;
+		setConnection(new URL(url));
 	}
 }

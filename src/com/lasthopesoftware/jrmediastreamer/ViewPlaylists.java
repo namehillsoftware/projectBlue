@@ -1,5 +1,6 @@
 package com.lasthopesoftware.jrmediastreamer;
 
+import jrAccess.JrSession;
 import jrFileSystem.JrPlaylist;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -13,17 +14,17 @@ public class ViewPlaylists extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_view_playlists);       
-        int playlistKey = this.getIntent().getIntExtra(ViewPlaylists.KEY, -1);
-        JrPlaylist playlist = new JrPlaylist(playlistKey);
+        setContentView(R.layout.activity_view_playlists);      
+        JrPlaylist playlist = (JrPlaylist) JrSession.selectedItem;
         ListAdapter adapter;
         ListView playlistView = (ListView)findViewById(R.id.lvPlaylist);
         if (playlist.getSubItems().size() > 0) {
         	adapter = new PlaylistAdapter(this, playlist.getSubItems());
-        	playlistView.setOnItemClickListener(new ClickPlaylist(this, playlist.getSubItems()));
+        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getSubItems()));
+        	playlistView.setOnItemLongClickListener(new BrowseItemLongClickListener());
         } else {
         	adapter = new FileListAdapter(this, playlist);
-        	playlistView.setOnItemClickListener(new ClickFile(this, playlist));
+        	playlistView.setOnItemClickListener(new ClickFileListener(this, playlist));
         }
         	
         

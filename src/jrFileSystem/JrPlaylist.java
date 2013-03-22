@@ -2,6 +2,7 @@ package jrFileSystem;
 
 import android.annotation.SuppressLint;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -14,6 +15,8 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	private HashMap<Integer, JrPlaylist> mSubItems;
 	private String mPath;
 	private String mGroup;
+	
+	public static int GET_SHUFFLED = 1;
 	
 	public JrPlaylist() {
 		super();		
@@ -33,6 +36,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	}
 	
 	public void addPlaylist(JrPlaylist playlist) {
+		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
 		mSubItems.put(playlist.getKey(), playlist);
 	}
 	
@@ -50,6 +54,15 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 		}
 		
 		return mFiles;
+	}
+	
+	public ArrayList<JrFile> getFiles(int option) {
+		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
+		returnFiles.addAll(getFiles());
+		
+		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles);
+		
+		return returnFiles;
 	}
 
 	/**

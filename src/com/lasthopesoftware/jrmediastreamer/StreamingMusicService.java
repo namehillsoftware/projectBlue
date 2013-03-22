@@ -33,6 +33,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	//private final IBinder mBinder = 
 	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
+	public static final String ACTION_STOP = "com.lasthopsoftware.jrmediastreamer.ACTION_STOP";
 	private int mId = 1;
 	private WifiLock mWifiLock = null;
 	private String mUrl;

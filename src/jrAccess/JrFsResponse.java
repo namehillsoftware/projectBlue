@@ -27,8 +27,6 @@ public class JrFsResponse<T extends JrListing> extends AsyncTask<String, Void, L
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			conn.setConnectTimeout(5000);
-			
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();

@@ -23,8 +23,6 @@ public class JrPlaylistResponse extends AsyncTask<String, Void, ArrayList<JrPlay
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			conn.setConnectTimeout(5000);
-			
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();

@@ -14,7 +14,6 @@ public class JrStringResponse extends AsyncTask<String, Void, String> {
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			conn.setConnectTimeout(5000);
 			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String line;
 			StringBuilder result = new StringBuilder();

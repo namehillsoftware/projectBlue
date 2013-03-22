@@ -13,7 +13,6 @@ public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			conn.setConnectTimeout(5000);
 	    	
 	    	responseDao = JrResponse.fromInputStream(conn.getInputStream());
 		} catch (MalformedURLException e) {

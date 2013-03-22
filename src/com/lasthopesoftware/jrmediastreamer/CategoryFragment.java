@@ -34,7 +34,8 @@ public class CategoryFragment extends Fragment {
     	int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
     	if (JrSession.categories.get(categoryPosition) instanceof JrPlaylists) {
     		ListView playlistView = new ListView(getActivity());
-    		playlistView.setOnItemClickListener(new ClickPlaylist(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
+    		playlistView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
+    		playlistView.setOnItemLongClickListener(new BrowseItemLongClickListener());
     		playlistView.setAdapter(new PlaylistAdapter(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
     		return playlistView;
     	}
