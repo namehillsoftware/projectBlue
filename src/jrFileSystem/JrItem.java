@@ -1,7 +1,10 @@
 package jrFileSystem;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
@@ -25,14 +28,6 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 	public JrItem() {
 		super();
 	}
-	
-//	public JrItem(String url) {
-//		int idStartPos = url.indexOf("ID=");
-//		int idEndPos = url.indexOf("&", idStartPos);
-//		String key = idEndPos > -1 ? url.substring(idStartPos, idEndPos - idStartPos) : url.substring(idStartPos);
-//		this.setKey(key);
-//		(new JrFsResponseHandler<JrItem>(JrItem.class));
-//	}
 	
 	public String getUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1");
@@ -68,6 +63,15 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 		}
 		
 		return mFiles;
+	}
+
+	@Override
+	public ArrayList<JrFile> getFiles(int option) {
+		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
+		returnFiles.addAll(getFiles());
+		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
+		
+		return returnFiles;
 	}
 	
 }

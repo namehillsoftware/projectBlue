@@ -43,6 +43,12 @@ public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public ArrayList<JrFile> getFiles(int option) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
 

@@ -2,34 +2,35 @@ package jrFileSystem;
 
 import android.annotation.SuppressLint;
 
-import java.util.Date;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
-
 import jrAccess.JrFileXmlResponse;
 import jrAccess.JrSession;
 
 @SuppressLint("UseSparseArrays")
 public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
-	private ArrayList<JrFile> mFiles;
 	private HashMap<Integer, JrPlaylist> mSubItems;
+	private JrPlaylist mParent = null;
 	private String mPath;
 	private String mGroup;
 	
-	public static int GET_SHUFFLED = 1;
-	
 	public JrPlaylist() {
-		super();		
+		super();
 	}
 	
 	public JrPlaylist(int key) {
-		super();
 		setKey(key);
 	}
 
+	public void setParent(JrPlaylist parent) {
+		mParent = parent;
+	}
+	
+	public JrPlaylist getParent() {
+		return mParent;
+	}
+	
 	@Override
 	public ArrayList<JrPlaylist> getSubItems() {
 		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
@@ -40,30 +41,38 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	
 	public void addPlaylist(JrPlaylist playlist) {
 		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
+		playlist.setParent(this);
 		mSubItems.put(playlist.getKey(), playlist);
 	}
 	
 	@Override
+	// Get a new list each time with playlists since 
+	// they can often change dynamically
 	public ArrayList<JrFile> getFiles() {
-		if (mFiles != null) return mFiles;
-		
-		mFiles = new ArrayList<JrFile>();
+		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
 		try {
-			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey())).get(); 
-			mFiles.addAll(tempFiles);
-			for (JrFile file : mFiles) file.setSiblings(mFiles);
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey())).get();
+			returnFiles = new ArrayList<JrFile>(tempFiles.size());
+			returnFiles.addAll(tempFiles);
+			for (JrFile file : returnFiles) file.setSiblings(returnFiles);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		
-		return mFiles;
+		} 
+			
+		return returnFiles;
 	}
 	
 	public ArrayList<JrFile> getFiles(int option) {
 		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-		returnFiles.addAll(getFiles());
-		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
-		
+		try {
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1").get();
+			returnFiles = new ArrayList<JrFile>(tempFiles.size());
+			returnFiles.addAll(tempFiles);
+			for (JrFile file : returnFiles) file.setSiblings(returnFiles);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+			
 		return returnFiles;
 	}
 

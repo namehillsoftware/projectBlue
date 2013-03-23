@@ -1,11 +1,9 @@
 package jrAccess;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.TreeMap;
 
-import jrFileSystem.JrFile;
+import jrFileSystem.JrFileUtils;
 import jrFileSystem.JrPlaylist;
 
 import org.xml.sax.Attributes;
@@ -14,10 +12,11 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class JrPlaylistXmlHandler extends DefaultHandler {
 	
-	private HashMap<String, JrPlaylist> playlists = new HashMap<String, JrPlaylist>();
+	private TreeMap<String, JrPlaylist> playlists = new TreeMap<String, JrPlaylist>();
 	private JrPlaylist currentPlaylist;
 	private String currentValue;
 	private String currentKey;
+	private StringBuilder valueSb;
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
@@ -31,10 +30,11 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		currentValue = new String(ch,start,length);
+		valueSb = JrFileUtils.HandleBadXml(valueSb, ch, start, length);
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
+		if (valueSb != null) currentValue = valueSb.toString();
 		if (qName.equalsIgnoreCase("field")) {
 			if (currentKey.equalsIgnoreCase("id"))
 				currentPlaylist.setKey(Integer.parseInt(currentValue));
@@ -52,14 +52,18 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 				// Add existing children
 				for (String key : playlists.keySet()) {
 					int lastKeyPathIndex = key.lastIndexOf('\\');
-					if (lastKeyPathIndex > -1 && key.indexOf(currentValue) == 0 && key.equals(currentValue + "\\" + key.substring(lastKeyPathIndex + 1))) currentPlaylist.addPlaylist(playlists.get(key));
+					if (lastKeyPathIndex > -1 && key.indexOf(currentValue) == 0 && key.equals(currentValue + "\\" + key.substring(lastKeyPathIndex + 1))) {
+						currentPlaylist.addPlaylist(playlists.get(key));
+					}
 				}
 				
 				// Add to existing parent if it has a path
 				int lastPathIndex = currentValue.lastIndexOf('\\');
 				if (lastPathIndex > -1) {
 					String parent = currentValue.substring(0, lastPathIndex);
-					if (playlists.containsKey(parent)) playlists.get(parent).addPlaylist(currentPlaylist);
+					if (playlists.containsKey(parent)) {
+						playlists.get(parent).addPlaylist(currentPlaylist);
+					}
 				}
 			}
 		}
@@ -72,7 +76,7 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 	public ArrayList<JrPlaylist> getPlaylists() {
 		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(playlists.size());
 		for (JrPlaylist playlist : playlists.values()) {
-			if (!playlist.getSubItems().isEmpty()) returnList.add(playlist);
+			if (playlist.getParent() == null) returnList.add(playlist);
 		}
 		
 		return returnList;

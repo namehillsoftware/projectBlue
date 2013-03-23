@@ -36,4 +36,10 @@ public class JrPlaylists extends JrListing implements IJrItem<JrPlaylist> {
 	public String getUrl() {
 		return JrSession.accessDao.getJrUrl("Playlists/List");
 	}
+
+	@Override
+	public ArrayList<JrFile> getFiles(int option) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

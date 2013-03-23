@@ -1,21 +1,31 @@
 package jrAccess;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import jrFileSystem.JrFile;
+import jrFileSystem.JrFileUtils;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import xmlwise.XmlElement;
+import xmlwise.XmlParseException;
+import xmlwise.Xmlwise;
+
 public class JrFileXmlHandler extends DefaultHandler {
 	
-	private List<JrFile> files = new ArrayList<JrFile>();
+	private ArrayList<JrFile> files = new ArrayList<JrFile>();
 	private JrFile currentFile;
 	private String currentValue;
+	private StringBuilder sb = null;
 	private String currentKey;
+	private String newValue;
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
+		
 		currentValue = "";
 
 		if (qName.equalsIgnoreCase("item"))
@@ -26,42 +36,38 @@ public class JrFileXmlHandler extends DefaultHandler {
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		currentValue = new String(ch,start,length);
+		sb = JrFileUtils.HandleBadXml(sb, ch, start, length);
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
+		if (sb != null) currentValue = sb.toString();
 		if (qName.equalsIgnoreCase("item"))
 			files.add(currentFile);
 		
 		if (qName.equalsIgnoreCase("field")) {
 			if (currentKey.equalsIgnoreCase("Key"))
 				currentFile.setKey(Integer.parseInt(currentValue));
-			
-			if (currentKey.equalsIgnoreCase("Artist"))
+			else if (currentKey.equalsIgnoreCase("Artist"))
 				currentFile.setArtist(currentValue);
-			
-			if (currentKey.equalsIgnoreCase("Album"))
+			else if (currentKey.equalsIgnoreCase("Album"))
 				currentFile.setAlbum(currentValue);
-			
-			if (currentKey.equalsIgnoreCase("Name"))
+			else if (currentKey.equalsIgnoreCase("Name"))
 				currentFile.setValue(currentValue);
-			
-			if (currentKey.equalsIgnoreCase("Genre"))
+			else if (currentKey.equalsIgnoreCase("Genre"))
 				currentFile.setGenre(currentValue);
-			
-			if (currentKey.equalsIgnoreCase("Track #"))
+			else if (currentKey.equalsIgnoreCase("Track #"))
 				currentFile.setTrackNumber(Integer.parseInt(currentValue));
-			
-			if (currentKey.equalsIgnoreCase("Duration"))
+			else if (currentKey.equalsIgnoreCase("Duration"))
 				currentFile.setDuration(Double.parseDouble(currentValue) * 1000);
 		}
 			
 	}
 	
+	
 	/**
 	 * @return the response
 	 */
-	public List<JrFile> getFiles() {
+	public ArrayList<JrFile> getFiles() {
 		return files;
 	}
 }

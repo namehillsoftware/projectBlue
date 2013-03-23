@@ -35,7 +35,7 @@ public class CategoryFragment extends Fragment {
     	if (JrSession.categories.get(categoryPosition) instanceof JrPlaylists) {
     		ListView playlistView = new ListView(getActivity());
     		playlistView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
-    		playlistView.setOnItemLongClickListener(new BrowseItemLongClickListener());
+    		playlistView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
     		playlistView.setAdapter(new PlaylistAdapter(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
     		return playlistView;
     	}
@@ -69,6 +69,7 @@ public class CategoryFragment extends Fragment {
     	        return true;
     	    }
 	    });
+    	listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
     	listView.setAdapter(adapter);
         return listView;
     }
@@ -95,10 +96,8 @@ public class CategoryFragment extends Fragment {
 		@Override
 		public View getChildView(int groupPosition, int childPosition,
 			boolean isLastChild, View convertView, ViewGroup parent) {
-			TextView returnView = getGenericView(mContext);
-	//			tv.setGravity(Gravity.LEFT);
-			returnView.setText(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getValue());
-			return returnView;
+
+			return BrowseItemMenu.getView(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
 		}
 
 		@Override
@@ -125,10 +124,21 @@ public class CategoryFragment extends Fragment {
 		public View getGroupView(int groupPosition, boolean isExpanded,
 				View convertView, ViewGroup parent) {
 
-			TextView tv = getGenericView(mContext);
-			tv.setText(mCategoryItems.get(groupPosition).getValue());
-			
-			return tv;
+			AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+		            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+	        TextView textView = new TextView(mContext);
+	        textView.setTextAppearance(mContext, android.R.style.TextAppearance_Large);
+	        textView.setLayoutParams(lp);
+	        // Center the text vertically
+	        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+//		        textView.setTextColor(getResources().getColor(marcyred));
+	        // Set the text starting position        
+	        textView.setPadding(64, 20, 20, 20);
+		    textView.setText(mCategoryItems.get(groupPosition).getValue());
+	        
+//			return BrowseItemMenu.getView(mCategoryItems.get(groupPosition), convertView, parent);
+			return textView;
 		}
 
 		@Override
@@ -141,22 +151,5 @@ public class CategoryFragment extends Fragment {
 			return true;
 		}
     	
-    }
-    
-    public static TextView getGenericView(Context context) {
-        // Layout parameters for the ExpandableListView
-        AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        TextView textView = new TextView(context);
-        textView.setTextAppearance(context, android.R.style.TextAppearance_Large);
-        textView.setLayoutParams(lp);
-        // Center the text vertically
-        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//        textView.setTextColor(getResources().getColor(marcyred));
-        // Set the text starting position        
-        textView.setPadding(64, 20, 20, 20);
-        //textView.setHeight(textView.getLineHeight() + 20);
-        return textView;
     }
 }
