@@ -240,15 +240,15 @@ public class JrFile extends JrListing implements
 	}
 	@Override
 	public int getBufferPercentage() {
-		return 0;
+		return (mp.getCurrentPosition() * 100) / mp.getDuration();
 	}
 	@Override
 	public int getCurrentPosition() {
-		return 0;
+		return mp.getCurrentPosition();
 	}
 	@Override
 	public boolean isPlaying() {
-		return mp.isPlaying();
+		return mp != null && mp.isPlaying();
 	}
 	@Override
 	public void pause() {

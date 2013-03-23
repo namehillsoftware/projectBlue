@@ -248,7 +248,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         }
     }
 
-    public class SelectedItem extends Fragment {
+    public static class SelectedItem extends Fragment {
     	private ListView mListView;
     	public static final String ARG_SELECTED_POSITION = "selected_position";   
     	public static final String ARG_CATEGORY_POSITION = "category_position";

@@ -4,8 +4,11 @@
 package com.lasthopesoftware.jrmediastreamer;
 
 
+import java.util.ArrayList;
+
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
+import jrFileSystem.JrPlaylist;
 import jrFileSystem.OnJrFileCompleteListener;
 import jrFileSystem.OnJrFilePreparedListener;
 import android.app.NotificationManager;
@@ -17,6 +20,7 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnErrorListener;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
@@ -37,10 +41,19 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private int mId = 1;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
-	private int NOTIFICATION = R.string.streaming_music_svc_started;
 	private NotificationManager mNotificationMgr;
 	private Thread trackProgressThread;
+	private static ArrayList<JrFile> playlist;
 	AudioManager mAudioManager;
+	
+	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
+		JrSession.playlist = playlist;
+		JrFile file = startFile;
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
+		context.startService(svcIntent);
+		Intent newIntent = new Intent(context, ViewNowPlaying.class);
+		context.startActivity(newIntent);
+	}
 	
 	public StreamingMusicService() {
 		super();
@@ -53,9 +66,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void initMediaPlayers() {
-		if (JrSession.playlist != null) {
+		if (playlist != null) {
 			
-			for (JrFile file : JrSession.playlist) {
+			for (JrFile file : playlist) {
 				file.setOnFileCompletionListener(this);
 				file.setOnFilePreparedListener(this);
 				if (file.getUrl().equalsIgnoreCase(mUrl)) {
@@ -92,14 +105,24 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         }
 	}
 	
-	private void releaseMediaPlayers() {
-		for (JrFile file : JrSession.playlist) {
-			releaseMediaPlayer(file);
+	private void stopPlayback() {
+		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
+			JrSession.playingFile.getMediaPlayer().stop();
+			JrSession.playingFile = null;
+			releaseMediaPlayers();
 		}
+		stopForeground(true);
+		mNotificationMgr.cancel(mId);
 	}
 	
 	private void releaseMediaPlayer(JrFile file) {
-		JrSession.playingFile = null;
+		file = null;
+	}
+	
+	private void releaseMediaPlayers() {
+		for (JrFile file : playlist) {
+			releaseMediaPlayer(file);
+		}
 	}
 
 	/* Begin Event Handlers */
@@ -110,6 +133,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_PLAY)) {
+			if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) stopPlayback();
+			if (playlist == null || !playlist.equals(JrSession.playlist)) playlist = JrSession.playlist;
 			mUrl = intent.getDataString();
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 	        builder.setSmallIcon(R.drawable.ic_launcher);
@@ -118,6 +143,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        startForeground(mId, builder.build());
 	        
 			initMediaPlayers();
+        } else if (intent.getAction().equals(ACTION_STOP)) {
+        	stopPlayback();
         }
 		return START_STICKY;
 	}
@@ -152,7 +179,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public void onJrFileComplete(JrFile file) {
 		mAudioManager.abandonAudioFocus(this);
 		if (mWifiLock != null) {
-			mWifiLock.release();
+			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
 		releaseMediaPlayer(file);
@@ -164,8 +191,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				startMediaPlayer(nextFile);
 			return;
 		}
-		stopForeground(true);
-		mNotificationMgr.cancel(mId);
+		
 	}
 
 
@@ -174,8 +200,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            if (JrSession.playlist == null || JrSession.playlist.isEmpty()) initMediaPlayers();
-	            else if (JrSession.playingFile.getMediaPlayer() == null) startMediaPlayer(JrSession.playingFile);
+	            /*if (playlist == null || playlist.isEmpty()) initMediaPlayers();
+	            else */
+	        	if (JrSession.playingFile.getMediaPlayer() == null) startMediaPlayer(JrSession.playingFile);
 	            else if (!JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().start();
 	            JrSession.playingFile.getMediaPlayer().setVolume(1.0f, 1.0f);
 	            break;
@@ -183,9 +210,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
 	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) {
-	            	JrSession.playlist.clear();
-	            	JrSession.playingFile.getMediaPlayer().stop();
-	            	releaseMediaPlayers();
+	            	stopPlayback();
 	            }
 	            break;
 

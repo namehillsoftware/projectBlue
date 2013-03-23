@@ -1,15 +1,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content" >
-
-    <SeekBar
-        android:id="@+id/sbNowPlaying"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="94dp" />
+    android:layout_height="wrap_content"
+    android:id="@+id/rlNowPlaying"
+    android:orientation="vertical" >
 
     <TextView
         android:id="@+id/tvNowPlaying"
@@ -17,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/hello_world"
+        android:text="@string/lblNowPlaying"
         android:textAppearance="?android:attr/textAppearanceLarge"
         tools:context=".ViewNowPlaying" />
 
@@ -32,5 +26,34 @@
         android:layout_marginRight="20dp"
         android:contentDescription="@string/img_now_playing"
         tools:context=".ViewNowPlaying" />
+ 
+    <SeekBar
+        android:id="@+id/sbNowPlaying"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btnPlay"
+        android:layout_alignParentLeft="true" />
+    
+    <ImageButton
+        android:id="@+id/btnPlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:contentDescription="@string/btnPlay"
+        android:src="@drawable/av_play" />
+
+     <ImageButton
+        android:id="@+id/btnPause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:contentDescription="@string/btnPlay"
+        android:src="@drawable/av_pause" 
+        android:visibility="invisible"/>
+
 
 </RelativeLayout>

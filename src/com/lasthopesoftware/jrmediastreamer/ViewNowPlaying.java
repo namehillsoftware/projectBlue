@@ -13,6 +13,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.SeekBar;
@@ -22,10 +26,13 @@ import android.support.v4.app.NavUtils;
 public class ViewNowPlaying extends Activity implements Runnable {
 	private TextView mNowPlayingText;
 	private ImageView mNowPlayingImg;
+//	private MediaController mMediaPlayerControl;
 	private SeekBar mSeekbar;
+	private ImageButton mPlay;
+	private ImageButton mPause;
 	
 	private static int UPDATE_ALL = 0;
-	private static int UPDATE_SB = 1;
+	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
 	
 	@SuppressLint("HandlerLeak")
@@ -36,9 +43,13 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				mSeekbar.setProgress(0);
 			} else if (msg.arg1 == UPDATE_ALL) {
 				setView();
-			} else if (msg.arg1 == UPDATE_SB) {
-				mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
-				mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+			} else if (msg.arg1 == UPDATE_PLAYING) {
+				mPause.setVisibility(View.VISIBLE);
+				mPlay.setVisibility(View.INVISIBLE);
+				if (JrSession.playingFile != null) {
+					mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
+					mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+				}
 			}
 		}
 	};
@@ -51,6 +62,13 @@ public class ViewNowPlaying extends Activity implements Runnable {
         mSeekbar = (SeekBar)findViewById(R.id.sbNowPlaying);
         mNowPlayingImg = (ImageView)findViewById(R.id.imgNowPlaying);
         mNowPlayingText = (TextView)findViewById(R.id.tvNowPlaying);
+        mPlay = (ImageButton)findViewById(R.id.btnPlay);
+        mPause = (ImageButton)findViewById(R.id.btnPause);
+        
+        /* Toggle play/pause */
+        TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
+        mPlay.setOnClickListener(togglePlayPauseListener);        
+        mPause.setOnClickListener(togglePlayPauseListener);
         
         Thread trackerThread = new Thread(this);
         trackerThread.setPriority(Thread.MIN_PRIORITY);
@@ -92,6 +110,29 @@ public class ViewNowPlaying extends Activity implements Runnable {
         return super.onOptionsItemSelected(item);
     }
     
+    private static class TogglePlayPauseListener implements OnClickListener {
+    	private View mPlay, mPause;
+    	
+    	public TogglePlayPauseListener(View play, View pause) {
+    		mPlay = play;
+    		mPause = pause;
+    	}
+    	
+		@Override
+		public void onClick(View v) {
+			if (JrSession.playingFile.isPlaying()) {
+				JrSession.playingFile.getMediaPlayer().pause();
+				mPause.setVisibility(View.INVISIBLE);
+				mPlay.setVisibility(View.VISIBLE);
+			} else {
+				JrSession.playingFile.getMediaPlayer().start();
+				mPlay.setVisibility(View.INVISIBLE);
+				mPause.setVisibility(View.VISIBLE);
+			}
+		}
+    	
+    }
+    
     private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
 
 		@Override
@@ -129,12 +170,11 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				}
 				else if (JrSession.playingFile.isPlaying()) {
 					msg = new Message();
-					msg.arg1 = UPDATE_SB;
+					msg.arg1 = UPDATE_PLAYING;
 				}
 				if (msg != null) handler.sendMessage(msg);
-				Thread.sleep(500);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

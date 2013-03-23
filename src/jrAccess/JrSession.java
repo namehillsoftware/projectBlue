@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFileSystem;
-import jrFileSystem.JrItem;
 
 public class JrSession {
 	public static String UserAuthCode = "";

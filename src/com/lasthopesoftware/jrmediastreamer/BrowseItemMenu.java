@@ -1,5 +1,7 @@
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.util.ArrayList;
+
 import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
@@ -66,10 +68,8 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			JrSession.playlist = mItem.getFiles();
-			JrFile file = mItem.getFiles().get(0);
-			Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), v.getContext(), StreamingMusicService.class);
-			v.getContext().startService(svcIntent);
+			ArrayList<JrFile> playlist = mItem.getFiles();
+			StreamingMusicService.StreamMusic(v.getContext(), playlist.get(0), playlist);
 		}
 	}
 	
@@ -82,10 +82,8 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			JrSession.playlist = mItem.getFiles(JrPlaylist.GET_SHUFFLED);
-			JrFile file = JrSession.playlist.get(0);
-			Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), v.getContext(), StreamingMusicService.class);
-			v.getContext().startService(svcIntent);
+			ArrayList<JrFile> playlist = mItem.getFiles(JrPlaylist.GET_SHUFFLED);
+			StreamingMusicService.StreamMusic(v.getContext(), playlist.get(0), playlist);
 		}
 	}
 	

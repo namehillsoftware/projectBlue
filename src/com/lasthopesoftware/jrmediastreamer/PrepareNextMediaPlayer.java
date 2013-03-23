@@ -16,14 +16,14 @@ public class PrepareNextMediaPlayer implements Runnable {
 		mContext = context;
 		mNextFile = mCurrentFile.getNextFile();
 		// figure out how much buffer time we need for this file if we're on the slowest 3G network
-		mBufferTime = ((mNextFile.getDuration() * 128) / 384) * 1.2; 
+		mBufferTime = ((mNextFile.getDuration() * 128) / 384) * 1.2 + 15000; 
 	}
 	
 	@Override
 	public void run() {
 		if (mNextFile == null) return;
 		mNextFile.initMediaPlayer(mContext);
-		while (mCurrentFile != null && mCurrentFile.getMediaPlayer() != null && mCurrentFile.getMediaPlayer().isPlaying()) {
+		while (mCurrentFile != null && mCurrentFile.getMediaPlayer() != null) {
 			try {
 				if (mCurrentFile.getMediaPlayer().getCurrentPosition() > (mCurrentFile.getMediaPlayer().getDuration() - mBufferTime)) {
 					if (!mNextFile.isPrepared()) {
