@@ -59,8 +59,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		context.startActivity(newIntent);
 	}
 	
-	public static void Start(Context context) {
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+	public static void Play(Context context) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY);
 		context.startService(svcIntent);
 	}
 	
@@ -72,14 +72,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static void Next(Context context) {
 		JrFile nextFile = JrSession.playingFile.getNextFile();
 		if (nextFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getUrl()), context, StreamingMusicService.class);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getUrl()));
 		context.startService(svcIntent);
 	}
 	
 	public static void Previous(Context context) {
 		JrFile previousFile = JrSession.playingFile.getPreviousFile();
 		if (previousFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getUrl()), context, StreamingMusicService.class);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getUrl()));
 		context.startService(svcIntent);
 	}
 	
@@ -134,8 +134,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void stopPlayback() {
-		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
-			JrSession.playingFile.getMediaPlayer().stop();
+		if (JrSession.playingFile != null) {
+			if (JrSession.playingFile.isPlaying()) JrSession.playingFile.getMediaPlayer().stop();
 			JrSession.playingFile = null;
 			releaseMediaPlayers();
 		}
@@ -173,14 +173,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_START)) {
-			if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) stopPlayback();
+			if (JrSession.playingFile != null) stopPlayback();
 			
-			if (playlist == null || !playlist.equals(JrSession.playlist)) {
-				playlist = JrSession.playlist;
-			} else if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
-				startMediaPlayer(JrSession.playingFile);
-				return START_STICKY;
-			}
+			if (playlist == null || !playlist.equals(JrSession.playlist)) playlist = JrSession.playlist;
 			
 			if (intent.getDataString() != null && !intent.getDataString().isEmpty()) mUrl = intent.getDataString();
 			
@@ -195,6 +190,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         	stopPlayback();
         } else if (intent.getAction().equals(ACTION_PAUSE)) {
         	pausePlayback();
+        } else if (intent.getAction().equals(ACTION_PLAY)) {
+        	if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
+				startMediaPlayer(JrSession.playingFile);
+				return START_STICKY;
+			}
         }
 		return START_STICKY;
 	}
