@@ -1,5 +1,7 @@
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.util.ArrayList;
+
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
 import android.content.Context;
@@ -11,32 +13,32 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 public class FileListAdapter extends BaseAdapter {
-	private IJrItem<?> mItem;
+	private ArrayList<JrFile> mFiles;
 	private Context mContext;
 	
 	public FileListAdapter(Context context, IJrItem<?> item) {
-		mItem = item;
+		mFiles = item.getFiles();
 		mContext = context;
 	}
 	
 	@Override
 	public int getCount() {
-		return mItem.getFiles().size();
+		return mFiles.size();
 	}
 
 	@Override
 	public Object getItem(int position) {
-		return mItem.getFiles().get(position);
+		return mFiles.get(position);
 	}
 
 	@Override
 	public long getItemId(int position) {
-		return mItem.getFiles().get(position).getKey();
+		return mFiles.get(position).getKey();
 	}
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		final JrFile file = mItem.getFiles().get(position);
+		final JrFile file = mFiles.get(position);
 		TextView tv = getGenericView(mContext);
 		tv.setText(file.getValue());		
 		return tv;

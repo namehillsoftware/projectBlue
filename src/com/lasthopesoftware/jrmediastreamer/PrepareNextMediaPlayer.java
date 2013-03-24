@@ -26,10 +26,8 @@ public class PrepareNextMediaPlayer implements Runnable {
 		while (mCurrentFile != null && mCurrentFile.getMediaPlayer() != null) {
 			try {
 				if (mCurrentFile.getMediaPlayer().getCurrentPosition() > (mCurrentFile.getMediaPlayer().getDuration() - mBufferTime)) {
-					if (!mNextFile.isPrepared()) {
-						mNextFile.prepareMpSynchronously();
-						return;
-					}
+					if (!mNextFile.isPrepared()) mNextFile.prepareMpSynchronously();
+					return;
 				}
 				Thread.sleep(5000);
 			} catch (Exception e) {

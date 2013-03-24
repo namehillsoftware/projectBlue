@@ -1,11 +1,7 @@
 package jrFileSystem;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -14,7 +10,6 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.PowerManager;
 import android.widget.MediaController.MediaPlayerControl;
-import jrAccess.JrConnection;
 import jrAccess.JrSession;
 import jrAccess.JrTestConnection;
 
@@ -173,7 +168,7 @@ public class JrFile extends JrListing implements
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
-	public MediaPlayer getMediaPlayer() {
+	public synchronized MediaPlayer getMediaPlayer() {
 		return mp;
 	}
 	

@@ -97,7 +97,7 @@ public class BrowseItemMenu {
 		@Override
 		public void onClick(View v) {
     		Intent intent = new Intent(v.getContext(), ViewFiles.class);
-    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
+    		intent.setAction(mItem instanceof JrPlaylist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
     		JrSession.selectedItem = mItem;
     		v.getContext().startActivity(intent);

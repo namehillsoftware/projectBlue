@@ -155,6 +155,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayer(JrFile file) {
+		file.releaseMediaPlayer();
 		file = null;
 	}
 	
@@ -173,13 +174,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent.getAction().equals(ACTION_START)) {
 			if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) stopPlayback();
+			
 			if (playlist == null || !playlist.equals(JrSession.playlist)) {
 				playlist = JrSession.playlist;
 			} else if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
 				startMediaPlayer(JrSession.playingFile);
 				return START_STICKY;
 			}
+			
 			if (intent.getDataString() != null && !intent.getDataString().isEmpty()) mUrl = intent.getDataString();
+			
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 	        builder.setSmallIcon(R.drawable.ic_launcher);
 			builder.setOngoing(true);
