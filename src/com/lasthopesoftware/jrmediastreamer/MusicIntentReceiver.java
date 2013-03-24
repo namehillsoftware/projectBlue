@@ -10,8 +10,7 @@ public class MusicIntentReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals(android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
-			JrSession.playlist.clear();
-			JrSession.playingFile.getMediaPlayer().stop();
+			StreamingMusicService.Pause(context);
 		}
 	}
 

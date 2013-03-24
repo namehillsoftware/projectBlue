@@ -30,13 +30,15 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private SeekBar mSeekbar;
 	private ImageButton mPlay;
 	private ImageButton mPause;
+	private ImageButton mNext;
+	private ImageButton mPrevious;
 	
 	private static int UPDATE_ALL = 0;
 	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
 	
 	@SuppressLint("HandlerLeak")
-	Handler handler = new Handler() {
+	private Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.arg1 == SET_STOPPED) {
@@ -64,11 +66,29 @@ public class ViewNowPlaying extends Activity implements Runnable {
         mNowPlayingText = (TextView)findViewById(R.id.tvNowPlaying);
         mPlay = (ImageButton)findViewById(R.id.btnPlay);
         mPause = (ImageButton)findViewById(R.id.btnPause);
+        mNext = (ImageButton)findViewById(R.id.btnNext);
+        mPrevious = (ImageButton)findViewById(R.id.btnPrevious);
         
         /* Toggle play/pause */
         TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
         mPlay.setOnClickListener(togglePlayPauseListener);        
         mPause.setOnClickListener(togglePlayPauseListener);
+        
+        mNext.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				StreamingMusicService.Next(v.getContext());			
+			}
+		});
+        
+        mPrevious.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				StreamingMusicService.Previous(v.getContext());
+			}
+		});
         
         Thread trackerThread = new Thread(this);
         trackerThread.setPriority(Thread.MIN_PRIORITY);
@@ -121,11 +141,11 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		@Override
 		public void onClick(View v) {
 			if (JrSession.playingFile.isPlaying()) {
-				JrSession.playingFile.getMediaPlayer().pause();
+				StreamingMusicService.Pause(v.getContext());
 				mPause.setVisibility(View.INVISIBLE);
 				mPlay.setVisibility(View.VISIBLE);
 			} else {
-				JrSession.playingFile.getMediaPlayer().start();
+				StreamingMusicService.Start(v.getContext());
 				mPlay.setVisibility(View.INVISIBLE);
 				mPause.setVisibility(View.VISIBLE);
 			}
@@ -141,7 +161,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			Bitmap returnBmp = null;
 			
 	        try {
-	        	JrConnection conn = new JrConnection("File/GetImage", "File=" + params[0], "Size=Large", "Type=Full");
+	        	JrConnection conn = new JrConnection("File/GetImage", "File=" + params[0], "Size=Large");
 	        	returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 			} catch (Exception e) {
 				e.printStackTrace();

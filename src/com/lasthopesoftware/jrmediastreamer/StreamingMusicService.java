@@ -5,10 +5,10 @@ package com.lasthopesoftware.jrmediastreamer;
 
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
-import jrFileSystem.JrPlaylist;
 import jrFileSystem.OnJrFileCompleteListener;
 import jrFileSystem.OnJrFilePreparedListener;
 import android.app.NotificationManager;
@@ -36,9 +36,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		OnJrFileCompleteListener, OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
+	public static final String ACTION_START = "com.lasthopsoftware.jrmediastreamer.ACTION_START";
 	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
 	public static final String ACTION_STOP = "com.lasthopsoftware.jrmediastreamer.ACTION_STOP";
-	private int mId = 1;
+	private static final String ACTION_PAUSE = "com.lasthopsoftware.jrmediastreamer.ACTION_PAUSE";
+	private static final String ACTION_NEXT = "com.lasthopsoftware.jrmediastreamer.ACTION_NEXT";
+	private static final String ACTION_PREVIOUS = "com.lasthopsoftware.jrmediastreamer.ACTION_PREVIOUS";
+	private static int mId = new Random().nextInt();
 	private WifiLock mWifiLock = null;
 	private String mUrl;
 	private NotificationManager mNotificationMgr;
@@ -49,10 +53,34 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
 		JrSession.playlist = playlist;
 		JrFile file = startFile;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
 		Intent newIntent = new Intent(context, ViewNowPlaying.class);
 		context.startActivity(newIntent);
+	}
+	
+	public static void Start(Context context) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		context.startService(svcIntent);
+	}
+	
+	public static void Pause(Context context) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PAUSE);
+		context.startService(svcIntent);
+	}
+	
+	public static void Next(Context context) {
+		JrFile nextFile = JrSession.playingFile.getNextFile();
+		if (nextFile == null) return;
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getUrl()), context, StreamingMusicService.class);
+		context.startService(svcIntent);
+	}
+	
+	public static void Previous(Context context) {
+		JrFile previousFile = JrSession.playingFile.getPreviousFile();
+		if (previousFile == null) return;
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getUrl()), context, StreamingMusicService.class);
+		context.startService(svcIntent);
 	}
 	
 	public StreamingMusicService() {
@@ -111,6 +139,17 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			JrSession.playingFile = null;
 			releaseMediaPlayers();
 		}
+		stopNotification();
+	}
+	
+	private void pausePlayback() {
+		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
+			JrSession.playingFile.getMediaPlayer().pause();
+		}
+		stopNotification();
+	}
+	
+	private void stopNotification() {
 		stopForeground(true);
 		mNotificationMgr.cancel(mId);
 	}
@@ -132,10 +171,15 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.getAction().equals(ACTION_PLAY)) {
+		if (intent.getAction().equals(ACTION_START)) {
 			if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) stopPlayback();
-			if (playlist == null || !playlist.equals(JrSession.playlist)) playlist = JrSession.playlist;
-			mUrl = intent.getDataString();
+			if (playlist == null || !playlist.equals(JrSession.playlist)) {
+				playlist = JrSession.playlist;
+			} else if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
+				startMediaPlayer(JrSession.playingFile);
+				return START_STICKY;
+			}
+			if (intent.getDataString() != null && !intent.getDataString().isEmpty()) mUrl = intent.getDataString();
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 	        builder.setSmallIcon(R.drawable.ic_launcher);
 			builder.setOngoing(true);
@@ -145,14 +189,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			initMediaPlayers();
         } else if (intent.getAction().equals(ACTION_STOP)) {
         	stopPlayback();
+        } else if (intent.getAction().equals(ACTION_PAUSE)) {
+        	pausePlayback();
         }
 		return START_STICKY;
 	}
 	
 	@Override
     public void onCreate() {
-		mNotificationMgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mAudioManager = (AudioManager)this.getSystemService(Context.AUDIO_SERVICE);
+		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 	}
 	
 	public void onJrFilePrepared(JrFile file) {

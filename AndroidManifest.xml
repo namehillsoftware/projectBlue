@@ -48,11 +48,18 @@
 
         <service android:name=".StreamingMusicService" >
 
-            <!--
             <intent-filter>
                 <action android:name=".ACTION_PLAY" />
             </intent-filter>
-            -->
+            <intent-filter>
+                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_PAUSE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name=".ACTION_STOP" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_START" />
+            </intent-filter>
         </service>
 
         <activity

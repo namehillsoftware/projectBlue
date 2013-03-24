@@ -51,9 +51,30 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/btnPlay"
+        android:contentDescription="@string/btnPause"
         android:src="@drawable/av_pause" 
         android:visibility="invisible"/>
 
+     <ImageButton
+         android:id="@+id/btnPrevious"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_marginLeft="33dp"
+         android:layout_alignLeft="@+id/imgNowPlaying"
+         android:background="?android:attr/selectableItemBackground"
+         android:contentDescription="@string/btnPrevious"
+         android:src="@drawable/av_rewind" />
+
+     <ImageButton
+         android:id="@+id/btnNext"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignRight="@+id/imgNowPlaying"
+         android:layout_marginRight="33dp"
+         android:background="?android:attr/selectableItemBackground"
+         android:contentDescription="@string/btnNext"
+         android:src="@drawable/av_fast_forward" />
 
 </RelativeLayout>

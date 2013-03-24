@@ -13,6 +13,7 @@ public class JrConnection extends URLConnection {
 
 	private URLConnection mUrlConnection;
 	private String[] mParams;
+	private int resets = 0;
 	
 	protected JrConnection(URL url) throws IOException {
 		super(url);
@@ -252,6 +253,8 @@ public class JrConnection extends URLConnection {
 	}
 	
 	private void resetConnection(IOException ioEx) throws IOException {
+		if (resets > 6) throw ioEx;
+		resets++;
 		JrSession.accessDao.resetUrl();
 		String url = JrSession.accessDao.getJrUrl(mParams);
 		if (url == null || url.isEmpty()) throw ioEx;
