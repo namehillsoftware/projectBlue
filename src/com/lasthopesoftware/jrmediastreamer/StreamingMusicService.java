@@ -160,9 +160,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayers() {
-		for (JrFile file : playlist) {
-			releaseMediaPlayer(file);
-		}
+		for (JrFile file : playlist) releaseMediaPlayer(file);
 	}
 
 	/* Begin Event Handlers */
@@ -172,22 +170,20 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		// 3/5 times it's going to be this so let's see if we can get
+		// some improved prefetching by the processor
 		if (intent.getAction().equals(ACTION_START)) {
-			if (JrSession.playingFile != null) stopPlayback();
-			
-			if (playlist == null || !playlist.equals(JrSession.playlist)) playlist = JrSession.playlist;
-			
-			if (intent.getDataString() != null && !intent.getDataString().isEmpty()) mUrl = intent.getDataString();
-			
-			NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-	        builder.setSmallIcon(R.drawable.ic_launcher);
-			builder.setOngoing(true);
-			builder.setContentTitle("Starting Music Streamer");
-	        startForeground(mId, builder.build());
-	        
-			initMediaPlayers();
-        } else if (intent.getAction().equals(ACTION_STOP)) {
-        	stopPlayback();
+			// Want to handle two situations: when the playlist is empty
+			// or when a new playlist is given, start playback on new playlist
+			if (playlist == null || !playlist.equals(JrSession.playlist)) {
+				playlist = JrSession.playlist;
+				initializePlaylist(intent.getDataString());
+			} else if (!mUrl.equals(intent.getDataString())) {
+				// Other situation: Selected track has changed, but playlist hasn't
+				// Already know that mUrl is not null since the above condition being
+				// true would have caught that
+				initializePlaylist(intent.getDataString());
+			}
         } else if (intent.getAction().equals(ACTION_PAUSE)) {
         	pausePlayback();
         } else if (intent.getAction().equals(ACTION_PLAY)) {
@@ -195,8 +191,24 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				startMediaPlayer(JrSession.playingFile);
 				return START_STICKY;
 			}
+        } else if (intent.getAction().equals(ACTION_STOP)) {
+            stopPlayback();
         }
 		return START_STICKY;
+	}
+	
+	private void initializePlaylist(String url) {
+		// stop any playback that is in action
+		if (JrSession.playingFile != null) stopPlayback();
+		if (url != null && !url.isEmpty()) mUrl = url;
+		
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_launcher);
+		builder.setOngoing(true);
+		builder.setContentTitle("Starting Music Streamer");
+        startForeground(mId, builder.build());
+        
+		initMediaPlayers();
 	}
 	
 	@Override
@@ -214,7 +226,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		
 		return mBinder;
 	}
 
@@ -228,6 +239,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public void onJrFileComplete(JrFile file) {
 		mAudioManager.abandonAudioFocus(this);
+		// release the wifilock if we still have it
 		if (mWifiLock != null) {
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
@@ -268,9 +280,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().pause();
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying())	pausePlayback();
 	            break;
-
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
