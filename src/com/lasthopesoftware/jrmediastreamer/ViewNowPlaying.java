@@ -184,7 +184,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 
 			mNowPlayingText.setText(title);
 			try {
-				mNowPlayingImg.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString()).get());
+				mNowPlayingImg.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(mNowPlayingImg.getWidth())).get());
 				mNowPlayingImg.setScaleType(ScaleType.CENTER_INSIDE);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -202,7 +202,15 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				Bitmap returnBmp = null;
 
 				try {
-					JrConnection conn = new JrConnection("File/GetImage", "File=" + params[0], "Size=Large");
+					JrConnection conn = new JrConnection(
+												"File/GetImage", 
+												"File=" + params[0], 
+												"Type=Full",
+												"Width=" + params[1], 
+												"Height=" + params[1], 
+												"Pad=1",
+												"Format=png",
+												"FillTransparency=ffffff");
 					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 				} catch (Exception e) {
 					e.printStackTrace();
