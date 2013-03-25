@@ -1,18 +1,12 @@
 package jrAccess;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFileUtils;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import xmlwise.XmlElement;
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
 
 public class JrFileXmlHandler extends DefaultHandler {
 	

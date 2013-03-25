@@ -14,9 +14,6 @@ import jrFileSystem.JrFile;
 
 import org.xml.sax.SAXException;
 
-import xmlwise.XmlElement;
-
-import android.R.xml;
 import android.os.AsyncTask;
 
 public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {

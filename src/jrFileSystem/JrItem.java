@@ -8,7 +8,6 @@ import java.util.Random;
 
 import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
-import jrAccess.JrFsResponseHandler;
 import jrAccess.JrSession;
 
 public class JrItem extends JrListing implements IJrItem<JrItem> {

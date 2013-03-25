@@ -40,9 +40,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static final String ACTION_START = "com.lasthopesoftware.jrmediastreamer.ACTION_START";
 	public static final String ACTION_PLAY = "com.lasthopesoftware.jrmediastreamer.ACTION_PLAY";
 	public static final String ACTION_STOP = "com.lasthopesoftware.jrmediastreamer.ACTION_STOP";
-	private static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
-	private static final String ACTION_NEXT = "com.lasthopesoftware.jrmediastreamer.ACTION_NEXT";
-	private static final String ACTION_PREVIOUS = "com.lasthopesoftware.jrmediastreamer.ACTION_PREVIOUS";
+	public static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
+	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE";
 	private static int mId = new Random().nextInt();
 	private WifiLock mWifiLock = null;
 	private String mUrl;
@@ -128,7 +127,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         
         file.getMediaPlayer().start();
         mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        BackgroundFileWorker backgroundProgressThread = new BackgroundFileWorker(this, file);
+        BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, file);
         if (file.getNextFile() != null) {
 	        trackProgressThread = new Thread(backgroundProgressThread);
 	        trackProgressThread.setName("Thread to prepare file " + file.getNextFile().getValue());
@@ -137,17 +136,22 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         }
 	}
 	
-	private void stopPlayback() {
+	private void stopPlayback(boolean isUserInterrupted) {
+		
 		if (JrSession.playingFile != null) {
-			if (JrSession.playingFile.isPlaying()) JrSession.playingFile.getMediaPlayer().stop();
+			if (JrSession.playingFile.isPlaying()) {
+				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
+				JrSession.playingFile.getMediaPlayer().stop();
+			}
 			JrSession.playingFile = null;
 			releaseMediaPlayers();
 		}
 		stopNotification();
 	}
 	
-	private void pausePlayback() {
+	private void pausePlayback(boolean isUserInterrupted) {
 		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
+			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.playingFile.getMediaPlayer().pause();
 		}
 		stopNotification();
@@ -189,21 +193,21 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				initializePlaylist(intent.getDataString());
 			}
         } else if (intent.getAction().equals(ACTION_PAUSE)) {
-        	pausePlayback();
+        	pausePlayback(true);
         } else if (intent.getAction().equals(ACTION_PLAY)) {
         	if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
-				startMediaPlayer(JrSession.playingFile);
+        		startMediaPlayer(JrSession.playingFile);
 				return START_STICKY;
 			}
         } else if (intent.getAction().equals(ACTION_STOP)) {
-            stopPlayback();
+        	stopPlayback(true);
         }
 		return START_STICKY;
 	}
 	
 	private void initializePlaylist(String url) {
 		// stop any playback that is in action
-		if (JrSession.playingFile != null) stopPlayback();
+		if (JrSession.playingFile != null) stopPlayback(false);
 		if (url != null && !url.isEmpty()) mUrl = url;
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -275,16 +279,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) {
-	            	stopPlayback();
-	            }
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) stopPlayback(false);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying())	pausePlayback();
+	            if (JrSession.playingFile.getMediaPlayer().isPlaying())	pausePlayback(false);
 	            break;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing

@@ -53,6 +53,7 @@
                 <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PLAY" />
                 <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_STOP" />
                 <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_START" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE" />
             </intent-filter>
             <!-- <intent-filter>
                 <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PLAY" />

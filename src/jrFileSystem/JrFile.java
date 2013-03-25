@@ -1,11 +1,8 @@
 package jrFileSystem;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
@@ -23,10 +20,8 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.widget.MediaController.MediaPlayerControl;
 import jrAccess.JrConnection;
 import jrAccess.JrFilePropertiesHandler;
-import jrAccess.JrFileXmlHandler;
 import jrAccess.JrSession;
 import jrAccess.JrTestConnection;
 
@@ -67,7 +62,12 @@ public class JrFile extends JrListing implements
 	}
 	
 	public String getUrl() {
-		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android");
+		/* Playback:
+		 * 0: Downloading (not real-time playback);
+		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.; 
+		 * 2: Real-time playback, no playback statistics handling (default: )
+		 */
+		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
 	}
 	
 	private String getMpUrl() throws InterruptedException, ExecutionException {
@@ -122,6 +122,19 @@ public class JrFile extends JrListing implements
 		return mProperties.get(name);
 	}
 	
+	public String getProperty(String name, boolean mostRecent) {
+		if (mostRecent) {
+			try {
+				mProperties.putAll(new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + name).get());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return getProperty(name);
+	}
+	
 	public void initMediaPlayer(Context context) {
 		if (mp != null) return;
 		
@@ -155,6 +168,7 @@ public class JrFile extends JrListing implements
 				mp.setDataSource(getMpUrl());
 				preparing = true;
 				mp.prepare();
+				prepared = true;
 			} catch (Exception e) {
 				e.printStackTrace();
 				preparing = false;
@@ -177,6 +191,11 @@ public class JrFile extends JrListing implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
+		int numberPlays = Integer.parseInt(getProperty("Number Plays", true));
+		setProperty("Number Plays", String.valueOf(++numberPlays));
+		
+		String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
+		setProperty("Last Played", lastPlayed);
 		releaseMediaPlayer();
 		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}

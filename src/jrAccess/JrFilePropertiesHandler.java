@@ -1,10 +1,7 @@
 package jrAccess;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.TreeMap;
 
-import jrFileSystem.JrFile;
 import jrFileSystem.JrFileUtils;
 
 import org.xml.sax.Attributes;
