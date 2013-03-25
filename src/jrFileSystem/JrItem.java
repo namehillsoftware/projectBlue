@@ -55,7 +55,7 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 		
 		mFiles = new ArrayList<JrFile>();
 		try {
-			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Artist,Album,Name,Duration").get(); 
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name").get(); 
 			mFiles.addAll(tempFiles);
 			for (JrFile file : mFiles) file.setSiblings(mFiles);
 		} catch (Exception e) {

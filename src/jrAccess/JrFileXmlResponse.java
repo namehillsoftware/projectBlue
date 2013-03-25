@@ -1,6 +1,7 @@
 package jrAccess;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,9 @@ import jrFileSystem.JrFile;
 
 import org.xml.sax.SAXException;
 
+import xmlwise.XmlElement;
+
+import android.R.xml;
 import android.os.AsyncTask;
 
 public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {
@@ -45,6 +49,10 @@ public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {
 		}
 		
 		return returnFiles;
+	}
+	
+	protected void SimpleParse(InputStream is) {
+		return;
 	}
 
 }

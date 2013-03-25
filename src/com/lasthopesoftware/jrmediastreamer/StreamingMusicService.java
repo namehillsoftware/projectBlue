@@ -11,6 +11,7 @@ import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.OnJrFileCompleteListener;
 import jrFileSystem.OnJrFilePreparedListener;
+import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -36,12 +37,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		OnJrFileCompleteListener, OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
-	public static final String ACTION_START = "com.lasthopsoftware.jrmediastreamer.ACTION_START";
-	public static final String ACTION_PLAY = "com.lasthopsoftware.jrmediastreamer.ACTION_PLAY";
-	public static final String ACTION_STOP = "com.lasthopsoftware.jrmediastreamer.ACTION_STOP";
-	private static final String ACTION_PAUSE = "com.lasthopsoftware.jrmediastreamer.ACTION_PAUSE";
-	private static final String ACTION_NEXT = "com.lasthopsoftware.jrmediastreamer.ACTION_NEXT";
-	private static final String ACTION_PREVIOUS = "com.lasthopsoftware.jrmediastreamer.ACTION_PREVIOUS";
+	public static final String ACTION_START = "com.lasthopesoftware.jrmediastreamer.ACTION_START";
+	public static final String ACTION_PLAY = "com.lasthopesoftware.jrmediastreamer.ACTION_PLAY";
+	public static final String ACTION_STOP = "com.lasthopesoftware.jrmediastreamer.ACTION_STOP";
+	private static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
+	private static final String ACTION_NEXT = "com.lasthopesoftware.jrmediastreamer.ACTION_NEXT";
+	private static final String ACTION_PREVIOUS = "com.lasthopesoftware.jrmediastreamer.ACTION_PREVIOUS";
 	private static int mId = new Random().nextInt();
 	private WifiLock mWifiLock = null;
 	private String mUrl;
@@ -55,8 +56,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrFile file = startFile;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
-		Intent newIntent = new Intent(context, ViewNowPlaying.class);
-		context.startActivity(newIntent);
+		Intent viewIntent = new Intent(context, ViewNowPlaying.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		context.startActivity(viewIntent);
 	}
 	
 	public static void Play(Context context) {
@@ -72,14 +74,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static void Next(Context context) {
 		JrFile nextFile = JrSession.playingFile.getNextFile();
 		if (nextFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getUrl()));
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
 	}
 	
 	public static void Previous(Context context) {
 		JrFile previousFile = JrSession.playingFile.getPreviousFile();
 		if (previousFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getUrl()));
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
 	}
 	
@@ -111,22 +113,24 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.playingFile = file;
 		mUrl = file.getUrl();
 		// Set the notification area
-		PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, ViewNowPlaying.class), 0);
+		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_launcher);
 		builder.setOngoing(true);
 		builder.setContentTitle("Music Streamer Now Playing");
-		builder.setContentText(file.getArtist() + " - " + file.getValue());
+		builder.setContentText(file.getProperty("Artist") + " - " + file.getValue());
 		builder.setContentIntent(pi);
 		mNotificationMgr.notify(mId, builder.build());        
         
         file.getMediaPlayer().start();
         mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        PrepareNextMediaPlayer backgroundPreparer = new PrepareNextMediaPlayer(this, file);
+        BackgroundFileWorker backgroundProgressThread = new BackgroundFileWorker(this, file);
         if (file.getNextFile() != null) {
-	        trackProgressThread = new Thread(backgroundPreparer);
+	        trackProgressThread = new Thread(backgroundProgressThread);
 	        trackProgressThread.setName("Thread to prepare file " + file.getNextFile().getValue());
 	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
 	        trackProgressThread.start();

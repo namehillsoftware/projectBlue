@@ -51,7 +51,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	public ArrayList<JrFile> getFiles() {
 		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
 		try {
-			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Fields=Key,Artist,Album,Name,Duration").get();
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Fields=Key,Name").get();
 			returnFiles = new ArrayList<JrFile>(tempFiles.size());
 			returnFiles.addAll(tempFiles);
 			for (JrFile file : returnFiles) file.setSiblings(returnFiles);
@@ -65,7 +65,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	public ArrayList<JrFile> getFiles(int option) {
 		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
 		try {
-			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1", "Fields=Key,Artist,Album,Name,Duration").get();
+			List<JrFile> tempFiles = (new JrFileXmlResponse()).execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1", "Fields=Key,Name").get();
 			returnFiles = new ArrayList<JrFile>(tempFiles.size());
 			returnFiles.addAll(tempFiles);
 			for (JrFile file : returnFiles) file.setSiblings(returnFiles);

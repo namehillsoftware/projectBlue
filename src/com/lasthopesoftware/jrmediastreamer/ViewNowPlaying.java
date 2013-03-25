@@ -24,22 +24,22 @@ import android.widget.TextView;
 import android.support.v4.app.NavUtils;
 
 public class ViewNowPlaying extends Activity implements Runnable {
-	private static TextView mNowPlayingText;
-	private static ImageView mNowPlayingImg;
+	private TextView mNowPlayingText;
+	private ImageView mNowPlayingImg;
 //	private MediaController mMediaPlayerControl;
-	private static SeekBar mSeekbar;
-	private static ImageButton mPlay;
-	private static ImageButton mPause;
-	private static ImageButton mNext;
-	private static ImageButton mPrevious;
-	
-	private static Thread mTrackerThread;
+	private SeekBar mSeekbar;
+	private ImageButton mPlay;
+	private ImageButton mPause;
+	private ImageButton mNext;
+	private ImageButton mPrevious;
+	private Thread mTrackerThread;
 	
 	private static int UPDATE_ALL = 0;
 	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
 	
-	private static Handler handler = new Handler() {
+	@SuppressLint("HandlerLeak")
+	private Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.arg1 == SET_STOPPED) {
@@ -92,17 +92,17 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		});
         
         if (mTrackerThread == null) {
-	        mTrackerThread = new Thread(this);
-	        mTrackerThread.setPriority(Thread.MIN_PRIORITY);
-	        mTrackerThread.setName("Tracker Thread");
-	        mTrackerThread.start();
+        	mTrackerThread = new Thread(this);
+        	mTrackerThread.setPriority(Thread.MIN_PRIORITY);
+        	mTrackerThread.setName("Tracker Thread");
+        	mTrackerThread.start();
         }
     }
     
-    private static void setView() {
-    	String title = JrSession.playingFile.getArtist() + " - " + JrSession.playingFile.getValue();
-    	if (JrSession.playingFile.getAlbum() != null)
-    		title += "\n (" + JrSession.playingFile.getAlbum() + ")";
+    private void setView() {
+    	String title = JrSession.playingFile.getProperty("Artist") + " - " + JrSession.playingFile.getValue();
+    	if (JrSession.playingFile.getProperty("Album") != null)
+    		title += "\n (" + JrSession.playingFile.getProperty("Album") + ")";
         
         mNowPlayingText.setText(title);
         try {
@@ -156,7 +156,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
     	
     }
     
-    private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
+    private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
 
 		@Override
 		protected Bitmap doInBackground(String... params) {

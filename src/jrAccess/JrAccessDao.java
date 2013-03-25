@@ -1,7 +1,9 @@
 package jrAccess;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -124,7 +126,21 @@ public class JrAccessDao {
 		// add arguments
 		if (params.length > 1) {
 			for (int i = 1; i < params.length; i++) {
-				url += params[i] + "&";
+				String[] keyValue = params[i].split("=");
+				try {
+					url += URLEncoder.encode(keyValue[0], "UTF-8").replace("+", "%20");
+				} catch (UnsupportedEncodingException e) {
+					url += keyValue[0];
+				}
+				if (keyValue.length > 1) {
+					url += "=";
+					try {
+						url += URLEncoder.encode(keyValue[1], "UTF-8").replace("+", "%20");
+					} catch (UnsupportedEncodingException e) {
+						url += keyValue[1];
+					}
+				}
+				url += "&";
 			}
 		}
 		

@@ -46,25 +46,29 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".StreamingMusicService" >
+        <service android:name=".StreamingMusicService" android:enabled="true" >
 
             <intent-filter>
-                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_PLAY" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PLAY" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_STOP" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_START" />
+            </intent-filter>
+            <!-- <intent-filter>
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PLAY" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_PAUSE" />
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_STOP" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_STOP" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.lasthopsoftware.jrmediastreamer.ACTION_START" />
-            </intent-filter>
+                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_START" />
+            </intent-filter> -->
         </service>
 
         <activity
             android:name=".ViewNowPlaying"
-            android:label="@string/title_activity_view_now_playing" >
+            android:label="@string/title_activity_view_now_playing"
+            android:launchMode="singleTop" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.jrmediastreamer.ViewFiles" />

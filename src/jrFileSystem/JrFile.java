@@ -1,30 +1,42 @@
 package jrFileSystem;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXException;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.widget.MediaController.MediaPlayerControl;
+import jrAccess.JrConnection;
+import jrAccess.JrFilePropertiesHandler;
+import jrAccess.JrFileXmlHandler;
 import jrAccess.JrSession;
 import jrAccess.JrTestConnection;
 
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
 	OnErrorListener, 
-	OnCompletionListener,
-	MediaPlayerControl
+	OnCompletionListener	
 {
-
-	private String mArtist;
-	private String mAlbum;
-	private String mGenre;
-	private int mTrackNumber;
-	private double mDuration;
+	private TreeMap<String, String> mProperties= null;
+	
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private MediaPlayer mp;
@@ -35,16 +47,9 @@ public class JrFile extends JrListing implements
 	public JrFile(int key) {
 		this.setKey(key);
 	}
+	
 	public JrFile(int key, String value) {
 		super(key, value);
-	}
-	
-	public JrFile(int key, String value, String Artist, String Album, int TrackNumber) {
-		super(key, value);
-		
-		mArtist = Artist;
-		mAlbum = Album;
-		mTrackNumber = TrackNumber;
 	}
 	
 	public JrFile() {
@@ -69,66 +74,7 @@ public class JrFile extends JrListing implements
 		if (!JrTestConnection.doTest()) return null;
 		return getUrl();
 	}
-	/**
-	 * @return the mArtist
-	 */
-	public String getArtist() {
-		return mArtist;
-	}
-	/**
-	 * @param mArtist the mArtist to set
-	 */
-	public void setArtist(String mArtist) {
-		this.mArtist = mArtist;
-	}
-	/**
-	 * @return the mAlbum
-	 */
-	public String getAlbum() {
-		return mAlbum;
-	}
-	/**
-	 * @param mAlbum the mAlbum to set
-	 */
-	public void setAlbum(String mAlbum) {
-		this.mAlbum = mAlbum;
-	}
-	/**
-	 * @return the mGenre
-	 */
-	public String getGenre() {
-		return mGenre;
-	}
-	/**
-	 * @param mGenre the mGenre to set
-	 */
-	public void setGenre(String mGenre) {
-		this.mGenre = mGenre;
-	}
-	/**
-	 * @return the mTrackNumber
-	 */
-	public int getTrackNumber() {
-		return mTrackNumber;
-	}
-	/**
-	 * @param mTrackNumber the mTrackNumber to set
-	 */
-	public void setTrackNumber(int mTrackNumber) {
-		this.mTrackNumber = mTrackNumber;
-	}
-	/**
-	 * @return the mDuration
-	 */
-	public int getDuration() {
-		return (int)mDuration;
-	}
-	/**
-	 * @param mDuration the mDuration to set
-	 */
-	public void setDuration(double mDuration) {
-		this.mDuration = mDuration;
-	}
+	
 	/**
 	 * @return the prepared
 	 */
@@ -155,6 +101,25 @@ public class JrFile extends JrListing implements
 		if (position < 0) return;
 		if (position > 0 && files.size() > 1) mPreviousFile = files.get(position - 1);
 		if (position < files.size() - 1) mNextFile = files.get(position + 1);
+	}
+	
+	public void setProperty(String name, String value) {
+		Thread setPropertyThread = new Thread(new SetProperty(getKey(), name, value));
+		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
+		setPropertyThread.start();
+		mProperties.put(name, value);
+	}
+	
+	public String getProperty(String name) {
+		if (mProperties == null) {
+			try {
+				mProperties = new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey())).get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return mProperties.get(name);
 	}
 	
 	public void initMediaPlayer(Context context) {
@@ -221,41 +186,83 @@ public class JrFile extends JrListing implements
 		mp.reset();
 		return false;
 	}
-	@Override
-	public boolean canPause() {
-		return true;
-	}
-	@Override
-	public boolean canSeekBackward() {
-		return true;
-	}
-	@Override
-	public boolean canSeekForward() {
-		return true;
-	}
-	@Override
+
 	public int getBufferPercentage() {
 		return (mp.getCurrentPosition() * 100) / mp.getDuration();
 	}
-	@Override
+
 	public int getCurrentPosition() {
 		return mp.getCurrentPosition();
 	}
-	@Override
+
 	public boolean isPlaying() {
 		return mp != null && mp.isPlaying();
 	}
-	@Override
+
 	public void pause() {
 		mp.pause();
 	}
-	@Override
+
 	public void seekTo(int pos) {
 		mp.seekTo(pos);
 	}
-	@Override
+
 	public void start() {
 		mp.start();
 	}
 	
+	private static class JrFilePropertyResponse extends AsyncTask<String, Void, TreeMap<String, String>> {
+
+		@Override
+		protected TreeMap<String, String> doInBackground(String... params) {
+			TreeMap<String, String> returnProperties = new TreeMap<String, String>();
+			
+			JrConnection conn;
+			try {
+				conn = new JrConnection(params);
+				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+				SAXParser sp = parserFactory.newSAXParser();
+		    	JrFilePropertiesHandler jrFileProperties = new JrFilePropertiesHandler();
+		    	sp.parse(conn.getInputStream(), jrFileProperties);
+		    	
+		    	returnProperties = jrFileProperties.getProperties();
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParserConfigurationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return returnProperties != null ? returnProperties : new TreeMap<String, String>();
+		}
+	}
+	
+	private static class SetProperty implements Runnable {
+		private int mKey;
+		private String mName;
+		private String mValue;
+		
+		public SetProperty(int key, String name, String value) {
+			mKey = key;
+			mName = name;
+			mValue = value;
+		}
+		
+		public void run() {
+			try {
+				JrConnection conn = new JrConnection("File/SetInfo", "File=" + String.valueOf(mKey), "Field=" + mName, "Value=" + mValue);
+				conn.getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+	}
 }

@@ -22,4 +22,8 @@
     <string name="btnPause">Pause</string>
     <string name="btnPrevious">Previous</string>
     <string name="btnNext">Next</string>
+    <string name="actionStart">com.lasthopesoftware.jrmediastreamer.ACTION_START</string>
+    <string name="actionStop">com.lasthopesoftware.jrmediastreamer.ACTION_STOP</string>
+    <string name="actionPlay">com.lasthopesoftware.jrmediastreamer.ACTION_PLAY</string>
+    <string name="actionPause">com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE</string>
 </resources>
