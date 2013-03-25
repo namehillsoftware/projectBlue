@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.Menu;
@@ -184,8 +185,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 
 			mNowPlayingText.setText(title);
 			try {
-				mNowPlayingImg.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(mNowPlayingImg.getWidth())).get());
-				mNowPlayingImg.setScaleType(ScaleType.CENTER_INSIDE);
+				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight(); 
+				mNowPlayingImg.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(size)).get());
+				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
