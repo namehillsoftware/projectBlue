@@ -106,6 +106,7 @@ public class JrFile extends JrListing implements
 	public void setProperty(String name, String value) {
 		Thread setPropertyThread = new Thread(new SetProperty(getKey(), name, value));
 		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
+		setPropertyThread.setPriority(Thread.MIN_PRIORITY);
 		setPropertyThread.start();
 		mProperties.put(name, value);
 	}
@@ -191,11 +192,10 @@ public class JrFile extends JrListing implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		int numberPlays = Integer.parseInt(getProperty("Number Plays", true));
-		setProperty("Number Plays", String.valueOf(++numberPlays));
-		
-		String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
-		setProperty("Last Played", lastPlayed);
+		Thread updateStatsThread = new Thread(new UpdatePlayStats(this));
+		updateStatsThread.setName("Asynchronous Update Stats Thread for " + getValue());
+		updateStatsThread.start();
+		updateStatsThread.setPriority(Thread.MIN_PRIORITY);
 		releaseMediaPlayer();
 		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}
@@ -274,6 +274,7 @@ public class JrFile extends JrListing implements
 			mValue = value;
 		}
 		
+		@Override
 		public void run() {
 			try {
 				JrConnection conn = new JrConnection("File/SetInfo", "File=" + String.valueOf(mKey), "Field=" + mName, "Value=" + mValue);
@@ -282,6 +283,23 @@ public class JrFile extends JrListing implements
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}			
+		}
+	}
+	
+	private static class UpdatePlayStats implements Runnable {
+		private JrFile mFile;
+		
+		public UpdatePlayStats(JrFile file) {
+			mFile = file;
+		}
+		
+		@Override
+		public void run() {
+			int numberPlays = Integer.parseInt(mFile.getProperty("Number Plays", true));
+			mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
+			
+			String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
+			mFile.setProperty("Last Played", lastPlayed);
 		}
 	}
 }
