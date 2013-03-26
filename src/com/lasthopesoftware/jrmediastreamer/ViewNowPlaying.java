@@ -145,6 +145,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			return;
 		}
 	}
 

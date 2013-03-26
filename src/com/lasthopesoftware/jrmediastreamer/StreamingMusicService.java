@@ -178,6 +178,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		/* starting not sticky since I don't think keeping this in memory
+		 * is the way to go.... (when not a foreground service). If I do
+		 * change it in the future, it should save it's state in local
+		 * long-term memory.
+		 */
+		 
+		
 		// 3/5 times it's going to be this so let's see if we can get
 		// some improved prefetching by the processor
 		if (intent.getAction().equals(ACTION_START)) {
@@ -194,15 +201,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			}
         } else if (intent.getAction().equals(ACTION_PAUSE)) {
         	pausePlayback(true);
-        } else if (intent.getAction().equals(ACTION_PLAY)) {
-        	if (JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
-        		startMediaPlayer(JrSession.playingFile);
-				return START_STICKY;
-			}
+        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
+    		startMediaPlayer(JrSession.playingFile);
         } else if (intent.getAction().equals(ACTION_STOP)) {
         	stopPlayback(true);
         }
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 	
 	private void initializePlaylist(String url) {
