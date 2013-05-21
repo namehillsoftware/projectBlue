@@ -5,18 +5,19 @@ package com.lasthopesoftware.jrmediastreamer;
 
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.OnJrFileCompleteListener;
 import jrFileSystem.OnJrFilePreparedListener;
-import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
@@ -26,6 +27,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
 
@@ -42,7 +44,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static final String ACTION_STOP = "com.lasthopesoftware.jrmediastreamer.ACTION_STOP";
 	public static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
 	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE";
-	private static int mId = new Random().nextInt();
+	public static final String STORED_PLAYLIST = "com.lasthopesoftware.jrmediastreamer.STORED_PLAYLIST";
+	private static int mId = 42;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
 	private NotificationManager mNotificationMgr;
@@ -52,6 +55,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
 		JrSession.playlist = playlist;
+		
+		LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>();
+		for (JrFile file : playlist) 
+			serializedPlaylist.add(Integer.toString(file.getKey()));
+		SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+		prefsEditor.putStringSet(StreamingMusicService.STORED_PLAYLIST, serializedPlaylist);
+		prefsEditor.commit();
+		
 		JrFile file = startFile;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
@@ -153,6 +164,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.playingFile.getMediaPlayer().pause();
+			SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+//			prefsEditor.put
 		}
 		stopNotification();
 	}
@@ -178,35 +191,33 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		/* starting not sticky since I don't think keeping this in memory
-		 * is the way to go.... (when not a foreground service). If I do
-		 * change it in the future, it should save it's state in local
-		 * long-term memory.
+		/* Should be modified to save its state locally in the future.
 		 */
 		 
-		
-		// 3/5 times it's going to be this so let's see if we can get
-		// some improved prefetching by the processor
-		if (intent.getAction().equals(ACTION_START)) {
-			// Want to handle two situations: when the playlist is empty
-			// or when a new playlist is given, start playback on new playlist
-			if (playlist == null || !playlist.equals(JrSession.playlist)) {
-				playlist = JrSession.playlist;
-				initializePlaylist(intent.getDataString());
-			} else if (!mUrl.equals(intent.getDataString())) {
-				// Other situation: Selected track has changed, but playlist hasn't
-				// Already know that mUrl is not null since the above condition being
-				// true would have caught that
-				initializePlaylist(intent.getDataString());
-			}
-        } else if (intent.getAction().equals(ACTION_PAUSE)) {
-        	pausePlayback(true);
-        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
-    		startMediaPlayer(JrSession.playingFile);
-        } else if (intent.getAction().equals(ACTION_STOP)) {
-        	stopPlayback(true);
-        }
-		return START_NOT_STICKY;
+		if (intent != null) {
+			// 3/5 times it's going to be this so let's see if we can get
+			// some improved prefetching by the processor
+			if (intent.getAction().equals(ACTION_START)) {
+				// Want to handle two situations: when the playlist is empty
+				// or when a new playlist is given, start playback on new playlist
+				if (playlist == null || !playlist.equals(JrSession.playlist)) {
+					playlist = JrSession.playlist;
+					initializePlaylist(intent.getDataString());
+				} else if (!mUrl.equals(intent.getDataString())) {
+					// Other situation: Selected track has changed, but playlist hasn't
+					// Already know that mUrl is not null since the above condition being
+					// true would have caught that
+					initializePlaylist(intent.getDataString());
+				}
+	        } else if (intent.getAction().equals(ACTION_PAUSE)) {
+	        	pausePlayback(true);
+	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
+	    		startMediaPlayer(JrSession.playingFile);
+	        } else if (intent.getAction().equals(ACTION_STOP)) {
+	        	stopPlayback(true);
+	        }
+		}
+		return START_STICKY;
 	}
 	
 	private void initializePlaylist(String url) {
