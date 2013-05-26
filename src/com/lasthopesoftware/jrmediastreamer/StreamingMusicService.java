@@ -6,8 +6,6 @@ package com.lasthopesoftware.jrmediastreamer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.Set;
-
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.OnJrFileCompleteListener;
