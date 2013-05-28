@@ -3,14 +3,15 @@ package com.lasthopesoftware.jrmediastreamer;
 import jrAccess.JrConnection;
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,14 +19,14 @@ import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.support.v4.app.NavUtils;
 
 public class ViewNowPlaying extends Activity implements Runnable {
 	private TextView mNowPlayingText;
 	private ImageView mNowPlayingImg;
-	// private MediaController mMediaPlayerControl;
+	private ProgressBar mLoadingImg;
 	private SeekBar mSeekbar;
 	private ImageButton mPlay;
 	private ImageButton mPause;
@@ -50,7 +51,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mPause = (ImageButton) findViewById(R.id.btnPause);
 		mNext = (ImageButton) findViewById(R.id.btnNext);
 		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
-
+				
+		
 		/* Toggle play/pause */
 		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
 		mPlay.setOnClickListener(togglePlayPauseListener);
@@ -187,7 +189,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			mNowPlayingText.setText(title);
 			try {
 				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight(); 
-				mNowPlayingImg.setImageBitmap(new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(size)).get());
+				mNowPlayingImg.setImageBitmap(new GetFileImage().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, JrSession.playingFile.getKey().toString(), String.valueOf(size)).get());
 				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -198,7 +200,12 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		}
 
 		private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
-
+			@Override
+			protected void onPreExecute() {
+				mNowPlayingImg.setVisibility(View.INVISIBLE);
+				
+			}
+			
 			@Override
 			protected Bitmap doInBackground(String... params) {
 
