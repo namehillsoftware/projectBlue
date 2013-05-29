@@ -24,10 +24,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class ViewNowPlaying extends Activity implements Runnable {
-	private TextView mNowPlayingText;
-	private ImageView mNowPlayingImg;
-	private ProgressBar mLoadingImg;
-	private SeekBar mSeekbar;
 	private ImageButton mPlay;
 	private ImageButton mPause;
 	private ImageButton mNext;
@@ -44,9 +40,6 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_view_now_playing);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
-		mSeekbar = (SeekBar) findViewById(R.id.sbNowPlaying);
-		mNowPlayingImg = (ImageView) findViewById(R.id.imgNowPlaying);
-		mNowPlayingText = (TextView) findViewById(R.id.tvNowPlaying);
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
 		mPause = (ImageButton) findViewById(R.id.btnPause);
 		mNext = (ImageButton) findViewById(R.id.btnNext);
@@ -73,7 +66,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				StreamingMusicService.Previous(v.getContext());
 			}
 		});
-		mHandler = new HandleStreamMessages(mNowPlayingText, mNowPlayingImg, mSeekbar, mPlay, mPause);
+		mHandler = new HandleStreamMessages(this);
 		if (mTrackerThread != null) mTrackerThread.interrupt();
 
 		mTrackerThread = new Thread(this);
@@ -157,13 +150,17 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private SeekBar mSeekbar;
 		private ImageButton mPlay;
 		private ImageButton mPause;
+		private ProgressBar mLoadingImg;
 
-		public HandleStreamMessages(TextView tv, ImageView iv, SeekBar seekbar, ImageButton play, ImageButton pause) {
-			mNowPlayingText = tv;
-			mNowPlayingImg = iv;
-			mSeekbar = seekbar;
-			mPlay = play;
-			mPause = pause;
+		public HandleStreamMessages(ViewNowPlaying owner) {
+			mSeekbar = (SeekBar) owner.findViewById(R.id.sbNowPlaying);
+			mLoadingImg = (ProgressBar) owner.findViewById(R.id.pbLoadingImg);
+			mNowPlayingImg = (ImageView) owner.findViewById(R.id.imgNowPlaying);
+			mNowPlayingText = (TextView) owner.findViewById(R.id.tvNowPlaying);
+			mPlay = (ImageButton) owner.findViewById(R.id.btnPlay);
+			mPause = (ImageButton) owner.findViewById(R.id.btnPause);
+//			mNext = (ImageButton) findViewById(R.id.btnNext);
+//			mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		}
 
 		@Override
@@ -187,23 +184,24 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			if (JrSession.playingFile.getProperty("Album") != null) title += "\n (" + JrSession.playingFile.getProperty("Album") + ")";
 
 			mNowPlayingText.setText(title);
+			
+			mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
+			mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
 			try {
-				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight(); 
-				mNowPlayingImg.setImageBitmap(new GetFileImage().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, JrSession.playingFile.getKey().toString(), String.valueOf(size)).get());
-				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight();
+				new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(size));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			
 
-			mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
-			mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
 		}
 
 		private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
 			@Override
 			protected void onPreExecute() {
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
-				
+				mLoadingImg.setVisibility(View.VISIBLE);
 			}
 			
 			@Override
@@ -227,6 +225,14 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				}
 
 				return returnBmp;
+			}
+			
+			@Override
+			protected void onPostExecute(Bitmap result) {
+				mNowPlayingImg.setImageBitmap(result);
+				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+				mNowPlayingImg.setVisibility(View.VISIBLE);
+				mLoadingImg.setVisibility(View.INVISIBLE);
 			}
 		}
 	}

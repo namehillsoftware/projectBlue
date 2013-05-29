@@ -164,6 +164,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			JrSession.playingFile.getMediaPlayer().pause();
 			SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 //			prefsEditor.put
+			prefsEditor.commit();
 		}
 		stopNotification();
 	}
