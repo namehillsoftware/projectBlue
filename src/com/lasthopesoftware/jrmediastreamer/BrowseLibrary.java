@@ -1,26 +1,15 @@
 package com.lasthopesoftware.jrmediastreamer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import jrAccess.JrAccessDao;
-import jrAccess.JrLookUpResponseHandler;
+import java.util.Locale;
+
 import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
 import jrFileSystem.JrPlaylists;
-
-import org.apache.http.client.ClientProtocolException;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -60,14 +49,12 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
         	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
         	
-        	SharedPreferences.Editor prefsEditor = getPreferences(0).edit();
-        	prefsEditor.putString("access_code", txtAccessCode.getText().toString());
-        	prefsEditor.putString("user_auth_code", Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        	prefsEditor.commit();
+        	JrSession.AccessCode = txtAccessCode.getText().toString();
+        	JrSession.UserAuthCode = Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim();
         	
-        	setConnectionValues();
+        	JrSession.SaveSession(v.getContext());
         	
-        	if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return;
+        	if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
         	displayLibrary();
         }
     };
@@ -76,9 +63,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        setConnectionValues();
-        
-        if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) {
+        if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
         	displayConnectionSetup();
         	return;
         }
@@ -86,38 +71,17 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         displayLibrary();
     }
     
-    private void setConnectionValues() {
-    	SharedPreferences prefs = getPreferences(0);
-    	JrSession.AccessCode = !BuildConfig.DEBUG ? prefs.getString("access_code", "") : "88d0280158de7d924482f909fa199350";
-    	JrSession.UserAuthCode = prefs.getString("user_auth_code", "");
-    }
     
-    private boolean tryConnection() {
-    	boolean connectResult = false;
-    	try {
-			JrSession.accessDao = new GetMcAccess().execute(JrSession.AccessCode).get();
-			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	
-    	return connectResult;
-    }
     
     private void displayConnectionSetup() {
     	setContentView(R.layout.activity_set_up_connection);
-    	SharedPreferences prefs = getPreferences(0);
 
     	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
     	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
     	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
     	
-    	txtAccessCode.setText(prefs.getString("access_code", ""));
-    	String decryptedUserAuth = new String(Base64.decode(prefs.getString("user_auth_code", ""), Base64.DEFAULT));
+    	txtAccessCode.setText(JrSession.AccessCode);
+    	String decryptedUserAuth = new String(Base64.decode(JrSession.UserAuthCode, Base64.DEFAULT));
     	if (!decryptedUserAuth.isEmpty()) {
 	    	String[] userDetails = decryptedUserAuth.split(":",2);
 	    	txtUserName.setText(userDetails[0]);
@@ -219,7 +183,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         @Override
         public CharSequence getPageTitle(int position) {
         	
-            return getPages().get(position).getValue() != null ? getPages().get(position).getValue().toUpperCase() : "";
+            return getPages().get(position).getValue() != null ? getPages().get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
             
         }
         
@@ -267,43 +231,5 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     	}
     }    
     
-    public class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
-
-		@Override
-		protected JrAccessDao doInBackground(String... params) {
-			
-			JrAccessDao accessDao = null;
-			// MD5 hash of "vedvicktest" from http://www.md5hashgenerator.com/
-			if (params[0].equals("88d0280158de7d924482f909fa199350")) {
-				accessDao = new JrAccessDao("ok");
-				accessDao.setPort(52199);
-				accessDao.setRemoteIp("themachine.dyndns-home.com");
-				accessDao.getLocalIps().add("192.168.1.50");
-				return accessDao;
-			}
-	        try {
-	        	URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
-	        	SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-	        	SAXParser sp = parserFactory.newSAXParser();
-	        	JrLookUpResponseHandler responseHandler = new JrLookUpResponseHandler();
-	        	
-	        	InputStream mcResponseStream = conn.getInputStream();
-
-	        	sp.parse(mcResponseStream, responseHandler);
-	        	
-	        	accessDao = responseHandler.getResponse();
-	        		
-			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-	        
-	        return accessDao;
-		}
-    }
+    
 }

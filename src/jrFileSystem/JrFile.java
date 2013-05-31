@@ -41,6 +41,7 @@ public class JrFile extends JrListing implements
 	
 	public JrFile(int key) {
 		this.setKey(key);
+		this.setValue(getProperty("Name"));
 	}
 	
 	public JrFile(int key, String value) {

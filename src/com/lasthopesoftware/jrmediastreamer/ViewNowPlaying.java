@@ -44,7 +44,6 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mPause = (ImageButton) findViewById(R.id.btnPause);
 		mNext = (ImageButton) findViewById(R.id.btnNext);
 		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
-				
 		
 		/* Toggle play/pause */
 		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
@@ -151,6 +150,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private ImageButton mPlay;
 		private ImageButton mPause;
 		private ProgressBar mLoadingImg;
+		private static GetFileImage getFileImageTask;
 
 		public HandleStreamMessages(ViewNowPlaying owner) {
 			mSeekbar = (SeekBar) owner.findViewById(R.id.sbNowPlaying);
@@ -189,12 +189,19 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
 			try {
 				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight();
-				new GetFileImage().execute(JrSession.playingFile.getKey().toString(), String.valueOf(size));
+				
+				// Cancel the getFileImageTask if it is already in progress
+				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+					if (getFileImageTask.cancel(true)) {
+						while (!getFileImageTask.isCancelled()) Thread.sleep(500);
+					}
+				}
+				
+				getFileImageTask = new GetFileImage();
+				getFileImageTask.execute(JrSession.playingFile.getKey().toString(), String.valueOf(size));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
-
 		}
 
 		private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
@@ -231,8 +238,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			protected void onPostExecute(Bitmap result) {
 				mNowPlayingImg.setImageBitmap(result);
 				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
-				mNowPlayingImg.setVisibility(View.VISIBLE);
 				mLoadingImg.setVisibility(View.INVISIBLE);
+				mNowPlayingImg.setVisibility(View.VISIBLE);
 			}
 		}
 	}

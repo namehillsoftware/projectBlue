@@ -5,7 +5,7 @@ package com.lasthopesoftware.jrmediastreamer;
 
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
 import jrFileSystem.OnJrFileCompleteListener;
@@ -42,7 +42,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static final String ACTION_STOP = "com.lasthopesoftware.jrmediastreamer.ACTION_STOP";
 	public static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
 	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE";
-	public static final String STORED_PLAYLIST = "com.lasthopesoftware.jrmediastreamer.STORED_PLAYLIST";
 	private static int mId = 42;
 	private WifiLock mWifiLock = null;
 	private String mUrl;
@@ -53,13 +52,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
 		JrSession.playlist = playlist;
-		
-		LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>();
-		for (JrFile file : playlist) 
-			serializedPlaylist.add(Integer.toString(file.getKey()));
-		SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-		prefsEditor.putStringSet(StreamingMusicService.STORED_PLAYLIST, serializedPlaylist);
-		prefsEditor.commit();
 		
 		JrFile file = startFile;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
