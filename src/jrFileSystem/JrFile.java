@@ -20,6 +20,7 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
+import android.widget.Toast;
 import jrAccess.JrConnection;
 import jrAccess.JrFilePropertiesHandler;
 import jrAccess.JrSession;
@@ -174,7 +175,7 @@ public class JrFile extends JrListing implements
 			} catch (Exception e) {
 				e.printStackTrace();
 				preparing = false;
-			}			
+			}
 		}
 	}
 	
@@ -204,6 +205,7 @@ public class JrFile extends JrListing implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mp.reset();
+		prepareMediaPlayer();
 		return false;
 	}
 

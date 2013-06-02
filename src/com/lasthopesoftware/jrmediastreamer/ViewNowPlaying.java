@@ -34,11 +34,18 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private static int UPDATE_ALL = 0;
 	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
+	
+	private static final String SAVED_KEY = "IS_SAVED";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_view_now_playing);
+		
+		if (!JrSession.Active) {
+			JrSession.CreateSession(this);
+		}
+		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
 		mPause = (ImageButton) findViewById(R.id.btnPause);
@@ -73,7 +80,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
 	}
-
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_view_now_playing, menu);
@@ -191,10 +198,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight();
 				
 				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
-					if (getFileImageTask.cancel(true)) {
-						while (!getFileImageTask.isCancelled()) Thread.sleep(500);
-					}
+				if (getFileImageTask != null && 
+						(getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+					getFileImageTask.cancel(true);
 				}
 				
 				getFileImageTask = new GetFileImage();

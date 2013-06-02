@@ -40,6 +40,8 @@ public class JrSession {
     
     public static JrFileSystem jrFs;
     
+    public static boolean Active = false;
+    
     public static void SaveSession(Context context) {
     	SaveSession(context.getSharedPreferences(PREFS_FILE, 0).edit());
     }
@@ -48,10 +50,12 @@ public class JrSession {
     	prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
     	prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
     	
-    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(playlist.size());
-    	for (JrFile file : playlist) 
-			serializedPlaylist.add(Integer.toString(file.getKey()));
-    	prefsEditor.putStringSet(PLAYLIST_KEY, serializedPlaylist);
+    	if (playlist != null) {
+	    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(playlist.size());
+	    	for (JrFile file : playlist) 
+				serializedPlaylist.add(Integer.toString(file.getKey()));
+	    	prefsEditor.putStringSet(PLAYLIST_KEY, serializedPlaylist);
+    	}
 		
 		if (playingFile != null) {
 			prefsEditor.putInt(NOW_PLAYING_KEY, playingFile.getKey());
@@ -88,6 +92,7 @@ public class JrSession {
     		}
     	}
     	
+    	Active = true;
     	return true;
 	}
     
