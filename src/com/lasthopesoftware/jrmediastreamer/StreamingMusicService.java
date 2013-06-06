@@ -56,9 +56,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrFile file = startFile;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
-		Intent viewIntent = new Intent(context, ViewNowPlaying.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		context.startActivity(viewIntent);
+		CreateNowPlayingView(context);
 	}
 	
 	public static void Play(Context context) {
@@ -205,6 +203,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
 	        }
+		} else if (!JrSession.Active) {
+			JrSession.CreateSession(this);
+			pausePlayback(true);
+//			CreateNowPlayingView(this);
 		}
 		return START_STICKY;
 	}
@@ -319,4 +321,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
     private final IBinder mBinder = new StreamingMusicServiceBinder();
 	
 	/* End Binder Code */
+    
+    private static void CreateNowPlayingView(Context context) {
+    	Intent viewIntent = new Intent(context, ViewNowPlaying.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		context.startActivity(viewIntent);
+    }
 }

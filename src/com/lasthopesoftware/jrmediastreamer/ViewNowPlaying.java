@@ -34,17 +34,12 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private static int UPDATE_ALL = 0;
 	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
-	
-	private static final String SAVED_KEY = "IS_SAVED";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_view_now_playing);
 		
-		if (!JrSession.Active) {
-			JrSession.CreateSession(this);
-		}
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
@@ -158,8 +153,10 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private ImageButton mPause;
 		private ProgressBar mLoadingImg;
 		private static GetFileImage getFileImageTask;
+		private ViewNowPlaying mOwner;
 
 		public HandleStreamMessages(ViewNowPlaying owner) {
+			mOwner = owner;
 			mSeekbar = (SeekBar) owner.findViewById(R.id.sbNowPlaying);
 			mLoadingImg = (ProgressBar) owner.findViewById(R.id.pbLoadingImg);
 			mNowPlayingImg = (ImageView) owner.findViewById(R.id.imgNowPlaying);

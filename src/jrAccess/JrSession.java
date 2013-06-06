@@ -77,20 +77,13 @@ public class JrSession {
     	
     	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(prefs.getStringSet(PLAYLIST_KEY, new LinkedHashSet<String>()));
     	
-    	playlist = new ArrayList<JrFile>(serializedPlaylist.size());
-    	for (String id : serializedPlaylist)
-    		playlist.add(new JrFile(Integer.parseInt(id)));
-    	
-    	int nowPlayingFile = prefs.getInt(NOW_PLAYING_KEY, -1);
-    	
-    	if (nowPlayingFile > -1) {
-    		for (JrFile file : playlist) {
-    			if (file.getKey() == nowPlayingFile) {
-    				playingFile = file;
-//    				playingFile.seekTo(prefs.getInt(NP_POSITION, 0));
-    			}
-    		}
+    	Integer[] params = new Integer[serializedPlaylist.size()];
+    	int i = 0;
+    	for (String id : serializedPlaylist) {
+    		params[i++] = Integer.parseInt(id);
     	}
+    	
+    	new RebuildPlaylist(prefs.getInt(NOW_PLAYING_KEY, -1)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
     	
     	Active = true;
     	return true;
@@ -150,5 +143,37 @@ public class JrSession {
 	        
 	        return accessDao;
 		}
+    }
+    
+    private static class RebuildPlaylist extends AsyncTask<Integer, Void, ArrayList<JrFile>> {
+    	int mNowPlayingFieldId;
+    	
+    	public RebuildPlaylist(int nowPlayingFieldId) {
+    		super();
+    		mNowPlayingFieldId = nowPlayingFieldId;
+    	}
+    	
+		@Override
+		protected ArrayList<JrFile> doInBackground(Integer... params) {
+			ArrayList<JrFile> oldPlaylist = new ArrayList<JrFile>(params.length);
+	    	for (int id : params)
+	    		oldPlaylist.add(new JrFile(id));
+	    	return oldPlaylist;
+		}
+		
+		@Override
+		protected void onPostExecute(ArrayList<JrFile> result) {
+			// die if the playlist is not null already
+			if (playlist != null) return;
+			playlist = result;
+	    	if (mNowPlayingFieldId > -1) {
+	    		for (JrFile file : playlist) {
+	    			if (file.getKey() == mNowPlayingFieldId) {
+	    				playingFile = file;
+	    			}
+	    		}
+	    	}
+		}
+    	
     }
 }
