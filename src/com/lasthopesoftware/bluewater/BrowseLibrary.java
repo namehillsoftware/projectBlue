@@ -45,27 +45,11 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
-    
-    private OnClickListener mConnectionButtonListener = new OnClickListener() {
-        public void onClick(View v) {
-        	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-        	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-        	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
-        	
-        	JrSession.AccessCode = txtAccessCode.getText().toString();
-        	JrSession.UserAuthCode = Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim();
-        	
-        	JrSession.SaveSession(v.getContext());
-        	
-        	if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
-        	displayLibrary();
-        }
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+        setTitle("Library");
         if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
         	displayConnectionSetup();
         	return;
