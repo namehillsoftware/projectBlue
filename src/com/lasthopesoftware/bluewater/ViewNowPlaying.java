@@ -1,6 +1,8 @@
-package com.lasthopesoftware.jrmediastreamer;
+package com.lasthopesoftware.bluewater;
 
 import java.io.FileNotFoundException;
+
+import com.lasthopesoftware.bluewater.R;
 
 import jrAccess.JrConnection;
 import jrAccess.JrSession;

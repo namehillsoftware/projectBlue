@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.lasthopesoftware.jrmediastreamer"
+    package="com.lasthopesoftware.bluewater"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -17,7 +17,7 @@
         android:allowBackup="true" >
 
         <activity
-            android:name=".BrowseLibrary"
+            android:name="com.lasthopesoftware.bluewater.BrowseLibrary"
             android:label="@string/title_activity_browse_library" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,52 +27,52 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.jrmediastreamer.SetUpConnection"
+            android:name="com.lasthopesoftware.bluewater.SetUpConnection"
             android:label="@string/title_activity_set_up_connection">
             
         </activity>
         
         <activity
-            android:name=".ViewFiles"
+            android:name="com.lasthopesoftware.bluewater.ViewFiles"
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.jrmediastreamer.BrowseLibrary" />
+                android:value="com.lasthopesoftware.bluewater.BrowseLibrary" />
         </activity>
         
         <activity
-            android:name=".ViewPlaylists"
+            android:name="com.lasthopesoftware.bluewater.ViewPlaylists"
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.jrmediastreamer.BrowseLibrary" />
+                android:value="com.lasthopesoftware.bluewater.BrowseLibrary" />
         </activity>
 
-        <receiver android:name=".MusicIntentReceiver" >
+        <receiver android:name="com.lasthopesoftware.bluewater.MusicIntentReceiver" >
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".StreamingMusicService" android:enabled="true" android:exported="false">
+        <service android:name="com.lasthopesoftware.bluewater.StreamingMusicService" android:enabled="true" android:exported="false">
 
             <intent-filter>
-                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE" />
-                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_PLAY" />
-                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_STOP" />
-                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_START" />
-                <action android:name="com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_PAUSE" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_PLAY" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_STOP" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_START" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE" />
             </intent-filter>
             
         </service>
 
         <activity
-            android:name=".ViewNowPlaying"
+            android:name="com.lasthopesoftware.bluewater.ViewNowPlaying"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTop" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.jrmediastreamer.ViewFiles" />
+                android:value="com.lasthopesoftware.bluewater.ViewFiles" />
         </activity>
     </application>
 

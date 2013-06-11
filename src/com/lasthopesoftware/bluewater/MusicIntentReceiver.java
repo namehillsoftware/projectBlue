@@ -1,4 +1,4 @@
-package com.lasthopesoftware.jrmediastreamer;
+package com.lasthopesoftware.bluewater;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

@@ -1,4 +1,6 @@
-package com.lasthopesoftware.jrmediastreamer;
+package com.lasthopesoftware.bluewater;
+
+import com.lasthopesoftware.bluewater.R;
 
 import jrAccess.JrSession;
 import android.content.Intent;

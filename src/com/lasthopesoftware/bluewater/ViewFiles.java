@@ -1,4 +1,6 @@
-package com.lasthopesoftware.jrmediastreamer;
+package com.lasthopesoftware.bluewater;
+
+import com.lasthopesoftware.bluewater.R;
 
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrItem;

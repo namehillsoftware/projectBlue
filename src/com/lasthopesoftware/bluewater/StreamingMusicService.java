@@ -1,10 +1,12 @@
 /**
  * 
  */
-package com.lasthopesoftware.jrmediastreamer;
+package com.lasthopesoftware.bluewater;
 
 
 import java.util.ArrayList;
+
+import com.lasthopesoftware.bluewater.R;
 
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
