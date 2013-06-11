@@ -52,6 +52,7 @@ public class CategoryFragment extends Fragment {
 	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 	    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 	    		intent.putExtra(ViewFiles.KEY, selection.getKey());
+	    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
 	    		JrSession.selectedItem = selection;
 	    		startActivity(intent);
 	    		return true;
@@ -64,6 +65,7 @@ public class CategoryFragment extends Fragment {
 	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 	    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 	    		intent.putExtra(ViewFiles.KEY, selection.getKey());
+	    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
 	    		JrSession.selectedItem = selection;
 	    		startActivity(intent);
     	        return true;
@@ -71,6 +73,7 @@ public class CategoryFragment extends Fragment {
 	    });
     	listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
     	listView.setAdapter(adapter);
+//    	listView.setGroupIndicator(null);
         return listView;
     }
     
@@ -135,9 +138,13 @@ public class CategoryFragment extends Fragment {
 //		        textView.setTextColor(getResources().getColor(marcyred));
 	        // Set the text starting position        
 	        textView.setPadding(64, 20, 20, 20);
+//	        textView.setPadding(20, 20, 20, 20);
 		    textView.setText(mCategoryItems.get(groupPosition).getValue());
 	        
-//			return BrowseItemMenu.getView(mCategoryItems.get(groupPosition), convertView, parent);
+//		    if (getChildrenCount(groupPosition) < 1) {
+//		    	
+//		    }
+		    
 			return textView;
 		}
 

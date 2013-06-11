@@ -39,7 +39,7 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 		mSubItems = new ArrayList<JrItem>();
 		if (JrSession.accessDao == null) return mSubItems;
 		try {
-			List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1").get();
+			List<JrItem> tempSubItems = (new JrFsResponse<JrItem>(JrItem.class)).execute( "Browse/Children", "ID=" + String.valueOf(this.getKey())).get();
 			mSubItems.addAll(tempSubItems);
 		} catch (Exception e) {
 			e.printStackTrace();

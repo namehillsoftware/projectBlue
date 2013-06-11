@@ -28,7 +28,6 @@ public class BackgroundFilePreparer implements Runnable {
 			try {
 				if (mCurrentFile.getMediaPlayer().getCurrentPosition() > (mCurrentFile.getMediaPlayer().getDuration() - mBufferTime)) {
 					if (!mNextFile.isPrepared()) mNextFile.prepareMpSynchronously();
-					return;
 				}
 				Thread.sleep(5000);
 			} catch (Exception e) {

@@ -128,6 +128,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, file);
         if (file.getNextFile() != null) {
+        	if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 	        trackProgressThread = new Thread(backgroundProgressThread);
 	        trackProgressThread.setName("Thread to prepare file " + file.getNextFile().getValue());
 	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
@@ -206,7 +207,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		} else if (!JrSession.Active) {
 			JrSession.CreateSession(this);
 			pausePlayback(true);
-//			CreateNowPlayingView(this);
 		}
 		return START_STICKY;
 	}
