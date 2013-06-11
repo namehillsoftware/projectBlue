@@ -1,5 +1,7 @@
 package com.lasthopesoftware.jrmediastreamer;
 
+import java.io.FileNotFoundException;
+
 import jrAccess.JrConnection;
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
@@ -208,6 +210,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		}
 
 		private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
+			private boolean isFileFound = false;
+			
 			@Override
 			protected void onPreExecute() {
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
@@ -230,6 +234,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 												"Format=png",
 												"FillTransparency=ffffff");
 					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
+					isFileFound = true;
+				} catch (FileNotFoundException fe) {
+					isFileFound = false;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

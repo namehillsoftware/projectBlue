@@ -278,8 +278,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            // resume playback
 	            /*if (playlist == null || playlist.isEmpty()) initMediaPlayers();
 	            else */
-	        	if (JrSession.playingFile.getMediaPlayer() == null) startMediaPlayer(JrSession.playingFile);
-	            else if (!JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().start();
+	        	if (JrSession.playingFile.getMediaPlayer() == null) {
+	        		initializePlaylist(JrSession.playingFile.getUrl());
+//	        		startMediaPlayer(JrSession.playingFile);
+	        	}
+	            else if (!JrSession.playingFile.getMediaPlayer().isPlaying()) startMediaPlayer(JrSession.playingFile);
 	            JrSession.playingFile.getMediaPlayer().setVolume(1.0f, 1.0f);
 	            break;
 

@@ -1,5 +1,7 @@
 package jrAccess;
 
+import java.io.BufferedInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,11 +11,16 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
+import jrFileSystem.JrFileUtils;
+
 public class JrConnection extends URLConnection {
 
 	private URLConnection mUrlConnection;
 	private String[] mParams;
 	private int resets = 0;
+	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
+	private InputStream mInputStream;
+	private boolean mIsFound;
 	
 	protected JrConnection(URL url) throws IOException {
 		super(url);
@@ -154,7 +161,10 @@ public class JrConnection extends URLConnection {
 	public InputStream getInputStream() throws IOException {
 		try {
 			return mUrlConnection.getInputStream();
-		} catch (IOException e) {
+		} catch (FileNotFoundException fe) {
+			throw fe;
+		}
+		catch (IOException e) {
 			resetConnection(e);
 			return this.getInputStream();
 		}
