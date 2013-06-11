@@ -10,6 +10,7 @@ import jrFileSystem.JrItem;
 import jrFileSystem.JrPlaylists;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -74,22 +75,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     
     
     private void displayConnectionSetup() {
-    	setContentView(R.layout.activity_set_up_connection);
-
-    	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-    	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-    	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
-    	
-    	txtAccessCode.setText(JrSession.AccessCode);
-    	String decryptedUserAuth = new String(Base64.decode(JrSession.UserAuthCode, Base64.DEFAULT));
-    	if (!decryptedUserAuth.isEmpty()) {
-	    	String[] userDetails = decryptedUserAuth.split(":",2);
-	    	txtUserName.setText(userDetails[0]);
-	    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
-    	}
-
-    	Button connectionButton = (Button)findViewById(R.id.btnConnect);
-    	connectionButton.setOnClickListener(mConnectionButtonListener);
+    	Intent intent = new Intent(findViewById(android.R.id.content).getContext(), SetUpConnection.class);
+    	startActivity(intent);
     }
     
     private void displayLibrary() {
