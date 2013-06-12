@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.CheckBox;
 
 public class ConnectionSettings extends FragmentActivity {
 
@@ -22,6 +23,8 @@ public class ConnectionSettings extends FragmentActivity {
         	
         	JrSession.AccessCode = txtAccessCode.getText().toString();
         	JrSession.UserAuthCode = Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim();
+        	
+        	JrSession.IsLocalOnly = ((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked();
         	
         	JrSession.SaveSession(v.getContext());
         	
@@ -36,11 +39,13 @@ public class ConnectionSettings extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
          
-        setContentView(R.layout.activity_set_up_connection);
-
+        setContentView(R.layout.activity_connection_settings);
+        
     	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
     	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
     	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
+    	
+    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(JrSession.IsLocalOnly);
     	
     	txtAccessCode.setText(JrSession.AccessCode);
     	String decryptedUserAuth = new String(Base64.decode(JrSession.UserAuthCode, Base64.DEFAULT));

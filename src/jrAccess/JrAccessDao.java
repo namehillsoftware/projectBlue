@@ -91,23 +91,27 @@ public class JrAccessDao {
 			}
 		}
 		
-		for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
+		if (!JrSession.IsLocalOnly) {
 			try {
-				mActiveUrl = getLocalIpUrl(urlIndex);
-	        	if (testConnection(mActiveUrl)) return mActiveUrl;
+				mActiveUrl = getRemoteUrl();
+	        	if (testConnection(getRemoteUrl())) return mActiveUrl;
 			} catch (Exception e) {
 				mActiveUrl = "";
 				e.printStackTrace();
 			}
+		} else { 
+			for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
+				try {
+					mActiveUrl = getLocalIpUrl(urlIndex);
+		        	if (testConnection(mActiveUrl)) return mActiveUrl;
+				} catch (Exception e) {
+					mActiveUrl = "";
+					e.printStackTrace();
+				}
+			}
 		}
 
-		try {
-			mActiveUrl = getRemoteUrl();
-        	if (testConnection(getRemoteUrl())) return mActiveUrl;
-		} catch (Exception e) {
-			mActiveUrl = "";
-			e.printStackTrace();
-		}
+		
 		mActiveUrl = "";
 		return mActiveUrl;
 	}

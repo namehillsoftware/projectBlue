@@ -27,6 +27,9 @@ public class JrSession {
 	private static final String NP_POSITION = "np_position";
 	private static final String ACCESS_CODE_KEY = "access_code";
 	private static final String USER_AUTH_CODE_KEY = "user_auth_code";
+	private static final String IS_LOCAL_ONLY = "is_local_only";
+	
+	public static boolean IsLocalOnly = false;
 	
 	public static String UserAuthCode = "";
 	public static String AccessCode = "";
@@ -49,6 +52,7 @@ public class JrSession {
     public static void SaveSession(SharedPreferences.Editor prefsEditor) {
     	prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
     	prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
+    	prefsEditor.putBoolean(IS_LOCAL_ONLY, IsLocalOnly);
     	
     	if (playlist != null) {
 	    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(playlist.size());
@@ -59,7 +63,7 @@ public class JrSession {
 		
 		if (playingFile != null) {
 			prefsEditor.putInt(NOW_PLAYING_KEY, playingFile.getKey());
-			prefsEditor.putInt(NP_POSITION, playingFile.getCurrentPosition());
+			if (playingFile.getMediaPlayer() != null) prefsEditor.putInt(NP_POSITION, playingFile.getCurrentPosition());
 		}
 		
 		prefsEditor.apply();
@@ -72,6 +76,7 @@ public class JrSession {
     public static boolean CreateSession(SharedPreferences prefs) {
     	AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
     	UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
+    	IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
     	
     	if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
     	
