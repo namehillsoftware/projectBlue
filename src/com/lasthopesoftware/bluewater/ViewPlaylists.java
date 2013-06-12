@@ -7,6 +7,7 @@ import jrFileSystem.JrPlaylist;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -33,6 +34,13 @@ public class ViewPlaylists extends FragmentActivity {
         	
         
         playlistView.setAdapter(adapter);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
+		return true;
 	}
 	
 	@Override

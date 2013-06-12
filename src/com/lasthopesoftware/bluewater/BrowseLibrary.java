@@ -105,10 +105,11 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-        return true;
-    }
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
+		return true;
+	}
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

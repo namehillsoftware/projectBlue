@@ -83,6 +83,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
 		return true;
 	}
 
