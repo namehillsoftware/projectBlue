@@ -82,17 +82,13 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_view_now_playing, menu);
+		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
-		}
+		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
 	}
 

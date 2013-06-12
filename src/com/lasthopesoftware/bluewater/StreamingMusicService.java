@@ -39,11 +39,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		OnJrFileCompleteListener, OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
-	public static final String ACTION_START = "com.lasthopesoftware.jrmediastreamer.ACTION_START";
-	public static final String ACTION_PLAY = "com.lasthopesoftware.jrmediastreamer.ACTION_PLAY";
-	public static final String ACTION_STOP = "com.lasthopesoftware.jrmediastreamer.ACTION_STOP";
-	public static final String ACTION_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_PAUSE";
-	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.jrmediastreamer.ACTION_SYSTEM_PAUSE";
+	public static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
+	public static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
+	public static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
+	public static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
+	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
 	private static int mId = 42;
 	private WifiLock mWifiLock = null;
 	private String mUrl;

@@ -37,11 +37,7 @@ public class ViewPlaylists extends FragmentActivity {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
-		}
+		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
 	}
 }

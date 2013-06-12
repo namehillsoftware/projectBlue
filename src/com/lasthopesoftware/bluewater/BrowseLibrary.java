@@ -22,6 +22,7 @@ import android.support.v4.view.ViewPager;
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -61,7 +62,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
     
     
     private void displayConnectionSetup() {
-    	Intent intent = new Intent(findViewById(android.R.id.content).getContext(), SetUpConnection.class);
+    	Intent intent = new Intent(this, ConnectionSettings.class);
     	startActivity(intent);
     }
     
@@ -105,12 +106,15 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_stream_media, menu);
+        getMenuInflater().inflate(R.menu.menu_blue_water, menu);
         return true;
     }
-
     
-
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	return ViewUtils.handleMenuClicks(this, item);
+    }
+    
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }

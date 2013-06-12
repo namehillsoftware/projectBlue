@@ -12,7 +12,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class SetUpConnection extends FragmentActivity {
+public class ConnectionSettings extends FragmentActivity {
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {

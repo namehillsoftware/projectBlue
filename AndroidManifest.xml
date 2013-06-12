@@ -27,7 +27,7 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.SetUpConnection"
+            android:name="com.lasthopesoftware.bluewater.ConnectionSettings"
             android:label="@string/title_activity_set_up_connection">
             
         </activity>

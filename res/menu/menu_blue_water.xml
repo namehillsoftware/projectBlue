@@ -1,8 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_settings"
-        android:title="@string/menu_settings"
+    <item android:id="@+id/menu_connection_settings"
+        android:title="@string/title_activity_set_up_connection"
         android:orderInCategory="100"
         android:showAsAction="never"
          />
-<!-- <item android:id="@+id/" -->    
 </menu>
