@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater;
 
 import java.io.FileNotFoundException;
 
-import com.lasthopesoftware.bluewater.R;
-
 import jrAccess.JrConnection;
 import jrAccess.JrSession;
 import jrFileSystem.JrFile;
@@ -15,7 +13,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -107,11 +104,16 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				StreamingMusicService.Pause(v.getContext());
 				mPause.setVisibility(View.INVISIBLE);
 				mPlay.setVisibility(View.VISIBLE);
-			} else {
-				StreamingMusicService.Play(v.getContext());
-				mPlay.setVisibility(View.INVISIBLE);
-				mPause.setVisibility(View.VISIBLE);
+				return;
 			}
+			
+			if (JrSession.playingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
+			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.playingFile, JrSession.playlist);
+			
+			mPlay.setVisibility(View.INVISIBLE);
+			mPause.setVisibility(View.VISIBLE);
+			
+			return;
 		}
 
 	}
@@ -124,7 +126,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			while (JrSession.playlist != null && !JrSession.playlist.isEmpty()) {
 				msg = null;
 
-				if (JrSession.playingFile == null) {
+				if (JrSession.playingFile == null || JrSession.playingFile.getMediaPlayer() == null) {
 					playingFile = null;
 					msg = new Message();
 					msg.arg1 = SET_STOPPED;
@@ -164,6 +166,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			mNowPlayingText = (TextView) owner.findViewById(R.id.tvNowPlaying);
 			mPlay = (ImageButton) owner.findViewById(R.id.btnPlay);
 			mPause = (ImageButton) owner.findViewById(R.id.btnPause);
+			setView();
 //			mNext = (ImageButton) findViewById(R.id.btnNext);
 //			mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		}
@@ -185,19 +188,22 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		}
 
 		private void setView() {
+			if (JrSession.playingFile == null) return;
+			
 			String title = JrSession.playingFile.getProperty("Artist") + " - " + JrSession.playingFile.getValue();
 			if (JrSession.playingFile.getProperty("Album") != null) title += "\n (" + JrSession.playingFile.getProperty("Album") + ")";
 
 			mNowPlayingText.setText(title);
 			
-			mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
-			mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+			if (JrSession.playingFile.isPrepared()) {
+				mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
+				mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+			}
 			try {
 				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight();
 				
 				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null && 
-						(getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
 					getFileImageTask.cancel(true);
 				}
 				

@@ -42,7 +42,6 @@ public class JrFile extends JrListing implements
 	
 	public JrFile(int key) {
 		this.setKey(key);
-		this.setValue(getProperty("Name"));
 	}
 	
 	public JrFile(int key, String value) {
@@ -52,6 +51,17 @@ public class JrFile extends JrListing implements
 	public JrFile() {
 		super();
 	}
+	
+
+	/**
+	 * @return the Value
+	 */
+	@Override
+	public String getValue() {
+		if (super.getValue() == null) setValue(getRefreshedProperty("Name"));
+		return super.getValue();
+	}
+	
 	
 	public void setOnFileCompletionListener(OnJrFileCompleteListener listener) {
 		if (onJrFileCompleteListeners == null) onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();
@@ -83,27 +93,24 @@ public class JrFile extends JrListing implements
 	public boolean isPrepared() {
 		return prepared;
 	}
-	/**
-	 * @param prepared the prepared to set
-	 */
-	public void setPrepared(boolean prepared) {
-		this.prepared = prepared;
-	}
-	
+		
 	public JrFile getNextFile() {
 		return mNextFile;
+	}
+	
+	public void setNextFile(JrFile file) {
+		mNextFile = file;
 	}
 	
 	public JrFile getPreviousFile() {
 		return mPreviousFile;
 	}
 	
-	public void setSiblings(ArrayList<JrFile> files) {
-		int position = files.indexOf(this);
-		if (position < 0) return;
-		if (position > 0 && files.size() > 1) mPreviousFile = files.get(position - 1);
-		if (position < files.size() - 1) mNextFile = files.get(position + 1);
+	public void setPreviousFile(JrFile file) {
+		mPreviousFile = file;
 	}
+	
+	
 	
 	public void setProperty(String name, String value) {
 		Thread setPropertyThread = new Thread(new SetProperty(getKey(), name, value));
@@ -125,14 +132,13 @@ public class JrFile extends JrListing implements
 		return mProperties.get(name);
 	}
 	
-	public String getProperty(String name, boolean mostRecent) {
-		if (mostRecent) {
-			try {
-				mProperties.putAll(new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + name).get());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+	public String getRefreshedProperty(String name) {
+		
+		try {
+			mProperties.putAll(new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		return getProperty(name);
@@ -298,7 +304,7 @@ public class JrFile extends JrListing implements
 		
 		@Override
 		public void run() {
-			int numberPlays = Integer.parseInt(mFile.getProperty("Number Plays", true));
+			int numberPlays = Integer.parseInt(mFile.getRefreshedProperty("Number Plays"));
 			mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
 			
 			String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);

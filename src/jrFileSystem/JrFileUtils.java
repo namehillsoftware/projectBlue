@@ -121,4 +121,15 @@ public class JrFileUtils {
 		}
 		return currentSb;
 	}
+	
+	public static void SetSiblings(List<JrFile> files) {
+		for (int i = 0; i < files.size(); i++) {
+			SetSiblings(i, files);
+		}
+	}
+	
+	public static void SetSiblings(int position, List<JrFile> files) {
+		if (position > 0 && files.size() > 1) files.get(position).setPreviousFile(files.get(position - 1));
+		if (position < files.size() - 1) files.get(position).setNextFile(files.get(position + 1));
+	}
 }

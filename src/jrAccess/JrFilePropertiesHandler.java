@@ -30,8 +30,7 @@ public class JrFilePropertiesHandler extends DefaultHandler {
 		if (sb != null) currentValue = sb.toString();
 		
 		if (qName.equalsIgnoreCase("field")) {
-			if (!currentKey.equalsIgnoreCase("Key") && !currentKey.equalsIgnoreCase("Name"))
-				properties.put(currentKey, currentValue);
+			properties.put(currentKey, currentValue);
 		}
 			
 	}

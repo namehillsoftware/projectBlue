@@ -160,10 +160,18 @@ public class JrSession {
     	
 		@Override
 		protected ArrayList<JrFile> doInBackground(Integer... params) {
-			ArrayList<JrFile> oldPlaylist = new ArrayList<JrFile>(params.length);
-	    	for (int id : params)
-	    		oldPlaylist.add(new JrFile(id));
-	    	return oldPlaylist;
+			ArrayList<JrFile> recoveredPlaylist = new ArrayList<JrFile>(params.length);
+	    	for (int i = 0; i < params.length; i++) {
+	    		JrFile recoveredFile = new JrFile(params[i]); 
+	    		recoveredPlaylist.add(recoveredFile);
+	    		
+	    		if (i > 0) {
+	    			recoveredFile.setPreviousFile(recoveredPlaylist.get(i - 1));
+	    			recoveredPlaylist.get(i - 1).setNextFile(recoveredFile);
+	    		}
+	    	}
+	    	
+	    	return recoveredPlaylist;
 		}
 		
 		@Override
