@@ -1,6 +1,5 @@
 package jrAccess;
 
-import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,8 +9,6 @@ import java.net.URLConnection;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-
-import jrFileSystem.JrFileUtils;
 
 public class JrConnection extends URLConnection {
 

@@ -16,19 +16,19 @@
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:text="@string/btnPlayFiles"/>
+        android:text="@string/btn_play_files"/>
 	<Button 
         android:id="@+id/btnShuffle"
         style="?android:attr/buttonBarButtonStyle"
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:text="@string/btnShuffleFiles"/>
+        android:text="@string/btn_shuffle_files"/>
 	<Button 
         android:id="@+id/btnViewFiles"
        	style="?android:attr/buttonBarButtonStyle"
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:text="@string/btnViewFiles"/>
+        android:text="@string/btn_view_files"/>
 </LinearLayout>

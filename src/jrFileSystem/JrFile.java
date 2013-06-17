@@ -10,6 +10,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import jrAccess.JrConnection;
+import jrAccess.JrFilePropertiesHandler;
+import jrAccess.JrSession;
+import jrAccess.JrTestConnection;
+
 import org.xml.sax.SAXException;
 
 import android.content.Context;
@@ -20,11 +25,6 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.widget.Toast;
-import jrAccess.JrConnection;
-import jrAccess.JrFilePropertiesHandler;
-import jrAccess.JrSession;
-import jrAccess.JrTestConnection;
 
 public class JrFile extends JrListing implements
 	OnPreparedListener, 
@@ -73,7 +73,7 @@ public class JrFile extends JrListing implements
 		onJrFilePreparedListeners.add(listener);
 	}
 	
-	public String getUrl() {
+	public String getSubItemUrl() {
 		/* Playback:
 		 * 0: Downloading (not real-time playback);
 		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.; 
@@ -84,7 +84,7 @@ public class JrFile extends JrListing implements
 	
 	private String getMpUrl() throws InterruptedException, ExecutionException {
 		if (!JrTestConnection.doTest()) return null;
-		return getUrl();
+		return getSubItemUrl();
 	}
 	
 	/**

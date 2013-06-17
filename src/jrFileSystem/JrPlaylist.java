@@ -109,7 +109,7 @@ public class JrPlaylist extends JrListing implements IJrItem<JrPlaylist> {
 	}
 
 	@Override
-	public String getUrl() {
+	public String getSubItemUrl() {
 		return JrSession.accessDao.getJrUrl("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()));
 	}
 }

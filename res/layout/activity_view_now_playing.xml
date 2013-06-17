@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/lblNowPlaying"
+        android:text="@string/lbl_now_playing"
         android:textAppearance="?android:attr/textAppearanceLarge"
         tools:context=".ViewNowPlaying" />
 
@@ -39,7 +39,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/btnPlay"
+        android:contentDescription="@string/btn_play"
         android:src="@drawable/av_play" />
 
      <ImageButton
@@ -49,7 +49,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/btnPause"
+        android:contentDescription="@string/btn_pause"
         android:src="@drawable/av_pause" 
         android:visibility="invisible"/>
 
@@ -61,7 +61,7 @@
          android:layout_marginLeft="33dp"
          android:layout_alignLeft="@+id/imgNowPlaying"
          android:background="?android:attr/selectableItemBackground"
-         android:contentDescription="@string/btnPrevious"
+         android:contentDescription="@string/btn_previous"
          android:src="@drawable/av_rewind" />
 
      <ImageButton
@@ -72,7 +72,7 @@
          android:layout_alignRight="@+id/imgNowPlaying"
          android:layout_marginRight="33dp"
          android:background="?android:attr/selectableItemBackground"
-         android:contentDescription="@string/btnNext"
+         android:contentDescription="@string/btn_next"
          android:src="@drawable/av_fast_forward" />
 
          

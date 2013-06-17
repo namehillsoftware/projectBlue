@@ -1,10 +1,16 @@
 package com.lasthopesoftware.bluewater;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-import com.lasthopesoftware.bluewater.R;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
+import jrAccess.JrDataTask;
+import jrAccess.JrDataTask.OnConnectListener;
+import jrAccess.JrFsResponseHandler;
 import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
@@ -12,6 +18,7 @@ import jrFileSystem.JrItem;
 import jrFileSystem.JrPlaylists;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -67,7 +74,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         
     	if (JrSession.jrFs == null) JrSession.jrFs = new JrFileSystem();
     	
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -96,8 +103,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
                     .setText(mSectionsPagerAdapter.getPageTitle(i))
                     .setTabListener(this));
         }
-        
-       
     }
 
     @Override
@@ -131,10 +136,12 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
      * sections of the app.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
-    	private Integer mCount;    	
+    	private Integer mCount;
+    	private Context mContext;
     	
-        public SectionsPagerAdapter(FragmentManager fm) {
+        public SectionsPagerAdapter(Context context, FragmentManager fm) {
             super(fm);
+            mContext = context;
         }
 
         @Override
@@ -164,9 +171,25 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         public ArrayList<IJrItem> getPages() {
         	if (JrSession.categories == null) {
         		JrSession.categories = new ArrayList<IJrItem>();
-        		for (JrItem page : JrSession.jrFs.getSubItems()) {
-        			if (page.getKey() == 1) {        				
+        		JrDataTask<List<JrItem>> getSubItemsTask = new JrDataTask<List<JrItem>>(mContext);
+        		getSubItemsTask.addOnConnectListener(new OnConnectListener<List<JrItem>>() {
+
+					@Override
+					public List<JrItem> onConnect(InputStream is) {
+						SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+						SAXParser sp = parserFactory.newSAXParser();
+				    	JrFsResponseHandler<JrItem> jrResponseHandler;// = new JrFsResponseHandler<JrItem>(newClass);
+				    	sp.parse(is, jrResponseHandler);
+				    	
+				    	return jrResponseHandler.items;
+					}
+				});
+        		
+        		List<JrItem> subItems = getSubItemsTask.execute(JrSession.jrFs.getSubItemParams()).get();
+        		for (JrItem page : subItems) {
+        			if (page.getKey() == 1) {
         				JrSession.categories = ((IJrItem)page).getSubItems();
+        				break;
         			}
         		}
         		// remove any categories that do not have any items

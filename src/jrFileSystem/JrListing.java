@@ -31,7 +31,7 @@ public abstract class JrListing {
 		this.mKey = mKey;
 	}
 
-	public abstract String getUrl();
+	public abstract String getSubItemUrl();
 
 	/**
 	 * @return the mValue

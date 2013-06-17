@@ -1,12 +1,9 @@
 package com.lasthopesoftware.bluewater;
 
-import com.lasthopesoftware.bluewater.R;
-
 import jrAccess.JrSession;
 import jrFileSystem.JrPlaylist;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListAdapter;

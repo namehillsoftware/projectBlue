@@ -2,10 +2,11 @@ package com.lasthopesoftware.bluewater;
 
 import jrAccess.JrSession;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
-import android.view.Menu;
 import android.view.MenuItem;
 
 public class ViewUtils {
@@ -43,4 +44,28 @@ public class ViewUtils {
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		context.startActivity(viewIntent);
     }
+	
+	public static boolean OkCancelDialog(Context context, String title, String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setTitle(title).setMessage(message);
+		OkCancelListener listener = new OkCancelListener();
+		builder.setPositiveButton(R.string.btn_ok, listener);
+		builder.setNegativeButton(R.string.btn_cancel, listener);
+		builder.create();
+		return listener.getResult();
+	}
+	
+	private static class OkCancelListener implements DialogInterface.OnClickListener {
+		boolean mResult = false;
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			// TODO Auto-generated method stub
+			mResult = which == DialogInterface.BUTTON_POSITIVE;
+		}
+		
+		public boolean getResult() {
+			return mResult;
+		}
+	}
 }

@@ -28,8 +28,8 @@ public class JrItem extends JrListing implements IJrItem<JrItem> {
 		super();
 	}
 	
-	public String getUrl() {
-		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.getKey()), "Skip=1");
+	public String getSubItemUrl() {
+		return JrSession.accessDao.getJrUrl("Browse/Children", "ID=" + String.valueOf(this.getKey()));
 	}
 	
 	@Override

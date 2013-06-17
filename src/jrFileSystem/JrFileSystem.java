@@ -16,7 +16,7 @@ public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
 //		setPages();
 	}
 	
-	public String getUrl() {
+	public String getSubItemUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
 	
@@ -48,6 +48,11 @@ public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
 	public ArrayList<JrFile> getFiles(int option) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public String[] getSubItemParams() {
+		return new String[] { "Browse/Children" };
 	}
 	
 }
