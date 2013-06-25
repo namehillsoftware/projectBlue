@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrFileSystem.IJrItem;
+import jrFileSystem.IJrItemFiles;
 import jrFileSystem.JrFile;
 import android.content.Context;
 import android.view.Gravity;
@@ -16,7 +16,7 @@ public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
 	private Context mContext;
 	
-	public FileListAdapter(Context context, IJrItem<?> item) {
+	public FileListAdapter(Context context, IJrItemFiles item) {
 		mFiles = item.getFiles();
 		mContext = context;
 	}

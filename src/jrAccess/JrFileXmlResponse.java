@@ -14,42 +14,28 @@ import jrFileSystem.JrFile;
 
 import org.xml.sax.SAXException;
 
-import android.os.AsyncTask;
+public class JrFileXmlResponse {
 
-public class JrFileXmlResponse extends AsyncTask<String, Void, List<JrFile>> {
-
-	@Override
-	protected List<JrFile> doInBackground(String... params) {
+	public static List<JrFile> GetFiles(InputStream is) {
 		List<JrFile> returnFiles = new ArrayList<JrFile>();
 		
-		JrConnection conn;
 		try {
-			conn = new JrConnection(params);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();
 	    	JrFileXmlHandler jrFileXml = new JrFileXmlHandler();
-	    	sp.parse(conn.getInputStream(), jrFileXml);
+	    	sp.parse(is, jrFileXml);
 	    	
 	    	returnFiles = jrFileXml.getFiles();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		return returnFiles;
 	}
-	
-	protected void SimpleParse(InputStream is) {
-		return;
-	}
-
 }

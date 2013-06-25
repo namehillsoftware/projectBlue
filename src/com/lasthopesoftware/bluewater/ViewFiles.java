@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater;
 
+import jrFileSystem.IJrItemFiles;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrItem;
 import jrFileSystem.JrPlaylist;
@@ -29,10 +30,10 @@ public class ViewFiles extends FragmentActivity {
         mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(this.getIntent().getIntExtra(KEY, 1)) :
         				new JrItem(this.getIntent().getIntExtra(KEY, 1));
         this.setTitle(this.getIntent().getStringExtra(VALUE));
-        FileListAdapter fileListAdapter = new FileListAdapter(this, mItem);
+        FileListAdapter fileListAdapter = new FileListAdapter(this, (IJrItemFiles)mItem);
     	
     	ListView fileListView = (ListView)findViewById(R.id.lvFilelist);
-    	fileListView.setOnItemClickListener(new ClickFileListener(this, mItem));
+    	fileListView.setOnItemClickListener(new ClickFileListener(this, (IJrItemFiles)mItem));
     	fileListView.setAdapter(fileListAdapter);
 	}
 	

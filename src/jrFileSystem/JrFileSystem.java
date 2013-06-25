@@ -3,16 +3,29 @@ package jrFileSystem;
 import java.util.ArrayList;
 import java.util.List;
 
-import jrAccess.JrStdXmlResponse;
 import jrAccess.JrSession;
+import jrAccess.JrStdXmlResponse;
+import jrFileSystem.IJrDataTask.OnCompleteListener;
+import jrFileSystem.IJrDataTask.OnConnectListener;
+import jrFileSystem.IJrDataTask.OnErrorListener;
+import jrFileSystem.IJrDataTask.OnStartListener;
 
-
-
-public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
+public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private ArrayList<JrItem> mPages;
+	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
 	
 	public JrFileSystem() {
 		super();
+		OnCompleteListener<List<JrItem>> completeListener = new OnCompleteListener<List<JrItem>>() {
+			
+			@Override
+			public void onComplete(List<JrItem> result) {
+				mSubItems = new ArrayList<JrItem>(result.size());
+				mPages.addAll(result);
+			}
+		};
+		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(2);
+		mOnCompleteListeners.add(completeListener);
 //		setPages();
 	}
 	
@@ -51,9 +64,105 @@ public class JrFileSystem extends JrListing implements IJrItem<JrItem> {
 	}
 
 	@Override
-	public String[] getSubItemParams() {
-		return new String[] { "Browse/Children" };
+	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
+		if (mOnCompleteListeners.size() < 2) mOnCompleteListeners.add(listener);
+		mOnCompleteListeners.set(1, listener);
 	}
-	
+
+	@Override
+	public void setOnItemsStartListener(OnStartListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setOnItemsErrorListener(OnErrorListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected OnConnectListener<List<JrItem>> getOnItemConnectListener() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
+		return mOnCompleteListeners;
+	}
+
+	@Override
+	protected List<OnStartListener> getOnItemsStartListeners() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected List<OnErrorListener> getOnItemsErrorListeners() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void getFilesAsync() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setOnFilesCompleteListener(
+			OnCompleteListener<List<JrFile>> listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setOnFilesStartListener(OnStartListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setOnFilesErrorListener(OnErrorListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected OnConnectListener<List<JrFile>> getOnFileConnectListener() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected List<OnCompleteListener<List<JrFile>>> getOnFilesCompleteListeners() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected List<OnStartListener> getOnFilesStartListeners() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected List<OnErrorListener> getOnFilesErrorListeners() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected String[] getSubItemParams() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected String[] getFileParams() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 

@@ -26,7 +26,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 
-public class JrFile extends JrListing implements
+public class JrFile extends JrObject implements
 	OnPreparedListener, 
 	OnErrorListener, 
 	OnCompletionListener	
@@ -41,6 +41,7 @@ public class JrFile extends JrListing implements
 	private JrFile mNextFile, mPreviousFile;
 	
 	public JrFile(int key) {
+		super();
 		this.setKey(key);
 	}
 	

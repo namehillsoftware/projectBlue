@@ -1,30 +1,20 @@
 package jrAccess;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import android.content.Context;
-import android.content.Intent;
+import jrFileSystem.IJrDataTask;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.ConnectionSettings;
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.ViewUtils;
+public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> implements IJrDataTask<TResult> {
 
-public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> {
-
-	LinkedList<OnConnectListener<TResult>> onWorkListeners;
+	LinkedList<OnConnectListener<TResult>> onConnectListeners;
 	LinkedList<OnCompleteListener<TResult>> onCompleteListeners;
 	LinkedList<OnStartListener> onStartListeners;
+	LinkedList<OnErrorListener> onErrorListeners;
 	ArrayList<TResult> mResults;
-	private Context mContext;
-	
-	public JrDataTask(Context context) {
-		mContext = context;
-	}
-	
+		
 	@Override
 	protected void onPreExecute() {
 		for (OnStartListener listener : onStartListeners) listener.onStart();
@@ -37,14 +27,13 @@ public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> {
 		JrConnection conn;
 		try {
 			conn = new JrConnection(params);
-			for (OnConnectListener<TResult> workEvent : onWorkListeners) mResults.add(workEvent.onConnect(conn.getInputStream()));
+			for (OnConnectListener<TResult> workEvent : onConnectListeners) mResults.add(workEvent.onConnect(conn.getInputStream()));
 		} catch (IOException ioEx) {
-			if (ViewUtils.OkCancelDialog(mContext, mContext.getString(R.string.lbl_connection_lost_title), mContext.getString(R.string.lbl_connection_lost))) {
-				return doInBackground(params);
-			}
+			boolean executeAgain = true;
 			
-			Intent connectIntent = new Intent(mContext, ConnectionSettings.class);
-			mContext.startActivity(connectIntent);
+			for (OnErrorListener errorListener : onErrorListeners) executeAgain &= errorListener.onError(ioEx.getMessage());
+			if (executeAgain) return doInBackground(params);
+			
 			return null;
 		}
 		return mResults.get(mResults.size() - 1);
@@ -59,31 +48,32 @@ public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> {
 		for (OnCompleteListener<TResult> completeListener : onCompleteListeners) completeListener.onComplete(result);
 	}
 	
+	@Override
 	public void addOnStartListener(OnStartListener listener) {
 		if (onStartListeners == null) onStartListeners = new LinkedList<OnStartListener>();
 		onStartListeners.add(listener);
 	}
 	
+	@Override
 	public void addOnConnectListener(OnConnectListener<TResult> listener) {
-		if (onWorkListeners == null) onWorkListeners = new LinkedList<OnConnectListener<TResult>>();
-		onWorkListeners.add(listener);
+		if (onConnectListeners == null) onConnectListeners = new LinkedList<OnConnectListener<TResult>>();
+		onConnectListeners.add(listener);
 	}
 	
-	public void addOnCompleteListener(OnCompleteListener<TResult> listener) {
+	@Override
+	public void addOnCompleteListener(IJrDataTask.OnCompleteListener<TResult> listener) {
 		if (onCompleteListeners == null) onCompleteListeners = new LinkedList<OnCompleteListener<TResult>>();
 		onCompleteListeners.add(listener);
 	}
-	
-	/* Events */
-	public interface OnStartListener {
-		void onStart();
+
+	@Override
+	public void addOnErrorListener(jrFileSystem.IJrDataTask.OnErrorListener listener) {
+		if (onErrorListeners == null) onErrorListeners = new LinkedList<OnErrorListener>();
+		onErrorListeners.add(listener);
 	}
-	
-	public interface OnConnectListener<TResult> {
-		TResult onConnect(InputStream is);
-	}
-	
-	public interface OnCompleteListener<TResult> {
-		void onComplete(TResult result);
+
+	@Override
+	public LinkedList<jrFileSystem.IJrDataTask.OnCompleteListener<TResult>> getOnCompleteListeners() {
+		return onCompleteListeners;
 	}
 }

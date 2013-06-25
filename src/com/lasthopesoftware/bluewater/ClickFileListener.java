@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
-
-import jrFileSystem.IJrItem;
+import jrFileSystem.IJrItemFiles;
 import jrFileSystem.JrFile;
 import android.content.Context;
 import android.view.View;
@@ -11,10 +10,10 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class ClickFileListener implements OnItemClickListener {
 
-	private IJrItem<?> mItem;
+	private IJrItemFiles mItem;
 	private Context mContext;
 	
-	public ClickFileListener(Context context, IJrItem<?> item) {
+	public ClickFileListener(Context context, IJrItemFiles item) {
 		mContext = context;
 		mItem = item;
 	}

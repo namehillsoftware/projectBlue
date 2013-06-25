@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater;
 import java.util.ArrayList;
 
 import com.lasthopesoftware.bluewater.R;
-
+import jrFileSystem.IJrItemFiles;
 import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
@@ -47,10 +47,10 @@ public class BrowseItemMenu {
         LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.active_jr_item_menu, null);
         
         Button shuffleButton = (Button)fileMenu.findViewById(R.id.btnShuffle);
-        shuffleButton.setOnClickListener(new ShuffleClickHandler(item));
+        shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrItemFiles)item));
         
         Button playButton = (Button)fileMenu.findViewById(R.id.btnPlayAll);
-        playButton.setOnClickListener(new PlayClickHandler(item));
+        playButton.setOnClickListener(new PlayClickHandler((IJrItemFiles)item));
         
         Button viewButton = (Button)fileMenu.findViewById(R.id.btnViewFiles);
         viewButton.setOnClickListener(new ViewFilesClickHandler(item));
@@ -61,9 +61,9 @@ public class BrowseItemMenu {
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
-		private IJrItem<?> mItem;
+		private IJrItemFiles mItem;
 		
-		public PlayClickHandler(IJrItem<?> item) {
+		public PlayClickHandler(IJrItemFiles item) {
 			mItem = item;
 		}
 		
@@ -75,9 +75,9 @@ public class BrowseItemMenu {
 	}
 	
 	private static class ShuffleClickHandler implements OnClickListener {
-		private IJrItem<?> mItem;
+		private IJrItemFiles mItem;
 		
-		public ShuffleClickHandler(IJrItem<?> item) {
+		public ShuffleClickHandler(IJrItemFiles item) {
 			mItem = item;
 		}
 		

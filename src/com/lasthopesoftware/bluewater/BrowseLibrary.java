@@ -1,16 +1,8 @@
 package com.lasthopesoftware.bluewater;
 
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import jrAccess.JrDataTask;
-import jrAccess.JrDataTask.OnConnectListener;
-import jrAccess.JrFsResponseHandler;
 import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
@@ -171,22 +163,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
         public ArrayList<IJrItem> getPages() {
         	if (JrSession.categories == null) {
         		JrSession.categories = new ArrayList<IJrItem>();
-        		JrDataTask<List<JrItem>> getSubItemsTask = new JrDataTask<List<JrItem>>(mContext);
-        		getSubItemsTask.addOnConnectListener(new OnConnectListener<List<JrItem>>() {
-
-					@Override
-					public List<JrItem> onConnect(InputStream is) {
-						SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-						SAXParser sp = parserFactory.newSAXParser();
-				    	JrFsResponseHandler<JrItem> jrResponseHandler;// = new JrFsResponseHandler<JrItem>(newClass);
-				    	sp.parse(is, jrResponseHandler);
-				    	
-				    	return jrResponseHandler.items;
-					}
-				});
         		
-        		List<JrItem> subItems = getSubItemsTask.execute(JrSession.jrFs.getSubItemParams()).get();
-        		for (JrItem page : subItems) {
+        		for (JrItem page : JrSession.jrFs.getSubItems()) {
         			if (page.getKey() == 1) {
         				JrSession.categories = ((IJrItem)page).getSubItems();
         				break;

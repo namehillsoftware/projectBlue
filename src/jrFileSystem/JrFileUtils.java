@@ -12,7 +12,7 @@ import java.util.Map;
 import android.os.AsyncTask;
 
 public class JrFileUtils {
-	public static <T extends JrListing> List<T> transformListing(Class<T> c, HashMap<String, String> listing) {
+	public static <T extends JrObject> List<T> transformListing(Class<T> c, HashMap<String, String> listing) {
 		List<T> returnList = new ArrayList<T>(listing.size());
 		try {
 			//for (int i = 0; i < listing.size(); i++) {
@@ -29,7 +29,7 @@ public class JrFileUtils {
 		return returnList;
 	}
 	
-	public static <T extends JrListing> T createListing(Class<T> c) {
+	public static <T extends JrObject> T createListing(Class<T> c) {
 		T newItem = null;
 		try {
 			newItem = c.newInstance();
@@ -39,7 +39,7 @@ public class JrFileUtils {
 		return newItem;
 	}
 	
-	public static class SortJrListAsync<T extends JrListing> extends AsyncTask<List<T>, Void, List<T>> {
+	public static class SortJrListAsync<T extends JrObject> extends AsyncTask<List<T>, Void, List<T>> {
 	
 		private int partition(List<T> list, int left, int right) {
 			int i = left, j = right;

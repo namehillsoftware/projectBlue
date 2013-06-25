@@ -1,37 +1,31 @@
 package jrAccess;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
 import jrFileSystem.JrItem;
-import jrFileSystem.JrListing;
+import jrFileSystem.JrObject;
+
 import org.xml.sax.SAXException;
-import android.os.AsyncTask;
 
-public class JrFsResponse<T extends JrListing> extends AsyncTask<String, Void, List<JrItem>> {
+public class JrFsResponse {
 
-	private Class<JrItem> newClass;
-	
-	public JrFsResponse(Class<JrItem> c) {
-		newClass = c;
-	}
-	
-	@Override
-	protected List<JrItem> doInBackground(String... params) {
+	public static List<JrItem> GetItems(InputStream is) {
 		List<JrItem> items = new ArrayList<JrItem>();
-				
-		JrConnection conn;
+
 		try {
-			conn = new JrConnection(params);
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();
-	    	JrFsResponseHandler<JrItem> jrResponseHandler = new JrFsResponseHandler<JrItem>(newClass);
-	    	sp.parse(conn.getInputStream(), jrResponseHandler);
+	    	JrFsResponseHandler<JrItem> jrResponseHandler = new JrFsResponseHandler<JrItem>(JrItem.class);
+	    	sp.parse(is, jrResponseHandler);
 	    	
 	    	items = jrResponseHandler.items;
 		} catch (MalformedURLException e) {

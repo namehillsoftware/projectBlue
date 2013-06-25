@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import jrAccess.JrPlaylistResponse;
 import jrAccess.JrSession;
 
-public class JrPlaylists extends JrListing implements IJrItem<JrPlaylist> {
+public class JrPlaylists extends JrObject implements IJrItem<JrPlaylist> {
 	private ArrayList<JrPlaylist> mSubItems;
 	
 	public JrPlaylists(int key) {
@@ -25,21 +25,5 @@ public class JrPlaylists extends JrListing implements IJrItem<JrPlaylist> {
 		}
 		
 		return mSubItems;
-	}
-	
-	@Override
-	public ArrayList<JrFile> getFiles() {
-		return null;
-	}
-
-	@Override
-	public String getSubItemUrl() {
-		return JrSession.accessDao.getJrUrl("Playlists/List");
-	}
-
-	@Override
-	public ArrayList<JrFile> getFiles(int option) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

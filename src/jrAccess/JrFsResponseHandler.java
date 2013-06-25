@@ -3,12 +3,12 @@ package jrAccess;
 import java.util.ArrayList;
 import java.util.List;
 import jrFileSystem.JrFileUtils;
-import jrFileSystem.JrListing;
+import jrFileSystem.JrObject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class JrFsResponseHandler<T extends JrListing> extends DefaultHandler {
+public class JrFsResponseHandler<T extends JrObject> extends DefaultHandler {
 	
 	private String currentValue;
 	private String currentKey;
