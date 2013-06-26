@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import jrAccess.JrFileXmlResponse;
 import jrAccess.JrFsResponse;
 import jrAccess.JrSession;
 import jrFileSystem.IJrDataTask.OnCompleteListener;
@@ -18,15 +19,24 @@ import android.os.AsyncTask;
 public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, IJrItemFiles {
 	private ArrayList<JrItem> mSubItems;
 	private ArrayList<JrFile> mFiles;
-	private OnStartListener mStartListener;
+	private OnStartListener mItemStartListener, mFileStartListener;
 	private ArrayList<OnCompleteListener<List<JrItem>>> mItemCompleteListeners;
-	private OnErrorListener mErrorListener;
+	private ArrayList<OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
+	private OnErrorListener mItemErrorListener, mFileErrorListener;
 	
-	private OnConnectListener<List<JrItem>> mConnectListener = new OnConnectListener<List<JrItem>>() {
+	private OnConnectListener<List<JrItem>> mItemConnectListener = new OnConnectListener<List<JrItem>>() {
 		
 		@Override
 		public List<JrItem> onConnect(InputStream is) {
 			return JrFsResponse.GetItems(is);
+		}
+	};
+	
+	private OnConnectListener<List<JrFile>> mFileConnectListener = new OnConnectListener<List<JrFile>>() {
+		
+		@Override
+		public List<JrFile> onConnect(InputStream is) {
+			return JrFileXmlResponse.GetFiles(is);
 		}
 	};
 	
@@ -35,6 +45,15 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		@Override
 		public void onComplete(List<JrItem> result) {
 			mSubItems = (ArrayList<JrItem>) result;
+		}
+	};
+	
+	private OnCompleteListener<List<JrFile>> mFileCompleteListener = new OnCompleteListener<List<JrFile>>() {
+		
+		@Override
+		public void onComplete(List<JrFile> result) {
+			mFiles = (ArrayList<JrFile>)result;
+//			if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
 		}
 	};
 	
@@ -106,22 +125,22 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 
 	@Override
 	public void setOnItemsStartListener(OnStartListener listener) {
-		mStartListener = listener;		
+		mItemStartListener = listener;		
 	}
 	
 	@Override
 	public void setOnItemsErrorListener(OnErrorListener listener) {
-		mErrorListener = listener;
+		mItemErrorListener = listener;
 	}
 	
 	@Override
 	public void getFilesAsync() {
-		getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name");
+		getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 	}
 
 	@Override
 	protected OnConnectListener<List<JrItem>> getOnItemConnectListener() {
-		return mConnectListener;
+		return mItemConnectListener;
 	}
 
 	@Override
@@ -132,57 +151,59 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	@Override
 	protected List<OnStartListener> getOnItemsStartListeners() {
 		ArrayList<OnStartListener> listeners = new ArrayList<IJrDataTask.OnStartListener>(1);
-		listeners.add(mStartListener);
+		listeners.add(mItemStartListener);
 		return listeners;
 	}
 
 	@Override
 	protected List<OnErrorListener> getOnItemsErrorListeners() {
 		ArrayList<OnErrorListener> listeners = new ArrayList<OnErrorListener>(1);
-		listeners.add(mErrorListener);
+		listeners.add(mItemErrorListener);
 		return listeners;
 	}
 
 	@Override
 	public void setOnFilesCompleteListener(OnCompleteListener<List<JrFile>> listener) {
-		// TODO Auto-generated method stub
-		
+		if (mFileCompleteListeners == null) {
+			mFileCompleteListeners = new ArrayList<OnCompleteListener<List<JrFile>>>(2);
+			mFileCompleteListeners.add(mFileCompleteListener);
+		}
+		if (mFileCompleteListeners.size() < 2) mFileCompleteListeners.add(listener);
+		else mFileCompleteListeners.set(1, listener);
 	}
 
 	@Override
 	public void setOnFilesStartListener(OnStartListener listener) {
-		// TODO Auto-generated method stub
-		
+		mFileStartListener = listener;
 	}
 
 	@Override
 	public void setOnFilesErrorListener(OnErrorListener listener) {
-		// TODO Auto-generated method stub
-		
+		mFileErrorListener = listener;
 	}
 
 	@Override
 	protected OnConnectListener<List<JrFile>> getOnFileConnectListener() {
-		// TODO Auto-generated method stub
-		return null;
+		return mFileConnectListener;
 	}
 
 	@Override
 	protected List<OnCompleteListener<List<JrFile>>> getOnFilesCompleteListeners() {
-		// TODO Auto-generated method stub
-		return null;
+		return mFileCompleteListeners;
 	}
 
 	@Override
 	protected List<OnStartListener> getOnFilesStartListeners() {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<OnStartListener> listeners = new ArrayList<OnStartListener>();
+		listeners.add(mFileStartListener);
+		return listeners;
 	}
 
 	@Override
 	protected List<OnErrorListener> getOnFilesErrorListeners() {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<OnErrorListener> listeners = new ArrayList<OnErrorListener>();
+		listeners.add(mFileErrorListener);
+		return listeners;
 	}
 
 	@Override
@@ -192,7 +213,6 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 
 	@Override
 	protected String[] getFileParams() {
-		// TODO Auto-generated method stub
-		return null;
+		return new String[] { "Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name" };
 	}
 }
