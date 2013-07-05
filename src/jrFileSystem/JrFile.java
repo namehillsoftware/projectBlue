@@ -31,7 +31,7 @@ public class JrFile extends JrObject implements
 	OnErrorListener, 
 	OnCompletionListener	
 {
-	private TreeMap<String, String> mProperties= null;
+	private TreeMap<String, String> mProperties = null;
 	
 	private boolean prepared = false;
 	private boolean preparing = false;

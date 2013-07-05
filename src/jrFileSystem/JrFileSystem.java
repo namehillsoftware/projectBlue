@@ -52,18 +52,6 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 
 	@Override
-	public ArrayList<JrFile> getFiles() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ArrayList<JrFile> getFiles(int option) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
 		if (mOnCompleteListeners.size() < 2) mOnCompleteListeners.add(listener);
 		mOnCompleteListeners.set(1, listener);
@@ -105,62 +93,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 
 	@Override
-	public void getFilesAsync() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesCompleteListener(
-			OnCompleteListener<List<JrFile>> listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesStartListener(OnStartListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesErrorListener(OnErrorListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected OnConnectListener<List<JrFile>> getOnFileConnectListener() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnCompleteListener<List<JrFile>>> getOnFilesCompleteListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnStartListener> getOnFilesStartListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnErrorListener> getOnFilesErrorListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	protected String[] getSubItemParams() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected String[] getFileParams() {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import jrAccess.JrSession;
 import jrFileSystem.IJrDataTask.OnCompleteListener;
 import jrFileSystem.IJrDataTask.OnConnectListener;
 import jrFileSystem.IJrDataTask.OnErrorListener;
@@ -12,11 +11,12 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 import android.annotation.SuppressLint;
 
 @SuppressLint("UseSparseArrays")
-public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist>, IJrItemFiles {
+public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist>, IJrFilesContainer {
 	private HashMap<Integer, JrPlaylist> mSubItems;
 	private JrPlaylist mParent = null;
 	private String mPath;
 	private String mGroup;
+	private JrFiles mJrFiles;
 	
 	public JrPlaylist() {
 		super();
@@ -48,40 +48,40 @@ public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<J
 		mSubItems.put(playlist.getKey(), playlist);
 	}
 	
-	@Override
+//	@Override
 	// Get a new list each time with playlists since 
 	// they can often change dynamically
-	public ArrayList<JrFile> getFiles() {
-		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-		try {
-			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Fields=Key,Name").get();
-			returnFiles = new ArrayList<JrFile>(tempFiles.size());
-			for (int i = 0; i < tempFiles.size(); i++) {
-				JrFileUtils.SetSiblings(i, tempFiles);
-				returnFiles.add(tempFiles.get(i));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
-			
-		return returnFiles;
-	}
+//	public ArrayList<JrFile> getFiles() {
+//		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
+//		try {
+//			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Fields=Key,Name").get();
+//			returnFiles = new ArrayList<JrFile>(tempFiles.size());
+//			for (int i = 0; i < tempFiles.size(); i++) {
+//				JrFileUtils.SetSiblings(i, tempFiles);
+//				returnFiles.add(tempFiles.get(i));
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} 
+//			
+//		return returnFiles;
+//	}
 	
-	public ArrayList<JrFile> getFiles(int option) {
-		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-		try {
-			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1", "Fields=Key,Name").get();
-			returnFiles = new ArrayList<JrFile>(tempFiles.size());
-			for (int i = 0; i < tempFiles.size(); i++) {
-				JrFileUtils.SetSiblings(i, tempFiles);
-				returnFiles.add(tempFiles.get(i));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
-			
-		return returnFiles;
-	}
+//	public ArrayList<JrFile> getFiles(int option) {
+//		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
+//		try {
+//			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1", "Fields=Key,Name").get();
+//			returnFiles = new ArrayList<JrFile>(tempFiles.size());
+//			for (int i = 0; i < tempFiles.size(); i++) {
+//				JrFileUtils.SetSiblings(i, tempFiles);
+//				returnFiles.add(tempFiles.get(i));
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} 
+//			
+//		return returnFiles;
+//	}
 
 	/**
 	 * @return the mPath
@@ -160,62 +160,13 @@ public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<J
 	}
 
 	@Override
-	public void getFilesAsync() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesCompleteListener(
-			OnCompleteListener<List<JrFile>> listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesStartListener(OnStartListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnFilesErrorListener(OnErrorListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected OnConnectListener<List<JrFile>> getOnFileConnectListener() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnCompleteListener<List<JrFile>>> getOnFilesCompleteListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnStartListener> getOnFilesStartListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnErrorListener> getOnFilesErrorListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	protected String[] getSubItemParams() {
 		return new String[] { "Playlist/Files", "Playlist=" + String.valueOf(this.getKey()) };
 	}
 
 	@Override
-	protected String[] getFileParams() {
-		// TODO Auto-generated method stub
-		return null;
+	public IJrItemFiles getJrFiles() {
+		if (mJrFiles == null) mJrFiles = new JrFiles("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()));
+		return mJrFiles;
 	}
 }
