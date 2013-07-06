@@ -11,7 +11,7 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 import android.annotation.SuppressLint;
 
 @SuppressLint("UseSparseArrays")
-public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist>, IJrFilesContainer {
+public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFilesContainer {
 	private HashMap<Integer, JrPlaylist> mSubItems;
 	private JrPlaylist mParent = null;
 	private String mPath;
@@ -111,55 +111,6 @@ public class JrPlaylist extends JrItemAsyncBase<JrPlaylist> implements IJrItem<J
 		this.mGroup = mGroup;
 	}
 
-	@Override
-	public void getSubItemsAsync() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnItemsCompleteListener(OnCompleteListener<List<JrPlaylist>> listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnItemsStartListener(OnStartListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setOnItemsErrorListener(OnErrorListener listener) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected OnConnectListener<List<JrPlaylist>> getOnItemConnectListener() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnCompleteListener<List<JrPlaylist>>> getOnItemsCompleteListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnStartListener> getOnItemsStartListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected List<OnErrorListener> getOnItemsErrorListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	protected String[] getSubItemParams() {
 		return new String[] { "Playlist/Files", "Playlist=" + String.valueOf(this.getKey()) };
 	}

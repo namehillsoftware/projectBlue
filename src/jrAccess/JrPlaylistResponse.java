@@ -1,6 +1,7 @@
 package jrAccess;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 
@@ -12,22 +13,16 @@ import jrFileSystem.JrPlaylist;
 
 import org.xml.sax.SAXException;
 
-import android.os.AsyncTask;
+public class JrPlaylistResponse {
 
-public class JrPlaylistResponse extends AsyncTask<String, Void, ArrayList<JrPlaylist>> {
-
-	@Override
-	protected ArrayList<JrPlaylist> doInBackground(String... params) {
+	public static ArrayList<JrPlaylist> GetItems(InputStream is) {
 		ArrayList<JrPlaylist> returnFiles = new ArrayList<JrPlaylist>();
 		
-		JrConnection conn;
-		try {
-			conn = new JrConnection(params);
-			
+		try {			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();
 	    	JrPlaylistXmlHandler jrPlaylistXml = new JrPlaylistXmlHandler();
-	    	sp.parse(conn.getInputStream(), jrPlaylistXml);
+	    	sp.parse(is, jrPlaylistXml);
 	    	
 	    	returnFiles = jrPlaylistXml.getPlaylists();
 		} catch (MalformedURLException e) {
