@@ -16,7 +16,8 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	private OnStartListener mItemStartListener;
 	private ArrayList<OnCompleteListener<List<JrItem>>> mItemCompleteListeners;
 	private OnErrorListener mItemErrorListener;
-	private JrFiles mFilesConnector;	
+	private JrFiles mJrFiles;
+	
 	private OnConnectListener<List<JrItem>> mItemConnectListener = new OnConnectListener<List<JrItem>>() {
 		
 		@Override
@@ -53,7 +54,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		mSubItems = new ArrayList<JrItem>();
 		if (JrSession.accessDao == null) return mSubItems;
 		try {
-			List<JrItem> tempSubItems = getNewSubItemsTask().execute("Browse/Children", "ID=" + String.valueOf(this.getKey())).get();
+			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
 			mSubItems.addAll(tempSubItems);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -75,8 +76,8 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	
 	@Override
 	public IJrItemFiles getJrFiles() {
-		if (mFilesConnector == null) mFilesConnector = new JrFiles("Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name");
-		return mFilesConnector;
+		if (mJrFiles == null) mJrFiles = new JrFiles("Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name");
+		return mJrFiles;
 	}
 
 	@Override

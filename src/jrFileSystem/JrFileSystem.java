@@ -1,8 +1,11 @@
 package jrFileSystem;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
+import jrAccess.JrFsResponse;
 import jrAccess.JrSession;
 import jrAccess.JrStdXmlResponse;
 import jrFileSystem.IJrDataTask.OnCompleteListener;
@@ -13,6 +16,9 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private ArrayList<JrItem> mPages;
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
+	private OnStartListener mOnStartListener;
+	private OnConnectListener<List<JrItem>> mOnConnectListener;
+	private OnErrorListener mOnErrorListener;
 	
 	public JrFileSystem() {
 		super();
@@ -26,7 +32,15 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 		};
 		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(2);
 		mOnCompleteListeners.add(completeListener);
-//		setPages();
+		
+		mOnConnectListener = new OnConnectListener<List<JrItem>>() {
+			
+			@Override
+			public List<JrItem> onConnect(InputStream is) {
+				return JrFsResponse.GetItems(is);
+			}
+		};
+		//		setPages();
 	}
 	
 	public String getSubItemUrl() {
@@ -41,8 +55,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 			
 			List<JrItem> tempItems;
 			try {
-				tempItems = JrFileUtils.transformListing(JrItem.class, (new JrStdXmlResponse()).execute("Browse/Children").get().items);
-				mPages = new ArrayList<JrItem>(tempItems.size());
+				tempItems = getNewSubItemsTask().execute(getSubItemParams()).get();
 				mPages.addAll(tempItems);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -59,20 +72,17 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 
 	@Override
 	public void setOnItemsStartListener(OnStartListener listener) {
-		// TODO Auto-generated method stub
-		
+		mOnStartListener = listener;
 	}
 
 	@Override
 	public void setOnItemsErrorListener(OnErrorListener listener) {
-		// TODO Auto-generated method stub
-		
+		mOnErrorListener = listener;
 	}
 
 	@Override
 	protected OnConnectListener<List<JrItem>> getOnItemConnectListener() {
-		// TODO Auto-generated method stub
-		return null;
+		return mOnConnectListener;
 	}
 
 	@Override
@@ -82,20 +92,21 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 
 	@Override
 	protected List<OnStartListener> getOnItemsStartListeners() {
-		// TODO Auto-generated method stub
-		return null;
+		LinkedList<OnStartListener> listeners = new LinkedList<IJrDataTask.OnStartListener>();
+		listeners.add(mOnStartListener);
+		return listeners;
 	}
 
 	@Override
 	protected List<OnErrorListener> getOnItemsErrorListeners() {
-		// TODO Auto-generated method stub
-		return null;
+		LinkedList<OnErrorListener> listeners = new LinkedList<IJrDataTask.OnErrorListener>();
+		listeners.add(mOnErrorListener);
+		return listeners;
 	}
 
 	@Override
 	protected String[] getSubItemParams() {
-		// TODO Auto-generated method stub
-		return null;
+		return new String[] { "Browse/Children" };
 	}
 }
 

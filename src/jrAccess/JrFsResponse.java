@@ -11,7 +11,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import jrFileSystem.JrItem;
-import jrFileSystem.JrObject;
 
 import org.xml.sax.SAXException;
 
