@@ -14,6 +14,13 @@ public class JrResponse {
 	public JrResponse(String status) {
 		this.status = status != null && status.equalsIgnoreCase("OK");
 	}
+
+	/**
+	 * @return the status
+	 */
+	public boolean isStatus() {
+		return status;
+	}
 	
 	public static JrResponse fromInputStream(InputStream is) {
 		try {
@@ -28,11 +35,4 @@ public class JrResponse {
     	
     	return null;
 	}
-
-	/**
-	 * @return the status
-	 */
-	public boolean isStatus() {
-		return status;
-	}	
 }

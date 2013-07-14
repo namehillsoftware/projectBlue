@@ -9,12 +9,12 @@ import android.os.AsyncTask;
 
 public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> implements IJrDataTask<TResult> {
 
-	LinkedList<OnConnectListener<TResult>> onConnectListeners;
-	LinkedList<OnCompleteListener<TResult>> onCompleteListeners;
-	LinkedList<OnStartListener> onStartListeners;
-	LinkedList<OnErrorListener> onErrorListeners;
+	LinkedList<OnConnectListener<TResult>> onConnectListeners = new LinkedList<IJrDataTask.OnConnectListener<TResult>>();
+	LinkedList<OnCompleteListener<TResult>> onCompleteListeners = new LinkedList<IJrDataTask.OnCompleteListener<TResult>>();
+	LinkedList<OnStartListener> onStartListeners = new LinkedList<OnStartListener>();
+	LinkedList<OnErrorListener> onErrorListeners = new LinkedList<OnErrorListener>();
 	ArrayList<TResult> mResults;
-		
+	
 	@Override
 	protected void onPreExecute() {
 		for (OnStartListener listener : onStartListeners) listener.onStart();

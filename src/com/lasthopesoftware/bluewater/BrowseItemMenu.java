@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.lasthopesoftware.bluewater.R;
 import jrFileSystem.IJrItemFiles;
 import jrAccess.JrSession;
+import jrFileSystem.IJrFilesContainer;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrPlaylist;
@@ -47,10 +48,10 @@ public class BrowseItemMenu {
         LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.active_jr_item_menu, null);
         
         Button shuffleButton = (Button)fileMenu.findViewById(R.id.btnShuffle);
-        shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrItemFiles)item));
+        shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrFilesContainer)item));
         
         Button playButton = (Button)fileMenu.findViewById(R.id.btnPlayAll);
-        playButton.setOnClickListener(new PlayClickHandler((IJrItemFiles)item));
+        playButton.setOnClickListener(new PlayClickHandler((IJrFilesContainer)item));
         
         Button viewButton = (Button)fileMenu.findViewById(R.id.btnViewFiles);
         viewButton.setOnClickListener(new ViewFilesClickHandler(item));
@@ -61,29 +62,29 @@ public class BrowseItemMenu {
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
-		private IJrItemFiles mItem;
+		private IJrFilesContainer mItem;
 		
-		public PlayClickHandler(IJrItemFiles item) {
+		public PlayClickHandler(IJrFilesContainer item) {
 			mItem = item;
 		}
 		
 		@Override
 		public void onClick(View v) {
-			ArrayList<JrFile> playlist = mItem.getFiles();
+			ArrayList<JrFile> playlist = mItem.getJrFiles().getFiles();
 			StreamingMusicService.StreamMusic(v.getContext(), playlist.get(0), playlist);
 		}
 	}
 	
 	private static class ShuffleClickHandler implements OnClickListener {
-		private IJrItemFiles mItem;
+		private IJrFilesContainer mItem;
 		
-		public ShuffleClickHandler(IJrItemFiles item) {
+		public ShuffleClickHandler(IJrFilesContainer item) {
 			mItem = item;
 		}
 		
 		@Override
 		public void onClick(View v) {
-			ArrayList<JrFile> playlist = mItem.getFiles(JrPlaylist.GET_SHUFFLED);
+			ArrayList<JrFile> playlist = mItem.getJrFiles().getFiles(JrPlaylist.GET_SHUFFLED);
 			StreamingMusicService.StreamMusic(v.getContext(), playlist.get(0), playlist);
 		}
 	}

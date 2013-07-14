@@ -16,8 +16,8 @@ public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
 	private Context mContext;
 	
-	public FileListAdapter(Context context, IJrItemFiles item) {
-		mFiles = item.getFiles();
+	public FileListAdapter(Context context, ArrayList<JrFile> files) {
+		mFiles = files;
 		mContext = context;
 	}
 	

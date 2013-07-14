@@ -14,8 +14,8 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 
 public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist> {
 	private ArrayList<JrPlaylist> mSubItems;
-	private OnStartListener mOnStartListener;
-	private OnErrorListener mOnErrorListener;
+	private ArrayList<OnStartListener> mItemStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
+	private ArrayList<OnErrorListener> mItemErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
 	private ArrayList<IJrDataTask.OnCompleteListener<List<JrPlaylist>>> mOnCompleteListeners;
 	
 	private OnConnectListener<List<JrPlaylist>> mOnConnectListener = new OnConnectListener<List<JrPlaylist>>() {
@@ -71,12 +71,14 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 
 	@Override
 	public void setOnItemsStartListener(OnStartListener listener) {
-		mOnStartListener = listener;
+		if (mItemStartListeners.size() < 1) mItemStartListeners.add(listener); 
+		mItemStartListeners.set(0, listener);
 	}
-
+	
 	@Override
 	public void setOnItemsErrorListener(OnErrorListener listener) {
-		mOnErrorListener = listener;
+		if (mItemErrorListeners.size() < 1) mItemErrorListeners.add(listener);
+		mItemErrorListeners.set(0, listener);
 	}
 
 	@Override
@@ -91,15 +93,11 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 
 	@Override
 	protected List<OnStartListener> getOnItemsStartListeners() {
-		LinkedList<OnStartListener> listeners = new LinkedList<OnStartListener>();
-		listeners.add(mOnStartListener);
-		return listeners;
+		return mItemStartListeners;
 	}
 
 	@Override
 	protected List<OnErrorListener> getOnItemsErrorListeners() {
-		LinkedList<OnErrorListener> listeners = new LinkedList<IJrDataTask.OnErrorListener>();
-		listeners.add(mOnErrorListener);
-		return listeners;
+		return mItemErrorListeners;
 	}
 }

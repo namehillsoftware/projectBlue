@@ -93,14 +93,14 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	@Override
 	protected List<OnStartListener> getOnItemsStartListeners() {
 		LinkedList<OnStartListener> listeners = new LinkedList<IJrDataTask.OnStartListener>();
-		listeners.add(mOnStartListener);
+		if (mOnStartListener != null) listeners.add(mOnStartListener);
 		return listeners;
 	}
 
 	@Override
 	protected List<OnErrorListener> getOnItemsErrorListeners() {
 		LinkedList<OnErrorListener> listeners = new LinkedList<IJrDataTask.OnErrorListener>();
-		listeners.add(mOnErrorListener);
+		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
 		return listeners;
 	}
 
