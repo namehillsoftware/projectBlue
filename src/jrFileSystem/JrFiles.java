@@ -1,6 +1,7 @@
 package jrFileSystem;
 
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class JrFiles implements IJrItemFiles {
 	private ArrayList<OnStartListener> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
 	private ArrayList<OnErrorListener> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
 	private ArrayList<OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
+	public static int GET_SHUFFLED = 1;
 
 	private OnConnectListener<List<JrFile>> mFileConnectListener = new OnConnectListener<List<JrFile>>() {
 		
@@ -125,7 +127,22 @@ public class JrFiles implements IJrItemFiles {
 
 	@Override
 	public ArrayList<JrFile> getFiles(int option) {
-		// TODO Auto-generated method stub
-		return null;
+		if (option != GET_SHUFFLED) return getFiles();
+		
+		mFiles = new ArrayList<JrFile>();
+		try {
+			String[] fileParams = new String[getFileParams().length + 1];
+			System.arraycopy(getFileParams(), 0, fileParams, 0, getFileParams().length);
+			fileParams[fileParams.length - 1] = "Shuffle=1";
+			List<JrFile> tempFiles = getNewFilesTask().execute(fileParams).get(); 
+			for (int i = 0; i < tempFiles.size(); i++) {
+				JrFileUtils.SetSiblings(i, tempFiles);
+				mFiles.add(tempFiles.get(i));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return mFiles;
 	}
 }

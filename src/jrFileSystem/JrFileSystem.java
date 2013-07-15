@@ -7,7 +7,6 @@ import java.util.List;
 
 import jrAccess.JrFsResponse;
 import jrAccess.JrSession;
-import jrAccess.JrStdXmlResponse;
 import jrFileSystem.IJrDataTask.OnCompleteListener;
 import jrFileSystem.IJrDataTask.OnConnectListener;
 import jrFileSystem.IJrDataTask.OnErrorListener;

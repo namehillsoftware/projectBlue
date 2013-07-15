@@ -2,20 +2,19 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import com.lasthopesoftware.bluewater.R;
-import jrFileSystem.IJrItemFiles;
 import jrAccess.JrSession;
 import jrFileSystem.IJrFilesContainer;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
+import jrFileSystem.JrFiles;
 import jrFileSystem.JrPlaylist;
 import android.content.Context;
 import android.content.Intent;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -84,7 +83,7 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			ArrayList<JrFile> playlist = mItem.getJrFiles().getFiles(JrPlaylist.GET_SHUFFLED);
+			ArrayList<JrFile> playlist = mItem.getJrFiles().getFiles(JrFiles.GET_SHUFFLED);
 			StreamingMusicService.StreamMusic(v.getContext(), playlist.get(0), playlist);
 		}
 	}

@@ -2,12 +2,7 @@ package jrFileSystem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import jrFileSystem.IJrDataTask.OnCompleteListener;
-import jrFileSystem.IJrDataTask.OnConnectListener;
-import jrFileSystem.IJrDataTask.OnErrorListener;
-import jrFileSystem.IJrDataTask.OnStartListener;
 import android.annotation.SuppressLint;
 
 @SuppressLint("UseSparseArrays")

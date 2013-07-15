@@ -1,8 +1,5 @@
 package jrFileSystem;
 
-import java.util.List;
-
-import jrFileSystem.IJrDataTask.OnConnectListener;
 
 public interface IJrItemAsync {
 	void getSubItemsAsync();
