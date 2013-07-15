@@ -16,9 +16,9 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 public class JrFiles implements IJrItemFiles {
 	private ArrayList<JrFile> mFiles;
 	private String[] mParams;
-	private OnStartListener mFileStartListener;
+	private ArrayList<OnStartListener> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
+	private ArrayList<OnErrorListener> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
 	private ArrayList<OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
-	private OnErrorListener mFileErrorListener;
 
 	private OnConnectListener<List<JrFile>> mFileConnectListener = new OnConnectListener<List<JrFile>>() {
 		
@@ -56,11 +56,13 @@ public class JrFiles implements IJrItemFiles {
 	}
 
 	public void setOnFilesStartListener(OnStartListener listener) {
-		mFileStartListener = listener;
+		if (mFileStartListeners.size() < 1) mFileStartListeners.add(listener);
+		mFileStartListeners.set(0, listener);
 	}
 
 	public void setOnFilesErrorListener(OnErrorListener listener) {
-		mFileErrorListener = listener;
+		if (mFileErrorListeners.size() < 1) mFileErrorListeners.add(listener);
+		mFileErrorListeners.set(0, listener);
 	}
 
 	protected OnConnectListener<List<JrFile>> getOnFileConnectListener() {
@@ -72,15 +74,11 @@ public class JrFiles implements IJrItemFiles {
 	}
 
 	protected List<OnStartListener> getOnFilesStartListeners() {
-		ArrayList<OnStartListener> listeners = new ArrayList<OnStartListener>();
-		listeners.add(mFileStartListener);
-		return listeners;
+		return mFileStartListeners;
 	}
 
 	protected List<OnErrorListener> getOnFilesErrorListeners() {
-		ArrayList<OnErrorListener> listeners = new ArrayList<OnErrorListener>();
-		listeners.add(mFileErrorListener);
-		return listeners;
+		return mFileErrorListeners;
 	}
 	
 	@Override

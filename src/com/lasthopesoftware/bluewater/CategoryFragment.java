@@ -1,9 +1,15 @@
 package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import jrAccess.JrSession;
+import jrFileSystem.IJrDataTask;
+import jrFileSystem.IJrDataTask.OnCompleteListener;
+import jrFileSystem.IJrItem;
 import jrFileSystem.JrItem;
+import jrFileSystem.JrItemAsyncBase;
+import jrFileSystem.JrPlaylist;
 import jrFileSystem.JrPlaylists;
 import android.content.Context;
 import android.content.Intent;
@@ -13,13 +19,20 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class CategoryFragment extends Fragment {
+	private IJrItem mCategory;
+	private ListView listView;
+	private ProgressBar pbLoading;
+	
     public CategoryFragment() {
     	super();
     }
@@ -30,60 +43,96 @@ public class CategoryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-
-    	int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
-    	if (JrSession.categories.get(categoryPosition) instanceof JrPlaylists) {
-    		ListView playlistView = new ListView(getActivity());
-    		playlistView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
-    		playlistView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
-    		playlistView.setAdapter(new PlaylistAdapter(getActivity(), JrSession.categories.get(categoryPosition).getSubItems()));
-    		return playlistView;
-    	}
+    	RelativeLayout layout = new RelativeLayout(getActivity());
+    	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
-    	ExpandableListView listView = new ExpandableListView(getActivity());
-    	ExpandableItemListAdapter adapter = new ExpandableItemListAdapter(getActivity(), categoryPosition);
-    	listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-			
-			@Override
-			public boolean onGroupClick(ExpandableListView parent, View v,
-					int groupPosition, long id) {
-				JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
-				if (selection.getSubItems().size() > 0) return false;
-	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
-	    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
-	    		intent.putExtra(ViewFiles.KEY, selection.getKey());
-	    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-	    		JrSession.selectedItem = selection;
-	    		startActivity(intent);
-	    		return true;
-			}
-		});
-    	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-    	    @Override
-    	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
-    	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
-	    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
-	    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
-	    		intent.putExtra(ViewFiles.KEY, selection.getKey());
-	    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-	    		JrSession.selectedItem = selection;
-	    		startActivity(intent);
-    	        return true;
-    	    }
-	    });
-    	listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
-    	listView.setAdapter(adapter);
-//    	listView.setGroupIndicator(null);
-        return listView;
+    	pbLoading = new ProgressBar(layout.getContext(), null, android.R.attr.progressBarStyleLarge);
+    	RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+    	pbLoading.setLayoutParams(pbParams);
+    	layout.addView(pbLoading);
+    	
+    	mCategory = JrSession.categories.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+    	
+    	if (mCategory instanceof JrPlaylists) {
+    		listView = new ListView(layout.getContext());
+    		listView.setVisibility(View.INVISIBLE);
+    		OnCompleteListener<List<JrPlaylist>> onPlaylistCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
+				
+				@Override
+				public void onComplete(List<JrPlaylist> result) {
+					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
+					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
+		    		listView.setAdapter(new PlaylistAdapter(getActivity(), (ArrayList<JrPlaylist>) result));
+		    		pbLoading.setVisibility(View.INVISIBLE);
+		    		listView.setVisibility(View.VISIBLE);
+				}
+			};
+			((JrPlaylists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
+			((JrPlaylists) mCategory).getSubItemsAsync();
+    	} else {
+	    	listView = new ExpandableListView(layout.getContext());
+	    	listView.setVisibility(View.INVISIBLE);
+	    	
+	    	OnCompleteListener<List<JrItem>> onItemCompleteListener = new OnCompleteListener<List<JrItem>>() {
+				
+				@Override
+				public void onComplete(List<JrItem> result) {
+					((ExpandableListView)listView).setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+						
+						@Override
+						public boolean onGroupClick(ExpandableListView parent, View v,
+								int groupPosition, long id) {
+							JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
+							if (selection.getSubItems().size() > 0) return false;
+				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
+				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
+				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
+				    		JrSession.selectedItem = selection;
+				    		startActivity(intent);
+				    		return true;
+						}
+					});
+			    	((ExpandableListView)listView).setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+			    	    @Override
+			    	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
+			    	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
+				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
+				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
+				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
+				    		JrSession.selectedItem = selection;
+				    		startActivity(intent);
+			    	        return true;
+			    	    }
+				    });
+			    	listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
+			    	
+			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<JrItem>)result));
+			    	pbLoading.setVisibility(View.INVISIBLE);
+		    		listView.setVisibility(View.VISIBLE);
+				}
+			};
+			((JrItem)mCategory).setOnItemsCompleteListener(onItemCompleteListener);
+			((JrItem)mCategory).getSubItemsAsync();
+    	}
+    	layout.addView(listView);
+        return layout;
     }
     
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
     	private ArrayList<JrItem> mCategoryItems;
     	
-    	public ExpandableItemListAdapter(Context context, int CategoryPosition) {
+//    	public ExpandableItemListAdapter(Context context, int CategoryPosition) {
+//    		mContext = context;
+//    		mCategoryItems = ((JrItem)JrSession.categories.get(CategoryPosition)).getSubItems();
+//    	}
+    	
+    	public ExpandableItemListAdapter(Context context, ArrayList<JrItem> categoryItems) {
     		mContext = context;
-    		mCategoryItems = ((JrItem)JrSession.categories.get(CategoryPosition)).getSubItems();
+    		mCategoryItems = categoryItems;
     	}
     	
 		@Override
@@ -97,9 +146,7 @@ public class CategoryFragment extends Fragment {
 		}
 		
 		@Override
-		public View getChildView(int groupPosition, int childPosition,
-			boolean isLastChild, View convertView, ViewGroup parent) {
-
+		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 			return BrowseItemMenu.getView(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
 		}
 
@@ -124,11 +171,9 @@ public class CategoryFragment extends Fragment {
 		}
 
 		@Override
-		public View getGroupView(int groupPosition, boolean isExpanded,
-				View convertView, ViewGroup parent) {
+		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
 
-			AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-		            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+			AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
 	        TextView textView = new TextView(mContext);
 	        textView.setTextAppearance(mContext, android.R.style.TextAppearance_Large);

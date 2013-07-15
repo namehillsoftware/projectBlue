@@ -105,7 +105,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 
 	@Override
-	protected String[] getSubItemParams() {
+	public String[] getSubItemParams() {
 		return new String[] { "Browse/Children" };
 	}
 }

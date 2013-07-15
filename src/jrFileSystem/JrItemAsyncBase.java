@@ -10,7 +10,7 @@ import jrFileSystem.IJrDataTask.OnCompleteListener;
 import jrFileSystem.IJrDataTask.OnConnectListener;
 import jrFileSystem.IJrDataTask.OnStartListener;
 
-public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject implements IJrItem<T> {
+public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject implements IJrItem<T>, IJrItemAsync {
 	protected ArrayList<T> mSubItems;
 	
 	public JrItemAsyncBase(int key, String value) {
@@ -27,30 +27,39 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 	/* Required Methods for Sub Item Async retrieval */
 	protected abstract String[] getSubItemParams();
 	public abstract void setOnItemsCompleteListener(IJrDataTask.OnCompleteListener<List<T>> listener);
-	public abstract void setOnItemsStartListener(IJrDataTask.OnStartListener listener);
-	public abstract void setOnItemsErrorListener(IJrDataTask.OnErrorListener listener);
 	protected abstract OnConnectListener<List<T>> getOnItemConnectListener();
 	protected abstract List<IJrDataTask.OnCompleteListener<List<T>>> getOnItemsCompleteListeners();
 	protected abstract List<IJrDataTask.OnStartListener> getOnItemsStartListeners();
 	protected abstract List<IJrDataTask.OnErrorListener> getOnItemsErrorListeners();
 	
 	public ArrayList<T> getSubItems() {
+		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
 		
-		if (mSubItems != null) {
+		if (mSubItems == null) {
 			try {
-				getNewSubItemsTask().execute(getSubItemParams()).get();
+				mSubItems = (ArrayList<T>) itemTask.execute(getSubItemParams()).get();
+				return mSubItems;
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
+		for (OnCompleteListener<List<T>> listener : itemTask.getOnCompleteListeners()) listener.onComplete(mSubItems);
 		return mSubItems;
 	}
 	
 	public void getSubItemsAsync() {
 		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
 		
-		if (mSubItems != null) {
+		if (mSubItems == null) {
+			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
+
+				@Override
+				public void onComplete(List<T> result) {
+					mSubItems = (ArrayList<T>) result;
+				}
+				
+			});
+			
 			itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
 			return;
 		}
