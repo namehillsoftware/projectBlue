@@ -14,8 +14,9 @@
     <string name="password_value"></string>
     <string name="access_code"></string>
     <string name="title_activity_file_view">File View</string>
-<!--    <string name="streaming_music_svc_started" /> -->
     <string name="title_activity_view_now_playing">Now Playing</string>
+    <string name="lbl_song_title">Now Playing</string>
+    <string name="lbl_song_artist">Now Playing Artist</string>
     <string name="img_now_playing">Now Playing Album Image</string>
     <string name="btn_view_files">View Files</string>
     <string name="btn_shuffle_files">Shuffle</string>

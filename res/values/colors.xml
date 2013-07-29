@@ -26,7 +26,7 @@
     <color name="status_unread">#E099CC00</color>
     <color name="status_progress">#E033B5E5</color>
     <color name="status_playing">#E0EE5F52</color> -->
-    <color name="overlay_dark">#262C31</color>
+    <color name="overlay_dark">#66000000</color>
     <color name="overlay_light">#DDDDDD</color>
     
     <!-- Use Gingerbread-orange -->

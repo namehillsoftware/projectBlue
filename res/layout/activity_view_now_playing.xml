@@ -5,76 +5,15 @@
     android:id="@+id/rlNowPlaying"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/tvNowPlaying"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:text="@string/lbl_now_playing"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        tools:context=".ViewNowPlaying" />
-
     <ImageView
         android:id="@+id/imgNowPlaying"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/tvNowPlaying"
+        android:layout_alignParentTop="true"
         android:layout_marginBottom="100dp"
         android:contentDescription="@string/img_now_playing"
         tools:context=".ViewNowPlaying" />
- 
-    <SeekBar
-        android:id="@+id/sbNowPlaying"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btnPlay"
-        android:layout_alignParentLeft="true" />
-    
-    <ImageButton
-        android:id="@+id/btnPlay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/btn_play"
-        android:src="@drawable/av_play" />
-
-     <ImageButton
-        android:id="@+id/btnPause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:background="?android:attr/selectableItemBackground"
-        android:contentDescription="@string/btn_pause"
-        android:src="@drawable/av_pause" 
-        android:visibility="invisible"/>
-
-     <ImageButton
-         android:id="@+id/btnPrevious"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_alignParentBottom="true"
-         android:layout_marginLeft="33dp"
-         android:layout_alignLeft="@+id/imgNowPlaying"
-         android:background="?android:attr/selectableItemBackground"
-         android:contentDescription="@string/btn_previous"
-         android:src="@drawable/av_rewind" />
-
-     <ImageButton
-         android:id="@+id/btnNext"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_alignParentBottom="true"
-         android:layout_alignRight="@+id/imgNowPlaying"
-         android:layout_marginRight="33dp"
-         android:background="?android:attr/selectableItemBackground"
-         android:contentDescription="@string/btn_next"
-         android:src="@drawable/av_fast_forward" />
-
          
      <ProgressBar
          android:id="@+id/pbLoadingImg"

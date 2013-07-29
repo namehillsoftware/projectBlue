@@ -16,11 +16,19 @@ import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
-public class ViewNowPlaying extends Activity implements Runnable {
+public class CtlNowPlaying extends Activity implements Runnable {
+	private ImageButton mPlay;
+	private ImageButton mPause;
+	private ImageButton mNext;
+	private ImageButton mPrevious;
 	private static Thread mTrackerThread;
 	private static HandleStreamMessages mHandler;
 
@@ -31,11 +39,34 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_view_now_playing);
-		
+		setContentView(R.layout.activity_ctl_now_playing);
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
+		mPlay = (ImageButton) findViewById(R.id.btnPlay);
+		mPause = (ImageButton) findViewById(R.id.btnPause);
+		mNext = (ImageButton) findViewById(R.id.btnNext);
+		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
+		
+		/* Toggle play/pause */
+		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
+		mPlay.setOnClickListener(togglePlayPauseListener);
+		mPause.setOnClickListener(togglePlayPauseListener);
 
+		mNext.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				StreamingMusicService.Next(v.getContext());
+			}
+		});
+
+		mPrevious.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				StreamingMusicService.Previous(v.getContext());
+			}
+		});
 		mHandler = new HandleStreamMessages(this);
 		if (mTrackerThread != null) mTrackerThread.interrupt();
 
@@ -56,6 +87,34 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
+	}
+
+	private static class TogglePlayPauseListener implements OnClickListener {
+		private View mPlay, mPause;
+
+		public TogglePlayPauseListener(View play, View pause) {
+			mPlay = play;
+			mPause = pause;
+		}
+
+		@Override
+		public void onClick(View v) {
+			if (JrSession.playingFile.isPlaying()) {
+				StreamingMusicService.Pause(v.getContext());
+				mPause.setVisibility(View.INVISIBLE);
+				mPlay.setVisibility(View.VISIBLE);
+				return;
+			}
+			
+			if (JrSession.playingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
+			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.playingFile, JrSession.playlist);
+			
+			mPlay.setVisibility(View.INVISIBLE);
+			mPause.setVisibility(View.VISIBLE);
+			
+			return;
+		}
+
 	}
 
 	@Override
@@ -89,26 +148,51 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	}
 
 	private static class HandleStreamMessages extends Handler {
+		private TextView mNowPlayingText;
 		private ImageView mNowPlayingImg;
+		private SeekBar mSeekbar;
+		private ImageButton mPlay;
+		private ImageButton mPause;
 		private ProgressBar mLoadingImg;
 		private static GetFileImage getFileImageTask;
 
-		public HandleStreamMessages(ViewNowPlaying owner) {
+		public HandleStreamMessages(CtlNowPlaying owner) {
+			mSeekbar = (SeekBar) owner.findViewById(R.id.sbNowPlaying);
 			mLoadingImg = (ProgressBar) owner.findViewById(R.id.pbLoadingImg);
 			mNowPlayingImg = (ImageView) owner.findViewById(R.id.imgNowPlaying);
+			mPlay = (ImageButton) owner.findViewById(R.id.btnPlay);
+			mPause = (ImageButton) owner.findViewById(R.id.btnPause);
 			setView();
-//			mNext = (ImageButton) findViewById(R.id.btnNext);
-//			mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		}
 
 		@Override
 		public void handleMessage(Message msg) {
-			
+			if (msg.arg1 == SET_STOPPED) {
+				mSeekbar.setProgress(0);
+			} else if (msg.arg1 == UPDATE_ALL) {
+				setView();
+			} else if (msg.arg1 == UPDATE_PLAYING) {
+				mPause.setVisibility(View.VISIBLE);
+				mPlay.setVisibility(View.INVISIBLE);
+				if (JrSession.playingFile != null) {
+					mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
+					mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+				}
+			}
 		}
 
 		private void setView() {
 			if (JrSession.playingFile == null) return;
 			
+			String title = JrSession.playingFile.getProperty("Artist") + " - " + JrSession.playingFile.getValue();
+			if (JrSession.playingFile.getProperty("Album") != null) title += "\n (" + JrSession.playingFile.getProperty("Album") + ")";
+
+			mNowPlayingText.setText(title);
+			
+			if (JrSession.playingFile.isPrepared()) {
+				mSeekbar.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
+				mSeekbar.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+			}
 			try {
 				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getWidth() : mNowPlayingImg.getHeight();
 				
