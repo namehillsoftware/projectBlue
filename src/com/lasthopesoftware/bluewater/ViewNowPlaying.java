@@ -16,7 +16,9 @@ import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.ImageView.ScaleType;
 import android.widget.ProgressBar;
 
@@ -31,8 +33,16 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+//		RelativeLayout layout = new RelativeLayout(this);
+//		
+//		View nowPlayingView = getLayoutInflater().inflate(R.layout.activity_view_now_playing, layout);
+//		View coverArtView = getLayoutInflater().inflate(R.layout.activity_ctl_now_playing, layout);
+//		layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+////		layout.addView(nowPlayingView);
+//		layout.addView(coverArtView);
+//		nowPlayingView.bringToFront();
+//		setContentView(layout);
 		setContentView(R.layout.activity_view_now_playing);
-		
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
