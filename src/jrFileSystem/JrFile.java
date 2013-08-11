@@ -17,6 +17,10 @@ import jrAccess.JrTestConnection;
 
 import org.xml.sax.SAXException;
 
+import xmlwise.XmlElement;
+import xmlwise.XmlParseException;
+import xmlwise.Xmlwise;
+
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -122,9 +126,9 @@ public class JrFile extends JrObject implements
 	}
 	
 	public String getProperty(String name) {
-		if (mProperties == null) {
+		if (mProperties == null || mProperties.size() == 0) {
 			try {
-				mProperties = new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey())).get();
+				mProperties = new JrFilePropertyResponse().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -136,9 +140,8 @@ public class JrFile extends JrObject implements
 	public String getRefreshedProperty(String name) {
 		
 		try {
-			mProperties.putAll(new JrFilePropertyResponse().execute("File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+			mProperties.putAll(new JrFilePropertyResponse().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -249,23 +252,16 @@ public class JrFile extends JrObject implements
 			JrConnection conn;
 			try {
 				conn = new JrConnection(params);
-				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-				SAXParser sp = parserFactory.newSAXParser();
-		    	JrFilePropertiesHandler jrFileProperties = new JrFilePropertiesHandler();
-		    	sp.parse(conn.getInputStream(), jrFileProperties);
+		    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
 		    	
-		    	returnProperties = jrFileProperties.getProperties();
+		    	for (XmlElement el : xml.get(0)) {
+		    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+		    	}
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (SAXException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ParserConfigurationException e) {
-				// TODO Auto-generated catch block
+			} catch (XmlParseException e) {
 				e.printStackTrace();
 			}
 			

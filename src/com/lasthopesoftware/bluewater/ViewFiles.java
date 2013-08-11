@@ -5,7 +5,6 @@ import java.util.List;
 
 import jrFileSystem.IJrDataTask.OnCompleteListener;
 import jrFileSystem.IJrFilesContainer;
-import jrFileSystem.IJrItemFiles;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFiles;

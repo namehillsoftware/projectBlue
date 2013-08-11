@@ -43,7 +43,7 @@ public class BrowseItemMenu {
         
         parentView.addView(textView);
         
-        LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE );
+        LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.active_jr_item_menu, null);
         
         Button shuffleButton = (Button)fileMenu.findViewById(R.id.btnShuffle);
