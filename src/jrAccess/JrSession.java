@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.SAXParser;
@@ -16,6 +18,8 @@ import org.apache.http.client.ClientProtocolException;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFileSystem;
+import jrFileSystem.JrItem;
+import jrFileSystem.JrPlaylists;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -35,7 +39,9 @@ public class JrSession {
 	public static String AccessCode = "";
 	
 	public static JrAccessDao accessDao;
-    public static ArrayList<IJrItem> categories;
+	
+    private static TreeMap<String, IJrItem> mCategories;
+    private static ArrayList<IJrItem> mCategoriesList;
     
     public static IJrItem<?> selectedItem;
     public static JrFile playingFile;
@@ -93,6 +99,35 @@ public class JrSession {
     	Active = true;
     	return true;
 	}
+    
+    public static TreeMap<String, IJrItem> getCategories() {
+    	if (mCategories != null) return mCategories;
+    	
+    	mCategories = new TreeMap<String, IJrItem>();
+		for (IJrItem category : getCategoriesList())
+			mCategories.put(category.getValue(), category);
+		
+		return mCategories;
+    }
+    
+    public static ArrayList<IJrItem> getCategoriesList() {
+    	if (mCategoriesList != null) return mCategoriesList;
+    	
+		if (JrSession.jrFs == null) JrSession.jrFs = new JrFileSystem();
+    	
+    	mCategoriesList = new ArrayList<IJrItem>();
+    	for (JrItem page : JrSession.jrFs.getSubItems()) {
+			if (page.getKey() == 1) {
+				mCategoriesList = ((IJrItem) page).getSubItems();
+				break;
+			}
+		}
+		
+    	JrPlaylists playlists = new JrPlaylists(mCategoriesList.size());
+    	mCategoriesList.add(playlists);
+    	
+    	return mCategoriesList;
+    }
     
     private static boolean tryConnection() {
     	boolean connectResult = false;

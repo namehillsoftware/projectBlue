@@ -52,7 +52,7 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
     	
-    	mCategory = JrSession.categories.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+    	mCategory = JrSession.getCategoriesList().get(getArguments().getInt(ARG_CATEGORY_POSITION));
     	
     	if (mCategory instanceof JrPlaylists) {
     		listView = new ListView(layout.getContext());

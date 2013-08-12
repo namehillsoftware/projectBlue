@@ -74,10 +74,7 @@ public class JrPlaylistXmlHandler extends DefaultHandler {
 	 * @return the response
 	 */
 	public ArrayList<JrPlaylist> getPlaylists() {
-		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(playlists.size());
-		for (JrPlaylist playlist : playlists.values()) {
-			if (playlist.getParent() == null) returnList.add(playlist);
-		}
+		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(playlists.values());
 		
 		return returnList;
 	}

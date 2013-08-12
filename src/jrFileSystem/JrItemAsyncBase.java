@@ -37,13 +37,13 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 		
 		if (mSubItems == null) {
 			try {
-				mSubItems = (ArrayList<T>) itemTask.execute(getSubItemParams()).get();
-				return mSubItems;
+				// This will call the onCompletes if they are attached.
+				mSubItems = (ArrayList<T>) itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
-		for (OnCompleteListener<List<T>> listener : itemTask.getOnCompleteListeners()) listener.onComplete(mSubItems);
+		
 		return mSubItems;
 	}
 	

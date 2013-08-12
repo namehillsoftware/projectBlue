@@ -20,6 +20,11 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 	public JrPlaylist(int key) {
 		setKey(key);
 	}
+	
+	public JrPlaylist(int key, JrPlaylist parent) {
+		setKey(key);
+		mParent = parent;
+	}
 
 	public void setParent(JrPlaylist parent) {
 		mParent = parent;

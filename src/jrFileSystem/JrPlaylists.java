@@ -4,6 +4,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.util.Base64;
+import android.util.SparseArray;
+
 import jrAccess.JrPlaylistResponse;
 import jrAccess.JrSession;
 import jrFileSystem.IJrDataTask.OnCompleteListener;
@@ -13,6 +16,7 @@ import jrFileSystem.IJrDataTask.OnStartListener;
 
 public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist> {
 	private ArrayList<JrPlaylist> mSubItems;
+	private SparseArray<JrPlaylist> mMappedPlaylists;
 	private ArrayList<OnStartListener> mItemStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
 	private ArrayList<OnErrorListener> mItemErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
 	private ArrayList<IJrDataTask.OnCompleteListener<List<JrPlaylist>>> mOnCompleteListeners;
@@ -21,7 +25,14 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		
 		@Override
 		public List<JrPlaylist> onConnect(InputStream is) {
-			return JrPlaylistResponse.GetItems(is);
+			ArrayList<JrPlaylist> streamResult = JrPlaylistResponse.GetItems(is);
+			
+			int i = 0;
+			while (i < streamResult.size()) {
+				if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+				else i++;
+			}
+			return streamResult;
 		}
 	};
 	
@@ -29,8 +40,10 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		
 		@Override
 		public void onComplete(List<JrPlaylist> result) {
-			mSubItems = (ArrayList<JrPlaylist>) result;			
+			mSubItems = new ArrayList<JrPlaylist>(result.size());
 		}
+		
+		
 	};
 	
 	public JrPlaylists(int key) {
@@ -38,21 +51,23 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		setValue("Playlist");
 	}
 	
-	@Override
-	public ArrayList<JrPlaylist> getSubItems() {
-		if (mSubItems != null) return mSubItems;
-		
-		mSubItems = new ArrayList<JrPlaylist>();
-		if (JrSession.accessDao == null) return mSubItems;
-		try {
-			mSubItems = (ArrayList<JrPlaylist>) getNewSubItemsTask().execute( "Playlists/List" ).get();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return mSubItems;
+	public SparseArray<JrPlaylist> getMappedPlaylists() {
+		if (mMappedPlaylists == null) denormalizeAndMap();
+		return mMappedPlaylists;
 	}
-
+	
+	private void denormalizeAndMap() {
+		mMappedPlaylists = new SparseArray<JrPlaylist>(getSubItems().size());
+		denormalizeAndMap(getSubItems());
+	}
+	
+	private void denormalizeAndMap(ArrayList<JrPlaylist> items) {
+		for (JrPlaylist playlist : items) {
+			mMappedPlaylists.append(playlist.getKey(), playlist);
+			if (playlist.getSubItems().size() > 0) denormalizeAndMap(playlist.getSubItems());
+		}
+	}
+	
 	@Override
 	protected String[] getSubItemParams() {
 		return new String[] { "Playlists/List" };

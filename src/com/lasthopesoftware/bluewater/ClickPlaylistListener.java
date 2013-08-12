@@ -23,7 +23,6 @@ public class ClickPlaylistListener implements OnItemClickListener {
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		Intent playlistIntent = new Intent(mContext, ViewPlaylists.class);
-		JrSession.selectedItem = mPlaylists.get(position);
 		playlistIntent.putExtra(ViewPlaylists.KEY, mPlaylists.get(position).getKey());
 		mContext.startActivity(playlistIntent);
 	}

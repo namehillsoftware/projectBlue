@@ -8,6 +8,7 @@ import jrFileSystem.IJrDataTask.OnCompleteListener;
 import jrFileSystem.JrFile;
 import jrFileSystem.JrFiles;
 import jrFileSystem.JrPlaylist;
+import jrFileSystem.JrPlaylists;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -20,14 +21,15 @@ import android.widget.ProgressBar;
 
 public class ViewPlaylists extends FragmentActivity {
 
-	public static final String KEY = "key";   
+	public static final String KEY = "com.lasthopesoftware.ViewPlaylist.key";
+	private int mPlaylistId;
 	private JrPlaylist mPlaylist;
-	
+
 	private ProgressBar pbLoading;
 	private ListView playlistView;
-	
+
 	private Context mContext;
-	
+
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +38,11 @@ public class ViewPlaylists extends FragmentActivity {
         playlistView = (ListView)findViewById(R.id.lvPlaylist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
         
-        mPlaylist = (JrPlaylist) JrSession.selectedItem;
+        mPlaylistId = 0;
+        if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
+        if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
+        
+        mPlaylist = ((JrPlaylists)JrSession.getCategories().get("Playlist")).getMappedPlaylists().get(mPlaylistId);
                 
         if (mPlaylist.getSubItems().size() > 0) {
         	playlistView.setAdapter(new PlaylistAdapter(this, mPlaylist.getSubItems()));
@@ -62,12 +68,24 @@ public class ViewPlaylists extends FragmentActivity {
 	}
 	
 	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		super.onSaveInstanceState(savedInstanceState);
+		savedInstanceState.putInt(KEY, mPlaylistId);
+	}
+	
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		mPlaylistId = savedInstanceState.getInt(KEY);
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
 		return true;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;

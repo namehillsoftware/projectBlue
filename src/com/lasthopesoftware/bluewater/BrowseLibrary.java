@@ -7,7 +7,6 @@ import jrAccess.JrSession;
 import jrFileSystem.IJrItem;
 import jrFileSystem.JrFileSystem;
 import jrFileSystem.JrItem;
-import jrFileSystem.JrItemAsyncBase;
 import jrFileSystem.JrPlaylists;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
@@ -62,8 +61,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
-
-		if (JrSession.jrFs == null) JrSession.jrFs = new JrFileSystem();
 
 		mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
 		// Set up the action bar.
@@ -162,36 +159,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		}
 
 		public ArrayList<IJrItem> getPages() {
-			if (JrSession.categories == null) {
-				JrSession.categories = new ArrayList<IJrItem>();
-
-				for (JrItem page : JrSession.jrFs.getSubItems()) {
-					if (page.getKey() == 1) {
-						JrSession.categories = ((IJrItem) page).getSubItems();
-						break;
-					}
-				}
-				// remove any categories that do not have any items
-				// for (IJrItem page : JrSession.categories) {
-				// if (page.getClass() != JrItem.class) continue;
-				//
-				// JrItem itemPage = (JrItem)page;
-				// itemPage.setOnItemsCompleteListener(listener)
-				// // itemPage.getSubItemsAsync()
-				// }
-				int i = 0;
-				while (i < JrSession.categories.size()) {
-					if (JrSession.categories.get(i).getSubItems().size() < 1) {
-						JrSession.categories.remove(i);
-						continue;
-					}
-					i++;
-				}
-
-				JrSession.categories.add(new JrPlaylists(JrSession.categories.size()));
-			}
-
-			return JrSession.categories;
+			return JrSession.getCategoriesList();
 		}
 	}
 
