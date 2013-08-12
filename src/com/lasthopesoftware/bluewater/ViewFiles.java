@@ -21,11 +21,12 @@ import android.widget.ProgressBar;
 
 public class ViewFiles extends FragmentActivity {
 
-	public static final String KEY = "key";
+	public static final String KEY = "com.lasthopesoftware.ViewFiles.key";
 	public static final String VALUE = "value";
 	public static final String VIEW_ITEM_FILES = "view_item_files";
 	public static final String VIEW_PLAYLIST_FILES = "view_playlist_files";
 	
+	private int mItemId;
 	private IJrItem<?> mItem;
 	private Context mContext;
 	
@@ -43,9 +44,10 @@ public class ViewFiles extends FragmentActivity {
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);
+        if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
+        if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
+        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(mItemId) : new JrItem(mItemId);
         
-        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(this.getIntent().getIntExtra(KEY, 1)) :
-        				new JrItem(this.getIntent().getIntExtra(KEY, 1));
         this.setTitle(this.getIntent().getStringExtra(VALUE));
         JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
         
@@ -65,6 +67,18 @@ public class ViewFiles extends FragmentActivity {
 		});
         
         filesContainer.getFilesAsync();
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		super.onSaveInstanceState(savedInstanceState);
+		savedInstanceState.putInt(KEY, mItemId);
+	}
+	
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		mItemId = savedInstanceState.getInt(KEY);
 	}
 	
 	@Override

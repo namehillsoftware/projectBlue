@@ -118,6 +118,8 @@ public class JrFile extends JrObject implements
 	
 	
 	public void setProperty(String name, String value) {
+		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
+		
 		Thread setPropertyThread = new Thread(new SetProperty(getKey(), name, value));
 		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
 		setPropertyThread.setPriority(Thread.MIN_PRIORITY);

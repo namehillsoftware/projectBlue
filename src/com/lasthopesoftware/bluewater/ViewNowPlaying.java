@@ -26,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
+import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -37,6 +38,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private ImageButton mPause;
 	private ImageButton mNext;
 	private ImageButton mPrevious;
+	private RatingBar mSongRating;
 	private static FrameLayout mContentView;
 	private static RelativeLayout mControlNowPlaying, mViewCoverArt;
 	private Timer hideTimer;
@@ -89,6 +91,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mPause = (ImageButton) findViewById(R.id.btnPause);
 		mNext = (ImageButton) findViewById(R.id.btnNext);
 		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
+		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
 		
 		/* Toggle play/pause */
 		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
@@ -108,6 +111,16 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			@Override
 			public void onClick(View v) {
 				StreamingMusicService.Previous(v.getContext());
+			}
+		});
+		
+		mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+			
+			@Override
+			public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+				if (!fromUser) return;
+				
+				JrSession.playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
 			}
 		});
 		
