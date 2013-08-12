@@ -41,8 +41,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private RatingBar mSongRating;
 	private static FrameLayout mContentView;
 	private static RelativeLayout mControlNowPlaying, mViewCoverArt;
-	private Timer hideTimer;
-	private TimerTask timerTask;
+	private Timer mHideTimer;
+	private TimerTask mTimerTask;
 
 	private static int UPDATE_ALL = 0;
 	private static int UPDATE_PLAYING = 1;
@@ -63,7 +63,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mContentView.addView(mControlNowPlaying);
 		mContentView.addView(mViewCoverArt);
 		
-		hideTimer = new Timer("Fade Timer");
+		mHideTimer = new Timer("Fade Timer");
 		
 		
 		mContentView.setOnClickListener(new OnClickListener() {
@@ -72,9 +72,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			public void onClick(View v) {
 				mControlNowPlaying.bringToFront();
 				mContentView.invalidate();
-				if (timerTask != null) timerTask.cancel();
-				hideTimer.purge();
-				timerTask = new TimerTask() {
+				if (mTimerTask != null) mTimerTask.cancel();
+				mHideTimer.purge();
+				mTimerTask = new TimerTask() {
 					
 					@Override
 					public void run() {
@@ -83,7 +83,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 						mHandler.sendMessage(msg);
 					}
 				};
-				hideTimer.schedule(timerTask, 5000);
+				mHideTimer.schedule(mTimerTask, 5000);
 			}
 		});
 
@@ -202,6 +202,15 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			return;
 		}
 
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		if (mHideTimer != null) {
+			mHideTimer.cancel();
+			mHideTimer.purge();
+		}
 	}
 	
 	public FrameLayout getContentView() {
