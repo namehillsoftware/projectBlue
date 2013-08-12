@@ -57,7 +57,7 @@ public class ViewPlaylists extends FragmentActivity {
 				@Override
 				public void onComplete(List<JrFile> result) {
 					playlistView.setAdapter(new FileListAdapter(mContext, (ArrayList<JrFile>) result));
-		        	playlistView.setOnItemClickListener(new ClickFileListener(mContext, mPlaylist.getJrFiles()));
+		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getJrFiles()));
 		        	
 		        	playlistView.setVisibility(View.VISIBLE);
 		        	pbLoading.setVisibility(View.INVISIBLE);

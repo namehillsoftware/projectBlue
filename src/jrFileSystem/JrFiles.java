@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
 
@@ -35,7 +36,17 @@ public class JrFiles implements IJrItemFiles {
 		@Override
 		public void onComplete(List<JrFile> result) {
 			mFiles = (ArrayList<JrFile>)result;
-//			if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
+			
+			mFiles = new ArrayList<JrFile>();
+			try {
+				List<JrFile> tempFiles = result; 
+				for (int i = 0; i < tempFiles.size(); i++) {
+					JrFileUtils.SetSiblings(i, tempFiles);
+					mFiles.add(tempFiles.get(i));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
 	
@@ -85,17 +96,14 @@ public class JrFiles implements IJrItemFiles {
 	
 	@Override
 	public ArrayList<JrFile> getFiles() {
-		if (mFiles != null) return mFiles;
-		
-		mFiles = new ArrayList<JrFile>();
-		try {
-			List<JrFile> tempFiles = getNewFilesTask().execute(getFileParams()).get(); 
-			for (int i = 0; i < tempFiles.size(); i++) {
-				JrFileUtils.SetSiblings(i, tempFiles);
-				mFiles.add(tempFiles.get(i));
+		if (mFiles == null) {
+			try {
+				getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams()).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		return mFiles;
