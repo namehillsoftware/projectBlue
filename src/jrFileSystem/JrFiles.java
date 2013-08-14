@@ -1,5 +1,6 @@
 package jrFileSystem;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ import jrFileSystem.IJrDataTask.OnErrorListener;
 import jrFileSystem.IJrDataTask.OnStartListener;
 
 public class JrFiles implements IJrItemFiles {
-	private ArrayList<JrFile> mFiles;
 	private String[] mParams;
 	private ArrayList<OnStartListener> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
 	private ArrayList<OnErrorListener> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
@@ -27,7 +27,30 @@ public class JrFiles implements IJrItemFiles {
 		
 		@Override
 		public List<JrFile> onConnect(InputStream is) {
-			return JrFileXmlResponse.GetFiles(is);
+			ArrayList<JrFile> files = new ArrayList<JrFile>();
+			try {
+				String[] keys = JrFileUtils.InputStreamToString(is).split(";");
+				files = new ArrayList<JrFile>(Integer.parseInt(keys[1]));
+				boolean IsListStarted = false;
+				for (String key : keys) {
+					int intKey = Integer.parseInt(key);
+					if (intKey < 0) {
+						IsListStarted = true;
+						continue;
+					}
+					if (IsListStarted) {
+						JrFile newFile = new JrFile(intKey);
+						if (files.size() > 0) {
+							newFile.setPreviousFile(files.get(files.size() - 1));
+							files.get(files.size() - 1).setNextFile(newFile);
+						}
+						files.add(newFile);
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return files;
 		}
 	};
 	
@@ -35,23 +58,16 @@ public class JrFiles implements IJrItemFiles {
 		
 		@Override
 		public void onComplete(List<JrFile> result) {
-			mFiles = (ArrayList<JrFile>)result;
 			
-			mFiles = new ArrayList<JrFile>();
-			try {
-				List<JrFile> tempFiles = result; 
-				for (int i = 0; i < tempFiles.size(); i++) {
-					JrFileUtils.SetSiblings(i, tempFiles);
-					mFiles.add(tempFiles.get(i));
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 	};
 	
 	public JrFiles(String... fileParams) {
-		mParams = fileParams;
+		mParams = new String[fileParams.length + 1];
+		System.arraycopy(fileParams, 0, mParams, 0, fileParams.length);
+		mParams[fileParams.length] = "Action=Serialize";
+		mFileCompleteListeners = new ArrayList<OnCompleteListener<List<JrFile>>>(2);
+		mFileCompleteListeners.add(mFileCompleteListener);
 	}
 	
 	/* Required Methods for File Async retrieval */
@@ -60,10 +76,6 @@ public class JrFiles implements IJrItemFiles {
 	}
 
 	public void setOnFilesCompleteListener(OnCompleteListener<List<JrFile>> listener) {
-		if (mFileCompleteListeners == null) {
-			mFileCompleteListeners = new ArrayList<OnCompleteListener<List<JrFile>>>(2);
-			mFileCompleteListeners.add(mFileCompleteListener);
-		}
 		if (mFileCompleteListeners.size() < 2) mFileCompleteListeners.add(listener);
 		else mFileCompleteListeners.set(1, listener);
 	}
@@ -96,17 +108,12 @@ public class JrFiles implements IJrItemFiles {
 	
 	@Override
 	public ArrayList<JrFile> getFiles() {
-		if (mFiles == null) {
-			try {
-				getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams()).get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
+		try {
+			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams()).get();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ArrayList<JrFile>();
 		}
-		
-		return mFiles;
 	}
 	
 	public void getFilesAsync() {
@@ -137,20 +144,15 @@ public class JrFiles implements IJrItemFiles {
 	public ArrayList<JrFile> getFiles(int option) {
 		if (option != GET_SHUFFLED) return getFiles();
 		
-		mFiles = new ArrayList<JrFile>();
 		try {
 			String[] fileParams = new String[getFileParams().length + 1];
 			System.arraycopy(getFileParams(), 0, fileParams, 0, getFileParams().length);
-			fileParams[fileParams.length - 1] = "Shuffle=1";
-			List<JrFile> tempFiles = getNewFilesTask().execute(fileParams).get(); 
-			for (int i = 0; i < tempFiles.size(); i++) {
-				JrFileUtils.SetSiblings(i, tempFiles);
-				mFiles.add(tempFiles.get(i));
-			}
+			fileParams[getFileParams().length] = "Shuffle=1";
+			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, fileParams).get(); 
+			
 		} catch (Exception e) {
 			e.printStackTrace();
+			return getFiles();
 		}
-		
-		return mFiles;
 	}
 }

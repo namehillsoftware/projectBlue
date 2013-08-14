@@ -114,9 +114,7 @@ public class JrFile extends JrObject implements
 	public void setPreviousFile(JrFile file) {
 		mPreviousFile = file;
 	}
-	
-	
-	
+		
 	public void setProperty(String name, String value) {
 		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
 		
@@ -130,7 +128,7 @@ public class JrFile extends JrObject implements
 	public String getProperty(String name) {
 		if (mProperties == null || mProperties.size() == 0) {
 			try {
-				mProperties = new JrFilePropertyResponse().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
+				mProperties = new JrFilePropertyResponse().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
