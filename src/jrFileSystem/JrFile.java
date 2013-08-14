@@ -40,8 +40,8 @@ public class JrFile extends JrObject implements
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private MediaPlayer mp;
-	private ArrayList<OnJrFileCompleteListener> onJrFileCompleteListeners;
-	private ArrayList<OnJrFilePreparedListener> onJrFilePreparedListeners;
+	private ArrayList<OnJrFileCompleteListener> onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();;
+	private ArrayList<OnJrFilePreparedListener> onJrFilePreparedListeners = new ArrayList<OnJrFilePreparedListener>();
 	private JrFile mNextFile, mPreviousFile;
 	
 	public JrFile(int key) {
@@ -68,13 +68,11 @@ public class JrFile extends JrObject implements
 	}
 	
 	
-	public void setOnFileCompletionListener(OnJrFileCompleteListener listener) {
-		if (onJrFileCompleteListeners == null) onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();
+	public void addOnFileCompletionListener(OnJrFileCompleteListener listener) {
 		onJrFileCompleteListeners.add(listener);
 	}
 	
-	public void setOnFilePreparedListener(OnJrFilePreparedListener listener) {
-		if (onJrFilePreparedListeners == null) onJrFilePreparedListeners = new ArrayList<OnJrFilePreparedListener>();
+	public void addOnFilePreparedListener(OnJrFilePreparedListener listener) {
 		onJrFilePreparedListeners.add(listener);
 	}
 	

@@ -95,11 +95,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (playlist != null) {
 			
 			for (JrFile file : playlist) {
-				file.setOnFileCompletionListener(this);
-				file.setOnFilePreparedListener(this);
 				if (file.getSubItemUrl().equalsIgnoreCase(mUrl)) {
+					file.addOnFileCompletionListener(this);
+					file.addOnFilePreparedListener(this);
 		        	file.initMediaPlayer(this);
 		        	file.prepareMediaPlayer(); // prepare async to not block main thread
+		        	break;
 		        }
 			}
 		}
@@ -259,10 +260,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		releaseMediaPlayer(file);
 		if (file.getNextFile() != null) {
 			JrFile nextFile = file.getNextFile();
-			if (!nextFile.isPrepared())
+			nextFile.addOnFileCompletionListener(this);
+			if (!nextFile.isPrepared()) {
+				nextFile.addOnFilePreparedListener(this);
 				nextFile.prepareMediaPlayer();
-			else
+			} else {
 				startMediaPlayer(nextFile);
+			}
 			return;
 		}
 		

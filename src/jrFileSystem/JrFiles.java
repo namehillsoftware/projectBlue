@@ -30,21 +30,27 @@ public class JrFiles implements IJrItemFiles {
 			ArrayList<JrFile> files = new ArrayList<JrFile>();
 			try {
 				String[] keys = JrFileUtils.InputStreamToString(is).split(";");
-				files = new ArrayList<JrFile>(Integer.parseInt(keys[1]));
-				boolean IsListStarted = false;
-				for (String key : keys) {
-					int intKey = Integer.parseInt(key);
-					if (intKey < 0) {
-						IsListStarted = true;
+				
+				int offset = -1;
+				JrFile newFile = null, prevFile = null;
+				for (int i = 0; i < keys.length; i++) {
+					int intKey = Integer.parseInt(keys[i]);
+					if (i == 0) {
+						offset = intKey;
 						continue;
 					}
-					if (IsListStarted) {
-						JrFile newFile = new JrFile(intKey);
-						if (files.size() > 0) {
-							newFile.setPreviousFile(files.get(files.size() - 1));
-							files.get(files.size() - 1).setNextFile(newFile);
+					if (i == 1) {
+						files = new ArrayList<JrFile>(intKey);
+						continue;
+					}	
+					if (i > offset) { 
+						newFile = new JrFile(intKey);
+						if (prevFile != null) {
+							newFile.setPreviousFile(prevFile);
+							prevFile.setNextFile(newFile);
 						}
 						files.add(newFile);
+						prevFile = newFile;
 					}
 				}
 			} catch (IOException e) {
