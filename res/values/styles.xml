@@ -34,6 +34,9 @@
         <item name="attr/overlay_drawable">@drawable/overlay_drawable</item>
         <item name="attr/dragview_background">@drawable/dragview_background</item>
         <item name="attr/dragview_float_background">@color/white</item>
+        <item name="android:actionBarStyle">@style/AppActionBar</item>
     </style> 
-
+    <style name="AppActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@color/project_blue_water_blue</item>
+    </style>
 </resources>

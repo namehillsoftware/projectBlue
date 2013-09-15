@@ -116,7 +116,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
         mWifiLock.acquire();
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		builder.setContentTitle("Music Streamer Now Playing");
 		builder.setContentText(file.getProperty("Artist") + " - " + file.getValue());
