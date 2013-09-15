@@ -77,7 +77,7 @@ public class FileListAdapter extends BaseAdapter {
 			}
 		});
         
-        getFileNameTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        getFileNameTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
                 
 		return textView;
 	}
