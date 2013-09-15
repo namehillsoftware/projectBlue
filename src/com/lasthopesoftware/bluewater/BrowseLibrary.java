@@ -3,11 +3,12 @@ package com.lasthopesoftware.bluewater;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import jrAccess.JrSession;
-import jrFileSystem.IJrItem;
-import jrFileSystem.JrFileSystem;
-import jrFileSystem.JrItem;
-import jrFileSystem.JrPlaylists;
+import com.lasthopesoftware.bluewater.FileSystem.IJrItem;
+import com.lasthopesoftware.bluewater.FileSystem.JrFileSystem;
+import com.lasthopesoftware.bluewater.FileSystem.JrItem;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylists;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Context;

@@ -3,13 +3,14 @@ package com.lasthopesoftware.bluewater;
 import java.util.ArrayList;
 import java.util.List;
 
-import jrFileSystem.IJrDataTask.OnCompleteListener;
-import jrFileSystem.IJrFilesContainer;
-import jrFileSystem.IJrItem;
-import jrFileSystem.JrFile;
-import jrFileSystem.JrFiles;
-import jrFileSystem.JrItem;
-import jrFileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.IJrFilesContainer;
+import com.lasthopesoftware.bluewater.FileSystem.IJrItem;
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.JrFiles;
+import com.lasthopesoftware.bluewater.FileSystem.JrItem;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;

@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrAccess.JrSession;
-import jrFileSystem.IJrFilesContainer;
-import jrFileSystem.IJrItem;
-import jrFileSystem.JrFile;
-import jrFileSystem.JrFiles;
-import jrFileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.IJrFilesContainer;
+import com.lasthopesoftware.bluewater.FileSystem.IJrItem;
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.JrFiles;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.content.Context;
 import android.content.Intent;
 import android.view.Gravity;

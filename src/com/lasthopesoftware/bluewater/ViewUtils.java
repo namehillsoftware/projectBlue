@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater;
 
-import jrAccess.JrSession;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;

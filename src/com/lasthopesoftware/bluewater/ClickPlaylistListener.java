@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrAccess.JrSession;
-import jrFileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;

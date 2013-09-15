@@ -6,10 +6,11 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrAccess.JrSession;
-import jrFileSystem.JrFile;
-import jrFileSystem.OnJrFileCompleteListener;
-import jrFileSystem.OnJrFilePreparedListener;
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.OnJrFileCompleteListener;
+import com.lasthopesoftware.bluewater.FileSystem.OnJrFilePreparedListener;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;

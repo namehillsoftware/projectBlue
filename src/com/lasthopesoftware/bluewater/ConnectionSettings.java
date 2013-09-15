@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.access.JrSession;
 
-import jrAccess.JrSession;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;

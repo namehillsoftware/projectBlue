@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater;
 
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+
 import android.content.Context;
-import jrFileSystem.JrFile;
 
 public class BackgroundFilePreparer implements Runnable {
 

@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrFileSystem.IJrItemFiles;
-import jrFileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.IJrItemFiles;
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;

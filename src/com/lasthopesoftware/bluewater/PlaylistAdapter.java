@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater;
 
 import java.util.ArrayList;
 
-import jrFileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
+
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;

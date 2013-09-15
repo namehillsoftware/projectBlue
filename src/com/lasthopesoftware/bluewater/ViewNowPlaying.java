@@ -4,9 +4,10 @@ import java.io.FileNotFoundException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jrAccess.JrConnection;
-import jrAccess.JrSession;
-import jrFileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.access.JrConnection;
+import com.lasthopesoftware.bluewater.access.JrSession;
+
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
