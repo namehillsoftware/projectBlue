@@ -217,7 +217,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (url != null && !url.isEmpty()) mUrl = url;
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		builder.setContentTitle("Starting Music Streamer");
         startForeground(mId, builder.build());
