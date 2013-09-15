@@ -6,22 +6,9 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-
-import org.xml.sax.SAXException;
-
-import com.lasthopesoftware.bluewater.access.JrConnection;
-import com.lasthopesoftware.bluewater.access.JrFilePropertiesHandler;
-import com.lasthopesoftware.bluewater.access.JrSession;
-import com.lasthopesoftware.bluewater.access.JrTestConnection;
-
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
-
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -30,6 +17,10 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
+
+import com.lasthopesoftware.bluewater.access.JrConnection;
+import com.lasthopesoftware.bluewater.access.JrSession;
+import com.lasthopesoftware.bluewater.access.JrTestConnection;
 
 public class JrFile extends JrObject implements
 	OnPreparedListener, 

@@ -3,15 +3,17 @@ package com.lasthopesoftware.bluewater.FileSystem;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.access.JrDataTask;
-
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnConnectListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnErrorListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.access.JrDataTask;
+import com.lasthopesoftware.threading.ISimpleTask;
 
-public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject implements IJrItem<T>, IJrItemAsync {
+
+public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject implements IJrItem<T>, IJrItemAsync<T> {
 	protected ArrayList<T> mSubItems;
 	
 	public JrItemAsyncBase(int key, String value) {
@@ -27,11 +29,11 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 	
 	/* Required Methods for Sub Item Async retrieval */
 	protected abstract String[] getSubItemParams();
-	public abstract void setOnItemsCompleteListener(IJrDataTask.OnCompleteListener<List<T>> listener);
+	public abstract void setOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
 	protected abstract OnConnectListener<List<T>> getOnItemConnectListener();
-	protected abstract List<IJrDataTask.OnCompleteListener<List<T>>> getOnItemsCompleteListeners();
-	protected abstract List<IJrDataTask.OnStartListener> getOnItemsStartListeners();
-	protected abstract List<IJrDataTask.OnErrorListener> getOnItemsErrorListeners();
+	protected abstract List<OnCompleteListener<List<T>>> getOnItemsCompleteListeners();
+	protected abstract List<OnStartListener<List<T>>> getOnItemsStartListeners();
+	protected abstract List<OnErrorListener<List<T>>> getOnItemsErrorListeners();
 	
 	public ArrayList<T> getSubItems() {
 		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
@@ -55,7 +57,7 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
 
 				@Override
-				public void onComplete(List<T> result) {
+				public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
 					mSubItems = (ArrayList<T>) result;
 				}
 				
@@ -65,7 +67,7 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 			return;
 		}
 		
-		for (OnCompleteListener<List<T>> listener : itemTask.getOnCompleteListeners()) listener.onComplete(mSubItems);
+		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners()) listener.onComplete((ISimpleTask<String, Void, List<T>>) this, mSubItems);
 	}
 	
 	protected JrDataTask<List<T>> getNewSubItemsTask() {
@@ -76,13 +78,13 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 		}
 			
 		if (getOnItemsStartListeners() != null) {
-			for (OnStartListener listener : getOnItemsStartListeners()) subItemsTask.addOnStartListener(listener);
+			for (OnStartListener<List<T>> listener : getOnItemsStartListeners()) subItemsTask.addOnStartListener(listener);
 		}
 		
 		subItemsTask.addOnConnectListener(getOnItemConnectListener());
 		
 		if (getOnItemsErrorListeners() != null) {
-			for (IJrDataTask.OnErrorListener listener : getOnItemsErrorListeners()) subItemsTask.addOnErrorListener(listener);
+			for (OnErrorListener<List<T>> listener : getOnItemsErrorListeners()) subItemsTask.addOnErrorListener(listener);
 		}
 		
 		return subItemsTask;

@@ -4,23 +4,22 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.access.JrPlaylistResponse;
-import com.lasthopesoftware.bluewater.access.JrSession;
-
-import android.util.Base64;
 import android.util.SparseArray;
+
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnConnectListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnErrorListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.access.JrPlaylistResponse;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist> {
 	private ArrayList<JrPlaylist> mSubItems;
 	private SparseArray<JrPlaylist> mMappedPlaylists;
-	private ArrayList<OnStartListener> mItemStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
-	private ArrayList<OnErrorListener> mItemErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
-	private ArrayList<IJrDataTask.OnCompleteListener<List<JrPlaylist>>> mOnCompleteListeners;
+	private ArrayList<OnStartListener<List<JrPlaylist>>> mItemStartListeners = new ArrayList<OnStartListener<List<JrPlaylist>>>(1);
+	private ArrayList<OnErrorListener<List<JrPlaylist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<JrPlaylist>>>(1);
+	private ArrayList<OnCompleteListener<List<JrPlaylist>>> mOnCompleteListeners;
 	
 	private OnConnectListener<List<JrPlaylist>> mOnConnectListener = new OnConnectListener<List<JrPlaylist>>() {
 		
@@ -40,10 +39,9 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	private OnCompleteListener<List<JrPlaylist>> mOnCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
 		
 		@Override
-		public void onComplete(List<JrPlaylist> result) {
-			mSubItems = new ArrayList<JrPlaylist>(result.size());
+		public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
+			mSubItems = new ArrayList<JrPlaylist>(result.size());			
 		}
-		
 		
 	};
 	
@@ -77,7 +75,7 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrPlaylist>> listener) {
 		if (mOnCompleteListeners == null) {
-			mOnCompleteListeners = new ArrayList<IJrDataTask.OnCompleteListener<List<JrPlaylist>>>();
+			mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrPlaylist>>>();
 			mOnCompleteListeners.add(mOnCompleteListener);
 		}
 		if (mOnCompleteListeners.size() < 2) mOnCompleteListeners.add(listener);
@@ -85,13 +83,13 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	}
 
 	@Override
-	public void setOnItemsStartListener(OnStartListener listener) {
+	public void setOnItemsStartListener(OnStartListener<List<JrPlaylist>> listener) {
 		if (mItemStartListeners.size() < 1) mItemStartListeners.add(listener); 
 		mItemStartListeners.set(0, listener);
 	}
 	
 	@Override
-	public void setOnItemsErrorListener(OnErrorListener listener) {
+	public void setOnItemsErrorListener(OnErrorListener<List<JrPlaylist>> listener) {
 		if (mItemErrorListeners.size() < 1) mItemErrorListeners.add(listener);
 		mItemErrorListeners.set(0, listener);
 	}
@@ -107,12 +105,12 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	}
 
 	@Override
-	protected List<OnStartListener> getOnItemsStartListeners() {
+	protected List<OnStartListener<List<JrPlaylist>>> getOnItemsStartListeners() {
 		return mItemStartListeners;
 	}
 
 	@Override
-	protected List<OnErrorListener> getOnItemsErrorListeners() {
+	protected List<OnErrorListener<List<JrPlaylist>>> getOnItemsErrorListeners() {
 		return mItemErrorListeners;
 	}
 }

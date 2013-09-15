@@ -7,21 +7,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.*;
 import com.lasthopesoftware.bluewater.access.JrDataTask;
 import com.lasthopesoftware.bluewater.access.JrFileXmlResponse;
+import com.lasthopesoftware.threading.ISimpleTask;
+
 
 import android.os.AsyncTask;
 
 
 public class JrFiles implements IJrItemFiles {
 	private String[] mParams;
-	private ArrayList<OnStartListener> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener>(1);
-	private ArrayList<OnErrorListener> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener>(1);
-	private ArrayList<OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
+	private ArrayList<OnStartListener<List<JrFile>>> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener<List<JrFile>>>(1);
+	private ArrayList<OnErrorListener<List<JrFile>>> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener<List<JrFile>>>(1);
+	private ArrayList<IJrDataTask.OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
 	public static int GET_SHUFFLED = 1;
 
 	private OnConnectListener<List<JrFile>> mFileConnectListener = new OnConnectListener<List<JrFile>>() {
@@ -64,7 +64,7 @@ public class JrFiles implements IJrItemFiles {
 	private OnCompleteListener<List<JrFile>> mFileCompleteListener = new OnCompleteListener<List<JrFile>>() {
 		
 		@Override
-		public void onComplete(List<JrFile> result) {
+		public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
 			
 		}
 	};
@@ -87,12 +87,12 @@ public class JrFiles implements IJrItemFiles {
 		else mFileCompleteListeners.set(1, listener);
 	}
 
-	public void setOnFilesStartListener(OnStartListener listener) {
+	public void setOnFilesStartListener(OnStartListener<List<JrFile>> listener) {
 		if (mFileStartListeners.size() < 1) mFileStartListeners.add(listener);
 		mFileStartListeners.set(0, listener);
 	}
 
-	public void setOnFilesErrorListener(OnErrorListener listener) {
+	public void setOnFilesErrorListener(OnErrorListener<List<JrFile>> listener) {
 		if (mFileErrorListeners.size() < 1) mFileErrorListeners.add(listener);
 		mFileErrorListeners.set(0, listener);
 	}
@@ -105,11 +105,11 @@ public class JrFiles implements IJrItemFiles {
 		return mFileCompleteListeners;
 	}
 
-	protected List<OnStartListener> getOnFilesStartListeners() {
+	protected List<OnStartListener<List<JrFile>>> getOnFilesStartListeners() {
 		return mFileStartListeners;
 	}
 
-	protected List<OnErrorListener> getOnFilesErrorListeners() {
+	protected List<OnErrorListener<List<JrFile>>> getOnFilesErrorListeners() {
 		return mFileErrorListeners;
 	}
 	
@@ -135,13 +135,13 @@ public class JrFiles implements IJrItemFiles {
 		}
 			
 		if (getOnFilesStartListeners() != null) {
-			for (OnStartListener listener : getOnFilesStartListeners()) fileTask.addOnStartListener(listener);
+			for (OnStartListener<List<JrFile>> listener : getOnFilesStartListeners()) fileTask.addOnStartListener(listener);
 		}
 		
 		fileTask.addOnConnectListener(getOnFileConnectListener());
 		
 		if (getOnFilesErrorListeners() != null) {
-			for (IJrDataTask.OnErrorListener listener : getOnFilesErrorListeners()) fileTask.addOnErrorListener(listener);
+			for (OnErrorListener<List<JrFile>> listener : getOnFilesErrorListeners()) fileTask.addOnErrorListener(listener);
 		}
 		
 		return fileTask;

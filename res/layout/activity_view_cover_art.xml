@@ -3,7 +3,7 @@
     android:id="@+id/rlViewCoverArt"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bright_blue" >
+    android:background="@color/project_blue_water_blue" >
 
 	<ImageView
 	    android:id="@+id/imgNowPlaying"

@@ -3,22 +3,22 @@ package com.lasthopesoftware.bluewater;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.FileSystem.JrFile;
-import com.lasthopesoftware.bluewater.FileSystem.JrFiles;
-import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
-import com.lasthopesoftware.bluewater.FileSystem.JrPlaylists;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.access.JrSession;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.FileSystem.JrFiles;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
+import com.lasthopesoftware.bluewater.FileSystem.JrPlaylists;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.access.JrSession;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class ViewPlaylists extends FragmentActivity {
 
@@ -56,7 +56,7 @@ public class ViewPlaylists extends FragmentActivity {
         	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<JrFile>>() {
 				
 				@Override
-				public void onComplete(List<JrFile> result) {
+				public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
 					playlistView.setAdapter(new FileListAdapter(mContext, (ArrayList<JrFile>) result));
 		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getJrFiles()));
 		        	

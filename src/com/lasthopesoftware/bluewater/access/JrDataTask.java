@@ -1,80 +1,55 @@
 package com.lasthopesoftware.bluewater.access;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTask;
 
-import android.os.AsyncTask;
+public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> implements IJrDataTask<TResult> {
 
-public class JrDataTask<TResult> extends AsyncTask<String, Void, TResult> implements IJrDataTask<TResult> {
-
-	LinkedList<OnConnectListener<TResult>> onConnectListeners = new LinkedList<IJrDataTask.OnConnectListener<TResult>>();
-	LinkedList<OnCompleteListener<TResult>> onCompleteListeners = new LinkedList<IJrDataTask.OnCompleteListener<TResult>>();
-	LinkedList<OnStartListener> onStartListeners = new LinkedList<OnStartListener>();
-	LinkedList<OnErrorListener> onErrorListeners = new LinkedList<OnErrorListener>();
+	LinkedList<OnConnectListener<TResult>> onConnectListeners = new LinkedList<OnConnectListener<TResult>>();
 	ArrayList<TResult> mResults;
 	
-	@Override
-	protected void onPreExecute() {
-		for (OnStartListener listener : onStartListeners) listener.onStart();
+	public JrDataTask() {
+		super();
+		super.addOnExecuteListener(new OnExecuteListener<String, Void, TResult>() {
+
+			@Override
+			public void onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
+				if (mResults == null) mResults = new ArrayList<TResult>();
+				mResults.clear();
+				JrConnection conn;
+				conn = new JrConnection(params);
+				for (OnConnectListener<TResult> workEvent : onConnectListeners) mResults.add(workEvent.onConnect(conn.getInputStream()));
+				
+				owner.setResult(mResults.get(mResults.size() - 1));
+			}
+		});
 	}
-	
-	@Override
-	protected TResult doInBackground(String... params) {
-		if (mResults == null) mResults = new ArrayList<TResult>();
-		mResults.clear();
-		JrConnection conn;
-		try {
-			conn = new JrConnection(params);
-			for (OnConnectListener<TResult> workEvent : onConnectListeners) mResults.add(workEvent.onConnect(conn.getInputStream()));
-		} catch (IOException ioEx) {
-			boolean executeAgain = true;
-			
-			for (OnErrorListener errorListener : onErrorListeners) executeAgain &= errorListener.onError(ioEx.getMessage());
-			if (executeAgain) return doInBackground(params);
-			
-			return null;
-		}
-		return mResults.get(mResults.size() - 1);
-	}
-	
+		
 	public ArrayList<TResult> getResults() {
 		return mResults;
 	}
-	
-	@Override
-	protected void onPostExecute(TResult result) {
-		for (OnCompleteListener<TResult> completeListener : onCompleteListeners) completeListener.onComplete(result);
-	}
-	
-	@Override
-	public void addOnStartListener(OnStartListener listener) {
-		if (onStartListeners == null) onStartListeners = new LinkedList<OnStartListener>();
-		onStartListeners.add(listener);
-	}
-	
+
 	@Override
 	public void addOnConnectListener(OnConnectListener<TResult> listener) {
-		if (onConnectListeners == null) onConnectListeners = new LinkedList<OnConnectListener<TResult>>();
 		onConnectListeners.add(listener);
 	}
 	
 	@Override
-	public void addOnCompleteListener(IJrDataTask.OnCompleteListener<TResult> listener) {
-		if (onCompleteListeners == null) onCompleteListeners = new LinkedList<OnCompleteListener<TResult>>();
-		onCompleteListeners.add(listener);
+	public void addOnExecuteListener(OnExecuteListener<String, Void, TResult> listener) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("The OnExecuteListener operation is not supported in the Jr Data Task. Please use the OnConnectListener.");
 	}
 
 	@Override
-	public void addOnErrorListener(com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnErrorListener listener) {
-		if (onErrorListeners == null) onErrorListeners = new LinkedList<OnErrorListener>();
-		onErrorListeners.add(listener);
+	public void removeOnConnectListener(com.lasthopesoftware.bluewater.access.IJrDataTask.OnConnectListener<TResult> listener) {
+		onConnectListeners.remove(listener);
 	}
 
 	@Override
-	public LinkedList<com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener<TResult>> getOnCompleteListeners() {
-		return onCompleteListeners;
+	public LinkedList<com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener<TResult>> getOnCompleteListeners() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

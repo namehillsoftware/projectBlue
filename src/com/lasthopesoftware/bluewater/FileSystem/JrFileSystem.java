@@ -5,29 +5,29 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnConnectListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnErrorListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.access.JrSession;
-
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private ArrayList<JrItem> mPages;
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
-	private OnStartListener mOnStartListener;
+	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
-	private OnErrorListener mOnErrorListener;
+	private OnErrorListener<List<JrItem>> mOnErrorListener;
 	
 	public JrFileSystem() {
 		super();
 		OnCompleteListener<List<JrItem>> completeListener = new OnCompleteListener<List<JrItem>>() {
 			
 			@Override
-			public void onComplete(List<JrItem> result) {
+			public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
 				mSubItems = new ArrayList<JrItem>(result.size());
-				mPages.addAll(result);
+				mPages.addAll(result);				
 			}
 		};
 		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(2);
@@ -71,12 +71,12 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 
 	@Override
-	public void setOnItemsStartListener(OnStartListener listener) {
+	public void setOnItemsStartListener(OnStartListener<List<JrItem>> listener) {
 		mOnStartListener = listener;
 	}
 
 	@Override
-	public void setOnItemsErrorListener(OnErrorListener listener) {
+	public void setOnItemsErrorListener(OnErrorListener<List<JrItem>> listener) {
 		mOnErrorListener = listener;
 	}
 
@@ -91,15 +91,15 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 
 	@Override
-	protected List<OnStartListener> getOnItemsStartListeners() {
-		LinkedList<OnStartListener> listeners = new LinkedList<IJrDataTask.OnStartListener>();
+	protected List<OnStartListener<List<JrItem>>> getOnItemsStartListeners() {
+		LinkedList<OnStartListener<List<JrItem>>> listeners = new LinkedList<OnStartListener<List<JrItem>>>();
 		if (mOnStartListener != null) listeners.add(mOnStartListener);
 		return listeners;
 	}
 
 	@Override
-	protected List<OnErrorListener> getOnItemsErrorListeners() {
-		LinkedList<OnErrorListener> listeners = new LinkedList<IJrDataTask.OnErrorListener>();
+	protected List<OnErrorListener<List<JrItem>>> getOnItemsErrorListeners() {
+		LinkedList<OnErrorListener<List<JrItem>>> listeners = new LinkedList<OnErrorListener<List<JrItem>>>();
 		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
 		return listeners;
 	}

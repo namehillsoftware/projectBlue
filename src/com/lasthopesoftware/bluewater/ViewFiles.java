@@ -9,7 +9,8 @@ import com.lasthopesoftware.bluewater.FileSystem.JrFile;
 import com.lasthopesoftware.bluewater.FileSystem.JrFiles;
 import com.lasthopesoftware.bluewater.FileSystem.JrItem;
 import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.access.IJrDataTask;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -52,10 +53,10 @@ public class ViewFiles extends FragmentActivity {
         this.setTitle(this.getIntent().getStringExtra(VALUE));
         JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
         
-        filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<JrFile>>() {
+        filesContainer.setOnFilesCompleteListener(new IJrDataTask.OnCompleteListener<List<JrFile>>() {
 			
 			@Override
-			public void onComplete(List<JrFile> result) {
+			public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
 				ArrayList<JrFile> innerResult =  (ArrayList<JrFile>) result;
 				FileListAdapter fileListAdapter = new FileListAdapter(mContext, innerResult);
 		    			    	
@@ -64,6 +65,7 @@ public class ViewFiles extends FragmentActivity {
 		    	
 		    	fileListView.setVisibility(View.VISIBLE);
 		        pbLoading.setVisibility(View.INVISIBLE);
+				
 			}
 		});
         

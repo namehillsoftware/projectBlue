@@ -3,14 +3,15 @@ package com.lasthopesoftware.bluewater;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask;
 import com.lasthopesoftware.bluewater.FileSystem.IJrItem;
 import com.lasthopesoftware.bluewater.FileSystem.JrItem;
 import com.lasthopesoftware.bluewater.FileSystem.JrItemAsyncBase;
 import com.lasthopesoftware.bluewater.FileSystem.JrPlaylist;
 import com.lasthopesoftware.bluewater.FileSystem.JrPlaylists;
-import com.lasthopesoftware.bluewater.FileSystem.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.access.JrSession;
+import com.lasthopesoftware.bluewater.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.access.IJrDataTask.*;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import android.content.Context;
 import android.content.Intent;
@@ -61,12 +62,12 @@ public class CategoryFragment extends Fragment {
     		OnCompleteListener<List<JrPlaylist>> onPlaylistCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
 				
 				@Override
-				public void onComplete(List<JrPlaylist> result) {
+				public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
 					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
 		    		listView.setAdapter(new PlaylistAdapter(getActivity(), (ArrayList<JrPlaylist>) result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
-		    		listView.setVisibility(View.VISIBLE);
+		    		listView.setVisibility(View.VISIBLE);					
 				}
 			};
 			((JrPlaylists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
@@ -76,9 +77,9 @@ public class CategoryFragment extends Fragment {
 	    	listView.setVisibility(View.INVISIBLE);
 	    	
 	    	OnCompleteListener<List<JrItem>> onItemCompleteListener = new OnCompleteListener<List<JrItem>>() {
-				
+
 				@Override
-				public void onComplete(List<JrItem> result) {
+				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
 					((ExpandableListView)listView).setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
 						
 						@Override
