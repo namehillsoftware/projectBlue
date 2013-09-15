@@ -51,9 +51,10 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 	}
 	
 	public void getSubItemsAsync() {
-		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
+		JrDataTask<List<T>> itemTask = new JrDataTask<List<T>>();
 		
 		if (mSubItems == null) {
+			itemTask = getNewSubItemsTask();
 			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
 
 				@Override
@@ -67,7 +68,7 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 			return;
 		}
 		
-		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners()) listener.onComplete((ISimpleTask<String, Void, List<T>>) this, mSubItems);
+		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners()) listener.onComplete(itemTask, mSubItems);
 	}
 	
 	protected JrDataTask<List<T>> getNewSubItemsTask() {

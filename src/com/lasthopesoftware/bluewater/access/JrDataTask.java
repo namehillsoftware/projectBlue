@@ -46,10 +46,4 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 	public void removeOnConnectListener(com.lasthopesoftware.bluewater.access.IJrDataTask.OnConnectListener<TResult> listener) {
 		onConnectListeners.remove(listener);
 	}
-
-	@Override
-	public LinkedList<com.lasthopesoftware.bluewater.access.IJrDataTask.OnCompleteListener<TResult>> getOnCompleteListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
