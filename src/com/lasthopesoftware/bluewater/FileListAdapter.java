@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.lasthopesoftware.bluewater.FileSystem.JrFile;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,7 +57,9 @@ public class FileListAdapter extends BaseAdapter {
         textView.setLayoutParams(lp);
         // Center the text vertically
         textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//			        textView.setTextColor(getResources().getColor(marcyred));
+        textView.setEllipsize(TruncateAt.END);
+        textView.setSingleLine();
+        textView.setMarqueeRepeatLimit(1);
         // Set the text starting position        
         textView.setPadding(20, 20, 20, 20);
         textView.setText("Loading...");

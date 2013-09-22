@@ -11,6 +11,8 @@ import com.lasthopesoftware.bluewater.access.JrSession;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils.TruncateAt;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +37,11 @@ public class BrowseItemMenu {
         TextView textView = new TextView(parentView.getContext());
         textView.setTextAppearance(parentView.getContext(), android.R.style.TextAppearance_Large);
         textView.setLayoutParams(lp);
+        textView.setEllipsize(TruncateAt.END);
+        textView.setMarqueeRepeatLimit(1);
+        textView.setSingleLine();
         // Center the text vertically
         textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//	        textView.setTextColor(getResources().getColor(marcyred));
         // Set the text starting position        
         textView.setPadding(20, 20, 20, 20);        
         textView.setText(item.getValue());

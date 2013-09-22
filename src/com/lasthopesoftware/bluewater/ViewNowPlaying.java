@@ -1,13 +1,19 @@
 package com.lasthopesoftware.bluewater;
 
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.lasthopesoftware.bluewater.FileSystem.JrFile;
 import com.lasthopesoftware.bluewater.access.JrConnection;
 import com.lasthopesoftware.bluewater.access.JrSession;
 
+import android.R.bool;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -60,9 +66,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 		mViewCoverArt = (RelativeLayout) inflater.inflate(R.layout.activity_view_cover_art, null);
 		mControlNowPlaying = (RelativeLayout) inflater.inflate(R.layout.activity_control_now_playing, null);
-		
-		mContentView.addView(mControlNowPlaying);
+		mControlNowPlaying.setVisibility(View.INVISIBLE);
 		mContentView.addView(mViewCoverArt);
+		mContentView.addView(mControlNowPlaying);
 		
 		mHideTimer = new Timer("Fade Timer");
 		
@@ -71,7 +77,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			@Override
 			public void onClick(View v) {
-				mControlNowPlaying.bringToFront();
+				mControlNowPlaying.setVisibility(View.VISIBLE);
 				mContentView.invalidate();
 				if (mTimerTask != null) mTimerTask.cancel();
 				mHideTimer.purge();
@@ -103,6 +109,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 
 			@Override
 			public void onClick(View v) {
+				if (!mControlNowPlaying.isShown()) return;
 				StreamingMusicService.Next(v.getContext());
 			}
 		});
@@ -111,6 +118,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			@Override
 			public void onClick(View v) {
+				if (!mControlNowPlaying.isShown()) return;
 				StreamingMusicService.Previous(v.getContext());
 			}
 		});
@@ -119,8 +127,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			@Override
 			public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-				if (!fromUser) return;
-				
+				if (!fromUser || !mControlNowPlaying.isShown()) return;
 				JrSession.playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
 			}
 		});
@@ -187,6 +194,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 
 		@Override
 		public void onClick(View v) {
+			if (!mControlNowPlaying.isShown()) return;
+			
 			if (JrSession.playingFile.isPlaying()) {
 				StreamingMusicService.Pause(v.getContext());
 				mPause.setVisibility(View.INVISIBLE);
@@ -225,7 +234,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	public RelativeLayout getViewCoverArt() {
 		return mViewCoverArt;
 	}
-	
+		
 	private static class HandleStreamMessages extends Handler {
 		private TextView mNowPlayingArtist, mNowPlayingTitle;
 		private ImageView mNowPlayingImg;
@@ -264,7 +273,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					mSongProgress.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
 				}
 			} else if (msg.arg1 == HIDE_CONTROLS) {
-				mOwner.getViewCoverArt().bringToFront();
+				mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);
 				mOwner.getContentView().invalidate();
 			}
 		}
@@ -272,7 +281,6 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private void setView() {
 			if (JrSession.playingFile == null) return;
 			
-//			if (JrSession.playingFile.getProperty("Album") != null) title += "\n (" + JrSession.playingFile.getProperty("Album") + ")";
 			mNowPlayingArtist.setText(JrSession.playingFile.getProperty("Artist"));
 			mNowPlayingTitle.setText(JrSession.playingFile.getValue());
 			if (JrSession.playingFile.getProperty("Rating") != null && !JrSession.playingFile.getProperty("Rating").isEmpty()) {
@@ -292,15 +300,30 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					getFileImageTask.cancel(true);
 				}
 				
-				getFileImageTask = new GetFileImage();
+				getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
+				
 				getFileImageTask.execute(JrSession.playingFile.getKey().toString(), String.valueOf(size));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
-		private class GetFileImage extends AsyncTask<String, Void, Bitmap> {
+		private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
 			private boolean isFileFound = false;
+			private ImageView mNowPlayingImg;
+			private ProgressBar mLoadingImg;
+			
+			private final int queueSize = 2;			
+			private static ConcurrentHashMap<String, Bitmap> imageCache;
+			private static ArrayBlockingQueue<String> imageQueue;
+						
+			public GetFileImage(ImageView nowPlayingImg, ProgressBar loadingImg) {
+				super();
+				mNowPlayingImg = nowPlayingImg;
+				mLoadingImg = loadingImg;
+				if (imageCache == null) imageCache = new ConcurrentHashMap<String, Bitmap>(queueSize);
+				if (imageQueue == null) imageQueue = new ArrayBlockingQueue<String>(queueSize);
+			}
 			
 			@Override
 			protected void onPreExecute() {
@@ -312,32 +335,54 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			protected Bitmap doInBackground(String... params) {
 
 				Bitmap returnBmp = null;
-
+				String fileKey = params[0];
+				
+				if (imageCache.containsKey(fileKey))
+					return imageCache.get(fileKey);
+				
 				try {
 					JrConnection conn = new JrConnection(
 												"File/GetImage", 
-												"File=" + params[0], 
+												"File=" + fileKey, 
 												"Type=Full",
 												"Width=" + params[1], 
 												"Height=" + params[1], 
 												"Pad=1",
 												"Format=png",
 												"FillTransparency=ffffff");
+					if (isCancelled()) return null;
 					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
+					
 					isFileFound = true;
 				} catch (FileNotFoundException fe) {
 					isFileFound = false;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-
+				
+				while (imageQueue.size() >= queueSize) {
+					String removeFileName;
+					try {
+						removeFileName = imageQueue.take();
+					} catch (InterruptedException e) {
+						e.printStackTrace();					
+						break;
+					}
+					if (imageCache.containsKey(removeFileName)) imageCache.remove(removeFileName);
+				}
+				
+				if (!imageCache.containsKey(fileKey)) {
+					imageQueue.add(fileKey);
+					imageCache.put(fileKey, returnBmp);
+				}
+				
 				return returnBmp;
 			}
 			
 			@Override
 			protected void onPostExecute(Bitmap result) {
 				mNowPlayingImg.setImageBitmap(result);
-				mNowPlayingImg.setScaleType(ScaleType.CENTER);
+				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
 				mLoadingImg.setVisibility(View.INVISIBLE);
 				mNowPlayingImg.setVisibility(View.VISIBLE);
 			}

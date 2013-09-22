@@ -136,8 +136,10 @@ public class JrSession {
 			JrSession.accessDao = new GetMcAccess().execute(JrSession.AccessCode).get();
 			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
 		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	
@@ -205,17 +207,22 @@ public class JrSession {
 	    		}
 	    	}
 	    	
-	    	// die if the playlist is not null already
-			if (playlist != null) return recoveredPlaylist;
-			playlist = recoveredPlaylist;
-			
-	    	if (mNowPlayingFieldId < 0) return recoveredPlaylist;
-	    	
-    		for (JrFile file : playlist) {
-    			if (file.getKey() == mNowPlayingFieldId) playingFile = file;
-    		}
-	    	
 	    	return recoveredPlaylist;
 		}
+		
+		@Override
+		protected void onPostExecute(ArrayList<JrFile> result) {
+			// die if the playlist is not null already
+			if (playlist != null) return;
+			playlist = result;
+	    	if (mNowPlayingFieldId > -1) {
+	    		for (JrFile file : playlist) {
+	    			if (file.getKey() == mNowPlayingFieldId) {
+	    				playingFile = file;
+	    			}
+	    		}
+	    	}
+		}
+    	
     }
 }

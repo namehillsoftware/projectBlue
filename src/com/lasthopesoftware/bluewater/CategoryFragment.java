@@ -17,6 +17,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -185,6 +186,9 @@ public class CategoryFragment extends Fragment {
 //		        textView.setTextColor(getResources().getColor(marcyred));
 	        // Set the text starting position        
 	        textView.setPadding(64, 20, 20, 20);
+	        textView.setEllipsize(TruncateAt.END);
+	        textView.setSingleLine();
+	        textView.setMarqueeRepeatLimit(1);
 //	        textView.setPadding(20, 20, 20, 20);
 		    textView.setText(mCategoryItems.get(groupPosition).getValue());
 	        
