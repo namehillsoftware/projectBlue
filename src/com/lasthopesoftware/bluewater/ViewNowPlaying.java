@@ -1,19 +1,11 @@
 package com.lasthopesoftware.bluewater;
 
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.lasthopesoftware.bluewater.FileSystem.JrFile;
-import com.lasthopesoftware.bluewater.access.JrConnection;
-import com.lasthopesoftware.bluewater.access.JrSession;
-
-import android.R.bool;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -35,8 +27,11 @@ import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.RelativeLayout;
-import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.access.JrConnection;
+import com.lasthopesoftware.bluewater.access.JrSession;
 
 public class ViewNowPlaying extends Activity implements Runnable {
 	private static Thread mTrackerThread;
@@ -57,7 +52,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private static int HIDE_CONTROLS = 3;
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		mContentView = new FrameLayout(this);
@@ -139,6 +134,14 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Message msg = new Message();
+		msg.arg1 = UPDATE_ALL;
+		mHandler.sendMessage(msg);
 	}
 	
 	@Override
@@ -256,7 +259,6 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			mNowPlayingArtist = (TextView) mOwner.findViewById(R.id.tvSongArtist);
 			mNowPlayingTitle = (TextView) mOwner.findViewById(R.id.tvSongTitle);
 			mSongRating = (RatingBar) mOwner.findViewById(R.id.rbSongRating);
-			setView();
 		}
 
 		@Override
@@ -281,7 +283,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private void setView() {
 			if (JrSession.playingFile == null) return;
 			
-			mNowPlayingArtist.setText(JrSession.playingFile.getProperty("Artist"));
+			String artist = JrSession.playingFile.getProperty("Artist");
+			String album = JrSession.playingFile.getProperty("Album"); 
+			mNowPlayingArtist.setText(artist);
 			mNowPlayingTitle.setText(JrSession.playingFile.getValue());
 			if (JrSession.playingFile.getProperty("Rating") != null && !JrSession.playingFile.getProperty("Rating").isEmpty()) {
 				mSongRating.setRating(Float.valueOf(JrSession.playingFile.getProperty("Rating")));
@@ -293,7 +297,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				mSongProgress.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
 			}
 			try {
-				int size = mNowPlayingImg.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mNowPlayingImg.getHeight() : mNowPlayingImg.getWidth();
+				int size = mOwner.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mOwner.getResources().getDisplayMetrics().heightPixels : mOwner.getResources().getDisplayMetrics().widthPixels;
 				
 				// Cancel the getFileImageTask if it is already in progress
 				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
@@ -302,7 +306,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				
 				getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 				
-				getFileImageTask.execute(JrSession.playingFile.getKey().toString(), String.valueOf(size));
+				getFileImageTask.execute(album == null ? JrSession.playingFile.getKey().toString() : (artist + ":" + album), JrSession.playingFile.getKey().toString(), String.valueOf(size));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -313,16 +317,18 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			private ImageView mNowPlayingImg;
 			private ProgressBar mLoadingImg;
 			
-			private final int queueSize = 2;			
+			private final int cacheSize = 5;			
 			private static ConcurrentHashMap<String, Bitmap> imageCache;
 			private static ArrayBlockingQueue<String> imageQueue;
+			
+			private static Bitmap emptyBitmap;
 						
 			public GetFileImage(ImageView nowPlayingImg, ProgressBar loadingImg) {
 				super();
 				mNowPlayingImg = nowPlayingImg;
 				mLoadingImg = loadingImg;
-				if (imageCache == null) imageCache = new ConcurrentHashMap<String, Bitmap>(queueSize);
-				if (imageQueue == null) imageQueue = new ArrayBlockingQueue<String>(queueSize);
+				if (imageCache == null) imageCache = new ConcurrentHashMap<String, Bitmap>(cacheSize);
+				if (imageQueue == null) imageQueue = new ArrayBlockingQueue<String>(cacheSize);
 			}
 			
 			@Override
@@ -333,20 +339,24 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			@Override
 			protected Bitmap doInBackground(String... params) {
-
-				Bitmap returnBmp = null;
-				String fileKey = params[0];
 				
-				if (imageCache.containsKey(fileKey))
-					return imageCache.get(fileKey);
+				Bitmap returnBmp = null;
+				String uId = params[0];
+				String fileKey = params[1];
+				String squareSize = params[2];
+				
+				if (imageCache.containsKey(uId)) {
+					isFileFound = true;
+					return imageCache.get(uId);
+				}
 				
 				try {
 					JrConnection conn = new JrConnection(
 												"File/GetImage", 
 												"File=" + fileKey, 
 												"Type=Full",
-												"Width=" + params[1], 
-												"Height=" + params[1], 
+												"Width=" + squareSize, 
+												"Height=" + squareSize, 
 												"Pad=1",
 												"Format=png",
 												"FillTransparency=ffffff");
@@ -360,20 +370,29 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					e.printStackTrace();
 				}
 				
-				while (imageQueue.size() >= queueSize) {
+				if (returnBmp == null) {
+					if (emptyBitmap == null) {
+						int squareInt = Integer.parseInt(squareSize);
+						emptyBitmap = Bitmap.createBitmap(squareInt, squareInt, Bitmap.Config.ARGB_8888);
+					}
+					
+					returnBmp = emptyBitmap;
+				}
+				
+				while (imageQueue.size() >= cacheSize) {
 					String removeFileName;
 					try {
 						removeFileName = imageQueue.take();
+						if (imageCache.containsKey(removeFileName)) imageCache.remove(removeFileName);
 					} catch (InterruptedException e) {
 						e.printStackTrace();					
 						break;
 					}
-					if (imageCache.containsKey(removeFileName)) imageCache.remove(removeFileName);
 				}
 				
-				if (!imageCache.containsKey(fileKey)) {
-					imageQueue.add(fileKey);
-					imageCache.put(fileKey, returnBmp);
+				if (!imageCache.containsKey(uId)) {
+					imageQueue.add(uId);
+					imageCache.put(uId, returnBmp);
 				}
 				
 				return returnBmp;
