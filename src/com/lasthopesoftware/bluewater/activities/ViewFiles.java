@@ -3,10 +3,16 @@ package com.lasthopesoftware.bluewater.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.layout;
-import com.lasthopesoftware.bluewater.R.menu;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
@@ -18,15 +24,6 @@ import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.threading.ISimpleTask;
-
-import android.content.Context;
-import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 
 public class ViewFiles extends FragmentActivity {
 

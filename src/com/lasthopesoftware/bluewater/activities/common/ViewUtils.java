@@ -1,12 +1,5 @@
 package com.lasthopesoftware.bluewater.activities.common;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.string;
-import com.lasthopesoftware.bluewater.activities.SetConnection;
-import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -14,6 +7,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
+
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.SetConnection;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 public class ViewUtils {
 

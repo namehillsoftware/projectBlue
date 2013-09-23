@@ -3,20 +3,6 @@ package com.lasthopesoftware.bluewater.activities.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.activities.ViewFiles;
-import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
-import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
-import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.access.IJrDataTask.*;
-import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrItemAsyncBase;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
-import com.lasthopesoftware.threading.ISimpleTask;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -34,6 +20,18 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.lasthopesoftware.bluewater.activities.ViewFiles;
+import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
+import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.objects.JrItem;
+import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class CategoryFragment extends Fragment {
 	private IJrItem mCategory;

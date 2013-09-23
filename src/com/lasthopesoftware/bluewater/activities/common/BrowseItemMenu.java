@@ -2,22 +2,9 @@ package com.lasthopesoftware.bluewater.activities.common;
 
 import java.util.ArrayList;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.layout;
-import com.lasthopesoftware.bluewater.activities.ViewFiles;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
-import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.services.StreamingMusicService;
-
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils.TruncateAt;
-import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +17,16 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
+
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.ViewFiles;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
+import com.lasthopesoftware.bluewater.data.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class BrowseItemMenu {
 	public static View getView(IJrItem<?> item, View convertView, ViewGroup parent) {
@@ -48,7 +45,7 @@ public class BrowseItemMenu {
         // Center the text vertically
         textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
         // Set the text starting position        
-        textView.setPadding(20, 20, 20, 20);        
+        textView.setPadding(20, 20, 20, 20);
         textView.setText(item.getValue());
         
         parentView.addView(textView);

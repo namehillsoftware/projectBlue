@@ -3,18 +3,6 @@ package com.lasthopesoftware.bluewater.activities;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.layout;
-import com.lasthopesoftware.bluewater.R.menu;
-import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
-
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -31,6 +19,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 
 public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
 

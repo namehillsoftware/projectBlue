@@ -1,10 +1,5 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.layout;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -12,8 +7,11 @@ import android.util.Base64;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.CheckBox;
+import android.widget.EditText;
+
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 public class SetConnection extends FragmentActivity {
 

@@ -30,9 +30,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.R.id;
-import com.lasthopesoftware.bluewater.R.layout;
-import com.lasthopesoftware.bluewater.R.menu;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.JrSession;

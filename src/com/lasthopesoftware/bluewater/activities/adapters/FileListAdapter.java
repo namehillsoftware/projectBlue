@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
 
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
-
 import android.content.Context;
 import android.os.AsyncTask;
 import android.text.TextUtils.TruncateAt;
@@ -12,10 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ViewSwitcher;
 
+import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
