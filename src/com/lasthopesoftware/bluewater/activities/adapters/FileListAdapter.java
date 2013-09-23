@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.adapters;
+package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
 

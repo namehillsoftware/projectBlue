@@ -8,9 +8,9 @@ import java.util.ArrayList;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.ViewUtils;
 import com.lasthopesoftware.bluewater.R.drawable;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;

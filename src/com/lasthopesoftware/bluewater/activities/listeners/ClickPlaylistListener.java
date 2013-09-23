@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.listeners;
+package com.lasthopesoftware.bluewater.activities.listeners;
 
 import java.util.ArrayList;
 

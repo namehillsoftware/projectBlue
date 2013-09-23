@@ -1,5 +1,8 @@
-package com.lasthopesoftware.bluewater;
+package com.lasthopesoftware.bluewater.activities.common;
 
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.R.id;
+import com.lasthopesoftware.bluewater.R.string;
 import com.lasthopesoftware.bluewater.activities.ConnectionSettings;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.data.access.JrSession;

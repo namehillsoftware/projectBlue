@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.ViewUtils;
 import com.lasthopesoftware.bluewater.R.id;
 import com.lasthopesoftware.bluewater.R.layout;
 import com.lasthopesoftware.bluewater.R.menu;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
-import com.lasthopesoftware.bluewater.fragments.CategoryFragment;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;

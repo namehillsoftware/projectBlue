@@ -13,22 +13,22 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.ViewUtils;
 import com.lasthopesoftware.bluewater.R.id;
 import com.lasthopesoftware.bluewater.R.layout;
 import com.lasthopesoftware.bluewater.R.menu;
-import com.lasthopesoftware.bluewater.adapters.FileListAdapter;
-import com.lasthopesoftware.bluewater.adapters.PlaylistAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
+import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu.ClickListener;
+import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
+import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
-import com.lasthopesoftware.bluewater.listeners.ClickFileListener;
-import com.lasthopesoftware.bluewater.listeners.ClickPlaylistListener;
-import com.lasthopesoftware.bluewater.views.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.views.BrowseItemMenu.ClickListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class ViewPlaylists extends FragmentActivity {

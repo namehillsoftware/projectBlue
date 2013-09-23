@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.views;
+package com.lasthopesoftware.bluewater.activities.common;
 
 import java.util.ArrayList;
 

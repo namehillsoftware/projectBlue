@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.adapters;
+package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
 
+import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.views.BrowseItemMenu;
 
 import android.content.Context;
 import android.view.View;

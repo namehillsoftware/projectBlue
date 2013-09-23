@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.ViewUtils;
 import com.lasthopesoftware.bluewater.R.id;
 import com.lasthopesoftware.bluewater.R.layout;
 import com.lasthopesoftware.bluewater.R.menu;
-import com.lasthopesoftware.bluewater.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
@@ -16,7 +17,6 @@ import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.listeners.ClickFileListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import android.content.Context;
