@@ -5,6 +5,7 @@
     <string name="title_activity_stream_media">Stream Media</string>
     <string name="title_activity_browse_library">Project Blue Water</string>
     <string name="title_activity_set_up_connection">Connection Settings</string>
+    <string name="title_activity_select_library">Select Library</string>
     <string name="lbl_user_name">User Name:</string>
     <string name="lbl_access_code">Access Code:</string>
     <string name="lbl_password">Password:</string>
@@ -28,6 +29,7 @@
     <string name="btn_next">Next</string>
     <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="btn_browse_library">Browse Library</string>
     <string name="lbl_connection_lost">Your connection has been lost. Reconnect?</string>
     <string name="lbl_connection_lost_title">Connection Lost</string>
 </resources>

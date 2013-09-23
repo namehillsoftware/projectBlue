@@ -55,7 +55,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	AudioManager mAudioManager;
 	
 	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
-		JrSession.playlist = playlist;
+		JrSession.Playlist = playlist;
 		
 		JrFile file = startFile;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getSubItemUrl()), context, StreamingMusicService.class);
@@ -74,14 +74,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public static void Next(Context context) {
-		JrFile nextFile = JrSession.playingFile.getNextFile();
+		JrFile nextFile = JrSession.PlayingFile.getNextFile();
 		if (nextFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getSubItemUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
 	}
 	
 	public static void Previous(Context context) {
-		JrFile previousFile = JrSession.playingFile.getPreviousFile();
+		JrFile previousFile = JrSession.PlayingFile.getPreviousFile();
 		if (previousFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getSubItemUrl()), context, StreamingMusicService.class);
 		context.startService(svcIntent);
@@ -113,7 +113,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 
 	private void startMediaPlayer(JrFile file) {
-		JrSession.playingFile = file;
+		JrSession.PlayingFile = file;
 		mUrl = file.getSubItemUrl();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
@@ -143,21 +143,21 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	private void stopPlayback(boolean isUserInterrupted) {
 		
-		if (JrSession.playingFile != null) {
-			if (JrSession.playingFile.isPlaying()) {
+		if (JrSession.PlayingFile != null) {
+			if (JrSession.PlayingFile.isPlaying()) {
 				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-				JrSession.playingFile.getMediaPlayer().stop();
+				JrSession.PlayingFile.getMediaPlayer().stop();
 			}
-			JrSession.playingFile = null;
+			JrSession.PlayingFile = null;
 			releaseMediaPlayers();
 		}
 		stopNotification();
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
-		if (JrSession.playingFile != null && JrSession.playingFile.isPlaying()) {
+		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-			JrSession.playingFile.getMediaPlayer().pause();
+			JrSession.PlayingFile.getMediaPlayer().pause();
 	        JrSession.SaveSession(this);
 		}
 		stopNotification();
@@ -191,21 +191,21 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 			if (intent.getAction().equals(ACTION_START)) {
-				// Want to handle two situations: when the playlist is empty
-				// or when a new playlist is given, start playback on new playlist
-				if (playlist == null || !playlist.equals(JrSession.playlist)) {
-					playlist = JrSession.playlist;
+				// Want to handle two situations: when the Playlist is empty
+				// or when a new Playlist is given, start playback on new Playlist
+				if (playlist == null || !playlist.equals(JrSession.Playlist)) {
+					playlist = JrSession.Playlist;
 					initializePlaylist(intent.getDataString());
 				} else if (!mUrl.equals(intent.getDataString())) {
-					// Other situation: Selected track has changed, but playlist hasn't
+					// Other situation: Selected track has changed, but Playlist hasn't
 					// Already know that mUrl is not null since the above condition being
 					// true would have caught that
 					initializePlaylist(intent.getDataString());
 				}
 	        } else if (intent.getAction().equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
-	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.playingFile != null && JrSession.playingFile.getMediaPlayer() != null) {
-	    		startMediaPlayer(JrSession.playingFile);
+	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.PlayingFile != null && JrSession.PlayingFile.getMediaPlayer() != null) {
+	    		startMediaPlayer(JrSession.PlayingFile);
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
 	        }
@@ -218,7 +218,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	private void initializePlaylist(String url) {
 		// stop any playback that is in action
-		if (JrSession.playingFile != null) stopPlayback(false);
+		if (JrSession.PlayingFile != null) stopPlayback(false);
 		if (url != null && !url.isEmpty()) mUrl = url;
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -237,7 +237,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public void onJrFilePrepared(JrFile file) {
-		if (JrSession.playingFile == null && !file.getMediaPlayer().isPlaying()) startMediaPlayer(file);
+		if (JrSession.PlayingFile == null && !file.getMediaPlayer().isPlaying()) startMediaPlayer(file);
 	}
 	
 	/* (non-Javadoc)
@@ -284,31 +284,31 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            /*if (playlist == null || playlist.isEmpty()) initMediaPlayers();
+	            /*if (Playlist == null || Playlist.isEmpty()) initMediaPlayers();
 	            else */
-	        	if (JrSession.playingFile.getMediaPlayer() == null) {
-	        		initializePlaylist(JrSession.playingFile.getSubItemUrl());
-//	        		startMediaPlayer(JrSession.playingFile);
+	        	if (JrSession.PlayingFile.getMediaPlayer() == null) {
+	        		initializePlaylist(JrSession.PlayingFile.getSubItemUrl());
+//	        		startMediaPlayer(JrSession.PlayingFile);
 	        	}
-	            else if (!JrSession.playingFile.getMediaPlayer().isPlaying()) startMediaPlayer(JrSession.playingFile);
-	            JrSession.playingFile.getMediaPlayer().setVolume(1.0f, 1.0f);
+	            else if (!JrSession.PlayingFile.getMediaPlayer().isPlaying()) startMediaPlayer(JrSession.PlayingFile);
+	            JrSession.PlayingFile.getMediaPlayer().setVolume(1.0f, 1.0f);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) stopPlayback(false);
+	            if (JrSession.PlayingFile.getMediaPlayer().isPlaying()) stopPlayback(false);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying())	pausePlayback(false);
+	            if (JrSession.PlayingFile.getMediaPlayer().isPlaying())	pausePlayback(false);
 	            break;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (JrSession.playingFile.getMediaPlayer().isPlaying()) JrSession.playingFile.getMediaPlayer().setVolume(0.1f, 0.1f);
+	            if (JrSession.PlayingFile.getMediaPlayer().isPlaying()) JrSession.PlayingFile.getMediaPlayer().setVolume(0.1f, 0.1f);
 	            break;
 	    }
 	}

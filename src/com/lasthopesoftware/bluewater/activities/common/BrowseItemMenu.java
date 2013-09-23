@@ -107,7 +107,7 @@ public class BrowseItemMenu {
     		Intent intent = new Intent(v.getContext(), ViewFiles.class);
     		intent.setAction(mItem instanceof JrPlaylist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
-    		JrSession.selectedItem = mItem;
+    		JrSession.SelectedItem = mItem;
     		v.getContext().startActivity(intent);
 		}
 	}

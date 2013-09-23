@@ -30,7 +30,7 @@ public class SetConnection extends FragmentActivity {
         	
         	if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
         	
-        	Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
+        	Intent intent = new Intent(v.getContext(), SelectLibrary.class);
         	startActivity(intent);
         }
     };

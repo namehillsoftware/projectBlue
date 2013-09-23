@@ -46,23 +46,25 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setTitle("Library");
-		if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
-			displayConnectionSetup();
+		
+		if (!JrSession.Active && !JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
+			Intent intent = new Intent(this, SetConnection.class);
+			startActivity(intent);
+			return;
+		}
+		
+		if (JrSession.LibraryKey < 0) {
+			Intent intent = new Intent(this, SelectLibrary.class);
+			startActivity(intent);
 			return;
 		}
 
 		displayLibrary();
 	}
 
-	private void displayConnectionSetup() {
-		Intent intent = new Intent(this, SetConnection.class);
-		startActivity(intent);
-	}
-
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
-
+		setTitle("Library");
 		mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();

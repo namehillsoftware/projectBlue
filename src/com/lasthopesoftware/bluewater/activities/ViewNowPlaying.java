@@ -126,7 +126,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			@Override
 			public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 				if (!fromUser || !mControlNowPlaying.isShown()) return;
-				JrSession.playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
+				JrSession.PlayingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
 			}
 		});
 		
@@ -165,18 +165,18 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		JrFile playingFile = null;
 		Message msg;
 		try {
-			while (JrSession.playlist != null && !JrSession.playlist.isEmpty()) {
+			while (JrSession.Playlist != null && !JrSession.Playlist.isEmpty()) {
 				msg = null;
 
-				if (JrSession.playingFile == null || JrSession.playingFile.getMediaPlayer() == null) {
+				if (JrSession.PlayingFile == null || JrSession.PlayingFile.getMediaPlayer() == null) {
 					playingFile = null;
 					msg = new Message();
 					msg.arg1 = SET_STOPPED;
-				} else if ((playingFile == null && JrSession.playingFile != null) || !playingFile.equals(JrSession.playingFile)) {
-					playingFile = JrSession.playingFile;
+				} else if ((playingFile == null && JrSession.PlayingFile != null) || !playingFile.equals(JrSession.PlayingFile)) {
+					playingFile = JrSession.PlayingFile;
 					msg = new Message();
 					msg.arg1 = UPDATE_ALL;
-				} else if (JrSession.playingFile.isPlaying()) {
+				} else if (JrSession.PlayingFile.isPlaying()) {
 					msg = new Message();
 					msg.arg1 = UPDATE_PLAYING;
 				}
@@ -202,15 +202,15 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		public void onClick(View v) {
 			if (!mControlNowPlaying.isShown()) return;
 			
-			if (JrSession.playingFile.isPlaying()) {
+			if (JrSession.PlayingFile.isPlaying()) {
 				StreamingMusicService.Pause(v.getContext());
 				mPause.setVisibility(View.INVISIBLE);
 				mPlay.setVisibility(View.VISIBLE);
 				return;
 			}
 			
-			if (JrSession.playingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
-			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.playingFile, JrSession.playlist);
+			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
+			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile, JrSession.Playlist);
 			
 			mPlay.setVisibility(View.INVISIBLE);
 			mPause.setVisibility(View.VISIBLE);
@@ -273,9 +273,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			} else if (msg.arg1 == UPDATE_PLAYING) {
 				mPause.setVisibility(View.VISIBLE);
 				mPlay.setVisibility(View.INVISIBLE);
-				if (JrSession.playingFile != null) {
-					mSongProgress.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
-					mSongProgress.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+				if (JrSession.PlayingFile != null) {
+					mSongProgress.setMax(JrSession.PlayingFile.getMediaPlayer().getDuration());
+					mSongProgress.setProgress(JrSession.PlayingFile.getMediaPlayer().getCurrentPosition());
 				}
 			} else if (msg.arg1 == HIDE_CONTROLS) {
 				mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);
@@ -284,20 +284,20 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		}
 
 		private void setView() {
-			if (JrSession.playingFile == null) return;
+			if (JrSession.PlayingFile == null) return;
 			
-			String artist = JrSession.playingFile.getProperty("Artist");
-			String album = JrSession.playingFile.getProperty("Album"); 
+			String artist = JrSession.PlayingFile.getProperty("Artist");
+			String album = JrSession.PlayingFile.getProperty("Album"); 
 			mNowPlayingArtist.setText(artist);
-			mNowPlayingTitle.setText(JrSession.playingFile.getValue());
-			if (JrSession.playingFile.getProperty("Rating") != null && !JrSession.playingFile.getProperty("Rating").isEmpty()) {
-				mSongRating.setRating(Float.valueOf(JrSession.playingFile.getProperty("Rating")));
+			mNowPlayingTitle.setText(JrSession.PlayingFile.getValue());
+			if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
+				mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
 				mSongRating.invalidate();
 			}
 			
-			if (JrSession.playingFile.isPrepared()) {
-				mSongProgress.setMax(JrSession.playingFile.getMediaPlayer().getDuration());
-				mSongProgress.setProgress(JrSession.playingFile.getMediaPlayer().getCurrentPosition());
+			if (JrSession.PlayingFile.isPrepared()) {
+				mSongProgress.setMax(JrSession.PlayingFile.getMediaPlayer().getDuration());
+				mSongProgress.setProgress(JrSession.PlayingFile.getMediaPlayer().getCurrentPosition());
 			}
 			try {
 				int size = mOwner.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mOwner.getResources().getDisplayMetrics().heightPixels : mOwner.getResources().getDisplayMetrics().widthPixels;
@@ -309,7 +309,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				
 				getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 				
-				getFileImageTask.execute(album == null ? JrSession.playingFile.getKey().toString() : (artist + ":" + album), JrSession.playingFile.getKey().toString(), String.valueOf(size));
+				getFileImageTask.execute(album == null ? JrSession.PlayingFile.getKey().toString() : (artist + ":" + album), JrSession.PlayingFile.getKey().toString(), String.valueOf(size));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -43,7 +43,7 @@ public class CategoryFragment extends Fragment {
     }
 
     public static final String ARG_CATEGORY_POSITION = "category_position";
-    public static final String IS_PLAYLIST = "playlist";
+    public static final String IS_PLAYLIST = "Playlist";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -94,7 +94,7 @@ public class CategoryFragment extends Fragment {
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-				    		JrSession.selectedItem = selection;
+				    		JrSession.SelectedItem = selection;
 				    		startActivity(intent);
 				    		return true;
 						}
@@ -107,7 +107,7 @@ public class CategoryFragment extends Fragment {
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-				    		JrSession.selectedItem = selection;
+				    		JrSession.SelectedItem = selection;
 				    		startActivity(intent);
 			    	        return true;
 			    	    }

@@ -1,16 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/grdLibrarySelection"
+    android:id="@+id/rlSelectLibrary"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RadioGroup
-        android:id="@+id/rgLibrarySelection"
+    <LinearLayout
+	    android:id="@+id/rlLibrarySelectionSubLayout"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:gravity="center_horizontal"
+	    android:orientation="vertical"
+	    android:visibility="invisible">
+	    <RadioGroup
+	        android:id="@+id/rgLibrarySelection"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content">
+	        
+	    </RadioGroup>
+
+	    <Button
+	        android:id="@+id/btnBrowseLibrary"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="@string/btn_browse_library" />
+	    
+	</LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/pbLibrarySelection"
+        style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" >
-        
-    </RadioGroup>
+        android:layout_centerVertical="true"
+        android:visibility="visible" />
 
 </RelativeLayout>

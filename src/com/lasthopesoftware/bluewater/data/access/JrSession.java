@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
@@ -15,24 +14,25 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.http.client.ClientProtocolException;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
-
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
-	private static final String PLAYLIST_KEY = "playlist";
+	private static final String PLAYLIST_KEY = "Playlist";
 	private static final String NOW_PLAYING_KEY = "now_playing";
 	private static final String NP_POSITION = "np_position";
 	private static final String ACCESS_CODE_KEY = "access_code";
 	private static final String USER_AUTH_CODE_KEY = "user_auth_code";
 	private static final String IS_LOCAL_ONLY = "is_local_only";
+	private static final String LIBRARY_KEY = "library_KEY";
 	
 	public static boolean IsLocalOnly = false;
 	
@@ -41,17 +41,19 @@ public class JrSession {
 	
 	public static JrAccessDao accessDao;
 	
-    private static TreeMap<String, IJrItem> mCategories;
-    private static ArrayList<IJrItem> mCategoriesList;
+	public static int LibraryKey = -1;
+	
+	public static IJrItem<?> SelectedItem;
+    public static JrFile PlayingFile;
+    public static ArrayList<JrFile> Playlist;
     
-    public static IJrItem<?> selectedItem;
-    public static JrFile playingFile;
-    public static ArrayList<JrFile> playlist;
-    
-    public static JrFileSystem jrFs;
+    public static JrFileSystem JrFs;
     
     public static boolean Active = false;
-    
+	
+    private static TreeMap<String, IJrItem> mCategories;
+    private static ArrayList<IJrItem> mCategoriesList;
+        
     public static void SaveSession(Context context) {
     	SaveSession(context.getSharedPreferences(PREFS_FILE, 0).edit());
     }
@@ -60,17 +62,18 @@ public class JrSession {
     	prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
     	prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
     	prefsEditor.putBoolean(IS_LOCAL_ONLY, IsLocalOnly);
+    	prefsEditor.putInt(LIBRARY_KEY, LibraryKey);
     	
-    	if (playlist != null) {
-	    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(playlist.size());
-	    	for (JrFile file : playlist) 
+    	if (Playlist != null) {
+	    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(Playlist.size());
+	    	for (JrFile file : Playlist) 
 				serializedPlaylist.add(Integer.toString(file.getKey()));
 	    	prefsEditor.putStringSet(PLAYLIST_KEY, serializedPlaylist);
     	}
 		
-		if (playingFile != null) {
-			prefsEditor.putInt(NOW_PLAYING_KEY, playingFile.getKey());
-			if (playingFile.getMediaPlayer() != null) prefsEditor.putInt(NP_POSITION, playingFile.getCurrentPosition());
+		if (PlayingFile != null) {
+			prefsEditor.putInt(NOW_PLAYING_KEY, PlayingFile.getKey());
+			if (PlayingFile.getMediaPlayer() != null) prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
 		}
 		
 		prefsEditor.apply();
@@ -84,6 +87,7 @@ public class JrSession {
     	AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
     	UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
     	IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
+    	LibraryKey = prefs.getInt(LIBRARY_KEY, -1);
     	
     	if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
     	
@@ -98,7 +102,7 @@ public class JrSession {
     	new RebuildPlaylist(prefs.getInt(NOW_PLAYING_KEY, -1)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
     	
     	Active = true;
-    	return true;
+    	return Active;
 	}
     
     public static TreeMap<String, IJrItem> getCategories() {
@@ -114,11 +118,13 @@ public class JrSession {
     public static ArrayList<IJrItem> getCategoriesList() {
     	if (mCategoriesList != null) return mCategoriesList;
     	
-		if (JrSession.jrFs == null) JrSession.jrFs = new JrFileSystem();
+		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
+		
+    	if (LibraryKey < 0) return null;
     	
     	mCategoriesList = new ArrayList<IJrItem>();
-    	for (JrItem page : JrSession.jrFs.getSubItems()) {
-			if (page.getKey() == 1) {
+    	for (JrItem page : JrSession.JrFs.getSubItems()) {
+			if (page.getKey() == LibraryKey) {
 				mCategoriesList = ((IJrItem) page).getSubItems();
 				break;
 			}
@@ -136,10 +142,8 @@ public class JrSession {
 			JrSession.accessDao = new GetMcAccess().execute(JrSession.AccessCode).get();
 			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	
@@ -212,13 +216,12 @@ public class JrSession {
 		
 		@Override
 		protected void onPostExecute(ArrayList<JrFile> result) {
-			// die if the playlist is not null already
-			if (playlist != null) return;
-			playlist = result;
+			if (Playlist != null) return;
+			Playlist = result;
 	    	if (mNowPlayingFieldId > -1) {
-	    		for (JrFile file : playlist) {
+	    		for (JrFile file : Playlist) {
 	    			if (file.getKey() == mNowPlayingFieldId) {
-	    				playingFile = file;
+	    				PlayingFile = file;
 	    			}
 	    		}
 	    	}
