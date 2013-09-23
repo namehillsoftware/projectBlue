@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
-	private ArrayList<JrItem> mPages;
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
 	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
@@ -22,16 +21,8 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	
 	public JrFileSystem() {
 		super();
-		OnCompleteListener<List<JrItem>> completeListener = new OnCompleteListener<List<JrItem>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
-				mSubItems = new ArrayList<JrItem>(result.size());
-				mPages.addAll(result);				
-			}
-		};
-		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(2);
-		mOnCompleteListeners.add(completeListener);
+
+		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(1);
 		
 		mOnConnectListener = new OnConnectListener<List<JrItem>>() {
 			
@@ -46,28 +37,12 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	public String getSubItemUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
-	
-	@Override
-	public ArrayList<JrItem> getSubItems() {
-		if (mPages == null) {
-			mPages = new ArrayList<JrItem>();
-			if (JrSession.accessDao == null) return mPages;
-			
-			List<JrItem> tempItems;
-			try {
-				tempItems = getNewSubItemsTask().execute(getSubItemParams()).get();
-				mPages.addAll(tempItems);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return mPages;
-	}
+
 
 	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
-		if (mOnCompleteListeners.size() < 2) mOnCompleteListeners.add(listener);
-		mOnCompleteListeners.set(1, listener);
+		if (mOnCompleteListeners.size() < 1) mOnCompleteListeners.add(listener);
+		mOnCompleteListeners.set(0, listener);
 	}
 
 	@Override

@@ -3,25 +3,26 @@ package com.lasthopesoftware.bluewater.activities;
 import java.util.HashMap;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
-import com.lasthopesoftware.threading.ISimpleTask;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
+
+import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.objects.JrItem;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class SelectLibrary extends FragmentActivity {
-	private RelativeLayout mRlSelectLibraries;
+	private LinearLayout mRlSelectLibraries;
 	private RadioGroup mRgLibraries;
 	private ProgressBar mPb;
 	private Button mBtnBrowseLibraries;
@@ -39,7 +40,7 @@ public class SelectLibrary extends FragmentActivity {
         
         setContentView(R.layout.activity_select_library);
         
-        mRlSelectLibraries = (RelativeLayout) findViewById(R.id.rlLibrarySelectionSubLayout);
+        mRlSelectLibraries = (LinearLayout) findViewById(R.id.rlLibrarySelectionSubLayout);
         mRgLibraries = (RadioGroup) findViewById(R.id.rgLibrarySelection);
         mPb = (ProgressBar) findViewById(R.id.pbLibrarySelection);
         mBtnBrowseLibraries = (Button) findViewById(R.id.btnBrowseLibrary);
@@ -52,6 +53,8 @@ public class SelectLibrary extends FragmentActivity {
 				startActivity(intent);
 			}
 		});
+        
+        if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
         
         JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<JrItem>>() {
 			
@@ -76,5 +79,7 @@ public class SelectLibrary extends FragmentActivity {
 				mRlSelectLibraries.setVisibility(View.VISIBLE);
 			}
 		});
+        
+        JrSession.JrFs.getSubItemsAsync();
 	}
 }
