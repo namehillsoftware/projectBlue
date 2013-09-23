@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater;
 
-import com.lasthopesoftware.bluewater.FileSystem.JrFile;
+import com.lasthopesoftware.bluewater.data.objects.JrFile;
 
 import android.content.Context;
 

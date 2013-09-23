@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater;
 
-import com.lasthopesoftware.bluewater.access.JrSession;
+import com.lasthopesoftware.bluewater.activities.ConnectionSettings;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 import android.app.Activity;
 import android.app.AlertDialog;
