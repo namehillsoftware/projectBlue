@@ -64,6 +64,7 @@ public class SelectLibrary extends FragmentActivity {
 				for (JrItem library : result) {
 					RadioButton rb = new RadioButton(mRgLibraries.getContext());
 					rb.setText(library.getValue());
+					rb.setChecked(JrSession.LibraryKey == library.getKey());
 					rb.setOnClickListener(new OnClickListener() {
 						
 						@Override
