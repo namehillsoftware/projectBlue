@@ -62,7 +62,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	}
 
 	private void displayConnectionSetup() {
-		Intent intent = new Intent(this, ConnectionSettings.class);
+		Intent intent = new Intent(this, SetConnection.class);
 		startActivity(intent);
 	}
 

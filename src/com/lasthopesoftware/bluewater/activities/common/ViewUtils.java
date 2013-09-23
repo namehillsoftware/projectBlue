@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.activities.common;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.R.id;
 import com.lasthopesoftware.bluewater.R.string;
-import com.lasthopesoftware.bluewater.activities.ConnectionSettings;
+import com.lasthopesoftware.bluewater.activities.SetConnection;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 
@@ -20,7 +20,7 @@ public class ViewUtils {
 	public static boolean handleMenuClicks(Context context, MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
-				Intent intent = new Intent(context, ConnectionSettings.class);
+				Intent intent = new Intent(context, SetConnection.class);
 				context.startActivity(intent);
 				return true;
 			case R.id.menu_view_now_playing:

@@ -15,7 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.CheckBox;
 
-public class ConnectionSettings extends FragmentActivity {
+public class SetConnection extends FragmentActivity {
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
@@ -41,7 +41,7 @@ public class ConnectionSettings extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
          
-        setContentView(R.layout.activity_connection_settings);
+        setContentView(R.layout.activity_set_connection);
         
     	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
     	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
