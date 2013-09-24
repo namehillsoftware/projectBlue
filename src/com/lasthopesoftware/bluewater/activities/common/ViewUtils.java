@@ -31,9 +31,9 @@ public class ViewUtils {
 	
 	public static boolean handleNavMenuClicks(Context context, MenuItem item) {
 		switch (item.getItemId()) {
-		case android.R.id.home:
-			NavUtils.navigateUpFromSameTask((Activity)context);
-			return true;
+			case android.R.id.home:
+				NavUtils.navigateUpFromSameTask((Activity)context);
+				return true;
 		}
 		return ViewUtils.handleMenuClicks(context, item);
 		

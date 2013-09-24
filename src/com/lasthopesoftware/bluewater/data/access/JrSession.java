@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -99,7 +100,7 @@ public class JrSession {
     		params[i++] = Integer.parseInt(id);
     	}
     	
-    	new RebuildPlaylist(prefs.getInt(NOW_PLAYING_KEY, -1)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
+    	new RebuildPlaylist(prefs.getInt(NOW_PLAYING_KEY, -1), prefs.getInt(NP_POSITION, -1)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
     	
     	Active = true;
     	return Active;
@@ -191,11 +192,12 @@ public class JrSession {
     }
     
     private static class RebuildPlaylist extends AsyncTask<Integer, Void, ArrayList<JrFile>> {
-    	int mNowPlayingFieldId;
+    	int mNowPlayingFieldId, mNowPlayingPosition;
     	
-    	public RebuildPlaylist(int nowPlayingFieldId) {
+    	public RebuildPlaylist(int nowPlayingFieldId, int nowPlayingPosition) {
     		super();
     		mNowPlayingFieldId = nowPlayingFieldId;
+    		mNowPlayingPosition = nowPlayingPosition;
     	}
     	
 		@Override
@@ -218,14 +220,22 @@ public class JrSession {
 		protected void onPostExecute(ArrayList<JrFile> result) {
 			if (Playlist != null) return;
 			Playlist = result;
-	    	if (mNowPlayingFieldId > -1) {
-	    		for (JrFile file : Playlist) {
-	    			if (file.getKey() == mNowPlayingFieldId) {
-	    				PlayingFile = file;
-	    			}
-	    		}
-	    	}
+	    	if (mNowPlayingFieldId < 0) return;
+	    	
+    		for (JrFile file : Playlist) {
+    			if (file.getKey() != mNowPlayingFieldId) continue;
+    			
+				PlayingFile = file;
+				if (mNowPlayingPosition < 0) continue;
+				
+				file.addOnFilePreparedListener(new OnJrFilePreparedListener() {
+					
+					@Override
+					public void onJrFilePrepared(JrFile file) {
+						file.getMediaPlayer().seekTo(mNowPlayingPosition);									
+					}
+				});
+			}
 		}
-    	
     }
 }
