@@ -168,7 +168,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			while (JrSession.Playlist != null && !JrSession.Playlist.isEmpty()) {
 				msg = null;
 
-				if (JrSession.PlayingFile == null || JrSession.PlayingFile.getMediaPlayer() == null) {
+				if (JrSession.PlayingFile == null || !JrSession.PlayingFile.isMediaPlayerCreated()) {
 					playingFile = null;
 					msg = new Message();
 					msg.arg1 = SET_STOPPED;
@@ -267,15 +267,15 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.arg1 == SET_STOPPED) {
-				mSongProgress.setProgress(0);
+//				mSongProgress.setProgress(0);
 			} else if (msg.arg1 == UPDATE_ALL) {
 				setView();
 			} else if (msg.arg1 == UPDATE_PLAYING) {
 				mPause.setVisibility(View.VISIBLE);
 				mPlay.setVisibility(View.INVISIBLE);
 				if (JrSession.PlayingFile != null) {
-					mSongProgress.setMax(JrSession.PlayingFile.getMediaPlayer().getDuration());
-					mSongProgress.setProgress(JrSession.PlayingFile.getMediaPlayer().getCurrentPosition());
+					mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+					mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
 				}
 			} else if (msg.arg1 == HIDE_CONTROLS) {
 				mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);
@@ -295,10 +295,10 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				mSongRating.invalidate();
 			}
 			
-			if (JrSession.PlayingFile.isPrepared()) {
-				mSongProgress.setMax(JrSession.PlayingFile.getMediaPlayer().getDuration());
-				mSongProgress.setProgress(JrSession.PlayingFile.getMediaPlayer().getCurrentPosition());
-			}
+			
+			mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+			mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
+			
 			try {
 				int size = mOwner.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mOwner.getResources().getDisplayMetrics().heightPixels : mOwner.getResources().getDisplayMetrics().widthPixels;
 				

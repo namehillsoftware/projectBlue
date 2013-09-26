@@ -31,6 +31,7 @@ public class JrFile extends JrObject implements
 	
 	private boolean prepared = false;
 	private boolean preparing = false;
+	private int mPosition = 0;
 	private MediaPlayer mp;
 	private ArrayList<OnJrFileCompleteListener> onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();;
 	private ArrayList<OnJrFilePreparedListener> onJrFilePreparedListeners = new ArrayList<OnJrFilePreparedListener>();
@@ -149,9 +150,13 @@ public class JrFile extends JrObject implements
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
-	public synchronized MediaPlayer getMediaPlayer() {
-		return mp;
+	public boolean isMediaPlayerCreated() {
+		return mp != null;
 	}
+	
+//	public synchronized MediaPlayer getMediaPlayer() {
+//		return mp;
+//	}
 	
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
@@ -214,7 +219,13 @@ public class JrFile extends JrObject implements
 	}
 
 	public int getCurrentPosition() {
+		if (mp == null || !isPrepared() || !isPlaying()) return mPosition;
 		return mp.getCurrentPosition();
+	}
+	
+	public int getDuration() {
+		if (mp == null) return (int) (Double.parseDouble(getProperty("Duration")) * 1000);
+		return mp.getDuration();
 	}
 
 	public boolean isPlaying() {
@@ -222,15 +233,27 @@ public class JrFile extends JrObject implements
 	}
 
 	public void pause() {
+		mPosition = mp.getCurrentPosition();
 		mp.pause();
 	}
 
 	public void seekTo(int pos) {
-		mp.seekTo(pos);
+		if (mp == null || !isPrepared() || !isPlaying()) mPosition = pos;
+		else mp.seekTo(pos);
 	}
 
 	public void start() {
+		mp.seekTo(mPosition);
 		mp.start();
+	}
+	
+	public void stop() {
+		mPosition = 0;
+		mp.stop();
+	}
+	
+	public void setVolume(float volume) {
+		mp.setVolume(volume, volume);
 	}
 	
 	private static class JrFilePropertyResponse extends AsyncTask<String, Void, TreeMap<String, String>> {

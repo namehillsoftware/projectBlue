@@ -74,7 +74,7 @@ public class JrSession {
 		
 		if (PlayingFile != null) {
 			prefsEditor.putInt(NOW_PLAYING_KEY, PlayingFile.getKey());
-			if (PlayingFile.getMediaPlayer() != null) prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
+			prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
 		}
 		
 		prefsEditor.apply();
@@ -226,15 +226,15 @@ public class JrSession {
     			if (file.getKey() != mNowPlayingFieldId) continue;
     			
 				PlayingFile = file;
-				if (mNowPlayingPosition < 0) continue;
+				if (mNowPlayingPosition > -1) file.seekTo(mNowPlayingPosition);
 				
-				file.addOnFilePreparedListener(new OnJrFilePreparedListener() {
-					
-					@Override
-					public void onJrFilePrepared(JrFile file) {
-						file.getMediaPlayer().seekTo(mNowPlayingPosition);									
-					}
-				});
+//				file.addOnFilePreparedListener(new OnJrFilePreparedListener() {
+//					
+//					@Override
+//					public void onJrFilePrepared(JrFile file) {
+//						file.getMediaPlayer().seekTo(mNowPlayingPosition);									
+//					}
+//				});
 			}
 		}
     }
