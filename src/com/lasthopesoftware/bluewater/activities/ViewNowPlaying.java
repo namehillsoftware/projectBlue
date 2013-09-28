@@ -209,13 +209,11 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				return;
 			}
 			
-			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
-			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile, JrSession.Playlist);
-			
 			mPlay.setVisibility(View.INVISIBLE);
 			mPause.setVisibility(View.VISIBLE);
 			
-			return;
+			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
+			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
 
 	}

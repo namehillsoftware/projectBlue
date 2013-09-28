@@ -5,4 +5,6 @@ import java.util.ArrayList;
 public interface IJrItemFiles {
 	ArrayList<JrFile> getFiles();
 	ArrayList<JrFile> getFiles(int option);
+	String getFileStringList();
+	String getFileStringList(int option);
 }

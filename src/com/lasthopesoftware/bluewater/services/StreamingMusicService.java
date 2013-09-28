@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 
@@ -45,23 +46,51 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
 	public static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
 	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
+	
+	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
+	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
+	private static final String BAG_START_POS = "com.lasthopesoftware.bluewater.bag.START_POS";
+	
 	private static int mId = 42;
 	private WifiLock mWifiLock = null;
-	private String mUrl;
+//	private String mUrl;
+	private int mFileKey;
+	private int mStartPos = 0;
 	private NotificationManager mNotificationMgr;
 	private Thread trackProgressThread;
 	private static ArrayList<JrFile> playlist;
 	AudioManager mAudioManager;
 	
-	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
-		JrSession.Playlist = playlist;
-		
-		JrFile file = startFile;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(file.getSubItemUrl()), context, StreamingMusicService.class);
+	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
+	public static void StreamMusic(Context context, int startFileKey, int startPos, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		svcIntent.putExtra(BAG_START_POS, startPos);
+		context.startService(svcIntent);
+	}
+	
+	public static void StreamMusic(Context context, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		context.startService(svcIntent);
+		ViewUtils.CreateNowPlayingView(context);
+	}
+	
+//	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
+//		JrSession.Playlist = playlist;
+//		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(startFile.getSubItemUrl()), context, StreamingMusicService.class);
+//		context.startService(svcIntent);
+//		ViewUtils.CreateNowPlayingView(context);
+//	}
+//	
 	public static void Play(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY);
 		context.startService(svcIntent);
@@ -90,20 +119,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		super();
 		
 	}
-	
-	public StreamingMusicService(String url) {
-		super();
-		mUrl = url;
-	}
-	
+
 	private void initMediaPlayers() {
 		if (playlist != null) {
 			
 			for (JrFile file : playlist) {
-				if (file.getSubItemUrl().equalsIgnoreCase(mUrl)) {
+				if (file.getKey() == mFileKey) {
 					file.addOnFileCompletionListener(this);
 					file.addOnFilePreparedListener(this);
 		        	file.initMediaPlayer(this);
+		        	file.seekTo(mStartPos);
 		        	file.prepareMediaPlayer(); // prepare async to not block main thread
 		        	break;
 		        }
@@ -113,7 +138,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	private void startMediaPlayer(JrFile file) {
 		JrSession.PlayingFile = file;
-		mUrl = file.getSubItemUrl();
+		mFileKey = file.getKey();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -192,14 +217,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			if (intent.getAction().equals(ACTION_START)) {
 				// Want to handle two situations: when the Playlist is empty
 				// or when a new Playlist is given, start playback on new Playlist
-				if (playlist == null || !playlist.equals(JrSession.Playlist)) {
-					playlist = JrSession.Playlist;
-					initializePlaylist(intent.getDataString());
-				} else if (!mUrl.equals(intent.getDataString())) {
+				ArrayList<JrFile> newPlaylist = JrFiles.deserializeFileStringList(intent.getStringExtra(BAG_PLAYLIST));
+				int bagKey = intent.getIntExtra(BAG_FILE_KEY, -1);
+				if (playlist == null || !playlist.equals(newPlaylist)) {
+					playlist = newPlaylist;
+					initializePlaylist(bagKey);
+				} else if (mFileKey != bagKey) {
 					// Other situation: Selected track has changed, but Playlist hasn't
 					// Already know that mUrl is not null since the above condition being
 					// true would have caught that
-					initializePlaylist(intent.getDataString());
+					initializePlaylist(bagKey);
 				}
 	        } else if (intent.getAction().equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
@@ -215,10 +242,15 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		return START_STICKY;
 	}
 	
-	private void initializePlaylist(String url) {
+	private void initializePlaylist(int fileKey) {
+		initializePlaylist(fileKey, 0);
+	}
+	
+	private void initializePlaylist(int fileKey, int filePos) {
 		// stop any playback that is in action
 		if (JrSession.PlayingFile != null) stopPlayback(false);
-		if (url != null && !url.isEmpty()) mUrl = url;
+		if (fileKey < 0) fileKey = playlist.get(0).getKey();
+		if (filePos > 0) mStartPos = filePos;
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
@@ -286,7 +318,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            /*if (Playlist == null || Playlist.isEmpty()) initMediaPlayers();
 	            else */
 	        	if (!JrSession.PlayingFile.isMediaPlayerCreated()) {
-	        		initializePlaylist(JrSession.PlayingFile.getSubItemUrl());
+	        		initializePlaylist(JrSession.PlayingFile.getKey());
 //	        		startMediaPlayer(JrSession.PlayingFile);
 	        	}
 	            else if (!JrSession.PlayingFile.isPlaying()) startMediaPlayer(JrSession.PlayingFile);

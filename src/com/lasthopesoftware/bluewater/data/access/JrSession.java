@@ -46,7 +46,8 @@ public class JrSession {
 	
 	public static IJrItem<?> SelectedItem;
     public static JrFile PlayingFile;
-    public static ArrayList<JrFile> Playlist;
+//    public static ArrayList<JrFile> Playlist;
+    public static String Playlist;
     
     public static JrFileSystem JrFs;
     
@@ -66,10 +67,7 @@ public class JrSession {
     	prefsEditor.putInt(LIBRARY_KEY, LibraryKey);
     	
     	if (Playlist != null) {
-	    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(Playlist.size());
-	    	for (JrFile file : Playlist) 
-				serializedPlaylist.add(Integer.toString(file.getKey()));
-	    	prefsEditor.putStringSet(PLAYLIST_KEY, serializedPlaylist);
+    		prefsEditor.putString(PLAYLIST_KEY, Playlist);
     	}
 		
 		if (PlayingFile != null) {
@@ -92,17 +90,20 @@ public class JrSession {
     	
     	if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
     	
-    	LinkedHashSet<String> serializedPlaylist = new LinkedHashSet<String>(prefs.getStringSet(PLAYLIST_KEY, new LinkedHashSet<String>()));
-    	
-    	Integer[] params = new Integer[serializedPlaylist.size()];
-    	int i = 0;
-    	for (String id : serializedPlaylist) {
-    		params[i++] = Integer.parseInt(id);
-    	}
-    	
-    	new RebuildPlaylist(prefs.getInt(NOW_PLAYING_KEY, -1), prefs.getInt(NP_POSITION, -1)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
+    	Playlist = prefs.getString(PLAYLIST_KEY, "");
+    	int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
+    	int savedFilePos = prefs.getInt(NP_POSITION, -1);
     	
     	Active = true;
+    	
+    	if (savedFileKey < 0) return Active;
+    	String savedFileKeyString = String.valueOf(savedFileKey);
+    	for (String fileKey : Playlist.split(";")) {
+    		if (!savedFileKeyString.equals(fileKey)) continue;
+    		PlayingFile = new JrFile(savedFileKey);
+    		if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
+    	}
+    	
     	return Active;
 	}
     
@@ -189,53 +190,5 @@ public class JrSession {
 	        
 	        return accessDao;
 		}
-    }
-    
-    private static class RebuildPlaylist extends AsyncTask<Integer, Void, ArrayList<JrFile>> {
-    	int mNowPlayingFieldId, mNowPlayingPosition;
-    	
-    	public RebuildPlaylist(int nowPlayingFieldId, int nowPlayingPosition) {
-    		super();
-    		mNowPlayingFieldId = nowPlayingFieldId;
-    		mNowPlayingPosition = nowPlayingPosition;
-    	}
-    	
-		@Override
-		protected ArrayList<JrFile> doInBackground(Integer... params) {
-			ArrayList<JrFile> recoveredPlaylist = new ArrayList<JrFile>(params.length);
-	    	for (int i = 0; i < params.length; i++) {
-	    		JrFile recoveredFile = new JrFile(params[i]); 
-	    		recoveredPlaylist.add(recoveredFile);
-	    		
-	    		if (i > 0) {
-	    			recoveredFile.setPreviousFile(recoveredPlaylist.get(i - 1));
-	    			recoveredPlaylist.get(i - 1).setNextFile(recoveredFile);
-	    		}
-	    	}
-	    	
-	    	return recoveredPlaylist;
-		}
-		
-		@Override
-		protected void onPostExecute(ArrayList<JrFile> result) {
-			if (Playlist != null) return;
-			Playlist = result;
-	    	if (mNowPlayingFieldId < 0) return;
-	    	
-    		for (JrFile file : Playlist) {
-    			if (file.getKey() != mNowPlayingFieldId) continue;
-    			
-				PlayingFile = file;
-				if (mNowPlayingPosition > -1) file.seekTo(mNowPlayingPosition);
-				
-//				file.addOnFilePreparedListener(new OnJrFilePreparedListener() {
-//					
-//					@Override
-//					public void onJrFilePrepared(JrFile file) {
-//						file.getMediaPlayer().seekTo(mNowPlayingPosition);									
-//					}
-//				});
-			}
-		}
-    }
+    }        
 }

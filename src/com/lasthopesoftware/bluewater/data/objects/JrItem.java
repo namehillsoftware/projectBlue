@@ -78,7 +78,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	
 	@Override
 	public IJrItemFiles getJrFiles() {
-		if (mJrFiles == null) mJrFiles = new JrFiles("Browse/Files", "ID=" + String.valueOf(this.getKey()), "Fields=Key,Name");
+		if (mJrFiles == null) mJrFiles = new JrFiles("Browse/Files", "ID=" + String.valueOf(this.getKey()));
 		return mJrFiles;
 	}
 

@@ -2,19 +2,20 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
-import com.lasthopesoftware.bluewater.data.access.JrDataTask;
-import com.lasthopesoftware.bluewater.data.access.JrFileXmlResponse;
-import com.lasthopesoftware.bluewater.data.access.IJrDataTask.*;
-import com.lasthopesoftware.threading.ISimpleTask;
-
-
 import android.os.AsyncTask;
+
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
+import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.access.JrDataTask;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class JrFiles implements IJrItemFiles {
@@ -22,7 +23,7 @@ public class JrFiles implements IJrItemFiles {
 	private ArrayList<OnStartListener<List<JrFile>>> mFileStartListeners = new ArrayList<IJrDataTask.OnStartListener<List<JrFile>>>(1);
 	private ArrayList<OnErrorListener<List<JrFile>>> mFileErrorListeners = new ArrayList<IJrDataTask.OnErrorListener<List<JrFile>>>(1);
 	private ArrayList<IJrDataTask.OnCompleteListener<List<JrFile>>> mFileCompleteListeners;
-	public static int GET_SHUFFLED = 1;
+	public static final int GET_SHUFFLED = 1;
 
 	private OnConnectListener<List<JrFile>> mFileConnectListener = new OnConnectListener<List<JrFile>>() {
 		
@@ -30,30 +31,7 @@ public class JrFiles implements IJrItemFiles {
 		public List<JrFile> onConnect(InputStream is) {
 			ArrayList<JrFile> files = new ArrayList<JrFile>();
 			try {
-				String[] keys = JrFileUtils.InputStreamToString(is).split(";");
-				
-				int offset = -1;
-				JrFile newFile = null, prevFile = null;
-				for (int i = 0; i < keys.length; i++) {
-					int intKey = Integer.parseInt(keys[i]);
-					if (i == 0) {
-						offset = intKey;
-						continue;
-					}
-					if (i == 1) {
-						files = new ArrayList<JrFile>(intKey);
-						continue;
-					}	
-					if (i > offset) { 
-						newFile = new JrFile(intKey);
-						if (prevFile != null) {
-							newFile.setPreviousFile(prevFile);
-							prevFile.setNextFile(newFile);
-						}
-						files.add(newFile);
-						prevFile = newFile;
-					}
-				}
+				files = deserializeFileStringList(JrFileUtils.InputStreamToString(is));				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -80,6 +58,18 @@ public class JrFiles implements IJrItemFiles {
 	/* Required Methods for File Async retrieval */
 	protected String[] getFileParams() {
 		return mParams;
+	}
+	
+	protected String[] getFileParams(int option) {
+		switch (option) {
+			case GET_SHUFFLED:
+				String[] fileParams = new String[mParams.length + 1];
+				System.arraycopy(mParams, 0, fileParams, 0, mParams.length);
+				fileParams[mParams.length] = "Shuffle=1";
+				return fileParams;
+			default:
+				return mParams;
+		}
 	}
 
 	public void setOnFilesCompleteListener(OnCompleteListener<List<JrFile>> listener) {
@@ -126,6 +116,49 @@ public class JrFiles implements IJrItemFiles {
 	public void getFilesAsync() {
 		getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 	}
+	
+	@Override
+	public ArrayList<JrFile> getFiles(int option) {
+		if (option != GET_SHUFFLED) return getFiles();
+		
+		try {
+			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return getFiles();
+		}
+	}
+	
+	public String getFileStringList() {
+		return getFileStringList(-1);
+	}
+	
+	public String getFileStringList(int option) {
+		JrDataTask<String> getStringListTask = new JrDataTask<String>();
+		getStringListTask.addOnConnectListener(new OnConnectListener<String>() {
+			
+			@Override
+			public String onConnect(InputStream is) {
+				try {
+					return JrFileUtils.InputStreamToString(is);
+				} catch (IOException e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+		});
+		
+		String result = null;
+		try {
+			result = getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
 
 	protected JrDataTask<List<JrFile>> getNewFilesTask() {
 		JrDataTask<List<JrFile>> fileTask = new JrDataTask<List<JrFile>>();
@@ -147,19 +180,34 @@ public class JrFiles implements IJrItemFiles {
 		return fileTask;
 	}
 
-	@Override
-	public ArrayList<JrFile> getFiles(int option) {
-		if (option != GET_SHUFFLED) return getFiles();
+	public static ArrayList<JrFile> deserializeFileStringList(String fileList) {
+		ArrayList<JrFile> files = new ArrayList<JrFile>();
 		
-		try {
-			String[] fileParams = new String[getFileParams().length + 1];
-			System.arraycopy(getFileParams(), 0, fileParams, 0, getFileParams().length);
-			fileParams[getFileParams().length] = "Shuffle=1";
-			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, fileParams).get(); 
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			return getFiles();
+		String[] keys = fileList.split(";");
+		
+		int offset = -1;
+		JrFile newFile = null, prevFile = null;
+		for (int i = 0; i < keys.length; i++) {
+			int intKey = Integer.parseInt(keys[i]);
+			if (i == 0) {
+				offset = intKey;
+				continue;
+			}
+			if (i == 1) {
+				files = new ArrayList<JrFile>(intKey);
+				continue;
+			}	
+			if (i > offset) { 
+				newFile = new JrFile(intKey);
+				if (prevFile != null) {
+					newFile.setPreviousFile(prevFile);
+					prevFile.setNextFile(newFile);
+				}
+				files.add(newFile);
+				prevFile = newFile;
+			}
 		}
+		
+		return files;
 	}
 }
