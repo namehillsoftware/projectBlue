@@ -85,13 +85,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-//	public static void StreamMusic(Context context, JrFile startFile, ArrayList<JrFile> playlist) {
-//		JrSession.Playlist = playlist;
-//		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(startFile.getSubItemUrl()), context, StreamingMusicService.class);
-//		context.startService(svcIntent);
-//		ViewUtils.CreateNowPlayingView(context);
-//	}
-//	
 	public static void Play(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY);
 		context.startService(svcIntent);
@@ -105,14 +98,18 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static void Next(Context context) {
 		JrFile nextFile = JrSession.PlayingFile.getNextFile();
 		if (nextFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(nextFile.getSubItemUrl()), context, StreamingMusicService.class);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, nextFile.getKey());
+		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
 	public static void Previous(Context context) {
 		JrFile previousFile = JrSession.PlayingFile.getPreviousFile();
 		if (previousFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START, Uri.parse(previousFile.getSubItemUrl()), context, StreamingMusicService.class);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, previousFile.getKey());
+		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
@@ -243,14 +240,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         startForeground(mId, builder.build());
         
         for (JrFile file : mPlaylist) {
-			if (file.getKey() == mFileKey) {
-				file.addOnFileCompletionListener(this);
-				file.addOnFilePreparedListener(this);
-	        	file.initMediaPlayer(this);
-	        	file.seekTo(mStartPos);
-	        	file.prepareMediaPlayer(); // prepare async to not block main thread
-	        	break;
-	        }
+			if (file.getKey() != mFileKey) continue;
+			
+			file.addOnFileCompletionListener(this);
+			file.addOnFilePreparedListener(this);
+        	file.initMediaPlayer(this);
+        	file.seekTo(mStartPos);
+        	file.prepareMediaPlayer(); // prepare async to not block main thread
+        	break;
 		}
 	}
 	
