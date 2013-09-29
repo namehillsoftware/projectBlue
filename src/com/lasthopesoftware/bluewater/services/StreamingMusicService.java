@@ -54,11 +54,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static int mId = 42;
 	private WifiLock mWifiLock = null;
 //	private String mUrl;
-	private int mFileKey;
+	private int mFileKey = -1;
 	private int mStartPos = 0;
 	private NotificationManager mNotificationMgr;
 	private Thread trackProgressThread;
-	private static ArrayList<JrFile> playlist;
+	private static ArrayList<JrFile> mPlaylist;
+	private static String mPlaylistString;
 	AudioManager mAudioManager;
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
@@ -118,22 +119,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public StreamingMusicService() {
 		super();
 		
-	}
-
-	private void initMediaPlayers() {
-		if (playlist != null) {
-			
-			for (JrFile file : playlist) {
-				if (file.getKey() == mFileKey) {
-					file.addOnFileCompletionListener(this);
-					file.addOnFilePreparedListener(this);
-		        	file.initMediaPlayer(this);
-		        	file.seekTo(mStartPos);
-		        	file.prepareMediaPlayer(); // prepare async to not block main thread
-		        	break;
-		        }
-			}
-		}
 	}
 
 	private void startMediaPlayer(JrFile file) {
@@ -198,7 +183,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayers() {
-		for (JrFile file : playlist) releaseMediaPlayer(file);
+		for (JrFile file : mPlaylist) releaseMediaPlayer(file);
 	}
 
 	/* Begin Event Handlers */
@@ -215,19 +200,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 			if (intent.getAction().equals(ACTION_START)) {
-				// Want to handle two situations: when the Playlist is empty
-				// or when a new Playlist is given, start playback on new Playlist
-				ArrayList<JrFile> newPlaylist = JrFiles.deserializeFileStringList(intent.getStringExtra(BAG_PLAYLIST));
-				int bagKey = intent.getIntExtra(BAG_FILE_KEY, -1);
-				if (playlist == null || !playlist.equals(newPlaylist)) {
-					playlist = newPlaylist;
-					initializePlaylist(bagKey);
-				} else if (mFileKey != bagKey) {
-					// Other situation: Selected track has changed, but Playlist hasn't
-					// Already know that mUrl is not null since the above condition being
-					// true would have caught that
-					initializePlaylist(bagKey);
-				}
+				initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, -1));
 	        } else if (intent.getAction().equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.PlayingFile != null && JrSession.PlayingFile.isMediaPlayerCreated()) {
@@ -242,15 +215,26 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		return START_STICKY;
 	}
 	
-	private void initializePlaylist(int fileKey) {
-		initializePlaylist(fileKey, 0);
+	private void initializePlaylist(String playlistString, int fileKey) {
+		initializePlaylist(playlistString, fileKey, 0);
 	}
 	
-	private void initializePlaylist(int fileKey, int filePos) {
+	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
+		// If everything is the same as before, don't do anything else 
+		if (mPlaylistString != null && mPlaylistString.equals(playlistString) && mFileKey == fileKey) return;
+		
+		// If the playlist has changed, change that
+		if (!playlistString.equals(mPlaylistString)) {
+			mPlaylistString = playlistString;
+			JrSession.Playlist = mPlaylistString;
+			mPlaylist = JrFiles.deserializeFileStringList(mPlaylistString);
+		}
+
 		// stop any playback that is in action
 		if (JrSession.PlayingFile != null) stopPlayback(false);
-		if (fileKey < 0) fileKey = playlist.get(0).getKey();
-		if (filePos > 0) mStartPos = filePos;
+		
+		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
+		mStartPos = filePos < 0 ? 0 : filePos;
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
@@ -258,7 +242,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		builder.setContentTitle("Starting Music Streamer");
         startForeground(mId, builder.build());
         
-		initMediaPlayers();
+        for (JrFile file : mPlaylist) {
+			if (file.getKey() == mFileKey) {
+				file.addOnFileCompletionListener(this);
+				file.addOnFilePreparedListener(this);
+	        	file.initMediaPlayer(this);
+	        	file.seekTo(mStartPos);
+	        	file.prepareMediaPlayer(); // prepare async to not block main thread
+	        	break;
+	        }
+		}
 	}
 	
 	@Override
@@ -318,7 +311,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            /*if (Playlist == null || Playlist.isEmpty()) initMediaPlayers();
 	            else */
 	        	if (!JrSession.PlayingFile.isMediaPlayerCreated()) {
-	        		initializePlaylist(JrSession.PlayingFile.getKey());
+	        		initializePlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey());
 //	        		startMediaPlayer(JrSession.PlayingFile);
 	        	}
 	            else if (!JrSession.PlayingFile.isPlaying()) startMediaPlayer(JrSession.PlayingFile);

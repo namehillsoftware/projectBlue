@@ -90,12 +90,20 @@ public class JrSession {
     	
     	if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
     	
-    	Playlist = prefs.getString(PLAYLIST_KEY, "");
+    	Active = true;
+    	
+    	try {
+    		Playlist = prefs.getString(PLAYLIST_KEY, "");
+    	} catch (ClassCastException ce) {
+    		ce.printStackTrace();
+    		Playlist = null;
+    		return Active;
+    	}
+    	
     	int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
     	int savedFilePos = prefs.getInt(NP_POSITION, -1);
     	
-    	Active = true;
-    	
+    	   	
     	if (savedFileKey < 0) return Active;
     	String savedFileKeyString = String.valueOf(savedFileKey);
     	for (String fileKey : Playlist.split(";")) {

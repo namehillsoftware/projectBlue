@@ -164,29 +164,29 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	public void run() {
 		JrFile playingFile = null;
 		Message msg;
-		try {
-			while (JrSession.Playlist != null && !JrSession.Playlist.isEmpty()) {
+		
+		while (true) {
+			try {
 				msg = null;
-
+	
 				if (JrSession.PlayingFile == null || !JrSession.PlayingFile.isMediaPlayerCreated()) {
 					playingFile = null;
 					msg = new Message();
 					msg.arg1 = SET_STOPPED;
-				} else if ((playingFile == null && JrSession.PlayingFile != null) || !playingFile.equals(JrSession.PlayingFile)) {
+				} else if (playingFile == null || !playingFile.equals(JrSession.PlayingFile)) {
 					playingFile = JrSession.PlayingFile;
 					msg = new Message();
 					msg.arg1 = UPDATE_ALL;
-				} else if (JrSession.PlayingFile.isPlaying()) {
+				} else if (playingFile.isPlaying()) {
 					msg = new Message();
 					msg.arg1 = UPDATE_PLAYING;
 				}
 				if (msg != null) mHandler.sendMessage(msg);
 				Thread.sleep(1000);
-
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return;
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return;
 		}
 	}
 	
