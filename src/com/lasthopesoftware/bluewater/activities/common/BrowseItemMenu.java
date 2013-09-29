@@ -89,7 +89,6 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			ArrayList<JrFile> playlist = mItem.getJrFiles().getFiles(JrFiles.GET_SHUFFLED);
 			StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(JrFiles.GET_SHUFFLED));
 		}
 	}
