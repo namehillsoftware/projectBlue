@@ -27,9 +27,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.access.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 
 
@@ -37,7 +39,7 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
  * @author david
  *
  */
-public class StreamingMusicService extends Service implements OnJrFilePreparedListener, OnErrorListener, 
+public class StreamingMusicService extends Service implements OnJrFilePreparedListener, OnJrFileErrorListener, 
 		OnJrFileCompleteListener, OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
@@ -242,8 +244,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         for (JrFile file : mPlaylist) {
 			if (file.getKey() != mFileKey) continue;
 			
-			file.addOnFileCompletionListener(this);
-			file.addOnFilePreparedListener(this);
+			file.addOnJrFileCompleteListener(this);
+			file.addOnJrFilePreparedListener(this);
         	file.initMediaPlayer(this);
         	file.seekTo(mStartPos);
         	file.prepareMediaPlayer(); // prepare async to not block main thread
@@ -270,9 +272,27 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 
 	@Override
-	public boolean onError(MediaPlayer mp, int what, int extra) {
-		mp.reset();
-		return false;
+	public void onJrFileError(JrFile file, int what, int extra) {
+		switch (extra) {
+			case MediaPlayer.MEDIA_ERROR_IO:
+			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+				NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+				builder.setOngoing(true);
+				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
+				mNotificationMgr.notify(mId, builder.build());
+				// Add intent for canceling waiting for connection to come back
+//				Intent pi = new Intent(this, )
+//				builder.setContentIntent(intent)
+				while (!JrTestConnection.doTest()) {
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						break;
+					}
+				}
+		}
 	}
 
 
@@ -287,9 +307,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		releaseMediaPlayer(file);
 		if (file.getNextFile() != null) {
 			JrFile nextFile = file.getNextFile();
-			nextFile.addOnFileCompletionListener(this);
+			nextFile.addOnJrFileCompleteListener(this);
 			if (!nextFile.isPrepared()) {
-				nextFile.addOnFilePreparedListener(this);
+				nextFile.addOnJrFilePreparedListener(this);
 				nextFile.prepareMediaPlayer();
 			} else {
 				startMediaPlayer(nextFile);

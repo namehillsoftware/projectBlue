@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.data.objects;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
@@ -33,8 +34,9 @@ public class JrFile extends JrObject implements
 	private boolean preparing = false;
 	private int mPosition = 0;
 	private MediaPlayer mp;
-	private ArrayList<OnJrFileCompleteListener> onJrFileCompleteListeners = new ArrayList<OnJrFileCompleteListener>();;
-	private ArrayList<OnJrFilePreparedListener> onJrFilePreparedListeners = new ArrayList<OnJrFilePreparedListener>();
+	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();;
+	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
+	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
 	
 	public JrFile(int key) {
@@ -60,13 +62,28 @@ public class JrFile extends JrObject implements
 		return super.getValue();
 	}
 	
-	
-	public void addOnFileCompletionListener(OnJrFileCompleteListener listener) {
+	public void addOnJrFileCompleteListener(OnJrFileCompleteListener listener) {
 		onJrFileCompleteListeners.add(listener);
 	}
 	
-	public void addOnFilePreparedListener(OnJrFilePreparedListener listener) {
+	public void removeOnJrFileCompleteListener(OnJrFileCompleteListener listener) {
+		onJrFileCompleteListeners.remove(listener);
+	}
+	
+	public void addOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
 		onJrFilePreparedListeners.add(listener);
+	}
+	
+	public void removeOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
+		onJrFilePreparedListeners.remove(listener);
+	}
+	
+	public void addOnJrFileErrorListener(OnJrFileErrorListener listener) {
+		onJrFileErrorListeners.add(listener);
+	}
+	
+	public void removeOnJrFileErrorListener(OnJrFileErrorListener listener) {
+		onJrFileErrorListeners.remove(listener);
 	}
 	
 	public String getSubItemUrl() {
@@ -209,8 +226,9 @@ public class JrFile extends JrObject implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		mPosition = mp.getCurrentPosition();
 		mp.reset();
-		prepareMediaPlayer();
+		for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, what, extra);
 		return false;
 	}
 
