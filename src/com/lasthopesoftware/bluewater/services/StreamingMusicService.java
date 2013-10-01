@@ -48,6 +48,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
 	public static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
 	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
+	public static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
 	
 	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
 	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
@@ -62,6 +63,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private Thread trackProgressThread;
 	private static ArrayList<JrFile> mPlaylist;
 	private static String mPlaylistString;
+	private static volatile boolean isStopWaitingForConnection = false;
 	AudioManager mAudioManager;
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
@@ -206,6 +208,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    		startMediaPlayer(JrSession.PlayingFile);
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
+	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
+	        	isStopWaitingForConnection = true;
 	        }
 		} else if (!JrSession.Active) {
 			JrSession.CreateSession(this);
@@ -276,17 +280,24 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+				isStopWaitingForConnection = false;
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
+				// Add intent for canceling waiting for connection to come back
+				Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
+				PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_NO_CREATE);
+				builder.setContentIntent(pi);
 				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				// Add intent for canceling waiting for connection to come back
-//				Intent pi = new Intent(this, )
-//				builder.setContentIntent(intent)
+				
 				while (!JrTestConnection.doTest()) {
 					try {
-						Thread.sleep(5000);
+						Thread.sleep(500);
+						if (isStopWaitingForConnection) {
+							stopPlayback(false);
+							break;
+						}
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 						break;
@@ -344,7 +355,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
-	            if (JrSession.PlayingFile.isPlaying())	pausePlayback(false);
+	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
 	            break;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
