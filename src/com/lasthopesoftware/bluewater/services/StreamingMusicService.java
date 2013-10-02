@@ -283,7 +283,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public void onJrFileError(JrFile file, int what, int extra) {
-		final JrFile localFile = file;
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
@@ -298,39 +297,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
  
-				SimpleTask<String, Void, Boolean> simpleTask = new SimpleTask<String, Void, Boolean>();
-				simpleTask.addOnExecuteListener(new OnExecuteListener<String, Void, Boolean>() {
-					
-					@Override
-					public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
-						
-						while (!JrTestConnection.doTest()) {
-							try {
-								Thread.sleep(3000);
-								if (mStopWaitingForConnection) {
-									
-									owner.setResult(Boolean.FALSE);
-									return;
-								}
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-								owner.setResult(Boolean.FALSE);
-								return;
-							}
-						}
-						
-						owner.setResult(Boolean.TRUE);
-					}
-				});
-				simpleTask.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						if (result == Boolean.TRUE) localFile.prepareMediaPlayer();
-						else pausePlayback(false);
-					}
-				});
-				simpleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(file);
+				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				break;
 		}
 	}
@@ -412,6 +380,42 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
     }
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
-	
 	/* End Binder Code */
+    
+    /* Background Task to check for Connection */
+    private class ServiceConnectionChecker extends SimpleTask<String, Void, Boolean> implements OnExecuteListener<String, Void, Boolean>, OnCompleteListener<String, Void, Boolean> {
+    	private JrFile mFile;
+    	
+    	public ServiceConnectionChecker(JrFile file) {
+    		mFile = file;
+    		addOnExecuteListener(this);
+    		addOnCompleteListener(this);
+    	}
+
+		@Override
+		public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
+			while (!JrTestConnection.doTest()) {
+				try {
+					Thread.sleep(3000);
+					if (mStopWaitingForConnection) {
+						
+						owner.setResult(Boolean.FALSE);
+						return;
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					owner.setResult(Boolean.FALSE);
+					return;
+				}
+			}
+			
+			owner.setResult(Boolean.TRUE);
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+			if (result == Boolean.TRUE) mFile.prepareMediaPlayer();
+			else pausePlayback(false);
+		}
+    }
 }
