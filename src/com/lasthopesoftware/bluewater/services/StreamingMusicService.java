@@ -35,6 +35,7 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -172,8 +173,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.PlayingFile.pause();
-	        JrSession.SaveSession(this);
 		}
+		JrSession.SaveSession(this);
 		stopNotification();
 	}
 	
@@ -282,7 +283,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public void onJrFileError(JrFile file, int what, int extra) {
-		
+		final JrFile localFile = file;
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
@@ -292,11 +293,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setOngoing(true);
 				// Add intent for canceling waiting for connection to come back
 				Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
-				PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_NO_CREATE);
+				PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 				builder.setContentIntent(pi);
 				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				final Context c = this; 
+ 
 				SimpleTask<String, Void, Boolean> simpleTask = new SimpleTask<String, Void, Boolean>();
 				simpleTask.addOnExecuteListener(new OnExecuteListener<String, Void, Boolean>() {
 					
@@ -305,9 +306,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 						
 						while (!JrTestConnection.doTest()) {
 							try {
-								Thread.sleep(500);
+								Thread.sleep(3000);
 								if (mStopWaitingForConnection) {
-									Pause(c);
+									
 									owner.setResult(Boolean.FALSE);
 									return;
 								}
@@ -319,8 +320,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 						}
 						
 						owner.setResult(Boolean.TRUE);
-						
-						Play(c);
+					}
+				});
+				simpleTask.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						if (result == Boolean.TRUE) localFile.prepareMediaPlayer();
+						else pausePlayback(false);
 					}
 				});
 				simpleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
