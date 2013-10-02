@@ -18,6 +18,7 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -33,6 +34,9 @@ import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 
 /**
@@ -292,21 +296,34 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setContentIntent(pi);
 				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				
-				while (!JrTestConnection.doTest()) {
-					try {
-						Thread.sleep(500);
-						if (mStopWaitingForConnection) {
-							stopPlayback(false);
-							break;
+				final Context c = this; 
+				SimpleTask<String, Void, Boolean> simpleTask = new SimpleTask<String, Void, Boolean>();
+				simpleTask.addOnExecuteListener(new OnExecuteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
+						
+						while (!JrTestConnection.doTest()) {
+							try {
+								Thread.sleep(500);
+								if (mStopWaitingForConnection) {
+									Pause(c);
+									owner.setResult(Boolean.FALSE);
+									return;
+								}
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+								owner.setResult(Boolean.FALSE);
+								return;
+							}
 						}
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						break;
+						
+						owner.setResult(Boolean.TRUE);
+						
+						Play(c);
 					}
-				}
-				
-				startMediaPlayer(JrSession.PlayingFile);
+				});
+				simpleTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				break;
 		}
 	}
