@@ -63,7 +63,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private Thread trackProgressThread;
 	private static ArrayList<JrFile> mPlaylist;
 	private static String mPlaylistString;
-	private static volatile boolean isStopWaitingForConnection = false;
+	private static volatile boolean mStopWaitingForConnection = false;
 	AudioManager mAudioManager;
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
@@ -209,7 +209,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
 	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	isStopWaitingForConnection = true;
+	        	mStopWaitingForConnection = true;
 	        }
 		} else if (!JrSession.Active) {
 			JrSession.CreateSession(this);
@@ -250,6 +250,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			
 			file.addOnJrFileCompleteListener(this);
 			file.addOnJrFilePreparedListener(this);
+			file.addOnJrFileErrorListener(this);
         	file.initMediaPlayer(this);
         	file.seekTo(mStartPos);
         	file.prepareMediaPlayer(); // prepare async to not block main thread
@@ -277,10 +278,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public void onJrFileError(JrFile file, int what, int extra) {
+		
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-				isStopWaitingForConnection = false;
+				mStopWaitingForConnection = false;
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
@@ -294,7 +296,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				while (!JrTestConnection.doTest()) {
 					try {
 						Thread.sleep(500);
-						if (isStopWaitingForConnection) {
+						if (mStopWaitingForConnection) {
 							stopPlayback(false);
 							break;
 						}
@@ -303,6 +305,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 						break;
 					}
 				}
+				
+				startMediaPlayer(JrSession.PlayingFile);
+				break;
 		}
 	}
 
@@ -319,6 +324,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (file.getNextFile() != null) {
 			JrFile nextFile = file.getNextFile();
 			nextFile.addOnJrFileCompleteListener(this);
+			nextFile.addOnJrFileErrorListener(this);
 			if (!nextFile.isPrepared()) {
 				nextFile.addOnJrFilePreparedListener(this);
 				nextFile.prepareMediaPlayer();

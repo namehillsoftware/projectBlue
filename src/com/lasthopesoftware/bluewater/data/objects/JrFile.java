@@ -95,8 +95,11 @@ public class JrFile extends JrObject implements
 		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
 	}
 	
-	private String getMpUrl() throws InterruptedException, ExecutionException {
-		if (!JrTestConnection.doTest()) return null;
+	private String getMpUrl() {
+		if (!JrTestConnection.doTest()) {
+			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			return null;
+		}
 		return getSubItemUrl();
 	}
 	
@@ -178,9 +181,13 @@ public class JrFile extends JrObject implements
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
 			try {
-				mp.setDataSource(getMpUrl());
-				mp.prepareAsync();
-				preparing = true;
+				String url = getMpUrl();
+				if (!url.isEmpty()) {
+					mp.setDataSource(url);
+					mp.prepareAsync();
+					preparing = true;
+					return;
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -190,10 +197,16 @@ public class JrFile extends JrObject implements
 	public void prepareMpSynchronously() {
 		if (!preparing && !prepared) {
 			try {
-				mp.setDataSource(getMpUrl());
-				preparing = true;
-				mp.prepare();
-				prepared = true;
+				String url = getMpUrl();
+				if (!url.isEmpty()) {
+					mp.setDataSource(url);
+					preparing = true;
+					mp.prepare();
+					prepared = true;
+					return;
+				}
+				
+				preparing = false;
 			} catch (Exception e) {
 				e.printStackTrace();
 				preparing = false;
