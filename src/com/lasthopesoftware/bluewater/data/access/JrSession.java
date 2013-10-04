@@ -78,8 +78,8 @@ public class JrSession {
 		prefsEditor.apply();
     }
     
-    public static void CreateSession(Context context) {
-    	CreateSession(context.getSharedPreferences(PREFS_FILE, 0));
+    public static boolean CreateSession(Context context) {
+    	return CreateSession(context.getSharedPreferences(PREFS_FILE, 0));
     }
     
     public static boolean CreateSession(SharedPreferences prefs) {

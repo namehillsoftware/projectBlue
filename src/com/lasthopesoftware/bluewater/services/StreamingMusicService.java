@@ -302,6 +302,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				JrSession.SaveSession(this);
 				
 				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(this);
+				
+				mPlaylistString = null;
+				mFileKey = -1;
 				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				break;
 			default:
@@ -427,7 +430,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		@Override
 		public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 			if (result != Boolean.TRUE) return;
-			StreamMusic(mContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
+			
+			if (JrSession.CreateSession(mContext))
+				StreamMusic(mContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
     }
 }
