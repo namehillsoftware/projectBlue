@@ -156,11 +156,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         }
 	}
 	
-	private void stopPlayback(boolean isUserInterrupted) {
+	private void stopPlayback(boolean abandonAudioFocus) {
 		
 		if (JrSession.PlayingFile != null) {
 			if (JrSession.PlayingFile.isPlaying()) {
-				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
+				if (abandonAudioFocus) mAudioManager.abandonAudioFocus(this);
 				JrSession.PlayingFile.stop();
 			}
 			JrSession.PlayingFile = null;
@@ -185,7 +185,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	private void releaseMediaPlayer(JrFile file) {
 		file.releaseMediaPlayer();
-		file = null;
+		file.removeOnJrFileCompleteListener(this);
+		file.removeOnJrFileErrorListener(this);
+		file.removeOnJrFilePreparedListener(this);
 	}
 	
 	private void releaseMediaPlayers() {
@@ -284,6 +286,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public boolean onJrFileError(JrFile file, int what, int extra) {
 		NotificationCompat.Builder builder;
+		
+		JrSession.PlayingFile = file;
+		JrSession.Playlist = mPlaylistString;
+		JrSession.SaveSession(this);
+		stopPlayback(true);
+		
 		switch (what) {
 			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
 				mStopWaitingForConnection = false;
@@ -294,27 +302,21 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
 				PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 				builder.setContentIntent(pi);
-				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
+				builder.setContentTitle("Waiting for Connection.");
+				builder.setTicker("Waiting for Connection.");
+				builder.setSubText("Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				
-				JrSession.PlayingFile = file;
-				JrSession.Playlist = mPlaylistString;
-				JrSession.SaveSession(this);
-				
 				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(this);
 				
-				mPlaylistString = null;
-				mFileKey = -1;
 				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				break;
 			default:
 				builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(false);
-				builder.setContentTitle("An error has occurred.");
+				builder.setContentTitle("An error has occurred during playback.");
 				break;
 		}
-		
 		return false;
 	}
 
