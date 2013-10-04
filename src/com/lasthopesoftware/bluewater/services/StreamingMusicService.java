@@ -327,9 +327,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
+		JrFile nextFile = file.getNextFile();
 		releaseMediaPlayer(file);
-		if (file.getNextFile() != null) {
-			JrFile nextFile = file.getNextFile();
+		if (nextFile != null) {
 			nextFile.addOnJrFileCompleteListener(this);
 			nextFile.addOnJrFileErrorListener(this);
 			if (!nextFile.isPrepared()) {

@@ -67,7 +67,7 @@ public class JrFile extends JrObject implements
 	}
 	
 	public void removeOnJrFileCompleteListener(OnJrFileCompleteListener listener) {
-		onJrFileCompleteListeners.remove(listener);
+		if (onJrFileCompleteListeners.contains(listener)) onJrFileCompleteListeners.remove(listener);
 	}
 	
 	public void addOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
@@ -75,7 +75,7 @@ public class JrFile extends JrObject implements
 	}
 	
 	public void removeOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
-		onJrFilePreparedListeners.remove(listener);
+		if (onJrFilePreparedListeners.contains(listener)) onJrFilePreparedListeners.remove(listener);
 	}
 	
 	public void addOnJrFileErrorListener(OnJrFileErrorListener listener) {
@@ -83,7 +83,7 @@ public class JrFile extends JrObject implements
 	}
 	
 	public void removeOnJrFileErrorListener(OnJrFileErrorListener listener) {
-		onJrFileErrorListeners.remove(listener);
+		if (onJrFileErrorListeners.contains(listener)) onJrFileErrorListeners.remove(listener);
 	}
 	
 	public String getSubItemUrl() {
@@ -218,9 +218,6 @@ public class JrFile extends JrObject implements
 		if (mp != null) mp.release();
 		mp = null;
 		prepared = false;
-		onJrFileCompleteListeners.clear();
-		onJrFileErrorListeners.clear();
-		onJrFilePreparedListeners.clear();
 	}
 	
 	@Override
