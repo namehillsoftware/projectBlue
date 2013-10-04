@@ -218,6 +218,9 @@ public class JrFile extends JrObject implements
 		if (mp != null) mp.release();
 		mp = null;
 		prepared = false;
+		onJrFileCompleteListeners.clear();
+		onJrFileErrorListeners.clear();
+		onJrFilePreparedListeners.clear();
 	}
 	
 	@Override
@@ -231,8 +234,8 @@ public class JrFile extends JrObject implements
 	public void onCompletion(MediaPlayer mp) {
 		Thread updateStatsThread = new Thread(new UpdatePlayStats(this));
 		updateStatsThread.setName("Asynchronous Update Stats Thread for " + getValue());
-		updateStatsThread.start();
 		updateStatsThread.setPriority(Thread.MIN_PRIORITY);
+		updateStatsThread.start();
 		releaseMediaPlayer();
 		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}
@@ -241,8 +244,9 @@ public class JrFile extends JrObject implements
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mPosition = mp.getCurrentPosition();
 		mp.reset();
-		for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, what, extra);
-		return false;
+		boolean handled = false;
+		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
+		return handled;
 	}
 
 	public int getBufferPercentage() {
@@ -250,8 +254,8 @@ public class JrFile extends JrObject implements
 	}
 
 	public int getCurrentPosition() {
-		if (mp == null || !isPrepared() || !isPlaying()) return mPosition;
-		return mp.getCurrentPosition();
+		if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+		return mPosition;
 	}
 	
 	public int getDuration() {
@@ -269,8 +273,8 @@ public class JrFile extends JrObject implements
 	}
 
 	public void seekTo(int pos) {
-		if (mp == null || !isPrepared() || !isPlaying()) mPosition = pos;
-		else mp.seekTo(pos);
+		mPosition = pos;
+		if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
 	}
 
 	public void start() {

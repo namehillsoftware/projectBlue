@@ -282,12 +282,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 
 	@Override
-	public void onJrFileError(JrFile file, int what, int extra) {
-		switch (extra) {
-			case MediaPlayer.MEDIA_ERROR_IO:
-			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+	public boolean onJrFileError(JrFile file, int what, int extra) {
+		NotificationCompat.Builder builder;
+		switch (what) {
+			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
 				mStopWaitingForConnection = false;
-				NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+				builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
 				// Add intent for canceling waiting for connection to come back
@@ -296,11 +296,23 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setContentIntent(pi);
 				builder.setContentTitle("Waiting for Connection. Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
- 
-				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(file);
+				
+				JrSession.PlayingFile = file;
+				JrSession.Playlist = mPlaylistString;
+				JrSession.SaveSession(this);
+				
+				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(this);
 				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 				break;
+			default:
+				builder = new NotificationCompat.Builder(this);
+		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+				builder.setOngoing(false);
+				builder.setContentTitle("An error has occurred.");
+				break;
 		}
+		
+		return false;
 	}
 
 
@@ -338,9 +350,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            else */
 	        	if (!JrSession.PlayingFile.isMediaPlayerCreated()) {
 	        		initializePlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey());
-//	        		startMediaPlayer(JrSession.PlayingFile);
-	        	}
-	            else if (!JrSession.PlayingFile.isPlaying()) startMediaPlayer(JrSession.PlayingFile);
+	        	} else if (!JrSession.PlayingFile.isPlaying()) {
+	            	startMediaPlayer(JrSession.PlayingFile);
+	            }
 	            JrSession.PlayingFile.setVolume(1.0f);
 	            break;
 
@@ -384,10 +396,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
     
     /* Background Task to check for Connection */
     private class ServiceConnectionChecker extends SimpleTask<String, Void, Boolean> implements OnExecuteListener<String, Void, Boolean>, OnCompleteListener<String, Void, Boolean> {
-    	private JrFile mFile;
+    	Context mContext;
     	
-    	public ServiceConnectionChecker(JrFile file) {
-    		mFile = file;
+    	public ServiceConnectionChecker(Context context) {
+    		mContext = context;
     		addOnExecuteListener(this);
     		addOnCompleteListener(this);
     	}
@@ -414,8 +426,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-			if (result == Boolean.TRUE) mFile.prepareMediaPlayer();
-			else pausePlayback(false);
+			if (result != Boolean.TRUE) return;
+			StreamMusic(mContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
     }
 }
