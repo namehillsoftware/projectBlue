@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.activities.common;
 
-import java.util.ArrayList;
-
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils.TruncateAt;
@@ -23,7 +21,6 @@ import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;

@@ -5,13 +5,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
+import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;

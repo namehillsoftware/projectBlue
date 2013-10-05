@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class CategoryFragment extends Fragment {
-	private IJrItem mCategory;
+	private IJrItem<?> mCategory;
 	private ListView listView;
 	private ProgressBar pbLoading;
 	
@@ -68,7 +68,7 @@ public class CategoryFragment extends Fragment {
 				public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
 					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
-		    		listView.setAdapter(new PlaylistAdapter(getActivity(), (ArrayList<JrPlaylist>) result));
+		    		listView.setAdapter(new PlaylistAdapter((ArrayList<JrPlaylist>) result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
 				}

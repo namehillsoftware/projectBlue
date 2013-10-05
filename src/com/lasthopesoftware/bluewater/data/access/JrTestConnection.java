@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.data.access;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 public class JrTestConnection implements Callable<Boolean> {

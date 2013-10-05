@@ -51,8 +51,8 @@ public class JrSession {
 
 	public static boolean Active = false;
 
-	private static TreeMap<String, IJrItem> mCategories;
-	private static ArrayList<IJrItem> mCategoriesList;
+	private static TreeMap<String, IJrItem<?>> mCategories;
+	private static ArrayList<IJrItem<?>> mCategoriesList;
 	
 	private static Object syncObject = new Object();
 
@@ -118,24 +118,24 @@ public class JrSession {
 		}
 	}
 
-	public static TreeMap<String, IJrItem> getCategories() {
+	public static TreeMap<String, IJrItem<?>> getCategories() {
 		if (mCategories != null) return mCategories;
 
-		mCategories = new TreeMap<String, IJrItem>();
-		for (IJrItem category : getCategoriesList())
+		mCategories = new TreeMap<String, IJrItem<?>>();
+		for (IJrItem<?> category : getCategoriesList())
 			mCategories.put(category.getValue(), category);
 
 		return mCategories;
 	}
 
-	public static ArrayList<IJrItem> getCategoriesList() {
+	public static ArrayList<IJrItem<?>> getCategoriesList() {
 		if (mCategoriesList != null) return mCategoriesList;
 
 		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
 
 		if (LibraryKey < 0) return null;
 
-		mCategoriesList = new ArrayList<IJrItem>();
+		mCategoriesList = new ArrayList<IJrItem<?>>();
 		for (JrItem page : JrSession.JrFs.getSubItems()) {
 			if (page.getKey() == LibraryKey) {
 				mCategoriesList = ((IJrItem) page).getSubItems();

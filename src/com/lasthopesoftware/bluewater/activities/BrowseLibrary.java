@@ -5,7 +5,6 @@ import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -65,7 +64,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
-		mSectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -130,11 +129,9 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	 */
 	public class SectionsPagerAdapter extends FragmentPagerAdapter {
 		private Integer mCount;
-		private Context mContext;
 
-		public SectionsPagerAdapter(Context context, FragmentManager fm) {
+		public SectionsPagerAdapter(FragmentManager fm) {
 			super(fm);
-			mContext = context;
 		}
 
 		@Override
@@ -161,7 +158,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 		}
 
-		public ArrayList<IJrItem> getPages() {
+		public ArrayList<IJrItem<?>> getPages() {
 			return JrSession.getCategoriesList();
 		}
 	}

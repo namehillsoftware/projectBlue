@@ -53,7 +53,7 @@ public class ViewPlaylists extends FragmentActivity {
         mPlaylist = ((JrPlaylists)JrSession.getCategories().get("Playlist")).getMappedPlaylists().get(mPlaylistId);
                 
         if (mPlaylist.getSubItems().size() > 0) {
-        	playlistView.setAdapter(new PlaylistAdapter(this, mPlaylist.getSubItems()));
+        	playlistView.setAdapter(new PlaylistAdapter(mPlaylist.getSubItems()));
         	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
         	playlistView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
         } else {

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

@@ -2,21 +2,18 @@ package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
 
-import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-
-import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+
 public class PlaylistAdapter extends BaseAdapter {
 	private ArrayList<JrPlaylist> mPlaylists;
-	private Context mContext;
 	
-	public PlaylistAdapter(Context context, ArrayList<JrPlaylist> playlists) {
+	public PlaylistAdapter(ArrayList<JrPlaylist> playlists) {
 		mPlaylists = playlists;
-		mContext = context;
 	}
 	
 	@Override
