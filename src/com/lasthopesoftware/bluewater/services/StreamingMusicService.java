@@ -171,6 +171,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.PlayingFile.pause();
+			JrSession.PlayingFile.releaseMediaPlayer();
 		}
 		JrSession.SaveSession(this);
 		stopNotification();
@@ -209,8 +210,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, -1));
 	        } else if (intent.getAction().equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
-	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.PlayingFile != null && JrSession.PlayingFile.isMediaPlayerCreated()) {
-	    		startMediaPlayer(JrSession.PlayingFile);
+	        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.PlayingFile != null) {
+	    		if (!JrSession.PlayingFile.isMediaPlayerCreated()) initializePlaylist(mPlaylistString, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());
+	    		else startMediaPlayer(JrSession.PlayingFile);
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
 	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
