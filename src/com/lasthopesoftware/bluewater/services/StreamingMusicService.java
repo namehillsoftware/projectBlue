@@ -161,6 +161,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				if (abandonAudioFocus) mAudioManager.abandonAudioFocus(this);
 				JrSession.PlayingFile.stop();
 			}
+			JrSession.SaveSession(this);
 			JrSession.PlayingFile = null;
 			releaseMediaPlayers();
 		}
@@ -171,9 +172,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.PlayingFile.pause();
-			JrSession.PlayingFile.releaseMediaPlayer();
 		}
 		JrSession.SaveSession(this);
+		mPlaylistString = null;
+		mFileKey = -1;
+		releaseMediaPlayers();
 		stopNotification();
 	}
 	
