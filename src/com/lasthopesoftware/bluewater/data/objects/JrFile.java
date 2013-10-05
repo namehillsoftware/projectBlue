@@ -241,9 +241,9 @@ public class JrFile extends JrObject implements
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mPosition = mp.getCurrentPosition();
 		mp.reset();
-		releaseMediaPlayer();
 		boolean handled = false;
 		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
+		if (handled) releaseMediaPlayer();
 		return handled;
 	}
 
