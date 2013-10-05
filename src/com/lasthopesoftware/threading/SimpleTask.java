@@ -86,28 +86,28 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 
 	@Override
 	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
-		onStartListeners.remove(listener);
+		if (onStartListeners.contains(listener)) onStartListeners.remove(listener);
 	}
 
 	@Override
 	public void removeOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
-		onExecuteListeners.remove(listener);		
+		if (onExecuteListeners.contains(listener)) onExecuteListeners.remove(listener);		
 	}
 
 	@Override
 	public void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
-		onCompleteListeners.remove(listener);		
+		if (onCompleteListeners.contains(listener)) onCompleteListeners.remove(listener);		
 	}
 
 	@Override
 	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		onErrorListeners.remove(listener);		
+		if (onErrorListeners.contains(listener)) onErrorListeners.remove(listener);		
 	}
 
 
 	@Override
 	public void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
-		onProgressListeners.remove(listener);		
+		if (onProgressListeners.contains(listener)) onProgressListeners.remove(listener);		
 	}
 
 	@Override
