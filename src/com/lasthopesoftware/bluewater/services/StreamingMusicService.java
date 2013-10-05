@@ -315,7 +315,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setContentTitle("An error has occurred during playback.");
 				break;
 		}
-		return false;
+		return true;
 	}
 
 

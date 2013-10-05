@@ -41,6 +41,11 @@ public class SetConnection extends FragmentActivity {
          
         setContentView(R.layout.activity_set_connection);
         
+        Button connectionButton = (Button)findViewById(R.id.btnConnect);
+    	connectionButton.setOnClickListener(mConnectionButtonListener);
+        
+        if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
+        
     	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
     	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
     	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
@@ -54,9 +59,5 @@ public class SetConnection extends FragmentActivity {
 	    	txtUserName.setText(userDetails[0]);
 	    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
     	}
-
-    	Button connectionButton = (Button)findViewById(R.id.btnConnect);
-    	connectionButton.setOnClickListener(mConnectionButtonListener);
 	}
-	
 }

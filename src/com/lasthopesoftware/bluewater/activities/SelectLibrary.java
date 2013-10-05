@@ -27,6 +27,7 @@ public class SelectLibrary extends FragmentActivity {
 	private ProgressBar mPb;
 	private Button mBtnBrowseLibraries;
 	private HashMap<RadioButton, Integer> libraries;
+	private int mSelectedLibrary = -1;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,6 +50,10 @@ public class SelectLibrary extends FragmentActivity {
 			
 			@Override
 			public void onClick(View v) {
+				if (mSelectedLibrary < 0) return;
+				
+				JrSession.LibraryKey = mSelectedLibrary;
+				JrSession.SaveSession(v.getContext());
 				Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
 				startActivity(intent);
 			}
@@ -69,7 +74,7 @@ public class SelectLibrary extends FragmentActivity {
 						
 						@Override
 						public void onClick(View v) {
-							JrSession.LibraryKey = libraries.get((RadioButton)v);
+							mSelectedLibrary = libraries.get((RadioButton)v);
 						}
 					});
 					libraries.put(rb, library.getKey());

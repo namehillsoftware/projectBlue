@@ -90,7 +90,8 @@ public class JrSession {
 			UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
 			IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
 			LibraryKey = prefs.getInt(LIBRARY_KEY, -1);
-	
+			Active = false;
+			
 			if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
 	
 			Active = true;
