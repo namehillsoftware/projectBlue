@@ -172,8 +172,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
 			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 			JrSession.PlayingFile.pause();
+			JrSession.SaveSession(this);
 		}
-		JrSession.SaveSession(this);
 		mPlaylistString = null;
 		mFileKey = -1;
 		releaseMediaPlayers();
@@ -225,7 +225,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			JrSession.CreateSession(this);
 			pausePlayback(true);
 		}
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 	
 	private void initializePlaylist(String playlistString, int fileKey) {
