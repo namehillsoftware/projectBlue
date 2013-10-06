@@ -57,7 +57,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
+		if (!JrSession.Active) JrSession.CreateSession(this);
+		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);
 		getActionBar().setDisplayHomeAsUpEnabled(true);

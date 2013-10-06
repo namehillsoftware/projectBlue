@@ -154,17 +154,17 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         }
 	}
 	
-	private void stopPlayback(boolean abandonAudioFocus) {
+	private void stopPlayback(boolean isUserInterrupted) {
 		
 		if (JrSession.PlayingFile != null) {
 			if (JrSession.PlayingFile.isPlaying()) {
-				if (abandonAudioFocus) mAudioManager.abandonAudioFocus(this);
+				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 				JrSession.PlayingFile.stop();
 			}
 			JrSession.SaveSession(this);
 			JrSession.PlayingFile = null;
-			releaseMediaPlayers();
 		}
+		releaseMediaPlayers();
 		stopNotification();
 	}
 	
@@ -222,8 +222,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        	mStopWaitingForConnection = true;
 	        }
 		} else if (!JrSession.Active) {
-			JrSession.CreateSession(this);
-			pausePlayback(true);
+			if (JrSession.CreateSession(this)) pausePlayback(true);
 		}
 		return START_NOT_STICKY;
 	}
@@ -385,6 +384,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	@Override
 	public void onDestroy() {
+		JrSession.SaveSession(this);
 		stopForeground(true);
 		releaseMediaPlayers();
 	}
