@@ -227,19 +227,17 @@ public class JrFile extends JrObject implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		if (mp != null && getCurrentPosition() == mp.getDuration()) {
-			Thread updateStatsThread = new Thread(new UpdatePlayStats(this));
-			updateStatsThread.setName("Asynchronous Update Stats Thread for " + getValue());
-			updateStatsThread.setPriority(Thread.MIN_PRIORITY);
-			updateStatsThread.start();
-		}
+		Thread updateStatsThread = new Thread(new UpdatePlayStats(this));
+		updateStatsThread.setName("Asynchronous Update Stats Thread for " + getValue());
+		updateStatsThread.setPriority(Thread.MIN_PRIORITY);
+		updateStatsThread.start();
+		
 		releaseMediaPlayer();
 		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		mPosition = mp.getCurrentPosition();
 		mp.reset();
 		boolean handled = false;
 		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
