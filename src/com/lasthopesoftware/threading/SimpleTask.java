@@ -15,6 +15,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	LinkedList<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = new LinkedList<OnCompleteListener<TParams, TProgress, TResult>>();
 	LinkedList<OnStartListener<TParams, TProgress, TResult>> onStartListeners = new LinkedList<OnStartListener<TParams, TProgress, TResult>>();
 	LinkedList<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = new LinkedList<OnErrorListener<TParams, TProgress, TResult>>();
+	LinkedList<Exception> exceptions = new LinkedList<Exception>();
 		
 	@Override
 	protected void onPreExecute() {
@@ -28,6 +29,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 			try {
 				workEvent.onExecute(this, params);
 			} catch (Exception ex) {
+				exceptions.add(ex);
 				mState = SimpleTaskState.ERROR;
 				boolean continueExecution = true;
 				
@@ -36,6 +38,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 			}
 		}
 		return mResult;
+	}
+	
+	@Override
+	public LinkedList<Exception> getExceptions() {
+		return exceptions;
 	}
 	
 	@Override

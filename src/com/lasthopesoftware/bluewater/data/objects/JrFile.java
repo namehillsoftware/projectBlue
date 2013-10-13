@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -20,6 +21,10 @@ import android.os.PowerManager;
 import com.lasthopesoftware.bluewater.data.access.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.JrTestConnection;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class JrFile extends JrObject implements
 	OnPreparedListener, 
@@ -36,6 +41,7 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
+	private SimpleTask<String, Void, TreeMap<String, String>> filePropertiesTask = null;
 	
 	public JrFile(int key) {
 		super();
@@ -56,7 +62,14 @@ public class JrFile extends JrObject implements
 	 */
 	@Override
 	public String getValue() {
-		if (super.getValue() == null) setValue(getRefreshedProperty("Name"));
+		if (super.getValue() == null) {
+			try {
+				setValue(getRefreshedProperty("Name"));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return super.getValue();
 	}
 	
@@ -134,11 +147,18 @@ public class JrFile extends JrObject implements
 		mProperties.put(name, value);
 	}
 	
-	public String getProperty(String name) {
+	public String getProperty(String name) throws IOException {
 		if (mProperties == null || mProperties.size() == 0) {
 			try {
-				mProperties = new JrFilePropertyResponse().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
-			} catch (Exception e) {
+				mProperties = GetFilePropertiesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
+				if (GetFilePropertiesTask().getState() == SimpleTaskState.ERROR) {
+					for (Exception e : GetFilePropertiesTask().getExceptions()) {
+						if (e instanceof IOException) throw (IOException)e;
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
 				e.printStackTrace();
 			}
 		}
@@ -146,10 +166,15 @@ public class JrFile extends JrObject implements
 		return mProperties.get(name);
 	}
 	
-	public String getRefreshedProperty(String name) {
+	public String getRefreshedProperty(String name) throws IOException {
 		
 		try {
-			mProperties.putAll(new JrFilePropertyResponse().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+			mProperties.putAll(GetFilePropertiesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+			if (GetFilePropertiesTask().getState() == SimpleTaskState.ERROR) {
+				for (Exception e : GetFilePropertiesTask().getExceptions()) {
+					if (e instanceof IOException) throw (IOException)e;
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -254,8 +279,10 @@ public class JrFile extends JrObject implements
 		return mPosition;
 	}
 	
-	public int getDuration() {
-		if (mp == null) return (int) (Double.parseDouble(getProperty("Duration")) * 1000);
+	public int getDuration() throws IOException {
+		if (mp == null) {
+			return (int) (Double.parseDouble(getProperty("Duration")) * 1000);
+		}
 		return mp.getDuration();
 	}
 
@@ -287,30 +314,43 @@ public class JrFile extends JrObject implements
 		mp.setVolume(volume, volume);
 	}
 	
-	private static class JrFilePropertyResponse extends AsyncTask<String, Void, TreeMap<String, String>> {
-
-		@Override
-		protected TreeMap<String, String> doInBackground(String... params) {
-			TreeMap<String, String> returnProperties = new TreeMap<String, String>();
+	private SimpleTask<String, Void, TreeMap<String, String>> GetFilePropertiesTask() {
+		if (filePropertiesTask != null) return filePropertiesTask;
+		
+		filePropertiesTask = new SimpleTask<String, Void, TreeMap<String,String>>();
+		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, TreeMap<String,String>>() {
 			
-			JrConnection conn;
-			try {
-				conn = new JrConnection(params);
-		    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
-		    	
-		    	for (XmlElement el : xml.get(0)) {
-		    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-		    	}
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (XmlParseException e) {
-				e.printStackTrace();
+			@Override
+			public void onExecute(ISimpleTask<String, Void, TreeMap<String, String>> owner, String... params) throws IOException {
+				TreeMap<String, String> returnProperties = new TreeMap<String, String>();
+				
+				JrConnection conn;
+				try {
+					conn = new JrConnection(params);
+			    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+			    	
+			    	for (XmlElement el : xml.get(0)) {
+			    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+			    	}
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (XmlParseException e) {
+					e.printStackTrace();
+				}
+				
+				owner.setResult(returnProperties != null ? returnProperties : new TreeMap<String, String>());
 			}
+		});
+		
+		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, TreeMap<String,String>>() {
 			
-			return returnProperties != null ? returnProperties : new TreeMap<String, String>();
-		}
+			@Override
+			public boolean onError(ISimpleTask<String, Void, TreeMap<String, String>> owner, Exception innerException) {
+				return !(innerException instanceof IOException);
+			}
+		});
+		
+		return filePropertiesTask;
 	}
 	
 	private static class SetProperty implements Runnable {
@@ -330,9 +370,8 @@ public class JrFile extends JrObject implements
 				JrConnection conn = new JrConnection("File/SetInfo", "File=" + String.valueOf(mKey), "Field=" + mName, "Value=" + mValue);
 				conn.getInputStream();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}			
+			}
 		}
 	}
 	
@@ -345,8 +384,13 @@ public class JrFile extends JrObject implements
 		
 		@Override
 		public void run() {
-			int numberPlays = Integer.parseInt(mFile.getRefreshedProperty("Number Plays"));
-			mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
+			int numberPlays;
+			try {
+				numberPlays = Integer.parseInt(mFile.getRefreshedProperty("Number Plays"));
+				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			
 			String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
 			mFile.setProperty("Last Played", lastPlayed);

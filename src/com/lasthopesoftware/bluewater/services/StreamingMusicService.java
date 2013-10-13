@@ -4,6 +4,7 @@
 package com.lasthopesoftware.bluewater.services;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.NotificationManager;
@@ -138,7 +139,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		builder.setContentTitle("Music Streamer Now Playing");
-		builder.setContentText(file.getProperty("Artist") + " - " + file.getValue());
+		try {
+			builder.setContentText(file.getProperty("Artist") + " - " + file.getValue());
+		} catch (IOException e) {
+			builder.setContentText("Error getting file properties.");
+		}
 		builder.setContentIntent(pi);
 		mNotificationMgr.notify(mId, builder.build());        
         

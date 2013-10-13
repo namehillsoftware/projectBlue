@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -274,7 +275,11 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				mPause.setVisibility(View.VISIBLE);
 				mPlay.setVisibility(View.INVISIBLE);
 				if (JrSession.PlayingFile != null) {
-					mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+					try {
+						mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+					} catch (IOException e) {
+						mSongProgress.setMax(100);
+					}
 					mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
 				}
 			} else if (msg.arg1 == HIDE_CONTROLS) {
@@ -286,17 +291,34 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		private void setView() {
 			if (JrSession.PlayingFile == null) return;
 			
-			String artist = JrSession.PlayingFile.getProperty("Artist");
-			String album = JrSession.PlayingFile.getProperty("Album"); 
+			String artist = "";
+			String album = "";
+			try {
+				artist = JrSession.PlayingFile.getProperty("Artist");
+				album = JrSession.PlayingFile.getProperty("Album");
+			} catch (IOException ioE) {
+				artist = "Error getting playing file Artist.";
+			}
+			
 			mNowPlayingArtist.setText(artist);
 			mNowPlayingTitle.setText(JrSession.PlayingFile.getValue());
-			if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
-				mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
-				mSongRating.invalidate();
+			
+			try {
+				if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
+					mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
+					mSongRating.invalidate();
+				}
+			} catch (IOException ioE) {
+				ioE.printStackTrace();
 			}
 			
 			
-			mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+			try {
+				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+			} catch (IOException ioE) {
+				ioE.printStackTrace();
+			}
+			
 			mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
 			
 			try {
