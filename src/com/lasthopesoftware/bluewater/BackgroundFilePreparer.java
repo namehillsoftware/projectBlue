@@ -10,31 +10,34 @@ public class BackgroundFilePreparer implements Runnable {
 
 	private JrFile mCurrentFile;
 	private JrFile mNextFile;
-	private double mBufferTime = -1;
 	private Context mContext;
+	private static final int SLEEP_TIME = 5000;
 	
 	public BackgroundFilePreparer(Context context, JrFile currentFile) {
 		mCurrentFile = currentFile;
 		if (mCurrentFile.getNextFile() == null) return;
 		mContext = context;
 		mNextFile = mCurrentFile.getNextFile();
-		// figure out how much buffer time we need for this file if we're on the slowest 3G network
-		// and add 15secs for a dropped connection  
+		
 	}
 	
 	@Override
 	public void run() {
 		if (mNextFile == null) return;
 		mNextFile.initMediaPlayer(mContext);
-		
+		double bufferTime = -1;
 		while (mCurrentFile != null && mCurrentFile.isMediaPlayerCreated()) {
-			if (mBufferTime < 0) {
+			
+			if (bufferTime < 0) {
+				// figure out how much buffer time we need for this file if we're on the slowest 3G network
+				// and add 15secs for a dropped connection  
 				try {
-					mBufferTime = (((Double.parseDouble(mNextFile.getProperty("Duration")) * 1000 * 128) / 384) * 1.2) + 15000;
+					bufferTime = (((Double.parseDouble(mNextFile.getProperty("Duration")) * 1000 * 128) / 384) * 1.2) + 15000;
 				} catch (IOException e) {
 					e.printStackTrace();
+					bufferTime = -1;
 					try {
-						Thread.sleep(100);
+						Thread.sleep(SLEEP_TIME);
 					} catch (InterruptedException e1) {
 						return;
 					}
@@ -42,10 +45,10 @@ public class BackgroundFilePreparer implements Runnable {
 				}
 			}
 			try {
-				if (mCurrentFile.getCurrentPosition() > (mCurrentFile.getDuration() - mBufferTime) && !mNextFile.isPrepared()) {
+				if (mCurrentFile.getCurrentPosition() > (mCurrentFile.getDuration() - bufferTime) && !mNextFile.isPrepared()) {
 					mNextFile.prepareMpSynchronously();
 				}
-				Thread.sleep(5000);
+				Thread.sleep(SLEEP_TIME);
 			} catch (Exception e) {
 				return;
 			}

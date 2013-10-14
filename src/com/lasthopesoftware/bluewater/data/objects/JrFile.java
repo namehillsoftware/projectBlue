@@ -41,7 +41,6 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
-	private SimpleTask<String, Void, TreeMap<String, String>> filePropertiesTask = null;
 	
 	public JrFile(int key) {
 		super();
@@ -315,9 +314,7 @@ public class JrFile extends JrObject implements
 	}
 	
 	private SimpleTask<String, Void, TreeMap<String, String>> GetFilePropertiesTask() {
-		if (filePropertiesTask != null) return filePropertiesTask;
-		
-		filePropertiesTask = new SimpleTask<String, Void, TreeMap<String,String>>();
+		SimpleTask<String, Void, TreeMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, TreeMap<String,String>>();
 		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, TreeMap<String,String>>() {
 			
 			@Override
