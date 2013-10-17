@@ -171,6 +171,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			JrSession.SaveSession(this);
 			JrSession.PlayingFile = null;
 		}
+		
 		releaseMediaPlayers();
 		stopNotification();
 	}
@@ -183,7 +184,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			}
 			
 			JrSession.SaveSession(this);
-			JrSession.PlayingFile = null;
 		}
 		mPlaylistString = null;
 		mFileKey = -1;
