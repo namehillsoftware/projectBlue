@@ -348,8 +348,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				startMediaPlayer(nextFile);
 			}
 			return;
-		}
-		
+		}		
 	}
 
 
@@ -391,6 +390,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public void onDestroy() {
 		JrSession.SaveSession(this);
 		stopForeground(true);
+		if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 		releaseMediaPlayers();
 	}
 
