@@ -14,7 +14,7 @@ public class JrConnection extends URLConnection {
 
 	private URLConnection mUrlConnection;
 	private String[] mParams;
-	private int resets = 0;
+	private int resets = 0, maxResets = -1;
 	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
 	private InputStream mInputStream;
 	private boolean mIsFound;
@@ -260,9 +260,7 @@ public class JrConnection extends URLConnection {
 	}
 	
 	private void resetConnection(IOException ioEx) throws IOException {
-		throw ioEx;
-		
-		// save this for later
+		/*if (resets > maxResets)*/ throw ioEx;
 //		resets++;
 //		JrSession.accessDao.resetUrl();
 //		String url = JrSession.accessDao.getJrUrl(mParams);

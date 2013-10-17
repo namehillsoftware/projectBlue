@@ -68,7 +68,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static ArrayList<JrFile> mPlaylist;
 	private static String mPlaylistString;
 	private static volatile boolean mStopWaitingForConnection = false;
-	AudioManager mAudioManager;
+	private Context thisContext;
+	private AudioManager mAudioManager;
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
@@ -123,7 +124,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public StreamingMusicService() {
 		super();
-		
+		thisContext = this;
 	}
 
 	private void startMediaPlayer(JrFile file) {
@@ -166,6 +167,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 				JrSession.PlayingFile.stop();
 			}
+			
 			JrSession.SaveSession(this);
 			JrSession.PlayingFile = null;
 		}
@@ -174,10 +176,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
-		if (JrSession.PlayingFile != null && JrSession.PlayingFile.isPlaying()) {
-			if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-			JrSession.PlayingFile.pause();
+		if (JrSession.PlayingFile != null) {
+			if (JrSession.PlayingFile.isPlaying()) {
+				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
+				JrSession.PlayingFile.pause();
+			}
+			
 			JrSession.SaveSession(this);
+			JrSession.PlayingFile = null;
 		}
 		mPlaylistString = null;
 		mFileKey = -1;
@@ -314,8 +320,18 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setSubText("Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
 				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(this);
-				
 				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				
+				checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
+							StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
+						else
+							mNotificationMgr.cancelAll();
+					}
+				});
 				break;
 			default:
 				builder = new NotificationCompat.Builder(this);
@@ -348,7 +364,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				startMediaPlayer(nextFile);
 			}
 			return;
-		}		
+		}
 	}
 
 
@@ -389,7 +405,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public void onDestroy() {
 		JrSession.SaveSession(this);
-		stopForeground(true);
+		stopNotification();
 		if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 		releaseMediaPlayers();
 	}
@@ -408,13 +424,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	/* End Binder Code */
     
     /* Background Task to check for Connection */
-    private class ServiceConnectionChecker extends SimpleTask<String, Void, Boolean> implements OnExecuteListener<String, Void, Boolean>, OnCompleteListener<String, Void, Boolean> {
-    	Context mContext;
+    private class ServiceConnectionChecker extends SimpleTask<String, Void, Boolean> implements OnExecuteListener<String, Void, Boolean> {
     	
     	public ServiceConnectionChecker(Context context) {
-    		mContext = context;
     		addOnExecuteListener(this);
-    		addOnCompleteListener(this);
     	}
 
 		@Override
@@ -435,14 +448,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			}
 			
 			owner.setResult(Boolean.TRUE);
-		}
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-			if (result != Boolean.TRUE) return;
-			
-			if (JrSession.CreateSession(mContext))
-				StreamMusic(mContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
     }
 }

@@ -13,7 +13,7 @@ public class JrTestConnection implements Callable<Boolean> {
 		
 		try {
 			JrConnection conn = new JrConnection("Alive");
-	    	conn.setConnectTimeout(30);
+	    	conn.setConnectTimeout(30000);
 			JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
 	    	
 	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
