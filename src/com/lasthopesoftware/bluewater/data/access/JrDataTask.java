@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.data.access;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.access;
+package com.lasthopesoftware.bluewater.data.access.connection;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,6 +9,8 @@ import java.net.URLConnection;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
+
+import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 public class JrConnection extends URLConnection {
 

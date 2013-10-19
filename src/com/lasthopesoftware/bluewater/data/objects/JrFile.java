@@ -18,9 +18,9 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 
-import com.lasthopesoftware.bluewater.data.access.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.access.JrTestConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.JrTestConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

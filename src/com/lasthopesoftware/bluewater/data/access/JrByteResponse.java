@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+
+import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
+
 import android.os.AsyncTask;
 
 public class JrByteResponse extends AsyncTask<String, Void, byte[]> {

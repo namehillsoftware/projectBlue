@@ -2,6 +2,9 @@ package com.lasthopesoftware.bluewater.data.access;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+
+import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
+
 import android.os.AsyncTask;
 
 public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {

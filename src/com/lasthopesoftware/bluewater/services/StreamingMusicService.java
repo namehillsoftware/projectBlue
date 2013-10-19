@@ -27,7 +27,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.access.JrTestConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.JrTestConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
@@ -319,8 +320,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setTicker("Waiting for Connection.");
 				builder.setSubText("Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				ServiceConnectionChecker checkConnection = new ServiceConnectionChecker(this);
-				checkConnection.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				PollConnectionTask checkConnection = new PollConnectionTask();
+				checkConnection.startPolling();
 				
 				checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 					
@@ -422,32 +423,4 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
 	/* End Binder Code */
-    
-    /* Background Task to check for Connection */
-    private class ServiceConnectionChecker extends SimpleTask<String, Void, Boolean> implements OnExecuteListener<String, Void, Boolean> {
-    	
-    	public ServiceConnectionChecker(Context context) {
-    		addOnExecuteListener(this);
-    	}
-
-		@Override
-		public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
-			while (!JrTestConnection.doTest()) {
-				try {
-					Thread.sleep(3000);
-					if (mStopWaitingForConnection) {
-						
-						owner.setResult(Boolean.FALSE);
-						return;
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					owner.setResult(Boolean.FALSE);
-					return;
-				}
-			}
-			
-			owner.setResult(Boolean.TRUE);
-		}
-    }
 }

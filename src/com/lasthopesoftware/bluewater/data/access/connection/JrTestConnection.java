@@ -1,9 +1,11 @@
-package com.lasthopesoftware.bluewater.data.access;
+package com.lasthopesoftware.bluewater.data.access.connection;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
+
+import com.lasthopesoftware.bluewater.data.access.JrResponse;
 
 public class JrTestConnection implements Callable<Boolean> {
 	
