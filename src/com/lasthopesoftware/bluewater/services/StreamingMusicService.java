@@ -17,7 +17,6 @@ import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -27,7 +26,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
-import com.lasthopesoftware.bluewater.data.access.connection.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
@@ -36,8 +34,6 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
 
 
 /**
@@ -68,7 +64,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private Thread trackProgressThread;
 	private static ArrayList<JrFile> mPlaylist;
 	private static String mPlaylistString;
-	private static volatile boolean mStopWaitingForConnection = false;
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	
@@ -231,7 +226,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        } else if (intent.getAction().equals(ACTION_STOP)) {
 	        	stopPlayback(true);
 	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	mStopWaitingForConnection = true;
+	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
 		} else if (!JrSession.Active) {
 			if (JrSession.CreateSession(this)) pausePlayback(true);
@@ -308,7 +303,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		
 		switch (what) {
 			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-				mStopWaitingForConnection = false;
 				builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
@@ -320,8 +314,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				builder.setTicker("Waiting for Connection.");
 				builder.setSubText("Click here to cancel.");
 				mNotificationMgr.notify(mId, builder.build());
-				PollConnectionTask checkConnection = new PollConnectionTask();
-				checkConnection.startPolling();
+				PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
 				
 				checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 					
@@ -333,6 +326,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 							mNotificationMgr.cancelAll();
 					}
 				});
+				
+				checkConnection.startPolling();
+				
 				break;
 			default:
 				builder = new NotificationCompat.Builder(this);

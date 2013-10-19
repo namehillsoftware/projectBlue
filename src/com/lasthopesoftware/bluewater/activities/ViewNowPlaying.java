@@ -34,8 +34,12 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements Runnable {
 	private static Thread mTrackerThread;
@@ -54,6 +58,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private static int UPDATE_PLAYING = 1;
 	private static int SET_STOPPED = 2;
 	private static int HIDE_CONTROLS = 3;
+	private static int SHOW_CONNECTION_LOST = 4;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -170,9 +175,12 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		
 		while (true) {
 			try {
+				
 				msg = null;
-	
-				if (JrSession.PlayingFile == null || !JrSession.PlayingFile.isMediaPlayerCreated()) {
+				if (PollConnectionTask.Instance.get().isRunning()) {
+					msg = new Message();
+					msg.arg1 = SHOW_CONNECTION_LOST;
+				} else if (JrSession.PlayingFile == null || !JrSession.PlayingFile.isMediaPlayerCreated()) {
 					playingFile = null;
 					msg = new Message();
 					msg.arg1 = SET_STOPPED;
@@ -185,6 +193,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					msg.arg1 = UPDATE_PLAYING;
 				}
 				if (msg != null) mHandler.sendMessage(msg);
+				
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -267,7 +276,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 
 		@Override
 		public void handleMessage(Message msg) {
-			if (msg.arg1 == SET_STOPPED) {
+			if (msg.arg1 == SHOW_CONNECTION_LOST) {
+				WaitForConnectionDialog.show(mOwner);
+			} else if (msg.arg1 == SET_STOPPED) {
 //				mSongProgress.setProgress(0);
 			} else if (msg.arg1 == UPDATE_ALL) {
 				setView();
@@ -278,7 +289,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					try {
 						mSongProgress.setMax(JrSession.PlayingFile.getDuration());
 					} catch (IOException e) {
-						mSongProgress.setMax(100);
+						WaitForConnectionDialog.show(mOwner);
 					}
 					mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
 				}
@@ -293,34 +304,31 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			String artist = "";
 			String album = "";
+			
 			try {
 				artist = JrSession.PlayingFile.getProperty("Artist");
 				album = JrSession.PlayingFile.getProperty("Album");
-			} catch (IOException ioE) {
-				artist = "Error getting playing file Artist.";
-			}
-			
-			mNowPlayingArtist.setText(artist);
-			mNowPlayingTitle.setText(JrSession.PlayingFile.getValue());
-			
-			try {
+				
+				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
 				if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
 					mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
 					mSongRating.invalidate();
 				}
+				mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
 			} catch (IOException ioE) {
-				ioE.printStackTrace();
+				PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						if (owner.getState() != SimpleTaskState.ERROR) setView();
+					}
+				});
+				WaitForConnectionDialog.show(mOwner);
 			}
 			
-			
-			try {
-				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
-			} catch (IOException ioE) {
-				ioE.printStackTrace();
-			}
-			
-			mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
-			
+			mNowPlayingArtist.setText(artist);
+			mNowPlayingTitle.setText(JrSession.PlayingFile.getValue());
+
 			try {
 				int size = mOwner.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mOwner.getResources().getDisplayMetrics().heightPixels : mOwner.getResources().getDisplayMetrics().widthPixels;
 				

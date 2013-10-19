@@ -9,21 +9,22 @@ import com.lasthopesoftware.bluewater.data.access.JrResponse;
 
 public class JrTestConnection implements Callable<Boolean> {
 	
+	private static int testTimoutTime = 30;
+	private static int stdTimeoutTime = 30000;
+	
 	@Override
 	public Boolean call() throws Exception {
 		Boolean result = Boolean.FALSE;
 		
 		try {
 			JrConnection conn = new JrConnection("Alive");
-	    	conn.setConnectTimeout(30000);
+	    	conn.setConnectTimeout(stdTimeoutTime);
 			JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
 	    	
 	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

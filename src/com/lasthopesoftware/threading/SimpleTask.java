@@ -1,6 +1,7 @@
 package com.lasthopesoftware.threading;
 
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
@@ -10,11 +11,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private TResult mResult;
 	private SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
-	LinkedList<OnExecuteListener<TParams, TProgress, TResult>> onExecuteListeners = new LinkedList<OnExecuteListener<TParams, TProgress, TResult>>();
-	LinkedList<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = new LinkedList<OnProgressListener<TParams, TProgress, TResult>>();
-	LinkedList<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = new LinkedList<OnCompleteListener<TParams, TProgress, TResult>>();
-	LinkedList<OnStartListener<TParams, TProgress, TResult>> onStartListeners = new LinkedList<OnStartListener<TParams, TProgress, TResult>>();
-	LinkedList<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = new LinkedList<OnErrorListener<TParams, TProgress, TResult>>();
+	ConcurrentLinkedQueue<OnExecuteListener<TParams, TProgress, TResult>> onExecuteListeners = new ConcurrentLinkedQueue<OnExecuteListener<TParams, TProgress, TResult>>();
+	ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = new ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>>();
+	ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = new ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>>();
+	ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = new ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>>();
+	ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = new ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>>();
 	LinkedList<Exception> exceptions = new LinkedList<Exception>();
 		
 	@Override

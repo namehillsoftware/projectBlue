@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.access;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -9,7 +10,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> implements IJrDataTask<TResult> {
 
-	LinkedList<OnConnectListener<TResult>> onConnectListeners = new LinkedList<OnConnectListener<TResult>>();
+	ConcurrentLinkedQueue<OnConnectListener<TResult>> onConnectListeners = new ConcurrentLinkedQueue<OnConnectListener<TResult>>();
 	ArrayList<TResult> mResults;
 	
 	public JrDataTask() {
@@ -22,7 +23,8 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 				mResults.clear();
 				JrConnection conn;
 				conn = new JrConnection(params);
-				for (OnConnectListener<TResult> workEvent : onConnectListeners) mResults.add(workEvent.onConnect(conn.getInputStream()));
+				for (OnConnectListener<TResult> workEvent : onConnectListeners)
+					mResults.add(workEvent.onConnect(conn.getInputStream()));
 				
 				owner.setResult(mResults.get(mResults.size() - 1));
 			}
