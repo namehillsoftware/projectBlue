@@ -320,7 +320,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					
 					@Override
 					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						if (owner.getState() != SimpleTaskState.ERROR) setView();
+						if (result == Boolean.TRUE) setView();
 					}
 				});
 				WaitForConnectionDialog.show(mOwner);
