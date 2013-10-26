@@ -18,11 +18,11 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class BrowseItemMenu {

@@ -26,11 +26,11 @@ import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class CategoryFragment extends Fragment {

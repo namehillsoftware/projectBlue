@@ -11,7 +11,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 
 public class SetConnection extends FragmentActivity {
 

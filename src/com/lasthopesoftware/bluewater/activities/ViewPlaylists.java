@@ -22,11 +22,11 @@ import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class ViewPlaylists extends FragmentActivity {

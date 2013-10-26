@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;

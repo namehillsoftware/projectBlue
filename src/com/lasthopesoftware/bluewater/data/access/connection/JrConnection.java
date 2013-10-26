@@ -10,7 +10,7 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
-import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 
 public class JrConnection extends URLConnection {
 

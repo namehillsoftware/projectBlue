@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;

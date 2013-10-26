@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.access;
+package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,11 +17,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.access.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.access.JrLookUpResponseHandler;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";

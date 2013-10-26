@@ -32,10 +32,10 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
