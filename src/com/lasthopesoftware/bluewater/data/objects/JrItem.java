@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
@@ -51,7 +52,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	}
 	
 	@Override
-	public ArrayList<JrItem> getSubItems() throws IOException {
+	public ArrayList<JrItem> getSubItems() {
 		if (mSubItems != null) return mSubItems;
 		
 		mSubItems = new ArrayList<JrItem>();
@@ -59,8 +60,6 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		try {
 			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
 			mSubItems.addAll(tempSubItems);
-		} catch (IOException ioE) {
-			throw ioE;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

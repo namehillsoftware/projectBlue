@@ -130,11 +130,6 @@ public class CategoryFragment extends Fragment {
     	Context mContext;
     	private ArrayList<JrItem> mCategoryItems;
     	
-//    	public ExpandableItemListAdapter(Context context, int CategoryPosition) {
-//    		mContext = context;
-//    		mCategoryItems = ((JrItem)JrSession.categories.get(CategoryPosition)).getSubItems();
-//    	}
-    	
     	public ExpandableItemListAdapter(Context context, ArrayList<JrItem> categoryItems) {
     		mContext = context;
     		mCategoryItems = categoryItems;

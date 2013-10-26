@@ -28,6 +28,8 @@ import com.lasthopesoftware.bluewater.data.access.JrSession;
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
 
@@ -69,14 +71,20 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
-		// Set up the action bar.
-		final ActionBar actionBar = getActionBar();
-		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		
 
 		// Set up the ViewPager with the sections adapter.
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
-
+		
+		BuildLibraryTabs();
+	}
+	
+	private void BuildLibraryTabs() {
+		// Set up the action bar.
+		final ActionBar actionBar = getActionBar();
+		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		
 		// When swiping between different sections, select the corresponding
 		// tab.
 		// We can also use ActionBar.Tab#select() to do this if we have a
@@ -88,16 +96,28 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 				actionBar.setSelectedNavigationItem(position);
 			}
 		});
-
-		// For each of the sections in the app, add a tab to the action bar.
-		for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-			// Create a tab with text corresponding to the page title defined by
-			// the adapter.
-			// Also specify this Activity object, which implements the
-			// TabListener interface, as the
-			// listener for when this tab is selected.
-			actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
-		}
+		
+//		try {
+			// For each of the sections in the app, add a tab to the action bar.
+			for (int i = 0; i < JrSession.getCategoriesList().size(); i++) {
+				// Create a tab with text corresponding to the page title defined by
+				// the adapter.
+				// Also specify this Activity object, which implements the
+				// TabListener interface, as the
+				// listener for when this tab is selected.
+				actionBar.addTab(actionBar.newTab().setText(JrSession.getCategoriesList().get(i).getValue()).setTabListener(this));
+			}
+//		} catch (IOException ioE) {
+//			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+//				
+//				@Override
+//				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+//					BuildLibraryTabs();
+//				}
+//			});
+//			
+//			WaitForConnectionDialog.show(this);
+//		}
 	}
 
 	@Override
@@ -165,12 +185,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		}
 
 		public ArrayList<IJrItem<?>> getPages() {
-			try {
-				return JrSession.getCategoriesList();
-			} catch (IOException ioE) {
-				WaitForConnectionDialog.show(mContext);
-				return new ArrayList<IJrItem<?>>();
-			}
+			return JrSession.getCategoriesList();
 		}
 	}
 

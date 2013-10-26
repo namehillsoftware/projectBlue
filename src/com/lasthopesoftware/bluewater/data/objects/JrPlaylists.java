@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +51,12 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		setValue("Playlist");
 	}
 	
-	public SparseArray<JrPlaylist> getMappedPlaylists() {
+	public SparseArray<JrPlaylist> getMappedPlaylists() throws IOException {
 		if (mMappedPlaylists == null) denormalizeAndMap();
 		return mMappedPlaylists;
 	}
 	
-	private void denormalizeAndMap() {
+	private void denormalizeAndMap() throws IOException {
 		mMappedPlaylists = new SparseArray<JrPlaylist>(getSubItems().size());
 		denormalizeAndMap(getSubItems());
 	}
