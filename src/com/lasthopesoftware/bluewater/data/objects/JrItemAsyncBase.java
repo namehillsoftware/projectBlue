@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,13 +36,15 @@ public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject imple
 	protected abstract List<OnStartListener<List<T>>> getOnItemsStartListeners();
 	protected abstract List<OnErrorListener<List<T>>> getOnItemsErrorListeners();
 	
-	public ArrayList<T> getSubItems() {
+	public ArrayList<T> getSubItems() throws IOException {
 		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
 		
 		if (mSubItems == null) {
 			try {
 				// This will call the onCompletes if they are attached.
 				mSubItems = (ArrayList<T>) itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
+			} catch (IOException ioE) {
+				throw ioE;
 			} catch(Exception e) {
 				e.printStackTrace();
 			}

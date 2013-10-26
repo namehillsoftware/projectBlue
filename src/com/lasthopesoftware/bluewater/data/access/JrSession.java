@@ -129,7 +129,7 @@ public class JrSession {
 		return mCategories;
 	}
 
-	public static ArrayList<IJrItem<?>> getCategoriesList() {
+	public static ArrayList<IJrItem<?>> getCategoriesList() throws IOException {
 		if (mCategoriesList != null) return mCategoriesList;
 
 		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();

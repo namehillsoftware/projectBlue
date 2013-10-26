@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 	}
 	
 	@Override
-	public ArrayList<JrItem> getSubItems() {
+	public ArrayList<JrItem> getSubItems() throws IOException {
 		if (mSubItems != null) return mSubItems;
 		
 		mSubItems = new ArrayList<JrItem>();
@@ -58,6 +59,8 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		try {
 			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
 			mSubItems.addAll(tempSubItems);
+		} catch (IOException ioE) {
+			throw ioE;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

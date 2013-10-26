@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.activities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -23,6 +25,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
 import com.lasthopesoftware.bluewater.data.access.JrSession;
+import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 
 public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
@@ -64,7 +68,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
-		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -127,11 +131,13 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
 	 * one of the primary sections of the app.
 	 */
-	public class SectionsPagerAdapter extends FragmentPagerAdapter {
+	public static class SectionsPagerAdapter extends FragmentPagerAdapter {
 		private Integer mCount;
+		private Context mContext;
 
-		public SectionsPagerAdapter(FragmentManager fm) {
+		public SectionsPagerAdapter(FragmentManager fm, Context context) {
 			super(fm);
+			mContext = context;
 		}
 
 		@Override
@@ -154,12 +160,17 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		@Override
 		public CharSequence getPageTitle(int position) {
 
-			return getPages().get(position).getValue() != null ? getPages().get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
+			return !getPages().get(position).getValue().isEmpty() ? getPages().get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
 
 		}
 
 		public ArrayList<IJrItem<?>> getPages() {
-			return JrSession.getCategoriesList();
+			try {
+				return JrSession.getCategoriesList();
+			} catch (IOException ioE) {
+				WaitForConnectionDialog.show(mContext);
+				return new ArrayList<IJrItem<?>>();
+			}
 		}
 	}
 
