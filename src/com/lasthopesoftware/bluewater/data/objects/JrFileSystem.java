@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.util.SparseArray;
+
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
@@ -12,6 +14,8 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
+	private SparseArray<JrItem> mLibraries;
+	
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
 	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
@@ -26,7 +30,13 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 			
 			@Override
 			public List<JrItem> onConnect(InputStream is) {
-				return JrFsResponse.GetItems(is);
+				LinkedList<JrItem> libraries = (LinkedList<JrItem>) JrFsResponse.GetItems(is);
+				
+				mLibraries = new SparseArray<JrItem>(libraries.size());
+				for (JrItem library : libraries)
+					mLibraries.append(library.getKey(), library);
+				
+				return libraries;
 			}
 		};
 		//		setPages();
@@ -35,7 +45,13 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	public String getSubItemUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
-
+	
+	public JrItem getLibrary(int libraryKey) {
+		if (mLibraries != null && mLibraries.indexOfKey(libraryKey) > -1)
+			return mLibraries.get(libraryKey);
+		
+		return null;
+	}
 
 	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {

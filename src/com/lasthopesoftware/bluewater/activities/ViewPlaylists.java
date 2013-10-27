@@ -22,8 +22,10 @@ import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
@@ -57,7 +59,12 @@ public class ViewPlaylists extends FragmentActivity {
 	
 	private void BuildPlaylistView() {
 		try {
-			mPlaylist = ((JrPlaylists)JrSession.getCategories().get("Playlist")).getMappedPlaylists().get(mPlaylistId);
+			for (IJrItem<?> page : JrSession.getCategoriesList()) {
+				if (!page.getValue().equals("Playlist")) continue;
+				
+				mPlaylist = ((JrPlaylists)page).getMappedPlaylists().get(mPlaylistId);
+				break;
+			}
 		} catch (IOException e) {
 			PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
 				

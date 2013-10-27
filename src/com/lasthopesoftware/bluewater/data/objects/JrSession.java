@@ -116,16 +116,6 @@ public class JrSession {
 		}
 	}
 
-	public static TreeMap<String, IJrItem<?>> getCategories() {
-		if (mCategories != null) return mCategories;
-
-		mCategories = new TreeMap<String, IJrItem<?>>();
-		for (IJrItem<?> category : getCategoriesList())
-			mCategories.put(category.getValue(), category);
-
-		return mCategories;
-	}
-
 	public static ArrayList<IJrItem<?>> getCategoriesList() {
 		if (mCategoriesList != null) return mCategoriesList;
 
