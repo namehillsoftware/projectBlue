@@ -2,10 +2,9 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
-import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
@@ -14,16 +13,18 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
-	private SparseArray<JrItem> mLibraries;
+	private HashMap<String, JrItem> mViews;
+	private int[] mVisibleViewKeys;
 	
 	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
 	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
 	private OnErrorListener<List<JrItem>> mOnErrorListener;
 	
-	public JrFileSystem() {
+	public JrFileSystem(int... visibleViewKeys) {
 		super();
-
+		mVisibleViewKeys = visibleViewKeys;
+		
 		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(1);
 		
 		mOnConnectListener = new OnConnectListener<List<JrItem>>() {
@@ -32,9 +33,19 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 			public List<JrItem> onConnect(InputStream is) {
 				LinkedList<JrItem> libraries = (LinkedList<JrItem>) JrFsResponse.GetItems(is);
 				
-				mLibraries = new SparseArray<JrItem>(libraries.size());
-				for (JrItem library : libraries)
-					mLibraries.append(library.getKey(), library);
+//				mViews = new HashMap<String, JrItem>();
+//				for (JrItem library : libraries) {
+//					if (mVisibleViewKeys.length < 1) {
+//						for (JrItem view : library.getSubItems())
+//						mViews.put(view.getValue(), view);
+//						continue;
+//					}
+//					
+//					for (int viewKey : mVisibleViewKeys) {
+//						if (viewKey == view.getKey())
+//							mViews.put(view.getValue(), view);
+//					}
+//				}
 				
 				return libraries;
 			}
@@ -46,11 +57,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
 	
-	public JrItem getLibrary(int libraryKey) {
-		if (mLibraries != null && mLibraries.indexOfKey(libraryKey) > -1)
-			return mLibraries.get(libraryKey);
-		
-		return null;
+	public void getVisibleViewsAsync() {
 	}
 
 	@Override

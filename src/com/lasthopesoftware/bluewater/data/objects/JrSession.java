@@ -48,7 +48,6 @@ public class JrSession {
 
 	public static boolean Active = false;
 
-	private static TreeMap<String, IJrItem<?>> mCategories;
 	private static ArrayList<IJrItem<?>> mCategoriesList;
 	
 	private static Object syncObject = new Object();
@@ -119,7 +118,7 @@ public class JrSession {
 	public static ArrayList<IJrItem<?>> getCategoriesList() {
 		if (mCategoriesList != null) return mCategoriesList;
 
-		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
+		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
 
 		if (LibraryKey < 0) return null;
 
