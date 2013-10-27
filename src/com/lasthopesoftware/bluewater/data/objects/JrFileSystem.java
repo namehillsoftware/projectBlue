@@ -6,12 +6,16 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.os.AsyncTask;
+
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private HashMap<String, JrItem> mViews;
@@ -41,35 +45,50 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 	
 	public void getVisibleViewsAsync() {
-		if (mOnCompleteViewsListener == null) {
-			mOnCompleteViewsListener = new OnCompleteListener<List<JrItem>>() {
+		getVisibleViewsAsync(null);
+	}
+	
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<JrItem, Void, HashMap<String, JrItem>> onCompleteListener) {
+		final ISimpleTask.OnCompleteListener<JrItem, Void, HashMap<String, JrItem>> mOnCompleteListener = onCompleteListener;
+		
+		mOnCompleteViewsListener = new OnCompleteListener<List<JrItem>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+				mViews = new HashMap<String, JrItem>();
+				SimpleTask<JrItem, Void, HashMap<String, JrItem>> getViewsTask = new SimpleTask<JrItem, Void, HashMap<String, JrItem>>();
 				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
-					mViews = new HashMap<String, JrItem>();
-					OnCompleteListener<List<JrItem>> librariesCompleteListener = new OnCompleteListener<List<JrItem>>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
-							for (JrItem view : result)
-								mViews.put(view.getValue(), view); 
-						}
-					};
+				
+				getViewsTask.addOnExecuteListener(new OnExecuteListener<JrItem, Void, HashMap<String,JrItem>>() {
 					
-					for (JrItem library : result) {
-						if (mVisibleViewKeys.length < 1) {
-							library.setOnItemsCompleteListener(librariesCompleteListener);
-							continue;
-						}
-						
-						for (int viewKey : mVisibleViewKeys) {
-							if (viewKey == library.getKey())
-								library.setOnItemsCompleteListener(librariesCompleteListener);
+					@Override
+					public void onExecute(ISimpleTask<JrItem, Void, HashMap<String, JrItem>> owner, JrItem... params) throws Exception {
+						for (JrItem library : params) {
+							if (mVisibleViewKeys.length < 1) {
+								for (JrItem view : library.getSubItems())
+									mViews.put(view.getValue(), view); 
+								continue;
+							}
+							
+							for (int viewKey : mVisibleViewKeys) {
+								if (viewKey != library.getKey()) continue;
+								
+								for (JrItem view : library.getSubItems())
+									mViews.put(view.getValue(), view);
+							}
 						}
 					}
-				}
-			};
-		}
+				});
+				
+				if (mOnCompleteListener != null) getViewsTask.addOnCompleteListener(mOnCompleteListener);
+				
+				JrItem[] libraries = new JrItem[result.size()];
+				result.toArray(libraries);
+				getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, libraries);
+			}
+		};
+		
+		getSubItemsAsync();
 	}
 
 	@Override
