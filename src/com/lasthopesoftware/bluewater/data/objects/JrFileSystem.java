@@ -11,12 +11,13 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
 	private HashMap<String, JrItem> mViews;
 	private int[] mVisibleViewKeys;
 	
-	private ArrayList<OnCompleteListener<List<JrItem>>> mOnCompleteListeners;
+	private OnCompleteListener<List<JrItem>> mOnCompleteClientListener, mOnCompleteViewsListener;
 	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
 	private OnErrorListener<List<JrItem>> mOnErrorListener;
@@ -25,29 +26,11 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 		super();
 		mVisibleViewKeys = visibleViewKeys;
 		
-		mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(1);
-		
 		mOnConnectListener = new OnConnectListener<List<JrItem>>() {
 			
 			@Override
 			public List<JrItem> onConnect(InputStream is) {
-				LinkedList<JrItem> libraries = (LinkedList<JrItem>) JrFsResponse.GetItems(is);
-				
-//				mViews = new HashMap<String, JrItem>();
-//				for (JrItem library : libraries) {
-//					if (mVisibleViewKeys.length < 1) {
-//						for (JrItem view : library.getSubItems())
-//						mViews.put(view.getValue(), view);
-//						continue;
-//					}
-//					
-//					for (int viewKey : mVisibleViewKeys) {
-//						if (viewKey == view.getKey())
-//							mViews.put(view.getValue(), view);
-//					}
-//				}
-				
-				return libraries;
+				return (LinkedList<JrItem>) JrFsResponse.GetItems(is);
 			}
 		};
 		//		setPages();
@@ -58,12 +41,40 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	}
 	
 	public void getVisibleViewsAsync() {
+		if (mOnCompleteViewsListener == null) {
+			mOnCompleteViewsListener = new OnCompleteListener<List<JrItem>>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+					mViews = new HashMap<String, JrItem>();
+					OnCompleteListener<List<JrItem>> librariesCompleteListener = new OnCompleteListener<List<JrItem>>() {
+						
+						@Override
+						public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+							for (JrItem view : result)
+								mViews.put(view.getValue(), view); 
+						}
+					};
+					
+					for (JrItem library : result) {
+						if (mVisibleViewKeys.length < 1) {
+							library.setOnItemsCompleteListener(librariesCompleteListener);
+							continue;
+						}
+						
+						for (int viewKey : mVisibleViewKeys) {
+							if (viewKey == library.getKey())
+								library.setOnItemsCompleteListener(librariesCompleteListener);
+						}
+					}
+				}
+			};
+		}
 	}
 
 	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
-		if (mOnCompleteListeners.size() < 1) mOnCompleteListeners.add(listener);
-		mOnCompleteListeners.set(0, listener);
+		mOnCompleteClientListener = listener;
 	}
 
 	@Override
@@ -83,7 +94,10 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 
 	@Override
 	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
-		return mOnCompleteListeners;
+		LinkedList<OnCompleteListener<List<JrItem>>> listeners = new LinkedList<OnCompleteListener<List<JrItem>>>();
+		if (mOnCompleteViewsListener != null) listeners.add(mOnCompleteViewsListener);
+		if (mOnCompleteClientListener != null) listeners.add(mOnCompleteClientListener);
+		return listeners;
 	}
 
 	@Override
