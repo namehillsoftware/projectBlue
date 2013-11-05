@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	private HashMap<String, JrItem> mViews;
 	private int[] mVisibleViewKeys;
 	
-	private OnCompleteListener<List<JrItem>> mOnCompleteClientListener, mOnCompleteViewsListener;
+	private OnCompleteListener<List<JrItem>> mOnCompleteClientListener;
 	private OnStartListener<List<JrItem>> mOnStartListener;
 	private OnConnectListener<List<JrItem>> mOnConnectListener;
 	private OnErrorListener<List<JrItem>> mOnErrorListener;
@@ -48,47 +47,34 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 		getVisibleViewsAsync(null);
 	}
 	
-	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<JrItem, Void, HashMap<String, JrItem>> onCompleteListener) {
-		final ISimpleTask.OnCompleteListener<JrItem, Void, HashMap<String, JrItem>> mOnCompleteListener = onCompleteListener;
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, HashMap<String, JrItem>> onCompleteListener) {
+		SimpleTask<String, Void, HashMap<String, JrItem>> getViewsTask = new SimpleTask<String, Void, HashMap<String, JrItem>>();
 		
-		mOnCompleteViewsListener = new OnCompleteListener<List<JrItem>>() {
+		
+		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, HashMap<String,JrItem>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
-				mViews = new HashMap<String, JrItem>();
-				SimpleTask<JrItem, Void, HashMap<String, JrItem>> getViewsTask = new SimpleTask<JrItem, Void, HashMap<String, JrItem>>();
-				
-				
-				getViewsTask.addOnExecuteListener(new OnExecuteListener<JrItem, Void, HashMap<String,JrItem>>() {
-					
-					@Override
-					public void onExecute(ISimpleTask<JrItem, Void, HashMap<String, JrItem>> owner, JrItem... params) throws Exception {
-						for (JrItem library : params) {
-							if (mVisibleViewKeys.length < 1) {
-								for (JrItem view : library.getSubItems())
-									mViews.put(view.getValue(), view); 
-								continue;
-							}
-							
-							for (int viewKey : mVisibleViewKeys) {
-								if (viewKey != library.getKey()) continue;
-								
-								for (JrItem view : library.getSubItems())
-									mViews.put(view.getValue(), view);
-							}
-						}
+			public void onExecute(ISimpleTask<String, Void, HashMap<String, JrItem>> owner, String... params) throws Exception {
+				List<JrItem> libraries = getSubItems();
+				for (JrItem library : libraries) {
+					if (mVisibleViewKeys.length < 1) {
+						for (JrItem view : library.getSubItems())
+							mViews.put(view.getValue(), view); 
+						continue;
 					}
-				});
-				
-				if (mOnCompleteListener != null) getViewsTask.addOnCompleteListener(mOnCompleteListener);
-				
-				JrItem[] libraries = new JrItem[result.size()];
-				result.toArray(libraries);
-				getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, libraries);
+					
+					for (int viewKey : mVisibleViewKeys) {
+						if (viewKey != library.getKey()) continue;
+						
+						for (JrItem view : library.getSubItems())
+							mViews.put(view.getValue(), view);
+					}
+				}
 			}
-		};
+		});
 		
-		getSubItemsAsync();
+		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
+		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	@Override
@@ -114,7 +100,6 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 	@Override
 	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
 		LinkedList<OnCompleteListener<List<JrItem>>> listeners = new LinkedList<OnCompleteListener<List<JrItem>>>();
-		if (mOnCompleteViewsListener != null) listeners.add(mOnCompleteViewsListener);
 		if (mOnCompleteClientListener != null) listeners.add(mOnCompleteClientListener);
 		return listeners;
 	}
