@@ -16,24 +16,28 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem> {
-	private HashMap<String, JrItem> mViews;
+public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem<IJrItem<?>> {
+	private HashMap<String, IJrItem<?>> mViews;
 	private int[] mVisibleViewKeys;
 	
-	private OnCompleteListener<List<JrItem>> mOnCompleteClientListener;
-	private OnStartListener<List<JrItem>> mOnStartListener;
-	private OnConnectListener<List<JrItem>> mOnConnectListener;
-	private OnErrorListener<List<JrItem>> mOnErrorListener;
+	private OnCompleteListener<List<IJrItem<?>>> mOnCompleteClientListener;
+	private OnStartListener<List<IJrItem<?>>> mOnStartListener;
+	private OnConnectListener<List<IJrItem<?>>> mOnConnectListener;
+	private OnErrorListener<List<IJrItem<?>>> mOnErrorListener;
 	
 	public JrFileSystem(int... visibleViewKeys) {
 		super();
 		mVisibleViewKeys = visibleViewKeys;
 		
-		mOnConnectListener = new OnConnectListener<List<JrItem>>() {
+		mOnConnectListener = new OnConnectListener<List<IJrItem<?>>>() {
 			
 			@Override
-			public List<JrItem> onConnect(InputStream is) {
-				return (LinkedList<JrItem>) JrFsResponse.GetItems(is);
+			public List<IJrItem<?>> onConnect(InputStream is) {
+				LinkedList<IJrItem<?>> returnList = new LinkedList<IJrItem<?>>();
+				for (JrItem item : JrFsResponse.GetItems(is))
+					returnList.add(item);
+				
+				return returnList;
 			}
 		};
 		//		setPages();
@@ -55,10 +59,10 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 			
 			@Override
 			public void onExecute(ISimpleTask<String, Void, HashMap<String, JrItem>> owner, String... params) throws Exception {
-				List<JrItem> libraries = getSubItems();
-				for (JrItem library : libraries) {
+				List<IJrItem<?>> libraries = getSubItems();
+				for (IJrItem<?> library : libraries) {
 					if (mVisibleViewKeys.length < 1) {
-						for (JrItem view : library.getSubItems())
+						for (IJrItem<?> view : library.getSubItems())
 							mViews.put(view.getValue(), view); 
 						continue;
 					}
@@ -66,7 +70,7 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 					for (int viewKey : mVisibleViewKeys) {
 						if (viewKey != library.getKey()) continue;
 						
-						for (JrItem view : library.getSubItems())
+						for (IJrItem<?> view : library.getSubItems())
 							mViews.put(view.getValue(), view);
 					}
 				}
@@ -74,46 +78,47 @@ public class JrFileSystem extends JrItemAsyncBase<JrItem> implements IJrItem<JrI
 		});
 		
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
+		
 		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	@Override
-	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
+	public void setOnItemsCompleteListener(OnCompleteListener<List<IJrItem<?>>> listener) {
 		mOnCompleteClientListener = listener;
 	}
 
 	@Override
-	public void setOnItemsStartListener(OnStartListener<List<JrItem>> listener) {
+	public void setOnItemsStartListener(OnStartListener<List<IJrItem<?>>> listener) {
 		mOnStartListener = listener;
 	}
 
 	@Override
-	public void setOnItemsErrorListener(OnErrorListener<List<JrItem>> listener) {
+	public void setOnItemsErrorListener(OnErrorListener<List<IJrItem<?>>> listener) {
 		mOnErrorListener = listener;
 	}
 
 	@Override
-	protected OnConnectListener<List<JrItem>> getOnItemConnectListener() {
+	protected OnConnectListener<List<IJrItem<?>>> getOnItemConnectListener() {
 		return mOnConnectListener;
 	}
 
 	@Override
-	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
-		LinkedList<OnCompleteListener<List<JrItem>>> listeners = new LinkedList<OnCompleteListener<List<JrItem>>>();
+	protected List<OnCompleteListener<List<IJrItem<?>>>> getOnItemsCompleteListeners() {
+		LinkedList<OnCompleteListener<List<IJrItem<?>>>> listeners = new LinkedList<OnCompleteListener<List<IJrItem<?>>>>();
 		if (mOnCompleteClientListener != null) listeners.add(mOnCompleteClientListener);
 		return listeners;
 	}
 
 	@Override
-	protected List<OnStartListener<List<JrItem>>> getOnItemsStartListeners() {
-		LinkedList<OnStartListener<List<JrItem>>> listeners = new LinkedList<OnStartListener<List<JrItem>>>();
+	protected List<OnStartListener<List<IJrItem<?>>>> getOnItemsStartListeners() {
+		LinkedList<OnStartListener<List<IJrItem<?>>>> listeners = new LinkedList<OnStartListener<List<IJrItem<?>>>>();
 		if (mOnStartListener != null) listeners.add(mOnStartListener);
 		return listeners;
 	}
 
 	@Override
-	protected List<OnErrorListener<List<JrItem>>> getOnItemsErrorListeners() {
-		LinkedList<OnErrorListener<List<JrItem>>> listeners = new LinkedList<OnErrorListener<List<JrItem>>>();
+	protected List<OnErrorListener<List<IJrItem<?>>>> getOnItemsErrorListeners() {
+		LinkedList<OnErrorListener<List<IJrItem<?>>>> listeners = new LinkedList<OnErrorListener<List<IJrItem<?>>>>();
 		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
 		return listeners;
 	}

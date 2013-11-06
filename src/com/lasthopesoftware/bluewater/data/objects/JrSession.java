@@ -123,7 +123,7 @@ public class JrSession {
 		if (LibraryKey < 0) return null;
 
 		mCategoriesList = new ArrayList<IJrItem<?>>();
-		for (JrItem page : JrSession.JrFs.getSubItems()) {
+		for (IJrItem<?> page : JrSession.JrFs.getSubItems()) {
 			if (page.getKey() == LibraryKey) {
 				mCategoriesList = ((IJrItem) page).getSubItems();
 				break;

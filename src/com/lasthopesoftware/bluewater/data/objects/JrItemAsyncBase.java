@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 
-public abstract class JrItemAsyncBase<T extends JrObject> extends JrObject implements IJrItem<T>, IJrItemAsync<T> {
+public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject implements IJrItem<T>, IJrItemAsync<T> {
 	protected ArrayList<T> mSubItems;
 	
 	public JrItemAsyncBase(int key, String value) {
