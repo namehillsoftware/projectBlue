@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
@@ -54,28 +55,36 @@ public class ViewPlaylists extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        BuildPlaylistView();
+        JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, HashMap<String,IJrItem<?>>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, HashMap<String, IJrItem<?>> result) {
+				mPlaylist = (JrPlaylist) result.get("Playlist");
+				BuildPlaylistView();
+			}
+		});
+        
 	}
 	
 	private void BuildPlaylistView() {
-		try {
-			for (IJrItem<?> page : JrSession.getCategoriesList()) {
-				if (!page.getValue().equals("Playlist")) continue;
-				
-				mPlaylist = ((JrPlaylists)page).getMappedPlaylists().get(mPlaylistId);
-				break;
-			}
-		} catch (IOException e) {
-			PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-					BuildPlaylistView();
-				}
-			});
-			
-			WaitForConnectionDialog.show(this);
-		}
+//		try {
+//			for (IJrItem<?> page : JrSession.getCategoriesList()) {
+//				if (!page.getValue().equals("Playlist")) continue;
+//				
+//				mPlaylist = ((JrPlaylists)page).getMappedPlaylists().get(mPlaylistId);
+//				break;
+//			}
+//		} catch (IOException e) {
+//			PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+//				
+//				@Override
+//				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+//					BuildPlaylistView();
+//				}
+//			});
+//			
+//			WaitForConnectionDialog.show(this);
+//		}
                 
         if (mPlaylist.getSubItems().size() > 0) {
         	playlistView.setAdapter(new PlaylistAdapter(mPlaylist.getSubItems()));

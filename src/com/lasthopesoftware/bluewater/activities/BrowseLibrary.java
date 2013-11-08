@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -68,46 +67,10 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
+		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+		mViewPager = (ViewPager) findViewById(R.id.pager);
 		
-		final BrowseLibrary libraryBrowser = this;
-		
-		JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, HashMap<String,JrItem>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, HashMap<String, JrItem>> owner, HashMap<String, JrItem> result) {
-				mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), JrSession.JrFs.getSubItems());
-				
-				// Set up the ViewPager with the sections adapter.
-				mViewPager = (ViewPager) findViewById(R.id.pager);
-				mViewPager.setAdapter(mSectionsPagerAdapter);
-				
-				// Set up the action bar.
-				final ActionBar actionBar = getActionBar();
-				actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-				
-				// When swiping between different sections, select the corresponding
-				// tab.
-				// We can also use ActionBar.Tab#select() to do this if we have a
-				// reference to the
-				// Tab.
-				mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-					@Override
-					public void onPageSelected(int position) {
-						actionBar.setSelectedNavigationItem(position);
-					}
-				});
-				
-				// For each of the sections in the app, add a tab to the action bar.
-				for (int i = 0; i < JrSession.JrFs.getSubItems().size(); i++) {
-					// Create a tab with text corresponding to the page title defined by
-					// the adapter.
-					// Also specify this Activity object, which implements the
-					// TabListener interface, as the
-					// listener for when this tab is selected.
-					actionBar.addTab(actionBar.newTab().setText(JrSession.JrFs.getSubItems().get(i).getValue()).setTabListener(libraryBrowser));
-				}
-			}
-		});
+		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(this, mSectionsPagerAdapter, mViewPager));
 	}
 
 	@Override
@@ -141,13 +104,16 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
 	 * one of the primary sections of the app.
 	 */
-	public static class SectionsPagerAdapter extends FragmentPagerAdapter {
+	private static class SectionsPagerAdapter extends FragmentPagerAdapter {
 		private Integer mCount;
-		private ArrayList<IJrItem<?>> mViews;
+		private ArrayList<IJrItem<?>> mLibraryViews;
 
-		public SectionsPagerAdapter(FragmentManager fm, ArrayList<IJrItem<?>> views) {
+		public SectionsPagerAdapter(FragmentManager fm) {
 			super(fm);
-			mViews = views;
+		}
+		
+		public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {
+			mLibraryViews = libraryViews;
 		}
 
 		@Override
@@ -169,11 +135,11 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 		@Override
 		public CharSequence getPageTitle(int position) {
-			return !mViews.get(position).getValue().isEmpty() ? mViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
+			return !mLibraryViews.get(position).getValue().isEmpty() ? mLibraryViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
 		}
 
 		public ArrayList<IJrItem<?>> getPages() {
-			return mViews;
+			return mLibraryViews;
 		}
 	}
 
@@ -192,5 +158,63 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			return mListView;
 		}
 	}
+	
+	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, HashMap<String, IJrItem<?>>> {
+		BrowseLibrary mLibraryActivity;
+		SectionsPagerAdapter mSectionsPagerAdapter;
+		ViewPager mViewPager;
+		
+		public CategoriesLoadedListener(BrowseLibrary libraryActivity, SectionsPagerAdapter sectionsPagerAdapter, ViewPager viewPager) {
+			mLibraryActivity = libraryActivity;
+			mSectionsPagerAdapter = sectionsPagerAdapter;
+			mViewPager = viewPager;
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, HashMap<String, IJrItem<?>> result) {
+			ArrayList<IJrItem<?>> libraryViews = new ArrayList<IJrItem<?>>(result.size());
 
+			for (IJrItem<?> libraryView : result.values()) libraryViews.add(libraryView);
+
+			mSectionsPagerAdapter.setLibraryViews(libraryViews);
+
+			// Set up the ViewPager with the sections adapter.
+			mViewPager.setAdapter(mSectionsPagerAdapter);
+			
+			// Set up the action bar.
+			ActionBar actionBar = mLibraryActivity.getActionBar();
+			actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+			
+			// When swiping between different sections, select the corresponding
+			// tab.
+			// We can also use ActionBar.Tab#select() to do this if we have a
+			// reference to the
+			// Tab.
+			mViewPager.setOnPageChangeListener(new OnPageChangeListener(actionBar));
+			
+			// For each of the sections in the app, add a tab to the action bar.
+			for (int i = 0; i < JrSession.JrFs.getSubItems().size(); i++) {
+				// Create a tab with text corresponding to the page title defined by
+				// the adapter.
+				// Also specify this Activity object, which implements the
+				// TabListener interface, as the
+				// listener for when this tab is selected.
+				actionBar.addTab(actionBar.newTab().setText(JrSession.JrFs.getSubItems().get(i).getValue()).setTabListener(mLibraryActivity));
+			}
+		}
+		
+		private static class OnPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
+			private ActionBar mActionBar;
+			
+			public OnPageChangeListener(ActionBar actionBar) {
+				super();
+				mActionBar = actionBar;
+			}
+			
+			@Override
+			public void onPageSelected(int position) {
+				mActionBar.setSelectedNavigationItem(position);
+			}
+		}
+	}
 }

@@ -51,29 +51,38 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 		getVisibleViewsAsync(null);
 	}
 	
-	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, HashMap<String, JrItem>> onCompleteListener) {
-		SimpleTask<String, Void, HashMap<String, JrItem>> getViewsTask = new SimpleTask<String, Void, HashMap<String, JrItem>>();
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, HashMap<String, IJrItem<?>>> onCompleteListener) {
+		SimpleTask<String, Void, HashMap<String, IJrItem<?>>> getViewsTask = new SimpleTask<String, Void, HashMap<String, IJrItem<?>>>();
 		
 		
-		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, HashMap<String,JrItem>>() {
+		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, HashMap<String, IJrItem<?>>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, HashMap<String, JrItem>> owner, String... params) throws Exception {
-				List<IJrItem<?>> libraries = getSubItems();
-				for (IJrItem<?> library : libraries) {
-					if (mVisibleViewKeys.length < 1) {
-						for (IJrItem<?> view : library.getSubItems())
-							mViews.put(view.getValue(), view); 
-						continue;
+			public void onExecute(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, String... params) throws Exception {
+				if (mViews == null) {
+					
+					List<IJrItem<?>> libraries = getSubItems();
+					mViews = new HashMap<String, IJrItem<?>>(libraries.size());
+					for (IJrItem<?> library : libraries) {
+						if (mVisibleViewKeys.length < 1) {
+							for (IJrItem<?> view : library.getSubItems())
+								mViews.put(view.getValue(), view); 
+							continue;
+						}
+						
+						for (int viewKey : mVisibleViewKeys) {
+							if (viewKey != library.getKey()) continue;
+							
+							for (IJrItem<?> view : library.getSubItems())
+								mViews.put(view.getValue(), view);
+						}
 					}
 					
-					for (int viewKey : mVisibleViewKeys) {
-						if (viewKey != library.getKey()) continue;
-						
-						for (IJrItem<?> view : library.getSubItems())
-							mViews.put(view.getValue(), view);
-					}
+					JrPlaylists playlists = new JrPlaylists(mViews.size());
+					mViews.put(playlists.getValue(), playlists);
 				}
+				
+				owner.setResult(mViews);
 			}
 		});
 		
