@@ -57,7 +57,15 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
     	
-    	mCategory = JrSession.getCategoriesList().get(getArguments().getInt(ARG_CATEGORY_POSITION));
+    	JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+    	mCategory = JrSession.JrFs.getVisibleViews().get(getArguments().getInt(ARG_CATEGORY_POSITION));
     	
     	if (mCategory instanceof JrPlaylists) {
     		listView = new ListView(layout.getContext());

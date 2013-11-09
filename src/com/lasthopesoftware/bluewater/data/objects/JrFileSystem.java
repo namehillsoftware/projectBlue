@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,7 +17,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem<IJrItem<?>> {
-	private HashMap<String, IJrItem<?>> mViews;
+	private ArrayList<IJrItem<?>> mVisibleViews;
 	private int[] mVisibleViewKeys;
 	
 	private OnCompleteListener<List<IJrItem<?>>> mOnCompleteClientListener;
@@ -33,7 +33,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 			
 			@Override
 			public List<IJrItem<?>> onConnect(InputStream is) {
-				LinkedList<IJrItem<?>> returnList = new LinkedList<IJrItem<?>>();
+				ArrayList<IJrItem<?>> returnList = new ArrayList<IJrItem<?>>();
 				for (JrItem item : JrFsResponse.GetItems(is))
 					returnList.add(item);
 				
@@ -47,48 +47,64 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 		return JrSession.accessDao.getJrUrl("Browse/Children");
 	}
 	
+	public ArrayList<IJrItem<?>> getVisibleViews() {
+		try {
+			return getVisibleViewsTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+		} catch (Exception e) {
+			return new ArrayList<IJrItem<?>>();
+		}
+	}
+	
 	public void getVisibleViewsAsync() {
 		getVisibleViewsAsync(null);
 	}
 	
-	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, HashMap<String, IJrItem<?>>> onCompleteListener) {
-		SimpleTask<String, Void, HashMap<String, IJrItem<?>>> getViewsTask = new SimpleTask<String, Void, HashMap<String, IJrItem<?>>>();
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> onCompleteListener) {
+		SimpleTask<String, Void, ArrayList<IJrItem<?>>> getViewsTask = getVisibleViewsTask();
 		
+		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		
-		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, HashMap<String, IJrItem<?>>>() {
+		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+	
+	private SimpleTask<String, Void, ArrayList<IJrItem<?>>> getVisibleViewsTask() {
+		SimpleTask<String, Void, ArrayList<IJrItem<?>>> getViewsTask = new SimpleTask<String, Void, ArrayList<IJrItem<?>>>();
+				
+		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, String... params) throws Exception {
-				if (mViews == null) {
+			public void onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
+				if (mVisibleViews == null) {
 					
 					List<IJrItem<?>> libraries = getSubItems();
-					mViews = new HashMap<String, IJrItem<?>>(libraries.size());
+					mVisibleViews = new ArrayList<IJrItem<?>>(libraries.size());
 					for (IJrItem<?> library : libraries) {
 						if (mVisibleViewKeys.length < 1) {
+							if (library.getValue().equalsIgnoreCase("Playlists"))
+								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));							
+							
 							for (IJrItem<?> view : library.getSubItems())
-								mViews.put(view.getValue(), view); 
+								mVisibleViews.add(view);
 							continue;
 						}
 						
 						for (int viewKey : mVisibleViewKeys) {
 							if (viewKey != library.getKey()) continue;
 							
+							if (library.getValue().equalsIgnoreCase("Playlists"))
+								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));
+							
 							for (IJrItem<?> view : library.getSubItems())
-								mViews.put(view.getValue(), view);
+								mVisibleViews.add(view);
 						}
 					}
-					
-					JrPlaylists playlists = new JrPlaylists(mViews.size());
-					mViews.put(playlists.getValue(), playlists);
 				}
 				
-				owner.setResult(mViews);
+				owner.setResult(mVisibleViews);
 			}
 		});
 		
-		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
-		
-		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		return getViewsTask;
 	}
 
 	@Override

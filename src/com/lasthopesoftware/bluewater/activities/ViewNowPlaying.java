@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements Runnable {
 	private static Thread mTrackerThread;

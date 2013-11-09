@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.SAXParser;
@@ -47,8 +45,6 @@ public class JrSession {
 	public static JrFileSystem JrFs;
 
 	public static boolean Active = false;
-
-	private static ArrayList<IJrItem<?>> mCategoriesList;
 	
 	private static Object syncObject = new Object();
 
@@ -89,7 +85,8 @@ public class JrSession {
 			Active = false;
 			
 			if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
-	
+			
+			if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
 			Active = true;
 	
 			try {
@@ -114,27 +111,27 @@ public class JrSession {
 			return Active;
 		}
 	}
-
-	public static ArrayList<IJrItem<?>> getCategoriesList() {
-		if (mCategoriesList != null) return mCategoriesList;
-
-		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
-
-		if (LibraryKey < 0) return null;
-
-		mCategoriesList = new ArrayList<IJrItem<?>>();
-		for (IJrItem<?> page : JrSession.JrFs.getSubItems()) {
-			if (page.getKey() == LibraryKey) {
-				mCategoriesList = ((IJrItem) page).getSubItems();
-				break;
-			}
-		}
-
-		JrPlaylists playlists = new JrPlaylists(mCategoriesList.size());
-		mCategoriesList.add(playlists);
-
-		return mCategoriesList;
-	}
+//
+//	public static ArrayList<IJrItem<?>> getCategoriesList() {
+//		if (mCategoriesList != null) return mCategoriesList;
+//
+//		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
+//
+//		if (LibraryKey < 0) return null;
+//
+//		mCategoriesList = new ArrayList<IJrItem<?>>();
+//		for (IJrItem<?> page : JrSession.JrFs.getSubItems()) {
+//			if (page.getKey() == LibraryKey) {
+//				mCategoriesList = ((IJrItem) page).getSubItems();
+//				break;
+//			}
+//		}
+//
+//		JrPlaylists playlists = new JrPlaylists(mCategoriesList.size());
+//		mCategoriesList.add(playlists);
+//
+//		return mCategoriesList;
+//	}
 
 	private static boolean tryConnection() {
 		boolean connectResult = false;

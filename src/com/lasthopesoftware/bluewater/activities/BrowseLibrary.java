@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
 
 import android.app.ActionBar;
@@ -159,7 +158,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		}
 	}
 	
-	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, HashMap<String, IJrItem<?>>> {
+	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> {
 		BrowseLibrary mLibraryActivity;
 		SectionsPagerAdapter mSectionsPagerAdapter;
 		ViewPager mViewPager;
@@ -171,12 +170,10 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		}
 		
 		@Override
-		public void onComplete(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, HashMap<String, IJrItem<?>> result) {
-			ArrayList<IJrItem<?>> libraryViews = new ArrayList<IJrItem<?>>(result.size());
+		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+			
 
-			for (IJrItem<?> libraryView : result.values()) libraryViews.add(libraryView);
-
-			mSectionsPagerAdapter.setLibraryViews(libraryViews);
+			mSectionsPagerAdapter.setLibraryViews(result);
 
 			// Set up the ViewPager with the sections adapter.
 			mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -193,13 +190,13 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			mViewPager.setOnPageChangeListener(new OnPageChangeListener(actionBar));
 			
 			// For each of the sections in the app, add a tab to the action bar.
-			for (int i = 0; i < JrSession.JrFs.getSubItems().size(); i++) {
+			for (IJrItem<?> item : result) {
 				// Create a tab with text corresponding to the page title defined by
 				// the adapter.
 				// Also specify this Activity object, which implements the
 				// TabListener interface, as the
 				// listener for when this tab is selected.
-				actionBar.addTab(actionBar.newTab().setText(JrSession.JrFs.getSubItems().get(i).getValue()).setTabListener(mLibraryActivity));
+				actionBar.addTab(actionBar.newTab().setText(item.getValue()).setTabListener(mLibraryActivity));
 			}
 		}
 		

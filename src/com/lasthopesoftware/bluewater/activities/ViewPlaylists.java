@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
@@ -22,13 +20,10 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -55,11 +50,16 @@ public class ViewPlaylists extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, HashMap<String,IJrItem<?>>>() {
+        JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, HashMap<String, IJrItem<?>>> owner, HashMap<String, IJrItem<?>> result) {
-				mPlaylist = (JrPlaylist) result.get("Playlist");
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				for (IJrItem<?> item : result) {
+					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
+					
+					mPlaylist = (JrPlaylist) item;
+				}
+				
 				BuildPlaylistView();
 			}
 		});

@@ -15,11 +15,11 @@ import com.lasthopesoftware.bluewater.data.objects.JrSession;
 public class JrConnection extends URLConnection {
 
 	private URLConnection mUrlConnection;
-	private String[] mParams;
-	private int resets = 0, maxResets = -1;
-	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
-	private InputStream mInputStream;
-	private boolean mIsFound;
+//	private String[] mParams;
+//	private int resets = 0, maxResets = -1;
+//	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
+//	private InputStream mInputStream;
+//	private boolean mIsFound;
 	
 	protected JrConnection(URL url) throws IOException {
 		super(url);
@@ -28,7 +28,7 @@ public class JrConnection extends URLConnection {
 
 	public JrConnection(String... params) throws IOException {
 		this(new URL(JrSession.accessDao.getJrUrl(params)));
-		mParams = params;
+//		mParams = params;
 	}
 	
 	public void setConnection(URL url) throws IOException {
