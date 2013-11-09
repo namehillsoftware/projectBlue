@@ -54,6 +54,7 @@ public class SelectLibrary extends FragmentActivity {
 				if (mSelectedLibrary < 0) return;
 				
 				JrSession.LibraryKey = mSelectedLibrary;
+				JrSession.JrFs = new JrFileSystem(JrSession.LibraryKey);
 				JrSession.SaveSession(v.getContext());
 				Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
 				startActivity(intent);
