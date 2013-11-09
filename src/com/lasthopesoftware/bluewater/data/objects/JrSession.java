@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.SAXParser;
@@ -35,7 +37,7 @@ public class JrSession {
 
 	public static JrAccessDao accessDao;
 
-	public static int LibraryKey = -1;
+	private static int[] SelectedLibraryKeys = new int[0];
 
 	public static IJrItem<?> SelectedItem;
 	public static JrFile PlayingFile;
@@ -45,31 +47,27 @@ public class JrSession {
 	public static JrFileSystem JrFs;
 
 	public static boolean Active = false;
-	
-	private static Object syncObject = new Object();
 
 	public static void SaveSession(Context context) {
 		SaveSession(context.getSharedPreferences(PREFS_FILE, 0).edit());
 	}
 
 	public static void SaveSession(SharedPreferences.Editor prefsEditor) {
-		synchronized(syncObject) {
-			prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
-			prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
-			prefsEditor.putBoolean(IS_LOCAL_ONLY, IsLocalOnly);
-			prefsEditor.putInt(LIBRARY_KEY, LibraryKey);
-	
-			if (Playlist != null) {
-				prefsEditor.putString(PLAYLIST_KEY, Playlist);
-			}
-	
-			if (PlayingFile != null) {
-				prefsEditor.putInt(NOW_PLAYING_KEY, PlayingFile.getKey());
-				prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
-			}
-	
-			prefsEditor.apply();
+		prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
+		prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
+		prefsEditor.putBoolean(IS_LOCAL_ONLY, IsLocalOnly);
+		prefsEditor.putStringSet(LIBRARY_KEY, getLibraryKeysSet());
+		
+		if (Playlist != null) {
+			prefsEditor.putString(PLAYLIST_KEY, Playlist);
 		}
+
+		if (PlayingFile != null) {
+			prefsEditor.putInt(NOW_PLAYING_KEY, PlayingFile.getKey());
+			prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
+		}
+
+		prefsEditor.apply();
 	}
 
 	public static boolean CreateSession(Context context) {
@@ -77,61 +75,61 @@ public class JrSession {
 	}
 
 	public static boolean CreateSession(SharedPreferences prefs) {
-		synchronized(syncObject) {
-			AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
-			UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
-			IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
-			LibraryKey = prefs.getInt(LIBRARY_KEY, -1);
-			Active = false;
-			
-			if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
-			
-			if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
-			Active = true;
-	
-			try {
-				Playlist = prefs.getString(PLAYLIST_KEY, "");
-			} catch (ClassCastException ce) {
-				Playlist = null;
-				return Active;
-			}
-	
-			int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
-			int savedFilePos = prefs.getInt(NP_POSITION, -1);
-	
-	
-			if (savedFileKey < 0) return Active;
-			String savedFileKeyString = String.valueOf(savedFileKey);
-			for (String fileKey : Playlist.split(";")) {
-				if (!savedFileKeyString.equals(fileKey)) continue;
-				PlayingFile = new JrFile(savedFileKey);
-				if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
-			}
-	
+		AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
+		UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
+		IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
+		setLibraryKeys(prefs.getStringSet(LIBRARY_KEY, new HashSet<String>()));
+		Active = false;
+		
+		if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
+		
+		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(getLibraryKeys());
+		Active = true;
+
+		try {
+			Playlist = prefs.getString(PLAYLIST_KEY, "");
+		} catch (ClassCastException ce) {
+			Playlist = null;
 			return Active;
 		}
+
+		int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
+		int savedFilePos = prefs.getInt(NP_POSITION, -1);
+
+
+		if (savedFileKey < 0) return Active;
+		String savedFileKeyString = String.valueOf(savedFileKey);
+		for (String fileKey : Playlist.split(";")) {
+			if (!savedFileKeyString.equals(fileKey)) continue;
+			PlayingFile = new JrFile(savedFileKey);
+			if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
+		}
+
+		return Active;
 	}
-//
-//	public static ArrayList<IJrItem<?>> getCategoriesList() {
-//		if (mCategoriesList != null) return mCategoriesList;
-//
-//		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(LibraryKey);
-//
-//		if (LibraryKey < 0) return null;
-//
-//		mCategoriesList = new ArrayList<IJrItem<?>>();
-//		for (IJrItem<?> page : JrSession.JrFs.getSubItems()) {
-//			if (page.getKey() == LibraryKey) {
-//				mCategoriesList = ((IJrItem) page).getSubItems();
-//				break;
-//			}
-//		}
-//
-//		JrPlaylists playlists = new JrPlaylists(mCategoriesList.size());
-//		mCategoriesList.add(playlists);
-//
-//		return mCategoriesList;
-//	}
+	
+	public static void setLibraryKeys(int[] keys) {
+		SelectedLibraryKeys = keys;
+	}
+	
+	public static void setLibraryKeys(Set<String> keys) {
+		int i = 0;
+		SelectedLibraryKeys = new int[keys.size()];
+		for (String key : keys)
+			SelectedLibraryKeys[i++] = Integer.parseInt(key);
+	}
+	
+	public static int[] getLibraryKeys() {
+		return SelectedLibraryKeys;
+	}
+	
+	public static HashSet<String> getLibraryKeysSet() {
+		HashSet<String> libraryKeys = new HashSet<String>(SelectedLibraryKeys.length);
+		for (int key : SelectedLibraryKeys)
+			libraryKeys.add(String.valueOf(key));
+		
+		return libraryKeys;
+	}
 
 	private static boolean tryConnection() {
 		boolean connectResult = false;

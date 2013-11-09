@@ -3,10 +3,6 @@ package com.lasthopesoftware.bluewater.activities;
 import java.util.HashMap;
 import java.util.List;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -25,7 +21,7 @@ import com.lasthopesoftware.bluewater.data.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-public class SelectLibrary extends DialogFragment {
+public class SelectLibrary extends FragmentActivity {
 	private LinearLayout mRlSelectLibraries;
 	private RadioGroup mRgLibraries;
 	private ProgressBar mPb;
@@ -34,34 +30,21 @@ public class SelectLibrary extends DialogFragment {
 	private int mSelectedLibrary = -1;
 	
 	@Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        
-    	if (!JrSession.Active) {
-    		return null;
+    	if (!JrSession.Active && !JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
+    		Intent intent = new Intent(this, SetConnection.class);
+    		startActivity(intent);
+    		return;
     	}
-
-        // Set the dialog title
-        builder.setTitle(R.string.title_activity_select_library);
-        // Specify the list array, the items to be selected by default (null for none),
-        // and the listener through which to receive callbacks when items are selected
-        builder.setMultiChoiceItems(R.array.toppings, null,
-        new DialogInterface.OnMultiChoiceClickListener() {
-           @Override
-           public void onClick(DialogInterface dialog, int which,
-                   boolean isChecked) {
-               if (isChecked) {
-                   // If the user checked the item, add it to the selected items
-                   mSelectedItems.add(which);
-               } else if (mSelectedItems.contains(which)) {
-                   // Else, if the item is already in the array, remove it 
-                   mSelectedItems.remove(Integer.valueOf(which));
-               }
-           }
-       });
-
+        
+        setContentView(R.layout.activity_select_library);
+        
+        mRlSelectLibraries = (LinearLayout) findViewById(R.id.rlLibrarySelectionSubLayout);
+        mRgLibraries = (RadioGroup) findViewById(R.id.rgLibrarySelection);
+        mPb = (ProgressBar) findViewById(R.id.pbLibrarySelection);
+        mBtnBrowseLibraries = (Button) findViewById(R.id.btnBrowseLibrary);
         
         mBtnBrowseLibraries.setOnClickListener(new OnClickListener() {
 			
@@ -69,8 +52,8 @@ public class SelectLibrary extends DialogFragment {
 			public void onClick(View v) {
 				if (mSelectedLibrary < 0) return;
 				
-				JrSession.LibraryKey = mSelectedLibrary;
-				JrSession.JrFs = new JrFileSystem(JrSession.LibraryKey);
+//				JrSession.LibraryKey = mSelectedLibrary;
+				JrSession.JrFs = new JrFileSystem(JrSession.getLibraryKeys());
 				JrSession.SaveSession(v.getContext());
 				Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
 				startActivity(intent);
@@ -87,7 +70,7 @@ public class SelectLibrary extends DialogFragment {
 				for (IJrItem<?> library : result) {
 					RadioButton rb = new RadioButton(mRgLibraries.getContext());
 					rb.setText(library.getValue());
-					rb.setChecked(JrSession.LibraryKey == library.getKey());
+//					rb.setChecked(JrSession.LibraryKey == library.getKey());
 					rb.setOnClickListener(new OnClickListener() {
 						
 						@Override

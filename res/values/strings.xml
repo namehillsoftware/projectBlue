@@ -33,4 +33,5 @@
     <string name="lbl_connection_lost">Your connection has been lost. Reconnect?</string>
     <string name="lbl_connection_lost_title">Connection Lost</string>
     <string name="lbl_waiting_for_connection">The connection with the server has been lost. %1$s is attempting to reconnect.</string>
+    <string name="btn_connecting">Connecting</string>
 </resources>

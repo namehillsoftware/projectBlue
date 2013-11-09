@@ -54,11 +54,11 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			return;
 		}
 		
-		if (JrSession.LibraryKey < 0) {
-			Intent intent = new Intent(this, SelectLibrary.class);
-			startActivity(intent);
-			return;
-		}
+//		if (JrSession.LibraryKey < 0) {
+//			Intent intent = new Intent(this, SelectLibrary.class);
+//			startActivity(intent);
+//			return;
+//		}
 
 		displayLibrary();
 	}
