@@ -51,12 +51,12 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		setValue("Playlist");
 	}
 	
-	public SparseArray<JrPlaylist> getMappedPlaylists() throws IOException {
+	public SparseArray<JrPlaylist> getMappedPlaylists() {
 		if (mMappedPlaylists == null) denormalizeAndMap();
 		return mMappedPlaylists;
 	}
 	
-	private void denormalizeAndMap() throws IOException {
+	private void denormalizeAndMap() {
 		mMappedPlaylists = new SparseArray<JrPlaylist>(getSubItems().size());
 		denormalizeAndMap(getSubItems());
 	}

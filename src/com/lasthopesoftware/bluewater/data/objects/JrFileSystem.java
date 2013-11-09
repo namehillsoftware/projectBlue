@@ -80,8 +80,10 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 					mVisibleViews = new ArrayList<IJrItem<?>>(libraries.size());
 					for (IJrItem<?> library : libraries) {
 						if (mVisibleViewKeys.length < 1) {
-							if (library.getValue().equalsIgnoreCase("Playlists"))
-								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));							
+							if (library.getValue().equalsIgnoreCase("Playlists")) {
+								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));
+								continue;
+							}
 							
 							for (IJrItem<?> view : library.getSubItems())
 								mVisibleViews.add(view);
@@ -91,8 +93,10 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 						for (int viewKey : mVisibleViewKeys) {
 							if (viewKey != library.getKey()) continue;
 							
-							if (library.getValue().equalsIgnoreCase("Playlists"))
+							if (library.getValue().equalsIgnoreCase("Playlists")) {
 								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));
+								continue;
+							}
 							
 							for (IJrItem<?> view : library.getSubItems())
 								mVisibleViews.add(view);

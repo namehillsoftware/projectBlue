@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
 import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -26,7 +27,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 public class SetConnection extends FragmentActivity {
 	private Button mConnectionButton;
 	private HashSet<Integer> mSelectedViews = new HashSet<Integer>();
-	private SparseArray<Integer> mViews;
+	private SparseIntArray mViews;
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
@@ -53,7 +54,7 @@ public class SetConnection extends FragmentActivity {
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {					
 					String[] views = new String[result.size()];
-					
+					mViews = new SparseIntArray(result.size());
 					for (int i = 0; i < result.size(); i++) {
 						views[i] = result.get(i).getValue();
 						mViews.put(i, result.get(i).getKey());
@@ -62,6 +63,8 @@ public class SetConnection extends FragmentActivity {
 					showViewsSelectionDialog(views);
 				}
 			});
+        	
+        	JrSession.JrFs.getSubItemsAsync();
         }
     };
 	
