@@ -1,16 +1,15 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.access.JrDataTask;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.access.JrDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 

@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.access.JrFsResponse;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 

@@ -71,6 +71,7 @@ public class JrConnection extends URLConnection {
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object getContent(Class[] types) throws IOException {
 		try {

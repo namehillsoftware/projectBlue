@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.data.access;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public interface IJrItem<T extends IJrItem<?>> {
