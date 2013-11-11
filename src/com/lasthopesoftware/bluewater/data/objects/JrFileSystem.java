@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem<IJrItem<?>> {
-	private ArrayList<IJrItem<?>> mVisibleViews;
+	private HashSet<IJrItem<?>> mVisibleViews;
 	private int[] mVisibleViewKeys;
 	
 	private OnCompleteListener<List<IJrItem<?>>> mOnCompleteClientListener;
@@ -77,7 +78,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 				if (mVisibleViews == null) {
 					
 					List<IJrItem<?>> libraries = getSubItems();
-					mVisibleViews = new ArrayList<IJrItem<?>>(libraries.size());
+					mVisibleViews = new HashSet<IJrItem<?>>(libraries.size());
 					for (IJrItem<?> library : libraries) {
 						if (mVisibleViewKeys.length < 1) {
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
@@ -104,7 +105,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 					}
 				}
 				
-				owner.setResult(mVisibleViews);
+				owner.setResult(new ArrayList<IJrItem<?>>(mVisibleViews));
 			}
 		});
 		

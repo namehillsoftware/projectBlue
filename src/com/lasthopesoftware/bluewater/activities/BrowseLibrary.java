@@ -66,8 +66,14 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	private void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
+		
+		if (mSectionsPagerAdapter != null && mViewPager != null) return;
+		
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 		mViewPager = (ViewPager) findViewById(R.id.pager);
+		
+		// Set up the ViewPager with the sections adapter.
+		mViewPager.setAdapter(mSectionsPagerAdapter);
 		
 		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(this, mSectionsPagerAdapter, mViewPager));
 	}
@@ -174,9 +180,6 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			
 
 			mSectionsPagerAdapter.setLibraryViews(result);
-
-			// Set up the ViewPager with the sections adapter.
-			mViewPager.setAdapter(mSectionsPagerAdapter);
 			
 			// Set up the action bar.
 			ActionBar actionBar = mLibraryActivity.getActionBar();
@@ -189,6 +192,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			// Tab.
 			mViewPager.setOnPageChangeListener(new OnPageChangeListener(actionBar));
 			
+			actionBar.removeAllTabs();
 			// For each of the sections in the app, add a tab to the action bar.
 			for (IJrItem<?> item : result) {
 				// Create a tab with text corresponding to the page title defined by
@@ -199,19 +203,19 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 				actionBar.addTab(actionBar.newTab().setText(item.getValue()).setTabListener(mLibraryActivity));
 			}
 		}
+	}
+	
+	private static class OnPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
+		private ActionBar mActionBar;
 		
-		private static class OnPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
-			private ActionBar mActionBar;
-			
-			public OnPageChangeListener(ActionBar actionBar) {
-				super();
-				mActionBar = actionBar;
-			}
-			
-			@Override
-			public void onPageSelected(int position) {
-				mActionBar.setSelectedNavigationItem(position);
-			}
+		public OnPageChangeListener(ActionBar actionBar) {
+			super();
+			mActionBar = actionBar;
+		}
+		
+		@Override
+		public void onPageSelected(int position) {
+			mActionBar.setSelectedNavigationItem(position);
 		}
 	}
 }
