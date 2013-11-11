@@ -120,4 +120,11 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 		if (mJrFiles == null) mJrFiles = new JrFiles("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()));
 		return mJrFiles;
 	}
+
+	@Override
+	public int compareTo(JrPlaylist another) {
+		int result = this.getValue().compareTo(another.getValue());
+		if (result == 0) result = this.getKey().compareTo(another.getKey());
+		return 0;
+	}
 }

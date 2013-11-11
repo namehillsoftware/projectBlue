@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import android.os.AsyncTask;
 
@@ -18,7 +20,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem<IJrItem<?>> {
-	private HashSet<IJrItem<?>> mVisibleViews;
+	private ConcurrentSkipListSet<IJrItem<?>> mVisibleViews;
 	private int[] mVisibleViewKeys;
 	
 	private OnCompleteListener<List<IJrItem<?>>> mOnCompleteClientListener;
@@ -76,13 +78,19 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 			@Override
 			public void onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
 				if (mVisibleViews == null) {
-					
 					List<IJrItem<?>> libraries = getSubItems();
-					mVisibleViews = new HashSet<IJrItem<?>>(libraries.size());
+					mVisibleViews = new ConcurrentSkipListSet<IJrItem<?>>(new Comparator<IJrItem<?>>() {
+
+						@Override
+						public int compare(IJrItem<?> lhs, IJrItem<?> rhs) {
+							return lhs.getKey().compareTo(rhs.getKey());
+						}
+					});
+					
 					for (IJrItem<?> library : libraries) {
 						if (mVisibleViewKeys.length < 1) {
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));
+								mVisibleViews.add(new JrPlaylists(Integer.MAX_VALUE));
 								continue;
 							}
 							
@@ -95,7 +103,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 							if (viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new JrPlaylists(mVisibleViews.size()));
+								mVisibleViews.add(new JrPlaylists(Integer.MAX_VALUE));
 								continue;
 							}
 							
@@ -105,7 +113,8 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 					}
 				}
 				
-				owner.setResult(new ArrayList<IJrItem<?>>(mVisibleViews));
+				ArrayList<IJrItem<?>> result = new ArrayList<IJrItem<?>>(mVisibleViews);
+				owner.setResult(result);
 			}
 		});
 		
@@ -156,6 +165,11 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	@Override
 	public String[] getSubItemParams() {
 		return new String[] { "Browse/Children" };
+	}
+
+	@Override
+	public int compareTo(IJrItem<?> another) {
+		return 0;
 	}
 }
 

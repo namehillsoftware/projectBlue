@@ -67,13 +67,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
 		
-		if (mSectionsPagerAdapter != null && mViewPager != null) return;
-		
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 		mViewPager = (ViewPager) findViewById(R.id.pager);
-		
-		// Set up the ViewPager with the sections adapter.
-		mViewPager.setAdapter(mSectionsPagerAdapter);
 		
 		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(this, mSectionsPagerAdapter, mViewPager));
 	}
@@ -177,9 +172,10 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-			
-
 			mSectionsPagerAdapter.setLibraryViews(result);
+
+			// Set up the ViewPager with the sections adapter.
+			mViewPager.setAdapter(mSectionsPagerAdapter);
 			
 			// Set up the action bar.
 			ActionBar actionBar = mLibraryActivity.getActionBar();

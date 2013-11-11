@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.data.access.JrDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 
-public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject implements IJrItem<T>, IJrItemAsync<T> {
+public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject implements IJrItem<T>, IJrItemAsync<T>, Comparable<T> {
 	protected ArrayList<T> mSubItems;
 	
 	public JrItemAsyncBase(int key, String value) {
@@ -89,5 +89,13 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 		}
 		
 		return subItemsTask;
+	}
+	
+
+	@Override
+	public int compareTo(T another) {
+		int result = this.getValue().compareTo(another.getValue());
+		if (result == 0) result = this.getKey().compareTo(another.getKey());
+		return result;
 	}
 }
