@@ -243,8 +243,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
-		// If everything is the same as before, don't do anything else 
-		if (mPlaylistString != null && mPlaylistString.equals(playlistString) && mFileKey == fileKey) return;
+		// If everything is the same as before, and stuff is playing, don't do anything else 
+		if (mPlaylistString != null && mPlaylistString.equals(playlistString) && mFileKey == fileKey && JrSession.PlayingFile.isPlaying()) return;
 		
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
@@ -324,10 +324,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 					
 					@Override
 					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						mNotificationMgr.cancelAll();
 						if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
-							StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
-						else
-							mNotificationMgr.cancelAll();
+							StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
 					}
 				});
 				

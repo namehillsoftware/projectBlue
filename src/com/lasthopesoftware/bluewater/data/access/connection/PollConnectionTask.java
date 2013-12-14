@@ -104,6 +104,19 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 
 	@Override
 	public void addOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<String, Void, Boolean> listener) {
+		if (isFinished()) {
+			try {
+				listener.onComplete(this, getResult());
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return;
+		}
+		
 		if (mUniqueOnCompleteListeners.add(listener))
 			mTask.addOnCompleteListener(listener);
 	}
