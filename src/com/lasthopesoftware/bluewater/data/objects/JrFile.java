@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.data.objects;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.LinkedList;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 
 import xmlwise.XmlElement;
@@ -30,7 +30,7 @@ public class JrFile extends JrObject implements
 	OnErrorListener, 
 	OnCompletionListener	
 {
-	private TreeMap<String, String> mProperties = null;
+	private ConcurrentSkipListMap<String, String> mProperties = null;
 	
 	private boolean prepared = false;
 	private boolean preparing = false;
@@ -312,13 +312,13 @@ public class JrFile extends JrObject implements
 		mp.setVolume(volume, volume);
 	}
 	
-	private SimpleTask<String, Void, TreeMap<String, String>> GetFilePropertiesTask() {
-		SimpleTask<String, Void, TreeMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, TreeMap<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, TreeMap<String,String>>() {
+	private SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> GetFilePropertiesTask() {
+		SimpleTask<String, Void, ConcurrentSkipListMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, ConcurrentSkipListMap<String,String>>();
+		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, ConcurrentSkipListMap<String,String>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, TreeMap<String, String>> owner, String... params) throws IOException {
-				TreeMap<String, String> returnProperties = new TreeMap<String, String>();
+			public void onExecute(ISimpleTask<String, Void, ConcurrentSkipListMap<String, String>> owner, String... params) throws IOException {
+				ConcurrentSkipListMap<String, String> returnProperties = new ConcurrentSkipListMap<String, String>();
 				
 				JrConnection conn;
 				try {
@@ -334,14 +334,14 @@ public class JrFile extends JrObject implements
 					e.printStackTrace();
 				}
 				
-				owner.setResult(returnProperties != null ? returnProperties : new TreeMap<String, String>());
+				owner.setResult(returnProperties != null ? returnProperties : new ConcurrentSkipListMap<String, String>());
 			}
 		});
 		
-		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, TreeMap<String,String>>() {
+		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, ConcurrentSkipListMap<String,String>>() {
 			
 			@Override
-			public boolean onError(ISimpleTask<String, Void, TreeMap<String, String>> owner, Exception innerException) {
+			public boolean onError(ISimpleTask<String, Void, ConcurrentSkipListMap<String, String>> owner, Exception innerException) {
 				return !(innerException instanceof IOException);
 			}
 		});
