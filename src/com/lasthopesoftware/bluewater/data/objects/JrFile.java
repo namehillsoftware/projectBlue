@@ -41,6 +41,8 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
 	
+	private Object syncObj = new Object();
+	
 	public JrFile(int key) {
 		super();
 		this.setKey(key);
@@ -142,22 +144,30 @@ public class JrFile extends JrObject implements
 		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
 		setPropertyThread.setPriority(Thread.MIN_PRIORITY);
 		setPropertyThread.start();
-		mProperties.put(name, value);
+		
+		synchronized(syncObj) {
+			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>();
+			mProperties.put(name, value);
+		}
 	}
 	
 	public String getProperty(String name) throws IOException {
-		if (mProperties == null || mProperties.size() == 0) {
-			try {
-				mProperties = GetFilePropertiesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
-				if (GetFilePropertiesTask().getState() == SimpleTaskState.ERROR) {
-					for (Exception e : GetFilePropertiesTask().getExceptions()) {
-						if (e instanceof IOException) throw (IOException)e;
+		synchronized(syncObj) {
+			if (mProperties == null || mProperties.size() == 0) {
+				try {
+					SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> filePropertiesTask = getFilePropertiesTask();
+					mProperties = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
+					
+					if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
+						for (Exception e : filePropertiesTask.getExceptions()) {
+							if (e instanceof IOException) throw (IOException)e;
+						}
 					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
 			}
 		}
 		
@@ -165,11 +175,18 @@ public class JrFile extends JrObject implements
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
+		if (mProperties == null) return getProperty(name);
+		
 		
 		try {
-			mProperties.putAll(GetFilePropertiesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
-			if (GetFilePropertiesTask().getState() == SimpleTaskState.ERROR) {
-				for (Exception e : GetFilePropertiesTask().getExceptions()) {
+			SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> filePropertiesTask = getFilePropertiesTask();
+			
+			synchronized(syncObj) {
+				mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+			}
+			
+			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
+				for (Exception e : filePropertiesTask.getExceptions()) {
 					if (e instanceof IOException) throw (IOException)e;
 				}
 			}
@@ -312,7 +329,7 @@ public class JrFile extends JrObject implements
 		mp.setVolume(volume, volume);
 	}
 	
-	private SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> GetFilePropertiesTask() {
+	private SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> getFilePropertiesTask() {
 		SimpleTask<String, Void, ConcurrentSkipListMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, ConcurrentSkipListMap<String,String>>();
 		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, ConcurrentSkipListMap<String,String>>() {
 			
