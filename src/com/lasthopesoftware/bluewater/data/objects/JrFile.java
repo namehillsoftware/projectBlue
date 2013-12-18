@@ -325,9 +325,8 @@ public class JrFile extends JrObject implements
 					conn = new JrConnection(params);
 			    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
 			    	
-			    	for (XmlElement el : xml.get(0)) {
+			    	for (XmlElement el : xml.get(0))
 			    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-			    	}
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				} catch (XmlParseException e) {
@@ -380,10 +379,12 @@ public class JrFile extends JrObject implements
 		
 		@Override
 		public void run() {
-			int numberPlays;
 			try {
-				numberPlays = Integer.parseInt(mFile.getRefreshedProperty("Number Plays"));
-				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
+				String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
+				if (!numberPlaysString.isEmpty()) {
+					int numberPlays = Integer.parseInt(numberPlaysString);
+					mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
