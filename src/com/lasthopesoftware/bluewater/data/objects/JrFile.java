@@ -437,10 +437,11 @@ public class JrFile extends JrObject implements
 		public void run() {
 			try {
 				String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
-				if (numberPlaysString != null && !numberPlaysString.isEmpty()) {
-					int numberPlays = Integer.parseInt(numberPlaysString);
-					mFile.setProperty("Number Plays", String.valueOf(++numberPlays));
-				}
+				
+				int numberPlays = 0;
+				if (numberPlaysString != null) numberPlays = Integer.parseInt(numberPlaysString);
+				
+				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));				
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (NumberFormatException ne) {

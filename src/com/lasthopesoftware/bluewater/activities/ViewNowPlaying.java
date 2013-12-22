@@ -187,7 +187,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					playingFile = JrSession.PlayingFile;
 					msg = new Message();
 					msg.arg1 = UPDATE_ALL;
-				} else if (playingFile.isPlaying()) {
+				} else if (playingFile.isMediaPlayerCreated() && playingFile.isPlaying()) {
 					msg = new Message();
 					msg.arg1 = UPDATE_PLAYING;
 				}
@@ -309,6 +309,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 				album = JrSession.PlayingFile.getProperty("Album");
 				
 				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+				mSongRating.setRating(0);
 				if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
 					mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
 					mSongRating.invalidate();
