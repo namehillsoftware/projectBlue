@@ -2,8 +2,10 @@ package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 
@@ -42,19 +44,20 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
 	
-	private Object syncObj = new Object();
-	
 	public JrFile(int key) {
-		super();
+		this();
 		this.setKey(key);
 	}
 	
 	public JrFile(int key, String value) {
-		super(key, value);
+		this();
+		this.setKey(key);
+		this.setValue(value);
 	}
 	
 	public JrFile() {
 		super();
+		mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 	}
 	
 
@@ -65,7 +68,7 @@ public class JrFile extends JrObject implements
 	public String getValue() {
 		if (super.getValue() == null) {
 			try {
-				setValue(getRefreshedProperty("Name"));
+				setValue(getProperty("Name"));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -146,49 +149,80 @@ public class JrFile extends JrObject implements
 		setPropertyThread.setPriority(Thread.MIN_PRIORITY);
 		setPropertyThread.start();
 		
-		synchronized(syncObj) {
-			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-			mProperties.put(name, value);
-		}
+		mProperties.put(name, value);
 	}
 	
 	public String getProperty(String name) throws IOException {
-		synchronized(syncObj) {
-			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-			if (mProperties.size() == 0) {
-				try {
-					SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
-					mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get());
-					
-					if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
-						for (Exception e : filePropertiesTask.getExceptions()) {
-							if (e instanceof IOException) throw (IOException)e;
-						}
+		
+		if (mProperties.size() == 0) {
+			try {
+				SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
+				mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get());
+				
+				if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
+					for (Exception e : filePropertiesTask.getExceptions()) {
+						if (e instanceof IOException) throw (IOException)e;
 					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
 				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
 			}
-			
-			return mProperties.get(name);
 		}
+		else if (!mProperties.containsKey(name)) {
+			return getRefreshedProperty(name);
+		}
+		return mProperties.get(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
-		if (mProperties == null) return getProperty(name);
+		if (mProperties.size() == 0) return getProperty(name);
 		
+		SimpleTask<String, Void, String> filePropertyTask = new SimpleTask<String, Void, String>();
 		
-		try {
-			SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
+		filePropertyTask.addOnExecuteListener(new OnExecuteListener<String, Void, String>() {
 			
-			synchronized(syncObj) {
-				mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
+			@Override
+			public void onExecute(ISimpleTask<String, Void, String> owner, String... params) throws Exception {
+				
+				try {
+					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + params[0]);
+					try {
+				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+				    	
+				    	for (XmlElement el : xml.get(0)) {
+				    		if (!el.getAttribute("Name").equalsIgnoreCase(params[0])) continue;
+				    		owner.setResult(el.getValue());
+				    		break;
+				    	}
+					} finally {
+						conn.disconnect();
+					}
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (XmlParseException e) {
+					e.printStackTrace();
+				}
 			}
+		});
+		
+		filePropertyTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, String>() {
 			
-			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
-				for (Exception e : filePropertiesTask.getExceptions()) {
+			@Override
+			public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
+				return !(innerException instanceof IOException);
+			}
+		});
+		
+		String result = null;
+		try {
+			
+			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get();
+			mProperties.put(name, result);
+			
+			if (filePropertyTask.getState() == SimpleTaskState.ERROR) {
+				for (Exception e : filePropertyTask.getExceptions()) {
 					if (e instanceof IOException) throw (IOException)e;
 				}
 			}
@@ -196,7 +230,7 @@ public class JrFile extends JrObject implements
 			e.printStackTrace();
 		}
 		
-		return getProperty(name);
+		return result;
 	}
 	
 	public void initMediaPlayer(Context context) {
@@ -337,13 +371,13 @@ public class JrFile extends JrObject implements
 			
 			@Override
 			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
-				ConcurrentSkipListMap<String, String> returnProperties = new ConcurrentSkipListMap<String, String>();
+				HashMap<String, String> returnProperties = new HashMap<String, String>();
 
 				try {
 					JrConnection conn = new JrConnection(params);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
-				    	
+				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
 				    	for (XmlElement el : xml.get(0))
 				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
 					} finally {
