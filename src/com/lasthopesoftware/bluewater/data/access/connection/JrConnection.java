@@ -28,7 +28,6 @@ public class JrConnection extends HttpURLConnection {
 
 	public JrConnection(String... params) throws IOException {
 		this(new URL(JrSession.accessDao.getJrUrl(params)));
-//		mParams = params;
 	}
 	
 	public void setConnection(URL url) throws IOException {
