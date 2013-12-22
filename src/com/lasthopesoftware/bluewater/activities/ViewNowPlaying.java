@@ -393,9 +393,12 @@ public class ViewNowPlaying extends Activity implements Runnable {
 												"Format=png",
 												"FillTransparency=ffffff");
 					if (isCancelled()) return null;
+					try {
 					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
-					
 					isFileFound = true;
+					} finally {
+						conn.disconnect();
+					}
 				} catch (FileNotFoundException fe) {
 					isFileFound = false;
 				} catch (Exception e) {

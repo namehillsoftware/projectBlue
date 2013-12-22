@@ -16,18 +16,22 @@ public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 		InputStream is = null;
 		// Add base url
 	
-		JrConnection conn;
 		try {
-			conn = new JrConnection(params);
-			is = conn.getInputStream();
-			int nRead = 0;
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			byte[] data = new byte[16384];
-			
-			while ((nRead = is.read(data, 0, data.length)) != -1)
-				buffer.write(data, 0, nRead);
-			
-			return buffer.toByteArray();
+			JrConnection conn = new JrConnection(params);
+			try {
+				is = conn.getInputStream();
+				
+				int nRead = 0;
+				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+				byte[] data = new byte[16384];
+				
+				while ((nRead = is.read(data, 0, data.length)) != -1)
+					buffer.write(data, 0, nRead);
+				
+				return buffer.toByteArray();
+			} finally {
+				conn.disconnect();
+			}
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

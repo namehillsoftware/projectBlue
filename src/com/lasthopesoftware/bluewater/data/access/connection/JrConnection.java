@@ -4,17 +4,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 
-public class JrConnection extends URLConnection {
+public class JrConnection extends HttpURLConnection {
 
-	private URLConnection mUrlConnection;
+	private HttpURLConnection mHttpConnection;
 //	private String[] mParams;
 //	private int resets = 0, maxResets = -1;
 //	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
@@ -32,14 +32,14 @@ public class JrConnection extends URLConnection {
 	}
 	
 	public void setConnection(URL url) throws IOException {
-		mUrlConnection = url.openConnection();
-		mUrlConnection.setConnectTimeout(5000);
+		mHttpConnection = (HttpURLConnection)url.openConnection();
+		mHttpConnection.setConnectTimeout(5000);
 	}
 	
 	@Override
 	public void connect() throws IOException {
 		try {
-			mUrlConnection.connect();
+			mHttpConnection.connect();
 		} catch (IOException e) {
 			resetConnection(e);
 			this.connect();
@@ -48,23 +48,23 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public boolean getAllowUserInteraction() {
-		return mUrlConnection.getAllowUserInteraction();
+		return mHttpConnection.getAllowUserInteraction();
 	}
 	
 	@Override
 	public void addRequestProperty(String field, String newValue) {
-		mUrlConnection.addRequestProperty(field, newValue);
+		mHttpConnection.addRequestProperty(field, newValue);
 	}
 	
 	@Override
 	public int getConnectTimeout() {
-		return mUrlConnection.getConnectTimeout();
+		return mHttpConnection.getConnectTimeout();
 	}
 	
 	@Override
 	public Object getContent() throws IOException {
 		try {
-			return mUrlConnection.getContent();
+			return mHttpConnection.getContent();
 		} catch (IOException e) {
 			resetConnection(e);
 			return this.getContent();
@@ -75,7 +75,7 @@ public class JrConnection extends URLConnection {
 	@Override
 	public Object getContent(Class[] types) throws IOException {
 		try {
-			return mUrlConnection.getContent(types);
+			return mHttpConnection.getContent(types);
 		} catch (IOException e) {
 			resetConnection(e);
 			return this.getContent(types);
@@ -84,83 +84,83 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public String getContentEncoding() {
-		return mUrlConnection.getContentEncoding();
+		return mHttpConnection.getContentEncoding();
 	}
 	
 	@Override
 	public int getContentLength() {
-		return mUrlConnection.getContentLength();
+		return mHttpConnection.getContentLength();
 	}
 	
 	@Override
 	public String getContentType() {
-		return mUrlConnection.getContentType();
+		return mHttpConnection.getContentType();
 	}
 	
 	@Override
 	public long getDate() {
-		return mUrlConnection.getDate();
+		return mHttpConnection.getDate();
 	}
 	
 	@Override
 	public boolean getDefaultUseCaches() {
-		return mUrlConnection.getDefaultUseCaches();
+		return mHttpConnection.getDefaultUseCaches();
 	}
 	
 	@Override
 	public boolean getDoInput() {
-		return mUrlConnection.getDoInput();
+		return mHttpConnection.getDoInput();
 	}
 	
 	@Override
 	public boolean getDoOutput() {
-		return mUrlConnection.getDoOutput();
+		return mHttpConnection.getDoOutput();
 	}
 	
 	@Override
 	public long getExpiration() {
-		return mUrlConnection.getExpiration();
+		return mHttpConnection.getExpiration();
 	}
 	
 	@Override
 	public String getHeaderField(int pos) {
-		return mUrlConnection.getHeaderField(pos);
+		return mHttpConnection.getHeaderField(pos);
 	}
 	
 	@Override
 	public String getHeaderField(String key) {
-		return mUrlConnection.getHeaderField(key);
+		return mHttpConnection.getHeaderField(key);
 	}
 	
 	@Override
 	public long getHeaderFieldDate(String field, long defaultValue) {
-		return mUrlConnection.getHeaderFieldDate(field, defaultValue);
+		return mHttpConnection.getHeaderFieldDate(field, defaultValue);
 	}
 	
 	@Override
 	public int getHeaderFieldInt(String field, int defaultValue) {
-		return mUrlConnection.getHeaderFieldInt(field, defaultValue);
+		return mHttpConnection.getHeaderFieldInt(field, defaultValue);
 	}
 	
 	@Override
 	public String getHeaderFieldKey(int posn) {
-		return mUrlConnection.getHeaderFieldKey(posn);
+		return mHttpConnection.getHeaderFieldKey(posn);
 	}
 	
 	@Override
 	public Map<String, List<String>> getHeaderFields() {
-		return mUrlConnection.getHeaderFields();
+		return mHttpConnection.getHeaderFields();
 	}
 	
 	@Override
 	public long getIfModifiedSince() {
-		return mUrlConnection.getIfModifiedSince();
+		return mHttpConnection.getIfModifiedSince();
 	}
 	
 	@Override
 	public InputStream getInputStream() throws IOException {
 		try {
-			return mUrlConnection.getInputStream();
+			return mHttpConnection.getInputStream();
 		} catch (FileNotFoundException fe) {
 			throw fe;
 		}
@@ -172,94 +172,94 @@ public class JrConnection extends URLConnection {
 	
 	@Override
 	public long getLastModified() {
-		return mUrlConnection.getLastModified();
+		return mHttpConnection.getLastModified();
 	}
 	
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		return mUrlConnection.getOutputStream();
+		return mHttpConnection.getOutputStream();
 		
 	}
 	
 	@Override
 	public Permission getPermission() throws IOException {
-		return mUrlConnection.getPermission();
+		return mHttpConnection.getPermission();
 	}
 	
 	@Override
 	public int getReadTimeout() {
-		return mUrlConnection.getReadTimeout();
+		return mHttpConnection.getReadTimeout();
 	}
 	
 	@Override
 	public Map<String, List<String>> getRequestProperties() {
-		return mUrlConnection.getRequestProperties();
+		return mHttpConnection.getRequestProperties();
 	}
 	
 	@Override
 	public String getRequestProperty(String field) {
-		return mUrlConnection.getRequestProperty(field);
+		return mHttpConnection.getRequestProperty(field);
 	}
 	
 	@Override
 	public URL getURL() {
-		return mUrlConnection.getURL();
+		return mHttpConnection.getURL();
 	}
 	
 	@Override
 	public boolean getUseCaches() {
-		return mUrlConnection.getUseCaches();
+		return mHttpConnection.getUseCaches();
 	}
 	
 	@Override
 	public void setAllowUserInteraction(boolean newValue) {
-		mUrlConnection.setAllowUserInteraction(newValue);
+		mHttpConnection.setAllowUserInteraction(newValue);
 	}
 	
 	@Override
 	public void setConnectTimeout(int timeoutMillis) {
-		mUrlConnection.setConnectTimeout(timeoutMillis);
+		mHttpConnection.setConnectTimeout(timeoutMillis);
 	}
 	
 	@Override
 	public void setDefaultUseCaches(boolean newValue) {
-		mUrlConnection.setDefaultUseCaches(newValue);
+		mHttpConnection.setDefaultUseCaches(newValue);
 	}
 	
 	@Override
 	public void setDoInput(boolean newValue) {
-		mUrlConnection.setDoInput(newValue);
+		mHttpConnection.setDoInput(newValue);
 	}
 	
 	@Override
 	public void setDoOutput(boolean newValue) {
-		mUrlConnection.setDoOutput(newValue);
+		mHttpConnection.setDoOutput(newValue);
 	}
 	
 	@Override
 	public void setIfModifiedSince(long newValue) {
-		mUrlConnection.setIfModifiedSince(newValue);
+		mHttpConnection.setIfModifiedSince(newValue);
 	}
 	
 	@Override
 	public void setReadTimeout(int timeoutMillis) {
-		mUrlConnection.setReadTimeout(timeoutMillis);
+		mHttpConnection.setReadTimeout(timeoutMillis);
 	}
 	
 	@Override
 	public void setRequestProperty(String field, String newValue) {
-		mUrlConnection.setRequestProperty(field, newValue);
+		mHttpConnection.setRequestProperty(field, newValue);
 	}
 	
 	@Override
 	public void setUseCaches(boolean newValue) {
-		mUrlConnection.setUseCaches(newValue);
+		mHttpConnection.setUseCaches(newValue);
 	}
 	
 	@Override
 	public String toString() {
 		
-		return mUrlConnection.toString();
+		return mHttpConnection.toString();
 	}
 	
 	private void resetConnection(IOException ioEx) throws IOException {
@@ -269,5 +269,15 @@ public class JrConnection extends URLConnection {
 //		String url = JrSession.accessDao.getJrUrl(mParams);
 //		if (url == null || url.isEmpty()) throw ioEx;
 //		setConnection(new URL(url));
+	}
+
+	@Override
+	public void disconnect() {
+		mHttpConnection.disconnect();
+	}
+
+	@Override
+	public boolean usingProxy() {
+		return mHttpConnection.usingProxy();
 	}
 }

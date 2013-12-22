@@ -13,19 +13,22 @@ public class JrStringResponse extends AsyncTask<String, Void, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-				
-		JrConnection conn;
 		try {
-			conn = new JrConnection(params);
-			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String line;
-			StringBuilder result = new StringBuilder();
+			JrConnection conn = new JrConnection(params);
+			try {
+				BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			
-			while ((line = br.readLine()) != null) {
-				result.append(line);
+				String line;
+				StringBuilder result = new StringBuilder();
+				
+				while ((line = br.readLine()) != null) {
+					result.append(line);
+				}
+			
+				return result.toString();
+			} finally {
+				conn.disconnect();
 			}
-			
-			return result.toString();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

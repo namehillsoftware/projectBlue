@@ -20,10 +20,14 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 			public void onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
 				if (mResults == null) mResults = new ArrayList<TResult>();
 				mResults.clear();
-				JrConnection conn;
-				conn = new JrConnection(params);
-				for (OnConnectListener<TResult> workEvent : onConnectListeners)
-					mResults.add(workEvent.onConnect(conn.getInputStream()));
+
+				JrConnection conn = new JrConnection(params);
+				try {
+					for (OnConnectListener<TResult> workEvent : onConnectListeners)
+						mResults.add(workEvent.onConnect(conn.getInputStream()));
+				} finally {
+					conn.disconnect();
+				}
 				
 				owner.setResult(mResults.get(mResults.size() - 1));
 			}

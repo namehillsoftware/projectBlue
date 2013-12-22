@@ -13,11 +13,14 @@ public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 	protected JrResponse doInBackground(String... params) {
 		JrResponse responseDao = null;
 		
-		JrConnection conn;
 		try {
-			conn = new JrConnection(params);
+			JrConnection conn = new JrConnection(params);
 	    	
-	    	responseDao = JrResponse.fromInputStream(conn.getInputStream());
+			try {
+				responseDao = JrResponse.fromInputStream(conn.getInputStream());
+			} finally {
+				conn.disconnect();
+			}
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

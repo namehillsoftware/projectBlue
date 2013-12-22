@@ -24,8 +24,8 @@ public class JrTestConnection implements Callable<Boolean> {
 	public Boolean call() throws Exception {
 		Boolean result = Boolean.FALSE;
 		
+		JrConnection conn = new JrConnection("Alive");
 		try {
-			JrConnection conn = new JrConnection("Alive");
 	    	conn.setConnectTimeout(mTimeout);
 			JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
 	    	
@@ -34,6 +34,8 @@ public class JrTestConnection implements Callable<Boolean> {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			conn.disconnect();
 		}
 		
 		return result;

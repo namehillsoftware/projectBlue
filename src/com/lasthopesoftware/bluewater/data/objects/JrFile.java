@@ -338,14 +338,17 @@ public class JrFile extends JrObject implements
 			@Override
 			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
 				ConcurrentSkipListMap<String, String> returnProperties = new ConcurrentSkipListMap<String, String>();
-				
-				JrConnection conn;
+
 				try {
-					conn = new JrConnection(params);
-			    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
-			    	
-			    	for (XmlElement el : xml.get(0))
-			    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+					JrConnection conn = new JrConnection(params);
+					try {
+				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+				    	
+				    	for (XmlElement el : xml.get(0))
+				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+					} finally {
+						conn.disconnect();
+					}
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				} catch (XmlParseException e) {
