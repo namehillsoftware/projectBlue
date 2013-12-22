@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.data.objects;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 
@@ -146,17 +147,18 @@ public class JrFile extends JrObject implements
 		setPropertyThread.start();
 		
 		synchronized(syncObj) {
-			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>();
+			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 			mProperties.put(name, value);
 		}
 	}
 	
 	public String getProperty(String name) throws IOException {
 		synchronized(syncObj) {
-			if (mProperties == null || mProperties.size() == 0) {
+			if (mProperties == null) mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+			if (mProperties.size() == 0) {
 				try {
-					SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> filePropertiesTask = getFilePropertiesTask();
-					mProperties = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get();
+					SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
+					mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get());
 					
 					if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
 						for (Exception e : filePropertiesTask.getExceptions()) {
@@ -169,9 +171,9 @@ public class JrFile extends JrObject implements
 					e.printStackTrace();
 				}
 			}
+			
+			return mProperties.get(name);
 		}
-		
-		return mProperties.get(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
@@ -179,7 +181,7 @@ public class JrFile extends JrObject implements
 		
 		
 		try {
-			SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> filePropertiesTask = getFilePropertiesTask();
+			SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
 			
 			synchronized(syncObj) {
 				mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey()), mProperties != null ? ("Fields=" + name) : "").get());
@@ -329,12 +331,12 @@ public class JrFile extends JrObject implements
 		mp.setVolume(volume, volume);
 	}
 	
-	private SimpleTask<String, Void, ConcurrentSkipListMap<String, String>> getFilePropertiesTask() {
-		SimpleTask<String, Void, ConcurrentSkipListMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, ConcurrentSkipListMap<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, ConcurrentSkipListMap<String,String>>() {
+	private SimpleTask<String, Void, Map<String, String>> getFilePropertiesTask() {
+		SimpleTask<String, Void, Map<String,String>> filePropertiesTask = new SimpleTask<String, Void, Map<String,String>>();
+		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, Map<String,String>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, ConcurrentSkipListMap<String, String>> owner, String... params) throws IOException {
+			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
 				ConcurrentSkipListMap<String, String> returnProperties = new ConcurrentSkipListMap<String, String>();
 				
 				JrConnection conn;
@@ -350,14 +352,14 @@ public class JrFile extends JrObject implements
 					e.printStackTrace();
 				}
 				
-				owner.setResult(returnProperties != null ? returnProperties : new ConcurrentSkipListMap<String, String>());
+				owner.setResult(returnProperties);
 			}
 		});
 		
-		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, ConcurrentSkipListMap<String,String>>() {
+		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Map<String,String>>() {
 			
 			@Override
-			public boolean onError(ISimpleTask<String, Void, ConcurrentSkipListMap<String, String>> owner, Exception innerException) {
+			public boolean onError(ISimpleTask<String, Void, Map<String, String>> owner, Exception innerException) {
 				return !(innerException instanceof IOException);
 			}
 		});
