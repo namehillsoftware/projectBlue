@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 
 import android.app.Activity;
 import android.content.res.Configuration;
@@ -13,8 +11,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
+import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,18 +29,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.TrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
+import com.lasthopesoftware.bluewater.services.OnStreamingStartListener;
+import com.lasthopesoftware.bluewater.services.OnStreamingStopListener;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
-public class ViewNowPlaying extends Activity implements Runnable {
+public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener {
 	private static Thread mTrackerThread;
-	private static HandleStreamMessages mHandler;
+	private static HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
 	private ImageButton mPause;
 	private ImageButton mNext;
@@ -52,12 +54,13 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	private static RelativeLayout mControlNowPlaying, mViewCoverArt;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
-
-	private static int UPDATE_ALL = 0;
-	private static int UPDATE_PLAYING = 1;
-	private static int SET_STOPPED = 2;
-	private static int HIDE_CONTROLS = 3;
-	private static int SHOW_CONNECTION_LOST = 4;
+	
+	private ProgressBar mSongProgress;
+	private ProgressBar mLoadingImg;
+	private ImageView mNowPlayingImg;
+	private TextView mNowPlayingArtist;
+	private TextView mNowPlayingTitle;
+	private static GetFileImage getFileImageTask;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +94,7 @@ public class ViewNowPlaying extends Activity implements Runnable {
 					@Override
 					public void run() {
 						Message msg = new Message();
-						msg.arg1 = HIDE_CONTROLS;
+						msg.arg1 = HandleViewNowPlayingMessages.HIDE_CONTROLS;
 						mHandler.sendMessage(msg);
 					}
 				};
@@ -104,9 +107,17 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		mNext = (ImageButton) findViewById(R.id.btnNext);
 		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
+		mSongProgress = (ProgressBar) findViewById(R.id.pbNowPlaying);
+		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
+		mNowPlayingImg = (ImageView) findViewById(R.id.imgNowPlaying);
+		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
+		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
+		
+		StreamingMusicService.AddOnStreamingStartListener(this);
+		StreamingMusicService.AddOnStreamingStopListener(this);
 		
 		/* Toggle play/pause */
-		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener(mPlay, mPause);
+		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener();
 		mPlay.setOnClickListener(togglePlayPauseListener);
 		mPause.setOnClickListener(togglePlayPauseListener);
 
@@ -137,21 +148,24 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			}
 		});
 		
-		mHandler = new HandleStreamMessages(this);
-		if (mTrackerThread != null) mTrackerThread.interrupt();
+		mHandler = new HandleViewNowPlayingMessages(this);
+		
+		if (JrSession.PlayingFile == null) return; 
+		
+		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(this);
+		mTrackerThread = new Thread(new TrackerThread(JrSession.PlayingFile, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
+		
+		setView(JrSession.PlayingFile);
 	}
 	
 	@Override
 	protected void onStart() {
 		super.onStart();
-		Message msg = new Message();
-		msg.arg1 = UPDATE_ALL;
-		mHandler.sendMessage(msg);
+		
 	}
 	
 	@Override
@@ -166,48 +180,8 @@ public class ViewNowPlaying extends Activity implements Runnable {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
 	}
-
-	@Override
-	public void run() {
-		JrFile playingFile = null;
-		Message msg;
-		
-		while (true) {
-			try {
-				
-				msg = null;
-				if (PollConnectionTask.Instance.get().isRunning()) {
-					msg = new Message();
-					msg.arg1 = SHOW_CONNECTION_LOST;
-				} else if (JrSession.PlayingFile == null || !JrSession.PlayingFile.isMediaPlayerCreated()) {
-					playingFile = null;
-					msg = new Message();
-					msg.arg1 = SET_STOPPED;
-				} else if (playingFile == null || !playingFile.equals(JrSession.PlayingFile)) {
-					playingFile = JrSession.PlayingFile;
-					msg = new Message();
-					msg.arg1 = UPDATE_ALL;
-				} else if (playingFile.isMediaPlayerCreated() && playingFile.isPlaying()) {
-					msg = new Message();
-					msg.arg1 = UPDATE_PLAYING;
-				}
-				if (msg != null) mHandler.sendMessage(msg);
-				
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				return;
-			}
-		}
-	}
 	
 	private static class TogglePlayPauseListener implements OnClickListener {
-		private View mPlay, mPause;
-
-		public TogglePlayPauseListener(View play, View pause) {
-			mPlay = play;
-			mPause = pause;
-		}
 
 		@Override
 		public void onClick(View v) {
@@ -215,18 +189,12 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			
 			if (JrSession.PlayingFile.isPlaying()) {
 				StreamingMusicService.Pause(v.getContext());
-				mPause.setVisibility(View.INVISIBLE);
-				mPlay.setVisibility(View.VISIBLE);
 				return;
 			}
-			
-			mPlay.setVisibility(View.INVISIBLE);
-			mPause.setVisibility(View.VISIBLE);
-			
+						
 			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
 			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
-
 	}
 	
 	@Override
@@ -236,6 +204,9 @@ public class ViewNowPlaying extends Activity implements Runnable {
 			mHideTimer.cancel();
 			mHideTimer.purge();
 		}
+		
+		StreamingMusicService.RemoveOnStreamingStartListener(this);
+		StreamingMusicService.RemoveOnStreamingStopListener(this);
 	}
 	
 	public FrameLayout getContentView() {
@@ -249,198 +220,159 @@ public class ViewNowPlaying extends Activity implements Runnable {
 	public RelativeLayout getViewCoverArt() {
 		return mViewCoverArt;
 	}
+	
+	private void setView(JrFile file) {
+		final JrFile playingFile = file;
 		
-	private static class HandleStreamMessages extends Handler {
-		private TextView mNowPlayingArtist, mNowPlayingTitle;
+		String artist = "";
+		String album = "";
+		
+		try {
+			artist = playingFile.getProperty("Artist");
+			album = playingFile.getProperty("Album");
+			
+			mSongProgress.setMax(playingFile.getDuration());
+			mSongRating.setRating(0);
+			if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty()) {
+				mSongRating.setRating(Float.valueOf(playingFile.getProperty("Rating")));
+				mSongRating.invalidate();
+			}
+			mSongProgress.setProgress(playingFile.getCurrentPosition());
+		} catch (IOException ioE) {
+			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+					if (result == Boolean.TRUE) setView(playingFile);
+				}
+			});
+			WaitForConnectionDialog.show(this);
+		}
+		
+		mNowPlayingArtist.setText(artist);
+		mNowPlayingTitle.setText(playingFile.getValue());
+
+		try {
+			int size = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? getResources().getDisplayMetrics().heightPixels : getResources().getDisplayMetrics().widthPixels;
+			
+			// Cancel the getFileImageTask if it is already in progress
+			if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+				getFileImageTask.cancel(true);
+			}
+			
+			getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
+			
+			getFileImageTask.execute(album == null ? playingFile.getKey().toString() : (artist + ":" + album), playingFile.getKey().toString(), String.valueOf(size));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		mPlay.setVisibility(!file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+		mPause.setVisibility(file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+	}
+	
+	private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
+		private boolean isFileFound = false;
 		private ImageView mNowPlayingImg;
-		private ProgressBar mSongProgress;
-		private ImageButton mPlay;
-		private ImageButton mPause;
 		private ProgressBar mLoadingImg;
-		private RatingBar mSongRating;
-		private static GetFileImage getFileImageTask;
-		private ViewNowPlaying mOwner;
+		
+		private final int cacheSize = 5;			
+		private static LruCache<String, Bitmap> imageCache;
+		
+		private static Bitmap emptyBitmap;
 
-		public HandleStreamMessages(ViewNowPlaying owner) {
-			mOwner = owner;
-			mSongProgress = (ProgressBar) mOwner.findViewById(R.id.pbNowPlaying);
-			mLoadingImg = (ProgressBar) mOwner.findViewById(R.id.pbLoadingImg);
-			mNowPlayingImg = (ImageView) mOwner.findViewById(R.id.imgNowPlaying);
-			mPlay = (ImageButton) mOwner.findViewById(R.id.btnPlay);
-			mPause = (ImageButton) mOwner.findViewById(R.id.btnPause);
-			mNowPlayingArtist = (TextView) mOwner.findViewById(R.id.tvSongArtist);
-			mNowPlayingTitle = (TextView) mOwner.findViewById(R.id.tvSongTitle);
-			mSongRating = (RatingBar) mOwner.findViewById(R.id.rbSongRating);
+		public GetFileImage(ImageView nowPlayingImg, ProgressBar loadingImg) {
+			super();
+			mNowPlayingImg = nowPlayingImg;
+			mLoadingImg = loadingImg;
+			if (imageCache == null) imageCache = new LruCache<String, Bitmap>(cacheSize);
 		}
-
+		
 		@Override
-		public void handleMessage(Message msg) {
-			if (msg.arg1 == SHOW_CONNECTION_LOST) {
-				WaitForConnectionDialog.show(mOwner);
-			} else if (msg.arg1 == SET_STOPPED) {
-//				mSongProgress.setProgress(0);
-			} else if (msg.arg1 == UPDATE_ALL) {
-				setView();
-			} else if (msg.arg1 == UPDATE_PLAYING) {
-				mPause.setVisibility(View.VISIBLE);
-				mPlay.setVisibility(View.INVISIBLE);
-				if (JrSession.PlayingFile != null) {
-					try {
-						mSongProgress.setMax(JrSession.PlayingFile.getDuration());
-					} catch (IOException e) {
-						WaitForConnectionDialog.show(mOwner);
-					}
-					mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
-				}
-			} else if (msg.arg1 == HIDE_CONTROLS) {
-				mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);
-				mOwner.getContentView().invalidate();
-			}
+		protected void onPreExecute() {
+			mNowPlayingImg.setVisibility(View.INVISIBLE);
+			mLoadingImg.setVisibility(View.VISIBLE);
 		}
-
-		private void setView() {
-			if (JrSession.PlayingFile == null) return;
+		
+		@Override
+		protected Bitmap doInBackground(String... params) {
 			
-			String artist = "";
-			String album = "";
+			Bitmap returnBmp = null;
+			String uId = params[0];
+			String fileKey = params[1];
+			String squareSize = params[2];
 			
-			try {
-				artist = JrSession.PlayingFile.getProperty("Artist");
-				album = JrSession.PlayingFile.getProperty("Album");
-				
-				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
-				mSongRating.setRating(0);
-				if (JrSession.PlayingFile.getProperty("Rating") != null && !JrSession.PlayingFile.getProperty("Rating").isEmpty()) {
-					mSongRating.setRating(Float.valueOf(JrSession.PlayingFile.getProperty("Rating")));
-					mSongRating.invalidate();
-				}
-				mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
-			} catch (IOException ioE) {
-				PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						if (result == Boolean.TRUE) setView();
-					}
-				});
-				WaitForConnectionDialog.show(mOwner);
+			if (imageCache.get(uId) != null) {
+				isFileFound = true;
+				return imageCache.get(uId);
 			}
 			
-			mNowPlayingArtist.setText(artist);
-			mNowPlayingTitle.setText(JrSession.PlayingFile.getValue());
-
 			try {
-				int size = mOwner.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? mOwner.getResources().getDisplayMetrics().heightPixels : mOwner.getResources().getDisplayMetrics().widthPixels;
-				
-				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
-					getFileImageTask.cancel(true);
+				JrConnection conn = new JrConnection(
+											"File/GetImage", 
+											"File=" + fileKey, 
+											"Type=Full",
+//											"Width=" + squareSize, 
+//											"Height=" + squareSize, 
+											"Pad=1",
+											"Format=png",
+											"FillTransparency=ffffff");
+				if (isCancelled()) return null;
+				try {
+				returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
+				isFileFound = true;
+				} finally {
+					conn.disconnect();
 				}
-				
-				getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
-				
-				getFileImageTask.execute(album == null ? JrSession.PlayingFile.getKey().toString() : (artist + ":" + album), JrSession.PlayingFile.getKey().toString(), String.valueOf(size));
+			} catch (FileNotFoundException fe) {
+				isFileFound = false;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			
+			if (returnBmp == null) {
+				if (emptyBitmap == null) {
+					int squareInt = Integer.parseInt(squareSize);
+					emptyBitmap = Bitmap.createBitmap(squareInt, squareInt, Bitmap.Config.ARGB_8888);
+				}
+				
+				returnBmp = emptyBitmap;
+			}
+			
+			imageCache.put(uId, returnBmp);				
+			
+			return returnBmp;
 		}
+		
+		@Override
+		protected void onPostExecute(Bitmap result) {
+			mNowPlayingImg.setImageBitmap(result);
+			mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+			mLoadingImg.setVisibility(View.INVISIBLE);
+			mNowPlayingImg.setVisibility(View.VISIBLE);
+		}
+	}
+	
 
-		private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
-			private boolean isFileFound = false;
-			private ImageView mNowPlayingImg;
-			private ProgressBar mLoadingImg;
-			
-			private final int cacheSize = 5;			
-			private static ConcurrentHashMap<String, Bitmap> imageCache;
-			private static ArrayBlockingQueue<String> imageQueue;
-			
-			private static Bitmap emptyBitmap;
-						
-			public GetFileImage(ImageView nowPlayingImg, ProgressBar loadingImg) {
-				super();
-				mNowPlayingImg = nowPlayingImg;
-				mLoadingImg = loadingImg;
-				if (imageCache == null) imageCache = new ConcurrentHashMap<String, Bitmap>(cacheSize);
-				if (imageQueue == null) imageQueue = new ArrayBlockingQueue<String>(cacheSize);
-			}
-			
-			@Override
-			protected void onPreExecute() {
-				mNowPlayingImg.setVisibility(View.INVISIBLE);
-				mLoadingImg.setVisibility(View.VISIBLE);
-			}
-			
-			@Override
-			protected Bitmap doInBackground(String... params) {
-				
-				Bitmap returnBmp = null;
-				String uId = params[0];
-				String fileKey = params[1];
-				String squareSize = params[2];
-				
-				if (imageCache.containsKey(uId)) {
-					isFileFound = true;
-					return imageCache.get(uId);
-				}
-				
-				try {
-					JrConnection conn = new JrConnection(
-												"File/GetImage", 
-												"File=" + fileKey, 
-												"Type=Full",
-												"Width=" + squareSize, 
-												"Height=" + squareSize, 
-												"Pad=1",
-												"Format=png",
-												"FillTransparency=ffffff");
-					if (isCancelled()) return null;
-					try {
-					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
-					isFileFound = true;
-					} finally {
-						conn.disconnect();
-					}
-				} catch (FileNotFoundException fe) {
-					isFileFound = false;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				if (returnBmp == null) {
-					if (emptyBitmap == null) {
-						int squareInt = Integer.parseInt(squareSize);
-						emptyBitmap = Bitmap.createBitmap(squareInt, squareInt, Bitmap.Config.ARGB_8888);
-					}
-					
-					returnBmp = emptyBitmap;
-				}
-				
-				while (imageQueue.size() >= cacheSize) {
-					String removeFileName;
-					try {
-						removeFileName = imageQueue.take();
-						if (imageCache.containsKey(removeFileName)) imageCache.remove(removeFileName);
-					} catch (InterruptedException e) {
-						e.printStackTrace();					
-						break;
-					}
-				}
-				
-				if (!imageCache.containsKey(uId)) {
-					imageQueue.add(uId);
-					imageCache.put(uId, returnBmp);
-				}
-				
-				return returnBmp;
-			}
-			
-			@Override
-			protected void onPostExecute(Bitmap result) {
-				mNowPlayingImg.setImageBitmap(result);
-				mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
-				mLoadingImg.setVisibility(View.INVISIBLE);
-				mNowPlayingImg.setVisibility(View.VISIBLE);
-			}
-		}
+	@Override
+	public void onStreamingStart(StreamingMusicService service, JrFile file) {		
+		setView(file);
+		mPause.setVisibility(View.VISIBLE);
+		mPlay.setVisibility(View.INVISIBLE);
+		
+		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
+
+		mTrackerThread = new Thread(new TrackerThread(file, mHandler));
+		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
+		mTrackerThread.setName("Tracker Thread");
+		mTrackerThread.start();
+	}
+	
+	@Override
+	public void onStreamingStop(StreamingMusicService service, JrFile file) {
+		mTrackerThread.interrupt();
+		
+		mPlay.setVisibility(View.VISIBLE);
+		mPause.setVisibility(View.INVISIBLE);
 	}
 }

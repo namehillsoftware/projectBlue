@@ -6,6 +6,7 @@ package com.lasthopesoftware.bluewater.services;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -57,7 +58,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	private static int mId = 42;
 	private WifiLock mWifiLock = null;
-//	private String mUrl;
 	private int mFileKey = -1;
 	private int mStartPos = 0;
 	private NotificationManager mNotificationMgr;
@@ -66,6 +66,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
+	
+	private static Object syncObject = new Object();
+	
+	private static HashSet<OnStreamingStartListener> mOnStreamingStartListeners = new HashSet<OnStreamingStartListener>();
+	private static HashSet<OnStreamingStopListener> mOnStreamingStopListeners = new HashSet<OnStreamingStopListener>();
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
@@ -118,6 +123,32 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		context.startService(svcIntent);
 	}
 	
+	public static void AddOnStreamingStartListener(OnStreamingStartListener listener) {
+		synchronized(syncObject) {
+			mOnStreamingStartListeners.add(listener);
+		}
+	}
+	
+	public static void AddOnStreamingStopListener(OnStreamingStopListener listener) {
+		synchronized(syncObject) {
+			mOnStreamingStopListeners.add(listener);
+		}
+	}
+	
+	public static void RemoveOnStreamingStartListener(OnStreamingStartListener listener) {
+		synchronized(syncObject) {
+			if (mOnStreamingStartListeners.contains(listener))
+				mOnStreamingStartListeners.remove(listener);
+		}
+	}
+	
+	public static void RemoveOnStreamingStopListener(OnStreamingStopListener listener) {
+		synchronized(syncObject) {
+			if (mOnStreamingStopListeners.contains(listener))
+				mOnStreamingStopListeners.remove(listener);
+		}
+	}
+	
 	public StreamingMusicService() {
 		super();
 		thisContext = this;
@@ -154,22 +185,15 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
 	        trackProgressThread.start();
         }
+        
+        synchronized(syncObject) {
+	        for (OnStreamingStartListener streamingStartListener : mOnStreamingStartListeners)
+	        	streamingStartListener.onStreamingStart(this, file);
+        }
 	}
 	
 	private void stopPlayback(boolean isUserInterrupted) {
-		
-		if (JrSession.PlayingFile != null) {
-			if (JrSession.PlayingFile.isPlaying()) {
-				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-				JrSession.PlayingFile.stop();
-			}
-			
-			JrSession.SaveSession(this);
-			JrSession.PlayingFile = null;
-		}
-		
-		releaseMediaPlayers();
-		stopNotification();
+		pausePlayback(isUserInterrupted);
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -185,6 +209,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		mFileKey = -1;
 		releaseMediaPlayers();
 		stopNotification();
+		
+		synchronized(syncObject) {
+			for (OnStreamingStopListener onStreamingStopListener : mOnStreamingStopListeners)
+				onStreamingStopListener.onStreamingStop(this, JrSession.PlayingFile);
+		}
 	}
 	
 	private void stopNotification() {
@@ -285,7 +314,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public void onJrFilePrepared(JrFile file) {
-		if (JrSession.PlayingFile == null && !file.isPlaying()) startMediaPlayer(file);
+		if (!file.isPlaying()) startMediaPlayer(file);
 	}
 	
 	/* (non-Javadoc)
@@ -354,17 +383,18 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		}
 		JrFile nextFile = file.getNextFile();
 		releaseMediaPlayer(file);
-		if (nextFile != null) {
-			nextFile.addOnJrFileCompleteListener(this);
-			nextFile.addOnJrFileErrorListener(this);
-			if (!nextFile.isPrepared()) {
-				nextFile.addOnJrFilePreparedListener(this);
-				nextFile.prepareMediaPlayer();
-			} else {
-				startMediaPlayer(nextFile);
-			}
+		
+		if (nextFile == null) return;
+		
+		nextFile.addOnJrFileCompleteListener(this);
+		nextFile.addOnJrFileErrorListener(this);
+		if (!nextFile.isPrepared()) {
+			nextFile.addOnJrFilePreparedListener(this);
+			nextFile.prepareMediaPlayer();
 			return;
-		}
+		} 
+		
+		startMediaPlayer(nextFile);
 	}
 
 
@@ -385,7 +415,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.PlayingFile.isPlaying()) stopPlayback(false);
+	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
 	            break;
 
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:

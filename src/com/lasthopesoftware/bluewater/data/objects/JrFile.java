@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -190,6 +192,8 @@ public class JrFile extends JrObject implements
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + params[0]);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+				    	owner.setResult(null);
+				    	if (xml.size() < 1) return;
 				    	
 				    	for (XmlElement el : xml.get(0)) {
 				    		if (!el.getAttribute("Name").equalsIgnoreCase(params[0])) continue;
@@ -218,16 +222,22 @@ public class JrFile extends JrObject implements
 		String result = null;
 		try {
 			
-			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get();
-			mProperties.put(name, result);
+			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get(5, TimeUnit.SECONDS);
+			if (result != null)
+				mProperties.put(name, result);
 			
 			if (filePropertyTask.getState() == SimpleTaskState.ERROR) {
 				for (Exception e : filePropertyTask.getExceptions()) {
 					if (e instanceof IOException) throw (IOException)e;
 				}
 			}
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		} catch (TimeoutException e1) {
+			if (mProperties.containsKey(name))
+				result = mProperties.get(name);
 		}
 		
 		return result;
@@ -377,6 +387,7 @@ public class JrFile extends JrObject implements
 					JrConnection conn = new JrConnection(params);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+				    	if (xml.size() < 1) return;
 				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
 				    	for (XmlElement el : xml.get(0))
 				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
