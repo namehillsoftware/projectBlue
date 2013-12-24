@@ -229,6 +229,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void releaseMediaPlayers() {
+		if (mPlaylist == null) return;
 		for (JrFile file : mPlaylist) releaseMediaPlayer(file);
 	}
 
@@ -275,15 +276,21 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		// If everything is the same as before, and stuff is playing, don't do anything else 
 		if (mPlaylistString != null && mPlaylistString.equals(playlistString) && mFileKey == fileKey && JrSession.PlayingFile.isPlaying()) return;
 		
+		// stop any playback that is in action
+		if (JrSession.PlayingFile != null) {
+			if (JrSession.PlayingFile.isPlaying())
+				JrSession.PlayingFile.stop();
+			
+			JrSession.PlayingFile = null;
+			releaseMediaPlayers();
+		}
+		
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
 			JrSession.Playlist = mPlaylistString;
 			mPlaylist = JrFiles.deserializeFileStringList(mPlaylistString);
 		}
-
-		// stop any playback that is in action
-		if (JrSession.PlayingFile != null) stopPlayback(false);
 		
 		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
 		mStartPos = filePos < 0 ? 0 : filePos;
