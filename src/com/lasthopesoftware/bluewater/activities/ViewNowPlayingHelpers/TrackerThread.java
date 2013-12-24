@@ -26,7 +26,7 @@ public class TrackerThread implements Runnable {
 					if (PollConnectionTask.Instance.get().isRunning()) {
 						msg = new Message();
 						msg.arg1 = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
-					} else if (mFile.isPlaying()) {
+					} else if (mFile !=null && mFile.isPlaying()) {
 						msg = new Message();
 						msg.arg1 = HandleViewNowPlayingMessages.UPDATE_PLAYING;
 					}

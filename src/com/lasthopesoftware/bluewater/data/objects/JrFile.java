@@ -234,7 +234,7 @@ public class JrFile extends JrObject implements
 			e.printStackTrace();
 		} catch (ExecutionException e) {
 			e.printStackTrace();
-		} catch (TimeoutException e1) {
+		} catch (TimeoutException te) {
 			if (mProperties.containsKey(name))
 				result = mProperties.get(name);
 		}
@@ -449,7 +449,7 @@ public class JrFile extends JrObject implements
 				String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
 				
 				int numberPlays = 0;
-				if (numberPlaysString != null) numberPlays = Integer.parseInt(numberPlaysString);
+				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
 				
 				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));				
 			} catch (IOException e) {

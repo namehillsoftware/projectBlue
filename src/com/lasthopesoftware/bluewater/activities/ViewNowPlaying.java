@@ -43,8 +43,8 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener {
-	private static Thread mTrackerThread;
-	private static HandleViewNowPlayingMessages mHandler;
+	private Thread mTrackerThread;
+	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
 	private ImageButton mPause;
 	private ImageButton mNext;
@@ -205,6 +205,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			mHideTimer.purge();
 		}
 		
+		if (mTrackerThread != null) mTrackerThread.interrupt();
 		StreamingMusicService.RemoveOnStreamingStartListener(this);
 		StreamingMusicService.RemoveOnStreamingStopListener(this);
 	}
