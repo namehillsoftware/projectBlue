@@ -124,15 +124,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public static void AddOnStreamingStartListener(OnStreamingStartListener listener) {
-		synchronized(syncObject) {
-			mOnStreamingStartListeners.add(listener);
-		}
+		mOnStreamingStartListeners.add(listener);
 	}
 	
 	public static void AddOnStreamingStopListener(OnStreamingStopListener listener) {
-		synchronized(syncObject) {
-			mOnStreamingStopListeners.add(listener);
-		}
+		mOnStreamingStopListeners.add(listener);
 	}
 	
 	public static void RemoveOnStreamingStartListener(OnStreamingStartListener listener) {
