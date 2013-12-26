@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import android.os.Message;
 
 
-public class TrackerThread implements Runnable {
+public class ProgressTrackerThread implements Runnable {
 		private JrFile mFile;
 		private HandleViewNowPlayingMessages mHandler;
 		
-		public TrackerThread(JrFile file, HandleViewNowPlayingMessages handler) {
+		public ProgressTrackerThread(JrFile file, HandleViewNowPlayingMessages handler) {
 			mFile = file;
 			mHandler = handler;
 		}

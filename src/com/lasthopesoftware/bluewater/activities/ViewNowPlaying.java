@@ -30,7 +30,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
-import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.TrackerThread;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
@@ -154,7 +154,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(new TrackerThread(JrSession.PlayingFile, mHandler));
+		mTrackerThread = new Thread(new ProgressTrackerThread(JrSession.PlayingFile, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
@@ -273,7 +273,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	}
 	
 	private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
-		private boolean isFileFound = false;
 		private ImageView mNowPlayingImg;
 		private ProgressBar mLoadingImg;
 		
@@ -304,7 +303,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			String squareSize = params[2];
 			
 			if (imageCache.get(uId) != null) {
-				isFileFound = true;
 				return imageCache.get(uId);
 			}
 			
@@ -312,21 +310,20 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				JrConnection conn = new JrConnection(
 											"File/GetImage", 
 											"File=" + fileKey, 
-											"Type=Full",
-//											"Width=" + squareSize, 
-//											"Height=" + squareSize, 
+											"Type=Full", 
 											"Pad=1",
 											"Format=png",
 											"FillTransparency=ffffff");
+				
 				if (isCancelled()) return null;
+				
 				try {
-				returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
-				isFileFound = true;
+					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 				} finally {
 					conn.disconnect();
 				}
 			} catch (FileNotFoundException fe) {
-				isFileFound = false;
+				fe.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -363,7 +360,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(new TrackerThread(file, mHandler));
+		mTrackerThread = new Thread(new ProgressTrackerThread(file, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
@@ -371,7 +368,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	
 	@Override
 	public void onStreamingStop(StreamingMusicService service, JrFile file) {
-		mTrackerThread.interrupt();
+		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);

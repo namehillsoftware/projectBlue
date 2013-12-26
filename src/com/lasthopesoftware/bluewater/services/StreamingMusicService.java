@@ -377,7 +377,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 
 	@Override
-	public void onJrFileComplete(JrFile file) {
+	public void onJrFileComplete(JrFile file) {		
 		mAudioManager.abandonAudioFocus(this);
 		// release the wifilock if we still have it
 		if (mWifiLock != null) {
@@ -385,6 +385,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			mWifiLock = null;
 		}
 		JrFile nextFile = file.getNextFile();
+		
+		synchronized(syncObject) {
+	        for (OnStreamingStopListener streamingStopListener : mOnStreamingStopListeners)
+	        	streamingStopListener.onStreamingStop(this, file);
+        }
+		
 		releaseMediaPlayer(file);
 		
 		if (nextFile == null) return;
@@ -395,7 +401,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			nextFile.addOnJrFilePreparedListener(this);
 			nextFile.prepareMediaPlayer();
 			return;
-		} 
+		}
 		
 		startMediaPlayer(nextFile);
 	}

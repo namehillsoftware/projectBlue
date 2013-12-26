@@ -33,6 +33,7 @@ public class JrConnection extends HttpURLConnection {
 	public void setConnection(URL url) throws IOException {
 		mHttpConnection = (HttpURLConnection)url.openConnection();
 		mHttpConnection.setConnectTimeout(5000);
+		mHttpConnection.setReadTimeout(180000);
 	}
 	
 	@Override

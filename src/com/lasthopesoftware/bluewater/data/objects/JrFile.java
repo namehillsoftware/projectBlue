@@ -7,8 +7,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -40,7 +38,7 @@ public class JrFile extends JrObject implements
 	private boolean preparing = false;
 	private int mPosition = 0;
 	private MediaPlayer mp;
-	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();;
+	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
@@ -189,6 +187,7 @@ public class JrFile extends JrObject implements
 				
 				try {
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + params[0]);
+					conn.setReadTimeout(5000);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
 				    	owner.setResult(null);
@@ -221,7 +220,7 @@ public class JrFile extends JrObject implements
 		String result = null;
 		try {
 			
-			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get(5, TimeUnit.SECONDS);
+			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get();
 			if (result != null)
 				mProperties.put(name, result);
 			
@@ -234,9 +233,6 @@ public class JrFile extends JrObject implements
 			e.printStackTrace();
 		} catch (ExecutionException e) {
 			e.printStackTrace();
-		} catch (TimeoutException te) {
-			if (mProperties.containsKey(name))
-				result = mProperties.get(name);
 		}
 		
 		return result;
@@ -429,8 +425,9 @@ public class JrFile extends JrObject implements
 		public void run() {
 			try {
 				JrConnection conn = new JrConnection("File/SetInfo", "File=" + String.valueOf(mKey), "Field=" + mName, "Value=" + mValue);
+				conn.setReadTimeout(5000);
 				conn.getInputStream();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}

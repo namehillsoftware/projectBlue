@@ -15,7 +15,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<JrPlaylist> {
-	private ArrayList<JrPlaylist> mSubItems;
+
 	private SparseArray<JrPlaylist> mMappedPlaylists;
 	private ArrayList<OnStartListener<List<JrPlaylist>>> mItemStartListeners = new ArrayList<OnStartListener<List<JrPlaylist>>>(1);
 	private ArrayList<OnErrorListener<List<JrPlaylist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<JrPlaylist>>>(1);
