@@ -138,18 +138,9 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			}
 		});
 		
-		mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
-			
-			@Override
-			public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-				if (!fromUser || !mControlNowPlaying.isShown()) return;
-				JrSession.PlayingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
-			}
-		});
-		
-		mHandler = new HandleViewNowPlayingMessages(this);
-		
 		if (JrSession.PlayingFile == null) return; 
+		
+		mHandler = new HandleViewNowPlayingMessages(this, JrSession.PlayingFile);
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
@@ -190,7 +181,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				StreamingMusicService.Pause(v.getContext());
 				return;
 			}
-						
+			
 			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
 			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
 		}
@@ -236,6 +227,15 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty()) {
 				mSongRating.setRating(Float.valueOf(playingFile.getProperty("Rating")));
 				mSongRating.invalidate();
+				
+				mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+					
+					@Override
+					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+						if (!fromUser || !mControlNowPlaying.isShown()) return;
+						playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
+					}
+				});
 			}
 			mSongProgress.setProgress(playingFile.getCurrentPosition());
 		} catch (IOException ioE) {
@@ -352,6 +352,8 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		setView(file);
 		mPause.setVisibility(View.VISIBLE);
 		mPlay.setVisibility(View.INVISIBLE);
+		
+		mHandler = new HandleViewNowPlayingMessages(this, file);
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 

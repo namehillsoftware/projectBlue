@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 
 import android.os.Handler;
@@ -21,9 +22,13 @@ public class HandleViewNowPlayingMessages extends Handler {
 	
 	private ProgressBar mSongProgress;
 	private ViewNowPlaying mOwner;
+	private JrFile mFile;
 
-	public HandleViewNowPlayingMessages(ViewNowPlaying owner) {
+	public HandleViewNowPlayingMessages(ViewNowPlaying owner, JrFile file) {
+		super();
+		
 		mOwner = owner;
+		mFile = file;
 		mSongProgress = (ProgressBar) mOwner.findViewById(R.id.pbNowPlaying);
 	}
 
@@ -34,14 +39,14 @@ public class HandleViewNowPlayingMessages extends Handler {
 			WaitForConnectionDialog.show(mOwner);
 			return;
 		case UPDATE_PLAYING:
-			if (JrSession.PlayingFile == null) return;
+			if (mFile == null) return;
 			
 			try {
-				mSongProgress.setMax(JrSession.PlayingFile.getDuration());
+				mSongProgress.setMax(mFile.getDuration());
 			} catch (IOException e) {
 				WaitForConnectionDialog.show(mOwner);
 			}
-			mSongProgress.setProgress(JrSession.PlayingFile.getCurrentPosition());
+			mSongProgress.setProgress(mFile.getCurrentPosition());
 			return;
 		case HIDE_CONTROLS:
 			mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);

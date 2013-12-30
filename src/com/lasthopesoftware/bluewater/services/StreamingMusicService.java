@@ -173,11 +173,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private void startFilePlayback(JrFile file) {
 		JrSession.PlayingFile = file;
 		mFileKey = file.getKey();
+		JrSession.SaveSession(this);
+		// Start playback immediately
+		file.start();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
-        mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "svcLock");
+        mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "project_blue_water_svc_lock");
         mWifiLock.acquire();
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
@@ -191,7 +194,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		builder.setContentIntent(pi);
 		mNotificationMgr.notify(mId, builder.build());        
         
-        file.start();
         mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, file);
         if (file.getNextFile() != null) {
@@ -234,12 +236,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		
 		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
 		mStartPos = filePos < 0 ? 0 : filePos;
-		
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		builder.setContentTitle("Starting Music Streamer");
-        startForeground(mId, builder.build());
         
         for (JrFile file : mPlaylist) {
 			if (file.getKey() != mFileKey) continue;
@@ -252,6 +248,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         	file.prepareMediaPlayer(); // prepare async to not block main thread
         	break;
 		}
+        
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		builder.setContentTitle("Starting Music Streamer");
+        startForeground(mId, builder.build());
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
