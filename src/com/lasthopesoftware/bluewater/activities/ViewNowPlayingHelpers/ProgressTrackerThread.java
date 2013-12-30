@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers;
 
+import java.io.IOException;
+
 import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 
@@ -7,35 +9,41 @@ import android.os.Message;
 
 
 public class ProgressTrackerThread implements Runnable {
-		private JrFile mFile;
-		private HandleViewNowPlayingMessages mHandler;
+	private JrFile mFile;
+	private HandleViewNowPlayingMessages mHandler;
+	
+	public ProgressTrackerThread(JrFile file, HandleViewNowPlayingMessages handler) {
+		mFile = file;
+		mHandler = handler;
+	}
+	
+	@Override
+	public void run() {
+		Message msg;
 		
-		public ProgressTrackerThread(JrFile file, HandleViewNowPlayingMessages handler) {
-			mFile = file;
-			mHandler = handler;
-		}
-		
-		@Override
-		public void run() {
-			Message msg;
-			
-			while (true) {
-				try {
-					
-					msg = null;
-					if (PollConnectionTask.Instance.get().isRunning()) {
-						msg = new Message();
-						msg.arg1 = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
-					} else if (mFile !=null && mFile.isPlaying()) {
-						msg = new Message();
-						msg.arg1 = HandleViewNowPlayingMessages.UPDATE_PLAYING;
+		while (true) {
+			try {
+				
+				msg = null;
+				if (PollConnectionTask.Instance.get().isRunning()) {
+					msg = new Message();
+					msg.what = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
+				} else if (mFile !=null && mFile.isPlaying()) {
+					msg = new Message();
+					msg.what = HandleViewNowPlayingMessages.UPDATE_PLAYING;
+					msg.arg1 = mFile.getCurrentPosition();
+					try {
+						msg.arg2 = mFile.getDuration();
+					} catch (IOException e) {
+						msg.what = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
 					}
-					if (msg != null) mHandler.sendMessage(msg);
-					
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					return;
 				}
+				if (msg != null) mHandler.sendMessage(msg);
+				
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				return;
 			}
 		}
 	}
+}

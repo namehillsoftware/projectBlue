@@ -269,7 +269,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		mFileKey = -1;
 		releaseMediaPlayers();
 		stopNotification();
-		stopSelfResult(mStartId);
+		if (isUserInterrupted) stopSelfResult(mStartId);
 	}
 	
 	private void stopNotification() {
@@ -349,7 +349,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.PlayingFile = file;
 		JrSession.Playlist = mPlaylistString;
 		JrSession.SaveSession(this);		
-		pausePlayback(true);
+		pausePlayback(false);
 		
 		switch (what) {
 			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:

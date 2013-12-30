@@ -54,7 +54,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
-	private ProgressBar mSongProgress;
+	private ProgressBar mSongProgressBar;
 	private ProgressBar mLoadingImg;
 	private ImageView mNowPlayingImg;
 	private TextView mNowPlayingArtist;
@@ -93,7 +93,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 					@Override
 					public void run() {
 						Message msg = new Message();
-						msg.arg1 = HandleViewNowPlayingMessages.HIDE_CONTROLS;
+						msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
 						mHandler.sendMessage(msg);
 					}
 				};
@@ -106,7 +106,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		mNext = (ImageButton) findViewById(R.id.btnNext);
 		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
-		mSongProgress = (ProgressBar) findViewById(R.id.pbNowPlaying);
+		mSongProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
 		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
 		mNowPlayingImg = (ImageView) findViewById(R.id.imgNowPlaying);
 		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
@@ -138,9 +138,9 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			}
 		});
 		
-		if (JrSession.PlayingFile == null) return; 
+		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		mHandler = new HandleViewNowPlayingMessages(this, JrSession.PlayingFile);
+		if (JrSession.PlayingFile == null) return;
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
@@ -212,6 +212,10 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		return mViewCoverArt;
 	}
 	
+	public ProgressBar getSongProgressBar() {
+		return mSongProgressBar;
+	}
+	
 	private void setView(JrFile file) {
 		final JrFile playingFile = file;
 		
@@ -222,7 +226,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			artist = playingFile.getProperty("Artist");
 			album = playingFile.getProperty("Album");
 			
-			mSongProgress.setMax(playingFile.getDuration());
+			mSongProgressBar.setMax(playingFile.getDuration());
 			mSongRating.setRating(0);
 			if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty()) {
 				mSongRating.setRating(Float.valueOf(playingFile.getProperty("Rating")));
@@ -237,7 +241,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 					}
 				});
 			}
-			mSongProgress.setProgress(playingFile.getCurrentPosition());
+			mSongProgressBar.setProgress(playingFile.getCurrentPosition());
 		} catch (IOException ioE) {
 			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 				
@@ -352,8 +356,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		setView(file);
 		mPause.setVisibility(View.VISIBLE);
 		mPlay.setVisibility(View.INVISIBLE);
-		
-		mHandler = new HandleViewNowPlayingMessages(this, file);
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
