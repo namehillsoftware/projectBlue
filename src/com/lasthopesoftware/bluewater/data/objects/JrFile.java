@@ -153,51 +153,31 @@ public class JrFile extends JrObject implements
 	
 	public String getProperty(String name) throws IOException {
 		
-		if (mProperties.size() == 0) {
-			try {
-				SimpleTask<String, Void, Map<String, String>> filePropertiesTask = getFilePropertiesTask();
-				mProperties.putAll(filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "File/GetInfo", "File=" + String.valueOf(getKey())).get());
-				
-				if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
-					for (Exception e : filePropertiesTask.getExceptions()) {
-						if (e instanceof IOException) throw (IOException)e;
-					}
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
-		}
-		else if (!mProperties.containsKey(name)) {
+		if (mProperties.size() == 0 || !mProperties.containsKey(name))
 			return getRefreshedProperty(name);
-		}
+		
 		return mProperties.get(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
-		if (mProperties.size() == 0) return getProperty(name);
+		String result = null;
 		
-		SimpleTask<String, Void, String> filePropertyTask = new SimpleTask<String, Void, String>();
-		
-		filePropertyTask.addOnExecuteListener(new OnExecuteListener<String, Void, String>() {
+		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
+		SimpleTask<String, Void, Map<String,String>> filePropertiesTask = new SimpleTask<String, Void, Map<String,String>>();
+		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, Map<String,String>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, String> owner, String... params) throws Exception {
-				
+			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
+				HashMap<String, String> returnProperties = new HashMap<String, String>();
+
 				try {
-					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()), "Fields=" + params[0]);
-					conn.setReadTimeout(5000);
+					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()));
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
-				    	owner.setResult(null);
 				    	if (xml.size() < 1) return;
-				    	
-				    	for (XmlElement el : xml.get(0)) {
-				    		if (!el.getAttribute("Name").equalsIgnoreCase(params[0])) continue;
-				    		owner.setResult(el.getValue());
-				    		break;
-				    	}
+				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
+				    	for (XmlElement el : xml.get(0))
+				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
 					} finally {
 						conn.disconnect();
 					}
@@ -206,26 +186,29 @@ public class JrFile extends JrObject implements
 				} catch (XmlParseException e) {
 					e.printStackTrace();
 				}
+				
+				owner.setResult(returnProperties);
 			}
 		});
 		
-		filePropertyTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, String>() {
+		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Map<String,String>>() {
 			
 			@Override
-			public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
+			public boolean onError(ISimpleTask<String, Void, Map<String, String>> owner, Exception innerException) {
 				return !(innerException instanceof IOException);
 			}
 		});
-		
-		String result = null;
+
 		try {
+			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			
-			result = filePropertyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, name).get();
-			if (result != null)
-				mProperties.put(name, result);
+			if (filePropertiesResult.containsKey(name))
+				result = filePropertiesResult.get(name);
 			
-			if (filePropertyTask.getState() == SimpleTaskState.ERROR) {
-				for (Exception e : filePropertyTask.getExceptions()) {
+			mProperties.putAll(filePropertiesResult);
+			
+			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
+				for (Exception e : filePropertiesTask.getExceptions()) {
 					if (e instanceof IOException) throw (IOException)e;
 				}
 			}
@@ -252,10 +235,6 @@ public class JrFile extends JrObject implements
 	public boolean isMediaPlayerCreated() {
 		return mp != null;
 	}
-	
-//	public synchronized MediaPlayer getMediaPlayer() {
-//		return mp;
-//	}
 	
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
@@ -368,46 +347,6 @@ public class JrFile extends JrObject implements
 	
 	public void setVolume(float volume) {
 		mp.setVolume(volume, volume);
-	}
-	
-	private SimpleTask<String, Void, Map<String, String>> getFilePropertiesTask() {
-		SimpleTask<String, Void, Map<String,String>> filePropertiesTask = new SimpleTask<String, Void, Map<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, Map<String,String>>() {
-			
-			@Override
-			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
-				HashMap<String, String> returnProperties = new HashMap<String, String>();
-
-				try {
-					JrConnection conn = new JrConnection(params);
-					try {
-				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
-				    	if (xml.size() < 1) return;
-				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
-				    	for (XmlElement el : xml.get(0))
-				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-					} finally {
-						conn.disconnect();
-					}
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				} catch (XmlParseException e) {
-					e.printStackTrace();
-				}
-				
-				owner.setResult(returnProperties);
-			}
-		});
-		
-		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Map<String,String>>() {
-			
-			@Override
-			public boolean onError(ISimpleTask<String, Void, Map<String, String>> owner, Exception innerException) {
-				return !(innerException instanceof IOException);
-			}
-		});
-		
-		return filePropertiesTask;
 	}
 	
 	private static class SetProperty implements Runnable {

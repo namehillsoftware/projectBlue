@@ -6,7 +6,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -253,9 +252,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		mNowPlayingArtist.setText(artist);
 		mNowPlayingTitle.setText(playingFile.getValue());
 
-		try {
-			int size = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? getResources().getDisplayMetrics().heightPixels : getResources().getDisplayMetrics().widthPixels;
-			
+		try {			
 			// Cancel the getFileImageTask if it is already in progress
 			if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
 				getFileImageTask.cancel(true);
@@ -263,7 +260,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			
 			getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 			
-			getFileImageTask.execute(album == null ? playingFile.getKey().toString() : (artist + ":" + album), playingFile.getKey().toString(), String.valueOf(size));
+			getFileImageTask.execute(album == null ? playingFile.getKey().toString() : (artist + ":" + album), playingFile.getKey().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -300,7 +297,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			Bitmap returnBmp = null;
 			String uId = params[0];
 			String fileKey = params[1];
-			String squareSize = params[2];
 			
 			if (imageCache.get(uId) != null) {
 				return imageCache.get(uId);
@@ -330,8 +326,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			
 			if (returnBmp == null) {
 				if (emptyBitmap == null) {
-					int squareInt = Integer.parseInt(squareSize);
-					emptyBitmap = Bitmap.createBitmap(squareInt, squareInt, Bitmap.Config.ARGB_8888);
+					emptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 				}
 				
 				returnBmp = emptyBitmap;
