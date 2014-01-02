@@ -37,9 +37,7 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 	@Override
 	public ArrayList<JrPlaylist> getSubItems() {
 		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
-		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(mSubItems.size());
-		returnList.addAll(mSubItems.values());
-		return returnList;
+		return new ArrayList<JrPlaylist>(mSubItems.values());
 	}
 	
 	public void addPlaylist(JrPlaylist playlist) {

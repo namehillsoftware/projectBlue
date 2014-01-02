@@ -36,15 +36,6 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 		}
 	};
 	
-	private OnCompleteListener<List<JrPlaylist>> mOnCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
-			mSubItems = new ArrayList<JrPlaylist>(result.size());			
-		}
-		
-	};
-	
 	public JrPlaylists(int key) {
 		setKey(key);
 		setValue("Playlist");
@@ -76,10 +67,9 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrPlaylist>> listener) {
 		if (mOnCompleteListeners == null) {
 			mOnCompleteListeners = new ArrayList<OnCompleteListener<List<JrPlaylist>>>();
-			mOnCompleteListeners.add(mOnCompleteListener);
 		}
-		if (mOnCompleteListeners.size() < 2) mOnCompleteListeners.add(listener);
-		mOnCompleteListeners.set(1, listener);
+		if (mOnCompleteListeners.size() < 1) mOnCompleteListeners.add(listener);
+		mOnCompleteListeners.set(0, listener);
 	}
 
 	@Override

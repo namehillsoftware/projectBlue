@@ -59,6 +59,7 @@ public class ViewPlaylists extends FragmentActivity {
 					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
 					
 					mPlaylist = ((JrPlaylists)item).getMappedPlaylists().get(mPlaylistId);
+					break;
 				}
 				
 				BuildPlaylistView();
