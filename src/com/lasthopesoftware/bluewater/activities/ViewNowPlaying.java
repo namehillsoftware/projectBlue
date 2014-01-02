@@ -65,7 +65,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		if (!JrSession.Active) JrSession.CreateSession(this);
+		if (!JrSession.isActive()) JrSession.CreateSession(this);
 		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);

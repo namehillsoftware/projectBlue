@@ -318,7 +318,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
-		} else if (!JrSession.Active) {
+		} else if (!JrSession.isActive()) {
 			if (JrSession.CreateSession(this)) pausePlayback(true);
 		}
 		return START_NOT_STICKY;
@@ -423,7 +423,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	        	if (!JrSession.Active && !JrSession.CreateSession(this)) return;
+	        	if (!JrSession.isActive() && !JrSession.CreateSession(this)) return;
 	        	
 	        	if (!JrSession.PlayingFile.isPlaying())
 	        		startPlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());

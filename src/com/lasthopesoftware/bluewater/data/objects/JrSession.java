@@ -46,7 +46,7 @@ public class JrSession {
 
 	public static JrFileSystem JrFs;
 
-	public static boolean Active = false;
+	private static boolean mActive = false;
 
 	public static void SaveSession(Context context) {
 		SaveSession(context.getSharedPreferences(PREFS_FILE, 0).edit());
@@ -79,25 +79,25 @@ public class JrSession {
 		UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
 		IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
 		setLibraryKeys(prefs.getStringSet(LIBRARY_KEY, new HashSet<String>()));
-		Active = false;
+		mActive = false;
 		
 		if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
 		
 		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(getLibraryKeys());
-		Active = true;
+		mActive = true;
 
 		try {
 			Playlist = prefs.getString(PLAYLIST_KEY, "");
 		} catch (ClassCastException ce) {
 			Playlist = null;
-			return Active;
+			return mActive;
 		}
 
 		int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
 		int savedFilePos = prefs.getInt(NP_POSITION, -1);
 
 
-		if (savedFileKey < 0) return Active;
+		if (savedFileKey < 0) return mActive;
 		String savedFileKeyString = String.valueOf(savedFileKey);
 		for (String fileKey : Playlist.split(";")) {
 			if (!savedFileKeyString.equals(fileKey)) continue;
@@ -105,7 +105,7 @@ public class JrSession {
 			if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
 		}
 
-		return Active;
+		return mActive;
 	}
 	
 	public static void setLibraryKeys(int[] keys) {
@@ -117,6 +117,10 @@ public class JrSession {
 		SelectedLibraryKeys = new int[keys.size()];
 		for (String key : keys)
 			SelectedLibraryKeys[i++] = Integer.parseInt(key);
+	}
+	
+	public static boolean isActive() {
+		return mActive;
 	}
 	
 	public static int[] getLibraryKeys() {
