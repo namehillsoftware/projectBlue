@@ -143,7 +143,7 @@ public class JrFile extends JrObject implements
 	public void setProperty(String name, String value) {
 		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
 		
-		Thread setPropertyThread = new Thread(new SetProperty(getKey(), name, value));
+		Thread setPropertyThread = new Thread(new SetPropertyRunner(getKey(), name, value));
 		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
 		setPropertyThread.setPriority(Thread.MIN_PRIORITY);
 		setPropertyThread.start();
@@ -287,7 +287,7 @@ public class JrFile extends JrObject implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		Thread updateStatsThread = new Thread(new UpdatePlayStats(this));
+		Thread updateStatsThread = new Thread(new UpdatePlayStatsRunner(this));
 		updateStatsThread.setName("Asynchronous Update Stats Thread for " + getValue());
 		updateStatsThread.setPriority(Thread.MIN_PRIORITY);
 		updateStatsThread.start();
@@ -315,8 +315,11 @@ public class JrFile extends JrObject implements
 	}
 	
 	public int getDuration() throws IOException {
-		if (mp == null) {
-			return (int) (Double.parseDouble(getProperty("Duration")) * 1000);
+		if (mp == null || !isPrepared()) {
+			String durationToParse = getProperty("Duration");
+			if (durationToParse != null && !durationToParse.isEmpty())
+				return (int) (Double.parseDouble(durationToParse) * 1000);
+			throw new IOException("Duration was not present in the song properties.");
 		}
 		return mp.getDuration();
 	}
@@ -349,12 +352,12 @@ public class JrFile extends JrObject implements
 		mp.setVolume(volume, volume);
 	}
 	
-	private static class SetProperty implements Runnable {
+	private static class SetPropertyRunner implements Runnable {
 		private int mKey;
 		private String mName;
 		private String mValue;
 		
-		public SetProperty(int key, String name, String value) {
+		public SetPropertyRunner(int key, String name, String value) {
 			mKey = key;
 			mName = name;
 			mValue = value;
@@ -372,10 +375,10 @@ public class JrFile extends JrObject implements
 		}
 	}
 	
-	private static class UpdatePlayStats implements Runnable {
+	private static class UpdatePlayStatsRunner implements Runnable {
 		private JrFile mFile;
 		
-		public UpdatePlayStats(JrFile file) {
+		public UpdatePlayStatsRunner(JrFile file) {
 			mFile = file;
 		}
 		

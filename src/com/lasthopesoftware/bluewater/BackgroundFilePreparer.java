@@ -27,20 +27,21 @@ public class BackgroundFilePreparer implements Runnable {
 		mNextFile.initMediaPlayer(mContext);
 		double bufferTime = -1;
 		while (mCurrentFile != null && mCurrentFile.isMediaPlayerCreated()) {
+			try {
+				Thread.sleep(SLEEP_TIME);
+			} catch (InterruptedException ie) {
+				return;
+			}
 			
 			if (bufferTime < 0) {
 				// figure out how much buffer time we need for this file if we're on the slowest 3G network
 				// and add 15secs for a dropped connection  
 				try {
-					bufferTime = (((Double.parseDouble(mNextFile.getProperty("Duration")) * 1000 * 128) / 384) * 1.2) + 15000;
+					if (mNextFile.getDuration() < 0) continue;
+					bufferTime = (((mNextFile.getDuration() * 128) / 384) * 1.2) + 15000;
 				} catch (IOException e) {
 					e.printStackTrace();
 					bufferTime = -1;
-					try {
-						Thread.sleep(SLEEP_TIME);
-					} catch (InterruptedException e1) {
-						return;
-					}
 					continue;
 				}
 			}
@@ -48,7 +49,6 @@ public class BackgroundFilePreparer implements Runnable {
 				if (mCurrentFile.getCurrentPosition() > (mCurrentFile.getDuration() - bufferTime) && !mNextFile.isPrepared()) {
 					mNextFile.prepareMpSynchronously();
 				}
-				Thread.sleep(SLEEP_TIME);
 			} catch (Exception e) {
 				return;
 			}
