@@ -423,32 +423,28 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	            /*if (Playlist == null || Playlist.isEmpty()) initMediaPlayers();
-	            else */
-	        	if (!JrSession.PlayingFile.isMediaPlayerCreated()) {
-	        		startPlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey());
-	        	} else if (!JrSession.PlayingFile.isPlaying()) {
-	            	startFilePlayback(JrSession.PlayingFile);
-	            }
+	        	if (!JrSession.Active && !JrSession.CreateSession(this)) return;
+	        	
+	        	if (!JrSession.PlayingFile.isPlaying())
+	        		startPlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());
+	        	
 	            JrSession.PlayingFile.setVolume(1.0f);
-	            break;
-
+	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	            // Lost focus for an unbounded amount of time: stop playback and release media player
 	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
-	            break;
-
+	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	            // Lost focus for a short time, but we have to stop
 	            // playback. We don't release the media player because playback
 	            // is likely to resume
 	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
-	            break;
+	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
 	            if (JrSession.PlayingFile.isPlaying()) JrSession.PlayingFile.setVolume(0.1f);
-	            break;
+	            return;
 	    }
 	}
 	
