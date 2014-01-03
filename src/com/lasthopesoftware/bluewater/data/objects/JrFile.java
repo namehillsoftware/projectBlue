@@ -202,18 +202,18 @@ public class JrFile extends JrObject implements
 		try {
 			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			
-			if (filePropertiesResult == null) return null;
-			
-			if (filePropertiesResult.containsKey(name))
-				result = filePropertiesResult.get(name);
-			
-			mProperties.putAll(filePropertiesResult);
-			
 			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
 				for (Exception e : filePropertiesTask.getExceptions()) {
 					if (e instanceof IOException) throw (IOException)e;
 				}
 			}
+			
+			if (filePropertiesResult == null) return mProperties.containsKey(name) ? mProperties.get(name) : null;
+			
+			if (filePropertiesResult.containsKey(name))
+				result = filePropertiesResult.get(name);
+			
+			mProperties.putAll(filePropertiesResult);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (ExecutionException e) {
