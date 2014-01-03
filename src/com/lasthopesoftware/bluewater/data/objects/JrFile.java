@@ -202,6 +202,8 @@ public class JrFile extends JrObject implements
 		try {
 			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			
+			if (filePropertiesResult == null) return null;
+			
 			if (filePropertiesResult.containsKey(name))
 				result = filePropertiesResult.get(name);
 			
