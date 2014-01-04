@@ -34,6 +34,8 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 
@@ -171,35 +173,50 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 
 	private void startFilePlayback(JrFile file) {
-		JrSession.PlayingFile = file;
-		mFileKey = file.getKey();
+		final JrFile playingFile = file;
+		JrSession.PlayingFile = playingFile;
+		mFileKey = playingFile.getKey();
 		JrSession.SaveSession(this);
 		// Start playback immediately
-		file.start();
+		playingFile.start();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
+		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "project_blue_water_svc_lock");
         mWifiLock.acquire();
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		builder.setContentTitle("Music Streamer Now Playing");
-		try {
-			builder.setContentText(file.getProperty("Artist") + " - " + file.getValue());
-		} catch (IOException e) {
-			builder.setContentText("Error getting file properties.");
-		}
-		builder.setContentIntent(pi);
-		mNotificationMgr.notify(mId, builder.build());        
+		
+		SimpleTask<Void, Void, String> getFilePropertiesTask = new SimpleTask<Void, Void, String>();
+		getFilePropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			
+			@Override
+			public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				owner.setResult(playingFile.getProperty("Artist") + " - " + playingFile.getValue());
+			}
+		});
+		getFilePropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+				NotificationCompat.Builder builder = new NotificationCompat.Builder(thisContext);
+		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+				builder.setOngoing(true);
+				builder.setContentTitle("Music Streamer Now Playing");
+				builder.setContentText(result);
+				builder.setContentIntent(pi);
+				mNotificationMgr.notify(mId, builder.build());
+			}
+		});
+		
+		getFilePropertiesTask.execute();
         
         mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, file);
-        if (file.getNextFile() != null) {
+        
+        if (playingFile.getNextFile() != null) {
+        	BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, playingFile);
         	if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 	        trackProgressThread = new Thread(backgroundProgressThread);
-	        trackProgressThread.setName("Thread to prepare file " + file.getNextFile().getValue());
+	        trackProgressThread.setName("Thread to prepare next file.");
 	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
 	        trackProgressThread.start();
         }
@@ -351,8 +368,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.SaveSession(this);		
 		pausePlayback(false);
 		
-		switch (what) {
-			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+//		switch (what) {
+//			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
 				builder = new NotificationCompat.Builder(this);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
@@ -378,14 +395,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 				});
 				
 				checkConnection.startPolling();
-				break;
-			default:
-				builder = new NotificationCompat.Builder(this);
-		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-				builder.setOngoing(false);
-				builder.setContentTitle("An error has occurred during playback.");
-				break;
-		}
+//				break;
+//			default:
+//				builder = new NotificationCompat.Builder(this);
+//		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+//				builder.setOngoing(false);
+//				builder.setContentTitle("An error has occurred during playback.");
+//				break;
+//		}
 		return true;
 	}
 

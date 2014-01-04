@@ -7,9 +7,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -45,7 +44,7 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
-	private static Executor fileStatsExecutor = Executors.newSingleThreadExecutor();
+	private static ExecutorService fileStatsExecutor = Executors.newSingleThreadExecutor();
 	
 	public JrFile(int key) {
 		this();

@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.content.Context;
 import android.text.TextUtils.TruncateAt;

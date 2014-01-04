@@ -40,6 +40,9 @@ import com.lasthopesoftware.bluewater.services.OnStreamingStopListener;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener {
 	private Thread mTrackerThread;
@@ -60,6 +63,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 	private static GetFileImage getFileImageTask;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -216,31 +220,120 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		return mSongProgressBar;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void setView(JrFile file) {
 		final JrFile playingFile = file;
-		
-		String artist = "";
-		String album = "";
-		
+				
 		try {
-			artist = playingFile.getProperty("Artist");
-			album = playingFile.getProperty("Album");
+			@SuppressWarnings("rawtypes")
+			OnErrorListener onSimpleIoExceptionErrors = new OnErrorListener() {
+				
+				@Override
+				public boolean onError(ISimpleTask owner, Exception innerException) {
+					return !(innerException instanceof IOException);
+				}
+			};
+			
+			SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
+			getArtistTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+				
+				@Override
+				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					owner.setResult(playingFile.getProperty("Artist"));
+				}
+			});
+			getArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					mNowPlayingArtist.setText(result);
+				}
+			});
+			getArtistTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getArtistTask.execute();
+			
+			SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
+			getTitleTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+				
+				@Override
+				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					owner.setResult(playingFile.getValue());
+				}
+			});
+			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					mNowPlayingTitle.setText(result);
+				}
+			});
+			getTitleTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getTitleTask.execute();
+			
+			SimpleTask<Void, Void, String> getAlbumTask = new SimpleTask<Void, Void, String>();
+			getAlbumTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+				
+				@Override
+				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					if (playingFile.getProperty("Album") != null)
+						owner.setResult(playingFile.getProperty("Artist") + ":" + playingFile.getProperty("Album"));
+				}
+			});
+			getAlbumTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					try {			
+						// Cancel the getFileImageTask if it is already in progress
+						if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+							getFileImageTask.cancel(true);
+						}
+						
+						getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
+						
+						getFileImageTask.execute(result == null ? playingFile.getKey().toString() : (result), playingFile.getKey().toString());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			getAlbumTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getAlbumTask.execute();
+			
+			SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
+			getRatingsTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
+				
+				@Override
+				public void onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+					owner.setResult((float) 0);
+					if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty())
+						owner.setResult(Float.valueOf(playingFile.getProperty("Rating")));
+				}
+			});
+			getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
+					
+					mSongRating.setRating(result);
+					mSongRating.invalidate();
+					
+					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+						
+						@Override
+						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+							if (!fromUser || !mControlNowPlaying.isShown()) return;
+							playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
+						}
+					});
+				}
+			});
+			getRatingsTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getRatingsTask.execute();
+			
 			
 			mSongProgressBar.setMax(playingFile.getDuration());
-			mSongRating.setRating(0);
-			if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty()) {
-				mSongRating.setRating(Float.valueOf(playingFile.getProperty("Rating")));
-				mSongRating.invalidate();
-				
-				mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
-					
-					@Override
-					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-						if (!fromUser || !mControlNowPlaying.isShown()) return;
-						playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
-					}
-				});
-			}
+			
 			mSongProgressBar.setProgress(playingFile.getCurrentPosition());
 		} catch (IOException ioE) {
 			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
@@ -251,22 +344,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				}
 			});
 			WaitForConnectionDialog.show(this);
-		}
-		
-		mNowPlayingArtist.setText(artist);
-		mNowPlayingTitle.setText(playingFile.getValue());
-
-		try {			
-			// Cancel the getFileImageTask if it is already in progress
-			if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
-				getFileImageTask.cancel(true);
-			}
-			
-			getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
-			
-			getFileImageTask.execute(album == null ? playingFile.getKey().toString() : (artist + ":" + album), playingFile.getKey().toString());
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		mPlay.setVisibility(!file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
