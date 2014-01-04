@@ -1,15 +1,17 @@
 package com.lasthopesoftware.bluewater.activities.adapters;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
@@ -20,7 +22,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
-	private Context mContext;
+	private Context mContext; 
 	
 	public FileListAdapter(Context context, ArrayList<JrFile> files) {
 		mFiles = files;
@@ -44,6 +46,8 @@ public class FileListAdapter extends BaseAdapter {
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
+		final ListView parentListView = (ListView)parent;
+		final int listPosition = position;		
 		final JrFile file = mFiles.get(position);
 		
 		// Layout parameters for the ExpandableListView
@@ -66,6 +70,7 @@ public class FileListAdapter extends BaseAdapter {
 			
 			@Override
 			public void onExecute(ISimpleTask<String, Void, String> owner, String... params) throws Exception {
+				if ((listPosition < parentListView.getFirstVisiblePosition() - 10) || (listPosition > parentListView.getLastVisiblePosition() + 10)) return;
 				owner.setResult(file.getValue());
 			}
 		});
@@ -78,7 +83,7 @@ public class FileListAdapter extends BaseAdapter {
 			}
 		});
         
-        getFileNameTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
+        getFileNameTask.execute();
                 
 		return textView;
 	}

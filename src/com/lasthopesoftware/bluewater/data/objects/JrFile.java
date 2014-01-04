@@ -7,6 +7,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -42,6 +45,7 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
+	private static Executor fileStatsExecutor = Executors.newSingleThreadExecutor();
 	
 	public JrFile(int key) {
 		this();
@@ -142,11 +146,22 @@ public class JrFile extends JrObject implements
 		
 	public void setProperty(String name, String value) {
 		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
-		
-		Thread setPropertyThread = new Thread(new SetPropertyRunner(getKey(), name, value));
-		setPropertyThread.setName(setPropertyThread.getName() + "setting property");
-		setPropertyThread.setPriority(Thread.MIN_PRIORITY);
-		setPropertyThread.start();
+
+		AsyncTask<String, Void, Boolean> setPropertyTask = new AsyncTask<String, Void, Boolean>() {
+			
+			@Override
+			protected Boolean doInBackground(String... params) {
+				try {
+					JrConnection conn = new JrConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
+					conn.setReadTimeout(5000);
+					conn.getInputStream();
+					return true;
+				} catch (Exception e) {
+					return false;
+				}
+			}
+		};
+		setPropertyTask.executeOnExecutor(fileStatsExecutor, String.valueOf(getKey()), name, value);
 		
 		mProperties.put(name, value);
 	}
@@ -172,6 +187,7 @@ public class JrFile extends JrObject implements
 
 				try {
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()));
+					conn.setReadTimeout(45000);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
 				    	if (xml.size() < 1) return;
@@ -200,7 +216,7 @@ public class JrFile extends JrObject implements
 		});
 
 		try {
-			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(fileStatsExecutor).get();
 			
 			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
 				for (Exception e : filePropertiesTask.getExceptions()) {
@@ -352,29 +368,6 @@ public class JrFile extends JrObject implements
 	
 	public void setVolume(float volume) {
 		mp.setVolume(volume, volume);
-	}
-	
-	private static class SetPropertyRunner implements Runnable {
-		private int mKey;
-		private String mName;
-		private String mValue;
-		
-		public SetPropertyRunner(int key, String name, String value) {
-			mKey = key;
-			mName = name;
-			mValue = value;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				JrConnection conn = new JrConnection("File/SetInfo", "File=" + String.valueOf(mKey), "Field=" + mName, "Value=" + mValue);
-				conn.setReadTimeout(5000);
-				conn.getInputStream();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	private static class UpdatePlayStatsRunner implements Runnable {
