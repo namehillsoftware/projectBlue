@@ -4,7 +4,6 @@
 package com.lasthopesoftware.bluewater.services;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -15,7 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
-import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
@@ -34,9 +32,9 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 
 /**
@@ -368,41 +366,32 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.SaveSession(this);		
 		pausePlayback(false);
 		
-//		switch (what) {
-//			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-				builder = new NotificationCompat.Builder(this);
-		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-				builder.setOngoing(true);
-				// Add intent for canceling waiting for connection to come back
-				Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
-				PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-				builder.setContentIntent(pi);
-				
-				builder.setContentTitle("Waiting for Connection.");
-				builder.setTicker("Waiting for Connection.");
-				builder.setSubText("Click here to cancel.");
-				mNotificationMgr.notify(mId, builder.build());
-				PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
-				
-				checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						mNotificationMgr.cancelAll();
-						if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
-							StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
-					}
-				});
-				
-				checkConnection.startPolling();
-//				break;
-//			default:
-//				builder = new NotificationCompat.Builder(this);
-//		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-//				builder.setOngoing(false);
-//				builder.setContentTitle("An error has occurred during playback.");
-//				break;
-//		}
+		builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		// Add intent for canceling waiting for connection to come back
+		Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
+		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(pi);
+		
+		builder.setContentTitle("Waiting for Connection.");
+		builder.setTicker("Waiting for Connection.");
+		builder.setSubText("Click here to cancel.");
+		mNotificationMgr.notify(mId, builder.build());
+		PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
+		
+		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+				mNotificationMgr.cancelAll();
+				if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
+					StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
+			}
+		});
+		
+		checkConnection.startPolling();
+
 		return true;
 	}
 

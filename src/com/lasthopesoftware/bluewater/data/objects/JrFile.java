@@ -285,6 +285,7 @@ public class JrFile extends JrObject implements
 			} catch (Exception e) {
 				e.printStackTrace();
 				preparing = false;
+				mp.reset();
 			}
 		}
 	}

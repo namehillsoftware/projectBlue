@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,6 +44,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener {
 	private Thread mTrackerThread;
@@ -246,6 +248,11 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
+						resetViewOnReconnect(playingFile);
+						return;
+					}
+					
 					mNowPlayingArtist.setText(result);
 				}
 			});
@@ -264,6 +271,11 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
+						resetViewOnReconnect(playingFile);
+						return;
+					}
+					
 					mNowPlayingTitle.setText(result);
 				}
 			});
@@ -283,6 +295,11 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
+						resetViewOnReconnect(playingFile);
+						return;
+					}
+					
 					try {			
 						// Cancel the getFileImageTask if it is already in progress
 						if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
@@ -314,6 +331,10 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
+					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
+						resetViewOnReconnect(playingFile);
+						return;
+					}
 					
 					mSongRating.setRating(result);
 					mSongRating.invalidate();
@@ -336,18 +357,30 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			
 			mSongProgressBar.setProgress(playingFile.getCurrentPosition());
 		} catch (IOException ioE) {
-			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-					if (result == Boolean.TRUE) setView(playingFile);
-				}
-			});
-			WaitForConnectionDialog.show(this);
+			resetViewOnReconnect(playingFile);
 		}
 		
 		mPlay.setVisibility(!file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 		mPause.setVisibility(file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+	}
+	
+	private boolean containsIoException(List<Exception> exceptions) {
+		for (Exception exception : exceptions)
+			if (exception instanceof IOException) return true;
+		
+		return false;
+	}
+	
+	private void resetViewOnReconnect(JrFile file) {
+		final JrFile playingFile = file;
+		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+				if (result == Boolean.TRUE) setView(playingFile);
+			}
+		});
+		WaitForConnectionDialog.show(this);
 	}
 	
 	private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
