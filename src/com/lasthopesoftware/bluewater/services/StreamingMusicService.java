@@ -4,6 +4,7 @@
 package com.lasthopesoftware.bluewater.services;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -32,6 +33,7 @@ import com.lasthopesoftware.bluewater.data.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -183,6 +185,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "project_blue_water_svc_lock");
         mWifiLock.acquire();
+        mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		
 		SimpleTask<Void, Void, String> getFilePropertiesTask = new SimpleTask<Void, Void, String>();
 		getFilePropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
@@ -196,19 +199,26 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (exception instanceof IOException) {
+							buildErrorNotification();
+							return;
+						}
+					}
+				}
+				
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(thisContext);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
 				builder.setContentTitle("Music Streamer Now Playing");
-				builder.setContentText(result);
+				builder.setContentText(result == null ? "Error getting file properties." : result);
 				builder.setContentIntent(pi);
 				mNotificationMgr.notify(mId, builder.build());
 			}
 		});
 		
 		getFilePropertiesTask.execute();
-        
-        mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         
         if (playingFile.getNextFile() != null) {
         	BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, playingFile);
@@ -287,6 +297,34 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (isUserInterrupted) stopSelfResult(mStartId);
 	}
 	
+	private void buildErrorNotification() {
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		// Add intent for canceling waiting for connection to come back
+		Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
+		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(pi);
+		
+		builder.setContentTitle("Waiting for Connection.");
+		builder.setTicker("Waiting for Connection.");
+		builder.setSubText("Click here to cancel.");
+		mNotificationMgr.notify(mId, builder.build());
+		PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
+		
+		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+				mNotificationMgr.cancelAll();
+				if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
+					StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
+			}
+		});
+		
+		checkConnection.startPolling();
+	}
+	
 	private void stopNotification() {
 		stopForeground(true);
 		mNotificationMgr.cancel(mId);
@@ -359,42 +397,16 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public boolean onJrFileError(JrFile file, int what, int extra) {
-		NotificationCompat.Builder builder;
 		
 		JrSession.PlayingFile = file;
 		JrSession.Playlist = mPlaylistString;
 		JrSession.SaveSession(this);		
 		pausePlayback(false);
 		
-		builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		// Add intent for canceling waiting for connection to come back
-		Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
-		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		builder.setContentIntent(pi);
-		
-		builder.setContentTitle("Waiting for Connection.");
-		builder.setTicker("Waiting for Connection.");
-		builder.setSubText("Click here to cancel.");
-		mNotificationMgr.notify(mId, builder.build());
-		PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
-		
-		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				mNotificationMgr.cancelAll();
-				if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
-					StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
-			}
-		});
-		
-		checkConnection.startPolling();
+		buildErrorNotification();
 
 		return true;
 	}
-
 
 	@Override
 	public void onJrFileComplete(JrFile file) {		

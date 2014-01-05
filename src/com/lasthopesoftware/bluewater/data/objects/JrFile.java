@@ -39,6 +39,7 @@ public class JrFile extends JrObject implements
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private int mPosition = 0;
+	private float mVolume = 1.0f;
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
@@ -258,6 +259,7 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
+					mp.reset();
 					mp.setDataSource(url);
 					mp.prepareAsync();
 					preparing = true;
@@ -274,6 +276,7 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
+					mp.reset();
 					mp.setDataSource(url);
 					preparing = true;
 					mp.prepare();
@@ -285,7 +288,6 @@ public class JrFile extends JrObject implements
 			} catch (Exception e) {
 				e.printStackTrace();
 				preparing = false;
-				mp.reset();
 			}
 		}
 	}
@@ -358,6 +360,7 @@ public class JrFile extends JrObject implements
 
 	public void start() {
 		mp.seekTo(mPosition);
+		mp.setVolume(mVolume, mVolume);
 		mp.start();
 	}
 	
@@ -366,8 +369,14 @@ public class JrFile extends JrObject implements
 		mp.stop();
 	}
 	
+	public float getVolume() {
+		return mVolume;
+	}
+	
 	public void setVolume(float volume) {
-		mp.setVolume(volume, volume);
+		mVolume = volume;
+		if (mp != null)
+			mp.setVolume(mVolume, mVolume);
 	}
 	
 	private static class UpdatePlayStatsRunner implements Runnable {

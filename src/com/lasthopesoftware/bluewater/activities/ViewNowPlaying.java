@@ -308,7 +308,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 						
 						getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 						
-						getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, result == null ? playingFile.getKey().toString() : result, playingFile.getKey().toString());
+						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? playingFile.getKey().toString() : result, playingFile.getKey().toString());
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
