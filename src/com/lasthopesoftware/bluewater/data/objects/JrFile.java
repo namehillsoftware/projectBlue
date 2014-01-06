@@ -40,6 +40,7 @@ public class JrFile extends JrObject implements
 	private boolean preparing = false;
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
+	private Context context;
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
@@ -242,6 +243,7 @@ public class JrFile extends JrObject implements
 	public void initMediaPlayer(Context context) {
 		if (mp != null) return;
 		
+		this.context = context;
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
 		mp.setOnErrorListener(this);
@@ -285,10 +287,19 @@ public class JrFile extends JrObject implements
 				preparing = false;
 			} catch (Exception e) {
 				e.printStackTrace();
-				mp.reset();
+				resetMediaPlayer();
 				preparing = false;
 			}
 		}
+	}
+	
+	private void resetMediaPlayer() {
+		mp.reset();
+		
+		if (context != null)
+			mp.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+		
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public void releaseMediaPlayer() {
@@ -317,7 +328,7 @@ public class JrFile extends JrObject implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		mp.reset();
+		resetMediaPlayer();
 		boolean handled = false;
 		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
 		if (handled) releaseMediaPlayer();
@@ -359,7 +370,7 @@ public class JrFile extends JrObject implements
 
 	public void start() {
 		mp.seekTo(mPosition);
-		mp.setVolume(mVolume, mVolume);
+//		mp.setVolume(mVolume, mVolume);
 		mp.start();
 	}
 	
