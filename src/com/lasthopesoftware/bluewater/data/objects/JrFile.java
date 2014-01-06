@@ -259,7 +259,6 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					mp.reset();
 					mp.setDataSource(url);
 					mp.prepareAsync();
 					preparing = true;
@@ -276,7 +275,6 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					mp.reset();
 					mp.setDataSource(url);
 					preparing = true;
 					mp.prepare();
@@ -287,6 +285,7 @@ public class JrFile extends JrObject implements
 				preparing = false;
 			} catch (Exception e) {
 				e.printStackTrace();
+				mp.reset();
 				preparing = false;
 			}
 		}
