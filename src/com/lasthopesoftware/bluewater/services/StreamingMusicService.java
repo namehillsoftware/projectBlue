@@ -292,6 +292,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		}
 		mPlaylistString = null;
 		mFileKey = -1;
+		if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 		releaseMediaPlayers();
 		stopNotification();
 		if (isUserInterrupted) stopSelfResult(mStartId);
@@ -448,15 +449,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        	
 	            JrSession.PlayingFile.setVolume(1.0f);
 	            return;
+        	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
-	            // Lost focus for an unbounded amount of time: stop playback and release media player
-	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
-	            return;
+	        	if (JrSession.PlayingFile.isPlaying()) pausePlayback(true);
+	        // Lost focus but it will be regained... could not release resources if wanted
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-	            // Lost focus for a short time, but we have to stop
-	            // playback. We don't release the media player because playback
-	            // is likely to resume
-	            if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
+	        	if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
