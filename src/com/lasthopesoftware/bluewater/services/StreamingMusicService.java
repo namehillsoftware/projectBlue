@@ -444,10 +444,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	            // resume playback
 	        	if (!JrSession.isActive() && !JrSession.CreateSession(this)) return;
 	        	
+	        	if (JrSession.PlayingFile != null)
+	        		JrSession.PlayingFile.setVolume(1.0f);
+	        	
 	        	if (!JrSession.PlayingFile.isPlaying())
 	        		startPlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());
 	        	
-	            JrSession.PlayingFile.setVolume(1.0f);
 	            return;
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
