@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.data.access.connection;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 import com.lasthopesoftware.bluewater.data.access.JrResponse;
+import com.lasthopesoftware.bluewater.data.objects.JrSession;
 
 public class JrTestConnection implements Callable<Boolean> {
 	
@@ -32,6 +34,8 @@ public class JrTestConnection implements Callable<Boolean> {
 	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
+		} catch (FileNotFoundException f) {
+			JrSession.accessDao.resetUrl();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
