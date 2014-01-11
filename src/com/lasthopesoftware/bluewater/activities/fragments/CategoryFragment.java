@@ -74,6 +74,8 @@ public class CategoryFragment extends Fragment {
 				
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
+					if (result == null) return;
+					
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
 					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
 		    		listView.setAdapter(new PlaylistAdapter((ArrayList<JrPlaylist>) result));
@@ -91,6 +93,8 @@ public class CategoryFragment extends Fragment {
 
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+					if (result == null) return;
+					
 					((ExpandableListView)listView).setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
 						
 						@Override
