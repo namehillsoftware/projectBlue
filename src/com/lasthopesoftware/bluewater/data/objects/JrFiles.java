@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.io.IOUtils;
+
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
@@ -30,7 +32,7 @@ public class JrFiles implements IJrItemFiles {
 		public List<JrFile> onConnect(InputStream is) {
 			ArrayList<JrFile> files = new ArrayList<JrFile>();
 			try {
-				files = deserializeFileStringList(JrFileUtils.InputStreamToString(is));				
+				files = deserializeFileStringList(IOUtils.toString(is));				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -139,7 +141,7 @@ public class JrFiles implements IJrItemFiles {
 			@Override
 			public String onConnect(InputStream is) {
 				try {
-					return JrFileUtils.InputStreamToString(is);
+					return IOUtils.toString(is);
 				} catch (IOException e) {
 					e.printStackTrace();
 					return null;

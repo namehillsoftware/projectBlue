@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.io.IOUtils;
+
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
@@ -190,7 +192,7 @@ public class JrFile extends JrObject implements
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()));
 					conn.setReadTimeout(45000);
 					try {
-				    	XmlElement xml = Xmlwise.createXml(JrFileUtils.InputStreamToString(conn.getInputStream()));
+				    	XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
 				    	if (xml.size() < 1) return;
 				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
 				    	for (XmlElement el : xml.get(0))
