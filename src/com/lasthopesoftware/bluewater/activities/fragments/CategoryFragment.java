@@ -37,6 +37,7 @@ public class CategoryFragment extends Fragment {
 	private IJrItem<?> mCategory;
 	private ListView listView;
 	private ProgressBar pbLoading;
+	private RelativeLayout mLayout;
 	
     public CategoryFragment() {
     	super();
@@ -48,27 +49,30 @@ public class CategoryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-    	RelativeLayout layout = new RelativeLayout(getActivity());
-    	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+    	mLayout = new RelativeLayout(getActivity());
+    	mLayout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
-    	pbLoading = new ProgressBar(layout.getContext(), null, android.R.attr.progressBarStyleLarge);
+    	pbLoading = new ProgressBar(mLayout.getContext(), null, android.R.attr.progressBarStyleLarge);
     	RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
     	pbLoading.setLayoutParams(pbParams);
-    	layout.addView(pbLoading);
+    	mLayout.addView(pbLoading);
     	
     	JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-				// TODO Auto-generated method stub
-				
+				mCategory = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+				BuildView();
 			}
 		});
-    	mCategory = JrSession.JrFs.getVisibleViews().get(getArguments().getInt(ARG_CATEGORY_POSITION));
     	
+        return mLayout;
+    }
+    
+    private void BuildView() {
     	if (mCategory instanceof JrPlaylists) {
-    		listView = new ListView(layout.getContext());
+    		listView = new ListView(mLayout.getContext());
     		listView.setVisibility(View.INVISIBLE);
     		OnCompleteListener<List<JrPlaylist>> onPlaylistCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
 				
@@ -86,7 +90,7 @@ public class CategoryFragment extends Fragment {
 			((JrPlaylists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
 			((JrPlaylists) mCategory).getSubItemsAsync();
     	} else {
-	    	listView = new ExpandableListView(layout.getContext());
+	    	listView = new ExpandableListView(mLayout.getContext());
 	    	listView.setVisibility(View.INVISIBLE);
 	    	
 	    	OnCompleteListener<List<JrItem>> onItemCompleteListener = new OnCompleteListener<List<JrItem>>() {
@@ -134,8 +138,7 @@ public class CategoryFragment extends Fragment {
 			((JrItem)mCategory).setOnItemsCompleteListener(onItemCompleteListener);
 			((JrItem)mCategory).getSubItemsAsync();
     	}
-    	layout.addView(listView);
-        return layout;
+    	mLayout.addView(listView);
     }
     
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
