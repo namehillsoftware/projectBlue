@@ -55,6 +55,8 @@ public class ViewPlaylists extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				if (result == null) return;
+				
 				for (IJrItem<?> item : result) {
 					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
 					
