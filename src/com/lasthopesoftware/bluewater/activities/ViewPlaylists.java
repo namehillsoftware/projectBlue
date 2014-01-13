@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
@@ -27,6 +29,7 @@ import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewPlaylists extends FragmentActivity {
 
@@ -38,6 +41,8 @@ public class ViewPlaylists extends FragmentActivity {
 	private ListView playlistView;
 
 	private Context mContext;
+	
+	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> visibleViewsAsyncComplete;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -51,10 +56,28 @@ public class ViewPlaylists extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (!(exception instanceof IOException)) continue;
+						
+						PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+								JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
+							}
+						});
+						PollConnectionTask.Instance.get().startPolling();
+						
+						break;
+					}
+					return;
+				}
+				
 				if (result == null) return;
 				
 				for (IJrItem<?> item : result) {
@@ -66,29 +89,12 @@ public class ViewPlaylists extends FragmentActivity {
 				
 				BuildPlaylistView();
 			}
-		});
-        
+		};
+		
+        JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 	}
 	
 	private void BuildPlaylistView() {
-//		try {
-//			for (IJrItem<?> page : JrSession.getCategoriesList()) {
-//				if (!page.getValue().equals("Playlist")) continue;
-//				
-//				mPlaylist = ((JrPlaylists)page).getMappedPlaylists().get(mPlaylistId);
-//				break;
-//			}
-//		} catch (IOException e) {
-//			PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
-//				
-//				@Override
-//				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-//					BuildPlaylistView();
-//				}
-//			});
-//			
-//			WaitForConnectionDialog.show(this);
-//		}
                 
         if (mPlaylist.getSubItems().size() > 0) {
         	playlistView.setAdapter(new PlaylistAdapter(mPlaylist.getSubItems()));

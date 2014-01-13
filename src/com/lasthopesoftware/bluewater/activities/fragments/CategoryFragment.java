@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.activities.fragments;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,12 +27,14 @@ import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylists;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class CategoryFragment extends Fragment {
 	private IJrItem<?> mCategory;
@@ -39,16 +42,44 @@ public class CategoryFragment extends Fragment {
 	private ProgressBar pbLoading;
 	private RelativeLayout mLayout;
 	
+	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> mVisibleViewsComplete;
+	
     public CategoryFragment() {
     	super();
+    	
+    	mVisibleViewsComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (!(exception instanceof IOException)) continue;
+						
+						PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+								JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
+							}
+						});
+						PollConnectionTask.Instance.get().startPolling();
+						
+						break;
+					}
+					return;
+				}
+				
+				mCategory = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+				BuildView();
+			}
+		};
     }
 
     public static final String ARG_CATEGORY_POSITION = "category_position";
     public static final String IS_PLAYLIST = "Playlist";
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     	mLayout = new RelativeLayout(getActivity());
     	mLayout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
@@ -58,14 +89,7 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	mLayout.addView(pbLoading);
     	
-    	JrSession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-				mCategory = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
-				BuildView();
-			}
-		});
+    	JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
     	
         return mLayout;
     }
@@ -78,6 +102,24 @@ public class CategoryFragment extends Fragment {
 				
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
+					if (owner.getState() == SimpleTaskState.ERROR) {
+						for (Exception exception : owner.getExceptions()) {
+							if (!(exception instanceof IOException)) continue;
+							
+							PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+								
+								@Override
+								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+									((JrPlaylists) mCategory).getSubItemsAsync();
+								}
+							});
+							PollConnectionTask.Instance.get().startPolling();
+							
+							break;
+						}
+						return;
+					}
+					
 					if (result == null) return;
 					
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
@@ -97,6 +139,24 @@ public class CategoryFragment extends Fragment {
 
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+					if (owner.getState() == SimpleTaskState.ERROR) {
+						for (Exception exception : owner.getExceptions()) {
+							if (!(exception instanceof IOException)) continue;
+							
+							PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+								
+								@Override
+								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+									((JrItem)mCategory).getSubItemsAsync();
+								}
+							});
+							PollConnectionTask.Instance.get().startPolling();
+							
+							break;
+						}
+						return;
+					}
+					
 					if (result == null) return;
 					
 					((ExpandableListView)listView).setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFile;
@@ -24,6 +26,8 @@ import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewFiles extends FragmentActivity {
 
@@ -55,12 +59,32 @@ public class ViewFiles extends FragmentActivity {
         mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(mItemId) : new JrItem(mItemId);
         
         this.setTitle(this.getIntent().getStringExtra(VALUE));
-        JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
+        final JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
         
         filesContainer.setOnFilesCompleteListener(new IJrDataTask.OnCompleteListener<List<JrFile>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (!(exception instanceof IOException)) continue;
+						
+						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+								filesContainer.getFilesAsync();
+							}
+						});
+						PollConnectionTask.Instance.get().startPolling();
+						
+						break;
+					}
+					return;
+				}
+				
+				if (result == null) return;
+				
 				ArrayList<JrFile> innerResult =  (ArrayList<JrFile>) result;
 				FileListAdapter fileListAdapter = new FileListAdapter(mContext, innerResult);
 		    			    	
@@ -69,7 +93,6 @@ public class ViewFiles extends FragmentActivity {
 		    	
 		    	fileListView.setVisibility(View.VISIBLE);
 		        pbLoading.setVisibility(View.INVISIBLE);
-				
 			}
 		});
         
