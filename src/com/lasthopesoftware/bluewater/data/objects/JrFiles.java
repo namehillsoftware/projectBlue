@@ -162,8 +162,9 @@ public class JrFiles implements IJrItemFiles {
 		try {
 			result = getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 			if (getStringListTask.getState() == SimpleTaskState.ERROR) {
-				for (Exception exception : getStringListTask.getExceptions())
+				for (Exception exception : getStringListTask.getExceptions()) {
 					if (exception instanceof IOException) throw (IOException)exception;
+				}
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

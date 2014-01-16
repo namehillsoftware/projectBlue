@@ -20,12 +20,16 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
+import com.lasthopesoftware.bluewater.activities.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseItemMenu {
 	public static View getView(IJrItem<?> item, View convertView, ViewGroup parent) {
@@ -78,7 +82,17 @@ public class BrowseItemMenu {
 			try {
 				StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
 			} catch (IOException io) {
-				io.printStackTrace();
+				final View _view = v;
+				PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						if (result)
+							onClick(_view);
+					}
+				});
+				
+				WaitForConnectionDialog.show(v.getContext());
 			}
 		}
 	}
@@ -95,7 +109,17 @@ public class BrowseItemMenu {
 			try {
 				StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(JrFiles.GET_SHUFFLED));
 			}  catch (IOException io) {
-				io.printStackTrace();
+				final View _view = v;
+				PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+						if (result)
+							onClick(_view);
+					}
+				});
+				
+				WaitForConnectionDialog.show(v.getContext());
 			} 
 		}
 	}
