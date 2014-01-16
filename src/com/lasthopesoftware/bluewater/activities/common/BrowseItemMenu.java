@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.activities.common;
 
+import java.io.IOException;
+
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils.TruncateAt;
@@ -73,7 +75,11 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
+			try {
+				StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
+			} catch (IOException io) {
+				io.printStackTrace();
+			}
 		}
 	}
 	
@@ -86,7 +92,11 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(JrFiles.GET_SHUFFLED));
+			try {
+				StreamingMusicService.StreamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(JrFiles.GET_SHUFFLED));
+			}  catch (IOException io) {
+				io.printStackTrace();
+			} 
 		}
 	}
 	

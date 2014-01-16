@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.activities.listeners;
 
+import java.io.IOException;
+
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -17,7 +19,11 @@ public class ClickFileListener implements OnItemClickListener {
 	
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		StreamingMusicService.StreamMusic(view.getContext(), mItem.getFiles().get(position).getKey(), mItem.getFileStringList());
+		try {
+			StreamingMusicService.StreamMusic(view.getContext(), mItem.getFiles().get(position).getKey(), mItem.getFileStringList());
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
 	}
 
 }

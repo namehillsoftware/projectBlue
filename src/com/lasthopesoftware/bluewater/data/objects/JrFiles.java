@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.access.JrDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 
 public class JrFiles implements IJrItemFiles {
@@ -130,11 +131,11 @@ public class JrFiles implements IJrItemFiles {
 		}
 	}
 	
-	public String getFileStringList() {
+	public String getFileStringList() throws IOException {
 		return getFileStringList(-1);
 	}
 	
-	public String getFileStringList(int option) {
+	public String getFileStringList(int option) throws IOException {
 		JrDataTask<String> getStringListTask = new JrDataTask<String>();
 		getStringListTask.addOnConnectListener(new OnConnectListener<String>() {
 			
@@ -149,9 +150,21 @@ public class JrFiles implements IJrItemFiles {
 			}
 		});
 		
+		getStringListTask.addOnErrorListener(new ISimpleTask.OnErrorListener<String, Void, String>() {
+			
+			@Override
+			public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
+				return innerException instanceof IOException;
+			}
+		});
+		
 		String result = null;
 		try {
 			result = getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
+			if (getStringListTask.getState() == SimpleTaskState.ERROR) {
+				for (Exception exception : getStringListTask.getExceptions())
+					if (exception instanceof IOException) throw (IOException)exception;
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (ExecutionException e) {

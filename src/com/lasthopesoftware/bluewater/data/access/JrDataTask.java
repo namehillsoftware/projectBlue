@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.data.access;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,8 +24,9 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 
 				JrConnection conn = new JrConnection(params);
 				try {
+					InputStream is = conn.getInputStream();
 					for (OnConnectListener<TResult> workEvent : onConnectListeners)
-						mResults.add(workEvent.onConnect(conn.getInputStream()));
+						mResults.add(workEvent.onConnect(is));
 				} finally {
 					conn.disconnect();
 				}
