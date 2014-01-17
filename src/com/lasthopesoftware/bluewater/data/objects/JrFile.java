@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -21,6 +22,7 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 
@@ -263,7 +265,10 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					mp.setDataSource(url);
+					Map<String, String> headers = new HashMap<String, String>();
+					if (!JrSession.UserAuthCode.isEmpty())
+						headers.put("Authorization", "basic " + JrSession.UserAuthCode);
+					mp.setDataSource(context, Uri.parse(url), headers);
 					mp.prepareAsync();
 					preparing = true;
 					return;
@@ -279,7 +284,11 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					mp.setDataSource(url);
+					Map<String, String> headers = new HashMap<String, String>();
+					if (!JrSession.UserAuthCode.isEmpty())
+						headers.put("Authorization", "basic " + JrSession.UserAuthCode);
+					mp.setDataSource(context, Uri.parse(url), headers);
+					
 					preparing = true;
 					mp.prepare();
 					prepared = true;

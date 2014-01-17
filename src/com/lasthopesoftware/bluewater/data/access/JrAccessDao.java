@@ -88,7 +88,7 @@ public class JrAccessDao {
 	public String getActiveUrl() {
 		if (!mActiveUrl.isEmpty()) {
 			try {
-				if (testConnection(mActiveUrl)) return mActiveUrl;
+				/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -97,7 +97,7 @@ public class JrAccessDao {
 		if (!JrSession.IsLocalOnly) {
 			try {
 				mActiveUrl = getRemoteUrl();
-	        	if (testConnection(getRemoteUrl())) return mActiveUrl;
+	        	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
 			} catch (Exception e) {
 				mActiveUrl = "";
 				e.printStackTrace();
@@ -106,7 +106,7 @@ public class JrAccessDao {
 			for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
 				try {
 					mActiveUrl = getLocalIpUrl(urlIndex);
-		        	if (testConnection(mActiveUrl)) return mActiveUrl;
+		        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 				} catch (Exception e) {
 					mActiveUrl = "";
 					e.printStackTrace();
@@ -127,8 +127,8 @@ public class JrAccessDao {
 		
 		url += "?";
 		// Add token
-		if (mToken != null)
-			url += "Token=" + getToken() + "&";
+//		if (mToken != null)
+//			url += "Token=" + getToken() + "&";
 		
 		// add arguments
 		if (params.length > 1) {
