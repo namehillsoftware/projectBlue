@@ -158,14 +158,11 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	}
 	
 	public static class Instance {
-		private static Object mSyncObject = new Object();
 		private static PollConnectionTask _instance = null;
 		
-		public static PollConnectionTask get() {
-			synchronized(mSyncObject) {
-				if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask();
-				return _instance;
-			}
+		public synchronized static PollConnectionTask get() {
+			if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask();
+			return _instance;
 		}
 	}
 }

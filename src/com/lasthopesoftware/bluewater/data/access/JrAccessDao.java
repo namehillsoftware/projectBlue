@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.data.access;
 
-import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;

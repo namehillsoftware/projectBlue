@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.HttpUriRequest;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;

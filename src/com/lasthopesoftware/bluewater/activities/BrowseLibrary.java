@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -22,10 +23,12 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
+import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
 
@@ -63,7 +66,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		displayLibrary();
 	}
 
-	private void displayLibrary() {
+	public void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
 		
@@ -172,6 +175,22 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+			if (owner.getState() == SimpleTaskState.ERROR) {
+				for (Exception exception : owner.getExceptions()) {
+					if (exception instanceof IOException) {
+						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+								if (result)
+									mLibraryActivity.displayLibrary();
+							}
+						});
+						PollConnectionTask.Instance.get().startPolling();
+					}
+				}
+			}
+			
 			mSectionsPagerAdapter.setLibraryViews(result);
 
 			// Set up the ViewPager with the sections adapter.
