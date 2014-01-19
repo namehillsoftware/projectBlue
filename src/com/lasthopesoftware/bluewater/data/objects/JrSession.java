@@ -158,27 +158,25 @@ public class JrSession {
 			try {
 				accessDao = new JrAccessDao();
 				
-				UrlValidator urlValidator = new UrlValidator();
-				if (urlValidator.isValid(params[0])) {
+				if (UrlValidator.getInstance().isValid(params[0])) {
 					Uri jrUrl = Uri.parse(params[0]);
 					accessDao.setRemoteIp(jrUrl.getHost());
 					accessDao.setPort(jrUrl.getPort());
 					accessDao.setStatus(true);
 					IsLocalOnly = false;
-					return accessDao;
+				} else {
+					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
+					XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
+					
+					
+					accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
+					accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+					accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+					for (String localIp : xml.getUnique("localiplist").getValue().split(","))
+						accessDao.getLocalIps().add(localIp);
+					for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
+						accessDao.getMacAddresses().add(macAddress);
 				}
-				
-				URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
-				XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-				
-				
-				accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-				accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-				accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-				for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-					accessDao.getLocalIps().add(localIp);
-				for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-					accessDao.getMacAddresses().add(macAddress);
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
