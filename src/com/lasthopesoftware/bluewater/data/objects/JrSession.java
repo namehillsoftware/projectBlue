@@ -164,6 +164,7 @@ public class JrSession {
 					accessDao.setRemoteIp(jrUrl.getHost());
 					accessDao.setPort(jrUrl.getPort());
 					accessDao.setStatus(true);
+					IsLocalOnly = false;
 					return accessDao;
 				}
 				
