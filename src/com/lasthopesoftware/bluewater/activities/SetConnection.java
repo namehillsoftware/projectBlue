@@ -51,7 +51,9 @@ public class SetConnection extends FragmentActivity {
         	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IJrItem<?>>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {					
+				public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+					if (result == null || result.size() == 0) return;
+					
 					String[] views = new String[result.size()];
 					mViews = new SparseIntArray(result.size());
 					for (int i = 0; i < result.size(); i++) {

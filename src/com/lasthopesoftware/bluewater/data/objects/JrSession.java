@@ -1,24 +1,24 @@
 package com.lasthopesoftware.bluewater.data.objects;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.ClientProtocolException;
 
+import xmlwise.XmlElement;
+import xmlwise.Xmlwise;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.access.JrAccessDao;
-import com.lasthopesoftware.bluewater.data.access.JrLookUpResponseHandler;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -156,17 +156,28 @@ public class JrSession {
 
 			JrAccessDao accessDao = null;
 			try {
+				accessDao = new JrAccessDao();
+				
+				UrlValidator urlValidator = new UrlValidator();
+				if (urlValidator.isValid(params[0])) {
+					Uri jrUrl = Uri.parse(params[0]);
+					accessDao.setRemoteIp(jrUrl.getHost());
+					accessDao.setPort(jrUrl.getPort());
+					accessDao.setStatus(true);
+					return accessDao;
+				}
+				
 				URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
-				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-				SAXParser sp = parserFactory.newSAXParser();
-				JrLookUpResponseHandler responseHandler = new JrLookUpResponseHandler();
-
-				InputStream mcResponseStream = conn.getInputStream();
-
-				sp.parse(mcResponseStream, responseHandler);
-
-				accessDao = responseHandler.getResponse();
-
+				XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
+				
+				
+				accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
+				accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+				accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+				for (String localIp : xml.getUnique("localiplist").getValue().split(","))
+					accessDao.getLocalIps().add(localIp);
+				for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
+					accessDao.getMacAddresses().add(macAddress);
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

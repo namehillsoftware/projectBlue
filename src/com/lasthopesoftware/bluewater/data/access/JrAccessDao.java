@@ -22,8 +22,7 @@ public class JrAccessDao {
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
 	
-	public JrAccessDao(String status) {
-		this.status = status != null && status.equalsIgnoreCase("OK");
+	public JrAccessDao() {
 	}
 
 	/**
@@ -31,6 +30,10 @@ public class JrAccessDao {
 	 */
 	public boolean isStatus() {
 		return status;
+	}
+	
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 	
 	/**

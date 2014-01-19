@@ -12,9 +12,10 @@ public class JrLookUpResponseHandler extends DefaultHandler {
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
 		currentValue = "";
-		if (qName.equalsIgnoreCase("response"))
-			response = new JrAccessDao(attributes.getValue("Status"));
-			
+		if (qName.equalsIgnoreCase("response")) {
+			response = new JrAccessDao();
+			response.setStatus(attributes.getValue("Status").equalsIgnoreCase("OK"));
+		}
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
