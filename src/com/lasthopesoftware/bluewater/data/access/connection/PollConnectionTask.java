@@ -129,32 +129,32 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 
 	@Override
 	public void removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<String, Void, Boolean> listener) {
-		mUniqueOnStartListeners.remove(listener);
-		mTask.removeOnStartListener(listener);
+		if (mUniqueOnStartListeners.remove(listener))
+			mTask.removeOnStartListener(listener);
 	}
 
 	@Override
 	public void removeOnExecuteListener(com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener<String, Void, Boolean> listener) {
-		mUniqueOnExecuteListeners.remove(listener);
-		mTask.removeOnExecuteListener(listener);
+		if (mUniqueOnExecuteListeners.remove(listener))
+			mTask.removeOnExecuteListener(listener);
 	}
 
 	@Override
 	public void removeOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<String, Void, Boolean> listener) {
-		mUniqueOnProgressListeners.remove(listener);
-		mTask.removeOnProgressListener(listener);
+		if (mUniqueOnProgressListeners.remove(listener))
+			mTask.removeOnProgressListener(listener);
 	}
 
 	@Override
 	public void removeOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<String, Void, Boolean> listener) {
-		mUniqueOnCompleteListeners.remove(listener);
-		mTask.removeOnCompleteListener(listener);
+		if (mUniqueOnCompleteListeners.remove(listener))
+			mTask.removeOnCompleteListener(listener);
 	}
 
 	@Override
 	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Boolean> listener) {
-		mUniqueOnErrorListeners.remove(listener);
-		mTask.removeOnErrorListener(listener);
+		if (mUniqueOnErrorListeners.remove(listener))
+			mTask.removeOnErrorListener(listener);
 	}
 	
 	public static class Instance {
