@@ -13,6 +13,8 @@ import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, OnExecuteListener<String, Void, Boolean> {
+	
+	private volatile boolean mStopWaitingForConnection = false;
 	private SimpleTask<String, Void, Boolean> mTask;
 	
 	private ConcurrentSkipListSet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new ConcurrentSkipListSet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
@@ -28,20 +30,20 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 
 	@Override
 	public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
-		do {
+		while (!JrTestConnection.doTest()) {
 			try {
-				if (mTask.isCancelled()) {
+				Thread.sleep(3000);
+				if (mStopWaitingForConnection) {
+					
 					owner.setResult(Boolean.FALSE);
 					return;
 				}
-				
-				Thread.sleep(3000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				owner.setResult(Boolean.FALSE);
 				return;
 			}
-		} while (!JrTestConnection.doTest());
+		}
 		
 		owner.setResult(Boolean.TRUE);
 	}
@@ -51,7 +53,7 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	}
 	
 	public void stopPolling() {
-		mTask.cancel(false);
+		mStopWaitingForConnection = true;
 	}
 	
 	public boolean isRunning() {
