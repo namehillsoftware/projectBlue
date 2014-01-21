@@ -13,50 +13,43 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class WaitForConnectionDialog {
 
-	private static Object mSyncObject = new Object();
 	private static AlertDialog _instance = null;
 	
-	private WaitForConnectionDialog()
-	{	
-	}
-	
 	public synchronized static AlertDialog show(Context context) {
-		synchronized(mSyncObject) {
-			if (_instance != null && _instance.isShowing()) return _instance;
+		if (_instance != null && _instance.isShowing()) return _instance;
+		
+		String title = context.getString(R.string.lbl_connection_lost_title);
+		String message = String.format(context.getString(R.string.lbl_waiting_for_connection), context.getString(R.string.app_name));
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setTitle(title).setMessage(message).setCancelable(true);
+		builder.setNegativeButton("Cancel", new OnClickListener() {
 			
-			String title = context.getString(R.string.lbl_connection_lost_title);
-			String message = String.format(context.getString(R.string.lbl_waiting_for_connection), context.getString(R.string.app_name));
-			AlertDialog.Builder builder = new AlertDialog.Builder(context);
-			builder.setTitle(title).setMessage(message).setCancelable(true);
-			builder.setNegativeButton("Cancel", new OnClickListener() {
-				
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.cancel();
-				}
-			});
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.cancel();
+			}
+		});
+		
+		builder.setOnCancelListener(new OnCancelListener() {
 			
-			builder.setOnCancelListener(new OnCancelListener() {
-				
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					PollConnectionTask.Instance.get().stopPolling();
-				}
-			});
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				PollConnectionTask.Instance.get().stopPolling();
+			}
+		});
+		
+		_instance = builder.show();
+					
+		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
-			_instance = builder.show();
-						
-			PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-					_instance.dismiss();
-				}
-			});
-			
-			PollConnectionTask.Instance.get().startPolling();
-			
-			return _instance;
-		}
+			@Override
+			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+				_instance.dismiss();
+			}
+		});
+		
+		PollConnectionTask.Instance.get().startPolling();
+		
+		return _instance;
 	}
 }

@@ -48,7 +48,7 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 		owner.setResult(Boolean.TRUE);
 	}
 	
-	public void startPolling() {
+	public synchronized void startPolling() {
 		if (mTask.getStatus() != Status.RUNNING) mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
