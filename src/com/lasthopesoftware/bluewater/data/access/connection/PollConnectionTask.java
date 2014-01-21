@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.access.connection;
 
-import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 
 import android.os.AsyncTask;
@@ -17,11 +17,11 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	private volatile boolean mStopWaitingForConnection = false;
 	private SimpleTask<String, Void, Boolean> mTask;
 	
-	private HashSet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new HashSet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
-	private HashSet<OnExecuteListener<String, Void, Boolean>> mUniqueOnExecuteListeners = new HashSet<ISimpleTask.OnExecuteListener<String, Void, Boolean>>();
-	private HashSet<OnCompleteListener<String, Void, Boolean>> mUniqueOnCompleteListeners = new HashSet<ISimpleTask.OnCompleteListener<String, Void, Boolean>>();
-	private HashSet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new HashSet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
-	private HashSet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new HashSet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
+	private ConcurrentSkipListSet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new ConcurrentSkipListSet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
+	private ConcurrentSkipListSet<OnExecuteListener<String, Void, Boolean>> mUniqueOnExecuteListeners = new ConcurrentSkipListSet<ISimpleTask.OnExecuteListener<String, Void, Boolean>>();
+	private ConcurrentSkipListSet<OnCompleteListener<String, Void, Boolean>> mUniqueOnCompleteListeners = new ConcurrentSkipListSet<ISimpleTask.OnCompleteListener<String, Void, Boolean>>();
+	private ConcurrentSkipListSet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new ConcurrentSkipListSet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
+	private ConcurrentSkipListSet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new ConcurrentSkipListSet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
 	
 	private PollConnectionTask() {
 		mTask = new SimpleTask<String, Void, Boolean>();
