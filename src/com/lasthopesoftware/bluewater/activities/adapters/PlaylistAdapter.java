@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
 
 public class PlaylistAdapter extends BaseAdapter {
 	private ArrayList<JrPlaylist> mPlaylists;

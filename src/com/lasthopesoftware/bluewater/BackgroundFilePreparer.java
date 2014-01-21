@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater;
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 import android.content.Context;
 

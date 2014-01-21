@@ -7,8 +7,8 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.activities.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.objects.IJrItemFiles;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.objects.IJrItemFiles;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;

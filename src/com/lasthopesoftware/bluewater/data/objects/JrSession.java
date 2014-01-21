@@ -18,7 +18,10 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.access.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";

@@ -9,7 +9,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.activities.ViewPlaylists;
-import com.lasthopesoftware.bluewater.data.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
 
 public class ClickPlaylistListener implements OnItemClickListener {
 

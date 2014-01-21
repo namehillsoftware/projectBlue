@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers;
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 import android.os.Message;
 
