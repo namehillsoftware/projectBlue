@@ -11,7 +11,7 @@ import android.view.MenuItem;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.SetConnection;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class ViewUtils {
 

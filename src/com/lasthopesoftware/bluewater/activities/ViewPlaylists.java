@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
@@ -28,6 +27,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
 import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 

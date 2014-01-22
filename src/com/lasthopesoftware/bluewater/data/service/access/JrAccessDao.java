@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrAccessDao {
 	private String mToken;

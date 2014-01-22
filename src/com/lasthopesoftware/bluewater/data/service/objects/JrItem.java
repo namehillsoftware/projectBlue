@@ -4,12 +4,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 

@@ -6,8 +6,8 @@ import java.net.MalformedURLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrTestConnection implements Callable<Boolean> {
 	

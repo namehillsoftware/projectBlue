@@ -15,10 +15,10 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.objects.JrSession;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class SelectLibrary extends FragmentActivity {

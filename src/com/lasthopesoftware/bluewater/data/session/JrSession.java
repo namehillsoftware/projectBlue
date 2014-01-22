@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.objects;
+package com.lasthopesoftware.bluewater.data.session;
 
 import java.io.IOException;
 import java.net.URL;
@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.ClientProtocolException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
@@ -71,6 +73,9 @@ public class JrSession {
 		}
 
 		prefsEditor.apply();
+		
+		Logger log = LoggerFactory.getLogger(JrSession.class);
+		log.info("Session saved.");
 	}
 
 	public static boolean CreateSession(Context context) {
@@ -78,6 +83,9 @@ public class JrSession {
 	}
 
 	public static boolean CreateSession(SharedPreferences prefs) {
+		Logger log = LoggerFactory.getLogger(JrSession.class);
+		log.info("Session started.");
+		
 		AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
 		UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
 		IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
@@ -192,5 +200,5 @@ public class JrSession {
 
 			return accessDao;
 		}
-	}        
+	}
 }
