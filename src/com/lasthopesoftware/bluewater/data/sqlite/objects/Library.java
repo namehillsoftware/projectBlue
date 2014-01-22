@@ -6,6 +6,7 @@ public class Library {
 	private String libraryName;
 	private String accessCode;
 	private ArrayList<View> views;
+	private String authKey;
 	
 	/**
 	 * @return the mLibraryName
@@ -42,5 +43,17 @@ public class Library {
 	 */
 	public void setViews(ArrayList<View> views) {
 		this.views = views;
+	}
+	/**
+	 * @return the authKey
+	 */
+	public String getAuthKey() {
+		return authKey;
+	}
+	/**
+	 * @param authKey the authKey to set
+	 */
+	public void setAuthKey(String authKey) {
+		this.authKey = authKey;
 	}
 }
