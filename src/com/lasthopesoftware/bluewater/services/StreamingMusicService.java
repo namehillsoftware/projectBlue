@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -398,7 +401,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public boolean onJrFileError(JrFile file, int what, int extra) {
-		
+		LoggerFactory.getLogger(StreamingMusicService.class).error("JR File error - " + what + " - " + extra);
 		JrSession.PlayingFile = file;
 		JrSession.Playlist = mPlaylistString;
 		JrSession.SaveSession(this);		
