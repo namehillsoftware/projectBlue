@@ -3,7 +3,7 @@
 <configuration>
   <!-- Create a file appender for a log in the application's data directory -->
   <appender name="file" class="ch.qos.logback.core.FileAppender">
-    <lazy>true</lazy>
+    <!--  <lazy>true</lazy> -->
     <file>/data/data/com.lasthopesoftware.projectbluewater/files/log/error.log</file>
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>

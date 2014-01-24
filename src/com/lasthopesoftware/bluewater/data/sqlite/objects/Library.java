@@ -2,7 +2,14 @@ package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
 
-public class Library {
+public class Library implements ISqliteDefinition {
+	private static final String NAME = "LIBRARIES";
+	private static final String[] COLUMNS = { "ID", "LIBRARY_NAME", "ACCESS_CODE", "AUTH_KEY" };
+	private static final String[] COLUMN_DEFINITIONS = { 	"ID INTEGER PRIMARY KEY AUTOINCREMENT",
+															"LIBRARY_NAME VARCHAR(50) NOT NULL",
+															"ACCESS_CODE VARCHAR(30) NOT NULL",
+															"AUTH_KEY VARCHAR VARCHAR(100)" };
+	
 	private String libraryName;
 	private String accessCode;
 	private ArrayList<View> views;
@@ -55,5 +62,17 @@ public class Library {
 	 */
 	public void setAuthKey(String authKey) {
 		this.authKey = authKey;
+	}
+	@Override
+	public String getTableName() {
+		return NAME;
+	}
+	@Override
+	public String[] getTableColumns() {
+		return COLUMNS;
+	}
+	@Override
+	public String[] getTableColumnDefintions() {
+		return COLUMN_DEFINITIONS;
 	}
 }

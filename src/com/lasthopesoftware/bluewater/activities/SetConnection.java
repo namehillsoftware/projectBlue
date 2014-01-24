@@ -78,7 +78,7 @@ public class SetConnection extends FragmentActivity {
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
         
-        if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
+        if (!JrSession.CreateSession(this)) return;
         
     	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
     	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);

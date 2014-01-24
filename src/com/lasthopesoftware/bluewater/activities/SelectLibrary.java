@@ -33,7 +33,7 @@ public class SelectLibrary extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-    	if (!JrSession.isActive() && !JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) {
+    	if (!JrSession.isActive() && !JrSession.CreateSession(this)) {
     		Intent intent = new Intent(this, SetConnection.class);
     		startActivity(intent);
     		return;

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.data.session;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -19,6 +20,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
@@ -79,10 +81,12 @@ public class JrSession {
 	}
 
 	public static boolean CreateSession(Context context) {
+		
 		return CreateSession(context.getSharedPreferences(PREFS_FILE, 0));
 	}
 
 	public static boolean CreateSession(SharedPreferences prefs) {
+		
 		Logger log = LoggerFactory.getLogger(JrSession.class);
 		log.info("Session started.");
 		
