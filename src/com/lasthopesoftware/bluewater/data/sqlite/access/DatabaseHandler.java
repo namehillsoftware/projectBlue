@@ -26,9 +26,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 	}
 	
 	private String getCreateTableSql(ISqliteDefinition definition) {
-		String returnString = "CREATE TABLE " + definition.getTableName() + "(";
+		String returnString = "CREATE TABLE " + definition.getSqlName() + "(";
 		
-		for (String colDef : definition.getTableColumnDefintions())
+		for (String colDef : definition.getSqlColumnDefintions())
 			returnString += colDef + ",";
 		
 		returnString = returnString.substring(0, returnString.length() - 1) + ")";
@@ -39,7 +39,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int arg1, int arg2) {
 		for (ISqliteDefinition table : tables)
-			db.execSQL("DROP TABLE IF EXISTS " + table.getTableName());
+			db.execSQL("DROP TABLE IF EXISTS " + table.getSqlName());
 		
 		onCreate(db);
 	}

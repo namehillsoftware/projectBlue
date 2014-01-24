@@ -64,15 +64,15 @@ public class Library implements ISqliteDefinition {
 		this.authKey = authKey;
 	}
 	@Override
-	public String getTableName() {
+	public String getSqlName() {
 		return NAME;
 	}
 	@Override
-	public String[] getTableColumns() {
+	public String[] getSqlColumns() {
 		return COLUMNS;
 	}
 	@Override
-	public String[] getTableColumnDefintions() {
+	public String[] getSqlColumnDefintions() {
 		return COLUMN_DEFINITIONS;
 	}
 }

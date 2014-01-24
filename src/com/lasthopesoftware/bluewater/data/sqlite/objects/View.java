@@ -33,15 +33,15 @@ public class View implements ISqliteDefinition {
 	}
 	
 	@Override
-	public String[] getTableColumns() {
+	public String[] getSqlColumns() {
 		return COLUMNS;
 	}
 	@Override
-	public String[] getTableColumnDefintions() {
+	public String[] getSqlColumnDefintions() {
 		return COLUMN_DEFINITIONS;
 	}
 	@Override
-	public String getTableName() {
+	public String getSqlName() {
 		return TABLE_NAME;
 	}
 }
