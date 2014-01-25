@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.View;
 public class DatabaseHandler extends SQLiteOpenHelper {
 
 	private static int DATABASE_VERSION = 1;
-	private static final String DATABASE_NAME = "library_db";
+	private static final String DATABASE_NAME = "sessions_db";
 	
 	private static ISqliteDefinition[] tables = { new Library(), new View() };
 	

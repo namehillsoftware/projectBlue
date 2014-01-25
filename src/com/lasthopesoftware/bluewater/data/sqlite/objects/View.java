@@ -2,8 +2,11 @@ package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 public class View implements ISqliteDefinition {
 	private static final String TABLE_NAME = "views";
-	private static String[] COLUMNS = { "ID", "NAME" };
-	private static String[] COLUMN_DEFINITIONS = { "ID INTEGER PRIMARY KEY", "NAME VARCHAR(50)" };
+	private static String[] COLUMNS = { "ID", "LIBRARY_ID", "NAME" };
+	private static String[] COLUMN_DEFINITIONS = {	"ID INTEGER PRIMARY KEY",
+													"LIBRARY_ID INTEGER", 
+													"NAME VARCHAR(50)", 
+													"FOREIGN KEY(LIBRARY_ID) REFERENCES LIBRARY(ID)" };
 	
 	private int id;
 	private String name;
