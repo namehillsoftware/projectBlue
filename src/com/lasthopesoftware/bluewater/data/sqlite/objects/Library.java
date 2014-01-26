@@ -2,8 +2,11 @@ package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
 
-public class Library implements ISqliteDefinition {
-	private static final String NAME = "LIBRARIES";
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+@DatabaseTable(tableName = "LIBRARIES")
+public class Library {
 	private static final String[] COLUMNS = { "ID", "LIBRARY_NAME", "ACCESS_CODE", "AUTH_KEY", "NOW_PLAYING_ID", "NOW_PLAYING_PROGRESS" };
 	private static final String[] COLUMN_DEFINITIONS = { 	"ID INTEGER PRIMARY KEY AUTOINCREMENT",
 															"LIBRARY_NAME VARCHAR(50) NOT NULL",
@@ -12,13 +15,19 @@ public class Library implements ISqliteDefinition {
 															"NOW_PLAYING_ID INTEGER",
 															"NOW_PLAYING_PROGRESS INTEGER" };
 	
+	@DatabaseField(id = true, generatedId= true)
+	private int id;
+	@DatabaseField(canBeNull = false, columnName = "LIBRARY_NAME", columnDefinition = "VARCHAR(50)")
 	private String libraryName;
+	@DatabaseField(canBeNull = false, columnName = "ACCESS_CODE", columnDefinition = "VARCHAR(30)")
 	private String accessCode;
-	private View[] views;
-	private int[] savedTracks;
+	
 	private String authKey;
 	private int nowPlayingId;
 	private int nowPlayingProgress;
+	
+	private View[] views;
+	private int[] savedTracks;
 	
 	/**
 	 * @return the nowPlayingId
@@ -82,18 +91,7 @@ public class Library implements ISqliteDefinition {
 	public void setAuthKey(String authKey) {
 		this.authKey = authKey;
 	}
-	@Override
-	public String getSqlName() {
-		return NAME;
-	}
-	@Override
-	public String[] getSqlColumns() {
-		return COLUMNS;
-	}
-	@Override
-	public String[] getSqlColumnDefintions() {
-		return COLUMN_DEFINITIONS;
-	}
+
 	/**
 	 * @return the nowPlayingProgress
 	 */
