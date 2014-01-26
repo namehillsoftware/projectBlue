@@ -21,9 +21,11 @@ public class Library {
 	private String libraryName;
 	@DatabaseField(canBeNull = false, columnName = "ACCESS_CODE", columnDefinition = "VARCHAR(30)")
 	private String accessCode;
-	
+	@DatabaseField(columnName = "AUTH_KEY", columnDefinition = "VARCHAR(100)")
 	private String authKey;
+	@DatabaseField(columnName = "NOW_PLAYING_ID")
 	private int nowPlayingId;
+	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS")
 	private int nowPlayingProgress;
 	
 	private View[] views;
