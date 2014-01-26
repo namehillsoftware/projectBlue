@@ -41,7 +41,7 @@ public class SetConnection extends FragmentActivity {
         	
         	JrSession.SaveSession(v.getContext());
         	
-        	if (!JrSession.CreateSession(getSharedPreferences(JrSession.PREFS_FILE, 0))) return;
+        	if (!JrSession.CreateSession(v.getContext())) return;
         	
         	mConnectionButton.setText(R.string.btn_connecting);
         	mConnectionButton.setEnabled(false);
@@ -118,7 +118,7 @@ public class SetConnection extends FragmentActivity {
 				for (int key : mSelectedViews)
 					selectedViews[i++] = key;
 				
-				JrSession.setLibraryKeys(selectedViews);
+				JrSession.setLibraryIds(selectedViews);
 				
 				JrSession.SaveSession(setConnection);
 				

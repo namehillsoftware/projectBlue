@@ -29,6 +29,8 @@ public class Library {
 	private int nowPlayingId;
 	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS")
 	private int nowPlayingProgress;
+	@DatabaseField(columnName = "IS_LOCAL_ONLY")
+	private boolean isLocalOnly;
 	
 	@ForeignCollectionField(eager = false)
 	private Collection<View> views;
@@ -121,5 +123,29 @@ public class Library {
 	 */
 	public void setSavedTracks(Collection<SavedTrack> savedTracks) {
 		this.savedTracks = savedTracks;
+	}
+	/**
+	 * @return the id
+	 */
+	public int getId() {
+		return id;
+	}
+	/**
+	 * @param id the id to set
+	 */
+	public void setId(int id) {
+		this.id = id;
+	}
+	/**
+	 * @return the isLocalOnly
+	 */
+	public boolean isLocalOnly() {
+		return isLocalOnly;
+	}
+	/**
+	 * @param isLocalOnly the isLocalOnly to set
+	 */
+	public void setLocalOnly(boolean isLocalOnly) {
+		this.isLocalOnly = isLocalOnly;
 	}
 }

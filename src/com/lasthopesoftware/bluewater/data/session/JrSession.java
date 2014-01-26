@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.data.session;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -20,12 +21,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 
+import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.View;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -36,6 +41,9 @@ public class JrSession {
 	private static final String USER_AUTH_CODE_KEY = "user_auth_code";
 	private static final String IS_LOCAL_ONLY = "is_local_only";
 	private static final String LIBRARY_KEY = "library_KEY";
+	private static final String CHOSEN_LIBRARY = "chosen_library";
+	
+	public static int ChosenLibrary = -1;
 
 	public static boolean IsLocalOnly = false;
 
@@ -44,7 +52,7 @@ public class JrSession {
 
 	public static JrAccessDao accessDao;
 
-	private static int[] SelectedLibraryKeys = new int[0];
+	private static int[] SelectedViewIds = new int[0];
 
 	public static IJrItem<?> SelectedItem;
 	public static JrFile PlayingFile;
@@ -82,56 +90,59 @@ public class JrSession {
 
 	public static boolean CreateSession(Context context) {
 		
-		return CreateSession(context.getSharedPreferences(PREFS_FILE, 0));
-	}
-
-	public static boolean CreateSession(SharedPreferences prefs) {
-		
 		Logger log = LoggerFactory.getLogger(JrSession.class);
 		log.info("Session started.");
 		
-		AccessCode = prefs.getString(ACCESS_CODE_KEY, "");
-		UserAuthCode = prefs.getString(USER_AUTH_CODE_KEY, "");
-		IsLocalOnly = prefs.getBoolean(IS_LOCAL_ONLY, false);
-		setLibraryKeys(prefs.getStringSet(LIBRARY_KEY, new HashSet<String>()));
-		mActive = false;
-		
-		if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
-		
-		if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(getLibraryKeys());
-		mActive = true;
-
+		DatabaseHandler handler = new DatabaseHandler(context);
 		try {
-			Playlist = prefs.getString(PLAYLIST_KEY, "");
-		} catch (ClassCastException ce) {
-			Playlist = null;
-			return mActive;
+			ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+			
+			if (ChosenLibrary < -1) return false;
+			
+			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+			
+			Library library = libraryAccess.queryForId(ChosenLibrary);
+			AccessCode = library.getAccessCode();
+			UserAuthCode = library.getAuthKey();
+			IsLocalOnly = library.isLocalOnly();
+			setLibraryIds(library.getViews());
+			mActive = false;
+			
+			if (JrSession.AccessCode == null || JrSession.AccessCode.isEmpty() || !tryConnection()) return false;
+			
+			if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem(getLibraryKeys());
+			mActive = true;
+		
+			int savedFileKey = library.getNowPlayingId();
+			int savedFilePos = library.getNowPlayingProgress();
+	
+	
+			if (savedFileKey < 0) return mActive;
+			
+			for (SavedTrack track : library.getSavedTracks()) {
+				if (track.getTrackId() != savedFileKey) continue;
+				PlayingFile = new JrFile(savedFileKey);
+				if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
+			}
+	
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			handler.close();
 		}
-
-		int savedFileKey = prefs.getInt(NOW_PLAYING_KEY, -1);
-		int savedFilePos = prefs.getInt(NP_POSITION, -1);
-
-
-		if (savedFileKey < 0) return mActive;
-		String savedFileKeyString = String.valueOf(savedFileKey);
-		for (String fileKey : Playlist.split(";")) {
-			if (!savedFileKeyString.equals(fileKey)) continue;
-			PlayingFile = new JrFile(savedFileKey);
-			if (savedFilePos > -1) PlayingFile.seekTo(savedFilePos);
-		}
-
+		
 		return mActive;
 	}
 	
-	public static void setLibraryKeys(int[] keys) {
-		SelectedLibraryKeys = keys;
+	public static void setLibraryIds(int[] keys) {
+		SelectedViewIds = keys;
 	}
 	
-	public static void setLibraryKeys(Set<String> keys) {
+	public static void setLibraryIds(Collection<View> views) {
 		int i = 0;
-		SelectedLibraryKeys = new int[keys.size()];
-		for (String key : keys)
-			SelectedLibraryKeys[i++] = Integer.parseInt(key);
+		SelectedViewIds = new int[views.size()];
+		for (View view : views)
+			SelectedViewIds[i++] = view.getId();
 	}
 	
 	public static boolean isActive() {
@@ -139,12 +150,12 @@ public class JrSession {
 	}
 	
 	public static int[] getLibraryKeys() {
-		return SelectedLibraryKeys;
+		return SelectedViewIds;
 	}
 	
 	public static HashSet<String> getLibraryKeysSet() {
-		HashSet<String> libraryKeys = new HashSet<String>(SelectedLibraryKeys.length);
-		for (int key : SelectedLibraryKeys)
+		HashSet<String> libraryKeys = new HashSet<String>(SelectedViewIds.length);
+		for (int key : SelectedViewIds)
 			libraryKeys.add(String.valueOf(key));
 		
 		return libraryKeys;

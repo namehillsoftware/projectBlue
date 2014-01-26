@@ -39,14 +39,21 @@ public class JrFsResponseHandler<T extends JrObject> extends DefaultHandler {
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-//		if (qName.equalsIgnoreCase("response"))
-//			response.add(currentResponse);
 		
 		if (qName.equalsIgnoreCase("item")) {
-			T newItem = (T) JrFileUtils.createListing(newClass);
-			newItem.setKey(Integer.parseInt(currentValue));
-			newItem.setValue(currentKey);
-			items.add(newItem);
+			T newItem;
+			try {
+				newItem = newClass.newInstance();
+				newItem.setKey(Integer.parseInt(currentValue));
+				newItem.setValue(currentKey);
+				items.add(newItem);
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }
