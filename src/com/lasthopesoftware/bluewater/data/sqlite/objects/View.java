@@ -6,10 +6,13 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "VIEWS")
 public class View {
 	
-	@DatabaseField(id = true, generatedId = true)
+	@DatabaseField(generatedId = true)
 	private int id;
 	@DatabaseField(columnDefinition = "VARCHAR(50)")
 	private String name;
+	@DatabaseField(foreign = true)
+	private Library library;
+	
 	/**
 	 * @return the key
 	 */

@@ -11,8 +11,8 @@ public class LibraryView {
 	@DatabaseField(foreign = true)
 	private Library library;
 	@DatabaseField(foreign = true)
-	
 	private View view;
+	
 	/**
 	 * @return the id
 	 */

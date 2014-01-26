@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -83,6 +82,8 @@ public class JrSession {
 			handler.getAccessObject(Library.class).createOrUpdate(library);
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			handler.close();
 		}
@@ -108,7 +109,7 @@ public class JrSession {
 		try {
 			ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 			
-			if (ChosenLibrary < -1) return library;
+			if (ChosenLibrary < 0) return library;
 			
 			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 			

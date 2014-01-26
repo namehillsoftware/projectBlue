@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
 	
-	@DatabaseField(id = true, generatedId= true)
+	@DatabaseField(generatedId = true)
 	private int id;
 	@DatabaseField(canBeNull = false, columnName = "LIBRARY_NAME", columnDefinition = "VARCHAR(50)")
 	private String libraryName;

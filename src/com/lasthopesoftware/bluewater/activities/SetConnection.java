@@ -98,6 +98,7 @@ public class SetConnection extends FragmentActivity {
     	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(library.isLocalOnly());
     	
     	txtAccessCode.setText(library.getAccessCode());
+    	if (library.getAuthKey() == null) return;
     	String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
     	if (!decryptedUserAuth.isEmpty()) {
 	    	String[] userDetails = decryptedUserAuth.split(":",2);

@@ -5,8 +5,13 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "SAVED_TRACKS")
 public class SavedTrack {
+	
+	@DatabaseField(generatedId = true)
+	private int id;
 	@DatabaseField(columnName = "TRACK_ID")
 	private int trackId;
+	@DatabaseField(foreign = true)
+	private Library library;
 
 	/**
 	 * @return the trackId
