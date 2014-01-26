@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "LIBRARIES")
@@ -26,8 +28,10 @@ public class Library {
 	private int nowPlayingId;
 	private int nowPlayingProgress;
 	
-	private View[] views;
-	private int[] savedTracks;
+	@ForeignCollectionField(eager = false)
+	private Collection<View> views;
+	@ForeignCollectionField(eager = false)
+	private Collection<SavedTrack> savedTracks;
 	
 	/**
 	 * @return the nowPlayingId
@@ -70,13 +74,13 @@ public class Library {
 	/**
 	 * @return the mViews
 	 */
-	public View[] getViews() {
+	public Collection<View> getViews() {
 		return views;
 	}
 	/**
 	 * @param mViews the mViews to set
 	 */
-	public void setViews(View[] views) {
+	public void setViews(Collection<View> views) {
 		this.views = views;
 	}
 	/**
@@ -107,13 +111,13 @@ public class Library {
 	/**
 	 * @return the savedTracks
 	 */
-	public int[] getSavedTracks() {
+	public Collection<SavedTrack> getSavedTracks() {
 		return savedTracks;
 	}
 	/**
 	 * @param savedTracks the savedTracks to set
 	 */
-	public void setSavedTracks(int[] savedTracks) {
+	public void setSavedTracks(Collection<SavedTrack> savedTracks) {
 		this.savedTracks = savedTracks;
 	}
 }

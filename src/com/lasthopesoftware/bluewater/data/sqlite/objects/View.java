@@ -11,7 +11,7 @@ public class View {
 													"NAME VARCHAR(50)", 
 													"FOREIGN KEY(LIBRARY_ID) REFERENCES LIBRARY(ID)" };
 	
-	@DatabaseField(id = true, generatedId= true)
+	@DatabaseField(id = true, generatedId = true)
 	private int id;
 	@DatabaseField(columnDefinition = "VARCHAR(50)")
 	private String name;
