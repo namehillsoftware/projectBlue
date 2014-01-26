@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.app.NotificationManager;
@@ -35,11 +34,12 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListe
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 
 /**
@@ -69,6 +69,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private NotificationManager mNotificationMgr;
 	private Thread trackProgressThread;
 	private static ArrayList<JrFile> mPlaylist;
+	private static JrFile mPlayingFile;
 	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
@@ -79,6 +80,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static HashSet<OnStreamingStopListener> mOnStreamingStopListeners = new HashSet<OnStreamingStopListener>();
 	
 	/* Begin streamer intent helpers */
+	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
@@ -113,7 +115,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public static void Next(Context context) {
-		JrFile nextFile = JrSession.PlayingFile.getNextFile();
+		JrFile nextFile = mPlayingFile.getNextFile();
 		if (nextFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, nextFile.getKey());
@@ -122,7 +124,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	public static void Previous(Context context) {
-		JrFile previousFile = JrSession.PlayingFile.getPreviousFile();
+		JrFile previousFile = mPlayingFile.getPreviousFile();
 		if (previousFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, previousFile.getKey());
@@ -170,6 +172,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	/* End Events */
 	
+	public static JrFile getNowPlayingFile() {
+		return mPlayingFile;
+	}
+	
 	public StreamingMusicService() {
 		super();
 		thisContext = this;
@@ -177,9 +183,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	private void startFilePlayback(JrFile file) {
 		final JrFile playingFile = file;
-		JrSession.PlayingFile = playingFile;
+		mPlayingFile = playingFile;
 		mFileKey = playingFile.getKey();
-		JrSession.SaveSession(this);
+		JrSession.GetLibrary(thisContext).setNowPlayingId(mFileKey);
+		JrSession.SaveSession(thisContext);
 		// Start playback immediately
 		playingFile.start();
 		// Set the notification area
@@ -242,24 +249,24 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private void startPlaylist(String playlistString, int fileKey, int filePos) {
 		if (playlistString == null) return;
 		// If everything is the same as before, and stuff is playing, don't do anything else 
-		if (playlistString.equals(mPlaylistString) && mFileKey == fileKey && JrSession.PlayingFile.isPlaying()) return;
+		if (playlistString.equals(mPlaylistString) && mFileKey == fileKey && mPlayingFile.isPlaying()) return;
 		
 		// stop any playback that is in action
-		if (JrSession.PlayingFile != null) {
-			if (JrSession.PlayingFile.isPlaying())
-				JrSession.PlayingFile.stop();
+		if (mPlayingFile != null) {
+			if (mPlayingFile.isPlaying())
+				mPlayingFile.stop();
 			
-			throwStopEvent(JrSession.PlayingFile);
+			throwStopEvent(mPlayingFile);
 			
-			JrSession.PlayingFile = null;
+			mPlayingFile = null;
 			releaseMediaPlayers();
 		}
 		
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
-			JrSession.Playlist = mPlaylistString;
 			mPlaylist = JrFiles.deserializeFileStringList(mPlaylistString);
+			JrSession.GetLibrary(thisContext).setSavedTracks(mPlaylist);
 		}
 		
 		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
@@ -285,13 +292,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
-		if (JrSession.PlayingFile != null) {
-			if (JrSession.PlayingFile.isPlaying()) {
+		if (mPlayingFile != null) {
+			if (mPlayingFile.isPlaying()) {
 				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-				JrSession.PlayingFile.pause();
+				mPlayingFile.pause();
 			}
 			JrSession.SaveSession(this);
-			throwStopEvent(JrSession.PlayingFile);
+			throwStopEvent(mPlayingFile);
 		}
 		mPlaylistString = null;
 		mFileKey = -1;
@@ -321,8 +328,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 				mNotificationMgr.cancelAll();
-				if (result == Boolean.TRUE && JrSession.CreateSession(thisContext))
-					StreamMusic(thisContext, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);							
+				if (result == Boolean.TRUE && JrSession.GetLibrary(thisContext) != null)
+					StreamMusic(thisContext, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition(), mPlaylistString);							
 			}
 		});
 		
@@ -361,13 +368,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			// some improved prefetching by the processor
 			if (intent.getAction().equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, -1));
-	        } else if (mPlaylist != null && JrSession.PlayingFile != null) {
+	        } else if (mPlaylist != null && mPlayingFile != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (intent.getAction().equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
-		        } else if (intent.getAction().equals(ACTION_PLAY) && JrSession.PlayingFile != null) {
-		    		if (!JrSession.PlayingFile.isMediaPlayerCreated()) startPlaylist(mPlaylistString, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());
-		    		else startFilePlayback(JrSession.PlayingFile);
+		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlayingFile != null) {
+		    		if (!mPlayingFile.isMediaPlayerCreated()) startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
+		    		else startFilePlayback(mPlayingFile);
 		        } else if (intent.getAction().equals(ACTION_STOP)) {
 		        	pausePlayback(true);
 		        }
@@ -376,7 +383,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
 		} else if (!JrSession.isActive()) {
-			if (JrSession.CreateSession(this)) pausePlayback(true);
+			if (JrSession.GetLibrary(thisContext) != null) pausePlayback(true);
 		}
 		return START_NOT_STICKY;
 	}
@@ -402,8 +409,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public boolean onJrFileError(JrFile file, int what, int extra) {
 		LoggerFactory.getLogger(StreamingMusicService.class).error("JR File error - " + what + " - " + extra);
-		JrSession.PlayingFile = file;
-		JrSession.Playlist = mPlaylistString;
+		mPlayingFile = file;
+		Library library = JrSession.GetLibrary(thisContext);
+		library.setNowPlayingId(file.getKey());
+		library.setSavedTracks(mPlaylist);
 		JrSession.SaveSession(this);		
 		pausePlayback(false);
 		
@@ -445,26 +454,26 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_GAIN:
 	            // resume playback
-	        	if (!JrSession.isActive() && !JrSession.CreateSession(this)) return;
+	        	if (!JrSession.isActive() && JrSession.GetLibrary(thisContext) != null) return;
 	        	
-	        	if (JrSession.PlayingFile != null)
-	        		JrSession.PlayingFile.setVolume(1.0f);
+	        	if (mPlayingFile != null)
+	        		mPlayingFile.setVolume(1.0f);
 	        	
-	        	if (!JrSession.PlayingFile.isPlaying())
-	        		startPlaylist(JrSession.Playlist, JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition());
+	        	if (!mPlayingFile.isPlaying())
+	        		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
 	        	
 	            return;
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
-	        	if (JrSession.PlayingFile.isPlaying()) pausePlayback(true);
+	        	if (mPlayingFile.isPlaying()) pausePlayback(true);
 	        // Lost focus but it will be regained... could not release resources if wanted
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-	        	if (JrSession.PlayingFile.isPlaying()) pausePlayback(false);
+	        	if (mPlayingFile.isPlaying()) pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (JrSession.PlayingFile.isPlaying()) JrSession.PlayingFile.setVolume(0.1f);
+	            if (mPlayingFile.isPlaying()) mPlayingFile.setVolume(0.1f);
 	            return;
 	    }
 	}

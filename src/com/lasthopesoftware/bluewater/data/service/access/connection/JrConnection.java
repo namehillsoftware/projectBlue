@@ -34,8 +34,12 @@ public class JrConnection extends HttpURLConnection {
 		mHttpConnection = (HttpURLConnection)url.openConnection();
 		mHttpConnection.setConnectTimeout(5000);
 		mHttpConnection.setReadTimeout(180000);
-		if (!JrSession.UserAuthCode.isEmpty())
-			mHttpConnection.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
+		try {
+			if (!JrSession.GetLibrary().getAuthKey().isEmpty())
+				mHttpConnection.setRequestProperty("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

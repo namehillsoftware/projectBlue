@@ -44,7 +44,7 @@ public class JrFile extends JrObject implements
 	private boolean preparing = false;
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
-	private Context context;
+	private Context mMpContext;;
 	private MediaPlayer mp;
 	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
@@ -247,7 +247,7 @@ public class JrFile extends JrObject implements
 	public void initMediaPlayer(Context context) {
 		if (mp != null) return;
 		
-		this.context = context;
+		this.mMpContext = context;
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
 		mp.setOnErrorListener(this);
@@ -266,9 +266,9 @@ public class JrFile extends JrObject implements
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
 					Map<String, String> headers = new HashMap<String, String>();
-					if (!JrSession.UserAuthCode.isEmpty())
-						headers.put("Authorization", "basic " + JrSession.UserAuthCode);
-					mp.setDataSource(context, Uri.parse(url), headers);
+					if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
+						headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty());
+					mp.setDataSource(mMpContext, Uri.parse(url), headers);
 					mp.prepareAsync();
 					preparing = true;
 					return;
@@ -285,9 +285,9 @@ public class JrFile extends JrObject implements
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
 					Map<String, String> headers = new HashMap<String, String>();
-					if (!JrSession.UserAuthCode.isEmpty())
-						headers.put("Authorization", "basic " + JrSession.UserAuthCode);
-					mp.setDataSource(context, Uri.parse(url), headers);
+					if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
+						headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty());
+					mp.setDataSource(mMpContext, Uri.parse(url), headers);
 					
 					preparing = true;
 					mp.prepare();
@@ -307,8 +307,8 @@ public class JrFile extends JrObject implements
 	private void resetMediaPlayer() {
 		mp.reset();
 		
-		if (context != null)
-			mp.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+		if (mMpContext != null)
+			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
 		
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}

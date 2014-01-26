@@ -5,11 +5,6 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "VIEWS")
 public class View {
-	private static String[] COLUMNS = { "ID", "LIBRARY_ID", "NAME" };
-	private static String[] COLUMN_DEFINITIONS = {	"ID INTEGER PRIMARY KEY",
-													"LIBRARY_ID INTEGER", 
-													"NAME VARCHAR(50)", 
-													"FOREIGN KEY(LIBRARY_ID) REFERENCES LIBRARY(ID)" };
 	
 	@DatabaseField(id = true, generatedId = true)
 	private int id;

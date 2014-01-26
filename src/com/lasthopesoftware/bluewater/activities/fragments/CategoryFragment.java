@@ -170,7 +170,6 @@ public class CategoryFragment extends Fragment {
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-				    		JrSession.SelectedItem = selection;
 				    		startActivity(intent);
 				    		return true;
 						}
@@ -183,7 +182,6 @@ public class CategoryFragment extends Fragment {
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
-				    		JrSession.SelectedItem = selection;
 				    		startActivity(intent);
 			    	        return true;
 			    	    }

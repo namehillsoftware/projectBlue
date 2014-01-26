@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +16,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectL
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.View;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -27,6 +29,25 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	private OnStartListener<List<IJrItem<?>>> mOnStartListener;
 	private OnConnectListener<List<IJrItem<?>>> mOnConnectListener;
 	private OnErrorListener<List<IJrItem<?>>> mOnErrorListener;
+	
+	public JrFileSystem(Collection<View> visibleViews) {
+		mVisibleViewKeys = new int[visibleViews.size()];
+		int i = 0;
+		for (View visibleView : visibleViews)
+			mVisibleViewKeys[i++] = visibleView.getId();
+		
+		mOnConnectListener = new OnConnectListener<List<IJrItem<?>>>() {
+			
+			@Override
+			public List<IJrItem<?>> onConnect(InputStream is) {
+				ArrayList<IJrItem<?>> returnList = new ArrayList<IJrItem<?>>();
+				for (JrItem item : JrFsResponse.GetItems(is))
+					returnList.add(item);
+				
+				return returnList;
+			}
+		};
+	}
 	
 	public JrFileSystem(int... visibleViewKeys) {
 		super();

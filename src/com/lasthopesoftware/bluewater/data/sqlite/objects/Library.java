@@ -6,16 +6,10 @@ import java.util.Collection;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
-	private static final String[] COLUMNS = { "ID", "LIBRARY_NAME", "ACCESS_CODE", "AUTH_KEY", "NOW_PLAYING_ID", "NOW_PLAYING_PROGRESS" };
-	private static final String[] COLUMN_DEFINITIONS = { 	"ID INTEGER PRIMARY KEY AUTOINCREMENT",
-															"LIBRARY_NAME VARCHAR(50) NOT NULL",
-															"ACCESS_CODE VARCHAR(30) NOT NULL",
-															"AUTH_KEY VARCHAR VARCHAR(100)",
-															"NOW_PLAYING_ID INTEGER",
-															"NOW_PLAYING_PROGRESS INTEGER" };
 	
 	@DatabaseField(id = true, generatedId= true)
 	private int id;
@@ -34,6 +28,8 @@ public class Library {
 	
 	@ForeignCollectionField(eager = false)
 	private Collection<View> views;
+	@ForeignCollectionField(eager = false)
+	private Collection<LibraryView> selectedViews;
 	@ForeignCollectionField(eager = false)
 	private Collection<SavedTrack> savedTracks;
 	
@@ -118,11 +114,29 @@ public class Library {
 	public Collection<SavedTrack> getSavedTracks() {
 		return savedTracks;
 	}
+	
+	public String getSavedTracksString() {
+		String trackStringList = "2;" + String.valueOf(savedTracks.size()) + ";-1;";
+		for (SavedTrack track : savedTracks)
+			trackStringList += String.valueOf(track.getTrackId()) + ";";
+		
+		return trackStringList;
+	}
 	/**
 	 * @param savedTracks the savedTracks to set
 	 */
 	public void setSavedTracks(Collection<SavedTrack> savedTracks) {
 		this.savedTracks = savedTracks;
+	}
+	
+	public void setSavedTracks(ArrayList<JrFile> files) {
+		if (savedTracks == null) savedTracks = new ArrayList<SavedTrack>(files.size()); 
+		savedTracks.clear();
+		for (JrFile file : files) {
+			SavedTrack newSavedTrack = new SavedTrack();
+			newSavedTrack.setTrackId(file.getKey());
+			savedTracks.add(newSavedTrack);			
+		}
 	}
 	/**
 	 * @return the id
@@ -147,5 +161,26 @@ public class Library {
 	 */
 	public void setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
+	}
+	/**
+	 * @return the selectedViews
+	 */
+	public Collection<View> getSelectedViews() {
+		ArrayList<View> returnViews = new ArrayList<View>(selectedViews.size());
+		for (LibraryView libraryView : selectedViews)
+			returnViews.add(libraryView.getView());
+		return returnViews;
+	}
+	/**
+	 * @param selectedViews the selectedViews to set
+	 */
+	public void setSelectedViews(Collection<View> selectedViews) {
+		this.selectedViews = new ArrayList<LibraryView>(selectedViews.size());
+		for (View view : selectedViews) {
+			LibraryView newLibraryView = new LibraryView();
+			newLibraryView.setLibrary(this);
+			newLibraryView.setView(view);
+			this.selectedViews.add(newLibraryView);
+		}
 	}
 }

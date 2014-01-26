@@ -33,7 +33,7 @@ public class SelectLibrary extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-    	if (!JrSession.isActive() && !JrSession.CreateSession(this)) {
+    	if (!JrSession.isActive() && JrSession.GetLibrary(this) == null) {
     		Intent intent = new Intent(this, SetConnection.class);
     		startActivity(intent);
     		return;
@@ -53,7 +53,7 @@ public class SelectLibrary extends FragmentActivity {
 				if (mSelectedLibrary < 0) return;
 				
 //				JrSession.LibraryKey = mSelectedLibrary;
-				JrSession.JrFs = new JrFileSystem(JrSession.getLibraryKeys());
+				JrSession.JrFs = new JrFileSystem(JrSession.GetLibrary(v.getContext()).getSelectedViews());
 				JrSession.SaveSession(v.getContext());
 				Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
 				startActivity(intent);

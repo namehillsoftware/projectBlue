@@ -7,7 +7,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.lasthopesoftware.bluewater.data.service.objects.JrFileUtils;
 import com.lasthopesoftware.bluewater.data.service.objects.JrObject;
 
 public class JrFsResponseHandler<T extends JrObject> extends DefaultHandler {

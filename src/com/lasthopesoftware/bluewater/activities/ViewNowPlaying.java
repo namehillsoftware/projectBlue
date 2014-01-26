@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnectio
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.OnStreamingStartListener;
 import com.lasthopesoftware.bluewater.services.OnStreamingStopListener;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
@@ -66,12 +67,13 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	private TextView mNowPlayingTitle;
 	private static GetFileImage getFileImageTask;
 	
+	private JrFile playingFile = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		if (!JrSession.isActive()) JrSession.CreateSession(this);
+		Library library = JrSession.GetLibrary(this);
 		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);
@@ -146,16 +148,18 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		if (JrSession.PlayingFile == null) return;
+		playingFile = StreamingMusicService.getNowPlayingFile();
+		if (playingFile == null)
+			playingFile = new JrFile(library.getNowPlayingId());
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(new ProgressTrackerThread(JrSession.PlayingFile, mHandler));
+		mTrackerThread = new Thread(new ProgressTrackerThread(playingFile, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
 		
-		setView(JrSession.PlayingFile);
+		setView(playingFile);
 	}
 	
 	@Override
@@ -167,7 +171,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
 		return true;
 	}
 
@@ -183,13 +187,17 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		public void onClick(View v) {
 			if (!mControlNowPlaying.isShown()) return;
 			
-			if (JrSession.PlayingFile.isPlaying()) {
-				StreamingMusicService.Pause(v.getContext());
+			if (StreamingMusicService.getNowPlayingFile() != null) {
+				if (StreamingMusicService.getNowPlayingFile().isPlaying()) {
+					StreamingMusicService.Pause(v.getContext());
+					return;
+				}
+				
+				if (StreamingMusicService.getNowPlayingFile().isPrepared()) StreamingMusicService.Play(v.getContext());
 				return;
 			}
-			
-			if (JrSession.PlayingFile.isPrepared()) StreamingMusicService.Play(v.getContext());
-			else StreamingMusicService.StreamMusic(v.getContext(), JrSession.PlayingFile.getKey(), JrSession.PlayingFile.getCurrentPosition(), JrSession.Playlist);
+			Library library = JrSession.GetLibrary(v.getContext());
+			StreamingMusicService.StreamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingId(), library.getSavedTracksString());
 		}
 	}
 	

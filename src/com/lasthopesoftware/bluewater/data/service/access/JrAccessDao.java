@@ -1,19 +1,13 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrAccessDao {
-	private String mToken;
 	private boolean status;
 	private volatile String mActiveUrl = "";
 	private String remoteIp;
@@ -84,7 +78,6 @@ public class JrAccessDao {
 	
 	public void resetUrl() {
 		mActiveUrl = "";
-		clearToken();
 	}
 	
 	public String getActiveUrl() {
@@ -96,26 +89,30 @@ public class JrAccessDao {
 			}
 		}
 		
-		if (!JrSession.IsLocalOnly) {
-			try {
-				mActiveUrl = getRemoteUrl();
-	        	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
-			} catch (Exception e) {
-				mActiveUrl = "";
-				e.printStackTrace();
-			}
-		} else { 
-			for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
+		try {
+			if (!JrSession.GetLibrary().isLocalOnly()) {
 				try {
-					mActiveUrl = getLocalIpUrl(urlIndex);
-		        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
+					mActiveUrl = getRemoteUrl();
+			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
 				} catch (Exception e) {
 					mActiveUrl = "";
 					e.printStackTrace();
 				}
+			} else { 
+				for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
+					try {
+						mActiveUrl = getLocalIpUrl(urlIndex);
+			        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
+					} catch (Exception e) {
+						mActiveUrl = "";
+						e.printStackTrace();
+					}
+				}
 			}
+		} catch (Exception e) {
+			mActiveUrl = "";
+			e.printStackTrace();
 		}
-
 		
 		mActiveUrl = "";
 		return mActiveUrl;
@@ -156,65 +153,4 @@ public class JrAccessDao {
 		return url;
 	}
 	
-	private String getToken(String url) {
-		if (!url.equals(mActiveUrl) || mToken == null || mToken.isEmpty()) {
-			try {
-				FutureTask<String> getTokenTask = new FutureTask<String>(new GetAuthToken(url));
-				Thread getTokenThread = new Thread(getTokenTask);
-				getTokenThread.setName("Auth Token Retrieval Thread");
-				getTokenThread.start();
-				mToken = getTokenTask.get();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		return mToken;
-	}
-	
-	private String getToken() {
-		return getToken(getActiveUrl());
-	}
-	
-	private void clearToken() {
-		mToken = null;
-	}
-	
-	private boolean testConnection(String url) {
-		return getToken(url) != null;
-	}
-	
-	private class GetAuthToken implements Callable<String> {
-		
-		private String mUrl;
-		
-		public GetAuthToken(String url) {
-			mUrl = url;
-		}
-		
-		@Override
-		public String call() throws InterruptedException, ExecutionException {
-			// Get authentication token
-			String token = null;
-			try {
-				URLConnection authConn = (new URL(mUrl + "Authenticate")).openConnection();
-				authConn.setReadTimeout(5000);
-				authConn.setConnectTimeout(5000);
-				if (!JrSession.UserAuthCode.isEmpty())
-					authConn.setRequestProperty("Authorization", "basic " + JrSession.UserAuthCode);
-				
-		    	JrResponse response = JrResponse.fromInputStream(authConn.getInputStream());
-		    	if (response != null && response.items.containsKey("Token"))
-		    		token = response.items.get("Token");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			return token;
-		}
-	}
 }

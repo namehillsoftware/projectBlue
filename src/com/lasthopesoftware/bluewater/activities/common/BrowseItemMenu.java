@@ -26,7 +26,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -136,7 +135,6 @@ public class BrowseItemMenu {
     		Intent intent = new Intent(v.getContext(), ViewFiles.class);
     		intent.setAction(mItem instanceof JrPlaylist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
-    		JrSession.SelectedItem = mItem;
     		v.getContext().startActivity(intent);
 		}
 	}

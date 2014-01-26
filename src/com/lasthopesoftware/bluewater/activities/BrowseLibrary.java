@@ -51,7 +51,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		if (!JrSession.isActive() && !JrSession.CreateSession(this)) {
+		if (!JrSession.isActive() && !JrSession.isActive()) {
 			Intent intent = new Intent(this, SetConnection.class);
 			startActivity(intent);
 			return;
@@ -79,7 +79,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu());
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
 		return true;
 	}
 

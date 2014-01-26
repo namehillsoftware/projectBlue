@@ -225,4 +225,11 @@ public class JrFiles implements IJrItemFiles {
 		
 		return files;
 	}
+	
+	public static String serializeFileStringList(ArrayList<JrFile> files) {
+		String fileStringList = "2;" + String.valueOf(files.size()) + ";-1;";
+		for (JrFile file : files)
+			fileStringList += file.getKey().toString() + ";";
+		return fileStringList;
+	}
 }
