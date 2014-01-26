@@ -17,6 +17,10 @@ import xmlwise.Xmlwise;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
@@ -130,7 +134,7 @@ public class JrSession {
 		
 		return library;
 	}
-	
+		
 	public synchronized static Library ChooseLibrary(Context context, int libraryKey) {
 		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).commit();
 		
@@ -139,32 +143,9 @@ public class JrSession {
 		return GetLibrary(context);
 	}
 	
-//	public static void setLibraryIds(int[] keys) {
-//		SelectedViewIds = keys;
-//	}
-//	
-//	public static void setLibraryIds(Collection<View> views) {
-//		int i = 0;
-//		SelectedViewIds = new int[views.size()];
-//		for (View view : views)
-//			SelectedViewIds[i++] = view.getId();
-//	}
-	
 	public static boolean isActive() {
 		return mActive;
 	}
-	
-//	public static int[] getLibraryKeys() {
-//		return SelectedViewIds;
-//	}
-//	
-//	public static HashSet<String> getLibraryKeysSet() {
-//		HashSet<String> libraryKeys = new HashSet<String>(SelectedViewIds.length);
-//		for (int key : SelectedViewIds)
-//			libraryKeys.add(String.valueOf(key));
-//		
-//		return libraryKeys;
-//	}
 
 	private static boolean tryConnection(String accessCode) {
 		boolean connectResult = false;

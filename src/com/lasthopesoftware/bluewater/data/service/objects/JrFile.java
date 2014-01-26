@@ -265,12 +265,9 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					Map<String, String> headers = new HashMap<String, String>();
-					if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
-						headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty());
-					mp.setDataSource(mMpContext, Uri.parse(url), headers);
-					mp.prepareAsync();
+					setMpDataSource(url);
 					preparing = true;
+					mp.prepareAsync();
 					return;
 				}
 			} catch (Exception e) {
@@ -284,10 +281,7 @@ public class JrFile extends JrObject implements
 			try {
 				String url = getMpUrl();
 				if (!url.isEmpty()) {
-					Map<String, String> headers = new HashMap<String, String>();
-					if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
-						headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty());
-					mp.setDataSource(mMpContext, Uri.parse(url), headers);
+					setMpDataSource(url);
 					
 					preparing = true;
 					mp.prepare();
@@ -302,6 +296,13 @@ public class JrFile extends JrObject implements
 				preparing = false;
 			}
 		}
+	}
+	
+	private void setMpDataSource(String url) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
+		Map<String, String> headers = new HashMap<String, String>();
+		if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
+			headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey());
+		mp.setDataSource(mMpContext, Uri.parse(url), headers);
 	}
 	
 	private void resetMediaPlayer() {

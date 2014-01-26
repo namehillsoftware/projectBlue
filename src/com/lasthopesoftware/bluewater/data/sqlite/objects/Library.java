@@ -130,8 +130,7 @@ public class Library {
 	}
 	
 	public void setSavedTracks(ArrayList<JrFile> files) {
-		if (savedTracks == null) savedTracks = new ArrayList<SavedTrack>(files.size()); 
-		savedTracks.clear();
+		savedTracks = new ArrayList<SavedTrack>(files.size()); 
 		for (JrFile file : files) {
 			SavedTrack newSavedTrack = new SavedTrack();
 			newSavedTrack.setTrackId(file.getKey());
