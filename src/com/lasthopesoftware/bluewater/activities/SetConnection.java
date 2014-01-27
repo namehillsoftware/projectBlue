@@ -48,14 +48,15 @@ public class SetConnection extends FragmentActivity {
 	        	library.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
         	}
         	final Context _context = v.getContext();
+        	
+        	mConnectionButton.setText(R.string.btn_connecting);
+        	mConnectionButton.setEnabled(false);
+        	
         	JrSession.SaveSession(v.getContext(), new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
 					if (JrSession.ChooseLibrary(_context, result.getId()) == null) return;
-		        	
-		        	mConnectionButton.setText(R.string.btn_connecting);
-		        	mConnectionButton.setEnabled(false);
 		        	
 		        	if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
 		        	
