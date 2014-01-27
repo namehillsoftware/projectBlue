@@ -5,6 +5,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -23,7 +25,11 @@ import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -52,6 +58,8 @@ public class JrSession {
 //	//    public static ArrayList<JrFile> Playlist;
 //	public static String Playlist;
 	
+	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
+	
 	private static Library library = null;
 
 	public static JrFileSystem JrFs;
@@ -62,45 +70,43 @@ public class JrSession {
 	public static void SaveSession(Context context) { 
 		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, ChosenLibrary).apply();
 		if (library == null) library = new Library();
-//		library.setAccessCode(accessCode);
-//		prefsEditor.putString(ACCESS_CODE_KEY, AccessCode);
-//		prefsEditor.putString(USER_AUTH_CODE_KEY, UserAuthCode);
-//		prefsEditor.putBoolean(IS_LOCAL_ONLY, IsLocalOnly);
-//		prefsEditor.putStringSet(LIBRARY_KEY, getLibraryKeysSet());
-//		
-//		if (Playlist != null) {
-//			prefsEditor.putString(PLAYLIST_KEY, Playlist);
-//		}
-//
-//		if (PlayingFile != null) {
-//			prefsEditor.putInt(NOW_PLAYING_KEY, PlayingFile.getKey());
-//			prefsEditor.putInt(NP_POSITION, PlayingFile.getCurrentPosition());
-//		}
-//
-//		prefsEditor.apply();
-		DatabaseHandler handler = new DatabaseHandler(context);
-		try {
-			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-			Dao<SelectedView, Integer> libraryViewAccess = handler.getAccessObject(SelectedView.class);
-			Library oldLibrary = libraryAccess.queryForId(library.getId());
-			if (oldLibrary != null) {
-				libraryViewAccess.delete(oldLibrary.getSelectedViews());
-			}
-			libraryAccess.createOrUpdate(library);
-			if (library.getSelectedViews() != null) {
-				for (SelectedView libraryView : library.getSelectedViews())
-					libraryViewAccess.create(libraryView);
-			}
-		} catch (SQLException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} catch (Exception e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} finally {
-			handler.close();
-		}
 		
-		Logger log = LoggerFactory.getLogger(JrSession.class);
-		log.info("Session saved.");
+		final Context _context = context;
+		SimpleTask<Void, Void, Void> writeToDatabaseTask = new SimpleTask<Void, Void, Void>();
+		writeToDatabaseTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Void>() {
+			
+			@Override
+			public void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+				DatabaseHandler handler = new DatabaseHandler(_context);
+				try {
+					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+					Dao<SelectedView, Integer> libraryViewAccess = handler.getAccessObject(SelectedView.class);
+					Dao<SavedTrack, Integer> savedTrackAccess = handler.getAccessObject(SavedTrack.class);
+					Library oldLibrary = libraryAccess.queryForId(library.getId());
+					if (oldLibrary != null) {
+						libraryViewAccess.delete(oldLibrary.getSelectedViews());
+						savedTrackAccess.delete(oldLibrary.getSavedTracks());
+					}
+					libraryAccess.createOrUpdate(library);
+					
+					for (SelectedView libraryView : library.getSelectedViews())
+						libraryViewAccess.create(libraryView);
+					
+					for (SavedTrack savedTrack : library.getSavedTracks())
+						savedTrackAccess.create(savedTrack);
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} catch (Exception e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} finally {
+					handler.close();
+				}
+				
+				Logger log = LoggerFactory.getLogger(JrSession.class);
+				log.info("Session saved.");
+			}
+		});
+		writeToDatabaseTask.executeOnExecutor(databaseExecutor);
 	}
 	
 	public static synchronized Library GetLibrary() throws Exception {
@@ -116,27 +122,43 @@ public class JrSession {
 		mActive = false;
 		library = new Library();
 		
-		DatabaseHandler handler = new DatabaseHandler(context);
-		try {
-			ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+		
+		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+		
+		if (ChosenLibrary < 0) return library;
+		final Context _context = context;
+		SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
+		getLibraryTask.addOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
 			
-			if (ChosenLibrary < 0) return library;
-			
-			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-			
-			library = libraryAccess.queryForId(ChosenLibrary);
-			
-			if (library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode())) {
-				JrSession.JrFs = new JrFileSystem(library.getSelectedViews());
-				mActive = true;
+			@Override
+			public void onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+				DatabaseHandler handler = new DatabaseHandler(_context);
+				try {
+					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+					owner.setResult(libraryAccess.queryForId(params[0]));
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} catch (Exception e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} finally {
+					handler.close();
+				}
 			}
-		} catch (SQLException e) {
+		});
+		
+		try {
+			library = getLibraryTask.executeOnExecutor(databaseExecutor, ChosenLibrary).get();
+		} catch (InterruptedException e) {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} catch (Exception e) {
+		} catch (ExecutionException e) {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} finally {
-			handler.close();
 		}
+		
+		if (library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode())) {
+			JrSession.JrFs = new JrFileSystem(library.getSelectedViews());
+			mActive = true;
+		}
+		
 		
 		Logger log = LoggerFactory.getLogger(JrSession.class);
 		log.info("Session started.");

@@ -141,7 +141,7 @@ public class Library {
 			newSavedTrack.setTrackId(file.getKey());
 			newSavedTracks.add(newSavedTrack);			
 		}
-		setSavedTracks(savedTracks);
+		setSavedTracks(newSavedTracks);
 	}
 	/**
 	 * @return the id

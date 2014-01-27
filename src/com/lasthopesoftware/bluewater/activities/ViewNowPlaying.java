@@ -204,7 +204,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				return;
 			}
 			Library library = JrSession.GetLibrary(v.getContext());
-			StreamingMusicService.StreamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingId(), library.getSavedTracksString());
+			StreamingMusicService.StreamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
 		}
 	}
 	

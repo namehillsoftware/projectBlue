@@ -296,6 +296,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			if (mPlayingFile.isPlaying()) {
 				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
 				mPlayingFile.pause();
+				JrSession.GetLibrary(thisContext).setNowPlayingId(mPlayingFile.getKey());
+				JrSession.GetLibrary(thisContext).setNowPlayingProgress(mPlayingFile.getCurrentPosition());
 			}
 			JrSession.SaveSession(this);
 			throwStopEvent(mPlayingFile);
