@@ -9,8 +9,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-
-
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
@@ -28,17 +27,13 @@ public class JrPlaylistResponse {
 	    	
 	    	returnFiles = jrPlaylistXml.getPlaylists();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrPlaylistResponse.class).error(e.toString(), e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrPlaylistResponse.class).error(e.toString(), e);
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrPlaylistResponse.class).error(e.toString(), e);
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrPlaylistResponse.class).error(e.toString(), e);
 		}
 		
 		return returnFiles;

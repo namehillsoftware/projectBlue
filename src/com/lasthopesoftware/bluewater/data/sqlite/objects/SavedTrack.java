@@ -10,7 +10,7 @@ public class SavedTrack {
 	private int id;
 	@DatabaseField(columnName = "TRACK_ID")
 	private int trackId;
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private Library library;
 
 	/**

@@ -5,6 +5,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
+
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrAccessDao {
@@ -85,7 +87,7 @@ public class JrAccessDao {
 			try {
 				/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 			} catch (Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
 			}
 		}
 		
@@ -96,7 +98,7 @@ public class JrAccessDao {
 			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
 				} catch (Exception e) {
 					mActiveUrl = "";
-					e.printStackTrace();
+					LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
 				}
 			} else { 
 				for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
@@ -105,13 +107,13 @@ public class JrAccessDao {
 			        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 					} catch (Exception e) {
 						mActiveUrl = "";
-						e.printStackTrace();
+						LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
 					}
 				}
 			}
 		} catch (Exception e) {
 			mActiveUrl = "";
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
 		}
 		
 		mActiveUrl = "";

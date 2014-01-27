@@ -6,6 +6,8 @@ import java.net.MalformedURLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
+import org.slf4j.LoggerFactory;
+
 import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
@@ -33,11 +35,12 @@ public class JrTestConnection implements Callable<Boolean> {
 	    	
 	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
 		} catch (FileNotFoundException f) {
+			LoggerFactory.getLogger(JrTestConnection.class).warn(f.getLocalizedMessage());
 			JrSession.accessDao.resetUrl();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
 		} finally {
 			conn.disconnect();
 		}

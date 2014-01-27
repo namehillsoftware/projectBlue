@@ -10,8 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-
-
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
@@ -29,13 +28,13 @@ public class JrFileXmlResponse {
 	    	
 	    	returnFiles = jrFileXml.getFiles();
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFileXmlResponse.class).error(e.toString(), e);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFileXmlResponse.class).error(e.toString(), e);
 		} catch (SAXException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFileXmlResponse.class).error(e.toString(), e);
 		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFileXmlResponse.class).error(e.toString(), e);
 		}
 		
 		return returnFiles;

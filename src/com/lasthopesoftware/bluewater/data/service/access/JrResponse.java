@@ -6,6 +6,8 @@ import java.util.HashMap;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.LoggerFactory;
+
 public class JrResponse {
 
 	private boolean status;
@@ -30,7 +32,7 @@ public class JrResponse {
 			sp.parse(is, jrResponseHandler);
 			return jrResponseHandler.getResponse();
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrResponse.class).error(e.toString(), e);
 		}
     	
     	return null;

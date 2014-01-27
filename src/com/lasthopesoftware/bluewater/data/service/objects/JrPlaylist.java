@@ -46,41 +46,6 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 		mSubItems.put(playlist.getKey(), playlist);
 	}
 	
-//	@Override
-	// Get a new list each time with playlists since 
-	// they can often change dynamically
-//	public ArrayList<JrFile> getFiles() {
-//		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-//		try {
-//			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Fields=Key,Name").get();
-//			returnFiles = new ArrayList<JrFile>(tempFiles.size());
-//			for (int i = 0; i < tempFiles.size(); i++) {
-//				JrFileUtils.SetSiblings(i, tempFiles);
-//				returnFiles.add(tempFiles.get(i));
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		} 
-//			
-//		return returnFiles;
-//	}
-	
-//	public ArrayList<JrFile> getFiles(int option) {
-//		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-//		try {
-//			List<JrFile> tempFiles = getNewFilesTask().execute("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()), "Shuffle=1", "Fields=Key,Name").get();
-//			returnFiles = new ArrayList<JrFile>(tempFiles.size());
-//			for (int i = 0; i < tempFiles.size(); i++) {
-//				JrFileUtils.SetSiblings(i, tempFiles);
-//				returnFiles.add(tempFiles.get(i));
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		} 
-//			
-//		return returnFiles;
-//	}
-
 	/**
 	 * @return the mPath
 	 */

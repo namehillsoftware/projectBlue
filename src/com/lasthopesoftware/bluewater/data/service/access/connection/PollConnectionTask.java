@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 
+import org.slf4j.LoggerFactory;
+
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
 
@@ -39,7 +41,7 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 					return;
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(PollConnectionTask.class).warn("Poll Connection Task interrupted.", e);
 				owner.setResult(Boolean.FALSE);
 				return;
 			}
@@ -108,11 +110,9 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 			try {
 				listener.onComplete(this, getResult());
 			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(PollConnectionTask.class).error(e.toString(), e);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(PollConnectionTask.class).error(e.toString(), e);
 			}
 			return;
 		}

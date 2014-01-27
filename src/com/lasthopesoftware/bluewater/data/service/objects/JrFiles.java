@@ -7,15 +7,16 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
-import com.lasthopesoftware.bluewater.data.service.access.JrDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.service.access.JrDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -35,7 +36,7 @@ public class JrFiles implements IJrItemFiles {
 			try {
 				files = deserializeFileStringList(IOUtils.toString(is));				
 			} catch (IOException e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 			}
 			return files;
 		}
@@ -110,7 +111,7 @@ public class JrFiles implements IJrItemFiles {
 		try {
 			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams()).get();
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 			return new ArrayList<JrFile>();
 		}
 	}
@@ -126,7 +127,7 @@ public class JrFiles implements IJrItemFiles {
 		try {
 			return (ArrayList<JrFile>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 			return getFiles();
 		}
 	}
@@ -144,7 +145,7 @@ public class JrFiles implements IJrItemFiles {
 				try {
 					return IOUtils.toString(is);
 				} catch (IOException e) {
-					e.printStackTrace();
+					LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 					return null;
 				}
 			}
@@ -167,9 +168,9 @@ public class JrFiles implements IJrItemFiles {
 				}
 			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 		} catch (ExecutionException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFiles.class).error(e.toString(), e);
 		}
 		
 		return result;

@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
+
+import org.slf4j.LoggerFactory;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -318,7 +321,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 						
 						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? playingFile.getKey().toString() : result, playingFile.getKey().toString());
 					} catch (Exception e) {
-						e.printStackTrace();
+						LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 					}
 				}
 			});
@@ -441,9 +444,9 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 					conn.disconnect();
 				}
 			} catch (FileNotFoundException fe) {
-				fe.printStackTrace();
+				LoggerFactory.getLogger(ViewNowPlaying.class).error(fe.toString(), fe);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 			}
 			
 			if (returnBmp == null) {

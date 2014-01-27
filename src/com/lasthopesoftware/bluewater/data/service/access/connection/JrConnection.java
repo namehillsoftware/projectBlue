@@ -10,6 +10,8 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.LoggerFactory;
+
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrConnection extends HttpURLConnection {
@@ -38,7 +40,7 @@ public class JrConnection extends HttpURLConnection {
 			if (!JrSession.GetLibrary().getAuthKey().isEmpty())
 				mHttpConnection.setRequestProperty("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrConnection.class).error(e.toString(), e);
 		}
 	}
 	

@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
+import org.slf4j.LoggerFactory;
+
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 
 import android.os.AsyncTask;
@@ -22,11 +24,9 @@ public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 				conn.disconnect();
 			}
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrStdXmlResponse.class).error(e.toString(), e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrStdXmlResponse.class).error(e.toString(), e);
 		}
 		
 		return responseDao;

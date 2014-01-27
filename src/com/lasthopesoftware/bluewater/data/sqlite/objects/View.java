@@ -10,7 +10,7 @@ public class View {
 	private int id;
 	@DatabaseField(columnDefinition = "VARCHAR(50)")
 	private String name;
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private Library library;
 	
 	/**

@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -25,6 +26,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 
+import com.lasthopesoftware.bluewater.data.service.access.JrStringResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -78,8 +80,7 @@ public class JrFile extends JrObject implements
 			try {
 				setValue(getProperty("Name"));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			}
 		}
 		return super.getValue();
@@ -203,9 +204,9 @@ public class JrFile extends JrObject implements
 						conn.disconnect();
 					}
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 				} catch (XmlParseException e) {
-					e.printStackTrace();
+					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 				}
 				
 				owner.setResult(returnProperties);
@@ -236,9 +237,9 @@ public class JrFile extends JrObject implements
 			
 			mProperties.putAll(filePropertiesResult);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 		} catch (ExecutionException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 		}
 		
 		return result;
@@ -271,7 +272,7 @@ public class JrFile extends JrObject implements
 					return;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			}
 		}
 	}
@@ -291,7 +292,7 @@ public class JrFile extends JrObject implements
 				
 				preparing = false;
 			} catch (Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 				resetMediaPlayer();
 				preparing = false;
 			}
@@ -418,9 +419,9 @@ public class JrFile extends JrObject implements
 				
 				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));				
 			} catch (IOException e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			} catch (NumberFormatException ne) {
-				ne.printStackTrace();
+				LoggerFactory.getLogger(JrFile.class).error(ne.toString(), ne);
 			}
 			
 			String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);

@@ -8,9 +8,9 @@ public class LibraryView {
 
 	@DatabaseField(generatedId = true)
 	private int id;
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private Library library;
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private View view;
 	
 	/**

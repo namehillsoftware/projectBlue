@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
+
+import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 
 public class JrStringResponse extends AsyncTask<String, Void, String> {
 
@@ -30,11 +32,9 @@ public class JrStringResponse extends AsyncTask<String, Void, String> {
 				conn.disconnect();
 			}
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrStringResponse.class).error(e.toString(), e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrStringResponse.class).error(e.toString(), e);
 		}
 		
 		return "";

@@ -4,11 +4,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
+import org.slf4j.LoggerFactory;
+
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -59,7 +61,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
 			mSubItems.addAll(tempSubItems);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrItem.class).error(e.toString(), e);
 		}
 		
 		return mSubItems;

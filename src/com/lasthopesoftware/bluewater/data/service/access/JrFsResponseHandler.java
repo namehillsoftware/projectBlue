@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -47,11 +48,10 @@ public class JrFsResponseHandler<T extends JrObject> extends DefaultHandler {
 				newItem.setValue(currentKey);
 				items.add(newItem);
 			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFsResponseHandler.class).error(e.toString(), e);
 			} catch (IllegalAccessException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrFsResponseHandler.class).error(e.toString(), e);
 			}
 		}
 	}

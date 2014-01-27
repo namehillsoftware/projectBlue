@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
+
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrDataTask;
@@ -43,7 +45,7 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 				// This will call the onCompletes if they are attached.
 				mSubItems = (ArrayList<T>) itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
 			} catch(Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrItemAsyncBase.class).error(e.toString(), e);
 			}
 		}
 		

@@ -26,11 +26,11 @@ public class Library {
 	@DatabaseField(columnName = "IS_LOCAL_ONLY")
 	private boolean isLocalOnly;
 	
-	@ForeignCollectionField(eager = false)
+	@ForeignCollectionField(eager = true)
 	private Collection<View> views;
-	@ForeignCollectionField(eager = false)
+	@ForeignCollectionField(eager = true)
 	private Collection<LibraryView> selectedViews;
-	@ForeignCollectionField(eager = false)
+	@ForeignCollectionField(eager = true)
 	private Collection<SavedTrack> savedTracks;
 	
 	/**
@@ -165,6 +165,7 @@ public class Library {
 	 * @return the selectedViews
 	 */
 	public Collection<View> getSelectedViews() {
+		if (selectedViews == null) selectedViews = new ArrayList<LibraryView>();
 		ArrayList<View> returnViews = new ArrayList<View>(selectedViews.size());
 		for (LibraryView libraryView : selectedViews)
 			returnViews.add(libraryView.getView());

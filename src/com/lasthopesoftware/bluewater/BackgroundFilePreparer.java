@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater;
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import org.slf4j.LoggerFactory;
 
 import android.content.Context;
+
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 public class BackgroundFilePreparer implements Runnable {
 
@@ -40,7 +42,7 @@ public class BackgroundFilePreparer implements Runnable {
 					if (mNextFile.getDuration() < 0) continue;
 					bufferTime = (((mNextFile.getDuration() * 128) / 384) * 1.2) + 15000;
 				} catch (IOException e) {
-					e.printStackTrace();
+					LoggerFactory.getLogger(BackgroundFilePreparer.class).error(e.toString(), e);
 					bufferTime = -1;
 					continue;
 				}

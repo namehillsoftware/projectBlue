@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -25,8 +26,10 @@ import ch.qos.logback.core.FileAppender;
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.JrItemAsyncBase;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.LibraryView;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -83,11 +86,16 @@ public class JrSession {
 //		prefsEditor.apply();
 		DatabaseHandler handler = new DatabaseHandler(context);
 		try {
-			handler.getAccessObject(Library.class).createOrUpdate(library);
+			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+//			if (library.getId() )
+//			Library oldLibrary = libraryAccess.queryForMatching(library).get(0);
+			
+			handler.getAccessObject(LibraryView.class);
+			libraryAccess.createOrUpdate(library);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		} finally {
 			handler.close();
 		}
@@ -120,11 +128,13 @@ public class JrSession {
 			library = libraryAccess.queryForId(ChosenLibrary);
 			
 			if (library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode())) {
-				JrSession.JrFs = new JrFileSystem(library.getViews());
+				JrSession.JrFs = new JrFileSystem(library.getSelectedViews());
 				mActive = true;
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+		} catch (Exception e) {
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		} finally {
 			handler.close();
 		}
@@ -153,9 +163,9 @@ public class JrSession {
 			JrSession.accessDao = new GetMcAccess().execute(accessCode).get();
 			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		} catch (ExecutionException e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		}
 
 		return connectResult;
@@ -190,13 +200,11 @@ public class JrSession {
 						accessDao.getMacAddresses().add(macAddress);
 				}
 			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 			}
 
 			return accessDao;
