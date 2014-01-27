@@ -14,19 +14,13 @@ import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.FileAppender;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrItemAsyncBase;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.LibraryView;
