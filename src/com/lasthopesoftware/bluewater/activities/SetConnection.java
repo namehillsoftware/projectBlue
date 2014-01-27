@@ -47,37 +47,41 @@ public class SetConnection extends FragmentActivity {
 	        	
 	        	library.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
         	}
-        	
-        	JrSession.SaveSession(v.getContext());
-        	
-        	if (JrSession.ChooseLibrary(v.getContext(), library.getId()) == null) return;
-        	
-        	mConnectionButton.setText(R.string.btn_connecting);
-        	mConnectionButton.setEnabled(false);
-        	
-        	if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
-        	
-        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IJrItem<?>>>() {
+        	final Context _context = v.getContext();
+        	JrSession.SaveSession(v.getContext(), new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
-					if (result == null || result.size() == 0) return;
-					
-					String[] views = new String[result.size()];
-					mViews = new SparseArray<SelectedView>(result.size());
-					for (int i = 0; i < result.size(); i++) {
-						views[i] = result.get(i).getValue();
-						SelectedView newView = new SelectedView();
-						newView.setServiceKey(result.get(i).getKey());
-						newView.setName(result.get(i).getValue());
-						mViews.put(i, newView);
-					}
-					
-					showViewsSelectionDialog(views);
+				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+					if (JrSession.ChooseLibrary(_context, result.getId()) == null) return;
+		        	
+		        	mConnectionButton.setText(R.string.btn_connecting);
+		        	mConnectionButton.setEnabled(false);
+		        	
+		        	if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
+		        	
+		        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IJrItem<?>>>() {
+						
+						@Override
+						public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+							if (result == null || result.size() == 0) return;
+							
+							String[] views = new String[result.size()];
+							mViews = new SparseArray<SelectedView>(result.size());
+							for (int i = 0; i < result.size(); i++) {
+								views[i] = result.get(i).getValue();
+								SelectedView newView = new SelectedView();
+								newView.setServiceKey(result.get(i).getKey());
+								newView.setName(result.get(i).getValue());
+								mViews.put(i, newView);
+							}
+							
+							showViewsSelectionDialog(views);
+						}
+					});
+		        	
+		        	JrSession.JrFs.getSubItemsAsync();
 				}
 			});
-        	
-        	JrSession.JrFs.getSubItemsAsync();
         }
     };
 	

@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -65,18 +66,21 @@ public class JrSession {
 	public static JrFileSystem JrFs;
 
 	private static boolean mActive = false;
+	
+	public static void SaveSession(Context context) {
+		SaveSession(context, null);
+	}
 
-
-	public static void SaveSession(Context context) { 
-		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, ChosenLibrary).apply();
+	public static void SaveSession(Context context, OnCompleteListener<Void, Void, Library> onSaveComplete) { 
+		
 		if (library == null) library = new Library();
 		
 		final Context _context = context;
-		SimpleTask<Void, Void, Void> writeToDatabaseTask = new SimpleTask<Void, Void, Void>();
-		writeToDatabaseTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Void>() {
+		SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
+		writeToDatabaseTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+			public void onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
 				DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
@@ -88,12 +92,15 @@ public class JrSession {
 						savedTrackAccess.delete(oldLibrary.getSavedTracks());
 					}
 					libraryAccess.createOrUpdate(library);
-					
+					ChosenLibrary = library.getId();
+					_context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					for (SelectedView libraryView : library.getSelectedViews())
 						libraryViewAccess.create(libraryView);
 					
 					for (SavedTrack savedTrack : library.getSavedTracks())
 						savedTrackAccess.create(savedTrack);
+					
+					owner.setResult(library);
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -106,6 +113,9 @@ public class JrSession {
 				log.info("Session saved.");
 			}
 		});
+		if (onSaveComplete != null)
+			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
+		
 		writeToDatabaseTask.executeOnExecutor(databaseExecutor);
 	}
 	
@@ -167,7 +177,7 @@ public class JrSession {
 	}
 		
 	public synchronized static Library ChooseLibrary(Context context, int libraryKey) {
-		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).commit();
+		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
 		
 		library = null;
 		
