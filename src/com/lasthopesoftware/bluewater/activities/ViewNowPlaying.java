@@ -152,8 +152,12 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
 		playingFile = StreamingMusicService.getNowPlayingFile();
-		if (playingFile == null)
+		if (playingFile == null) {
+			if (library.getNowPlayingId() <= 0) return;
+			
 			playingFile = new JrFile(library.getNowPlayingId());
+		}
+			
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 

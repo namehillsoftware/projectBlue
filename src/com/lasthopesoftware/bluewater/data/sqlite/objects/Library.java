@@ -19,12 +19,12 @@ public class Library {
 	private String accessCode;
 	@DatabaseField(columnName = "AUTH_KEY", columnDefinition = "VARCHAR(100)")
 	private String authKey;
-	@DatabaseField(columnName = "NOW_PLAYING_ID")
+	@DatabaseField(columnName = "NOW_PLAYING_ID", defaultValue = "-1")
 	private int nowPlayingId;
-	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS")
+	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS", defaultValue = "-1")
 	private int nowPlayingProgress;
 	@DatabaseField(columnName = "IS_LOCAL_ONLY")
-	private boolean isLocalOnly;
+	private boolean isLocalOnly = false;
 	
 	@ForeignCollectionField(eager = true)
 	private Collection<SelectedView> selectedViews = new ArrayList<SelectedView>();
