@@ -7,7 +7,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class LibraryView {
 
 	@DatabaseField(generatedId = true)
-	private int id;
+	private Integer id;
 	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private Library library;
 	@DatabaseField(foreign = true, foreignAutoCreate = true)
@@ -16,13 +16,13 @@ public class LibraryView {
 	/**
 	 * @return the id
 	 */
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	/**

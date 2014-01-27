@@ -80,12 +80,11 @@ public class JrSession {
 //		prefsEditor.apply();
 		DatabaseHandler handler = new DatabaseHandler(context);
 		try {
-			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-//			if (library.getId() )
-//			Library oldLibrary = libraryAccess.queryForMatching(library).get(0);
-			
-			handler.getAccessObject(LibraryView.class);
-			libraryAccess.createOrUpdate(library);
+		
+			handler.getAccessObject(Library.class).createOrUpdate(library);
+			if (library.getSelectedLibraryViews() != null) {
+//				handler.getAccessObject(LibraryView.class).
+			}
 		} catch (SQLException e) {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		} catch (Exception e) {

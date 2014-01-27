@@ -7,7 +7,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class View {
 	
 	@DatabaseField(generatedId = true)
-	private int id;
+	private Integer id;
 	@DatabaseField(columnDefinition = "VARCHAR(50)")
 	private String name;
 	@DatabaseField(foreign = true, foreignAutoCreate = true)
@@ -16,13 +16,13 @@ public class View {
 	/**
 	 * @return the key
 	 */
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 	/**
 	 * @param key the key to set
 	 */
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	/**

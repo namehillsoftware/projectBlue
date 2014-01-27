@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 public class Library {
 	
 	@DatabaseField(generatedId = true)
-	private int id;
+	private Integer id;
 	@DatabaseField(canBeNull = false, columnName = "LIBRARY_NAME", columnDefinition = "VARCHAR(50)")
 	private String libraryName;
 	@DatabaseField(canBeNull = false, columnName = "ACCESS_CODE", columnDefinition = "VARCHAR(30)")
@@ -20,11 +20,11 @@ public class Library {
 	@DatabaseField(columnName = "AUTH_KEY", columnDefinition = "VARCHAR(100)")
 	private String authKey;
 	@DatabaseField(columnName = "NOW_PLAYING_ID")
-	private int nowPlayingId;
+	private Integer nowPlayingId;
 	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS")
-	private int nowPlayingProgress;
+	private Integer nowPlayingProgress;
 	@DatabaseField(columnName = "IS_LOCAL_ONLY")
-	private boolean isLocalOnly;
+	private Boolean isLocalOnly;
 	
 	@ForeignCollectionField(eager = true)
 	private Collection<View> views;
@@ -140,25 +140,25 @@ public class Library {
 	/**
 	 * @return the id
 	 */
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	/**
 	 * @return the isLocalOnly
 	 */
-	public boolean isLocalOnly() {
+	public Boolean isLocalOnly() {
 		return isLocalOnly;
 	}
 	/**
 	 * @param isLocalOnly the isLocalOnly to set
 	 */
-	public void setLocalOnly(boolean isLocalOnly) {
+	public void setLocalOnly(Boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
 	}
 	/**
@@ -170,6 +170,10 @@ public class Library {
 		for (LibraryView libraryView : selectedViews)
 			returnViews.add(libraryView.getView());
 		return returnViews;
+	}
+	
+	public Collection<LibraryView> getSelectedLibraryViews() {
+		return selectedViews;
 	}
 	/**
 	 * @param selectedViews the selectedViews to set
