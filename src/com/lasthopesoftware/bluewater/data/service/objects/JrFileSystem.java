@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectL
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.View;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -30,11 +30,11 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	private OnConnectListener<List<IJrItem<?>>> mOnConnectListener;
 	private OnErrorListener<List<IJrItem<?>>> mOnErrorListener;
 	
-	public JrFileSystem(Collection<View> visibleViews) {
+	public JrFileSystem(Collection<SelectedView> visibleViews) {
 		mVisibleViewKeys = new int[visibleViews.size()];
 		int i = 0;
-		for (View visibleView : visibleViews)
-			mVisibleViewKeys[i++] = visibleView.getId();
+		for (SelectedView visibleView : visibleViews)
+			mVisibleViewKeys[i++] = visibleView.getServiceKey();
 		
 		mOnConnectListener = new OnConnectListener<List<IJrItem<?>>>() {
 			

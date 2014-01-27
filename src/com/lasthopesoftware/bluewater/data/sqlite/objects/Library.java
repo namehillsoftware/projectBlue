@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 public class Library {
 	
 	@DatabaseField(generatedId = true)
-	private Integer id;
+	private int id;
 	@DatabaseField(canBeNull = false, columnName = "LIBRARY_NAME", columnDefinition = "VARCHAR(50)")
 	private String libraryName;
 	@DatabaseField(canBeNull = false, columnName = "ACCESS_CODE", columnDefinition = "VARCHAR(30)")
@@ -20,18 +20,16 @@ public class Library {
 	@DatabaseField(columnName = "AUTH_KEY", columnDefinition = "VARCHAR(100)")
 	private String authKey;
 	@DatabaseField(columnName = "NOW_PLAYING_ID")
-	private Integer nowPlayingId;
+	private int nowPlayingId;
 	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS")
-	private Integer nowPlayingProgress;
+	private int nowPlayingProgress;
 	@DatabaseField(columnName = "IS_LOCAL_ONLY")
-	private Boolean isLocalOnly;
+	private boolean isLocalOnly;
 	
 	@ForeignCollectionField(eager = true)
-	private Collection<View> views;
+	private Collection<SelectedView> selectedViews = new ArrayList<SelectedView>();
 	@ForeignCollectionField(eager = true)
-	private Collection<LibraryView> selectedViews;
-	@ForeignCollectionField(eager = true)
-	private Collection<SavedTrack> savedTracks;
+	private Collection<SavedTrack> savedTracks = new ArrayList<SavedTrack>();
 	
 	/**
 	 * @return the nowPlayingId
@@ -74,14 +72,18 @@ public class Library {
 	/**
 	 * @return the mViews
 	 */
-	public Collection<View> getViews() {
-		return views;
+	public Collection<SelectedView> getSelectedViews() {
+//		if (selectedViews == null) selectedViews = new ArrayList<SelectedView>();
+		return selectedViews;
 	}
 	/**
 	 * @param mViews the mViews to set
 	 */
-	public void setViews(Collection<View> views) {
-		this.views = views;
+	public void setSelectedViews(Collection<SelectedView> views) {
+		for (SelectedView view : views)
+			view.setLibrary(this);
+		
+		this.selectedViews = views;
 	}
 	/**
 	 * @return the authKey
@@ -126,65 +128,37 @@ public class Library {
 	 * @param savedTracks the savedTracks to set
 	 */
 	public void setSavedTracks(Collection<SavedTrack> savedTracks) {
+		for (SavedTrack track : savedTracks)
+			track.setLibrary(this);
+		
 		this.savedTracks = savedTracks;
 	}
 	
 	public void setSavedTracks(ArrayList<JrFile> files) {
-		savedTracks = new ArrayList<SavedTrack>(files.size()); 
+		ArrayList<SavedTrack> newSavedTracks = new ArrayList<SavedTrack>(files.size()); 
 		for (JrFile file : files) {
 			SavedTrack newSavedTrack = new SavedTrack();
 			newSavedTrack.setTrackId(file.getKey());
-			savedTracks.add(newSavedTrack);			
+			newSavedTracks.add(newSavedTrack);			
 		}
+		setSavedTracks(savedTracks);
 	}
 	/**
 	 * @return the id
 	 */
-	public Integer getId() {
+	public int getId() {
 		return id;
-	}
-	/**
-	 * @param id the id to set
-	 */
-	public void setId(Integer id) {
-		this.id = id;
 	}
 	/**
 	 * @return the isLocalOnly
 	 */
-	public Boolean isLocalOnly() {
+	public boolean isLocalOnly() {
 		return isLocalOnly;
 	}
 	/**
 	 * @param isLocalOnly the isLocalOnly to set
 	 */
-	public void setLocalOnly(Boolean isLocalOnly) {
+	public void setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
-	}
-	/**
-	 * @return the selectedViews
-	 */
-	public Collection<View> getSelectedViews() {
-		if (selectedViews == null) selectedViews = new ArrayList<LibraryView>();
-		ArrayList<View> returnViews = new ArrayList<View>(selectedViews.size());
-		for (LibraryView libraryView : selectedViews)
-			returnViews.add(libraryView.getView());
-		return returnViews;
-	}
-	
-	public Collection<LibraryView> getSelectedLibraryViews() {
-		return selectedViews;
-	}
-	/**
-	 * @param selectedViews the selectedViews to set
-	 */
-	public void setSelectedViews(Collection<View> selectedViews) {
-		this.selectedViews = new ArrayList<LibraryView>(selectedViews.size());
-		for (View view : selectedViews) {
-			LibraryView newLibraryView = new LibraryView();
-			newLibraryView.setLibrary(this);
-			newLibraryView.setView(view);
-			this.selectedViews.add(newLibraryView);
-		}
 	}
 }

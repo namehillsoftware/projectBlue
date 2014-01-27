@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.LibraryView;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
@@ -80,10 +80,16 @@ public class JrSession {
 //		prefsEditor.apply();
 		DatabaseHandler handler = new DatabaseHandler(context);
 		try {
-		
-			handler.getAccessObject(Library.class).createOrUpdate(library);
-			if (library.getSelectedLibraryViews() != null) {
-//				handler.getAccessObject(LibraryView.class).
+			Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+			Dao<SelectedView, Integer> libraryViewAccess = handler.getAccessObject(SelectedView.class);
+			Library oldLibrary = libraryAccess.queryForId(library.getId());
+			if (oldLibrary != null) {
+				libraryViewAccess.delete(oldLibrary.getSelectedViews());
+			}
+			libraryAccess.createOrUpdate(library);
+			if (library.getSelectedViews() != null) {
+				for (SelectedView libraryView : library.getSelectedViews())
+					libraryViewAccess.create(libraryView);
 			}
 		} catch (SQLException e) {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);

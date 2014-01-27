@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -23,12 +24,13 @@ import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class SetConnection extends FragmentActivity {
 	private Button mConnectionButton;
-	private ArrayList<com.lasthopesoftware.bluewater.data.sqlite.objects.View> mSelectedViews = new ArrayList<com.lasthopesoftware.bluewater.data.sqlite.objects.View>();
-	private SparseArray<com.lasthopesoftware.bluewater.data.sqlite.objects.View> mViews = new SparseArray<com.lasthopesoftware.bluewater.data.sqlite.objects.View>();
+	private HashSet<SelectedView> mSelectedViews = new HashSet<SelectedView>();
+	private SparseArray<SelectedView> mViews = new SparseArray<SelectedView>();
 	private Context thisContext = this;
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
@@ -62,11 +64,11 @@ public class SetConnection extends FragmentActivity {
 					if (result == null || result.size() == 0) return;
 					
 					String[] views = new String[result.size()];
-					mViews = new SparseArray<com.lasthopesoftware.bluewater.data.sqlite.objects.View>(result.size());
+					mViews = new SparseArray<SelectedView>(result.size());
 					for (int i = 0; i < result.size(); i++) {
 						views[i] = result.get(i).getValue();
-						com.lasthopesoftware.bluewater.data.sqlite.objects.View newView = new com.lasthopesoftware.bluewater.data.sqlite.objects.View();
-						newView.setId(result.get(i).getKey());
+						SelectedView newView = new SelectedView();
+						newView.setServiceKey(result.get(i).getKey());
 						newView.setName(result.get(i).getValue());
 						mViews.put(i, newView);
 					}

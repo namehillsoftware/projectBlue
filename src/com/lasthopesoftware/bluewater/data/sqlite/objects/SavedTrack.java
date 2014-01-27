@@ -7,23 +7,44 @@ import com.j256.ormlite.table.DatabaseTable;
 public class SavedTrack {
 	
 	@DatabaseField(generatedId = true)
-	private Integer id;
+	private int id;
 	@DatabaseField(columnName = "TRACK_ID")
-	private Integer trackId;
+	private int trackId;
 	@DatabaseField(foreign = true, foreignAutoCreate = true)
 	private Library library;
 
 	/**
 	 * @return the trackId
 	 */
-	public Integer getTrackId() {
+	public int getTrackId() {
 		return trackId;
 	}
 
 	/**
 	 * @param trackId the trackId to set
 	 */
-	public void setTrackId(Integer trackId) {
+	public void setTrackId(int trackId) {
 		this.trackId = trackId;
+	}
+
+	/**
+	 * @return the library
+	 */
+	public Library getLibrary() {
+		return library;
+	}
+
+	/**
+	 * @param library the library to set
+	 */
+	public void setLibrary(Library library) {
+		this.library = library;
+	}
+
+	/**
+	 * @return the id
+	 */
+	public int getId() {
+		return id;
 	}
 }
