@@ -27,9 +27,9 @@ public class Library {
 	private boolean isLocalOnly = false;
 	
 	@ForeignCollectionField(eager = true)
-	private Collection<SelectedView> selectedViews = new ArrayList<SelectedView>();
+	private Collection<SelectedView> selectedViews;
 	@ForeignCollectionField(eager = true)
-	private Collection<SavedTrack> savedTracks = new ArrayList<SavedTrack>();
+	private Collection<SavedTrack> savedTracks;
 	
 	/**
 	 * @return the nowPlayingId
@@ -73,7 +73,7 @@ public class Library {
 	 * @return the mViews
 	 */
 	public Collection<SelectedView> getSelectedViews() {
-//		if (selectedViews == null) selectedViews = new ArrayList<SelectedView>();
+		if (selectedViews == null) selectedViews = new ArrayList<SelectedView>();
 		return selectedViews;
 	}
 	/**
@@ -114,6 +114,7 @@ public class Library {
 	 * @return the savedTracks
 	 */
 	public Collection<SavedTrack> getSavedTracks() {
+		if (savedTracks == null) savedTracks = new ArrayList<SavedTrack>();
 		return savedTracks;
 	}
 	

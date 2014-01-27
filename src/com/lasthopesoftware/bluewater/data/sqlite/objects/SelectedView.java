@@ -12,7 +12,7 @@ public class SelectedView {
 	private int serviceKey;
 	@DatabaseField(columnDefinition = "VARCHAR(50)")
 	private String name;
-	@DatabaseField(foreign = true, foreignAutoCreate = true)
+	@DatabaseField(foreign = true, foreignAutoCreate = true, foreignAutoRefresh = true)
 	private Library library;
 	
 	/**

@@ -156,6 +156,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			if (library.getNowPlayingId() <= 0) return;
 			
 			playingFile = new JrFile(library.getNowPlayingId());
+			playingFile.seekTo(library.getNowPlayingProgress());
 		}
 			
 		
