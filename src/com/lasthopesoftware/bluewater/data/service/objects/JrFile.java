@@ -25,6 +25,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
+import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrStringResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
@@ -341,6 +342,25 @@ public class JrFile extends JrObject implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		Logger logger = (Logger) LoggerFactory.getLogger(JrFile.class);
+		logger.error("Media Player error.");
+		logger.error("What: ");
+		logger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
+		logger.error("Extra: ");
+		switch (extra) {
+		case MediaPlayer.MEDIA_ERROR_IO:
+			logger.error("MEDIA_ERROR_IO");
+			break;
+		case MediaPlayer.MEDIA_ERROR_MALFORMED:
+			logger.error("MEDIA_ERROR_MALFORMED");
+			break;
+		case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+			logger.error("MEDIA_ERROR_UNSUPPORTED");
+			break;
+		case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+			logger.error("MEDIA_ERROR_TIMED_OUT");
+			break;
+		}
 		resetMediaPlayer();
 		boolean handled = false;
 		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
