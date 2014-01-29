@@ -17,8 +17,9 @@
         android:logo="@drawable/ic_stat_water_drop_white"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
-        android:allowBackup="true" >
-
+        android:allowBackup="true"
+        android:name="com.lasthopesoftware.bluewater.MainApplication">
+        
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.BrowseLibrary"
             android:label="@string/title_activity_browse_library" >
