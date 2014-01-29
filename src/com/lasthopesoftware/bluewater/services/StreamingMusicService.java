@@ -209,14 +209,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (exception instanceof IOException) {
-							buildErrorNotification();
-							return;
-						}
-					}
-				}
+				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(thisContext);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
@@ -272,7 +265,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
 		mStartPos = filePos < 0 ? 0 : filePos;
         
-        for (JrFile file : mPlaylist) {
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		builder.setContentTitle("Starting Music Streamer");
+        startForeground(mId, builder.build());
+        
+		for (JrFile file : mPlaylist) {
 			if (file.getKey() != mFileKey) continue;
 			
 			file.addOnJrFileCompleteListener(this);
@@ -283,12 +282,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         	file.prepareMediaPlayer(); // prepare async to not block main thread
         	break;
 		}
-        
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		builder.setContentTitle("Starting Music Streamer");
-        startForeground(mId, builder.build());
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -302,8 +295,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			JrSession.SaveSession(this);
 			throwStopEvent(mPlayingFile);
 		}
-		mPlaylistString = null;
-		mFileKey = -1;
+//		mPlaylistString = null;
+//		mFileKey = -1;
 		if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
 		releaseMediaPlayers();
 		stopNotification();
@@ -364,7 +357,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		/* Should be modified to save its state locally in the future.
 		 */
-		mStartId = startId; 
+		mStartId = startId;
+		
+		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
 		if (intent != null) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
@@ -411,11 +406,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	@Override
 	public boolean onJrFileError(JrFile file, int what, int extra) {
 		LoggerFactory.getLogger(StreamingMusicService.class).error("JR File error - " + what + " - " + extra);
-		mPlayingFile = file;
-		Library library = JrSession.GetLibrary(thisContext);
-		library.setNowPlayingId(file.getKey());
-		library.setSavedTracks(mPlaylist);
-		JrSession.SaveSession(this);		
+		mPlayingFile = file;		
 		pausePlayback(false);
 		
 		buildErrorNotification();

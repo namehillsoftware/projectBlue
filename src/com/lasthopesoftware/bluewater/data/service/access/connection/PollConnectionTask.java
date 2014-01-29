@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.access.connection;
 
 import java.util.LinkedList;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.LoggerFactory;
@@ -19,15 +19,18 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	private volatile boolean mStopWaitingForConnection = false;
 	private SimpleTask<String, Void, Boolean> mTask;
 	
-	private ConcurrentSkipListSet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new ConcurrentSkipListSet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
-	private ConcurrentSkipListSet<OnExecuteListener<String, Void, Boolean>> mUniqueOnExecuteListeners = new ConcurrentSkipListSet<ISimpleTask.OnExecuteListener<String, Void, Boolean>>();
-	private ConcurrentSkipListSet<OnCompleteListener<String, Void, Boolean>> mUniqueOnCompleteListeners = new ConcurrentSkipListSet<ISimpleTask.OnCompleteListener<String, Void, Boolean>>();
-	private ConcurrentSkipListSet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new ConcurrentSkipListSet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
-	private ConcurrentSkipListSet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new ConcurrentSkipListSet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
+	private static CopyOnWriteArraySet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new CopyOnWriteArraySet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
+	private CopyOnWriteArraySet<OnExecuteListener<String, Void, Boolean>> mUniqueOnExecuteListeners = new CopyOnWriteArraySet<ISimpleTask.OnExecuteListener<String, Void, Boolean>>();
+	private CopyOnWriteArraySet<OnCompleteListener<String, Void, Boolean>> mUniqueOnCompleteListeners = new CopyOnWriteArraySet<ISimpleTask.OnCompleteListener<String, Void, Boolean>>();
+	private CopyOnWriteArraySet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new CopyOnWriteArraySet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
+	private CopyOnWriteArraySet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
 	
 	private PollConnectionTask() {
 		mTask = new SimpleTask<String, Void, Boolean>();
 		mTask.addOnExecuteListener(this);
+		
+		for (OnStartListener<String, Void, Boolean> onStartListener : mUniqueOnStartListeners)
+			mTask.addOnStartListener(onStartListener);
 	}
 
 	@Override
@@ -86,6 +89,10 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 		return mTask.getState();
 	}
 
+	
+	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
+	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener)
+	 */
 	@Override
 	public void addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<String, Void, Boolean> listener) {
 		if (mUniqueOnStartListeners.add(listener))

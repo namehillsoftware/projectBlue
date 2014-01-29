@@ -40,7 +40,7 @@ public class JrTestConnection implements Callable<Boolean> {
 			LoggerFactory.getLogger(JrTestConnection.class).warn(f.getLocalizedMessage());
 			JrSession.accessDao.resetUrl();
 		} catch (IOException e) {
-			LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
+			LoggerFactory.getLogger(JrTestConnection.class).warn(e.getLocalizedMessage());
 		} finally {
 			conn.disconnect();
 		}
@@ -65,7 +65,7 @@ public class JrTestConnection implements Callable<Boolean> {
 			statusThread.start();
 			return statusTask.get().booleanValue();
 		} catch (Exception e) {
-			e.printStackTrace();
+			LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
 		}
 		
 		return false;

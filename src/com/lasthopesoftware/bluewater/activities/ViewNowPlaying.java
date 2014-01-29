@@ -49,7 +49,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener {
+public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener, ISimpleTask.OnStartListener<String, Void, Boolean> {
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
@@ -124,6 +124,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		StreamingMusicService.AddOnStreamingStartListener(this);
 		StreamingMusicService.AddOnStreamingStopListener(this);
+		PollConnectionTask.Instance.get().addOnStartListener(this);
 		
 		/* Toggle play/pause */
 		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener();
@@ -221,6 +222,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		if (mTrackerThread != null) mTrackerThread.interrupt();
 		StreamingMusicService.RemoveOnStreamingStartListener(this);
 		StreamingMusicService.RemoveOnStreamingStopListener(this);
+		PollConnectionTask.Instance.get().removeOnStartListener(this);
 	}
 	
 	public FrameLayout getContentView() {
@@ -498,5 +500,10 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
+	}
+
+	@Override
+	public void onStart(ISimpleTask<String, Void, Boolean> owner) {
+		WaitForConnectionDialog.show(this);
 	}
 }

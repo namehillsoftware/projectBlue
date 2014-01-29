@@ -25,9 +25,6 @@ public class HandleViewNowPlayingMessages extends Handler {
 	@Override
 	public void handleMessage(Message msg) {
 		switch (msg.what) {
-		case SHOW_CONNECTION_LOST:
-			WaitForConnectionDialog.show(mOwner);
-			return;
 		case UPDATE_PLAYING:
 			mOwner.getSongProgressBar().setMax(msg.arg2);
 			mOwner.getSongProgressBar().setProgress(msg.arg1);

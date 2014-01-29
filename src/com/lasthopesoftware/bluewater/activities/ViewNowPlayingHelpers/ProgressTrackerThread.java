@@ -25,10 +25,7 @@ public class ProgressTrackerThread implements Runnable {
 			try {
 				
 				msg = null;
-				if (PollConnectionTask.Instance.get().isRunning()) {
-					msg = new Message();
-					msg.what = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
-				} else if (mFile !=null && mFile.isPlaying()) {
+				if (mFile !=null && mFile.isPlaying()) {
 					msg = new Message();
 					msg.what = HandleViewNowPlayingMessages.UPDATE_PLAYING;
 					msg.arg1 = mFile.getCurrentPosition();
