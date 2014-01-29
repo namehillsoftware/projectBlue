@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Logger;
 
 import org.slf4j.LoggerFactory;
 
@@ -201,8 +200,10 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 					return;
 				}
 				
-				if (StreamingMusicService.getNowPlayingFile().isPrepared()) StreamingMusicService.Play(v.getContext());
-				return;
+				if (StreamingMusicService.getNowPlayingFile().isPrepared()) {
+					StreamingMusicService.Play(v.getContext());
+					return;
+				}
 			}
 			Library library = JrSession.GetLibrary(v.getContext());
 			StreamingMusicService.StreamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
