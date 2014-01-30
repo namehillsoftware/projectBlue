@@ -21,6 +21,7 @@
     <color name="status_unread">#E099CC00</color>
     <color name="status_progress">#E033B5E5</color>
     <color name="status_playing">#E0EE5F52</color> -->
+    <color name="status_unread">#E099CC00</color>
     <color name="bright_blue">#33B5E5</color>
     <color name="blue">#0000FF</color>
     <color name="navy">#000080</color>

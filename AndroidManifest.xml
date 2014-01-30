@@ -37,12 +37,6 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.activities.SelectLibrary"
-            android:label="@string/title_activity_select_library">
-            
-        </activity>
-        
-        <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewFiles"
             android:label="@string/title_activity_file_view" >
             <meta-data

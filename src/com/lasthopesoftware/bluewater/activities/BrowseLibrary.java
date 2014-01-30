@@ -2,17 +2,21 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,11 +25,14 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
+import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -46,10 +53,16 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+	ListView mLvSelectViews;
+	DrawerLayout mDrawerLayout;
+
+	private ActionBarDrawerToggle mDrawerToggle;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		
 		
 		if (JrSession.GetLibrary(this) == null || JrSession.GetLibrary(this).getSelectedViews().size() == 0) {
 			Intent intent = new Intent(this, SetConnection.class);
@@ -57,18 +70,36 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			return;
 		}
 		
-//		if (JrSession.LibraryKey < 0) {
-//			Intent intent = new Intent(this, SelectLibrary.class);
-//			startActivity(intent);
-//			return;
-//		}
-
 		displayLibrary();
 	}
 
 	public void displayLibrary() {
 		setContentView(R.layout.activity_stream_media);
 		setTitle("Library");
+		
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		
+		mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer icon to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description */
+                R.string.drawer_close  /* "close drawer" description */
+		);
+		
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+		final Collection<SelectedView> _selectedViews = JrSession.GetLibrary(this).getSelectedViews();
+		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
+		JrSession.JrFs.setOnItemsCompleteListener(new IJrDataTask.OnCompleteListener<List<IJrItem<?>>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, result, _selectedViews));
+			}
+		});
+		
+		JrSession.JrFs.getSubItemsAsync();
 		
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 		mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -85,6 +116,9 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		if (mDrawerToggle.onOptionsItemSelected(item))
+			return true;
+		
 		return ViewUtils.handleMenuClicks(this, item);
 	}
 
@@ -193,7 +227,9 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			
 			if (result == null) return;
 			
-			mSectionsPagerAdapter.setLibraryViews(result);
+			final ArrayList<IJrItem<?>> _selectedViews = result;
+			
+			mSectionsPagerAdapter.setLibraryViews(_selectedViews);
 
 			// Set up the ViewPager with the sections adapter.
 			mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -211,7 +247,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			
 			actionBar.removeAllTabs();
 			// For each of the sections in the app, add a tab to the action bar.
-			for (IJrItem<?> item : result) {
+			for (IJrItem<?> item : _selectedViews) {
 				// Create a tab with text corresponding to the page title defined by
 				// the adapter.
 				// Also specify this Activity object, which implements the
