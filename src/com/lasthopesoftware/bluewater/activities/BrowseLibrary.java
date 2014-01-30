@@ -95,6 +95,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+				if (result == null) return;
 				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, result, _selectedViews));
 			}
 		});
