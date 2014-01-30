@@ -15,6 +15,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
@@ -74,10 +75,14 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	}
 
 	public void displayLibrary() {
-		setContentView(R.layout.activity_stream_media);
+		setContentView(R.layout.activity_browse_library);
 		setTitle("Library");
 		
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
+		
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		
 		mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
@@ -86,7 +91,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
                 R.string.drawer_open,  /* "open drawer" description */
                 R.string.drawer_close  /* "close drawer" description */
 		);
-		
+        
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
 		final Collection<SelectedView> _selectedViews = JrSession.GetLibrary(this).getSelectedViews();
