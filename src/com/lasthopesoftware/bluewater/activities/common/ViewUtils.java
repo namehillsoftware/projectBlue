@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.view.MenuItem;
 
 import com.lasthopesoftware.bluewater.R;
@@ -29,13 +30,27 @@ public class ViewUtils {
 		}
 	}
 	
-	public static boolean handleNavMenuClicks(Context context, MenuItem item) {
+	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
-				NavUtils.navigateUpFromSameTask((Activity)context);
+				Intent upIntent = NavUtils.getParentActivityIntent(activity);
+		        if (NavUtils.shouldUpRecreateTask(activity, upIntent)) {
+		            // This activity is NOT part of this app's task, so create a new task
+		            // when navigating up, with a synthesized back stack.
+		            TaskStackBuilder.create(activity)
+		                    // Add all of this activity's parents to the back stack
+		                    .addNextIntentWithParentStack(upIntent)
+		                    // Navigate up to the closest parent
+		                    .startActivities();
+		        } else {
+		            // This activity is part of this app's task, so simply
+		            // navigate up to the logical parent activity.
+		            NavUtils.navigateUpTo(activity, upIntent);
+		        }
+
 				return true;
 		}
-		return ViewUtils.handleMenuClicks(context, item);
+		return ViewUtils.handleMenuClicks(activity, item);
 		
 	}
 	
