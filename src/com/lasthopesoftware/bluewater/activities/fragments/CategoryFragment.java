@@ -69,6 +69,7 @@ public class CategoryFragment extends Fragment {
 					return;
 				}
 				
+				if (result == null) return;
 				mCategory = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 				BuildView();
 			}

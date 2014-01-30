@@ -191,6 +191,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 				}
 			}
 			
+			if (result == null) return;
+			
 			mSectionsPagerAdapter.setLibraryViews(result);
 
 			// Set up the ViewPager with the sections adapter.
