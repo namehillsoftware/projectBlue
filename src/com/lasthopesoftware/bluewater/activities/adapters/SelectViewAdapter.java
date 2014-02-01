@@ -1,11 +1,14 @@
 package com.lasthopesoftware.bluewater.activities.adapters;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -15,19 +18,20 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.BrowseLibrary;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 
 public class SelectViewAdapter extends ArrayAdapter<IJrItem<?>> {
 
 	private List<IJrItem<?>> mViews;
-	private Collection<SelectedView> mSelectedViews;
 	
-	public SelectViewAdapter(Context context, int resource, List<IJrItem<?>> views, Collection<SelectedView> selectedViews) {
+	public SelectViewAdapter(Context context, int resource, List<IJrItem<?>> views) {
 		super(context, resource, views);
 		
 		mViews = views;
-		mSelectedViews = selectedViews;
 	}
 	
 	@Override
@@ -40,22 +44,23 @@ public class SelectViewAdapter extends ArrayAdapter<IJrItem<?>> {
 		TextView tvViewName = (TextView) returnView.findViewById(R.id.tvViewName);
 		tvViewName.setText(_view.getValue());
 		
-		CheckBox cbView = (CheckBox) returnView.findViewById(R.id.cbView);
-		cbView.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				//TODO Set up view changing code here
-			}
-		});
-		
-		cbView.setChecked(false);
-		for (SelectedView selectedView : mSelectedViews) {
-			if (selectedView.getServiceKey() != _view.getKey().intValue()) continue;
-			
-			cbView.setChecked(true);
-			break;
-		}
+//		returnView.setOnClickListener(new OnClickListener() {
+//			
+//			@Override
+//			public void onClick(View v) {
+////				ArrayList<SelectedView> selectedViews = new ArrayList<SelectedView>();
+////				SelectedView selectedView = new SelectedView();
+////				selectedView.setName(_view.getValue());
+////				selectedView.setServiceKey(_view.getKey());
+////				selectedViews.add(selectedView);
+////				JrSession.GetLibrary(v.getContext()).setSelectedViews(selectedViews);
+//				
+//				JrSession.JrFs = new JrFileSystem(_view.getKey());
+//				
+//				Intent intent = new Intent(v.getContext(), BrowseLibrary.class);
+//				v.getContext().startActivity(intent);
+//			}
+//		});
 		
 		return returnView;
 	}
