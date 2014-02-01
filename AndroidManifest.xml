@@ -41,7 +41,7 @@
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.BrowseLibrary" />
+                android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
         
         <activity
@@ -49,16 +49,13 @@
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.BrowseLibrary" />
+                android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
         
          <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewNowPlaying"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTop" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.ViewFiles" />
         </activity>
 
         <receiver android:name="com.lasthopesoftware.bluewater.receivers.MusicIntentReceiver" >

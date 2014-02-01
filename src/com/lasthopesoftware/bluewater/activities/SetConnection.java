@@ -32,7 +32,9 @@ public class SetConnection extends FragmentActivity {
         	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
         	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
         	
-        	Library library = JrSession.GetLibrary(v.getContext());
+        	final Context _context = v.getContext();
+        	
+        	Library library = JrSession.GetLibrary(_context);
 
         	if (library != null) {
         		library.setAccessCode(txtAccessCode.getText().toString());
@@ -40,12 +42,12 @@ public class SetConnection extends FragmentActivity {
 	        	
 	        	library.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
         	}
-        	final Context _context = v.getContext();
+        	
         	
         	mConnectionButton.setText(R.string.btn_connecting);
         	mConnectionButton.setEnabled(false);
         	
-        	JrSession.SaveSession(v.getContext(), new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
+        	JrSession.SaveSession(_context, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

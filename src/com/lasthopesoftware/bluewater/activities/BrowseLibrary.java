@@ -56,20 +56,21 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	ViewPager mViewPager;
-	ListView mLvSelectViews;
-	DrawerLayout mDrawerLayout;
+	private ViewPager mViewPager;
+	private ListView mLvSelectViews;
+	private DrawerLayout mDrawerLayout;
 
 	private ActionBarDrawerToggle mDrawerToggle;
+	
+	private BrowseLibrary thisContext;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		
-		
-		if (JrSession.GetLibrary(this) == null || JrSession.GetLibrary(this).getSelectedView() <= 0) {
-			Intent intent = new Intent(this, SetConnection.class);
+		thisContext = this;
+		if (JrSession.GetLibrary(thisContext) == null || JrSession.GetLibrary(thisContext).getSelectedView() <= 0) {
+			Intent intent = new Intent(thisContext, SetConnection.class);
 			startActivity(intent);
 			return;
 		}
@@ -112,6 +113,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+						JrSession.GetLibrary(thisContext).setSelectedView(_views.get(position).getKey());
+						JrSession.SaveSession(thisContext);
 						JrSession.JrFs = new JrFileSystem(_views.get(position).getKey());
 						displayLibrary();
 					}
@@ -124,7 +127,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		
-		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(this, mSectionsPagerAdapter, mViewPager));
+		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(thisContext, mSectionsPagerAdapter, mViewPager));
 	}
 
 	@Override

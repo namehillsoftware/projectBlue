@@ -79,7 +79,6 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);
-		getActionBar().setDisplayHomeAsUpEnabled(true);
 		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 		mViewCoverArt = (RelativeLayout) inflater.inflate(R.layout.activity_view_cover_art, null);
 		mControlNowPlaying = (RelativeLayout) inflater.inflate(R.layout.activity_control_now_playing, null);

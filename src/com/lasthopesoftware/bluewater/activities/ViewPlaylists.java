@@ -49,6 +49,7 @@ public class ViewPlaylists extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_playlists);
         mContext = this;
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         playlistView = (ListView)findViewById(R.id.lvPlaylist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
         
