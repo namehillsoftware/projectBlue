@@ -87,7 +87,7 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
-		
+        
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		
@@ -117,7 +117,7 @@ public class BrowseLibrary extends FragmentActivity {
             }
 
 		};
-        
+		
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
@@ -146,6 +146,7 @@ public class BrowseLibrary extends FragmentActivity {
 						JrSession.SaveSession(thisContext);
 						JrSession.JrFs = new JrFileSystem(_views.get(position).getKey());
 						displayLibrary();
+						invalidateOptionsMenu();
 					}
 				});
 			}
@@ -187,6 +188,49 @@ public class BrowseLibrary extends FragmentActivity {
         mDrawerToggle.onConfigurationChanged(newConfig);
     }
 
+	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> {
+		BrowseLibrary mLibraryActivity;
+		SectionsPagerAdapter mSectionsPagerAdapter;
+		ViewPager mViewPager;
+		
+		public CategoriesLoadedListener(BrowseLibrary libraryActivity, SectionsPagerAdapter sectionsPagerAdapter, ViewPager viewPager) {
+			mLibraryActivity = libraryActivity;
+			mSectionsPagerAdapter = sectionsPagerAdapter;
+			mViewPager = viewPager;
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+			if (owner.getState() == SimpleTaskState.ERROR) {
+				for (Exception exception : owner.getExceptions()) {
+					if (exception instanceof IOException) {
+						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+								if (result)
+									mLibraryActivity.displayLibrary();
+							}
+						});
+						PollConnectionTask.Instance.get().startPolling();
+					}
+				}
+			}
+			
+			if (result == null) return;
+			
+			final ArrayList<IJrItem<?>> _selectedViews = result;
+			
+			mSectionsPagerAdapter.setLibraryViews(_selectedViews);
+			
+			// Set up the ViewPager with the sections adapter.
+			mViewPager.setAdapter(mSectionsPagerAdapter);
+			
+			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
+			tabs.setViewPager(mViewPager);
+		}
+	}
+	
 	/**
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
 	 * one of the primary sections of the app.
@@ -245,49 +289,6 @@ public class BrowseLibrary extends FragmentActivity {
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			mListView = new ListView(getActivity());
 			return mListView;
-		}
-	}
-	
-	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> {
-		BrowseLibrary mLibraryActivity;
-		SectionsPagerAdapter mSectionsPagerAdapter;
-		ViewPager mViewPager;
-		
-		public CategoriesLoadedListener(BrowseLibrary libraryActivity, SectionsPagerAdapter sectionsPagerAdapter, ViewPager viewPager) {
-			mLibraryActivity = libraryActivity;
-			mSectionsPagerAdapter = sectionsPagerAdapter;
-			mViewPager = viewPager;
-		}
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-			if (owner.getState() == SimpleTaskState.ERROR) {
-				for (Exception exception : owner.getExceptions()) {
-					if (exception instanceof IOException) {
-						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-							
-							@Override
-							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-								if (result)
-									mLibraryActivity.displayLibrary();
-							}
-						});
-						PollConnectionTask.Instance.get().startPolling();
-					}
-				}
-			}
-			
-			if (result == null) return;
-			
-			final ArrayList<IJrItem<?>> _selectedViews = result;
-			
-			mSectionsPagerAdapter.setLibraryViews(_selectedViews);
-			
-			// Set up the ViewPager with the sections adapter.
-			mViewPager.setAdapter(mSectionsPagerAdapter);
-			
-			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
-			tabs.setViewPager(mViewPager);
 		}
 	}
 }
