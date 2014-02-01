@@ -13,21 +13,25 @@ public class Library {
 	
 	@DatabaseField(generatedId = true)
 	private int id;
-	@DatabaseField(canBeNull = false, columnName = "LIBRARY_NAME", columnDefinition = "VARCHAR(50)")
+	
+	// Remote connection fields
+	@DatabaseField(canBeNull = false, columnDefinition = "VARCHAR(50)")
 	private String libraryName;
-	@DatabaseField(canBeNull = false, columnName = "ACCESS_CODE", columnDefinition = "VARCHAR(30)")
+	@DatabaseField(canBeNull = false, columnDefinition = "VARCHAR(30)")
 	private String accessCode;
-	@DatabaseField(columnName = "AUTH_KEY", columnDefinition = "VARCHAR(100)")
+	@DatabaseField(columnDefinition = "VARCHAR(100)")
 	private String authKey;
-	@DatabaseField(columnName = "NOW_PLAYING_ID", defaultValue = "-1")
-	private int nowPlayingId;
-	@DatabaseField(columnName = "NOW_PLAYING_PROGRESS", defaultValue = "-1")
-	private int nowPlayingProgress;
-	@DatabaseField(columnName = "IS_LOCAL_ONLY")
+	@DatabaseField()
 	private boolean isLocalOnly = false;
 	
-	@ForeignCollectionField(eager = true)
-	private Collection<SelectedView> selectedViews;
+	@DatabaseField(defaultValue = "-1", canBeNull = false)
+	private int nowPlayingId;
+	@DatabaseField(defaultValue = "-1", canBeNull = false)
+	private int nowPlayingProgress;
+	
+	@DatabaseField(defaultValue = "-1", canBeNull = false)
+	private int selectedView = -1;
+	
 	@ForeignCollectionField(eager = true)
 	private Collection<SavedTrack> savedTracks;
 	
@@ -69,22 +73,7 @@ public class Library {
 	public void setAccessCode(String accessCode) {
 		this.accessCode = accessCode;
 	}
-	/**
-	 * @return the mViews
-	 */
-	public Collection<SelectedView> getSelectedViews() {
-		if (selectedViews == null) selectedViews = new ArrayList<SelectedView>();
-		return selectedViews;
-	}
-	/**
-	 * @param mViews the mViews to set
-	 */
-	public void setSelectedViews(Collection<SelectedView> views) {
-		for (SelectedView view : views)
-			view.setLibrary(this);
-		
-		this.selectedViews = views;
-	}
+
 	/**
 	 * @return the authKey
 	 */
@@ -161,5 +150,17 @@ public class Library {
 	 */
 	public void setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
+	}
+	/**
+	 * @return the selectedView
+	 */
+	public int getSelectedView() {
+		return selectedView;
+	}
+	/**
+	 * @param selectedView the selectedView to set
+	 */
+	public void setSelectedView(int selectedView) {
+		this.selectedView = selectedView;
 	}
 }

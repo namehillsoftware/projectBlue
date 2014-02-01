@@ -2,13 +2,11 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.app.ActionBar.LayoutParams;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -39,7 +37,6 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnect
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -71,7 +68,7 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		
 		
 		
-		if (JrSession.GetLibrary(this) == null || JrSession.GetLibrary(this).getSelectedViews().size() == 0) {
+		if (JrSession.GetLibrary(this) == null || JrSession.GetLibrary(this).getSelectedView() <= 0) {
 			Intent intent = new Intent(this, SetConnection.class);
 			startActivity(intent);
 			return;

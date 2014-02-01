@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,13 +9,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.SelectedView;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -29,25 +27,6 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	private OnStartListener<List<IJrItem<?>>> mOnStartListener;
 	private OnConnectListener<List<IJrItem<?>>> mOnConnectListener;
 	private OnErrorListener<List<IJrItem<?>>> mOnErrorListener;
-	
-	public JrFileSystem(Collection<SelectedView> visibleViews) {
-		mVisibleViewKeys = new int[visibleViews.size()];
-		int i = 0;
-		for (SelectedView visibleView : visibleViews)
-			mVisibleViewKeys[i++] = visibleView.getServiceKey();
-		
-		mOnConnectListener = new OnConnectListener<List<IJrItem<?>>>() {
-			
-			@Override
-			public List<IJrItem<?>> onConnect(InputStream is) {
-				ArrayList<IJrItem<?>> returnList = new ArrayList<IJrItem<?>>();
-				for (JrItem item : JrFsResponse.GetItems(is))
-					returnList.add(item);
-				
-				return returnList;
-			}
-		};
-	}
 	
 	public JrFileSystem(int... visibleViewKeys) {
 		super();
