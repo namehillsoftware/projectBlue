@@ -63,10 +63,10 @@ public class SetConnection extends FragmentActivity {
 								Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
 							
 							JrSession.JrFs = new JrFileSystem(result.get(0).getKey());
-							JrSession.GetLibrary(thisContext).setSelectedView(result.get(0).getKey());
-							JrSession.SaveSession(thisContext);
+							JrSession.GetLibrary(_context).setSelectedView(result.get(0).getKey());
+							JrSession.SaveSession(_context);
 							
-							Intent intent = new Intent(thisContext, BrowseLibrary.class);
+							Intent intent = new Intent(_context, BrowseLibrary.class);
 							thisContext.startActivity(intent);
 						}
 					});
