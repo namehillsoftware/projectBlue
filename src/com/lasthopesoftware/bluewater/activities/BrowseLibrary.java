@@ -8,6 +8,7 @@ import java.util.Locale;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -41,7 +42,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class BrowseLibrary extends FragmentActivity implements ActionBar.TabListener {
+public class BrowseLibrary extends FragmentActivity {
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -63,6 +64,8 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 	private ActionBarDrawerToggle mDrawerToggle;
 	
 	private BrowseLibrary thisContext;
+	
+	private CharSequence mOldTitle;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -88,13 +91,32 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		
+		mOldTitle = getTitle();
 		mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
                 mDrawerLayout,         /* DrawerLayout object */
                 R.drawable.ic_drawer,  /* nav drawer icon to replace 'Up' caret */
                 R.string.drawer_open,  /* "open drawer" description */
                 R.string.drawer_close  /* "close drawer" description */
-		);
+		) {
+			 /** Called when a drawer has settled in a completely closed state. */
+			@Override
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getActionBar().setTitle(mOldTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely open state. */
+			@Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                mOldTitle = getActionBar().getTitle();
+                getActionBar().setTitle("Select view");
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+		};
         
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 
@@ -106,6 +128,13 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 				if (result == null) return;
 				
 				final List<IJrItem<?>> _views = result;
+				
+				for (IJrItem<?> item : _views) {
+					if (item.getKey() != JrSession.GetLibrary(thisContext).getSelectedView()) continue;
+					
+					getActionBar().setTitle(item.getValue());
+					break;
+				}
 				
 				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, _views));
 				
@@ -144,21 +173,19 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 		
 		return ViewUtils.handleMenuClicks(this, item);
 	}
-
+	
 	@Override
-	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
-
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+	
 	@Override
-	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-		// When the given tab is selected, switch to the corresponding page in
-		// the ViewPager.
-		mViewPager.setCurrentItem(tab.getPosition());
-	}
-
-	@Override
-	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-	}
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
 
 	/**
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
