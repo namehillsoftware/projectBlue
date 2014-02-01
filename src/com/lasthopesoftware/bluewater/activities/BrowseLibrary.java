@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
@@ -240,27 +241,30 @@ public class BrowseLibrary extends FragmentActivity implements ActionBar.TabList
 			// Set up the ViewPager with the sections adapter.
 			mViewPager.setAdapter(mSectionsPagerAdapter);
 			
+			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
+			tabs.setViewPager(mViewPager);
+			
 			// Set up the action bar.
-			ActionBar actionBar = mLibraryActivity.getActionBar();
-			actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+//			ActionBar actionBar = mLibraryActivity.getActionBar();
+//			actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 			
 			// When swiping between different sections, select the corresponding
 			// tab.
 			// We can also use ActionBar.Tab#select() to do this if we have a
 			// reference to the
 			// Tab.
-			mViewPager.setOnPageChangeListener(new OnPageChangeListener(actionBar));
-			
-			actionBar.removeAllTabs();
-			// For each of the sections in the app, add a tab to the action bar.
-			for (IJrItem<?> item : _selectedViews) {
-				// Create a tab with text corresponding to the page title defined by
-				// the adapter.
-				// Also specify this Activity object, which implements the
-				// TabListener interface, as the
-				// listener for when this tab is selected.
-				actionBar.addTab(actionBar.newTab().setText(item.getValue()).setTabListener(mLibraryActivity));
-			}
+//			mViewPager.setOnPageChangeListener(new OnPageChangeListener(actionBar));
+//			
+//			actionBar.removeAllTabs();
+//			// For each of the sections in the app, add a tab to the action bar.
+//			for (IJrItem<?> item : _selectedViews) {
+//				// Create a tab with text corresponding to the page title defined by
+//				// the adapter.
+//				// Also specify this Activity object, which implements the
+//				// TabListener interface, as the
+//				// listener for when this tab is selected.
+//				actionBar.addTab(actionBar.newTab().setText(item.getValue()).setTabListener(mLibraryActivity));
+//			}
 		}
 	}
 	
