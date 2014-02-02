@@ -2,12 +2,14 @@
     <item android:id="@+id/menu_connection_settings"
         android:title="@string/title_activity_set_up_connection"
         android:orderInCategory="100"
-        android:showAsAction="never"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/ic_action_settings"
          />
     <item android:id="@+id/menu_view_now_playing"
         android:title="@string/title_activity_view_now_playing"
         android:orderInCategory="200"
-        android:showAsAction="never"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/av_play"
         android:visible="false"
         />
 </menu>
