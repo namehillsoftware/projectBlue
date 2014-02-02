@@ -9,7 +9,7 @@
         android:title="@string/title_activity_view_now_playing"
         android:orderInCategory="200"
         android:showAsAction="ifRoom"
-        android:icon="@drawable/av_play"
+        android:icon="@drawable/av_play_dark"
         android:visible="false"
         />
 </menu>
