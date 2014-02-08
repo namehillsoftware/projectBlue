@@ -451,7 +451,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 					conn.disconnect();
 				}
 			} catch (FileNotFoundException fe) {
-				LoggerFactory.getLogger(ViewNowPlaying.class).error(fe.toString(), fe);
+				LoggerFactory.getLogger(ViewNowPlaying.class).warn(fe.toString(), fe);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 			}

@@ -42,7 +42,7 @@ public class BackgroundFilePreparer implements Runnable {
 					if (mNextFile.getDuration() < 0) continue;
 					bufferTime = (((mNextFile.getDuration() * 128) / 384) * 1.2) + 15000;
 				} catch (IOException e) {
-					LoggerFactory.getLogger(BackgroundFilePreparer.class).error(e.toString(), e);
+					LoggerFactory.getLogger(BackgroundFilePreparer.class).warn(e.toString(), e);
 					bufferTime = -1;
 					continue;
 				}
