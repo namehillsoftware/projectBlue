@@ -16,10 +16,13 @@
   </appender>
 
   <!-- Write WARN (and higher-level) messages to the log file -->
+  
+	<logger name="com.lasthopesoftware" level="INFO">
+		<appender-ref ref="logcat" />
+	</logger>
+
 	<root level="WARN">
     	<appender-ref ref="file" />
   	</root>
-	<root level="INFO">
-    	<appender-ref ref="logcat" />
-	</root>
+	
 </configuration>

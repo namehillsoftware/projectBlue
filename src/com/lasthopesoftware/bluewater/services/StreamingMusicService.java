@@ -444,18 +444,22 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 
 	@Override
 	public void onAudioFocusChange(int focusChange) {
+		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+			// resume playback
+        	if (JrSession.GetLibrary(thisContext) != null && !JrSession.isActive()) return;
+        	
+        	if (mPlayingFile != null)
+        		mPlayingFile.setVolume(1.0f);
+        	
+        	if (!mPlayingFile.isPlaying())
+        		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
+        	
+            return;
+		}
+		
+		if (mPlayingFile == null) return;
+		
 	    switch (focusChange) {
-	        case AudioManager.AUDIOFOCUS_GAIN:
-	            // resume playback
-	        	if (!JrSession.isActive() && JrSession.GetLibrary(thisContext) != null) return;
-	        	
-	        	if (mPlayingFile != null)
-	        		mPlayingFile.setVolume(1.0f);
-	        	
-	        	if (!mPlayingFile.isPlaying())
-	        		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
-	        	
-	            return;
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	        	if (mPlayingFile.isPlaying()) pausePlayback(true);
