@@ -4,7 +4,6 @@
 package com.lasthopesoftware.bluewater.services;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -18,11 +17,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.MediaMetadataRetriever;
+import android.media.RemoteControlClient;
+import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.R;
@@ -35,7 +38,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListe
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -63,6 +65,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
 	private static final String BAG_START_POS = "com.lasthopesoftware.bluewater.bag.START_POS";
 	
+	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
+	
 	private static int mId = 42;
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
@@ -75,6 +79,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
+	private ComponentName mRemoteControlReceiver;
 	
 	private static Object syncObject = new Object();
 	
@@ -191,7 +196,10 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.SaveSession(thisContext);
 		
 		// Start playback immediately
-		registerHardwareCommunication();
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+		
 		playingFile.start();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
@@ -200,15 +208,15 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "project_blue_water_svc_lock");
         mWifiLock.acquire();
 		
-		SimpleTask<Void, Void, String> getFilePropertiesTask = new SimpleTask<Void, Void, String>();
-		getFilePropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+		SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>();
+		getNotificationPropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
 				owner.setResult(playingFile.getProperty("Artist") + " - " + playingFile.getValue());
 			}
 		});
-		getFilePropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+		getNotificationPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
@@ -224,7 +232,56 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 			}
 		});
 		
-		getFilePropertiesTask.execute();
+		getNotificationPropertiesTask.execute();
+		
+		SimpleTask<Void, Void, SparseArray<Object>> getBtPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>();
+		getBtPropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
+			
+			@Override
+			public void onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
+				SparseArray<Object> result = new SparseArray<Object>(4);
+				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty("Artist"));
+				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty("Album"));
+				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
+				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
+				owner.setResult(result);
+			}
+		});
+		getBtPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
+				if (owner.getState() == SimpleTaskState.ERROR) return;
+				// build the PendingIntent for the remote control client
+				Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+				mediaButtonIntent.setComponent(mRemoteControlReceiver);
+				PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(thisContext, 0, mediaButtonIntent, 0);
+				// create and register the remote control client
+				RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
+				remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+				remoteControlClient.setTransportControlFlags(
+						RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+	                    RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+	                    RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+	                    RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+				MetadataEditor metaData = remoteControlClient.editMetadata(true);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));				
+				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
+				metaData.apply();
+				
+				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
+				pebbleIntent.putExtra("artist", (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+				pebbleIntent.putExtra("album", (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+				pebbleIntent.putExtra("track", (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));
+			    
+			    sendBroadcast(pebbleIntent);
+				
+				mAudioManager.registerRemoteControlClient(remoteControlClient);
+			}
+		});
+		getBtPropertiesTask.execute();
         
         if (playingFile.getNextFile() != null) {
         	BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, playingFile);
@@ -350,12 +407,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (mPlaylist == null) return;
 		for (JrFile file : mPlaylist) releaseMediaPlayer(file);
 	}
-	
-	private void registerHardwareCommunication() {
-		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-		ComponentName remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		mAudioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
-	}
 
 	/* Begin Event Handlers */
 	
@@ -364,8 +415,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	 */
 	
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		/* Should be modified to save its state locally in the future.
-		 */
+		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
 		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
