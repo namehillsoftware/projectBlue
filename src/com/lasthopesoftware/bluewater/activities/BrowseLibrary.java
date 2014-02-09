@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.activities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -11,9 +10,6 @@ import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -29,8 +25,8 @@ import android.widget.ListView;
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
@@ -50,7 +46,7 @@ public class BrowseLibrary extends FragmentActivity {
 	 * intensive, it may be best to switch to a
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
-	SectionsPagerAdapter mSectionsPagerAdapter;
+	ViewChildPagerAdapter mViewChildPagerAdapter;
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
@@ -152,10 +148,10 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		JrSession.JrFs.getSubItemsAsync();
 		
-		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+		mViewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		
-		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(thisContext, mSectionsPagerAdapter, mViewPager));
+		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(thisContext));
 	}
 
 	@Override
@@ -185,16 +181,20 @@ public class BrowseLibrary extends FragmentActivity {
         super.onConfigurationChanged(newConfig);
         if (mDrawerToggle != null) mDrawerToggle.onConfigurationChanged(newConfig);
     }
+	
+	public ViewChildPagerAdapter getViewChildPagerAdapter() {
+		return mViewChildPagerAdapter;
+	}
+	
+	public ViewPager getViewPager() {
+		return mViewPager;
+	}
 
 	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> {
 		BrowseLibrary mLibraryActivity;
-		SectionsPagerAdapter mSectionsPagerAdapter;
-		ViewPager mViewPager;
 		
-		public CategoriesLoadedListener(BrowseLibrary libraryActivity, SectionsPagerAdapter sectionsPagerAdapter, ViewPager viewPager) {
+		public CategoriesLoadedListener(BrowseLibrary libraryActivity) {
 			mLibraryActivity = libraryActivity;
-			mSectionsPagerAdapter = sectionsPagerAdapter;
-			mViewPager = viewPager;
 		}
 		
 		@Override
@@ -219,74 +219,13 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			final ArrayList<IJrItem<?>> _selectedViews = result;
 			
-			mSectionsPagerAdapter.setLibraryViews(_selectedViews);
+			mLibraryActivity.getViewChildPagerAdapter().setLibraryViews(_selectedViews);
 			
 			// Set up the ViewPager with the sections adapter.
-			mViewPager.setAdapter(mSectionsPagerAdapter);
+			mLibraryActivity.getViewPager().setAdapter(mLibraryActivity.getViewChildPagerAdapter());
 			
 			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
-			tabs.setViewPager(mViewPager);
-		}
-	}
-	
-	/**
-	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-	 * one of the primary sections of the app.
-	 */
-	private static class SectionsPagerAdapter extends  FragmentStatePagerAdapter {
-		private ArrayList<IJrItem<?>> mLibraryViews;
-		private ArrayList<CategoryFragment> fragments;
-		
-		public SectionsPagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
-		
-		public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {
-			mLibraryViews = libraryViews;
-			fragments = new ArrayList<CategoryFragment>(libraryViews.size());
-		}
-
-		@Override
-		public Fragment getItem(int i) {
-			if (fragments.size() <= i) {
-				CategoryFragment fragment = new CategoryFragment();
-				Bundle args = new Bundle();
-				args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
-				fragment.setArguments(args);
-				fragments.add(fragment);
-			}
-			
-			return fragments.get(i);
-		}
-
-		@Override
-		public int getCount() {
-			return getPages().size();
-		}
-
-		@Override
-		public CharSequence getPageTitle(int position) {
-			return !mLibraryViews.get(position).getValue().isEmpty() ? mLibraryViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
-		}
-
-		public ArrayList<IJrItem<?>> getPages() {
-			return mLibraryViews;
-		}
-	}
-
-	public static class SelectedItem extends Fragment {
-		private ListView mListView;
-		public static final String ARG_SELECTED_POSITION = "selected_position";
-		public static final String ARG_CATEGORY_POSITION = "category_position";
-
-		public SelectedItem() {
-			super();
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			mListView = new ListView(getActivity());
-			return mListView;
+			tabs.setViewPager(mLibraryActivity.getViewPager());
 		}
 	}
 }
