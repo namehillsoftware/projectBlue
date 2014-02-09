@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -23,7 +24,7 @@ public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
 	public ViewChildPagerAdapter(FragmentManager fm) {
 		super(fm);
 	}
-	
+		
 	public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {
 		mLibraryViews = libraryViews;
 		fragments = new ArrayList<CategoryFragment>(libraryViews.size());

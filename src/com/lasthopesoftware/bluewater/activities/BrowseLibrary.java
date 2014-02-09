@@ -217,9 +217,7 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			if (result == null) return;
 			
-			final ArrayList<IJrItem<?>> _selectedViews = result;
-			
-			mLibraryActivity.getViewChildPagerAdapter().setLibraryViews(_selectedViews);
+			mLibraryActivity.getViewChildPagerAdapter().setLibraryViews(result);
 			
 			// Set up the ViewPager with the sections adapter.
 			mLibraryActivity.getViewPager().setAdapter(mLibraryActivity.getViewChildPagerAdapter());
