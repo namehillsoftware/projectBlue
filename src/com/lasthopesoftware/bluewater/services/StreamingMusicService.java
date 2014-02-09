@@ -191,7 +191,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		JrSession.SaveSession(thisContext);
 		
 		// Start playback immediately
-		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		registerHardwareCommunication();
 		playingFile.start();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
@@ -350,6 +350,12 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (mPlaylist == null) return;
 		for (JrFile file : mPlaylist) releaseMediaPlayer(file);
 	}
+	
+	private void registerHardwareCommunication() {
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		ComponentName remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		mAudioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
+	}
 
 	/* Begin Event Handlers */
 	
@@ -457,8 +463,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         	if (!mPlayingFile.isPlaying())
         		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
         	
-        	ComponentName remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-        	mAudioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
             return;
 		}
 		
