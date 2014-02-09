@@ -51,6 +51,9 @@ public class SetConnection extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+					mConnectionButton.setText(R.string.btn_connect);
+					mConnectionButton.setEnabled(true);
+					
 					if (JrSession.ChooseLibrary(_context, result.getId()) == null) return;
 		        	
 		        	if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
@@ -61,8 +64,10 @@ public class SetConnection extends FragmentActivity {
 						public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
 							if (result == null) return;
 							
-							if (result.size() == 0)
+							if (result.size() == 0) {
 								Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
+								return;
+							}
 							
 							JrSession.JrFs = new JrFileSystem(result.get(0).getKey());
 							JrSession.GetLibrary(_context).setSelectedView(result.get(0).getKey());

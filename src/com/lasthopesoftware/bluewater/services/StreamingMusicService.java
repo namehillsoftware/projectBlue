@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -35,6 +36,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -187,7 +189,9 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		mFileKey = playingFile.getKey();
 		JrSession.GetLibrary(thisContext).setNowPlayingId(mFileKey);
 		JrSession.SaveSession(thisContext);
+		
 		// Start playback immediately
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		playingFile.start();
 		// Set the notification area
 		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
@@ -195,7 +199,6 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
         mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "project_blue_water_svc_lock");
         mWifiLock.acquire();
-        mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		
 		SimpleTask<Void, Void, String> getFilePropertiesTask = new SimpleTask<Void, Void, String>();
 		getFilePropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
@@ -454,6 +457,8 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
         	if (!mPlayingFile.isPlaying())
         		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
         	
+        	ComponentName remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+        	mAudioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
             return;
 		}
 		
