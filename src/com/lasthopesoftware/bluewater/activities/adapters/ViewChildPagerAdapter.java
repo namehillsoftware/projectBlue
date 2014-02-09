@@ -3,15 +3,14 @@ package com.lasthopesoftware.bluewater.activities.adapters;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
+
+import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
+import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 
 /**
  * A {@link FragmentPagerAdapter} that returns a fragment corresponding to

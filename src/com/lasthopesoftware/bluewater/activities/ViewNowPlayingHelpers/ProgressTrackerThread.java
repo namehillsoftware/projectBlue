@@ -2,10 +2,9 @@ package com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers;
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-
 import android.os.Message;
+
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 
 public class ProgressTrackerThread implements Runnable {

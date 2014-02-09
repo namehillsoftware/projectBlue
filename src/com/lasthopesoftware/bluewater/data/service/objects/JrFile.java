@@ -27,7 +27,6 @@ import android.os.AsyncTask;
 import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrStringResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.session.JrSession;

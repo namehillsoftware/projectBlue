@@ -5,7 +5,6 @@ import android.os.Message;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
-import com.lasthopesoftware.bluewater.activities.WaitForConnectionDialog;
 
 public class HandleViewNowPlayingMessages extends Handler {
 //	private static int UPDATE_ALL = 0;
