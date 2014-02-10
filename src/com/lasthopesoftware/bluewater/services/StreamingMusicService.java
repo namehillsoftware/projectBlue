@@ -263,6 +263,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 						RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
 	                    RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
 	                    RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+	                    RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
 	                    RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 				MetadataEditor metaData = remoteControlClient.editMetadata(true);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
