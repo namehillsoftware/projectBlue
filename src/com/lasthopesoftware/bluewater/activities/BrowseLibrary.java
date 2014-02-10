@@ -64,7 +64,7 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		thisContext = this;
 		if (JrSession.GetLibrary(thisContext) == null || JrSession.GetLibrary(thisContext).getSelectedView() <= 0) {
-			Intent intent = new Intent(thisContext, SetConnection.class);
+			Intent intent = new Intent(thisContext, SelectServer.class);
 			startActivity(intent);
 			return;
 		}
@@ -137,7 +137,6 @@ public class BrowseLibrary extends FragmentActivity {
 						JrSession.SaveSession(thisContext);
 						JrSession.JrFs = new JrFileSystem(_views.get(position).getKey());
 						displayLibrary();
-						invalidateOptionsMenu();
 					}
 				});
 			}

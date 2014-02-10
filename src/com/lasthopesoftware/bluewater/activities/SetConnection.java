@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -15,6 +17,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
@@ -86,9 +89,9 @@ public class SetConnection extends FragmentActivity {
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-         
+        super.onCreate(savedInstanceState); 
         setContentView(R.layout.activity_set_connection);
+        getActionBar().setDisplayHomeAsUpEnabled(true);        
         
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
@@ -110,5 +113,18 @@ public class SetConnection extends FragmentActivity {
 	    	txtUserName.setText(userDetails[0]);
 	    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
     	}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		menu.findItem(R.id.menu_connection_settings).setVisible(false);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return ViewUtils.handleNavMenuClicks(this, item);
 	}
 }

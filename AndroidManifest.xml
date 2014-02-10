@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lasthopesoftware.bluewater"
     android:versionCode="1"
@@ -13,13 +14,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        android:icon="@drawable/ic_launcher"
-        android:logo="@drawable/ic_stat_water_drop_white"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme"
+        android:name="com.lasthopesoftware.bluewater.MainApplication"
         android:allowBackup="true"
-        android:name="com.lasthopesoftware.bluewater.MainApplication">
-        
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:logo="@drawable/ic_stat_water_drop_white"
+        android:theme="@style/AppTheme" >
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.BrowseLibrary"
             android:label="@string/title_activity_browse_library" >
@@ -31,9 +31,17 @@
         </activity>
         
         <activity
+            android:name="com.lasthopesoftware.bluewater.activities.SelectServer"
+            android:label="@string/title_activity_select_server" >
+        </activity>
+        
+        <activity
             android:name="com.lasthopesoftware.bluewater.activities.SetConnection"
-            android:label="@string/title_activity_set_up_connection">
+            android:label="@string/title_activity_set_up_connection" >
             
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.activities.SelectServer" />
         </activity>
         
         <activity
@@ -43,7 +51,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
-        
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewPlaylists"
             android:label="@string/title_activity_file_view" >
@@ -51,8 +58,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
-        
-         <activity
+        <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewNowPlaying"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTop" >
@@ -63,15 +69,16 @@
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
-        
-        <receiver android:name="com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver">
-		    <intent-filter>
-		        <action android:name="android.intent.action.MEDIA_BUTTON" />
-		    </intent-filter>
-		</receiver>
+        <receiver android:name="com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
-        <service android:name="com.lasthopesoftware.bluewater.services.StreamingMusicService" android:enabled="true" android:exported="false">
-
+        <service
+            android:name="com.lasthopesoftware.bluewater.services.StreamingMusicService"
+            android:enabled="true"
+            android:exported="false" >
             <intent-filter>
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_PAUSE" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_PLAY" />
@@ -80,10 +87,9 @@
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION" />
             </intent-filter>
-            
         </service>
 
-       
+        
     </application>
 
 </manifest>

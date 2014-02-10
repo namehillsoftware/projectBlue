@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,31 +35,11 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
-//	private static final String PLAYLIST_KEY = "Playlist";
-//	private static final String NOW_PLAYING_KEY = "now_playing";
-//	private static final String NP_POSITION = "np_position";
-//	private static final String ACCESS_CODE_KEY = "access_code";
-//	private static final String USER_AUTH_CODE_KEY = "user_auth_code";
-//	private static final String IS_LOCAL_ONLY = "is_local_only";
-//	private static final String LIBRARY_KEY = "library_KEY";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
-	
 	public static int ChosenLibrary = -1;
-
-//	public static boolean IsLocalOnly = false;
-//
-//	public static String UserAuthCode = "";
-//	public static String AccessCode = "";
 
 	public static JrAccessDao accessDao;
 
-//	private static int[] SelectedViewIds = new int[0];
-//
-//	public static IJrItem<?> SelectedItem;
-//	public static JrFile PlayingFile;
-//	//    public static ArrayList<JrFile> Playlist;
-//	public static String Playlist;
-	
 	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
 	private static Library library = null;
@@ -169,6 +151,38 @@ public class JrSession {
 		log.info("Session started.");
 		
 		return library;
+	}
+	
+	public static List<Library> GetLibraries(Context context) {
+		final Context _context = context;
+		SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<Void, Void, List<Library>>();
+		getLibrariesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, List<Library>>() {
+			
+			@Override
+			public void onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
+				DatabaseHandler handler = new DatabaseHandler(_context);
+				try {
+					owner.setResult(handler.getAccessObject(Library.class).queryForAll());
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} catch (Exception e) {
+					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				} finally {
+					handler.close();
+				}
+			}
+		});
+		
+		try {
+			return getLibrariesTask.executeOnExecutor(databaseExecutor).get();
+		} catch (InterruptedException e) {
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+		} catch (ExecutionException e) {
+			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+		}
+		
+		// Exceptions occurred, return an empty library
+		return new ArrayList<Library>();
 	}
 		
 	public synchronized static Library ChooseLibrary(Context context, int libraryKey) {

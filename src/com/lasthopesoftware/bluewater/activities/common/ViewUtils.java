@@ -10,7 +10,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.view.MenuItem;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.activities.SetConnection;
+import com.lasthopesoftware.bluewater.activities.SelectServer;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
@@ -19,8 +19,7 @@ public class ViewUtils {
 	public static boolean handleMenuClicks(Context context, MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
-				Intent intent = new Intent(context, SetConnection.class);
-				context.startActivity(intent);
+				context.startActivity(new Intent(context, SelectServer.class));
 				return true;
 			case R.id.menu_view_now_playing:
 				CreateNowPlayingView(context);

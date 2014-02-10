@@ -15,12 +15,8 @@ import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 
 public class SelectViewAdapter extends ArrayAdapter<IJrItem<?>> {
 
-	private List<IJrItem<?>> mViews;
-	
 	public SelectViewAdapter(Context context, int resource, List<IJrItem<?>> views) {
 		super(context, resource, views);
-		
-		mViews = views;
 	}
 	
 	@Override
@@ -29,7 +25,7 @@ public class SelectViewAdapter extends ArrayAdapter<IJrItem<?>> {
 		RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, null);
 		
 		TextView tvViewName = (TextView) returnView.findViewById(R.id.tvViewName);
-		tvViewName.setText(mViews.get(position).getValue());
+		tvViewName.setText(getItem(position).getValue());
 		
 		return returnView;
 	}
