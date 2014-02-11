@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -61,7 +62,7 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+				
 		thisContext = this;
 		if (JrSession.GetLibrary(thisContext) == null || JrSession.GetLibrary(thisContext).getSelectedView() <= 0) {
 			Intent intent = new Intent(thisContext, SelectServer.class);
@@ -69,16 +70,12 @@ public class BrowseLibrary extends FragmentActivity {
 			return;
 		}
 		
-		displayLibrary();
-	}
-
-	public void displayLibrary() {
 		setContentView(R.layout.activity_browse_library);
 		setTitle("Library");
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
-        
+		
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		
@@ -110,6 +107,11 @@ public class BrowseLibrary extends FragmentActivity {
 		};
 		
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
+		
+		displayLibrary();
+	}
+
+	public void displayLibrary() {		
 
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		JrSession.JrFs.setOnItemsCompleteListener(new IJrDataTask.OnCompleteListener<List<IJrItem<?>>>() {
@@ -133,6 +135,8 @@ public class BrowseLibrary extends FragmentActivity {
 
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+						mDrawerLayout.closeDrawer(Gravity.LEFT);
+						mDrawerToggle.syncState();
 						JrSession.GetLibrary(thisContext).setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(thisContext);
 						JrSession.JrFs = new JrFileSystem(_views.get(position).getKey());
