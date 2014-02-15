@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <item android:id="@+id/menu_connection_settings"
+        android:title="@string/title_activity_set_up_connection"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/ic_action_settings" />
+    
+    <item android:id="@+id/menu_repeat_playlist"
+        android:title="@string/btn_repeat_playlist"
+        android:orderInCategory="200"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/av_repeat_dark"
+        android:visible="false" />
+    
+</menu>

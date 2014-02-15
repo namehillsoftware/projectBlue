@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import org.slf4j.LoggerFactory;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -177,15 +178,22 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		getMenuInflater().inflate(R.menu.menu_now_playing, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
-		return super.onOptionsItemSelected(item);
+		switch (item.getItemId()) {
+		case R.id.menu_connection_settings:
+			startActivity(new Intent(this, SelectServer.class));
+			return true;
+		case R.id.menu_repeat_playlist:
+			// TODO add repeat option to streaming
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 	
 	private static class TogglePlayPauseListener implements OnClickListener {

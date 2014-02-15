@@ -22,6 +22,7 @@
     <string name="img_now_playing">Now Playing Album Image</string>
     <string name="btn_view_files">View Files</string>
     <string name="btn_shuffle_files">Shuffle</string>
+    <string name="btn_repeat_playlist">Repeat Playlist</string>
     <string name="btn_play_files">Play All</string>
     <string name="lbl_now_playing">Now Playing</string>
     <string name="btn_play">Play</string>

@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -53,15 +53,15 @@ public class BrowseItemMenu {
         parentView.addView(textView);
         
         LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.active_jr_item_menu, null);
+        LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, null);
         
-        Button shuffleButton = (Button)fileMenu.findViewById(R.id.btnShuffle);
+        ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
         shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrFilesContainer)item));
         
-        Button playButton = (Button)fileMenu.findViewById(R.id.btnPlayAll);
+        ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
         playButton.setOnClickListener(new PlayClickHandler((IJrFilesContainer)item));
         
-        Button viewButton = (Button)fileMenu.findViewById(R.id.btnViewFiles);
+        ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
         viewButton.setOnClickListener(new ViewFilesClickHandler(item));
 		
 		parentView.addView(fileMenu);
