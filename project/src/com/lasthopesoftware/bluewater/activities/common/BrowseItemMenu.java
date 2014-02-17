@@ -36,10 +36,18 @@ public class BrowseItemMenu {
 		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
 	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		
-		ViewFlipper parentView = new ViewFlipper(parent.getContext());
+		final ViewFlipper parentView = new ViewFlipper(parent.getContext());
 		parentView.setLayoutParams(lp);
+		
 		OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
-		onSwipeListener.setOnSwipeRightListener(new SwipeRightListener());
+		onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
+			
+			@Override
+			public boolean onSwipeRight(View view) {
+				parentView.showPrevious();
+				return true;
+			}
+		});
 		parentView.setOnTouchListener(onSwipeListener);
 		
 //        TextView textView = new TextView(parentView.getContext());
@@ -61,15 +69,19 @@ public class BrowseItemMenu {
         parentView.addView(rl);
         
         LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, null);
+        fileMenu.setOnTouchListener(onSwipeListener);
         
         ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
         shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrFilesContainer)item));
+        shuffleButton.setOnTouchListener(onSwipeListener);
         
         ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
         playButton.setOnClickListener(new PlayClickHandler((IJrFilesContainer)item));
+        playButton.setOnTouchListener(onSwipeListener);
         
         ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
         viewButton.setOnClickListener(new ViewFilesClickHandler(item));
+        viewButton.setOnTouchListener(onSwipeListener);
 		
 		parentView.addView(fileMenu);
 		
@@ -146,25 +158,21 @@ public class BrowseItemMenu {
 		}
 	}
 	
-	public static class ClickListener implements OnItemLongClickListener {
+	public static class LongClickListener implements OnItemLongClickListener {
 		@Override
 		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+			for (int i = 0; i < parent.getChildCount(); i++) {
+				View child = parent.getChildAt(i);
+				if (child instanceof ViewFlipper) {
+					ViewFlipper flipper = ((ViewFlipper)child); 
+					if (flipper.getDisplayedChild() == 0) continue;
+					
+					flipper.showPrevious();
+				}
+			}
 			if (view instanceof ViewFlipper) {
 				ViewFlipper parentView = (ViewFlipper)view;
 				parentView.showNext();
-				return true;
-			}
-			return false;
-		}
-	}
-	
-	public static class SwipeRightListener implements OnSwipeRightListener {
-
-		@Override
-		public boolean onSwipeRight(View view) {
-			if (view instanceof ViewFlipper) {
-				ViewFlipper parentView = (ViewFlipper)view;
-				parentView.showPrevious();
 				return true;
 			}
 			return false;

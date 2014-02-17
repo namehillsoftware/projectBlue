@@ -51,11 +51,6 @@ public class OnSwipeListener implements OnTouchListener {
 
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
-        }
         
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
@@ -76,7 +71,7 @@ public class OnSwipeListener implements OnTouchListener {
                 if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                     if (diffY > 0) {
                     	if (mOnSwipeDownListener == null) return false;
-                        return mOnSwipeRightListener.onSwipeRight(mActiveView);
+                        return mOnSwipeDownListener.onSwipeDown(mActiveView);
                     }
                     if (mOnSwipeUpListener == null) return false;
                     return mOnSwipeUpListener.onSwipeUp(mActiveView);

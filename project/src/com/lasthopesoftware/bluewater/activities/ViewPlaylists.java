@@ -100,7 +100,7 @@ public class ViewPlaylists extends FragmentActivity {
         if (mPlaylist.getSubItems().size() > 0) {
         	playlistView.setAdapter(new PlaylistAdapter(mContext, R.id.tvStandard, mPlaylist.getSubItems()));
         	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
-        	playlistView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
+        	playlistView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
         } else {
         	playlistView.setVisibility(View.INVISIBLE);
         	pbLoading.setVisibility(View.VISIBLE);

@@ -125,7 +125,7 @@ public class CategoryFragment extends Fragment {
 					if (result == null) return;
 					
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
-					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
+					listView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
 		    		listView.setAdapter(new PlaylistAdapter(getActivity(), R.id.tvStandard, result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
@@ -188,7 +188,7 @@ public class CategoryFragment extends Fragment {
 			    	        return true;
 			    	    }
 				    });
-			    	listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
+			    	listView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
 			    	
 			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<JrItem>)result));
 			    	pbLoading.setVisibility(View.INVISIBLE);

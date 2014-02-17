@@ -6,7 +6,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -28,12 +27,9 @@ public class ServerListAdapter extends BaseAdapter {
 		RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
 		
 		TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
-		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		textView.setLayoutParams(lp);
 		textView.setText(position == 0 ? "Add Server" : mLibraries.get(--position).getAccessCode());
 		
-		return textView;
+		return returnView;
 	}
 
 	@Override
