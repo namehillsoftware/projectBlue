@@ -124,8 +124,8 @@ public class BrowseLibrary extends FragmentActivity {
 				
 				for (IJrItem<?> item : _views) {
 					if (item.getKey() != JrSession.GetLibrary(thisContext).getSelectedView()) continue;
-					
-					getActionBar().setTitle(item.getValue());
+					mOldTitle = item.getValue();
+					getActionBar().setTitle(mOldTitle);
 					break;
 				}
 				
