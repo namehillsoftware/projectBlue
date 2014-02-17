@@ -320,7 +320,7 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
 			mPlaylist = JrFiles.deserializeFileStringList(mPlaylistString);
-			JrSession.GetLibrary(thisContext).setSavedTracks(mPlaylist);
+			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
 		}
 		
 		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;

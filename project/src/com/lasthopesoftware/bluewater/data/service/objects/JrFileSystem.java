@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import android.os.AsyncTask;
@@ -30,6 +32,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	
 	public JrFileSystem(int... visibleViewKeys) {
 		super();
+		
 		mVisibleViewKeys = visibleViewKeys;
 		
 		mOnConnectListener = new OnConnectListener<List<IJrItem<?>>>() {
@@ -43,11 +46,17 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 				return returnList;
 			}
 		};
-		//		setPages();
+		
 	}
 	
 	public String getSubItemUrl() {
 		return JrSession.accessDao.getJrUrl("Browse/Children");
+	}
+	
+	public void setVisibleViews(int... visibleViewKeys) {
+		if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
+		mVisibleViewKeys = visibleViewKeys;
+		mVisibleViews = null;
 	}
 	
 	public ArrayList<IJrItem<?>> getVisibleViews() {

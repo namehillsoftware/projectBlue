@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -65,17 +64,10 @@ public class JrSession {
 				DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					Dao<SavedTrack, Integer> savedTrackAccess = handler.getAccessObject(SavedTrack.class);
-					Library oldLibrary = libraryAccess.queryForId(library.getId());
-					if (oldLibrary != null) {
-						savedTrackAccess.delete(oldLibrary.getSavedTracks());
-					}
+					
 					libraryAccess.createOrUpdate(library);
 					ChosenLibrary = library.getId();
 					_context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
-					
-					for (SavedTrack savedTrack : library.getSavedTracks())
-						savedTrackAccess.create(savedTrack);
 					
 					owner.setResult(library);
 				} catch (SQLException e) {

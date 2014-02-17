@@ -139,7 +139,7 @@ public class BrowseLibrary extends FragmentActivity {
 						mDrawerToggle.syncState();
 						JrSession.GetLibrary(thisContext).setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(thisContext);
-						JrSession.JrFs = new JrFileSystem(_views.get(position).getKey());
+						JrSession.JrFs.setVisibleViews(_views.get(position).getKey());
 						displayLibrary();
 					}
 				});

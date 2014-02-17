@@ -228,9 +228,12 @@ public class JrFiles implements IJrItemFiles {
 	}
 	
 	public static String serializeFileStringList(ArrayList<JrFile> files) {
-		String fileStringList = "2;" + String.valueOf(files.size()) + ";-1;";
+		StringBuilder sb = new StringBuilder("2;");
+		sb.append(files.size()).append(";-1;");
+		
 		for (JrFile file : files)
-			fileStringList += file.getKey().toString() + ";";
-		return fileStringList;
+			sb.append(file.getKey()).append(";");
+		
+		return sb.toString();
 	}
 }

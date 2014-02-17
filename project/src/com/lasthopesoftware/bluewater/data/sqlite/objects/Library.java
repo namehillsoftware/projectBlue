@@ -1,12 +1,11 @@
 package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
@@ -32,8 +31,8 @@ public class Library {
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int selectedView = -1;
 	
-	@ForeignCollectionField(eager = true)
-	private Collection<SavedTrack> savedTracks;
+	@DatabaseField()
+	private String savedTracksString;
 	
 	/**
 	 * @return the nowPlayingId
@@ -99,39 +98,17 @@ public class Library {
 	public void setNowPlayingProgress(int nowPlayingProgress) {
 		this.nowPlayingProgress = nowPlayingProgress;
 	}
-	/**
-	 * @return the savedTracks
-	 */
-	public Collection<SavedTrack> getSavedTracks() {
-		if (savedTracks == null) savedTracks = new ArrayList<SavedTrack>();
-		return savedTracks;
-	}
-	
+		
 	public String getSavedTracksString() {
-		String trackStringList = "2;" + String.valueOf(savedTracks.size()) + ";-1;";
-		for (SavedTrack track : savedTracks)
-			trackStringList += String.valueOf(track.getTrackId()) + ";";
-		
-		return trackStringList;
-	}
-	/**
-	 * @param savedTracks the savedTracks to set
-	 */
-	public void setSavedTracks(Collection<SavedTrack> savedTracks) {
-		for (SavedTrack track : savedTracks)
-			track.setLibrary(this);
-		
-		this.savedTracks = savedTracks;
+		return savedTracksString;
 	}
 	
+	public void setSavedTracksString(String savedTracksString) {
+		this.savedTracksString = savedTracksString;
+	}
+		
 	public void setSavedTracks(ArrayList<JrFile> files) {
-		ArrayList<SavedTrack> newSavedTracks = new ArrayList<SavedTrack>(files.size()); 
-		for (JrFile file : files) {
-			SavedTrack newSavedTrack = new SavedTrack();
-			newSavedTrack.setTrackId(file.getKey());
-			newSavedTracks.add(newSavedTrack);			
-		}
-		setSavedTracks(newSavedTracks);
+		savedTracksString = JrFiles.serializeFileStringList(files);
 	}
 	/**
 	 * @return the id

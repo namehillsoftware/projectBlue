@@ -15,7 +15,6 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.SavedTrack;
 
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 
@@ -23,7 +22,7 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	private static final String DATABASE_NAME = "sessions_db";
 	
 	@SuppressWarnings("rawtypes")
-	private static Class[] tables = { Library.class, SavedTrack.class };
+	private static Class[] tables = { Library.class };
 	
 	public DatabaseHandler(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
