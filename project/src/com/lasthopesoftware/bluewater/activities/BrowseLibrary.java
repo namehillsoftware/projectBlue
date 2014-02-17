@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,6 +31,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnect
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -44,7 +46,7 @@ public class BrowseLibrary extends FragmentActivity {
 	 * intensive, it may be best to switch to a
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
-	ViewChildPagerAdapter mViewChildPagerAdapter;
+	private SparseArray<ViewChildPagerAdapter> mViewChildAdapterCache = new SparseArray<ViewChildPagerAdapter>();
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
@@ -108,11 +110,13 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 		
+		mViewPager = (ViewPager) findViewById(R.id.pager);
+		
 		displayLibrary();
 	}
 
 	public void displayLibrary() {		
-
+		final Library library = JrSession.GetLibrary(thisContext);
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		JrSession.JrFs.setOnItemsCompleteListener(new IJrDataTask.OnCompleteListener<List<IJrItem<?>>>() {
 			
@@ -137,7 +141,7 @@ public class BrowseLibrary extends FragmentActivity {
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 						mDrawerLayout.closeDrawer(Gravity.LEFT);
 						mDrawerToggle.syncState();
-						JrSession.GetLibrary(thisContext).setSelectedView(_views.get(position).getKey());
+						library.setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(thisContext);
 						JrSession.JrFs.setVisibleViews(_views.get(position).getKey());
 						displayLibrary();
@@ -148,10 +152,50 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		JrSession.JrFs.getSubItemsAsync();
 		
-		mViewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
-		mViewPager = (ViewPager) findViewById(R.id.pager);
 		
-		JrSession.JrFs.getVisibleViewsAsync(new CategoriesLoadedListener(thisContext));
+		ViewChildPagerAdapter viewChildPagerAdapter = mViewChildAdapterCache.get(library.getSelectedView());
+		if (viewChildPagerAdapter == null) {
+
+			JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+					if (owner.getState() == SimpleTaskState.ERROR) {
+						for (Exception exception : owner.getExceptions()) {
+							if (exception instanceof IOException) {
+								PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+									
+									@Override
+									public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+										if (result)
+											displayLibrary();
+									}
+								});
+								PollConnectionTask.Instance.get().startPolling();
+							}
+						}
+					}
+					
+					if (result == null) return;
+					
+					ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
+					viewChildPagerAdapter.setLibraryViews(result);
+					mViewChildAdapterCache.put(library.getSelectedView(), viewChildPagerAdapter);
+					
+					// Set up the ViewPager with the sections adapter.
+					setViewPagerAdapter(viewChildPagerAdapter);
+				}
+			});
+			return;
+		}
+		
+		setViewPagerAdapter(viewChildPagerAdapter);
+	}
+	
+	private void setViewPagerAdapter(ViewChildPagerAdapter viewChildPagerAdapter) {
+		mViewPager.setAdapter(viewChildPagerAdapter);
+		PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
+		tabs.setViewPager(mViewPager);
 	}
 
 	@Override
@@ -181,11 +225,7 @@ public class BrowseLibrary extends FragmentActivity {
         super.onConfigurationChanged(newConfig);
         if (mDrawerToggle != null) mDrawerToggle.onConfigurationChanged(newConfig);
     }
-	
-	public ViewChildPagerAdapter getViewChildPagerAdapter() {
-		return mViewChildPagerAdapter;
-	}
-	
+
 	public ViewPager getViewPager() {
 		return mViewPager;
 	}
@@ -217,10 +257,11 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			if (result == null) return;
 			
-			mLibraryActivity.getViewChildPagerAdapter().setLibraryViews(result);
+			ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(mLibraryActivity.getSupportFragmentManager());
+			viewChildPagerAdapter.setLibraryViews(result);
 			
 			// Set up the ViewPager with the sections adapter.
-			mLibraryActivity.getViewPager().setAdapter(mLibraryActivity.getViewChildPagerAdapter());
+			mLibraryActivity.getViewPager().setAdapter(viewChildPagerAdapter);
 			
 			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
 			tabs.setViewPager(mLibraryActivity.getViewPager());
