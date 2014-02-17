@@ -22,6 +22,7 @@ public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
 	
 	public ViewChildPagerAdapter(FragmentManager fm) {
 		super(fm);
+		mLibraryViews = new ArrayList<IJrItem<?>>();
 	}
 		
 	public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {

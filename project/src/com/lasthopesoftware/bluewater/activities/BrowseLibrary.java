@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -228,43 +227,5 @@ public class BrowseLibrary extends FragmentActivity {
 
 	public ViewPager getViewPager() {
 		return mViewPager;
-	}
-
-	private static class CategoriesLoadedListener implements OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> {
-		BrowseLibrary mLibraryActivity;
-		
-		public CategoriesLoadedListener(BrowseLibrary libraryActivity) {
-			mLibraryActivity = libraryActivity;
-		}
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-			if (owner.getState() == SimpleTaskState.ERROR) {
-				for (Exception exception : owner.getExceptions()) {
-					if (exception instanceof IOException) {
-						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-							
-							@Override
-							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-								if (result)
-									mLibraryActivity.displayLibrary();
-							}
-						});
-						PollConnectionTask.Instance.get().startPolling();
-					}
-				}
-			}
-			
-			if (result == null) return;
-			
-			ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(mLibraryActivity.getSupportFragmentManager());
-			viewChildPagerAdapter.setLibraryViews(result);
-			
-			// Set up the ViewPager with the sections adapter.
-			mLibraryActivity.getViewPager().setAdapter(viewChildPagerAdapter);
-			
-			PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) mLibraryActivity.findViewById(R.id.tabsLibraryViews);
-			tabs.setViewPager(mLibraryActivity.getViewPager());
-		}
 	}
 }
