@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.TreeSet;
 
 import android.os.AsyncTask;
 
@@ -21,13 +21,16 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem<IJrItem<?>> {
-	private ConcurrentSkipListSet<IJrItem<?>> mVisibleViews;
+	private TreeSet<IJrItem<?>> mVisibleViews;
+	private JrPlaylists mPlaylistsView;
 	private int[] mVisibleViewKeys;
 	
 	private OnCompleteListener<List<IJrItem<?>>> mOnCompleteClientListener;
 	private OnStartListener<List<IJrItem<?>>> mOnStartListener;
 	private OnConnectListener<List<IJrItem<?>>> mOnConnectListener;
 	private OnErrorListener<List<IJrItem<?>>> mOnErrorListener;
+	
+	private static Object syncObject = new Object();
 	
 	public JrFileSystem(int... visibleViewKeys) {
 		super();
@@ -55,7 +58,9 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	public void setVisibleViews(int... visibleViewKeys) {
 		if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
 		mVisibleViewKeys = visibleViewKeys;
-		mVisibleViews = null;
+		synchronized(syncObject) {
+			mVisibleViews = null;
+		}
 	}
 	
 	public ArrayList<IJrItem<?>> getVisibleViews() {
@@ -85,38 +90,30 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 			
 			@Override
 			public void onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
-				if (mVisibleViews == null) {
-					List<IJrItem<?>> libraries = getSubItems();
-					mVisibleViews = new ConcurrentSkipListSet<IJrItem<?>>(new Comparator<IJrItem<?>>() {
-
-						@Override
-						public int compare(IJrItem<?> lhs, IJrItem<?> rhs) {
-							return lhs.getKey().compareTo(rhs.getKey());
-						}
-					});
-					
-					for (IJrItem<?> library : libraries) {
-						if (mVisibleViewKeys.length < 1) {
-							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new JrPlaylists(Integer.MAX_VALUE));
-								continue;
+				synchronized(syncObject) {
+					if (mVisibleViews == null) {
+						List<IJrItem<?>> libraries = getSubItems();
+						mVisibleViews = new TreeSet<IJrItem<?>>(new Comparator<IJrItem<?>>() {
+	
+							@Override
+							public int compare(IJrItem<?> lhs, IJrItem<?> rhs) {
+								return lhs.getKey().compareTo(rhs.getKey());
 							}
-							
-							for (IJrItem<?> view : library.getSubItems())
-								mVisibleViews.add(view);
-							continue;
-						}
+						});
 						
 						for (int viewKey : mVisibleViewKeys) {
-							if (viewKey != library.getKey()) continue;
-							
-							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new JrPlaylists(Integer.MAX_VALUE));
-								continue;
+							for (IJrItem<?> library : libraries) {
+								if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
+								
+								if (library.getValue().equalsIgnoreCase("Playlists")) {
+									if (mPlaylistsView == null) mPlaylistsView = new JrPlaylists(Integer.MAX_VALUE);
+									mVisibleViews.add(new JrPlaylists(Integer.MAX_VALUE));
+									continue;
+								}
+								
+								for (IJrItem<?> view : library.getSubItems())
+									mVisibleViews.add(view);
 							}
-							
-							for (IJrItem<?> view : library.getSubItems())
-								mVisibleViews.add(view);
 						}
 					}
 				}
