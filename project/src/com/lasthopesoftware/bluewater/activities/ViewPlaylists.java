@@ -98,7 +98,7 @@ public class ViewPlaylists extends FragmentActivity {
 	private void BuildPlaylistView() {
                 
         if (mPlaylist.getSubItems().size() > 0) {
-        	playlistView.setAdapter(new PlaylistAdapter(mPlaylist.getSubItems()));
+        	playlistView.setAdapter(new PlaylistAdapter(mContext, R.id.tvStandard, mPlaylist.getSubItems()));
         	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
         	playlistView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
         } else {

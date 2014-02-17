@@ -10,6 +10,8 @@
         android:padding="@dimen/standard_textview_padding"
         android:text=""
         android:gravity="left|center_vertical"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 	
 </RelativeLayout>

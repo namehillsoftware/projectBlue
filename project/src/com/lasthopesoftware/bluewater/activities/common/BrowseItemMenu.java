@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import android.content.Context;
 import android.content.Intent;
-import android.text.TextUtils.TruncateAt;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -15,12 +13,15 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
+import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
@@ -37,22 +38,28 @@ public class BrowseItemMenu {
 		
 		ViewFlipper parentView = new ViewFlipper(parent.getContext());
 		parentView.setLayoutParams(lp);
+		OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
+		onSwipeListener.setOnSwipeRightListener(new SwipeRightListener());
+		parentView.setOnTouchListener(onSwipeListener);
 		
-        TextView textView = new TextView(parentView.getContext());
-        textView.setTextAppearance(parentView.getContext(), android.R.style.TextAppearance_Large);
-        textView.setLayoutParams(lp);
-        textView.setEllipsize(TruncateAt.END);
-        textView.setMarqueeRepeatLimit(1);
-        textView.setSingleLine();
-        // Center the text vertically
-        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-        // Set the text starting position        
-        textView.setPadding(20, 20, 20, 20);
-        textView.setText(item.getValue());
-        
-        parentView.addView(textView);
+//        TextView textView = new TextView(parentView.getContext());
+//        textView.setTextAppearance(parentView.getContext(), android.R.style.TextAppearance_Large);
+//        textView.setLayoutParams(lp);
+//        textView.setEllipsize(TruncateAt.END);
+//        textView.setMarqueeRepeatLimit(1);
+//        textView.setSingleLine();
+//        // Center the text vertically
+//        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+//        // Set the text starting position        
+//        textView.setPadding(20, 20, 20, 20);
+//        textView.setText(item.getValue());
         
         LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, null);
+        TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
+        textView.setText(item.getValue());
+        parentView.addView(rl);
+        
         LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, null);
         
         ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
@@ -145,6 +152,19 @@ public class BrowseItemMenu {
 			if (view instanceof ViewFlipper) {
 				ViewFlipper parentView = (ViewFlipper)view;
 				parentView.showNext();
+				return true;
+			}
+			return false;
+		}
+	}
+	
+	public static class SwipeRightListener implements OnSwipeRightListener {
+
+		@Override
+		public boolean onSwipeRight(View view) {
+			if (view instanceof ViewFlipper) {
+				ViewFlipper parentView = (ViewFlipper)view;
+				parentView.showPrevious();
 				return true;
 			}
 			return false;

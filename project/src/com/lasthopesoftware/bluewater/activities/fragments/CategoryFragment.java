@@ -22,6 +22,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
@@ -125,7 +126,7 @@ public class CategoryFragment extends Fragment {
 					
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
 					listView.setOnItemLongClickListener(new BrowseItemMenu.ClickListener());
-		    		listView.setAdapter(new PlaylistAdapter((ArrayList<JrPlaylist>) result));
+		    		listView.setAdapter(new PlaylistAdapter(getActivity(), R.id.tvStandard, result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
 				}
