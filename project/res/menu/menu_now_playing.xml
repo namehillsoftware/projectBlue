@@ -13,4 +13,10 @@
         android:icon="@drawable/av_repeat_dark"
         android:visible="false" />
     
+    <item android:id="@+id/menu_view_now_playing_files"
+        android:title="@string/title_view_now_playing_files"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/btn_view_files" />
+    
 </menu>

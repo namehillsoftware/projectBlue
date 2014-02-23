@@ -190,6 +190,9 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		case R.id.menu_repeat_playlist:
 			// TODO add repeat option to streaming
 			return true;
+		case R.id.menu_view_now_playing_files:
+			startActivity(new Intent(this, ViewNowPlayingFiles.class));
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}

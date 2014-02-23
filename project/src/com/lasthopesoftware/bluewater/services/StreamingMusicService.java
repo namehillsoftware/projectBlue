@@ -121,6 +121,13 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		context.startService(svcIntent);
 	}
 	
+	public static void SeekToFile(Context context, int fileKey) { 
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, fileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
+		context.startService(svcIntent);
+	}
+	
 	public static void Next(Context context) {
 		JrFile nextFile = mPlayingFile.getNextFile();
 		if (nextFile == null) return;
@@ -181,6 +188,11 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 	
 	public static JrFile getNowPlayingFile() {
 		return mPlayingFile;
+	}
+	
+	public static ArrayList<JrFile> getPlaylist() {
+		if (mPlaylist == null) return new ArrayList<JrFile>();
+		return mPlaylist;
 	}
 	
 	public StreamingMusicService() {
