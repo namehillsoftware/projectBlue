@@ -49,19 +49,7 @@ public class BrowseItemMenu {
 			}
 		});
 		parentView.setOnTouchListener(onSwipeListener);
-		
-//        TextView textView = new TextView(parentView.getContext());
-//        textView.setTextAppearance(parentView.getContext(), android.R.style.TextAppearance_Large);
-//        textView.setLayoutParams(lp);
-//        textView.setEllipsize(TruncateAt.END);
-//        textView.setMarqueeRepeatLimit(1);
-//        textView.setSingleLine();
-//        // Center the text vertically
-//        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//        // Set the text starting position        
-//        textView.setPadding(20, 20, 20, 20);
-//        textView.setText(item.getValue());
-        
+		        
         LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, null);
         TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
