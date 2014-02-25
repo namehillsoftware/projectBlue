@@ -14,6 +14,8 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class ViewNowPlayingFiles extends FragmentActivity {
@@ -34,7 +36,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         this.setTitle("Now Playing Playlist");
         
-        FileListAdapter fileListAdapter = new FileListAdapter(mContext, StreamingMusicService.getPlaylist());
+        FileListAdapter fileListAdapter = new FileListAdapter(mContext, StreamingMusicService.getPlaylist().size() > 0 ? StreamingMusicService.getPlaylist() : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString()));
         fileListView.setAdapter(fileListAdapter);
         fileListView.setOnItemClickListener(new OnItemClickListener() {
 

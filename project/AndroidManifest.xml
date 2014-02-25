@@ -51,6 +51,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
+        
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewPlaylists"
             android:label="@string/title_activity_file_view" >
@@ -62,6 +63,14 @@
             android:name="com.lasthopesoftware.bluewater.activities.ViewNowPlaying"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTop" >
+        </activity>
+        
+        <activity
+            android:name="com.lasthopesoftware.bluewater.activities.ViewNowPlayingFiles"
+            android:label="@string/title_activity_file_view" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.activities.ViewNowPlaying" />
         </activity>
 
         <receiver android:name="com.lasthopesoftware.bluewater.receivers.MusicIntentReceiver" >
