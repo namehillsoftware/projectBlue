@@ -95,9 +95,9 @@ public class JrFileProperties {
 						conn.disconnect();
 					}
 				} catch (MalformedURLException e) {
-					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+					LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 				} catch (XmlParseException e) {
-					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+					LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 				}
 				
 				owner.setResult(returnProperties);
@@ -128,9 +128,9 @@ public class JrFileProperties {
 			
 			mProperties.putAll(filePropertiesResult);
 		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+			LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+			LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 		}
 		
 		return result;
