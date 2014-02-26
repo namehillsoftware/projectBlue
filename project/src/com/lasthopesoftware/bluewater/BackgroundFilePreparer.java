@@ -15,12 +15,10 @@ public class BackgroundFilePreparer implements Runnable {
 	private Context mContext;
 	private static final int SLEEP_TIME = 5000;
 	
-	public BackgroundFilePreparer(Context context, JrFile currentFile) {
-		mCurrentFile = currentFile;
-		if (mCurrentFile.getNextFile() == null) return;
+	public BackgroundFilePreparer(Context context, JrFile currentFile, JrFile nextFile) {
 		mContext = context;
-		mNextFile = mCurrentFile.getNextFile();
-		
+		mCurrentFile = currentFile;
+		mNextFile = nextFile;
 	}
 	
 	@Override
