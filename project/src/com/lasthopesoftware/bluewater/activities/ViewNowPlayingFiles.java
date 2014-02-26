@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -14,6 +16,7 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
@@ -34,15 +37,19 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
-        this.setTitle("Now Playing Playlist");
+        this.setTitle(R.string.title_view_now_playing_files);
         
-        FileListAdapter fileListAdapter = new FileListAdapter(mContext, StreamingMusicService.getPlaylist().size() > 0 ? StreamingMusicService.getPlaylist() : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString()));
+        final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylist().size() > 0 ? StreamingMusicService.getPlaylist() : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
+        FileListAdapter fileListAdapter = new FileListAdapter(mContext, playlist);
         fileListView.setAdapter(fileListAdapter);
         fileListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				StreamingMusicService.SeekToFile(view.getContext(), StreamingMusicService.getPlaylist().get(position).getKey());
+				if (StreamingMusicService.getPlaylist().size() > 0)
+					StreamingMusicService.SeekToFile(view.getContext(), playlist.get(position).getKey());
+				else
+					StreamingMusicService.StreamMusic(view.getContext(), playlist.get(position).getKey(), JrSession.GetLibrary(view.getContext()).getSavedTracksString());
 			}
 		});
         fileListView.setVisibility(View.VISIBLE);

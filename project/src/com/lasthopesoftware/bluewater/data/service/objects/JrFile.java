@@ -1,21 +1,12 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
-import xmlwise.XmlElement;
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -23,25 +14,17 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class JrFile extends JrObject implements
 	OnPreparedListener, 
 	OnErrorListener, 
 	OnCompletionListener	
 {
-	private ConcurrentSkipListMap<String, String> mProperties = null;
-	
 	private boolean prepared = false;
 	private boolean preparing = false;
 	private int mPosition = 0;
@@ -52,7 +35,7 @@ public class JrFile extends JrObject implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	private JrFile mNextFile, mPreviousFile;
-	private static ExecutorService fileStatsExecutor = Executors.newSingleThreadExecutor();
+	private JrFileProperties mFileProperties;
 	
 	public JrFile(int key) {
 		this();
@@ -67,9 +50,13 @@ public class JrFile extends JrObject implements
 	
 	public JrFile() {
 		super();
-		mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 	}
 	
+	@Override
+	public void setKey(Integer key) {
+		super.setKey(key);
+		mFileProperties = new JrFileProperties(key);
+	}
 
 	/**
 	 * @return the Value
@@ -78,7 +65,7 @@ public class JrFile extends JrObject implements
 	public String getValue() {
 		if (super.getValue() == null) {
 			try {
-				setValue(getProperty("Name"));
+				setValue(mFileProperties.getProperty("Name"));
 			} catch (IOException e) {
 				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			}
@@ -149,100 +136,17 @@ public class JrFile extends JrObject implements
 	public void setPreviousFile(JrFile file) {
 		mPreviousFile = file;
 	}
-		
+	
 	public void setProperty(String name, String value) {
-		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
-
-		AsyncTask<String, Void, Boolean> setPropertyTask = new AsyncTask<String, Void, Boolean>() {
-			
-			@Override
-			protected Boolean doInBackground(String... params) {
-				try {
-					JrConnection conn = new JrConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
-					conn.setReadTimeout(5000);
-					conn.getInputStream();
-					return true;
-				} catch (Exception e) {
-					return false;
-				}
-			}
-		};
-		setPropertyTask.executeOnExecutor(fileStatsExecutor, String.valueOf(getKey()), name, value);
-		
-		mProperties.put(name, value);
+		mFileProperties.setProperty(name, value);
 	}
 	
 	public String getProperty(String name) throws IOException {
-		
-		if (mProperties.size() == 0 || !mProperties.containsKey(name))
-			return getRefreshedProperty(name);
-		
-		return mProperties.get(name);
+		return mFileProperties.getProperty(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
-		String result = null;
-		
-		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		SimpleTask<String, Void, Map<String,String>> filePropertiesTask = new SimpleTask<String, Void, Map<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, Map<String,String>>() {
-			
-			@Override
-			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
-				HashMap<String, String> returnProperties = new HashMap<String, String>();
-
-				try {
-					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(getKey()));
-					conn.setReadTimeout(45000);
-					try {
-				    	XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-				    	if (xml.size() < 1) return;
-				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
-				    	for (XmlElement el : xml.get(0))
-				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-					} finally {
-						conn.disconnect();
-					}
-				} catch (MalformedURLException e) {
-					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
-				} catch (XmlParseException e) {
-					LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
-				}
-				
-				owner.setResult(returnProperties);
-			}
-		});
-		
-		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Map<String,String>>() {
-			
-			@Override
-			public boolean onError(ISimpleTask<String, Void, Map<String, String>> owner, Exception innerException) {
-				return !(innerException instanceof IOException);
-			}
-		});
-
-		try {
-			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(fileStatsExecutor).get();
-			
-			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
-				for (Exception e : filePropertiesTask.getExceptions()) {
-					if (e instanceof IOException) throw (IOException)e;
-				}
-			}
-			
-			if (filePropertiesResult == null) return mProperties.containsKey(name) ? mProperties.get(name) : null;
-			
-			if (filePropertiesResult.containsKey(name))
-				result = filePropertiesResult.get(name);
-			
-			mProperties.putAll(filePropertiesResult);
-		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
-		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
-		}
-		
-		return result;
+		return mFileProperties.getRefreshedProperty(name);
 	}
 	
 	public void initMediaPlayer(Context context) {
@@ -378,7 +282,7 @@ public class JrFile extends JrObject implements
 	
 	public int getDuration() throws IOException {
 		if (mp == null || !isPrepared()) {
-			String durationToParse = getProperty("Duration");
+			String durationToParse = mFileProperties.getProperty("Duration");
 			if (durationToParse != null && !durationToParse.isEmpty())
 				return (int) (Double.parseDouble(durationToParse) * 1000);
 			throw new IOException("Duration was not present in the song properties.");

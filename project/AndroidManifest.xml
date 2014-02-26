@@ -67,7 +67,7 @@
         
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewNowPlayingFiles"
-            android:label="@string/title_activity_file_view" >
+            android:label="@string/title_activity_view_now_playing" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.ViewNowPlaying" />
