@@ -71,6 +71,10 @@ public class JrFileMediaPlayer implements
 		if (onJrFileErrorListeners.contains(listener)) onJrFileErrorListeners.remove(listener);
 	}
 	
+	public JrFile getFile() {
+		return mFile;
+	}
+	
 	public void initMediaPlayer() {
 		if (mp != null) return;
 		
@@ -92,7 +96,7 @@ public class JrFileMediaPlayer implements
 	
 	private String getMpUrl() {
 		if (!JrTestConnection.doTest()) {
-			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, mFile, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}
 		return mFile.getSubItemUrl();
@@ -162,7 +166,7 @@ public class JrFileMediaPlayer implements
 	public void onPrepared(MediaPlayer mp) {
 		prepared = true;
 		preparing = false;
-		for (OnJrFilePreparedListener listener : onJrFilePreparedListeners) listener.onJrFilePrepared(this, mFile);
+		for (OnJrFilePreparedListener listener : onJrFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
 	@Override
@@ -173,7 +177,7 @@ public class JrFileMediaPlayer implements
 		updateStatsThread.start();
 		
 		releaseMediaPlayer();
-		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this, mFile);
+		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}
 	
 	@Override
@@ -199,7 +203,7 @@ public class JrFileMediaPlayer implements
 		}
 		resetMediaPlayer();
 		boolean handled = false;
-		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, mFile, what, extra);
+		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
 		if (handled) releaseMediaPlayer();
 		return handled;
 	}

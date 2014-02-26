@@ -50,8 +50,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
  * @author david
  *
  */
-public class StreamingMusicService extends Service implements OnJrFilePreparedListener, OnJrFileErrorListener, 
-		OnJrFileCompleteListener, OnAudioFocusChangeListener {
+public class StreamingMusicService extends Service implements OnAudioFocusChangeListener {
 	
 	//private final IBinder mBinder = 
 	public static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
@@ -296,14 +295,14 @@ public class StreamingMusicService extends Service implements OnJrFilePreparedLi
 		});
 		getBtPropertiesTask.execute();
         
-        if (playingFile.getNextFile() != null) {
-        	BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, playingFile);
-        	if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
-	        trackProgressThread = new Thread(backgroundProgressThread);
-	        trackProgressThread.setName("Thread to prepare next file.");
-	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
-	        trackProgressThread.start();
-        }
+//        if (playingFile.getNextFile() != null) {
+//        	BackgroundFilePreparer backgroundProgressThread = new BackgroundFilePreparer(this, playingFile);
+//        	if (trackProgressThread != null && trackProgressThread.isAlive()) trackProgressThread.interrupt();
+//	        trackProgressThread = new Thread(backgroundProgressThread);
+//	        trackProgressThread.setName("Thread to prepare next file.");
+//	        trackProgressThread.setPriority(Thread.MIN_PRIORITY);
+//	        trackProgressThread.start();
+//        }
         
         throwStartEvent(file);
 	}

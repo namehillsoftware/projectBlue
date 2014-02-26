@@ -4,29 +4,24 @@ import java.io.IOException;
 
 import org.slf4j.LoggerFactory;
 
-import android.content.Context;
-
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
 
 public class BackgroundFilePreparer implements Runnable {
 
-	private JrFile mCurrentFile;
-	private JrFile mNextFile;
-	private Context mContext;
+	private JrFileMediaPlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
 	
-	public BackgroundFilePreparer(Context context, JrFile currentFile, JrFile nextFile) {
-		mContext = context;
-		mCurrentFile = currentFile;
-		mNextFile = nextFile;
+	public BackgroundFilePreparer(JrFileMediaPlayer currentPlayer, JrFileMediaPlayer nextPlayer) {
+		mCurrentFilePlayer = currentPlayer;
+		mNextFilePlayer = nextPlayer;
 	}
 	
 	@Override
 	public void run() {
-		if (mNextFile == null) return;
-		mNextFile.initMediaPlayer(mContext);
+		if (mNextFilePlayer == null) return;
+		mCurrentFilePlayer.initMediaPlayer();
 		double bufferTime = -1;
-		while (mCurrentFile != null && mCurrentFile.isMediaPlayerCreated()) {
+		while (mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
 			try {
 				Thread.sleep(SLEEP_TIME);
 			} catch (InterruptedException ie) {
@@ -37,8 +32,8 @@ public class BackgroundFilePreparer implements Runnable {
 				// figure out how much buffer time we need for this file if we're on the slowest 3G network
 				// and add 15secs for a dropped connection  
 				try {
-					if (mNextFile.getDuration() < 0) continue;
-					bufferTime = (((mNextFile.getDuration() * 128) / 384) * 1.2) + 15000;
+					if (mNextFilePlayer.getDuration() < 0) continue;
+					bufferTime = (((mNextFilePlayer.getDuration() * 128) / 384) * 1.2) + 15000;
 				} catch (IOException e) {
 					LoggerFactory.getLogger(BackgroundFilePreparer.class).warn(e.toString(), e);
 					bufferTime = -1;
@@ -46,8 +41,8 @@ public class BackgroundFilePreparer implements Runnable {
 				}
 			}
 			try {
-				if (mCurrentFile.getCurrentPosition() > (mCurrentFile.getDuration() - bufferTime) && !mNextFile.isPrepared()) {
-					mNextFile.prepareMpSynchronously();
+				if (mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
+					mNextFilePlayer.prepareMpSynchronously();
 				}
 			} catch (Exception e) {
 				return;
