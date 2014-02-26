@@ -23,7 +23,6 @@ public class JrPlaylistStateControl implements
 	private JrFileMediaPlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
 	private Thread mBackgroundFilePreparerThread;
-	private int mFileKey;
 	
 	public JrPlaylistStateControl(Context context, String playlistString) {
 		this(context, JrFiles.deserializeFileStringList(playlistString));
@@ -38,8 +37,9 @@ public class JrPlaylistStateControl implements
 		seekTo(fileKey, 0);
 	}
 	
-	public void seekTo(int fileKey, int startPos) { 
-		if (mFileKey == fileKey && mCurrentFilePlayer.isPlaying()) return;
+	public void seekTo(int fileKey, int startPos) {
+		// If the track is already playing, keep on playing
+		if (mCurrentFilePlayer != null && mCurrentFilePlayer.getFile().getKey() == fileKey && mCurrentFilePlayer.isPlaying()) return;
 		
 		// stop any playback that is in action
 		if (mCurrentFilePlayer != null) {
@@ -51,11 +51,11 @@ public class JrPlaylistStateControl implements
 			mCurrentFilePlayer = null;
 		}
 		
-		mFileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
+		fileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
 		startPos = startPos < 0 ? 0 : startPos;
         
 		for (JrFile file : mPlaylist) {
-			if (file.getKey() != mFileKey) continue;
+			if (file.getKey() != fileKey) continue;
 		
 			JrFileMediaPlayer filePlayer = new JrFileMediaPlayer(mContext, file);
 			filePlayer.addOnJrFileCompleteListener(this);
@@ -68,14 +68,54 @@ public class JrPlaylistStateControl implements
 		}
 	}
 	
+	public void pause() {
+		if (mCurrentFilePlayer != null) {
+			if (mCurrentFilePlayer.isPlaying()) {
+				mCurrentFilePlayer.pause();
+				JrSession.GetLibrary(mContext).setNowPlayingId(mCurrentFilePlayer.getFile().getKey());
+				JrSession.GetLibrary(mContext).setNowPlayingProgress(mCurrentFilePlayer.getCurrentPosition());
+			}
+			JrSession.SaveSession(mContext);
+			throwStopEvent(mCurrentFilePlayer.getFile());
+			mCurrentFilePlayer.releaseMediaPlayer();
+		}
+		
+		if (mNextFilePlayer != null)
+			mNextFilePlayer.releaseMediaPlayer();
+	}
+	
+	private void startFilePlayback(JrFileMediaPlayer mediaPlayer) {
+		mCurrentFilePlayer = mediaPlayer;
+		JrSession.GetLibrary(mContext).setNowPlayingId(mediaPlayer.getFile().getKey());
+		JrSession.SaveSession(mContext);
+		
+		mediaPlayer.start();
+		
+        if (mediaPlayer.getFile().getNextFile() != null) {
+        	mNextFilePlayer = new JrFileMediaPlayer(mContext, mediaPlayer.getFile().getNextFile());
+        	BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
+        	if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
+        	mBackgroundFilePreparerThread = new Thread(backgroundFilePreparer);
+        	mBackgroundFilePreparerThread.setName("Thread to prepare next file.");
+        	mBackgroundFilePreparerThread.setPriority(Thread.MIN_PRIORITY);
+        	mBackgroundFilePreparerThread.start();
+        }
+		
+		throwChangeEvent(mediaPlayer.getFile());
+	}
+	
+	public boolean isPlaying() {
+		return mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying();
+	}
+
+	/* Event handlers */
 	@Override
 	public void onJrFilePrepared(JrFileMediaPlayer mediaPlayer) {
 		if (mediaPlayer.isPlaying()) return;
 		
 		startFilePlayback(mediaPlayer);
 	}
-
-	/* Event handlers */
+	
 	@Override
 	public void onJrFileComplete(JrFileMediaPlayer mediaPlayer) {
 		throwStopEvent(mediaPlayer.getFile());
@@ -113,26 +153,6 @@ public class JrPlaylistStateControl implements
 	private void throwStopEvent(JrFile stoppedFile) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
 			listener.onNowPlayingStop(this, stoppedFile);
-	}
-	
-	public void startFilePlayback(JrFileMediaPlayer mediaPlayer) {
-		mCurrentFilePlayer = mediaPlayer;
-		JrSession.GetLibrary(mContext).setNowPlayingId(mediaPlayer.getFile().getKey());
-		JrSession.SaveSession(mContext);
-		
-		mediaPlayer.start();
-		
-        if (mediaPlayer.getFile().getNextFile() != null) {
-        	mNextFilePlayer = new JrFileMediaPlayer(mContext, mediaPlayer.getFile().getNextFile());
-        	BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
-        	if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
-        	mBackgroundFilePreparerThread = new Thread(backgroundFilePreparer);
-        	mBackgroundFilePreparerThread.setName("Thread to prepare next file.");
-        	mBackgroundFilePreparerThread.setPriority(Thread.MIN_PRIORITY);
-        	mBackgroundFilePreparerThread.start();
-        }
-		
-		throwChangeEvent(mediaPlayer.getFile());
 	}
 	
 	public void release() {
