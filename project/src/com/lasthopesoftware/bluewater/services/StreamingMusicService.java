@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl.OnNowPlayingStopListener;
@@ -175,17 +176,17 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		}
 	}
 	
-	private void throwStartEvent(JrFile file) {
+	private void throwStartEvent(JrFileMediaPlayer filePlayer) {
 		synchronized(syncObject) {
 			for (OnStreamingStartListener onStartListener : mOnStreamingStartListeners)
-				onStartListener.onStreamingStart(this, file);
+				onStartListener.onStreamingStart(this, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(JrFile file) {
+	private void throwStopEvent(JrFileMediaPlayer filePlayer) {
 		synchronized(syncObject) {
 			for (OnStreamingStopListener onStopListener : mOnStreamingStopListeners)
-				onStopListener.onStreamingStop(this, file);
+				onStopListener.onStreamingStop(this, filePlayer);
 		}
 	}
 	/* End Events */
@@ -407,9 +408,8 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (intent.getAction().equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
-		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlayingFile != null) {
-		    		if (!mPlayingFile.isMediaPlayerCreated()) startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
-		    		else startFilePlayback(mPlayingFile);
+		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlaylistControl != null) {
+//		    		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
 		        } else if (intent.getAction().equals(ACTION_STOP)) {
 		        	pausePlayback(true);
 		        }
@@ -427,10 +427,6 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
     public void onCreate() {
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-	}
-	
-	public void onJrFilePrepared(JrFile file) {
-		if (!file.isPlaying()) startFilePlayback(file);
 	}
 	
 	/* (non-Javadoc)
@@ -508,18 +504,19 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	/* End Binder Code */
 
 	@Override
-	public void onNowPlayingStop(JrPlaylistStateControl controller, JrFile stoppedFile) {
+	public void onNowPlayingStop(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer) {
 		mAudioManager.abandonAudioFocus(this);
 		// release the wifilock if we still have it
 		if (mWifiLock != null) {
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
-		throwStopEvent(stoppedFile);
+		throwStopEvent(filePlayer);
 	}
 
 	@Override
-	public void onNowPlayingChange(JrPlaylistStateControl controller, JrFile nowPlayingFile) {
-		startFilePlayback(nowPlayingFile);
+	public void onNowPlayingChange(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer) {
+		startFilePlayback(filePlayer.getFile());
+		throwStartEvent(filePlayer);
 	}
 }

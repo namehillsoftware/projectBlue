@@ -45,7 +45,7 @@ public class JrPlaylistStateControl implements
 		if (mCurrentFilePlayer != null) {
 			if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.stop();
 			
-			throwStopEvent(mCurrentFilePlayer.getFile());
+			throwStopEvent(mCurrentFilePlayer);
 			
 			mCurrentFilePlayer.releaseMediaPlayer();
 			mCurrentFilePlayer = null;
@@ -76,7 +76,7 @@ public class JrPlaylistStateControl implements
 				JrSession.GetLibrary(mContext).setNowPlayingProgress(mCurrentFilePlayer.getCurrentPosition());
 			}
 			JrSession.SaveSession(mContext);
-			throwStopEvent(mCurrentFilePlayer.getFile());
+			throwStopEvent(mCurrentFilePlayer);
 			mCurrentFilePlayer.releaseMediaPlayer();
 		}
 		
@@ -101,7 +101,7 @@ public class JrPlaylistStateControl implements
         	mBackgroundFilePreparerThread.start();
         }
 		
-		throwChangeEvent(mediaPlayer.getFile());
+		throwChangeEvent(mediaPlayer);
 	}
 	
 	public boolean isPlaying() {
@@ -118,7 +118,7 @@ public class JrPlaylistStateControl implements
 	
 	@Override
 	public void onJrFileComplete(JrFileMediaPlayer mediaPlayer) {
-		throwStopEvent(mediaPlayer.getFile());
+		throwStopEvent(mediaPlayer);
 		
 		mediaPlayer.releaseMediaPlayer();
 		
@@ -145,14 +145,14 @@ public class JrPlaylistStateControl implements
 		return false;
 	}
 	
-	private void throwChangeEvent(JrFile nowPlayingFile) {
+	private void throwChangeEvent(JrFileMediaPlayer filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
-			listener.onNowPlayingChange(this, nowPlayingFile);
+			listener.onNowPlayingChange(this, filePlayer);
 	}
 	
-	private void throwStopEvent(JrFile stoppedFile) {
+	private void throwStopEvent(JrFileMediaPlayer filePlayer) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
-			listener.onNowPlayingStop(this, stoppedFile);
+			listener.onNowPlayingStop(this, filePlayer);
 	}
 	
 	public void release() {
@@ -161,10 +161,10 @@ public class JrPlaylistStateControl implements
 
 	/* Listener interfaces */
 	public interface OnNowPlayingChangeListener {
-		void onNowPlayingChange(JrPlaylistStateControl controller, JrFile nowPlayingFile);
+		void onNowPlayingChange(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer);
 	}
 	
 	public interface OnNowPlayingStopListener {
-		void onNowPlayingStop(JrPlaylistStateControl controller, JrFile stoppedFile);
+		void onNowPlayingStop(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer);
 	}
 }
