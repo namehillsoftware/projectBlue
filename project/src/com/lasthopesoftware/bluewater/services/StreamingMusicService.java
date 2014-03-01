@@ -302,6 +302,9 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			mPlaylistControl.pause();
 			mPlaylistControl.release();
 			mPlaylistControl = new JrPlaylistStateControl(thisContext, mPlaylistString);
+			mPlaylistControl.addOnNowPlayingChangeListener(this);
+			mPlaylistControl.addOnNowPlayingStopListener(this);
+			mPlaylistControl.addOnPlaylistStateControlErrorListener(this);
 			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
 		}
 		
@@ -441,11 +444,14 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			// resume playback
         	if (JrSession.GetLibrary(thisContext) != null && !JrSession.isActive()) return;
         	
-        	if (mPlaylistControl != null)
+        	if (mPlaylistControl != null) {
         		mPlaylistControl.setVolume(1.0f);
-        	
-        	if (!mPlaylistControl.isPlaying())
-        		startPlaylist(mPlaylistString, mPlayingFile.getKey(), mPlayingFile.getCurrentPosition());
+        	        	
+	        	if (!mPlaylistControl.isPlaying()) {
+	        		Library library = JrSession.GetLibrary(thisContext);
+	        		startPlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress());
+	        	}
+        	}
         	
             return;
 		}
@@ -456,7 +462,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
 	        	if (mPlaylistControl.isPlaying()) pausePlayback(true);
-	        // Lost focus but it will be regained... could not release resources if wanted
+	        // Lost focus but it will be regained... cannot release resources
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	        	if (mPlaylistControl.isPlaying()) pausePlayback(false);
 	            return;

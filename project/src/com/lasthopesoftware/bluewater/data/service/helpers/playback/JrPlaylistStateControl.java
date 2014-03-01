@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.helpers.playback;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,9 @@ public class JrPlaylistStateControl implements
 	OnJrFileErrorListener, 
 	OnJrFileCompleteListener
 {
-	private ArrayList<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new ArrayList<OnNowPlayingChangeListener>();
-	private ArrayList<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new ArrayList<OnNowPlayingStopListener>();
-	private ArrayList<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new ArrayList<OnPlaylistStateControlErrorListener>();
+	private HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
+	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<JrFile> mPlaylist;
 	private JrFileMediaPlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
@@ -39,6 +40,8 @@ public class JrPlaylistStateControl implements
 		mContext = context;
 		mPlaylist = playlist;
 	}
+	
+	/* Begin playlist control */
 	
 	public void seekTo(int fileKey) {
 		seekTo(fileKey, 0);
@@ -128,6 +131,8 @@ public class JrPlaylistStateControl implements
 		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.setVolume(mVolume);
 	}
 	
+	/* End playlist control */
+	
 	public JrFileMediaPlayer getCurrentFilePlayer() {
 		return mCurrentFilePlayer;
 	}
@@ -166,7 +171,7 @@ public class JrPlaylistStateControl implements
 		
 		startFilePlayback(mNextFilePlayer);
 	}
-
+	
 	@Override
 	public boolean onJrFileError(JrFileMediaPlayer mediaPlayer, int what, int extra) {
 		LoggerFactory.getLogger(StreamingMusicService.class).error("JR File error - " + what + " - " + extra);
@@ -178,7 +183,9 @@ public class JrPlaylistStateControl implements
 		
 		return isHandled;
 	}
+	/* End event handlers */
 	
+	/* Listener callers */
 	private void throwChangeEvent(JrFileMediaPlayer filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, filePlayer);
@@ -189,8 +196,41 @@ public class JrPlaylistStateControl implements
 			listener.onNowPlayingStop(this, filePlayer);
 	}
 	
+	/* Listener collection helpers */
+	public void addOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
+		mOnNowPlayingChangeListeners.add(listener);
+	}
+	
+	public void removeOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
+		if (mOnNowPlayingChangeListeners.contains(listener))
+			mOnNowPlayingChangeListeners.remove(listener);
+	}
+	
+	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
+		mOnNowPlayingStopListeners.add(listener);
+	}
+	
+	public void removeOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
+		if (mOnNowPlayingStopListeners.contains(listener))
+			mOnNowPlayingStopListeners.remove(listener);
+	}
+	
+	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
+		mOnPlaylistStateControlErrorListeners.add(listener);
+	}
+	
+	public void removeOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
+		if (mOnPlaylistStateControlErrorListeners.contains(listener))
+			mOnPlaylistStateControlErrorListeners.remove(listener);
+	}
+	
+	// Release all heavy resources
 	public void release() {
-		mCurrentFilePlayer.releaseMediaPlayer();
+		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
+		if (mNextFilePlayer != null)  mNextFilePlayer.releaseMediaPlayer();
+		
+		if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive())
+			mBackgroundFilePreparerThread.interrupt();
 	}
 
 	/* Listener interfaces */
