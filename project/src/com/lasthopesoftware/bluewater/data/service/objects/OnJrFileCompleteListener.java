@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 
 public interface OnJrFileCompleteListener {
-	void onJrFileComplete(JrFileMediaPlayer mediaPlayer);
+	void onJrFileComplete(JrFilePlayer mediaPlayer);
 }

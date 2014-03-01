@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListe
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
-public class JrPlaylistStateControl implements
+public class JrPlaylistController implements
 	OnJrFilePreparedListener,
 	OnJrFileErrorListener, 
 	OnJrFileCompleteListener
@@ -27,16 +27,16 @@ public class JrPlaylistStateControl implements
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<JrFile> mPlaylist;
-	private JrFileMediaPlayer mCurrentFilePlayer, mNextFilePlayer;
+	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
 	private Thread mBackgroundFilePreparerThread;
 	private float mVolume;
 	
-	public JrPlaylistStateControl(Context context, String playlistString) {
+	public JrPlaylistController(Context context, String playlistString) {
 		this(context, JrFiles.deserializeFileStringList(playlistString));
 	}
 	
-	public JrPlaylistStateControl(Context context, ArrayList<JrFile> playlist) {
+	public JrPlaylistController(Context context, ArrayList<JrFile> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}
@@ -67,7 +67,7 @@ public class JrPlaylistStateControl implements
 		for (JrFile file : mPlaylist) {
 			if (file.getKey() != fileKey) continue;
 		
-			JrFileMediaPlayer filePlayer = new JrFileMediaPlayer(mContext, file);
+			JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
 			filePlayer.addOnJrFileCompleteListener(this);
 			filePlayer.addOnJrFilePreparedListener(this);
 			filePlayer.addOnJrFileErrorListener(this);
@@ -97,7 +97,7 @@ public class JrPlaylistStateControl implements
 			mBackgroundFilePreparerThread.interrupt();
 	}
 	
-	private void startFilePlayback(JrFileMediaPlayer mediaPlayer) {
+	private void startFilePlayback(JrFilePlayer mediaPlayer) {
 		mCurrentFilePlayer = mediaPlayer;
 		JrSession.GetLibrary(mContext).setNowPlayingId(mediaPlayer.getFile().getKey());
 		JrSession.SaveSession(mContext);
@@ -106,7 +106,7 @@ public class JrPlaylistStateControl implements
 		mediaPlayer.start();
 		
         if (mediaPlayer.getFile().getNextFile() != null) {
-        	mNextFilePlayer = new JrFileMediaPlayer(mContext, mediaPlayer.getFile().getNextFile());
+        	mNextFilePlayer = new JrFilePlayer(mContext, mediaPlayer.getFile().getNextFile());
         	BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
         	if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
         	mBackgroundFilePreparerThread = new Thread(backgroundFilePreparer);
@@ -133,7 +133,7 @@ public class JrPlaylistStateControl implements
 	
 	/* End playlist control */
 	
-	public JrFileMediaPlayer getCurrentFilePlayer() {
+	public JrFilePlayer getCurrentFilePlayer() {
 		return mCurrentFilePlayer;
 	}
 	
@@ -143,14 +143,14 @@ public class JrPlaylistStateControl implements
 
 	/* Event handlers */
 	@Override
-	public void onJrFilePrepared(JrFileMediaPlayer mediaPlayer) {
+	public void onJrFilePrepared(JrFilePlayer mediaPlayer) {
 		if (mediaPlayer.isPlaying()) return;
 		
 		startFilePlayback(mediaPlayer);
 	}
 	
 	@Override
-	public void onJrFileComplete(JrFileMediaPlayer mediaPlayer) {
+	public void onJrFileComplete(JrFilePlayer mediaPlayer) {
 		throwStopEvent(mediaPlayer);
 		
 		mediaPlayer.releaseMediaPlayer();
@@ -158,7 +158,7 @@ public class JrPlaylistStateControl implements
 		if (mNextFilePlayer == null) {
 			if (mediaPlayer.getFile().getNextFile() == null) return;
 			
-			mNextFilePlayer = new JrFileMediaPlayer(mContext, mediaPlayer.getFile().getNextFile());
+			mNextFilePlayer = new JrFilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}
 		
 		mNextFilePlayer.addOnJrFileCompleteListener(this);
@@ -173,7 +173,7 @@ public class JrPlaylistStateControl implements
 	}
 	
 	@Override
-	public boolean onJrFileError(JrFileMediaPlayer mediaPlayer, int what, int extra) {
+	public boolean onJrFileError(JrFilePlayer mediaPlayer, int what, int extra) {
 		LoggerFactory.getLogger(StreamingMusicService.class).error("JR File error - " + what + " - " + extra);
 		pause();
 		
@@ -186,12 +186,12 @@ public class JrPlaylistStateControl implements
 	/* End event handlers */
 	
 	/* Listener callers */
-	private void throwChangeEvent(JrFileMediaPlayer filePlayer) {
+	private void throwChangeEvent(JrFilePlayer filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, filePlayer);
 	}
 	
-	private void throwStopEvent(JrFileMediaPlayer filePlayer) {
+	private void throwStopEvent(JrFilePlayer filePlayer) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
 			listener.onNowPlayingStop(this, filePlayer);
 	}
@@ -235,14 +235,14 @@ public class JrPlaylistStateControl implements
 
 	/* Listener interfaces */
 	public interface OnNowPlayingChangeListener {
-		void onNowPlayingChange(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer);
+		void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer);
 	}
 	
 	public interface OnNowPlayingStopListener {
-		void onNowPlayingStop(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer);
+		void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer);
 	}
 	
 	public interface OnPlaylistStateControlErrorListener {
-		boolean onPlaylistStateControlError(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer);
+		boolean onPlaylistStateControlError(JrPlaylistController controller, JrFilePlayer filePlayer);
 	}
 }

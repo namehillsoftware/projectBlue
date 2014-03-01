@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 
 public interface OnJrFileErrorListener {
-	boolean onJrFileError(JrFileMediaPlayer mediaPlayer, int what, int extra);
+	boolean onJrFileError(JrFilePlayer mediaPlayer, int what, int extra);
 }

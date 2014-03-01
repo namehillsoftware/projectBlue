@@ -32,11 +32,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistStateControl.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
@@ -83,7 +83,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
-	private static JrPlaylistStateControl mPlaylistControl;
+	private static JrPlaylistController mPlaylistControl;
 	
 	private static Object syncObject = new Object();
 	
@@ -175,14 +175,14 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		}
 	}
 	
-	private void throwStartEvent(JrFileMediaPlayer filePlayer) {
+	private void throwStartEvent(JrFilePlayer filePlayer) {
 		synchronized(syncObject) {
 			for (OnStreamingStartListener onStartListener : mOnStreamingStartListeners)
 				onStartListener.onStreamingStart(this, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(JrFileMediaPlayer filePlayer) {
+	private void throwStopEvent(JrFilePlayer filePlayer) {
 		synchronized(syncObject) {
 			for (OnStreamingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onStreamingStop(this, filePlayer);
@@ -190,7 +190,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	}
 	/* End Events */
 		
-	public static JrPlaylistStateControl getPlaylist() {
+	public static JrPlaylistController getPlaylist() {
 		return mPlaylistControl;
 	}
 	
@@ -301,7 +301,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			mPlaylistString = playlistString;
 			mPlaylistControl.pause();
 			mPlaylistControl.release();
-			mPlaylistControl = new JrPlaylistStateControl(thisContext, mPlaylistString);
+			mPlaylistControl = new JrPlaylistController(thisContext, mPlaylistString);
 			mPlaylistControl.addOnNowPlayingChangeListener(this);
 			mPlaylistControl.addOnNowPlayingStopListener(this);
 			mPlaylistControl.addOnPlaylistStateControlErrorListener(this);
@@ -432,7 +432,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 
 
 	@Override
-	public boolean onPlaylistStateControlError(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer) {
+	public boolean onPlaylistStateControlError(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		buildErrorNotification();
 
 		return true;
@@ -495,7 +495,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	/* End Binder Code */
 
 	@Override
-	public void onNowPlayingStop(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer) {
+	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		mAudioManager.abandonAudioFocus(this);
 		// release the wifilock if we still have it
 		if (mWifiLock != null) {
@@ -506,7 +506,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	}
 
 	@Override
-	public void onNowPlayingChange(JrPlaylistStateControl controller, JrFileMediaPlayer filePlayer) {
+	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		startFilePlayback(filePlayer.getFile());
 		throwStartEvent(filePlayer);
 	}

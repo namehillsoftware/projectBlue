@@ -25,7 +25,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.PowerManager;
 
-public class JrFileMediaPlayer implements
+public class JrFilePlayer implements
 	OnPreparedListener, 
 	OnErrorListener, 
 	OnCompletionListener
@@ -42,7 +42,7 @@ public class JrFileMediaPlayer implements
 	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
 	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
 	
-	public JrFileMediaPlayer(Context context, JrFile file) {
+	public JrFilePlayer(Context context, JrFile file) {
 		mMpContext = context;
 		mFile = file;
 	}

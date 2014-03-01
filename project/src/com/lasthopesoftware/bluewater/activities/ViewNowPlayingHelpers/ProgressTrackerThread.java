@@ -4,15 +4,15 @@ import java.io.IOException;
 
 import android.os.Message;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 
 public class ProgressTrackerThread implements Runnable {
-	private JrFileMediaPlayer mFilePlayer;
+	private JrFilePlayer mFilePlayer;
 	private HandleViewNowPlayingMessages mHandler;
 	
-	public ProgressTrackerThread(JrFileMediaPlayer filePlayer, HandleViewNowPlayingMessages handler) {
+	public ProgressTrackerThread(JrFilePlayer filePlayer, HandleViewNowPlayingMessages handler) {
 		mFilePlayer = filePlayer;
 		mHandler = handler;
 	}

@@ -4,14 +4,14 @@ import java.io.IOException;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 
 public class BackgroundFilePreparer implements Runnable {
 
-	private JrFileMediaPlayer mCurrentFilePlayer, mNextFilePlayer;
+	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
 	
-	public BackgroundFilePreparer(JrFileMediaPlayer currentPlayer, JrFileMediaPlayer nextPlayer) {
+	public BackgroundFilePreparer(JrFilePlayer currentPlayer, JrFilePlayer nextPlayer) {
 		mCurrentFilePlayer = currentPlayer;
 		mNextFilePlayer = nextPlayer;
 	}
