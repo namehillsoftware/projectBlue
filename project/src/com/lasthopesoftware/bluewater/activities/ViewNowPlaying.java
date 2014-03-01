@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleVie
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFileMediaPlayer;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -69,7 +70,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	private TextView mNowPlayingTitle;
 	private static GetFileImage getFileImageTask;
 	
-	private JrFile playingFile = null;
+	private JrFileMediaPlayer mFilePlayer = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -150,22 +151,23 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		playingFile = StreamingMusicService.getNowPlayingFile();
-		if (playingFile == null) {
+		mFilePlayer = StreamingMusicService.getPlaylist().getCurrentFilePlayer();
+		if (mFilePlayer == null) {
 			if (library.getNowPlayingId() <= 0) return;
 			
-			playingFile = new JrFile(library.getNowPlayingId());
-			playingFile.seekTo(library.getNowPlayingProgress());
+			JrFile savedPlayingFile = new JrFile(library.getNowPlayingId());
+			mFilePlayer = new JrFileMediaPlayer(this, savedPlayingFile);
+			mFilePlayer.seekTo(library.getNowPlayingProgress());
 		}
 				
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(new ProgressTrackerThread(playingFile, mHandler));
+		mTrackerThread = new Thread(new ProgressTrackerThread(mFilePlayer, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
 		
-		setView(playingFile);
+		setView(mFilePlayer);
 	}
 	
 	@Override
@@ -203,13 +205,13 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		public void onClick(View v) {
 			if (!mControlNowPlaying.isShown()) return;
 			
-			if (StreamingMusicService.getNowPlayingFile() != null) {
-				if (StreamingMusicService.getNowPlayingFile().isPlaying()) {
+			if (StreamingMusicService.getPlaylist() != null) {
+				if (StreamingMusicService.getPlaylist().isPlaying()) {
 					StreamingMusicService.Pause(v.getContext());
 					return;
 				}
 				
-				if (StreamingMusicService.getNowPlayingFile().isPrepared()) {
+				if (StreamingMusicService.getPlaylist().isPrepared()) {
 					StreamingMusicService.Play(v.getContext());
 					return;
 				}
@@ -250,8 +252,9 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setView(JrFile file) {
-		final JrFile playingFile = file;
+	private void setView(JrFileMediaPlayer filePlayer) {
+		final JrFile playingFile = filePlayer.getFile();
+		final JrFileMediaPlayer _filePlayer = filePlayer;
 				
 		try {
 			@SuppressWarnings("rawtypes")
@@ -276,7 +279,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(playingFile);
+						resetViewOnReconnect(_filePlayer);
 						return;
 					}
 					
@@ -299,7 +302,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(playingFile);
+						resetViewOnReconnect(_filePlayer);
 						return;
 					}
 					
@@ -323,7 +326,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(playingFile);
+						resetViewOnReconnect(_filePlayer);
 						return;
 					}
 					
@@ -359,7 +362,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(playingFile);
+						resetViewOnReconnect(_filePlayer);
 						return;
 					}
 					
@@ -380,15 +383,15 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 			getRatingsTask.execute();
 			
 			
-			mSongProgressBar.setMax(playingFile.getDuration());
+			mSongProgressBar.setMax(filePlayer.getDuration());
 			
-			mSongProgressBar.setProgress(playingFile.getCurrentPosition());
+			mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 		} catch (IOException ioE) {
-			resetViewOnReconnect(playingFile);
+			resetViewOnReconnect(_filePlayer);
 		}
 		
-		mPlay.setVisibility(!file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
-		mPause.setVisibility(file.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+		mPlay.setVisibility(!filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+		mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 	}
 	
 	private boolean containsIoException(List<Exception> exceptions) {
@@ -398,13 +401,13 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 		return false;
 	}
 	
-	private void resetViewOnReconnect(JrFile file) {
-		final JrFile playingFile = file;
+	private void resetViewOnReconnect(JrFileMediaPlayer filePlayer) {
+		final JrFileMediaPlayer _filePlayer = filePlayer;
 		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) setView(playingFile);
+				if (result == Boolean.TRUE) setView(_filePlayer);
 			}
 		});
 		WaitForConnectionDialog.show(this);
@@ -489,21 +492,21 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	
 
 	@Override
-	public void onStreamingStart(StreamingMusicService service, JrFile file) {		
-		setView(file);
+	public void onStreamingStart(StreamingMusicService service, JrFileMediaPlayer filePlayer) {		
+		setView(filePlayer);
 		mPause.setVisibility(View.VISIBLE);
 		mPlay.setVisibility(View.INVISIBLE);
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
-		mTrackerThread = new Thread(new ProgressTrackerThread(file, mHandler));
+		mTrackerThread = new Thread(new ProgressTrackerThread(filePlayer, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
 	}
 	
 	@Override
-	public void onStreamingStop(StreamingMusicService service, JrFile file) {
+	public void onStreamingStop(StreamingMusicService service, JrFileMediaPlayer file) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		mPlay.setVisibility(View.VISIBLE);
