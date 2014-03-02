@@ -9,13 +9,12 @@ import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectL
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
-import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, IJrFilesContainer {
 	private ArrayList<OnStartListener<List<JrItem>>> mItemStartListeners = new ArrayList<OnStartListener<List<JrItem>>>(1);
 	private ArrayList<OnErrorListener<List<JrItem>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<JrItem>>>(1);
-	private ArrayList<OnCompleteListener<List<JrItem>>> mItemCompleteListeners;
+	private OnCompleteListener<List<JrItem>> mItemCompleteListener;
 	private JrFiles mJrFiles;
 	
 	private OnConnectListener<List<JrItem>> mItemConnectListener = new OnConnectListener<List<JrItem>>() {
@@ -23,14 +22,6 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		@Override
 		public List<JrItem> onConnect(InputStream is) {
 			return JrFsResponse.GetItems(is);
-		}
-	};
-		
-	private OnCompleteListener<List<JrItem>> mItemCompleteListener = new OnCompleteListener<List<JrItem>>() {
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
-			mSubItems = (ArrayList<JrItem>) result;			
 		}
 	};
 	
@@ -71,12 +62,7 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 
 	@Override
 	public void setOnItemsCompleteListener(OnCompleteListener<List<JrItem>> listener) {
-		if (mItemCompleteListeners == null) {
-			mItemCompleteListeners = new ArrayList<OnCompleteListener<List<JrItem>>>(2);
-			mItemCompleteListeners.add(mItemCompleteListener);
-		}
-		if (mItemCompleteListeners.size() < 2) mItemCompleteListeners.add(listener);
-		else mItemCompleteListeners.set(1, listener);
+		mItemCompleteListener = listener;
 	}
 
 	@Override
@@ -98,17 +84,19 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 
 	@Override
 	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
-		return mItemCompleteListeners;
+		ArrayList<OnCompleteListener<List<JrItem>>> returnList = new ArrayList<OnCompleteListener<List<JrItem>>>();
+		returnList.add(mItemCompleteListener);
+		return returnList;
 	}
 
 	@Override
 	protected List<OnStartListener<List<JrItem>>> getOnItemsStartListeners() {
-		return (List<OnStartListener<List<JrItem>>>) mItemStartListeners;
+		return mItemStartListeners;
 	}
 
 	@Override
 	protected List<OnErrorListener<List<JrItem>>> getOnItemsErrorListeners() {
-		return (List<OnErrorListener<List<JrItem>>>) mItemErrorListeners;
+		return mItemErrorListeners;
 	}
 
 	@Override
