@@ -113,7 +113,7 @@ public class JrFilePlayer implements
 					return;
 				}
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+				LoggerFactory.getLogger(JrFilePlayer.class).error(e.toString(), e);
 			}
 		}
 	}
@@ -148,6 +148,11 @@ public class JrFilePlayer implements
 	}
 	
 	private void resetMediaPlayer() {
+		if (mp == null) {
+			initMediaPlayer();
+			return;
+		}
+		
 		mp.reset();
 		
 		if (mMpContext != null)
