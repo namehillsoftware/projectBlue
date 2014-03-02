@@ -28,7 +28,7 @@ public class JrPlaylistController implements
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<JrFile> mPlaylist;
-	private int mFileKey = -1, mPausedPosition = -1;
+	private int mFileKey = -1;
 	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
 	private Thread mBackgroundFilePreparerThread;
@@ -64,7 +64,6 @@ public class JrPlaylistController implements
 		}
 		
 		fileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
-		startPos = startPos < 0 ? 0 : startPos;
         
 		for (JrFile file : mPlaylist) {
 			if (file.getKey() != fileKey) continue;
@@ -74,7 +73,7 @@ public class JrPlaylistController implements
 			filePlayer.addOnJrFilePreparedListener(this);
 			filePlayer.addOnJrFileErrorListener(this);
 			filePlayer.initMediaPlayer();
-			filePlayer.seekTo(startPos);
+			filePlayer.seekTo(startPos < 0 ? filePlayer.getCurrentPosition() : startPos);
 			filePlayer.prepareMediaPlayer(); // prepare async to not block main thread
         	break;
 		}
@@ -84,7 +83,7 @@ public class JrPlaylistController implements
 		if (mCurrentFilePlayer == null) {
 			if (mFileKey == -1) return false;
 			
-			seekTo(mFileKey, mPausedPosition);
+			seekTo(mFileKey);
 			return true;
 		}
 		
@@ -120,13 +119,10 @@ public class JrPlaylistController implements
 	}
 	
 	public void pause() {
-		if (mCurrentFilePlayer != null) {
-			if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
-			mPausedPosition = mCurrentFilePlayer.getCurrentPosition();
-			throwStopEvent(mCurrentFilePlayer);
-		}
+		if (mCurrentFilePlayer == null) return;
 		
-		release();
+		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
+		throwStopEvent(mCurrentFilePlayer);
 	}
 	
 	public boolean isPrepared() {

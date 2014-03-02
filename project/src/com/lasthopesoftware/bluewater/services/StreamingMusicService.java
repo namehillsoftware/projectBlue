@@ -48,7 +48,12 @@ import com.lasthopesoftware.threading.SimpleTaskState;
  * @author david
  *
  */
-public class StreamingMusicService extends Service implements OnAudioFocusChangeListener, OnNowPlayingChangeListener, OnNowPlayingStopListener, OnPlaylistStateControlErrorListener {
+public class StreamingMusicService extends Service implements
+	OnAudioFocusChangeListener, 
+	OnNowPlayingChangeListener, 
+	OnNowPlayingStopListener, 
+	OnPlaylistStateControlErrorListener
+{
 	
 	//private final IBinder mBinder = 
 	public static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
@@ -67,14 +72,12 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	private static int mId = 42;
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
-	private int mFileKey = -1;
-	private int mStartPos = 0;
 	private NotificationManager mNotificationMgr;
 	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
-	private static JrPlaylistController mPlaylistControl;
+	private static JrPlaylistController mPlaylistController;
 	
 	private static Object syncObject = new Object();
 	
@@ -124,7 +127,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	}
 	
 	public static void Next(Context context) {
-		JrFile nextFile = mPlaylistControl.getCurrentFilePlayer().getFile().getNextFile();
+		JrFile nextFile = mPlaylistController.getCurrentFilePlayer().getFile().getNextFile();
 		if (nextFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, nextFile.getKey());
@@ -133,7 +136,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	}
 	
 	public static void Previous(Context context) {
-		JrFile previousFile = mPlaylistControl.getCurrentFilePlayer().getFile().getPreviousFile();
+		JrFile previousFile = mPlaylistController.getCurrentFilePlayer().getFile().getPreviousFile();
 		if (previousFile == null) return;
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, previousFile.getKey());
@@ -182,7 +185,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	/* End Events */
 		
 	public static JrPlaylistController getPlaylist() {
-		return mPlaylistControl;
+		return mPlaylistController;
 	}
 	
 	public StreamingMusicService() {
@@ -287,32 +290,30 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
-			mPlaylistControl.pause();
-			mPlaylistControl.release();
-			mPlaylistControl = new JrPlaylistController(thisContext, mPlaylistString);
-			mPlaylistControl.addOnNowPlayingChangeListener(this);
-			mPlaylistControl.addOnNowPlayingStopListener(this);
-			mPlaylistControl.addOnPlaylistStateControlErrorListener(this);
+			mPlaylistController.pause();
+			mPlaylistController.release();
+			mPlaylistController = new JrPlaylistController(thisContext, mPlaylistString);
+			mPlaylistController.addOnNowPlayingChangeListener(this);
+			mPlaylistController.addOnNowPlayingStopListener(this);
+			mPlaylistController.addOnPlaylistStateControlErrorListener(this);
 			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
+			JrSession.SaveSession(thisContext);
 		}
 		
-		mFileKey = fileKey < 0 ? mPlaylistControl.getPlaylist().get(0).getKey() : fileKey;
-		mStartPos = filePos < 0 ? 0 : filePos;
-        
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		builder.setContentTitle("Starting Music Streamer");
         startForeground(mId, builder.build());
         
-        mPlaylistControl.seekTo(mFileKey, mStartPos);
+        mPlaylistController.seekTo(fileKey, filePos);
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
-		if (mPlaylistControl != null) {
-			if (mPlaylistControl.isPlaying()) {
+		if (mPlaylistController != null) {
+			if (mPlaylistController.isPlaying()) {
 				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
-				mPlaylistControl.pause();
+				mPlaylistController.pause();
 			}
 		}
 		stopNotification();
@@ -371,11 +372,11 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			// some improved prefetching by the processor
 			if (intent.getAction().equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
-	        } else if (mPlaylistControl != null) {
+	        } else if (mPlaylistController != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (intent.getAction().equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
-		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlaylistControl != null) {
+		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlaylistController != null) {
 		    		startPlaylist(mPlaylistString, JrSession.GetLibrary(thisContext).getNowPlayingId(), JrSession.GetLibrary(thisContext).getNowPlayingProgress());
 		        } else if (intent.getAction().equals(ACTION_STOP)) {
 		        	pausePlayback(true);
@@ -417,10 +418,10 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			// resume playback
         	if (JrSession.GetLibrary(thisContext) != null && !JrSession.isActive()) return;
         	
-        	if (mPlaylistControl != null) {
-        		mPlaylistControl.setVolume(1.0f);
+        	if (mPlaylistController != null) {
+        		mPlaylistController.setVolume(1.0f);
         	        	
-	        	if (!mPlaylistControl.isPlaying()) {
+	        	if (!mPlaylistController.isPlaying()) {
 	        		Library library = JrSession.GetLibrary(thisContext);
 	        		startPlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress());
 	        	}
@@ -429,20 +430,20 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
             return;
 		}
 		
-		if (mPlaylistControl == null) return;
+		if (mPlaylistController == null) return;
 		
 	    switch (focusChange) {
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
-	        	if (mPlaylistControl.isPlaying()) pausePlayback(true);
+	        	if (mPlaylistController.isPlaying()) pausePlayback(true);
 	        // Lost focus but it will be regained... cannot release resources
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-	        	if (mPlaylistControl.isPlaying()) pausePlayback(false);
+	        	if (mPlaylistController.isPlaying()) pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (mPlaylistControl.isPlaying()) mPlaylistControl.setVolume(0.1f);
+	            if (mPlaylistController.isPlaying()) mPlaylistController.setVolume(0.1f);
 	            return;
 	    }
 	}
@@ -476,7 +477,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	public void onDestroy() {
 		JrSession.SaveSession(this);
 		stopNotification();
-		if (mPlaylistControl != null) mPlaylistControl.release();
+		if (mPlaylistController != null) mPlaylistController.release();
 	}
 
 	/* End Event Handlers */
