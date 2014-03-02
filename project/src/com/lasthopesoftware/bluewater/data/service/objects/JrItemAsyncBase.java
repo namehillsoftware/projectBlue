@@ -7,12 +7,14 @@ import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.service.access.JrDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 
 public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject implements IJrItem<T>, IJrItemAsync<T>, Comparable<T> {
@@ -38,12 +40,11 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 	protected abstract List<OnErrorListener<List<T>>> getOnItemsErrorListeners();
 	
 	public ArrayList<T> getSubItems() {
-		JrDataTask<List<T>> itemTask = getNewSubItemsTask();
 		
-		if (mSubItems == null) {
+		if (mSubItems == null || mSubItems.size() == 0) {
 			try {
 				// This will call the onCompletes if they are attached.
-				mSubItems = (ArrayList<T>) itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
+				mSubItems = new ArrayList<T>(getNewSubItemsTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get());
 			} catch(Exception e) {
 				LoggerFactory.getLogger(JrItemAsyncBase.class).error(e.toString(), e);
 			}
@@ -53,15 +54,15 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 	}
 	
 	public void getSubItemsAsync() {
-		JrDataTask<List<T>> itemTask = new JrDataTask<List<T>>();
 		
-		if (mSubItems == null) {
+		if (mSubItems == null || mSubItems.size() == 0) {
+			JrDataTask<List<T>> itemTask = new JrDataTask<List<T>>();
 			itemTask = getNewSubItemsTask();
 			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
 
 				@Override
 				public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
-					mSubItems = (ArrayList<T>) result;
+					mSubItems = new ArrayList<T>(result);
 				}
 				
 			});
@@ -70,7 +71,21 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 			return;
 		}
 		
-		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners()) listener.onComplete(itemTask, mSubItems);
+		// Simple task that just returns sub items if they are in memory
+		SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>();
+		
+		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
+			task.addOnCompleteListener(listener);
+		
+		task.addOnExecuteListener(new OnExecuteListener<String, Void, List<T>>() {
+
+			@Override
+			public void onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
+				owner.setResult(mSubItems);
+			}
+		});
+		
+		task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	protected JrDataTask<List<T>> getNewSubItemsTask() {

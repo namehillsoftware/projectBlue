@@ -26,7 +26,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 public class JrFileProperties {
 	private Integer mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
-	private static ExecutorService fileStatsExecutor = Executors.newSingleThreadExecutor();
+	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String,String>>();
 	
 	public JrFileProperties(Integer fileKey) {
@@ -58,7 +58,7 @@ public class JrFileProperties {
 				}
 			}
 		};
-		setPropertyTask.executeOnExecutor(fileStatsExecutor, String.valueOf(mFileKey), name, value);
+		setPropertyTask.executeOnExecutor(filePropertiesExecutor, String.valueOf(mFileKey), name, value);
 		
 		mProperties.put(name, value);
 	}
@@ -113,7 +113,7 @@ public class JrFileProperties {
 		});
 
 		try {
-			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(fileStatsExecutor).get();
+			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
 			
 			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
 				for (Exception e : filePropertiesTask.getExceptions()) {

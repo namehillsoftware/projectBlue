@@ -4,19 +4,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.LoggerFactory;
-
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, IJrFilesContainer {
-	private ArrayList<JrItem> mSubItems;
 	private ArrayList<OnStartListener<List<JrItem>>> mItemStartListeners = new ArrayList<OnStartListener<List<JrItem>>>(1);
 	private ArrayList<OnErrorListener<List<JrItem>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<JrItem>>>(1);
 	private ArrayList<OnCompleteListener<List<JrItem>>> mItemCompleteListeners;
@@ -51,31 +47,20 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		super();
 	}
 	
-	@Override
-	public ArrayList<JrItem> getSubItems() {
-		if (mSubItems != null) return mSubItems;
-		
-		mSubItems = new ArrayList<JrItem>();
-		if (JrSession.accessDao == null) return mSubItems;
-		try {
-			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
-			mSubItems.addAll(tempSubItems);
-		} catch (Exception e) {
-			LoggerFactory.getLogger(JrItem.class).error(e.toString(), e);
-		}
-		
-		return mSubItems;
-	}
-	
-	
-//
 //	@Override
-//	public ArrayList<JrFile> getFiles(int option) {
-//		ArrayList<JrFile> returnFiles = new ArrayList<JrFile>();
-//		returnFiles.addAll(getFiles());
-//		if (option == GET_SHUFFLED) Collections.shuffle(returnFiles, new Random(new Date().getTime()));
+//	public ArrayList<JrItem> getSubItems() {
+//		if (mSubItems != null && mSubItems.size() > 0) return mSubItems;
 //		
-//		return returnFiles;
+//		mSubItems = new ArrayList<JrItem>();
+//		if (JrSession.accessDao == null) return mSubItems;
+//		try {
+//			List<JrItem> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
+//			mSubItems.addAll(tempSubItems);
+//		} catch (Exception e) {
+//			LoggerFactory.getLogger(JrItem.class).error(e.toString(), e);
+//		}
+//		
+//		return mSubItems;
 //	}
 	
 	@Override
