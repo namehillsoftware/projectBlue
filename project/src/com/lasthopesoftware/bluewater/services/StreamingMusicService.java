@@ -30,9 +30,9 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -78,8 +78,8 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	
 	private static Object syncObject = new Object();
 	
-	private static HashSet<OnStreamingStartListener> mOnStreamingStartListeners = new HashSet<OnStreamingStartListener>();
-	private static HashSet<OnStreamingStopListener> mOnStreamingStopListeners = new HashSet<OnStreamingStopListener>();
+	private static HashSet<OnNowPlayingChangeListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingChangeListener>();
+	private static HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
 	/* Begin streamer intent helpers */
 	
@@ -144,39 +144,39 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	/* End streamer intent helpers */
 	
 	/* Begin Events */
-	public static void AddOnStreamingStartListener(OnStreamingStartListener listener) {
+	public static void AddOnStreamingStartListener(OnNowPlayingChangeListener listener) {
 		mOnStreamingStartListeners.add(listener);
 	}
 	
-	public static void AddOnStreamingStopListener(OnStreamingStopListener listener) {
+	public static void AddOnStreamingStopListener(OnNowPlayingStopListener listener) {
 		mOnStreamingStopListeners.add(listener);
 	}
 	
-	public static void RemoveOnStreamingStartListener(OnStreamingStartListener listener) {
+	public static void RemoveOnStreamingStartListener(OnNowPlayingChangeListener listener) {
 		synchronized(syncObject) {
 			if (mOnStreamingStartListeners.contains(listener))
 				mOnStreamingStartListeners.remove(listener);
 		}
 	}
 	
-	public static void RemoveOnStreamingStopListener(OnStreamingStopListener listener) {
+	public static void RemoveOnStreamingStopListener(OnNowPlayingStopListener listener) {
 		synchronized(syncObject) {
 			if (mOnStreamingStopListeners.contains(listener))
 				mOnStreamingStopListeners.remove(listener);
 		}
 	}
 	
-	private void throwStartEvent(JrFilePlayer filePlayer) {
+	private void throwStartEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		synchronized(syncObject) {
-			for (OnStreamingStartListener onStartListener : mOnStreamingStartListeners)
-				onStartListener.onStreamingStart(this, filePlayer);
+			for (OnNowPlayingChangeListener onStartListener : mOnStreamingStartListeners)
+				onStartListener.onNowPlayingChange(controller, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(JrFilePlayer filePlayer) {
+	private void throwStopEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		synchronized(syncObject) {
-			for (OnStreamingStopListener onStopListener : mOnStreamingStopListeners)
-				onStopListener.onStreamingStop(this, filePlayer);
+			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
+				onStopListener.onNowPlayingStop(controller, filePlayer);
 		}
 	}
 	/* End Events */
@@ -459,7 +459,8 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
-		throwStopEvent(filePlayer);
+		
+		throwStopEvent(controller, filePlayer);
 	}
 
 	@Override
@@ -468,7 +469,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		JrSession.GetLibrary(thisContext).setNowPlayingProgress(0);
 		JrSession.SaveSession(thisContext);
 		startFilePlayback(filePlayer.getFile());
-		throwStartEvent(filePlayer);
+		throwStartEvent(controller, filePlayer);
 	}
 	
 	@Override

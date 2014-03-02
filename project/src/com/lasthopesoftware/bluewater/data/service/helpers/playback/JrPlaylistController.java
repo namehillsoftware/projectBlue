@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
@@ -225,18 +228,5 @@ public class JrPlaylistController implements
 		
 		if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive())
 			mBackgroundFilePreparerThread.interrupt();
-	}
-
-	/* Listener interfaces */
-	public interface OnNowPlayingChangeListener {
-		void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer);
-	}
-	
-	public interface OnNowPlayingStopListener {
-		void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer);
-	}
-	
-	public interface OnPlaylistStateControlErrorListener {
-		boolean onPlaylistStateControlError(JrPlaylistController controller, JrFilePlayer filePlayer);
 	}
 }

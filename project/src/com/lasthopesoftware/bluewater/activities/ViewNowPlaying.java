@@ -37,11 +37,12 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressT
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.services.OnStreamingStartListener;
-import com.lasthopesoftware.bluewater.services.OnStreamingStopListener;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -50,7 +51,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class ViewNowPlaying extends Activity implements OnStreamingStartListener, OnStreamingStopListener, ISimpleTask.OnStartListener<String, Void, Boolean> {
+public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListener, OnNowPlayingStopListener, ISimpleTask.OnStartListener<String, Void, Boolean> {
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
@@ -492,7 +493,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	
 
 	@Override
-	public void onStreamingStart(StreamingMusicService service, JrFilePlayer filePlayer) {		
+	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
 		setView(filePlayer);
 		mPause.setVisibility(View.VISIBLE);
 		mPlay.setVisibility(View.INVISIBLE);
@@ -506,7 +507,7 @@ public class ViewNowPlaying extends Activity implements OnStreamingStartListener
 	}
 	
 	@Override
-	public void onStreamingStop(StreamingMusicService service, JrFilePlayer file) {
+	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer file) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		mPlay.setVisibility(View.VISIBLE);
