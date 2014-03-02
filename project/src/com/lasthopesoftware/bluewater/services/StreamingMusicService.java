@@ -4,10 +4,7 @@
 package com.lasthopesoftware.bluewater.services;
 
 
-import java.util.ArrayList;
 import java.util.HashSet;
-
-import org.slf4j.LoggerFactory;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -27,7 +24,6 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
 
-import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
@@ -38,10 +34,6 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistCo
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
@@ -78,7 +70,6 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	private int mFileKey = -1;
 	private int mStartPos = 0;
 	private NotificationManager mNotificationMgr;
-//	private static ArrayList<JrFile> mPlaylist;
 	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
@@ -201,6 +192,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 
 	private void startFilePlayback(JrFile file) {
 		final JrFile playingFile = file;
+		
 		// Start playback immediately
 		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
@@ -290,10 +282,6 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		getBtPropertiesTask.execute();
 	}
 	
-	private void startPlaylist(String playlistString, int fileKey) {
-		startPlaylist(playlistString, fileKey, 0);
-	}
-	
 	private void startPlaylist(String playlistString, int fileKey, int filePos) {
 		if (playlistString == null) return;
 		// If the playlist has changed, change that
@@ -327,9 +315,6 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 				mPlaylistControl.pause();
 			}
 		}
-//		mPlaylistString = null;
-//		mFileKey = -1;
-//		releaseMediaPlayers();
 		stopNotification();
 		if (isUserInterrupted) stopSelfResult(mStartId);
 	}
@@ -369,18 +354,6 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		mNotificationMgr.cancel(mId);
 	}
 	
-//	private void releaseMediaPlayer(JrFile file) {
-//		file.releaseMediaPlayer();
-//		file.removeOnJrFileCompleteListener(this);
-//		file.removeOnJrFileErrorListener(this);
-//		file.removeOnJrFilePreparedListener(this);
-//	}
-	
-//	private void releaseMediaPlayers() {
-//		if (mPlaylist == null) return;
-//		for (JrFile file : mPlaylist) releaseMediaPlayer(file);
-//	}
-
 	/* Begin Event Handlers */
 	
 	/* (non-Javadoc)
@@ -392,11 +365,12 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		mStartId = startId;
 		
 		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
+		
 		if (intent != null) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 			if (intent.getAction().equals(ACTION_START)) {
-				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, -1));
+				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
 	        } else if (mPlaylistControl != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (intent.getAction().equals(ACTION_PAUSE)) {
@@ -406,8 +380,7 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 		        } else if (intent.getAction().equals(ACTION_STOP)) {
 		        	pausePlayback(true);
 		        }
-	        } 
-	        else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
+	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
 		} else if (!JrSession.isActive()) {
@@ -475,6 +448,30 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 	}
 	
 	@Override
+	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
+		JrSession.GetLibrary(thisContext).setNowPlayingId(filePlayer.getFile().getKey());
+		JrSession.GetLibrary(thisContext).setNowPlayingProgress(filePlayer.getCurrentPosition());
+		JrSession.SaveSession(thisContext);
+		
+		mAudioManager.abandonAudioFocus(this);
+		// release the wifilock if we still have it
+		if (mWifiLock != null) {
+			if (mWifiLock.isHeld()) mWifiLock.release();
+			mWifiLock = null;
+		}
+		throwStopEvent(filePlayer);
+	}
+
+	@Override
+	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
+		JrSession.GetLibrary(thisContext).setNowPlayingId(filePlayer.getFile().getKey());
+		JrSession.GetLibrary(thisContext).setNowPlayingProgress(0);
+		JrSession.SaveSession(thisContext);
+		startFilePlayback(filePlayer.getFile());
+		throwStartEvent(filePlayer);
+	}
+	
+	@Override
 	public void onDestroy() {
 		JrSession.SaveSession(this);
 		stopNotification();
@@ -493,21 +490,4 @@ public class StreamingMusicService extends Service implements OnAudioFocusChange
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
 	/* End Binder Code */
-
-	@Override
-	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		mAudioManager.abandonAudioFocus(this);
-		// release the wifilock if we still have it
-		if (mWifiLock != null) {
-			if (mWifiLock.isHeld()) mWifiLock.release();
-			mWifiLock = null;
-		}
-		throwStopEvent(filePlayer);
-	}
-
-	@Override
-	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		startFilePlayback(filePlayer.getFile());
-		throwStartEvent(filePlayer);
-	}
 }

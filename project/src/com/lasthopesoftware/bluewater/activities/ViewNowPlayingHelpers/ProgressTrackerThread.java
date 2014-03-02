@@ -5,7 +5,6 @@ import java.io.IOException;
 import android.os.Message;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 
 public class ProgressTrackerThread implements Runnable {
