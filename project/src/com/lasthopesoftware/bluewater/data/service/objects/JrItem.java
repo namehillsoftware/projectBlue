@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
@@ -82,11 +83,10 @@ public class JrItem extends JrItemAsyncBase<JrItem> implements IJrItem<JrItem>, 
 		return mItemConnectListener;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected List<OnCompleteListener<List<JrItem>>> getOnItemsCompleteListeners() {
-		ArrayList<OnCompleteListener<List<JrItem>>> returnList = new ArrayList<OnCompleteListener<List<JrItem>>>();
-		returnList.add(mItemCompleteListener);
-		return returnList;
+		return Arrays.asList(mItemCompleteListener);
 	}
 
 	@Override
