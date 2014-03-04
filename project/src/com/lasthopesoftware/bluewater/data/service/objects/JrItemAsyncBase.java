@@ -74,8 +74,10 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 		// Simple task that just returns sub items if they are in memory
 		SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>();
 		
-		for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
-			task.addOnCompleteListener(listener);
+		if (getOnItemsCompleteListeners() != null) {
+			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
+				task.addOnCompleteListener(listener);
+		}
 		
 		task.addOnExecuteListener(new OnExecuteListener<String, Void, List<T>>() {
 
