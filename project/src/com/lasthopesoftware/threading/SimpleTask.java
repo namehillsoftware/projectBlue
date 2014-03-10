@@ -58,28 +58,33 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	public void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
-		onStartListeners.add(listener);
+		if (listener != null)
+			onStartListeners.add(listener);
 	}
 	
 	@Override
 	public void addOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
-		onExecuteListeners.add(listener);
+		if (listener != null)
+			onExecuteListeners.add(listener);
 	}
 
 
 	@Override
 	public void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
-		onProgressListeners.add(listener);
+		if (listener != null)
+			onProgressListeners.add(listener);
 	}
 	
 	@Override
 	public void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
-		onCompleteListeners.add(listener);
+		if (listener != null)
+			onCompleteListeners.add(listener);
 	}
 
 	@Override
 	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		onErrorListeners.add(listener);
+		if (listener != null)
+			onErrorListeners.add(listener);
 	}
 
 	@Override
