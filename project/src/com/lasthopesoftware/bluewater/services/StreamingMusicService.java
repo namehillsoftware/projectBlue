@@ -184,7 +184,7 @@ public class StreamingMusicService extends Service implements
 	}
 	/* End Events */
 		
-	public static JrPlaylistController getPlaylist() {
+	public static JrPlaylistController getPlaylistController() {
 		return mPlaylistController;
 	}
 	
@@ -290,8 +290,10 @@ public class StreamingMusicService extends Service implements
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
-			mPlaylistController.pause();
-			mPlaylistController.release();
+			if (mPlaylistController != null) {
+				mPlaylistController.pause();
+				mPlaylistController.release();
+			}
 			mPlaylistController = new JrPlaylistController(thisContext, mPlaylistString);
 			mPlaylistController.addOnNowPlayingChangeListener(this);
 			mPlaylistController.addOnNowPlayingStopListener(this);

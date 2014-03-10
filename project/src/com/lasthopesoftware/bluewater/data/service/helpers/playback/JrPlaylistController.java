@@ -32,7 +32,7 @@ public class JrPlaylistController implements
 	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
 	private Thread mBackgroundFilePreparerThread;
-	private float mVolume;
+	private float mVolume = 1.0f;
 	
 	public JrPlaylistController(Context context, String playlistString) {
 		this(context, JrFiles.deserializeFileStringList(playlistString));

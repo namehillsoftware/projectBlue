@@ -20,7 +20,7 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	            break;
 	        case KeyEvent.KEYCODE_HEADSETHOOK:
 	        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-	            if (StreamingMusicService.getPlaylist() != null && StreamingMusicService.getPlaylist().isPlaying())
+	            if (StreamingMusicService.getPlaylistController() != null && StreamingMusicService.getPlaylistController().isPlaying())
 	            	StreamingMusicService.Pause(context);
 	            else
 	            	StreamingMusicService.Play(context);

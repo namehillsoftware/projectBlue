@@ -39,14 +39,14 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         this.setTitle(R.string.title_view_now_playing_files);
         
-        final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylist().getPlaylist().size() > 0 ? new ArrayList<JrFile>(StreamingMusicService.getPlaylist().getPlaylist()) : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
+        final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylistController().getPlaylist().size() > 0 ? new ArrayList<JrFile>(StreamingMusicService.getPlaylistController().getPlaylist()) : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
         FileListAdapter fileListAdapter = new FileListAdapter(mContext, playlist);
         fileListView.setAdapter(fileListAdapter);
         fileListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				if (StreamingMusicService.getPlaylist().getPlaylist().size() > 0)
+				if (StreamingMusicService.getPlaylistController().getPlaylist().size() > 0)
 					StreamingMusicService.SeekToFile(view.getContext(), playlist.get(position).getKey());
 				else
 					StreamingMusicService.StreamMusic(view.getContext(), playlist.get(position).getKey(), JrSession.GetLibrary(view.getContext()).getSavedTracksString());

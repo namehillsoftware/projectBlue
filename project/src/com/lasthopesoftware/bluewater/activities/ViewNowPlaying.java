@@ -152,7 +152,9 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		mFilePlayer = StreamingMusicService.getPlaylist().getCurrentFilePlayer();
+		if (StreamingMusicService.getPlaylistController() != null)
+			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
+		
 		if (mFilePlayer == null) {
 			if (library.getNowPlayingId() <= 0) return;
 			
@@ -206,13 +208,13 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		public void onClick(View v) {
 			if (!mControlNowPlaying.isShown()) return;
 			
-			if (StreamingMusicService.getPlaylist() != null) {
-				if (StreamingMusicService.getPlaylist().isPlaying()) {
+			if (StreamingMusicService.getPlaylistController() != null) {
+				if (StreamingMusicService.getPlaylistController().isPlaying()) {
 					StreamingMusicService.Pause(v.getContext());
 					return;
 				}
 				
-				if (StreamingMusicService.getPlaylist().isPrepared()) {
+				if (StreamingMusicService.getPlaylistController().isPrepared()) {
 					StreamingMusicService.Play(v.getContext());
 					return;
 				}
