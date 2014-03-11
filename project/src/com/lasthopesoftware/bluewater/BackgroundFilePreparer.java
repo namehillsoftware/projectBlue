@@ -19,7 +19,7 @@ public class BackgroundFilePreparer implements Runnable {
 	@Override
 	public void run() {
 		if (mNextFilePlayer == null) return;
-		mCurrentFilePlayer.initMediaPlayer();
+		mNextFilePlayer.initMediaPlayer();
 		double bufferTime = -1;
 		while (mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
 			try {

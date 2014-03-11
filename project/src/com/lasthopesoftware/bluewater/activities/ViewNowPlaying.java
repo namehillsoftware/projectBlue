@@ -466,7 +466,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 					conn.disconnect();
 				}
 			} catch (FileNotFoundException fe) {
-				LoggerFactory.getLogger(ViewNowPlaying.class).warn(fe.toString(), fe);
+				LoggerFactory.getLogger(ViewNowPlaying.class).warn("Image not found!");
 			} catch (Exception e) {
 				LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 			}
