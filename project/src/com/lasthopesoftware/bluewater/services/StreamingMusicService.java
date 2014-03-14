@@ -62,6 +62,7 @@ public class StreamingMusicService extends Service implements
 	public static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
 	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
 	public static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
+	public static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST";
 	
 	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
 	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
@@ -290,14 +291,13 @@ public class StreamingMusicService extends Service implements
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
 			mPlaylistString = playlistString;
+			
 			if (mPlaylistController != null) {
 				mPlaylistController.pause();
 				mPlaylistController.release();
 			}
-			mPlaylistController = new JrPlaylistController(thisContext, mPlaylistString);
-			mPlaylistController.addOnNowPlayingChangeListener(this);
-			mPlaylistController.addOnNowPlayingStopListener(this);
-			mPlaylistController.addOnPlaylistStateControlErrorListener(this);
+			
+			mPlaylistController = getInitializedPlaylistController(mPlaylistString);
 			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
 			JrSession.SaveSession(thisContext);
 		}
@@ -309,6 +309,15 @@ public class StreamingMusicService extends Service implements
         startForeground(mId, builder.build());
         
         mPlaylistController.seekTo(fileKey, filePos);
+	}
+	
+	private JrPlaylistController getInitializedPlaylistController(String playlistString) {
+		JrPlaylistController playlistController = new JrPlaylistController(thisContext, playlistString);
+		playlistController.addOnNowPlayingChangeListener(this);
+		playlistController.addOnNowPlayingStopListener(this);
+		playlistController.addOnPlaylistStateControlErrorListener(this);
+		
+		return playlistController;
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
