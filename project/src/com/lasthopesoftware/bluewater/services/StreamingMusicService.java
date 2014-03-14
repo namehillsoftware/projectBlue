@@ -56,13 +56,13 @@ public class StreamingMusicService extends Service implements
 {
 	
 	//private final IBinder mBinder = 
-	public static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
-	public static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
-	public static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
-	public static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
-	public static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
-	public static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
-	public static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST";
+	private static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
+	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
+	private static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
+	private static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
+	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
+	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
+	private static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST";
 	
 	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
 	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
@@ -86,6 +86,33 @@ public class StreamingMusicService extends Service implements
 	private static HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
 	/* Begin streamer intent helpers */
+	public static void InitializePlaylist(Context context, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		context.startService(svcIntent);
+	}
+	
+	public static void InitializePlaylist(Context context, int startFileKey, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		context.startService(svcIntent);
+	}
+	
+	public static void InitializePlaylist(Context context, int startFileKey, int startPos, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		svcIntent.putExtra(BAG_START_POS, startPos);
+		context.startService(svcIntent);
+	}
+	
+	public static void StreamMusic(Context context, String serializedFileList) {
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		context.startService(svcIntent);
+		ViewUtils.CreateNowPlayingView(context);
+	}
 	
 	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
@@ -100,12 +127,6 @@ public class StreamingMusicService extends Service implements
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		svcIntent.putExtra(BAG_START_POS, startPos);
-		context.startService(svcIntent);
-	}
-	
-	public static void StreamMusic(Context context, String serializedFileList) {
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
@@ -381,18 +402,21 @@ public class StreamingMusicService extends Service implements
 		if (intent != null) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
-			if (intent.getAction().equals(ACTION_START)) {
+			String action = intent.getAction(); 
+			if (action.equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
+	        } else if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
+	        	InitializePlaylist(thisContext, intent.getStringExtra(BAG_PLAYLIST));
 	        } else if (mPlaylistController != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
-	        	if (intent.getAction().equals(ACTION_PAUSE)) {
+	        	if (action.equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
-		        } else if (intent.getAction().equals(ACTION_PLAY) && mPlaylistController != null) {
+		        } else if (action.equals(ACTION_PLAY) && mPlaylistController != null) {
 		    		startPlaylist(mPlaylistString, JrSession.GetLibrary(thisContext).getNowPlayingId(), JrSession.GetLibrary(thisContext).getNowPlayingProgress());
-		        } else if (intent.getAction().equals(ACTION_STOP)) {
+		        } else if (action.equals(ACTION_STOP)) {
 		        	pausePlayback(true);
 		        }
-	        } else if (intent.getAction().equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
+	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
 		} else if (!JrSession.isActive()) {
