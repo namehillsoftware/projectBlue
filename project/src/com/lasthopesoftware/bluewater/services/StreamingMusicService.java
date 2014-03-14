@@ -406,7 +406,7 @@ public class StreamingMusicService extends Service implements
 			if (action.equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
 	        } else if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
-	        	InitializePlaylist(thisContext, intent.getStringExtra(BAG_PLAYLIST));
+	        	mPlaylistController = getInitializedPlaylistController(intent.getStringExtra(BAG_PLAYLIST));
 	        } else if (mPlaylistController != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (action.equals(ACTION_PAUSE)) {
