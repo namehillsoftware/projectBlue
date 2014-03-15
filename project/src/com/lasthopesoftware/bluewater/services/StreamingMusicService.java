@@ -186,6 +186,7 @@ public class StreamingMusicService extends Service implements
 	public static void setIsRepeating(Context context, boolean isRepeating) {
 		JrSession.GetLibrary(context).setRepeating(isRepeating);
 		JrSession.SaveSession(context);
+		if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
 	}
 	
 	/* End streamer intent helpers */
@@ -424,6 +425,8 @@ public class StreamingMusicService extends Service implements
 		JrSession.GetLibrary(thisContext).setNowPlayingId(filePlayer.getFile().getKey());
 		JrSession.GetLibrary(thisContext).setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
+		
+		mNotificationMgr.cancelAll();
 		
 		mAudioManager.abandonAudioFocus(this);
 		// release the wifilock if we still have it
