@@ -75,6 +75,7 @@ public class JrPlaylistController implements
 			filePlayer.initMediaPlayer();
 			filePlayer.seekTo(startPos < 0 ? filePlayer.getCurrentPosition() : startPos);
 			mCurrentFilePlayer = filePlayer;
+			throwChangeEvent(mCurrentFilePlayer);
 			return;
 		}
 	}
