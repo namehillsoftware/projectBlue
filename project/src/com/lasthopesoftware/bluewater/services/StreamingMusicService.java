@@ -86,20 +86,20 @@ public class StreamingMusicService extends Service implements
 	
 	/* Begin streamer intent helpers */
 	public static void InitializePlaylist(Context context, String serializedFileList) {
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
 	public static void InitializePlaylist(Context context, int startFileKey, String serializedFileList) {
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
 	public static void InitializePlaylist(Context context, int startFileKey, int startPos, String serializedFileList) {
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		svcIntent.putExtra(BAG_START_POS, startPos);
@@ -156,18 +156,22 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	public static void Next(Context context) {
-		JrFile nextFile = mPlaylistController.getCurrentFilePlayer().getFile().getNextFile();
+		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
+		if (currentFilePlayer == null) return;
+		JrFile nextFile = currentFilePlayer.getFile().getNextFile();
 		if (nextFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		Intent svcIntent = new Intent(currentFilePlayer.isPlaying() ? StreamingMusicService.ACTION_START : StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, nextFile.getKey());
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
 	public static void Previous(Context context) {
-		JrFile previousFile = mPlaylistController.getCurrentFilePlayer().getFile().getPreviousFile();
+		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
+		if (currentFilePlayer == null) return;
+		JrFile previousFile = currentFilePlayer.getFile().getPreviousFile();
 		if (previousFile == null) return;
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		Intent svcIntent = new Intent(currentFilePlayer.isPlaying() ? StreamingMusicService.ACTION_START : StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, previousFile.getKey());
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
@@ -318,9 +322,7 @@ public class StreamingMusicService extends Service implements
 		if (playlistString == null) return;
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
-			initializePlaylist(mPlaylistString);
-			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
-			JrSession.SaveSession(thisContext);
+			initializePlaylist(playlistString);
 		}
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -334,6 +336,9 @@ public class StreamingMusicService extends Service implements
 		
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
+		
+		JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
+		JrSession.SaveSession(thisContext);
 		
 		if (mPlaylistController != null) {
 			mPlaylistController.pause();

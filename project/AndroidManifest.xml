@@ -95,6 +95,7 @@
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_START" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION" />
+                <action android:name="com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST" />
             </intent-filter>
         </service>
 

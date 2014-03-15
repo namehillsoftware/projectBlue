@@ -155,6 +155,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		if (StreamingMusicService.getPlaylistController() == null) {
 			if (library.getNowPlayingId() <= 0) return;
 			StreamingMusicService.InitializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+			return;
 		}
 		
 		mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
