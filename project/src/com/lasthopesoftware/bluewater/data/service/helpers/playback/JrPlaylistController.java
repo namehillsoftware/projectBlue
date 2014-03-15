@@ -115,20 +115,28 @@ public class JrPlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
-        if (mediaPlayer.getFile().getNextFile() != null) {
-        	mNextFilePlayer = new JrFilePlayer(mContext, mediaPlayer.getFile().getNextFile());
-        	BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
-        	if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
-        	mBackgroundFilePreparerThread = new Thread(backgroundFilePreparer);
-        	mBackgroundFilePreparerThread.setName("Thread to prepare next file");
-        	mBackgroundFilePreparerThread.setPriority(Thread.MIN_PRIORITY);
-        	mBackgroundFilePreparerThread.start();
-        }
+		JrFile nextFile = mediaPlayer.getFile().getNextFile();
+		if (nextFile == null && mIsRepeating)
+			nextFile = mPlaylist.get(0);
+		
+        if (nextFile != null)
+        	prepareNextFile(nextFile);
         
         // Throw events after asynchronous calls have started
         throwChangeEvent(mCurrentFilePlayer);
         for (OnNowPlayingStartListener listener : mOnNowPlayingStartListeners)
         	listener.onNowPlayingStart(this, mCurrentFilePlayer);
+	}
+	
+	private void prepareNextFile(JrFile nextFile) {
+		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
+		
+		BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
+    	if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
+    	mBackgroundFilePreparerThread = new Thread(backgroundFilePreparer);
+    	mBackgroundFilePreparerThread.setName("Thread to prepare next file");
+    	mBackgroundFilePreparerThread.setPriority(Thread.MIN_PRIORITY);
+    	mBackgroundFilePreparerThread.start();
 	}
 	
 	public void pause() {
@@ -153,6 +161,16 @@ public class JrPlaylistController implements
 	
 	public void setIsRepeating(boolean isRepeating) {
 		mIsRepeating = isRepeating;
+		
+		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying() && mCurrentFilePlayer.getFile().getNextFile() == null) {
+			if (mIsRepeating) {
+				prepareNextFile(mPlaylist.get(0));
+			} else {
+				if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
+				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+				mNextFilePlayer = null;
+			}
+		}
 	}
 	
 	public boolean isRepeating() {

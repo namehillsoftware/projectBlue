@@ -183,6 +183,11 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
+	public static void setIsRepeating(Context context, boolean isRepeating) {
+		JrSession.GetLibrary(context).setRepeating(isRepeating);
+		JrSession.SaveSession(context);
+	}
+	
 	/* End streamer intent helpers */
 	
 	/* Begin Events */
@@ -260,6 +265,7 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		mPlaylistController = new JrPlaylistController(thisContext, playlistString);
+		mPlaylistController.setIsRepeating(JrSession.GetLibrary(thisContext).isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
 		mPlaylistController.addOnNowPlayingStopListener(this);
 		mPlaylistController.addOnPlaylistStateControlErrorListener(this);

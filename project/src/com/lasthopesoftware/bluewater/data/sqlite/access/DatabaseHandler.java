@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 
-	private static int DATABASE_VERSION = 1;
+	private static int DATABASE_VERSION = 2;
 	private static final String DATABASE_NAME = "sessions_db";
 	
 	@SuppressWarnings("rawtypes")

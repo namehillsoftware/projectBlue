@@ -22,6 +22,8 @@ public class Library {
 	private String authKey;
 	@DatabaseField()
 	private boolean isLocalOnly = false;
+	@DatabaseField()
+	private boolean isRepeating = false;
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int nowPlayingId;
@@ -139,5 +141,17 @@ public class Library {
 	 */
 	public void setSelectedView(int selectedView) {
 		this.selectedView = selectedView;
+	}
+	/**
+	 * @return the isRepeating
+	 */
+	public boolean isRepeating() {
+		return isRepeating;
+	}
+	/**
+	 * @param isRepeating the isRepeating to set
+	 */
+	public void setRepeating(boolean isRepeating) {
+		this.isRepeating = isRepeating;
 	}
 }

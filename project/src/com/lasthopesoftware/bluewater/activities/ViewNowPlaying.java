@@ -179,6 +179,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_now_playing, menu);
+		setRepeatingIcon(menu.findItem(R.id.menu_repeat_playlist));
 		return true;
 	}
 
@@ -189,7 +190,8 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 			startActivity(new Intent(this, SelectServer.class));
 			return true;
 		case R.id.menu_repeat_playlist:
-			// TODO add repeat option to streaming
+			StreamingMusicService.setIsRepeating(this, !JrSession.GetLibrary(this).isRepeating());
+			setRepeatingIcon(item);
 			return true;
 		case R.id.menu_view_now_playing_files:
 			startActivity(new Intent(this, ViewNowPlayingFiles.class));
@@ -197,6 +199,10 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+	
+	private void setRepeatingIcon(MenuItem item) {
+		item.setIcon(JrSession.GetLibrary(this).isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
 	}
 	
 	private static class TogglePlayPauseListener implements OnClickListener {

@@ -54,7 +54,7 @@ public class ViewUtils {
 	}
 	
 	public static boolean displayNowPlayingMenu(Context context) {
-		return JrSession.GetLibrary(context).getNowPlayingId() > 0;
+		return JrSession.GetLibrary(context) != null && JrSession.GetLibrary(context).getNowPlayingId() > 0;
 	}
 	
 	public static void CreateNowPlayingView(Context context) {
