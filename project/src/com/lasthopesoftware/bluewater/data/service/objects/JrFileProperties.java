@@ -135,4 +135,10 @@ public class JrFileProperties {
 		
 		return result;
 	}
+	
+	/* Utility string constants */
+	public static final String ARTIST = "Artist";
+	public static final String ALBUM = "Album";
+	public static final String DURATION = "Duration";
+	public static final String NAME = "Name";
 }

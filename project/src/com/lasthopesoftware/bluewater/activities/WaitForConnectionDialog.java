@@ -19,7 +19,7 @@ public class WaitForConnectionDialog {
 		if (_instance != null && _instance.isShowing()) return _instance;
 		
 		String title = context.getString(R.string.lbl_connection_lost_title);
-		String message = String.format(context.getString(R.string.lbl_waiting_for_connection), context.getString(R.string.app_name));
+		String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setTitle(title).setMessage(message).setCancelable(true);
 		builder.setNegativeButton("Cancel", new OnClickListener() {

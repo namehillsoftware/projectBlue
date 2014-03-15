@@ -38,7 +38,7 @@ public class JrFile extends JrObject {
 	public String getValue() {
 		if (super.getValue() == null) {
 			try {
-				setValue(mFileProperties.getProperty("Name"));
+				setValue(mFileProperties.getProperty(JrFileProperties.NAME));
 			} catch (IOException e) {
 				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			}
@@ -84,7 +84,7 @@ public class JrFile extends JrObject {
 	}
 	
 	public int getDuration() throws IOException {
-		String durationToParse = mFileProperties.getProperty("Duration");
+		String durationToParse = mFileProperties.getProperty(JrFileProperties.DURATION);
 		if (durationToParse != null && !durationToParse.isEmpty())
 			return (int) (Double.parseDouble(durationToParse) * 1000);
 		throw new IOException("Duration was not present in the song properties.");

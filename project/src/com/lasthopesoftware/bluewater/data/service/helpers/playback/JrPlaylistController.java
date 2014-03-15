@@ -11,6 +11,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
@@ -25,6 +26,7 @@ public class JrPlaylistController implements
 	OnJrFileCompleteListener
 {
 	private HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
+	private HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<JrFile> mPlaylist;
@@ -33,6 +35,7 @@ public class JrPlaylistController implements
 	private Context mContext;
 	private Thread mBackgroundFilePreparerThread;
 	private float mVolume = 1.0f;
+	private boolean mIsRepeating = false;
 	
 	public JrPlaylistController(Context context, String playlistString) {
 		this(context, JrFiles.deserializeFileStringList(playlistString));
@@ -121,8 +124,11 @@ public class JrPlaylistController implements
         	mBackgroundFilePreparerThread.setPriority(Thread.MIN_PRIORITY);
         	mBackgroundFilePreparerThread.start();
         }
-		
-		throwChangeEvent(mediaPlayer);
+        
+        // Throw events after asynchronous calls have started
+        throwChangeEvent(mCurrentFilePlayer);
+        for (OnNowPlayingStartListener listener : mOnNowPlayingStartListeners)
+        	listener.onNowPlayingStart(this, mCurrentFilePlayer);
 	}
 	
 	public void pause() {
@@ -143,6 +149,14 @@ public class JrPlaylistController implements
 	public void setVolume(float volume) {
 		mVolume = volume;
 		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.setVolume(mVolume);
+	}
+	
+	public void setIsRepeating(boolean isRepeating) {
+		mIsRepeating = isRepeating;
+	}
+	
+	public boolean isRepeating() {
+		return mIsRepeating;
 	}
 	
 	/* End playlist control */
@@ -218,6 +232,15 @@ public class JrPlaylistController implements
 	public void removeOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
 		if (mOnNowPlayingChangeListeners.contains(listener))
 			mOnNowPlayingChangeListeners.remove(listener);
+	}
+	
+	public void addOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
+		mOnNowPlayingStartListeners.add(listener);
+	}
+	
+	public void removeOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
+		if (mOnNowPlayingStartListeners.contains(listener))
+			mOnNowPlayingStartListeners.remove(listener);
 	}
 	
 	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {

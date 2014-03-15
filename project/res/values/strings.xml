@@ -34,7 +34,7 @@
     <string name="btn_browse_library">Browse Library</string>
     <string name="lbl_connection_lost">Your connection has been lost. Reconnect?</string>
     <string name="lbl_connection_lost_title">Connection Lost</string>
-    <string name="lbl_waiting_for_connection">The connection with the server has been lost. %1$s is attempting to reconnect.</string>
+    <string name="lbl_attempting_to_reconnect">The connection with the server has been lost. %1$s is attempting to reconnect.</string>
     <string name="btn_connecting">Connecting</string>
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
@@ -42,5 +42,7 @@
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_view_now_playing_files">Now Playing Files</string>
-
+    <string name="lbl_waiting_for_connection">Waiting for Connection</string>
+    <string name="lbl_click_to_cancel">Click here to cancel.</string>
+    <string name="title_svc_now_playing">Project Blue Water Now Playing</string>
 </resources>

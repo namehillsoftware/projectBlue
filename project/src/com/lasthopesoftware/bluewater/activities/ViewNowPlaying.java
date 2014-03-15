@@ -494,8 +494,6 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
 		setView(filePlayer);
-		mPause.setVisibility(View.VISIBLE);
-		mPlay.setVisibility(View.INVISIBLE);
 		
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
