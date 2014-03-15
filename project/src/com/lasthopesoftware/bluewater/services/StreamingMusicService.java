@@ -131,6 +131,21 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
+	public static void StreamMusic(Context context, int startFileKey) { 
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
+		context.startService(svcIntent);
+	}
+	
+	public static void StreamMusic(Context context, int startFileKey, int startPos) { 
+		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
+		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
+		svcIntent.putExtra(BAG_START_POS, startPos);
+		context.startService(svcIntent);
+	}
+	
 	public static void Play(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY);
 		context.startService(svcIntent);
@@ -138,13 +153,6 @@ public class StreamingMusicService extends Service implements
 	
 	public static void Pause(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PAUSE);
-		context.startService(svcIntent);
-	}
-	
-	public static void SeekToFile(Context context, int fileKey) { 
-		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
-		svcIntent.putExtra(BAG_FILE_KEY, fileKey);
-		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
