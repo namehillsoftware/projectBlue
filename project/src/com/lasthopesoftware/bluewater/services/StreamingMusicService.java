@@ -58,7 +58,6 @@ public class StreamingMusicService extends Service implements
 	//private final IBinder mBinder = 
 	private static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
 	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
-	private static final String ACTION_STOP = "com.lasthopesoftware.bluewater.ACTION_STOP";
 	private static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
 	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
 	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
@@ -319,14 +318,7 @@ public class StreamingMusicService extends Service implements
 		if (playlistString == null) return;
 		// If the playlist has changed, change that
 		if (!playlistString.equals(mPlaylistString)) {
-			mPlaylistString = playlistString;
-			
-			if (mPlaylistController != null) {
-				mPlaylistController.pause();
-				mPlaylistController.release();
-			}
-			
-			mPlaylistController = getInitializedPlaylistController(mPlaylistString);
+			initializePlaylist(mPlaylistString);
 			JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
 			JrSession.SaveSession(thisContext);
 		}
@@ -337,16 +329,27 @@ public class StreamingMusicService extends Service implements
 		builder.setContentTitle("Starting Music Streamer");
         startForeground(mId, builder.build());
         
-        mPlaylistController.seekTo(fileKey, filePos);
+        mPlaylistController.startAt(fileKey, filePos);
+	}
+		
+	private void initializePlaylist(String playlistString) {
+		mPlaylistString = playlistString;
+		
+		if (mPlaylistController != null) {
+			mPlaylistController.pause();
+			mPlaylistController.release();
+		}
+		
+		mPlaylistController = new JrPlaylistController(thisContext, playlistString);
+		mPlaylistController.addOnNowPlayingChangeListener(this);
+		mPlaylistController.addOnNowPlayingStopListener(this);
+		mPlaylistController.addOnPlaylistStateControlErrorListener(this);
 	}
 	
-	private JrPlaylistController getInitializedPlaylistController(String playlistString) {
-		JrPlaylistController playlistController = new JrPlaylistController(thisContext, playlistString);
-		playlistController.addOnNowPlayingChangeListener(this);
-		playlistController.addOnNowPlayingStopListener(this);
-		playlistController.addOnPlaylistStateControlErrorListener(this);
-		
-		return playlistController;
+
+	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
+		initializePlaylist(playlistString);
+		mPlaylistController.seekTo(fileKey, filePos);
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -414,15 +417,13 @@ public class StreamingMusicService extends Service implements
 			if (action.equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
 	        } else if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
-	        	mPlaylistController = getInitializedPlaylistController(intent.getStringExtra(BAG_PLAYLIST));
+	        	initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
 	        } else if (mPlaylistController != null) {
 	        	// These actions can only occur if mPlaylist and the PlayingFile are not null
 	        	if (action.equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
 		        } else if (action.equals(ACTION_PLAY) && mPlaylistController != null) {
 		    		startPlaylist(mPlaylistString, JrSession.GetLibrary(thisContext).getNowPlayingId(), JrSession.GetLibrary(thisContext).getNowPlayingProgress());
-		        } else if (action.equals(ACTION_STOP)) {
-		        	pausePlayback(true);
 		        }
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
