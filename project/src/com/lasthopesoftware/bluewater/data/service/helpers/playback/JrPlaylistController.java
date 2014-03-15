@@ -115,9 +115,17 @@ public class JrPlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
+		if (mBackgroundFilePreparerThread != null && mBackgroundFilePreparerThread.isAlive()) mBackgroundFilePreparerThread.interrupt();
+		
 		JrFile nextFile = mediaPlayer.getFile().getNextFile();
-		if (nextFile == null && mIsRepeating)
-			nextFile = mPlaylist.get(0);
+		if (nextFile == null) {
+			if (!mIsRepeating) {
+				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
+				mNextFilePlayer = null;
+			} else {
+				nextFile = mPlaylist.get(0);
+			}
+		}
 		
         if (nextFile != null)
         	prepareNextFile(nextFile);

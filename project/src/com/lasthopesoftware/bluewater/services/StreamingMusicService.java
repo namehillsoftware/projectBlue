@@ -426,7 +426,7 @@ public class StreamingMusicService extends Service implements
 		JrSession.GetLibrary(thisContext).setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		
-		mNotificationMgr.cancelAll();
+		stopNotification();
 		
 		mAudioManager.abandonAudioFocus(this);
 		// release the wifilock if we still have it
