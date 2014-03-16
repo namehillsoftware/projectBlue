@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
@@ -55,10 +56,6 @@ public class FileListAdapter extends BaseAdapter {
         textView.setText("Loading...");
         GetFileValueTask.getFileValue(position, file, (ListView)parent, textView);
         
-        final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
-        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-        	imgIsPlaying.setVisibility(View.VISIBLE);
-        
         final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
@@ -67,17 +64,30 @@ public class FileListAdapter extends BaseAdapter {
 			}
 		};
 		
-        StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
+		final OnNowPlayingStopListener onNowPlayingStop = new OnNowPlayingStopListener() {
+			
+			@Override
+			public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
+				imgIsPlaying.setVisibility(View.INVISIBLE);
+			}
+		};
+		
         returnView.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
 			
 			@Override
 			public void onViewDetachedFromWindow(View v) {
 				StreamingMusicService.removeOnStreamingStartListener(checkIfIsPlayingFileListener);
+				StreamingMusicService.removeOnStreamingStopListener(onNowPlayingStop);
 			}
 			
 			@Override
 			public void onViewAttachedToWindow(View v) {
+				final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
+		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey().equals(file.getKey()))
+		        	imgIsPlaying.setVisibility(View.VISIBLE);
+		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
+				StreamingMusicService.addOnStreamingStopListener(onNowPlayingStop);
 			}
 		});
         
