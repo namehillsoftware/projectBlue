@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnect
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -54,8 +55,10 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
-	OnNowPlayingStopListener, 
-	ISimpleTask.OnStartListener<String, Void, Boolean>{
+	OnNowPlayingStopListener,
+	OnNowPlayingStartListener,
+	ISimpleTask.OnStartListener<String, Void, Boolean>
+{
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
@@ -129,7 +132,7 @@ public class ViewNowPlaying extends Activity implements
 		
 		StreamingMusicService.addOnStreamingChangeListener(this);
 		StreamingMusicService.addOnStreamingStopListener(this);
-		StreamingMusicService.addOnStreamingChangeListener(this);
+		StreamingMusicService.addOnStreamingStartListener(this);
 		PollConnectionTask.Instance.get().addOnStartListener(this);
 		
 		/* Toggle play/pause */
@@ -242,6 +245,7 @@ public class ViewNowPlaying extends Activity implements
 		
 		if (mTrackerThread != null) mTrackerThread.interrupt();
 		StreamingMusicService.removeOnStreamingStartListener(this);
+		StreamingMusicService.removeOnStreamingChangeListener(this);
 		StreamingMusicService.removeOnStreamingStopListener(this);
 		PollConnectionTask.Instance.get().removeOnStartListener(this);
 	}
@@ -269,7 +273,7 @@ public class ViewNowPlaying extends Activity implements
 				
 		try {
 			@SuppressWarnings("rawtypes")
-			OnErrorListener onSimpleIoExceptionErrors = new OnErrorListener() {
+			final OnErrorListener onSimpleIoExceptionErrors = new OnErrorListener() {
 				
 				@Override
 				public boolean onError(ISimpleTask owner, Exception innerException) {
@@ -277,7 +281,7 @@ public class ViewNowPlaying extends Activity implements
 				}
 			};
 			
-			SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
+			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
 			getArtistTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
@@ -300,7 +304,7 @@ public class ViewNowPlaying extends Activity implements
 			getArtistTask.addOnErrorListener(onSimpleIoExceptionErrors);
 			getArtistTask.execute();
 			
-			SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
+			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
 			getTitleTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
@@ -323,7 +327,7 @@ public class ViewNowPlaying extends Activity implements
 			getTitleTask.addOnErrorListener(onSimpleIoExceptionErrors);
 			getTitleTask.execute();
 			
-			SimpleTask<Void, Void, String> getAlbumTask = new SimpleTask<Void, Void, String>();
+			final SimpleTask<Void, Void, String> getAlbumTask = new SimpleTask<Void, Void, String>();
 			getAlbumTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
@@ -358,7 +362,7 @@ public class ViewNowPlaying extends Activity implements
 			getAlbumTask.addOnErrorListener(onSimpleIoExceptionErrors);
 			getAlbumTask.execute();
 			
-			SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
+			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
 			getRatingsTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
 				
 				@Override
@@ -505,13 +509,19 @@ public class ViewNowPlaying extends Activity implements
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
 		setView(filePlayer);
-		
+	}
+	
+	@Override
+	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
 		mTrackerThread = new Thread(new ProgressTrackerThread(filePlayer, mHandler));
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
+		
+		mPlay.setVisibility(View.INVISIBLE);
+		mPause.setVisibility(View.VISIBLE);
 	}
 	
 	@Override

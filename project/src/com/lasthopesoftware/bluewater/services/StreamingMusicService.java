@@ -205,7 +205,7 @@ public class StreamingMusicService extends Service implements
 		mOnStreamingStopListeners.add(listener);
 	}
 		
-	public static void removeOnStreamingStartListener(OnNowPlayingChangeListener listener) {
+	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
 		synchronized(syncObject) {
 			if (mOnStreamingChangeListeners.contains(listener))
 				mOnStreamingChangeListeners.remove(listener);
