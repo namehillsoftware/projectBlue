@@ -18,11 +18,10 @@ public class WaitForConnectionDialog {
 	public synchronized static AlertDialog show(Context context) {
 		if (_instance != null && _instance.isShowing()) return _instance;
 		
-		String title = context.getString(R.string.lbl_connection_lost_title);
-		String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-		builder.setTitle(title).setMessage(message).setCancelable(true);
-		builder.setNegativeButton("Cancel", new OnClickListener() {
+		final String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
+		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setTitle(context.getText(R.string.lbl_connection_lost_title)).setMessage(message).setCancelable(true);
+		builder.setNegativeButton(context.getText(R.string.btn_cancel), new OnClickListener() {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
