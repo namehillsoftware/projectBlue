@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.activities.adapters;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
 import android.view.View;
@@ -13,10 +14,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
@@ -44,12 +41,9 @@ public class FileListAdapter extends BaseAdapter {
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		final ListView parentListView = (ListView)parent;
-		final int listPosition = position;		
-		final JrFile file = mFiles.get(position);
 		
 		// Layout parameters for the ExpandableListView
-		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+		final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
 	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		
         final TextView textView = new TextView(mContext);
@@ -63,26 +57,40 @@ public class FileListAdapter extends BaseAdapter {
         // Set the text starting position        
         textView.setPadding(20, 20, 20, 20);
         textView.setText("Loading...");
-        SimpleTask<String, Void, String> getFileNameTask = new SimpleTask<String, Void, String>();
-        getFileNameTask.addOnExecuteListener(new OnExecuteListener<String, Void, String>() {
-			
-			@Override
-			public void onExecute(ISimpleTask<String, Void, String> owner, String... params) throws Exception {
-				if ((listPosition < parentListView.getFirstVisiblePosition() - 10) || (listPosition > parentListView.getLastVisiblePosition() + 10)) return;
-				owner.setResult(file.getValue());
-			}
-		});
         
-        getFileNameTask.addOnCompleteListener(new OnCompleteListener<String, Void, String>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
-				textView.setText(result);
-			}
-		});
-        
-        getFileNameTask.execute();
+        GetFileValueTask.getFileValue(position, mFiles.get(position), (ListView)parent, textView);
                 
 		return textView;
+	}
+	
+	private static class GetFileValueTask extends AsyncTask<String, Void, String> {
+		private int mPosition;
+		private ListView mParentListView;
+		private TextView mTextView;
+		private JrFile mFile;
+		
+		public static GetFileValueTask getFileValue(int position, JrFile file, ListView parentListView, TextView textView) {
+			return (GetFileValueTask) (new GetFileValueTask(position, file, parentListView, textView)).execute();
+		}
+		
+		private GetFileValueTask(int position, JrFile file, ListView parentListView, TextView textView) {
+			mPosition = position;
+			mParentListView = parentListView;
+			mFile = file;
+			mTextView = textView;
+		}
+
+		@Override
+		protected String doInBackground(String... params) {
+			if ((mPosition < mParentListView.getFirstVisiblePosition() - 10) || (mPosition > mParentListView.getLastVisiblePosition() + 10)) return null;
+			return mFile.getValue();
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			if (result == null) return;
+			
+			mTextView.setText(result);
+		}
 	}
 }

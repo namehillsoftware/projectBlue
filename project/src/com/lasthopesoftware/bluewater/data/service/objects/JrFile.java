@@ -38,7 +38,7 @@ public class JrFile extends JrObject {
 	public String getValue() {
 		if (super.getValue() == null) {
 			try {
-				setValue(mFileProperties.getProperty(JrFileProperties.NAME));
+				super.setValue(mFileProperties.getProperty(JrFileProperties.NAME));
 			} catch (IOException e) {
 				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
 			}
