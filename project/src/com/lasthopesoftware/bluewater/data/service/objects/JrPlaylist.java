@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.annotation.SuppressLint;
+import android.util.SparseArray;
 
-@SuppressLint("UseSparseArrays")
 public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFilesContainer {
-	private HashMap<Integer, JrPlaylist> mSubItems;
+	private SparseArray<JrPlaylist> mSubItems;
 	private JrPlaylist mParent = null;
 	private String mPath;
 	private String mGroup;
@@ -36,12 +36,15 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 	
 	@Override
 	public ArrayList<JrPlaylist> getSubItems() {
-		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
-		return new ArrayList<JrPlaylist>(mSubItems.values());
+		if (mSubItems == null) mSubItems = new SparseArray<JrPlaylist>();
+		ArrayList<JrPlaylist> returnList = new ArrayList<JrPlaylist>(mSubItems.size());
+		for (int i = 0; i < mSubItems.size(); i++)
+			returnList.add(mSubItems.valueAt(i));
+		return returnList;
 	}
 	
 	public void addPlaylist(JrPlaylist playlist) {
-		if (mSubItems == null) mSubItems = new HashMap<Integer, JrPlaylist>();
+		if (mSubItems == null) mSubItems = new SparseArray<JrPlaylist>();
 		playlist.setParent(this);
 		mSubItems.put(playlist.getKey(), playlist);
 	}
@@ -87,7 +90,7 @@ public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFile
 	@Override
 	public int compareTo(JrPlaylist another) {
 		int result = this.getValue().compareTo(another.getValue());
-		if (result == 0) result = this.getKey().compareTo(another.getKey());
+		if (result == 0) result = this.getKey() - another.getKey();
 		return 0;
 	}
 }

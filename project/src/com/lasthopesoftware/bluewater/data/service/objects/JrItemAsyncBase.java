@@ -114,7 +114,7 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 	@Override
 	public int compareTo(T another) {
 		int result = this.getValue().compareTo(another.getValue());
-		if (result == 0) result = this.getKey().compareTo(another.getKey());
+		if (result == 0) result = this.getKey() - another.getKey();
 		return result;
 	}
 }

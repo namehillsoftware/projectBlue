@@ -26,7 +26,7 @@ public class JrFile extends JrObject {
 	}
 	
 	@Override
-	public void setKey(Integer key) {
+	public void setKey(int key) {
 		super.setKey(key);
 		mFileProperties = new JrFileProperties(key);
 	}

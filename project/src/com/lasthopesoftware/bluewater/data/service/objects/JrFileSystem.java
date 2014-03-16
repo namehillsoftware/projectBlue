@@ -97,7 +97,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	
 							@Override
 							public int compare(IJrItem<?> lhs, IJrItem<?> rhs) {
-								return lhs.getKey().compareTo(rhs.getKey());
+								return lhs.getKey() - rhs.getKey();
 							}
 						});
 						

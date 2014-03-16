@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
 public abstract class JrObject {
-	private Integer mKey;
+	private int mKey;
 	private String mValue;
 	
 	public JrObject(int key, String value) {
@@ -10,7 +10,7 @@ public abstract class JrObject {
 	}
 	
 	public JrObject(String value) {
-		this.setKey(null);
+		this.setKey(-1);
 		this.setValue(value);
 	}
 	
@@ -20,14 +20,14 @@ public abstract class JrObject {
 	/**
 	 * @return the mKey
 	 */
-	public Integer getKey() {
+	public int getKey() {
 		return mKey;
 	}
 
 	/**
 	 * @param mKey the mKey to set
 	 */
-	public void setKey(Integer mKey) {
+	public void setKey(int mKey) {
 		this.mKey = mKey;
 	}
 

@@ -353,7 +353,7 @@ public class ViewNowPlaying extends Activity implements
 						
 						getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 						
-						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? playingFile.getKey().toString() : result, playingFile.getKey().toString());
+						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? String.valueOf(playingFile.getKey()) : result, String.valueOf(playingFile.getKey()));
 					} catch (Exception e) {
 						LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 					}
