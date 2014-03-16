@@ -40,7 +40,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         this.setTitle(R.string.title_view_now_playing_files);
         
         final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylistController().getPlaylist().size() > 0 ? new ArrayList<JrFile>(StreamingMusicService.getPlaylistController().getPlaylist()) : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
-        FileListAdapter fileListAdapter = new FileListAdapter(mContext, playlist);
+        FileListAdapter fileListAdapter = new FileListAdapter(playlist);
         fileListView.setAdapter(fileListAdapter);
         fileListView.setOnItemClickListener(new OnItemClickListener() {
 

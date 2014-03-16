@@ -4,12 +4,9 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.text.TextUtils.TruncateAt;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -20,11 +17,9 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
-	private Context mContext; 
 	
-	public FileListAdapter(Context context, ArrayList<JrFile> files) {
+	public FileListAdapter(ArrayList<JrFile> files) {
 		mFiles = files;
-		mContext = context;
 	}
 	
 	@Override

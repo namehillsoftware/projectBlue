@@ -86,7 +86,7 @@ public class ViewFiles extends FragmentActivity {
 				if (result == null) return;
 				
 				ArrayList<JrFile> innerResult =  (ArrayList<JrFile>) result;
-				FileListAdapter fileListAdapter = new FileListAdapter(mContext, innerResult);
+				FileListAdapter fileListAdapter = new FileListAdapter(innerResult);
 		    			    	
 		    	fileListView.setOnItemClickListener(new ClickFileListener(((IJrFilesContainer)mItem).getJrFiles()));
 		    	fileListView.setAdapter(fileListAdapter);
