@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.activities;
+package com.lasthopesoftware.bluewater.activities.common;
 
 import android.app.AlertDialog;
 import android.content.Context;
