@@ -6,13 +6,16 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.text.TextUtils.TruncateAt;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 public class FileListAdapter extends BaseAdapter {
@@ -41,26 +44,15 @@ public class FileListAdapter extends BaseAdapter {
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		
-		// Layout parameters for the ExpandableListView
-		final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		
-        final TextView textView = new TextView(mContext);
-        textView.setTextAppearance(mContext, android.R.style.TextAppearance_Large);
-        textView.setLayoutParams(lp);
-        // Center the text vertically
-        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-        textView.setEllipsize(TruncateAt.END);
-        textView.setSingleLine();
+	
+		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
+		final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
         textView.setMarqueeRepeatLimit(1);
-        // Set the text starting position        
-        textView.setPadding(20, 20, 20, 20);
         textView.setText("Loading...");
-        
         GetFileValueTask.getFileValue(position, mFiles.get(position), (ListView)parent, textView);
                 
-		return textView;
+		return returnView;
 	}
 	
 	private static class GetFileValueTask extends AsyncTask<String, Void, String> {
