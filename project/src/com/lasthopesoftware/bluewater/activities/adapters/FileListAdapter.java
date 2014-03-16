@@ -6,14 +6,20 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class FileListAdapter extends BaseAdapter {
 	private ArrayList<JrFile> mFiles;
@@ -41,12 +47,40 @@ public class FileListAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 	
 		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
-		final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
+		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
+		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
+		final ImageView imgIsPlaying = (ImageView) returnView.findViewById(R.id.imgIsPlaying);
+		final JrFile file = mFiles.get(position);
         textView.setMarqueeRepeatLimit(1);
         textView.setText("Loading...");
-        GetFileValueTask.getFileValue(position, mFiles.get(position), (ListView)parent, textView);
-                
+        GetFileValueTask.getFileValue(position, file, (ListView)parent, textView);
+        
+        final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
+        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
+        	imgIsPlaying.setVisibility(View.VISIBLE);
+        
+        final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
+			
+			@Override
+			public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
+				imgIsPlaying.setVisibility(filePlayer.getFile().getKey() == file.getKey() ? View.VISIBLE : View.INVISIBLE);
+			}
+		};
+		
+        StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
+        returnView.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
+			
+			@Override
+			public void onViewDetachedFromWindow(View v) {
+				StreamingMusicService.removeOnStreamingStartListener(checkIfIsPlayingFileListener);
+			}
+			
+			@Override
+			public void onViewAttachedToWindow(View v) {
+				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
+			}
+		});
+        
 		return returnView;
 	}
 	
