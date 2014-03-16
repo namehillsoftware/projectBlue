@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.util.ArrayList;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -22,8 +21,6 @@ import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class ViewNowPlayingFiles extends FragmentActivity {
-
-	private Context mContext;
 	
 	private ProgressBar pbLoading;
 	private ListView fileListView;
@@ -31,7 +28,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = this;
+        
         getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         fileListView = (ListView)findViewById(R.id.lvFilelist);

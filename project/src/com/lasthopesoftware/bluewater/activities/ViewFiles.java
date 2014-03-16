@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -38,7 +37,6 @@ public class ViewFiles extends FragmentActivity {
 	
 	private int mItemId;
 	private IJrItem<?> mItem;
-	private Context mContext;
 	
 	private ProgressBar pbLoading;
 	private ListView fileListView;
@@ -46,7 +44,7 @@ public class ViewFiles extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = this;
+        
         getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         fileListView = (ListView)findViewById(R.id.lvFilelist);
