@@ -60,7 +60,7 @@ public class FileListAdapter extends BaseAdapter {
 			
 			@Override
 			public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
-				imgIsPlaying.setVisibility(filePlayer.getFile().getKey() == file.getKey() ? View.VISIBLE : View.INVISIBLE);
+				imgIsPlaying.setVisibility(filePlayer.getFile().getKey().equals(file.getKey()) ? View.VISIBLE : View.INVISIBLE);
 			}
 		};
 		
