@@ -45,4 +45,5 @@
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
     <string name="title_svc_now_playing">Project Blue Water Now Playing</string>
+    <string name="something_went_wrong">Something went wrong! Try reconnecting?</string>
 </resources>
