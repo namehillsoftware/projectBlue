@@ -53,14 +53,15 @@ public class JrPlaylistController implements
 	}
 	
 	public void seekTo(int fileKey, int startPos) {
-		// If the track is already playing, keep on playing
-		if (mCurrentFilePlayer != null && mCurrentFilePlayer.getFile().getKey() == fileKey) {
-			if (!mCurrentFilePlayer.isMediaPlayerCreated()) mCurrentFilePlayer.initMediaPlayer();
-			return;
-		}
 		
-		// stop any playback that is in action
 		if (mCurrentFilePlayer != null) {
+			// If the track is already playing, keep on playing
+			if (mCurrentFilePlayer.getFile().getKey() == fileKey) {
+				if (!mCurrentFilePlayer.isMediaPlayerCreated()) mCurrentFilePlayer.initMediaPlayer();
+				return;
+			}
+			
+			// stop any playback that is in action
 			if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.stop();
 			
 			throwStopEvent(mCurrentFilePlayer);
@@ -88,7 +89,7 @@ public class JrPlaylistController implements
 	
 	public void startAt(int fileKey, int startPos) {
 		seekTo(fileKey, startPos);
-		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying()) return;
+		if (mCurrentFilePlayer == null || mCurrentFilePlayer.isPlaying()) return;
 		if (!mCurrentFilePlayer.isPrepared()) mCurrentFilePlayer.prepareMediaPlayer(); // prepare async to not block main thread
 		else mCurrentFilePlayer.start();
 	}
