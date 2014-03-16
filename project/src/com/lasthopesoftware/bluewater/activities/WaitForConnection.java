@@ -20,7 +20,7 @@ public class WaitForConnection extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_select_server);
+		setContentView(R.layout.activity_wait_for_connection);
 		
 		ListView serverList = (ListView) findViewById(R.id.lvServerList);
 		
@@ -36,18 +36,4 @@ public class WaitForConnection extends Activity {
 			}
 		});
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
-		menu.findItem(R.id.menu_connection_settings).setVisible(false);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return ViewUtils.handleMenuClicks(this, item);
-	}
-
 }

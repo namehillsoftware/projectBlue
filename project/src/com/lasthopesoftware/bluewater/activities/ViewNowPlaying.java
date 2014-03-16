@@ -52,7 +52,10 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListener, OnNowPlayingStopListener, ISimpleTask.OnStartListener<String, Void, Boolean> {
+public class ViewNowPlaying extends Activity implements 
+	OnNowPlayingChangeListener, 
+	OnNowPlayingStopListener, 
+	ISimpleTask.OnStartListener<String, Void, Boolean>{
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
@@ -124,8 +127,9 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
 		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
 		
-		StreamingMusicService.AddOnStreamingStartListener(this);
-		StreamingMusicService.AddOnStreamingStopListener(this);
+		StreamingMusicService.addOnStreamingChangeListener(this);
+		StreamingMusicService.addOnStreamingStopListener(this);
+		StreamingMusicService.addOnStreamingChangeListener(this);
 		PollConnectionTask.Instance.get().addOnStartListener(this);
 		
 		/* Toggle play/pause */
@@ -138,7 +142,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				StreamingMusicService.Next(v.getContext());
+				StreamingMusicService.next(v.getContext());
 			}
 		});
 		
@@ -147,7 +151,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				StreamingMusicService.Previous(v.getContext());
+				StreamingMusicService.previous(v.getContext());
 			}
 		});
 		
@@ -155,7 +159,7 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		
 		if (StreamingMusicService.getPlaylistController() == null) {
 			if (library.getNowPlayingId() <= 0) return;
-			StreamingMusicService.InitializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+			StreamingMusicService.initializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
 			return;
 		}
 		
@@ -214,17 +218,17 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 			
 			if (StreamingMusicService.getPlaylistController() != null) {
 				if (StreamingMusicService.getPlaylistController().isPlaying()) {
-					StreamingMusicService.Pause(v.getContext());
+					StreamingMusicService.pause(v.getContext());
 					return;
 				}
 				
 				if (StreamingMusicService.getPlaylistController().isPrepared()) {
-					StreamingMusicService.Play(v.getContext());
+					StreamingMusicService.play(v.getContext());
 					return;
 				}
 			}
 			Library library = JrSession.GetLibrary(v.getContext());
-			StreamingMusicService.StreamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+			StreamingMusicService.streamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
 		}
 	}
 	
@@ -237,8 +241,8 @@ public class ViewNowPlaying extends Activity implements OnNowPlayingChangeListen
 		}
 		
 		if (mTrackerThread != null) mTrackerThread.interrupt();
-		StreamingMusicService.RemoveOnStreamingStartListener(this);
-		StreamingMusicService.RemoveOnStreamingStopListener(this);
+		StreamingMusicService.removeOnStreamingStartListener(this);
+		StreamingMusicService.removeOnStreamingStopListener(this);
 		PollConnectionTask.Instance.get().removeOnStartListener(this);
 	}
 	

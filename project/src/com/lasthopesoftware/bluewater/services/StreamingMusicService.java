@@ -88,23 +88,24 @@ public class StreamingMusicService extends Service implements
 	private static Object syncObject = new Object();
 	
 	private static HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
+	private static HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
 	/* Begin streamer intent helpers */
-	public static void InitializePlaylist(Context context, String serializedFileList) {
+	public static void initializePlaylist(Context context, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
-	public static void InitializePlaylist(Context context, int startFileKey, String serializedFileList) {
+	public static void initializePlaylist(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
-	public static void InitializePlaylist(Context context, int startFileKey, int startPos, String serializedFileList) {
+	public static void initializePlaylist(Context context, int startFileKey, int startPos, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -112,14 +113,14 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void StreamMusic(Context context, String serializedFileList) {
+	public static void streamMusic(Context context, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void StreamMusic(Context context, int startFileKey, String serializedFileList) {
+	public static void streamMusic(Context context, int startFileKey, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -127,7 +128,7 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void StreamMusic(Context context, int startFileKey, int startPos, String serializedFileList) {
+	public static void streamMusic(Context context, int startFileKey, int startPos, String serializedFileList) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -136,14 +137,14 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void StreamMusic(Context context, int startFileKey) { 
+	public static void streamMusic(Context context, int startFileKey) { 
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
-	public static void StreamMusic(Context context, int startFileKey, int startPos) { 
+	public static void streamMusic(Context context, int startFileKey, int startPos) { 
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
@@ -151,17 +152,17 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void Play(Context context) {
+	public static void play(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PLAY);
 		context.startService(svcIntent);
 	}
 	
-	public static void Pause(Context context) {
+	public static void pause(Context context) {
 		Intent svcIntent = new Intent(StreamingMusicService.ACTION_PAUSE);
 		context.startService(svcIntent);
 	}
 	
-	public static void Next(Context context) {
+	public static void next(Context context) {
 		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
 		if (currentFilePlayer == null) return;
 		JrFile nextFile = currentFilePlayer.getFile().getNextFile();
@@ -172,7 +173,7 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void Previous(Context context) {
+	public static void previous(Context context) {
 		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
 		if (currentFilePlayer == null) return;
 		JrFile previousFile = currentFilePlayer.getFile().getPreviousFile();
@@ -192,22 +193,33 @@ public class StreamingMusicService extends Service implements
 	/* End streamer intent helpers */
 	
 	/* Begin Events */
-	public static void AddOnStreamingStartListener(OnNowPlayingChangeListener listener) {
+	public static void addOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
 		mOnStreamingChangeListeners.add(listener);
 	}
-	
-	public static void AddOnStreamingStopListener(OnNowPlayingStopListener listener) {
-		mOnStreamingStopListeners.add(listener);
+
+	public static void addOnStreamingStartListener(OnNowPlayingStartListener listener) {
+		mOnStreamingStartListeners.add(listener);
 	}
 	
-	public static void RemoveOnStreamingStartListener(OnNowPlayingChangeListener listener) {
+	public static void addOnStreamingStopListener(OnNowPlayingStopListener listener) {
+		mOnStreamingStopListeners.add(listener);
+	}
+		
+	public static void removeOnStreamingStartListener(OnNowPlayingChangeListener listener) {
 		synchronized(syncObject) {
 			if (mOnStreamingChangeListeners.contains(listener))
 				mOnStreamingChangeListeners.remove(listener);
 		}
 	}
+
+	public static void removeOnStreamingStartListener(OnNowPlayingStartListener listener) {
+		synchronized(syncObject) {
+			if (mOnStreamingStartListeners.contains(listener))
+				mOnStreamingStartListeners.remove(listener);
+		}
+	}
 	
-	public static void RemoveOnStreamingStopListener(OnNowPlayingStopListener listener) {
+	public static void removeOnStreamingStopListener(OnNowPlayingStopListener listener) {
 		synchronized(syncObject) {
 			if (mOnStreamingStopListeners.contains(listener))
 				mOnStreamingStopListeners.remove(listener);
@@ -218,6 +230,13 @@ public class StreamingMusicService extends Service implements
 		synchronized(syncObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
 				onChangeListener.onNowPlayingChange(controller, filePlayer);
+		}
+	}
+
+	private void throwStartEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
+		synchronized(syncObject) {
+			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
+				onStartListener.onNowPlayingStart(controller, filePlayer);
 		}
 	}
 	
@@ -314,7 +333,7 @@ public class StreamingMusicService extends Service implements
 				if (result == Boolean.FALSE) return;
 				Library library = JrSession.GetLibrary(thisContext);
 				if (library != null)
-					StreamMusic(thisContext, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());							
+					streamMusic(thisContext, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());							
 			}
 		});
 		
@@ -479,7 +498,7 @@ public class StreamingMusicService extends Service implements
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(thisContext);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
-				builder.setContentTitle(getText(R.string.title_svc_now_playing));
+				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(result == null ? "Error getting file properties." : result);
 				builder.setContentIntent(pi);
 				mNotificationMgr.notify(mId, builder.build());
@@ -537,6 +556,8 @@ public class StreamingMusicService extends Service implements
 			}
 		});
 		getBtPropertiesTask.execute();
+		
+		throwStartEvent(controller, filePlayer);
 	}
 	
 	@Override

@@ -44,9 +44,9 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				if (StreamingMusicService.getPlaylistController().getPlaylist().size() > 0)
-					StreamingMusicService.StreamMusic(view.getContext(), playlist.get(position).getKey());
+					StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey());
 				else
-					StreamingMusicService.StreamMusic(view.getContext(), playlist.get(position).getKey(), JrSession.GetLibrary(view.getContext()).getSavedTracksString());
+					StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey(), JrSession.GetLibrary(view.getContext()).getSavedTracksString());
 			}
 		});
         fileListView.setVisibility(View.VISIBLE);
