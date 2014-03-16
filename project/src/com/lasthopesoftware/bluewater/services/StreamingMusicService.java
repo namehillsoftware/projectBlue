@@ -564,7 +564,10 @@ public class StreamingMusicService extends Service implements
 	public void onDestroy() {
 		JrSession.SaveSession(this);
 		stopNotification();
-		if (mPlaylistController != null) mPlaylistController.release();
+		if (mPlaylistController != null) {
+			mPlaylistController.release();
+			mPlaylistController = null;
+		}
 	}
 
 	/* End Event Handlers */
