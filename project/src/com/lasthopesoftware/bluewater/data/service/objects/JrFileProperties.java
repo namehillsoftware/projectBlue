@@ -24,12 +24,12 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 
 public class JrFileProperties {
-	private Integer mFileKey;
+	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String,String>>();
 	
-	public JrFileProperties(Integer fileKey) {
+	public JrFileProperties(int fileKey) {
 		
 		mFileKey = fileKey;
 		
