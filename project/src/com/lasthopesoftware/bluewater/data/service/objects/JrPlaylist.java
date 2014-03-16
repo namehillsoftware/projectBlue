@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
-import android.annotation.SuppressLint;
 import android.util.SparseArray;
 
 public class JrPlaylist extends JrObject implements IJrItem<JrPlaylist>, IJrFilesContainer {
