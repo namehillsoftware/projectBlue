@@ -269,7 +269,7 @@ public class StreamingMusicService extends Service implements
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
-		builder.setContentTitle("Starting Music Streamer");
+		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
         startForeground(mId, builder.build());
         
         mPlaylistController.startAt(fileKey, filePos);
