@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class ViewNowPlayingFiles extends FragmentActivity {
@@ -35,6 +36,11 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
         this.setTitle(R.string.title_view_now_playing_files);
+        
+        if(StreamingMusicService.getPlaylistController() == null) {
+        	Library library = JrSession.GetLibrary(this);
+        	StreamingMusicService.initializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+        }
         
         final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylistController().getPlaylist().size() > 0 ? new ArrayList<JrFile>(StreamingMusicService.getPlaylistController().getPlaylist()) : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
         FileListAdapter fileListAdapter = new FileListAdapter(playlist);
