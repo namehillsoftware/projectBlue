@@ -79,10 +79,12 @@ public class StreamingMusicService extends Service implements
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
 	private NotificationManager mNotificationMgr;
-	private static String mPlaylistString;
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
+	
+	// State dependent static variables
+	private static String mPlaylistString;
 	private static JrPlaylistController mPlaylistController;
 	
 	private static Object syncObject = new Object();
