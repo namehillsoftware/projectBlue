@@ -260,7 +260,7 @@ public class StreamingMusicService extends Service implements
 	private void startPlaylist(String playlistString, int fileKey, int filePos) {
 		if (playlistString == null) return;
 		// If the playlist has changed, change that
-		if (!playlistString.equals(mPlaylistString)) {
+		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
 			initializePlaylist(playlistString);
 		}
 		
@@ -563,11 +563,15 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public void onDestroy() {
 		JrSession.SaveSession(this);
+		
 		stopNotification();
+		
 		if (mPlaylistController != null) {
 			mPlaylistController.release();
 			mPlaylistController = null;
 		}
+		
+		mPlaylistString = null;
 	}
 
 	/* End Event Handlers */
