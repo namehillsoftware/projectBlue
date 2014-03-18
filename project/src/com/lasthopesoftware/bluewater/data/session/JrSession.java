@@ -44,8 +44,6 @@ public class JrSession {
 	private static Library library = null;
 
 	public static JrFileSystem JrFs;
-
-	private static boolean mActive = false;
 	
 	public static void SaveSession(Context context) {
 		SaveSession(context, null);
@@ -96,12 +94,13 @@ public class JrSession {
 	}
 
 	public static synchronized Library GetLibrary(Context context) {
-		if (library != null) return library;
+		if (library != null) {
+			if (JrFs == null && isActive()) JrFs = new JrFileSystem(library.getSelectedView());
+			return library;
+		}
 		
-		mActive = false;
 		library = new Library();
-		
-		
+				
 		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 		
 		if (ChosenLibrary < 0) return library;
@@ -133,11 +132,8 @@ public class JrSession {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		}
 		
-		if (library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode())) {
-			JrSession.JrFs = new JrFileSystem(library.getSelectedView());
-			mActive = true;
-		}
-		
+		if (isActive())
+			JrFs = new JrFileSystem(library.getSelectedView());
 		
 		Logger log = LoggerFactory.getLogger(JrSession.class);
 		log.info("Session started.");
@@ -186,7 +182,7 @@ public class JrSession {
 	}
 	
 	public static boolean isActive() {
-		return mActive;
+		return library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode());
 	}
 
 	private static boolean tryConnection(String accessCode) {
