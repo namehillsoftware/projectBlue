@@ -191,8 +191,8 @@ public class ViewNowPlaying extends Activity implements
 			mTrackerThread.start();
 			
 			setView(mFilePlayer.getFile());
-			mPlay.setVisibility(mFilePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
-			mPause.setVisibility(mFilePlayer.isPlaying() ? View.INVISIBLE : View.VISIBLE);
+			mPlay.setVisibility(mFilePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
+			mPause.setVisibility(mFilePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 			return;
 		}
 		
