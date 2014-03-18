@@ -48,11 +48,23 @@ public class JrPlaylistController implements
 	
 	/* Begin playlist control */
 	
+	/**
+	 * Seeks to the JrFile with the file key in the playlist and beginning of the file.
+	 * If a file in the playlist is already playing, it will begin playback.
+	 * @param fileKey The key of the file to seek to
+	 */
 	public void seekTo(int fileKey) {
 		seekTo(fileKey, 0);
 	}
 	
+	/**
+	 * Seeks to the file key in the playlist and the start position in that file.
+	 * If a file in the playlist is already playing, it will begin playback.
+	 * @param fileKey The key of the file to seek to
+	 * @param startPos The position in the file to start at
+	 */
 	public void seekTo(int fileKey, int startPos) {
+		boolean wasPlaying = false;
 		
 		if (mCurrentFilePlayer != null) {
 			// If the track is already playing, keep on playing
@@ -62,7 +74,10 @@ public class JrPlaylistController implements
 			}
 			
 			// stop any playback that is in action
-			if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.stop();
+			if (mCurrentFilePlayer.isPlaying()) {
+				wasPlaying = true;
+				mCurrentFilePlayer.stop();
+			}
 			
 			throwStopEvent(mCurrentFilePlayer);
 			
@@ -82,28 +97,47 @@ public class JrPlaylistController implements
 			filePlayer.initMediaPlayer();
 			filePlayer.seekTo(startPos < 0 ? filePlayer.getCurrentPosition() : startPos);
 			mCurrentFilePlayer = filePlayer;
+			if (wasPlaying) mCurrentFilePlayer.prepareMediaPlayer();
 			throwChangeEvent(mCurrentFilePlayer);
 			return;
 		}
 	}
 	
+	/**
+	 * Start playback of the playlist at the desired file key
+	 * @param fileKey The file key to start playback with
+	 */
+	public void startAt(int fileKey) {
+		startAt(fileKey, 0);
+	}
+	
+	/**
+	 * Start playback of the playlist at the desired file key and at the desired position in the file
+	 * @param fileKey The file key to start playback with
+	 * @param startPos The position in the file to start playback at
+	 */
 	public void startAt(int fileKey, int startPos) {
 		seekTo(fileKey, startPos);
 		if (mCurrentFilePlayer == null || mCurrentFilePlayer.isPlaying()) return;
 		if (!mCurrentFilePlayer.isPrepared()) mCurrentFilePlayer.prepareMediaPlayer(); // prepare async to not block main thread
-		else mCurrentFilePlayer.start();
+		else startFilePlayback(mCurrentFilePlayer);
 	}
 	
 	public boolean resume() {
 		if (mCurrentFilePlayer == null) {
 			if (mFileKey == -1) return false;
 			
-			seekTo(mFileKey);
+			startAt(mFileKey);
 			return true;
 		}
 		
 		if (!mCurrentFilePlayer.isMediaPlayerCreated()) {
 			mCurrentFilePlayer.initMediaPlayer();
+			mCurrentFilePlayer.prepareMediaPlayer();
+			return true;
+		}
+		
+		if (!mCurrentFilePlayer.isPrepared()) {
 			mCurrentFilePlayer.prepareMediaPlayer();
 			return true;
 		}
@@ -198,6 +232,10 @@ public class JrPlaylistController implements
 	
 	public List<JrFile> getPlaylist() {
 		return Collections.unmodifiableList(mPlaylist);
+	}
+	
+	public int getCurrentPosition() {
+		return mCurrentFilePlayer != null ? mPlaylist.indexOf(mCurrentFilePlayer.getFile()) : -1;
 	}
 
 	/* Event handlers */

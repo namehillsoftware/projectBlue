@@ -137,10 +137,27 @@ public class ViewNowPlaying extends Activity implements
 		StreamingMusicService.addOnStreamingStartListener(this);
 		PollConnectionTask.Instance.get().addOnStartListener(this);
 		
-		/* Toggle play/pause */
-		TogglePlayPauseListener togglePlayPauseListener = new TogglePlayPauseListener();
-		mPlay.setOnClickListener(togglePlayPauseListener);
-		mPause.setOnClickListener(togglePlayPauseListener);
+		mPlay.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (!mControlNowPlaying.isShown()) return;
+				StreamingMusicService.play(v.getContext());
+				mPlay.setVisibility(View.INVISIBLE);
+				mPause.setVisibility(View.VISIBLE);
+			}
+		});
+		
+		mPause.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (!mControlNowPlaying.isShown()) return;
+				StreamingMusicService.pause(v.getContext());
+				mPlay.setVisibility(View.VISIBLE);
+				mPause.setVisibility(View.INVISIBLE);
+			}
+		});
 
 		mNext.setOnClickListener(new View.OnClickListener() {
 
@@ -217,28 +234,6 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void setRepeatingIcon(MenuItem item) {
 		item.setIcon(mLibrary.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
-	}
-	
-	private static class TogglePlayPauseListener implements OnClickListener {
-
-		@Override
-		public void onClick(View v) {
-			if (!mControlNowPlaying.isShown()) return;
-			
-			if (StreamingMusicService.getPlaylistController() != null) {
-				if (StreamingMusicService.getPlaylistController().isPlaying()) {
-					StreamingMusicService.pause(v.getContext());
-					return;
-				}
-				
-				if (StreamingMusicService.getPlaylistController().isPrepared()) {
-					StreamingMusicService.play(v.getContext());
-					return;
-				}
-			}
-			Library library = JrSession.GetLibrary(v.getContext());
-			StreamingMusicService.streamMusic(v.getContext(), library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
-		}
 	}
 	
 	@Override
