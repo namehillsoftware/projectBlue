@@ -91,7 +91,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 			@Override
 			public void onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
 				synchronized(syncObject) {
-					if (mVisibleViews == null) {
+					if (mVisibleViews == null || mVisibleViews.size() == 0) {
 						List<IJrItem<?>> libraries = getSubItems();
 						mVisibleViews = new TreeSet<IJrItem<?>>(new Comparator<IJrItem<?>>() {
 	

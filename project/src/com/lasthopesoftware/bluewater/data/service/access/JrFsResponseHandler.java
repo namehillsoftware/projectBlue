@@ -15,11 +15,12 @@ public class JrFsResponseHandler<T extends JrObject> extends DefaultHandler {
 	private String currentValue;
 	private String currentKey;
 	
-	public List<T> items = new ArrayList<T>();
+	public List<T> items;
 	
 	private Class<T> newClass;
 	
 	public JrFsResponseHandler(Class<T> c) {
+		items = new ArrayList<T>();
 		newClass = c;
 	}
 	

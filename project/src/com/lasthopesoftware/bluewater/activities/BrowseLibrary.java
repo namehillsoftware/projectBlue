@@ -134,17 +134,19 @@ public class BrowseLibrary extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
+							
+							PollConnectionTask.Instance.get().startPolling();
+							
+							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+							
 							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 									if (result)
-										displayLibrary();
+										JrSession.JrFs.getSubItemsAsync();
 								}
 							});
-							PollConnectionTask.Instance.get().startPolling();
-							
-							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
 							break;
 						}
 					}
@@ -187,11 +189,12 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		ViewChildPagerAdapter viewChildPagerAdapter = mViewChildAdapterCache.get(library.getSelectedView());
 		if (viewChildPagerAdapter == null) {
-
+			
 			JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+					final OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> _this = this;
 					if (owner.getState() == SimpleTaskState.ERROR) {
 						for (Exception exception : owner.getExceptions()) {
 							if (exception instanceof IOException) {
@@ -200,7 +203,7 @@ public class BrowseLibrary extends FragmentActivity {
 									@Override
 									public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 										if (result)
-											displayLibrary();
+											JrSession.JrFs.getVisibleViewsAsync(_this);
 									}
 								});
 								PollConnectionTask.Instance.get().startPolling();

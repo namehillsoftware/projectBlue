@@ -68,7 +68,7 @@ public class CategoryFragment extends Fragment {
 							}
 						});
 						PollConnectionTask.Instance.get().startPolling();
-						
+						mContext.startActivity(mWaitForConnection);
 						break;
 					}
 					return;

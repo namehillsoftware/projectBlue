@@ -56,7 +56,12 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 			try {
 				// This will call the onCompletes if they are attached.
 				JrDataTask<List<T>> getNewSubItemsTask = getNewSubItemsTask();
-				mSubItems = new ArrayList<T>(getNewSubItemsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get());
+				List<T> result = getNewSubItemsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
+				
+				if (result != null)
+					mSubItems = new ArrayList<T>(result);
+				else
+					mSubItems = new ArrayList<T>();
 				
 				if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : getNewSubItemsTask.getExceptions()) {
