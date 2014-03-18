@@ -79,7 +79,7 @@ public class JrPlaylistController implements
 				mCurrentFilePlayer.stop();
 			}
 			
-			throwStopEvent(mCurrentFilePlayer);
+//			throwStopEvent(mCurrentFilePlayer);
 			
 			mCurrentFilePlayer.releaseMediaPlayer();
 			mCurrentFilePlayer = null;
