@@ -526,7 +526,7 @@ public class StreamingMusicService extends Service implements
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(result == null ? "Error getting file properties." : result);
 				builder.setContentIntent(pi);
-				mNotificationMgr.notify(mId, builder.build());
+				startForeground(mId, builder.build());
 			}
 		});
 		
