@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -40,7 +41,7 @@ public class ViewPlaylists extends FragmentActivity {
 	private ProgressBar pbLoading;
 	private ListView playlistView;
 
-	private Context mContext;
+	private Context thisContext;
 	
 	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> visibleViewsAsyncComplete;
 
@@ -48,7 +49,7 @@ public class ViewPlaylists extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_playlists);
-        mContext = this;
+        thisContext = this;
         getActionBar().setDisplayHomeAsUpEnabled(true);
         playlistView = (ListView)findViewById(R.id.lvPlaylist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
@@ -72,8 +73,10 @@ public class ViewPlaylists extends FragmentActivity {
 								JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 							}
 						});
+						
 						PollConnectionTask.Instance.get().startPolling();
 						
+						thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
 						break;
 					}
 					return;
@@ -98,7 +101,7 @@ public class ViewPlaylists extends FragmentActivity {
 	private void BuildPlaylistView() {
                 
         if (mPlaylist.getSubItems().size() > 0) {
-        	playlistView.setAdapter(new PlaylistAdapter(mContext, R.id.tvStandard, mPlaylist.getSubItems()));
+        	playlistView.setAdapter(new PlaylistAdapter(thisContext, R.id.tvStandard, mPlaylist.getSubItems()));
         	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
         	playlistView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
         } else {

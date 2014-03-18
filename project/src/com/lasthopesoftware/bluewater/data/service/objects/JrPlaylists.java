@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.util.SparseArray;
 
+import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.data.service.access.JrPlaylistResponse;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectListener;
@@ -46,8 +48,12 @@ public class JrPlaylists extends JrItemAsyncBase<JrPlaylist> implements IJrItem<
 	}
 	
 	private void denormalizeAndMap() {
-		mMappedPlaylists = new SparseArray<JrPlaylist>(getSubItems().size());
-		denormalizeAndMap(getSubItems());
+		try {
+			mMappedPlaylists = new SparseArray<JrPlaylist>(getSubItems().size());
+			denormalizeAndMap(getSubItems());
+		} catch (IOException io) {
+			LoggerFactory.getLogger(JrPlaylists.class).error(io.getMessage(), io);
+		}
 	}
 	
 	private void denormalizeAndMap(ArrayList<JrPlaylist> items) {

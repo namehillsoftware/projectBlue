@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
@@ -27,6 +28,7 @@ import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -65,9 +67,17 @@ public class BrowseLibrary extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 				
 		thisContext = this;
+		
+		Intent selectServer = new Intent(thisContext, SelectServer.class);
 		if (JrSession.GetLibrary(thisContext) == null || JrSession.GetLibrary(thisContext).getSelectedView() <= 0) {
-			Intent intent = new Intent(thisContext, SelectServer.class);
-			startActivity(intent);
+			Toast.makeText(thisContext, "Please select a valid server", Toast.LENGTH_LONG).show();
+			startActivity(selectServer);
+			return;
+		}
+		
+		if (!JrTestConnection.doTest(30000)) {
+			Toast.makeText(thisContext, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
+			startActivity(selectServer);
 			return;
 		}
 		
@@ -121,6 +131,26 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (exception instanceof IOException) {
+							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+								
+								@Override
+								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+									if (result)
+										displayLibrary();
+								}
+							});
+							PollConnectionTask.Instance.get().startPolling();
+							
+							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+							break;
+						}
+					}
+					return;
+				}
+				
 				if (result == null) return;
 				
 				final List<IJrItem<?>> _views = result;
@@ -174,8 +204,12 @@ public class BrowseLibrary extends FragmentActivity {
 									}
 								});
 								PollConnectionTask.Instance.get().startPolling();
+								
+								thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+								break;
 							}
 						}
+						return;
 					}
 					
 					if (result == null) return;

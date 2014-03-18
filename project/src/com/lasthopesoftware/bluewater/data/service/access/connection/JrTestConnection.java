@@ -35,7 +35,7 @@ public class JrTestConnection implements Callable<Boolean> {
 	    	
 	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
 		} catch (MalformedURLException e) {
-			LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
+			LoggerFactory.getLogger(JrTestConnection.class).warn(e.toString(), e);
 		} catch (FileNotFoundException f) {
 			LoggerFactory.getLogger(JrTestConnection.class).warn(f.getLocalizedMessage());
 			JrSession.accessDao.resetUrl();

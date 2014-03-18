@@ -22,8 +22,10 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
+import com.lasthopesoftware.bluewater.activities.WaitForConnection;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
@@ -44,6 +46,8 @@ public class CategoryFragment extends Fragment {
 	private RelativeLayout mLayout;
 	
 	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> mVisibleViewsComplete;
+	private Context mContext;
+	private Intent mWaitForConnection;
 	
     public CategoryFragment() {
     	super();
@@ -85,6 +89,9 @@ public class CategoryFragment extends Fragment {
     	mLayout = new RelativeLayout(getActivity());
     	mLayout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
+    	mContext = mLayout.getContext();
+    	mWaitForConnection = new Intent(mContext, WaitForConnection.class);
+    	
     	pbLoading = new ProgressBar(mLayout.getContext(), null, android.R.attr.progressBarStyleLarge);
     	RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -116,7 +123,7 @@ public class CategoryFragment extends Fragment {
 								}
 							});
 							PollConnectionTask.Instance.get().startPolling();
-							
+							mContext.startActivity(mWaitForConnection);
 							break;
 						}
 						return;
@@ -153,7 +160,7 @@ public class CategoryFragment extends Fragment {
 								}
 							});
 							PollConnectionTask.Instance.get().startPolling();
-							
+							mContext.startActivity(mWaitForConnection);
 							break;
 						}
 						return;
@@ -167,7 +174,12 @@ public class CategoryFragment extends Fragment {
 						public boolean onGroupClick(ExpandableListView parent, View v,
 								int groupPosition, long id) {
 							JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
-							if (selection.getSubItems().size() > 0) return false;
+							try {
+								if (selection.getSubItems().size() > 0) return false;
+							} catch (IOException e) {
+								LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+								return true;
+							}
 				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
@@ -212,22 +224,42 @@ public class CategoryFragment extends Fragment {
     	
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
-			return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
+			try {
+				return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
+			} catch (IOException e) {
+				 LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				 return null;
+			}
 		}
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
-			return ((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
+			try {
+				return ((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
+			} catch (IOException e) {
+				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				return 0;
+			}
 		}
 		
 		@Override
 		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-			return BrowseItemMenu.getView(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
+			try {
+				return BrowseItemMenu.getView(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
+			} catch (IOException e) {
+				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				return null;
+			}
 		}
 
 		@Override
 		public int getChildrenCount(int groupPosition) {
-			return mCategoryItems.get(groupPosition).getSubItems().size();
+			try {
+				return mCategoryItems.get(groupPosition).getSubItems().size();
+			} catch (IOException e) {
+				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				return 0;
+			}
 		}
 
 		@Override

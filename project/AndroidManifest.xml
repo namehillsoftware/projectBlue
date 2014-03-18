@@ -83,6 +83,12 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        
+        <activity
+            android:name="com.lasthopesoftware.bluewater.activities.WaitForConnection"
+            android:label="@string/title_activity_wait_for_connection"
+            android:launchMode="singleTop" >
+        </activity>
 
         <service
             android:name="com.lasthopesoftware.bluewater.services.StreamingMusicService"

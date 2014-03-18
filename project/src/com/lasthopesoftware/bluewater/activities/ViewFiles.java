@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -58,7 +59,7 @@ public class ViewFiles extends FragmentActivity {
         
         this.setTitle(this.getIntent().getStringExtra(VALUE));
         final JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
-        
+        final ViewFiles _this = this;
         filesContainer.setOnFilesCompleteListener(new IJrDataTask.OnCompleteListener<List<JrFile>>() {
 			
 			@Override
@@ -76,6 +77,8 @@ public class ViewFiles extends FragmentActivity {
 						});
 						PollConnectionTask.Instance.get().startPolling();
 						
+						_this.startActivity(new Intent(_this, WaitForConnection.class));
+						
 						break;
 					}
 					return;
@@ -83,8 +86,7 @@ public class ViewFiles extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				ArrayList<JrFile> innerResult =  (ArrayList<JrFile>) result;
-				FileListAdapter fileListAdapter = new FileListAdapter(innerResult);
+				FileListAdapter fileListAdapter = new FileListAdapter((ArrayList<JrFile>) result);
 		    			    	
 		    	fileListView.setOnItemClickListener(new ClickFileListener(((IJrFilesContainer)mItem).getJrFiles()));
 		    	fileListView.setAdapter(fileListAdapter);
