@@ -73,8 +73,7 @@ public class StreamingMusicService extends Service implements
 	/* Miscellaneous programming related string constants */
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
-	
-	
+		
 	private static int mId = 42;
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
@@ -82,6 +81,7 @@ public class StreamingMusicService extends Service implements
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
+	private Library mLibrary;
 	
 	// State dependent static variables
 	private static String mPlaylistString;
@@ -260,6 +260,7 @@ public class StreamingMusicService extends Service implements
 	public StreamingMusicService() {
 		super();
 		thisContext = this;
+		mLibrary = JrSession.GetLibrary(thisContext);
 	}
 	
 	private void startPlaylist(String playlistString, int fileKey, int filePos) {
@@ -281,7 +282,7 @@ public class StreamingMusicService extends Service implements
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
 		
-		JrSession.GetLibrary(thisContext).setSavedTracksString(mPlaylistString);
+		mLibrary.setSavedTracksString(mPlaylistString);
 		JrSession.SaveSession(thisContext);
 		
 		if (mPlaylistController != null) {
@@ -292,7 +293,7 @@ public class StreamingMusicService extends Service implements
 		synchronized(syncPlaylistControllerObject) {
 			mPlaylistController = new JrPlaylistController(thisContext, playlistString);
 		}
-		mPlaylistController.setIsRepeating(JrSession.GetLibrary(thisContext).isRepeating());
+		mPlaylistController.setIsRepeating(mLibrary.isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
 		mPlaylistController.addOnNowPlayingStopListener(this);
 		mPlaylistController.addOnPlaylistStateControlErrorListener(this);
@@ -338,7 +339,7 @@ public class StreamingMusicService extends Service implements
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 				mNotificationMgr.cancelAll();
 				if (result == Boolean.FALSE) return;
-				Library library = JrSession.GetLibrary(thisContext);
+				Library library = mLibrary;
 				if (library != null)
 					streamMusic(thisContext, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());							
 			}
@@ -377,13 +378,13 @@ public class StreamingMusicService extends Service implements
 	        	if (action.equals(ACTION_PAUSE)) {
 	        		pausePlayback(true);
 		        } else if (action.equals(ACTION_PLAY) && mPlaylistController != null) {
-		    		startPlaylist(mPlaylistString, JrSession.GetLibrary(thisContext).getNowPlayingId(), JrSession.GetLibrary(thisContext).getNowPlayingProgress());
+		    		startPlaylist(mPlaylistString, mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 		        }
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
 		} else if (!JrSession.isActive()) {
-			if (JrSession.GetLibrary(thisContext) != null) pausePlayback(true);
+			if (mLibrary != null) pausePlayback(true);
 		}
 		return START_NOT_STICKY;
 	}
@@ -414,14 +415,13 @@ public class StreamingMusicService extends Service implements
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-        	if (JrSession.GetLibrary(thisContext) != null && !JrSession.isActive()) return;
+        	if (mLibrary != null && !JrSession.isActive()) return;
         	
         	if (mPlaylistController != null) {
         		mPlaylistController.setVolume(1.0f);
         	        	
 	        	if (!mPlaylistController.isPlaying()) {
-	        		Library library = JrSession.GetLibrary(thisContext);
-	        		startPlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress());
+	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	        	}
         	}
         	
@@ -448,8 +448,8 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		JrSession.GetLibrary(thisContext).setNowPlayingId(filePlayer.getFile().getKey());
-		JrSession.GetLibrary(thisContext).setNowPlayingProgress(filePlayer.getCurrentPosition());
+		mLibrary.setNowPlayingId(filePlayer.getFile().getKey());
+		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		
 		stopNotification();
@@ -466,8 +466,8 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		JrSession.GetLibrary(thisContext).setNowPlayingId(filePlayer.getFile().getKey());
-		JrSession.GetLibrary(thisContext).setNowPlayingProgress(filePlayer.getCurrentPosition());
+		mLibrary.setNowPlayingId(filePlayer.getFile().getKey());
+		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		throwChangeEvent(controller, filePlayer);
 	}
