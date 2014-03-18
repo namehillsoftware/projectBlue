@@ -87,7 +87,8 @@ public class StreamingMusicService extends Service implements
 	private static String mPlaylistString;
 	private static JrPlaylistController mPlaylistController;
 	
-	private static Object syncObject = new Object();
+	private static Object syncHandlersObject = new Object();
+	private static Object syncPlaylistControllerObject = new Object();
 	
 	private static HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private static HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
@@ -208,42 +209,42 @@ public class StreamingMusicService extends Service implements
 	}
 		
 	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			if (mOnStreamingChangeListeners.contains(listener))
 				mOnStreamingChangeListeners.remove(listener);
 		}
 	}
 
 	public static void removeOnStreamingStartListener(OnNowPlayingStartListener listener) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			if (mOnStreamingStartListeners.contains(listener))
 				mOnStreamingStartListeners.remove(listener);
 		}
 	}
 	
 	public static void removeOnStreamingStopListener(OnNowPlayingStopListener listener) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			if (mOnStreamingStopListeners.contains(listener))
 				mOnStreamingStopListeners.remove(listener);
 		}
 	}
 	
 	private void throwChangeEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
 				onChangeListener.onNowPlayingChange(controller, filePlayer);
 		}
 	}
 
 	private void throwStartEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
 				onStartListener.onNowPlayingStart(controller, filePlayer);
 		}
 	}
 	
 	private void throwStopEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		synchronized(syncObject) {
+		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onNowPlayingStop(controller, filePlayer);
 		}
@@ -251,7 +252,9 @@ public class StreamingMusicService extends Service implements
 	/* End Events */
 		
 	public static JrPlaylistController getPlaylistController() {
-		return mPlaylistController;
+		synchronized(syncPlaylistControllerObject) {
+			return mPlaylistController;
+		}
 	}
 	
 	public StreamingMusicService() {
@@ -286,7 +289,9 @@ public class StreamingMusicService extends Service implements
 			mPlaylistController.release();
 		}
 		
-		mPlaylistController = new JrPlaylistController(thisContext, playlistString);
+		synchronized(syncPlaylistControllerObject) {
+			mPlaylistController = new JrPlaylistController(thisContext, playlistString);
+		}
 		mPlaylistController.setIsRepeating(JrSession.GetLibrary(thisContext).isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
 		mPlaylistController.addOnNowPlayingStopListener(this);

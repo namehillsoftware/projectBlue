@@ -35,24 +35,17 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
-        this.setTitle(R.string.title_view_now_playing_files);
+        this.setTitle(R.string.title_view_now_playing_files);     
         
-        if(StreamingMusicService.getPlaylistController() == null) {
-        	Library library = JrSession.GetLibrary(this);
-        	StreamingMusicService.initializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
-        }
-        
-        final ArrayList<JrFile> playlist = StreamingMusicService.getPlaylistController().getPlaylist().size() > 0 ? new ArrayList<JrFile>(StreamingMusicService.getPlaylistController().getPlaylist()) : JrFiles.deserializeFileStringList(JrSession.GetLibrary(this).getSavedTracksString());
-        FileListAdapter fileListAdapter = new FileListAdapter(playlist);
+        final Library library = JrSession.GetLibrary(this);
+        final ArrayList<JrFile> playlist = JrFiles.deserializeFileStringList(library.getSavedTracksString());
+        final FileListAdapter fileListAdapter = new FileListAdapter(playlist);
         fileListView.setAdapter(fileListAdapter);
         fileListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				if (StreamingMusicService.getPlaylistController().getPlaylist().size() > 0)
-					StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey());
-				else
-					StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey(), JrSession.GetLibrary(view.getContext()).getSavedTracksString());
+				StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey(), library.getSavedTracksString());
 			}
 		});
         fileListView.setVisibility(View.VISIBLE);
