@@ -79,12 +79,14 @@ public class ViewNowPlaying extends Activity implements
 	private static GetFileImage getFileImageTask;
 	
 	private JrFilePlayer mFilePlayer = null;
+	
+	private Library mLibrary;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		Library library = JrSession.GetLibrary(this);
+		mLibrary = JrSession.GetLibrary(this);
 		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);
@@ -160,22 +162,26 @@ public class ViewNowPlaying extends Activity implements
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		if (StreamingMusicService.getPlaylistController() == null) {
-			if (library.getNowPlayingId() <= 0) return;
-			StreamingMusicService.initializePlaylist(this, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+		// Get initial view state from playlist controller if it is active
+		if (StreamingMusicService.getPlaylistController() != null) {
+			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
+					
+			if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
+	
+			mTrackerThread = new Thread(new ProgressTrackerThread(mFilePlayer, mHandler));
+			mTrackerThread.setPriority(Thread.MIN_PRIORITY);
+			mTrackerThread.setName("Song Progress Tracker Thread");
+			mTrackerThread.start();
+			
+			setView(mFilePlayer.getFile());
+			mPlay.setVisibility(mFilePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+			mPause.setVisibility(mFilePlayer.isPlaying() ? View.INVISIBLE : View.VISIBLE);
 			return;
 		}
 		
-		mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
-				
-		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
-
-		mTrackerThread = new Thread(new ProgressTrackerThread(mFilePlayer, mHandler));
-		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
-		mTrackerThread.setName("Tracker Thread");
-		mTrackerThread.start();
-		
-		setView(mFilePlayer);
+		// otherwise get it from the session
+		setView(new JrFile(mLibrary.getNowPlayingId()));
+		mSongProgressBar.setProgress(mLibrary.getNowPlayingProgress());
 	}
 	
 	@Override
@@ -198,7 +204,7 @@ public class ViewNowPlaying extends Activity implements
 			startActivity(new Intent(this, SelectServer.class));
 			return true;
 		case R.id.menu_repeat_playlist:
-			StreamingMusicService.setIsRepeating(this, !JrSession.GetLibrary(this).isRepeating());
+			StreamingMusicService.setIsRepeating(this, !mLibrary.isRepeating());
 			setRepeatingIcon(item);
 			return true;
 		case R.id.menu_view_now_playing_files:
@@ -210,7 +216,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void setRepeatingIcon(MenuItem item) {
-		item.setIcon(JrSession.GetLibrary(this).isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+		item.setIcon(mLibrary.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
 	}
 	
 	private static class TogglePlayPauseListener implements OnClickListener {
@@ -267,9 +273,8 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setView(JrFilePlayer filePlayer) {
-		final JrFile playingFile = filePlayer.getFile();
-		final JrFilePlayer _filePlayer = filePlayer;
+	private void setView(JrFile file) {
+		final JrFile _file = file;
 				
 		try {
 			@SuppressWarnings("rawtypes")
@@ -286,7 +291,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					owner.setResult(playingFile.getProperty("Artist"));
+					owner.setResult(_file.getProperty("Artist"));
 				}
 			});
 			getArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -294,7 +299,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_filePlayer);
+						resetViewOnReconnect(_file);
 						return;
 					}
 					
@@ -309,7 +314,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					owner.setResult(playingFile.getValue());
+					owner.setResult(_file.getValue());
 				}
 			});
 			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -317,7 +322,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_filePlayer);
+						resetViewOnReconnect(_file);
 						return;
 					}
 					
@@ -332,8 +337,8 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					if (playingFile.getProperty("Album") != null)
-						owner.setResult(playingFile.getProperty("Artist") + ":" + playingFile.getProperty("Album"));
+					if (_file.getProperty("Album") != null)
+						owner.setResult(_file.getProperty("Artist") + ":" + _file.getProperty("Album"));
 				}
 			});
 			getAlbumTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -341,7 +346,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_filePlayer);
+						resetViewOnReconnect(_file);
 						return;
 					}
 					
@@ -353,7 +358,7 @@ public class ViewNowPlaying extends Activity implements
 						
 						getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
 						
-						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? String.valueOf(playingFile.getKey()) : result, String.valueOf(playingFile.getKey()));
+						getFileImageTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, result == null ? String.valueOf(_file.getKey()) : result, String.valueOf(_file.getKey()));
 					} catch (Exception e) {
 						LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 					}
@@ -368,8 +373,8 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 					owner.setResult((float) 0);
-					if (playingFile.getProperty("Rating") != null && !playingFile.getProperty("Rating").isEmpty())
-						owner.setResult(Float.valueOf(playingFile.getProperty("Rating")));
+					if (_file.getProperty("Rating") != null && !_file.getProperty("Rating").isEmpty())
+						owner.setResult(Float.valueOf(_file.getProperty("Rating")));
 				}
 			});
 			getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
@@ -377,7 +382,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_filePlayer);
+						resetViewOnReconnect(_file);
 						return;
 					}
 					
@@ -389,7 +394,7 @@ public class ViewNowPlaying extends Activity implements
 						@Override
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
-							playingFile.setProperty("Rating", String.valueOf(Math.round(rating)));
+							_file.setProperty("Rating", String.valueOf(Math.round(rating)));
 						}
 					});
 				}
@@ -398,15 +403,11 @@ public class ViewNowPlaying extends Activity implements
 			getRatingsTask.execute();
 			
 			
-			mSongProgressBar.setMax(filePlayer.getDuration());
+			mSongProgressBar.setMax(_file.getDuration());
 			
-			mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 		} catch (IOException ioE) {
-			resetViewOnReconnect(_filePlayer);
+			resetViewOnReconnect(_file);
 		}
-		
-		mPlay.setVisibility(!filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
-		mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 	}
 	
 	private boolean containsIoException(List<Exception> exceptions) {
@@ -416,13 +417,13 @@ public class ViewNowPlaying extends Activity implements
 		return false;
 	}
 	
-	private void resetViewOnReconnect(JrFilePlayer filePlayer) {
-		final JrFilePlayer _filePlayer = filePlayer;
+	private void resetViewOnReconnect(JrFile file) {
+		final JrFile _file = file;
 		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) setView(_filePlayer);
+				if (result == Boolean.TRUE) setView(_file);
 			}
 		});
 		WaitForConnectionDialog.show(this);
@@ -508,7 +509,7 @@ public class ViewNowPlaying extends Activity implements
 
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
-		setView(filePlayer);
+		setView(filePlayer.getFile());
 	}
 	
 	@Override
