@@ -119,7 +119,8 @@ public class CategoryFragment extends Fragment {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									((JrPlaylists) mCategory).getSubItemsAsync();
+									if (result)
+										((JrPlaylists) mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get().startPolling();
@@ -156,7 +157,8 @@ public class CategoryFragment extends Fragment {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									((JrItem)mCategory).getSubItemsAsync();
+									if (result)
+										((JrItem)mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get().startPolling();
@@ -279,28 +281,15 @@ public class CategoryFragment extends Fragment {
 
 		@Override
 		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
+			
+			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);			
 
-			AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-	        TextView textView = new TextView(mContext);
-	        textView.setTextAppearance(mContext, android.R.style.TextAppearance_Large);
-	        textView.setLayoutParams(lp);
-	        // Center the text vertically
-	        textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-//		        textView.setTextColor(getResources().getColor(marcyred));
-	        // Set the text starting position        
 	        textView.setPadding(64, 20, 20, 20);
-	        textView.setEllipsize(TruncateAt.END);
-	        textView.setSingleLine();
-	        textView.setMarqueeRepeatLimit(1);
-//	        textView.setPadding(20, 20, 20, 20);
 		    textView.setText(mCategoryItems.get(groupPosition).getValue());
-	        
-//		    if (getChildrenCount(groupPosition) < 1) {
-//		    	
-//		    }
-		    
-			return textView;
+
+		    return returnView;
 		}
 
 		@Override

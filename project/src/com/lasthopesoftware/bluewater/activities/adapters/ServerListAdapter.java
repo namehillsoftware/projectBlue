@@ -23,10 +23,10 @@ public class ServerListAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
+		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
 		
-		TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
+		final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
 		textView.setText(position == 0 ? "Add Server" : mLibraries.get(--position).getAccessCode());
 		
 		return returnView;
