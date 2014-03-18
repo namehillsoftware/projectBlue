@@ -505,6 +505,7 @@ public class ViewNowPlaying extends Activity implements
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
 		setView(filePlayer.getFile());
+		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 	}
 	
 	@Override

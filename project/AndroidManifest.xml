@@ -94,7 +94,7 @@
             android:name="com.lasthopesoftware.bluewater.services.StreamingMusicService"
             android:enabled="true"
             android:exported="false" >
-            <intent-filter>
+            <!--  <intent-filter>
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_PAUSE" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_PLAY" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_STOP" />
@@ -102,7 +102,7 @@
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION" />
                 <action android:name="com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST" />
-            </intent-filter>
+            </intent-filter>  -->
         </service>
 
         
