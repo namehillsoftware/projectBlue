@@ -20,6 +20,10 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class ViewNowPlayingFiles extends FragmentActivity {
 	
@@ -38,18 +42,37 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         this.setTitle(R.string.title_view_now_playing_files);     
         
         final Library library = JrSession.GetLibrary(this);
-        final ArrayList<JrFile> playlist = JrFiles.deserializeFileStringList(library.getSavedTracksString());
-        final FileListAdapter fileListAdapter = new FileListAdapter(playlist);
-        fileListView.setAdapter(fileListAdapter);
-        fileListView.setOnItemClickListener(new OnItemClickListener() {
-
+        
+        final SimpleTask<Void, Void, ArrayList<JrFile>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<JrFile>>();
+        
+        getFileStringTask.addOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<JrFile>>() {
+			
 			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				StreamingMusicService.streamMusic(view.getContext(), playlist.get(position).getKey(), library.getSavedTracksString());
+			public void onExecute(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, Void... params) throws Exception {
+				owner.setResult(JrFiles.deserializeFileStringList(library.getSavedTracksString()));
 			}
 		});
-        fileListView.setVisibility(View.VISIBLE);
-        pbLoading.setVisibility(View.INVISIBLE);
+        
+        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<JrFile>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, ArrayList<JrFile> result) {
+				final ArrayList<JrFile> _result = result;
+				final FileListAdapter fileListAdapter = new FileListAdapter(_result);
+		        fileListView.setAdapter(fileListAdapter);
+		        fileListView.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+						StreamingMusicService.streamMusic(view.getContext(), _result.get(position).getKey(), library.getSavedTracksString());
+					}
+				});
+		        fileListView.setVisibility(View.VISIBLE);
+		        pbLoading.setVisibility(View.INVISIBLE);
+			}
+		});
+        
+        getFileStringTask.execute();
 	}
 		
 	@Override
