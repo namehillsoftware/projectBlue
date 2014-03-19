@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -27,7 +28,7 @@ public class JrFileProperties {
 	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentSkipListMap<Integer, ConcurrentSkipListMap<String,String>>();
+	private static ConcurrentHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentHashMap<Integer, ConcurrentSkipListMap<String,String>>();
 	
 	public JrFileProperties(int fileKey) {
 		
