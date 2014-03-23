@@ -94,12 +94,12 @@ public class StreamingMusicService extends Service implements
 	// State dependent non-static variables
 	private static boolean mIsHwRegistered = false;
 	
-	private static Object syncHandlersObject = new Object();
-	private static Object syncPlaylistControllerObject = new Object();
+	private static final Object syncHandlersObject = new Object();
+	private static final Object syncPlaylistControllerObject = new Object();
 	
-	private static HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
-	private static HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
-	private static HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
+	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
+	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
 	private static Intent getNewSelfIntent(Context context, String action) {
 		Intent newIntent = new Intent(context, StreamingMusicService.class);
@@ -308,12 +308,11 @@ public class StreamingMusicService extends Service implements
 	private void pausePlayback(boolean isUserInterrupted) {
 		if (mPlaylistController != null) {
 			if (mPlaylistController.isPlaying()) {
-				if (isUserInterrupted) mAudioManager.abandonAudioFocus(this);
+				if (isUserInterrupted & mIsHwRegistered) unregisterHardwareListeners();
 				mPlaylistController.pause();
 			}
 		}
 		stopNotification();
-//		if (isUserInterrupted) stopSelfResult(mStartId);
 	}
 	
 	private void buildErrorNotification() {
@@ -496,8 +495,6 @@ public class StreamingMusicService extends Service implements
 		JrSession.SaveSession(thisContext);
 		
 		stopNotification();
-		
-		if (mIsHwRegistered) unregisterHardwareListeners();
 		
 		throwStopEvent(controller, filePlayer);
 	}
