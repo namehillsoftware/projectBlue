@@ -84,11 +84,15 @@ public class StreamingMusicService extends Service implements
 	private Context thisContext;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
+	private RemoteControlClient mRemoteControlClient;
 	private Library mLibrary;
 	
 	// State dependent static variables
 	private static String mPlaylistString;
 	private static JrPlaylistController mPlaylistController;
+	
+	// State dependent non-static variables
+	private static boolean mIsHwRegistered = false;
 	
 	private static Object syncHandlersObject = new Object();
 	private static Object syncPlaylistControllerObject = new Object();
@@ -175,29 +179,10 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	public static void next(Context context) {
-//		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
-//		if (currentFilePlayer == null) {
-//			Intent svcIntent = new Intent(StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
-//			String savedTracks = JrSession.GetLibrary(context).getSavedTracksString();
-//			svcIntent.putExtra(BAG_PLAYLIST, savedTracks);
-//			svcIntent.putExtra(BAG_FILE_KEY, savedTracks.get);
-//		}
-//		JrFile nextFile = currentFilePlayer.getFile().getNextFile();
-//		if (nextFile == null) return;
-//		Intent svcIntent = new Intent(currentFilePlayer.isPlaying() ? StreamingMusicService.ACTION_START : StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
-//		svcIntent.putExtra(BAG_FILE_KEY, nextFile.getKey());
-//		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(getNewSelfIntent(context, ACTION_NEXT));
 	}
 	
 	public static void previous(Context context) {
-//		JrFilePlayer currentFilePlayer = mPlaylistController.getCurrentFilePlayer();
-//		if (currentFilePlayer == null) return;
-//		JrFile previousFile = currentFilePlayer.getFile().getPreviousFile();
-//		if (previousFile == null) return;
-//		Intent svcIntent = new Intent(currentFilePlayer.isPlaying() ? StreamingMusicService.ACTION_START : StreamingMusicService.ACTION_INITIALIZE_PLAYLIST);
-//		svcIntent.putExtra(BAG_FILE_KEY, previousFile.getKey());
-//		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(getNewSelfIntent(context, ACTION_PREVIOUS));
 	}
 	
@@ -367,6 +352,46 @@ public class StreamingMusicService extends Service implements
 		mNotificationMgr.cancel(mId);
 	}
 	
+	private void registerHardwareListeners() {
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+		
+		mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
+        mWifiLock.acquire();
+        
+        // build the PendingIntent for the remote control client
+		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+		mediaButtonIntent.setComponent(mRemoteControlReceiver);
+		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(thisContext, 0, mediaButtonIntent, 0);
+		// create and register the remote control client
+		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
+		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+		mRemoteControlClient.setTransportControlFlags(
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+                RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+		
+		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
+		
+		mIsHwRegistered = true;
+	}
+	
+	private void unregisterHardwareListeners() {
+		mAudioManager.abandonAudioFocus(this);
+		if (mRemoteControlClient != null) mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
+		if (mRemoteControlReceiver != null) mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
+		// release the wifilock if we still have it
+		if (mWifiLock != null) {
+			if (mWifiLock.isHeld()) mWifiLock.release();
+			mWifiLock = null;
+		}
+		
+		mIsHwRegistered = false;
+	}
+	
 	/* Begin Event Handlers */
 	
 	/* (non-Javadoc)
@@ -433,7 +458,7 @@ public class StreamingMusicService extends Service implements
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-        	if (mLibrary != null && !JrSession.isActive()) return;
+        	if (!JrSession.isActive()) return;
         	
         	if (mPlaylistController != null) {
         		mPlaylistController.setVolume(1.0f);
@@ -472,12 +497,7 @@ public class StreamingMusicService extends Service implements
 		
 		stopNotification();
 		
-		mAudioManager.abandonAudioFocus(this);
-		// release the wifilock if we still have it
-		if (mWifiLock != null) {
-			if (mWifiLock.isHeld()) mWifiLock.release();
-			mWifiLock = null;
-		}
+		if (mIsHwRegistered) unregisterHardwareListeners();
 		
 		throwStopEvent(controller, filePlayer);
 	}
@@ -494,17 +514,13 @@ public class StreamingMusicService extends Service implements
 	@Override
 	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
 		final JrFile playingFile = filePlayer.getFile();
-		// Start playback immediately
-		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+		
+		if (!mIsHwRegistered) registerHardwareListeners();
 		
 		// Set the notification area
-		Intent viewIntent = new Intent(this, ViewNowPlaying.class);
+		final Intent viewIntent = new Intent(this, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
-        mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
-        mWifiLock.acquire();
 		
 		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>();
 		getNotificationPropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
@@ -550,25 +566,15 @@ public class StreamingMusicService extends Service implements
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
-				// build the PendingIntent for the remote control client
-				Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-				mediaButtonIntent.setComponent(mRemoteControlReceiver);
-				PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(thisContext, 0, mediaButtonIntent, 0);
-				// create and register the remote control client
-				RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
-				remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-				remoteControlClient.setTransportControlFlags(
-						RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-	                    RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-	                    RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-	                    RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-	                    RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-				MetadataEditor metaData = remoteControlClient.editMetadata(true);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));				
-				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
-				metaData.apply();
+				
+				if (mRemoteControlClient != null) {
+					final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));				
+					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
+					metaData.apply();
+				}
 				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
@@ -576,8 +582,6 @@ public class StreamingMusicService extends Service implements
 				pebbleIntent.putExtra("track", (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));
 			    
 			    sendBroadcast(pebbleIntent);
-				
-				mAudioManager.registerRemoteControlClient(remoteControlClient);
 			}
 		});
 		getBtPropertiesTask.execute();
@@ -595,6 +599,8 @@ public class StreamingMusicService extends Service implements
 			mPlaylistController.release();
 			mPlaylistController = null;
 		}
+		
+		if (mIsHwRegistered) unregisterHardwareListeners();
 		
 		mPlaylistString = null;
 	}

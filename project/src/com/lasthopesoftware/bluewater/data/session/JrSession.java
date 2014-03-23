@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.ClientProtocolException;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
@@ -76,8 +75,7 @@ public class JrSession {
 					handler.close();
 				}
 				
-				Logger log = LoggerFactory.getLogger(JrSession.class);
-				log.info("Session saved.");
+				LoggerFactory.getLogger(JrSession.class).debug("Session saved.");
 			}
 		});
 		if (onSaveComplete != null)
@@ -132,11 +130,10 @@ public class JrSession {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		}
 		
-		if (isActive())
+		if (isActive()) {
 			JrFs = new JrFileSystem(library.getSelectedView());
-		
-		Logger log = LoggerFactory.getLogger(JrSession.class);
-		log.info("Session started.");
+			LoggerFactory.getLogger(JrSession.class).debug("Session started.");
+		}
 		
 		return library;
 	}
