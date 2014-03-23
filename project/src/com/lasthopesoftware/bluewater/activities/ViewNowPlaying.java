@@ -525,6 +525,13 @@ public class ViewNowPlaying extends Activity implements
 	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer file) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
+		try {
+			mSongProgressBar.setMax(file.getDuration());
+			mSongProgressBar.setProgress(file.getCurrentPosition());
+		} catch (IOException e) {
+			LoggerFactory.getLogger(ViewNowPlaying.class).error(e.getMessage(), e);
+		}
+		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
 	}
