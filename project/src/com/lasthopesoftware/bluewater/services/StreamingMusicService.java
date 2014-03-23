@@ -509,7 +509,6 @@ public class StreamingMusicService extends Service implements
 		JrSession.SaveSession(thisContext);
 		throwChangeEvent(controller, filePlayer);
 	}
-	
 
 	@Override
 	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
