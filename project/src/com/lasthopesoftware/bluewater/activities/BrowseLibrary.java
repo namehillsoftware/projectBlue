@@ -40,6 +40,8 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 public class BrowseLibrary extends FragmentActivity {
 
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.activities.BrowseLibrary.SAVED_TAB_KEY";
+	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.activities.BrowseLibrary.SAVED_SCROLL_POS";
+	
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
 	 * fragments for each of the sections. We use a
@@ -221,7 +223,7 @@ public class BrowseLibrary extends FragmentActivity {
 					ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
 					viewChildPagerAdapter.setLibraryViews(result);
 					mViewChildAdapterCache.put(library.getSelectedView(), viewChildPagerAdapter);
-					
+
 					// Set up the ViewPager with the sections adapter.
 					setViewPagerAdapter(viewChildPagerAdapter);
 				}
@@ -269,13 +271,21 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
-		savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
+		
+		if (mViewPager != null) {
+			savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
+			savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
+		}
 	}
 	
 	@Override
 	public void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-//		mPlaylistId = savedInstanceState.getInt(KEY);
+		
+		if (mViewPager != null) {
+			mViewPager.setCurrentItem(savedInstanceState.getInt(SAVED_TAB_KEY));
+			mViewPager.setScrollY(savedInstanceState.getInt(SAVED_SCROLL_POS));
+		}
 	}
 
 	public ViewPager getViewPager() {
