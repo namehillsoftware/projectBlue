@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.playback;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -8,6 +7,14 @@ import java.util.Map;
 
 import org.slf4j.LoggerFactory;
 
+import android.content.Context;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
+import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
@@ -16,19 +23,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListe
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-
-import android.content.Context;
-import android.content.CursorLoader;
-import android.database.Cursor;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer.OnErrorListener;
-import android.media.MediaPlayer.OnPreparedListener;
-import android.net.Uri;
-import android.os.Environment;
-import android.os.PowerManager;
-import android.provider.MediaStore;
 
 public class JrFilePlayer implements
 	OnPreparedListener, 
