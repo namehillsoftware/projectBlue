@@ -34,7 +34,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewPlaylists extends FragmentActivity {
 
-	public static final String KEY = "com.lasthopesoftware.ViewPlaylist.key";
+	private static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewPlaylist.key";
 	private int mPlaylistId;
 	private JrPlaylist mPlaylist;
 

@@ -39,6 +39,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class BrowseLibrary extends FragmentActivity {
 
+	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.activities.BrowseLibrary.SAVED_TAB_KEY";
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
 	 * fragments for each of the sections. We use a
@@ -264,6 +265,18 @@ public class BrowseLibrary extends FragmentActivity {
         super.onConfigurationChanged(newConfig);
         if (mDrawerToggle != null) mDrawerToggle.onConfigurationChanged(newConfig);
     }
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		super.onSaveInstanceState(savedInstanceState);
+		savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
+	}
+	
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+//		mPlaylistId = savedInstanceState.getInt(KEY);
+	}
 
 	public ViewPager getViewPager() {
 		return mViewPager;
