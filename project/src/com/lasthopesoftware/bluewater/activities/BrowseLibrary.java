@@ -236,8 +236,7 @@ public class BrowseLibrary extends FragmentActivity {
 	
 	private void setViewPagerAdapter(ViewChildPagerAdapter viewChildPagerAdapter) {
 		mViewPager.setAdapter(viewChildPagerAdapter);
-		PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
-		tabs.setViewPager(mViewPager);
+		((PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews)).setViewPager(mViewPager);
 	}
 
 	@Override
