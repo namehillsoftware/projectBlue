@@ -404,6 +404,7 @@ public class StreamingMusicService extends Service implements
 		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
 		
 		if (intent != null) {
+			if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 			String action = intent.getAction(); 
