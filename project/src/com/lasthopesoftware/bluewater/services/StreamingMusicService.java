@@ -277,6 +277,18 @@ public class StreamingMusicService extends Service implements
         
         mPlaylistController.startAt(fileKey, filePos);
 	}
+	
+	private void restorePlaylistControllerFromStorage() {
+		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
+		
+		if (JrSession.isActive())
+			initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+	}
+	
+	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
+		initializePlaylist(playlistString);
+		mPlaylistController.seekTo(fileKey, filePos);
+	}
 		
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
@@ -297,12 +309,6 @@ public class StreamingMusicService extends Service implements
 		mPlaylistController.addOnNowPlayingStopListener(this);
 		mPlaylistController.addOnPlaylistStateControlErrorListener(this);
 		mPlaylistController.addOnNowPlayingStartListener(this);
-	}
-	
-
-	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
-		initializePlaylist(playlistString);
-		mPlaylistController.seekTo(fileKey, filePos);
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -417,18 +423,18 @@ public class StreamingMusicService extends Service implements
 	        	if (mPlaylistController == null || !mPlaylistController.resume())
 	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	        } else if (action.equals(ACTION_PREVIOUS)) {
-	        	if (mPlaylistController == null) initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
 	        	mPlaylistController.seekTo(mPlaylistController.getPlaylist().get(mPlaylistController.getCurrentPosition() - 1).getKey());	        	
 	        } else if (action.equals(ACTION_NEXT)) {
-	        	if (mPlaylistController == null) initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
 	        	mPlaylistController.seekTo(mPlaylistController.getPlaylist().get(mPlaylistController.getCurrentPosition() + 1).getKey());
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
-		} else {
-			if (mLibrary != null) pausePlayback(true);
+		} else if (mLibrary != null)  {
+			pausePlayback(true);
 		}
 		return START_NOT_STICKY;
 	}
