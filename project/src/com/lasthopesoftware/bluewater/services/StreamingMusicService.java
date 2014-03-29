@@ -403,8 +403,9 @@ public class StreamingMusicService extends Service implements
 		
 		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
 		
-		if (intent != null) {
-			if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
+		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
+		
+		if (intent != null && JrSession.isActive()) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 			String action = intent.getAction(); 
@@ -426,7 +427,7 @@ public class StreamingMusicService extends Service implements
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
 	        	PollConnectionTask.Instance.get().stopPolling();
 	        }
-		} else if (!JrSession.isActive()) {
+		} else {
 			if (mLibrary != null) pausePlayback(true);
 		}
 		return START_NOT_STICKY;
