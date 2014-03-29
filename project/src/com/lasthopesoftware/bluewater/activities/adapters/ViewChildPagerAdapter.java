@@ -18,30 +18,24 @@ import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
  */
 public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IJrItem<?>> mLibraryViews;
-	private ArrayList<CategoryFragment> fragments;
 	
 	public ViewChildPagerAdapter(FragmentManager fm) {
 		super(fm);
 		mLibraryViews = new ArrayList<IJrItem<?>>();
-		fragments = new ArrayList<CategoryFragment>();
 	}
 		
 	public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {
 		mLibraryViews = libraryViews;
-		fragments = new ArrayList<CategoryFragment>(libraryViews.size());
 	}
 
 	@Override
 	public Fragment getItem(int i) {
-		if (fragments.size() <= i) {
-			CategoryFragment fragment = new CategoryFragment();
-			Bundle args = new Bundle();
-			args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
-			fragment.setArguments(args);
-			fragments.add(fragment);
-		}
+		CategoryFragment fragment = new CategoryFragment();
+		Bundle args = new Bundle();
+		args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
+		fragment.setArguments(args);
 		
-		return fragments.get(i);
+		return fragment;
 	}
 
 	@Override

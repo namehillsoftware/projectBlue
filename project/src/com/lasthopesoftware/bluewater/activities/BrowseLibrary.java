@@ -12,7 +12,6 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -42,16 +41,6 @@ public class BrowseLibrary extends FragmentActivity {
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.activities.BrowseLibrary.SAVED_TAB_KEY";
 	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.activities.BrowseLibrary.SAVED_SCROLL_POS";
 	
-	/**
-	 * The {@link android.support.v4.view.PagerAdapter} that will provide
-	 * fragments for each of the sections. We use a
-	 * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
-	 * will keep every loaded fragment in memory. If this becomes too memory
-	 * intensive, it may be best to switch to a
-	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-	 */
-	private SparseArray<ViewChildPagerAdapter> mViewChildAdapterCache = new SparseArray<ViewChildPagerAdapter>();
-
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
@@ -189,49 +178,40 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		JrSession.JrFs.getSubItemsAsync();
 		
-		
-		ViewChildPagerAdapter viewChildPagerAdapter = mViewChildAdapterCache.get(library.getSelectedView());
-		if (viewChildPagerAdapter == null) {
+		JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
-			JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-					final OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> _this = this;
-					if (owner.getState() == SimpleTaskState.ERROR) {
-						for (Exception exception : owner.getExceptions()) {
-							if (exception instanceof IOException) {
-								PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
-									
-									@Override
-									public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-										if (result)
-											JrSession.JrFs.getVisibleViewsAsync(_this);
-									}
-								});
-								PollConnectionTask.Instance.get().startPolling();
+			@Override
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+				final OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> _this = this;
+				if (owner.getState() == SimpleTaskState.ERROR) {
+					for (Exception exception : owner.getExceptions()) {
+						if (exception instanceof IOException) {
+							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 								
-								thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
-								break;
-							}
+								@Override
+								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+									if (result)
+										JrSession.JrFs.getVisibleViewsAsync(_this);
+								}
+							});
+							PollConnectionTask.Instance.get().startPolling();
+							
+							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+							break;
 						}
-						return;
 					}
-					
-					if (result == null) return;
-					
-					ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
-					viewChildPagerAdapter.setLibraryViews(result);
-					mViewChildAdapterCache.put(library.getSelectedView(), viewChildPagerAdapter);
-
-					// Set up the ViewPager with the sections adapter.
-					setViewPagerAdapter(viewChildPagerAdapter);
+					return;
 				}
-			});
-			return;
-		}
-		
-		setViewPagerAdapter(viewChildPagerAdapter);
+				
+				if (result == null) return;
+				
+				ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
+				viewChildPagerAdapter.setLibraryViews(result);
+
+				// Set up the ViewPager with the sections adapter.
+				setViewPagerAdapter(viewChildPagerAdapter);
+			}
+		});
 	}
 	
 	private void setViewPagerAdapter(ViewChildPagerAdapter viewChildPagerAdapter) {
