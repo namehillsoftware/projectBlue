@@ -209,14 +209,10 @@ public class BrowseLibrary extends FragmentActivity {
 				viewChildPagerAdapter.setLibraryViews(result);
 
 				// Set up the ViewPager with the sections adapter.
-				setViewPagerAdapter(viewChildPagerAdapter);
+				mViewPager.setAdapter(viewChildPagerAdapter);
+				((PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews)).setViewPager(mViewPager);
 			}
 		});
-	}
-	
-	private void setViewPagerAdapter(ViewChildPagerAdapter viewChildPagerAdapter) {
-		mViewPager.setAdapter(viewChildPagerAdapter);
-		((PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews)).setViewPager(mViewPager);
 	}
 
 	@Override
