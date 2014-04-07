@@ -28,7 +28,6 @@ public class WaitForConnection extends Activity {
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 				if (result) finish();
 				else _this.startActivity(selectServerIntent);
-//				if (!result) _this.startActivity(selectServerIntent);
 			}
 		});
 		
