@@ -50,25 +50,23 @@ public class BrowseLibrary extends FragmentActivity {
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
 	
-	private BrowseLibrary thisContext;
+	private BrowseLibrary mBrowseLibrary = this;
 	
 	private CharSequence mOldTitle;
-
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-				
-		thisContext = this;
 		
-		Intent selectServer = new Intent(thisContext, SelectServer.class);
-		if (JrSession.GetLibrary(thisContext) == null || JrSession.GetLibrary(thisContext).getSelectedView() <= 0) {
-			Toast.makeText(thisContext, "Please select a valid server", Toast.LENGTH_LONG).show();
+		Intent selectServer = new Intent(mBrowseLibrary, SelectServer.class);
+		if (JrSession.GetLibrary(mBrowseLibrary) == null || JrSession.GetLibrary(mBrowseLibrary).getSelectedView() <= 0) {
+			Toast.makeText(mBrowseLibrary, "Please select a valid server", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
 			return;
 		}
 		
 		if (!JrTestConnection.doTest(30000)) {
-			Toast.makeText(thisContext, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
+			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
 			return;
 		}
@@ -117,7 +115,7 @@ public class BrowseLibrary extends FragmentActivity {
 	}
 
 	public void displayLibrary() {		
-		final Library library = JrSession.GetLibrary(thisContext);
+		final Library library = JrSession.GetLibrary(mBrowseLibrary);
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		JrSession.JrFs.setOnItemsCompleteListener(new IJrDataTask.OnCompleteListener<List<IJrItem<?>>>() {
 			
@@ -129,7 +127,7 @@ public class BrowseLibrary extends FragmentActivity {
 							
 							PollConnectionTask.Instance.get().startPolling();
 							
-							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							
 							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 								
@@ -150,7 +148,7 @@ public class BrowseLibrary extends FragmentActivity {
 				final List<IJrItem<?>> _views = result;
 				
 				for (IJrItem<?> item : _views) {
-					if (item.getKey() != JrSession.GetLibrary(thisContext).getSelectedView()) continue;
+					if (item.getKey() != JrSession.GetLibrary(mBrowseLibrary).getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
 					break;
@@ -168,7 +166,7 @@ public class BrowseLibrary extends FragmentActivity {
 						if (library.getSelectedView() == _views.get(position).getKey()) return;
 						
 						library.setSelectedView(_views.get(position).getKey());
-						JrSession.SaveSession(thisContext);
+						JrSession.SaveSession(mBrowseLibrary);
 						JrSession.JrFs.setVisibleViews(_views.get(position).getKey());
 						displayLibrary();
 					}
@@ -196,7 +194,7 @@ public class BrowseLibrary extends FragmentActivity {
 							});
 							PollConnectionTask.Instance.get().startPolling();
 							
-							thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
+							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							break;
 						}
 					}

@@ -41,7 +41,7 @@ public class ViewPlaylists extends FragmentActivity {
 	private ProgressBar pbLoading;
 	private ListView playlistView;
 
-	private Context thisContext;
+	private Context thisContext = this;
 	
 	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> visibleViewsAsyncComplete;
 
@@ -49,7 +49,7 @@ public class ViewPlaylists extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_playlists);
-        thisContext = this;
+
         getActionBar().setDisplayHomeAsUpEnabled(true);
         playlistView = (ListView)findViewById(R.id.lvPlaylist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
