@@ -215,10 +215,9 @@ public class JrFiles implements IJrItemFiles {
 			}	
 			if (i > offset) { 
 				newFile = new JrFile(intKey);
-				if (prevFile != null) {
-					newFile.setPreviousFile(prevFile);
+				if (prevFile != null)
 					prevFile.setNextFile(newFile);
-				}
+
 				files.add(newFile);
 				prevFile = newFile;
 			}

@@ -61,6 +61,7 @@ public class JrFile extends JrObject {
 	
 	public void setNextFile(JrFile file) {
 		mNextFile = file;
+		file.setPreviousFile(this);
 	}
 	
 	public JrFile getPreviousFile() {
@@ -69,6 +70,7 @@ public class JrFile extends JrObject {
 	
 	public void setPreviousFile(JrFile file) {
 		mPreviousFile = file;
+		file.setNextFile(this);
 	}
 	
 	public void setProperty(String name, String value) {
