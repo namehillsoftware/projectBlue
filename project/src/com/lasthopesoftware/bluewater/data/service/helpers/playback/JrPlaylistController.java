@@ -51,24 +51,24 @@ public class JrPlaylistController implements
 	/**
 	 * Seeks to the JrFile with the file key in the playlist and beginning of the file.
 	 * If a file in the playlist is already playing, it will begin playback.
-	 * @param fileKey The key of the file to seek to
+	 * @param filePos The key of the file to seek to
 	 */
-	public void seekTo(int fileKey) {
-		seekTo(fileKey, 0);
+	public void seekTo(int filePos) {
+		seekTo(filePos, 0);
 	}
 	
 	/**
 	 * Seeks to the file key in the playlist and the start position in that file.
 	 * If a file in the playlist is already playing, it will begin playback.
-	 * @param fileKey The key of the file to seek to
-	 * @param startPos The position in the file to start at
+	 * @param filePos The key of the file to seek to
+	 * @param fileProgress The position in the file to start at
 	 */
-	public void seekTo(int fileKey, int startPos) {
+	public void seekTo(int filePos, int fileProgress) {
 		boolean wasPlaying = false;
 		
 		if (mCurrentFilePlayer != null) {
 			// If the track is already playing, keep on playing
-			if (mCurrentFilePlayer.getFile().getKey() == fileKey) {
+			if (mPlaylist.indexOf(mCurrentFilePlayer.getFile()) == filePos) {
 				if (!mCurrentFilePlayer.isMediaPlayerCreated()) mCurrentFilePlayer.initMediaPlayer();
 				return;
 			}
@@ -79,45 +79,39 @@ public class JrPlaylistController implements
 				mCurrentFilePlayer.stop();
 			}
 			
-//			throwStopEvent(mCurrentFilePlayer);
-			
 			mCurrentFilePlayer.releaseMediaPlayer();
 			mCurrentFilePlayer = null;
 		}
 		
-		fileKey = fileKey < 0 ? mPlaylist.get(0).getKey() : fileKey;
+		if (filePos < 0) filePos = 0;
         
-		for (JrFile file : mPlaylist) {
-			if (file.getKey() != fileKey) continue;
-		
-			JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
-			filePlayer.addOnJrFileCompleteListener(this);
-			filePlayer.addOnJrFilePreparedListener(this);
-			filePlayer.addOnJrFileErrorListener(this);
-			filePlayer.initMediaPlayer();
-			filePlayer.seekTo(startPos < 0 ? filePlayer.getCurrentPosition() : startPos);
-			mCurrentFilePlayer = filePlayer;
-			if (wasPlaying) mCurrentFilePlayer.prepareMediaPlayer();
-			throwChangeEvent(mCurrentFilePlayer);
-			return;
-		}
+		final JrFile file = mPlaylist.get(filePos);
+		final JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
+		filePlayer.addOnJrFileCompleteListener(this);
+		filePlayer.addOnJrFilePreparedListener(this);
+		filePlayer.addOnJrFileErrorListener(this);
+		filePlayer.initMediaPlayer();
+		filePlayer.seekTo(fileProgress < 0 ? filePlayer.getCurrentPosition() : fileProgress);
+		mCurrentFilePlayer = filePlayer;
+		if (wasPlaying) mCurrentFilePlayer.prepareMediaPlayer();
+		throwChangeEvent(mCurrentFilePlayer);
 	}
 	
 	/**
 	 * Start playback of the playlist at the desired file key
-	 * @param fileKey The file key to start playback with
+	 * @param filePos The file key to start playback with
 	 */
-	public void startAt(int fileKey) {
-		startAt(fileKey, 0);
+	public void startAt(int filePos) {
+		startAt(filePos, 0);
 	}
 	
 	/**
 	 * Start playback of the playlist at the desired file key and at the desired position in the file
-	 * @param fileKey The file key to start playback with
-	 * @param startPos The position in the file to start playback at
+	 * @param filePos The file key to start playback with
+	 * @param fileProgress The position in the file to start playback at
 	 */
-	public void startAt(int fileKey, int startPos) {
-		seekTo(fileKey, startPos);
+	public void startAt(int filePos, int fileProgress) {
+		seekTo(filePos, fileProgress);
 		if (mCurrentFilePlayer == null || mCurrentFilePlayer.isPlaying()) return;
 		if (!mCurrentFilePlayer.isPrepared()) mCurrentFilePlayer.prepareMediaPlayer(); // prepare async to not block main thread
 		else startFilePlayback(mCurrentFilePlayer);
@@ -225,6 +219,14 @@ public class JrPlaylistController implements
 	}
 	
 	/* End playlist control */
+	
+	public void addFile(int fileKey) {
+		addFile(new JrFile(fileKey));
+	}
+	
+	public void addFile(JrFile file) {
+		mPlaylist.add(file);
+	}
 	
 	public JrFilePlayer getCurrentFilePlayer() {
 		return mCurrentFilePlayer;

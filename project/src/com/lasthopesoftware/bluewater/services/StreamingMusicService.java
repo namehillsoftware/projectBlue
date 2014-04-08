@@ -114,18 +114,18 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void initializePlaylist(Context context, int startFileKey, String serializedFileList) {
+	public static void initializePlaylist(Context context, int filePos, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
-	public static void initializePlaylist(Context context, int startFileKey, int startPos, String serializedFileList) {
+	public static void initializePlaylist(Context context, int filePos, int fileProgress, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(BAG_START_POS, startPos);
+		svcIntent.putExtra(BAG_START_POS, fileProgress);
 		context.startService(svcIntent);
 	}
 	
@@ -136,35 +136,35 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int startFileKey, String serializedFileList) {
+	public static void streamMusic(Context context, int filePos, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int startFileKey, int startPos, String serializedFileList) {
+	public static void streamMusic(Context context, int filePos, int fileProgress, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(BAG_START_POS, startPos);
+		svcIntent.putExtra(BAG_START_POS, fileProgress);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int startFileKey) { 
+	public static void streamMusic(Context context, int filePos) { 
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
-	public static void streamMusic(Context context, int startFileKey, int startPos) { 
+	public static void streamMusic(Context context, int filePos, int fileProgress) { 
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
-		svcIntent.putExtra(BAG_FILE_KEY, startFileKey);
+		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
-		svcIntent.putExtra(BAG_START_POS, startPos);
+		svcIntent.putExtra(BAG_START_POS, fileProgress);
 		context.startService(svcIntent);
 	}
 	
@@ -262,7 +262,7 @@ public class StreamingMusicService extends Service implements
 		mLibrary = JrSession.GetLibrary(thisContext);
 	}
 	
-	private void startPlaylist(String playlistString, int fileKey, int filePos) {
+	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
 		if (playlistString == null) return;
 		// If the playlist has changed, change that
 		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
@@ -275,7 +275,7 @@ public class StreamingMusicService extends Service implements
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
         startForeground(mId, builder.build());
         
-        mPlaylistController.startAt(fileKey, filePos);
+        mPlaylistController.startAt(filePos, fileProgress);
 	}
 	
 	private void restorePlaylistControllerFromStorage() {
@@ -285,9 +285,9 @@ public class StreamingMusicService extends Service implements
 			initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	}
 	
-	private void initializePlaylist(String playlistString, int fileKey, int filePos) {
+	private void initializePlaylist(String playlistString, int filePos, int fileProgress) {
 		initializePlaylist(playlistString);
-		mPlaylistController.seekTo(fileKey, filePos);
+		mPlaylistController.seekTo(filePos, fileProgress);
 	}
 		
 	private void initializePlaylist(String playlistString) {
@@ -424,10 +424,10 @@ public class StreamingMusicService extends Service implements
 	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	        } else if (action.equals(ACTION_PREVIOUS)) {
 	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getPlaylist().get(mPlaylistController.getCurrentPosition() - 1).getKey());	        	
+	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() - 1);	        	
 	        } else if (action.equals(ACTION_NEXT)) {
 	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getPlaylist().get(mPlaylistController.getCurrentPosition() + 1).getKey());
+	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() + 1);
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
