@@ -225,6 +225,7 @@ public class JrPlaylistController implements
 	}
 	
 	public void addFile(JrFile file) {
+		file.setPreviousFile(mPlaylist.get(mPlaylist.size() - 1));
 		mPlaylist.add(file);
 	}
 	
