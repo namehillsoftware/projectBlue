@@ -25,7 +25,7 @@ public class ClickFileListener implements OnItemClickListener {
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		
 		try {
-			StreamingMusicService.streamMusic(view.getContext(), mItem.getFiles().get(position).getKey(), mItem.getFileStringList());
+			StreamingMusicService.streamMusic(view.getContext(), position, mItem.getFileStringList());
 		} catch (IOException io) {
 			final AdapterView<?> _parent = parent;
 			final View _view = view;

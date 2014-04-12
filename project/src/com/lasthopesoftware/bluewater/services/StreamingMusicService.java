@@ -498,7 +498,7 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		mLibrary.setNowPlayingId(filePlayer.getFile().getKey());
+		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		
@@ -509,7 +509,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		mLibrary.setNowPlayingId(filePlayer.getFile().getKey());
+		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		throwChangeEvent(controller, filePlayer);

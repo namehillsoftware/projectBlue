@@ -238,7 +238,7 @@ public class JrPlaylistController implements
 	}
 	
 	public int getCurrentPosition() {
-		return mCurrentFilePlayer != null ? mPlaylist.indexOf(mCurrentFilePlayer.getFile()) : -1;
+		return mCurrentFilePlayer != null ? mPlaylist.indexOf(mCurrentFilePlayer.getFile()) : 0;
 	}
 
 	/* Event handlers */
