@@ -303,7 +303,7 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		synchronized(syncPlaylistControllerObject) {
-			mPlaylistController = new JrPlaylistController(thisContext, playlistString);
+			mPlaylistController = new JrPlaylistController(thisContext, mPlaylistString);
 		}
 		mPlaylistController.setIsRepeating(mLibrary.isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
