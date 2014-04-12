@@ -263,7 +263,6 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
-		if (playlistString == null) return;
 		// If the playlist has changed, change that
 		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
 			initializePlaylist(playlistString);
@@ -292,6 +291,8 @@ public class StreamingMusicService extends Service implements
 		
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
+		
+		if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = mLibrary.getSavedTracksString();
 		
 		mLibrary.setSavedTracksString(mPlaylistString);
 		JrSession.SaveSession(thisContext);
@@ -414,6 +415,7 @@ public class StreamingMusicService extends Service implements
 		if (intent != null && JrSession.isActive()) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
+				
 			String action = intent.getAction(); 
 			if (action.equals(ACTION_START)) {
 				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));

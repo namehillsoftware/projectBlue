@@ -63,10 +63,10 @@ public class JrPlaylistController implements
 	 * @param filePos The key of the file to seek to
 	 * @param fileProgress The position in the file to start at
 	 */
-	public void seekTo(int filePos, int fileProgress) {
+	public void seekTo(int filePos, int fileProgress) throws IndexOutOfBoundsException {
 		boolean wasPlaying = false;
 		
-		if (mCurrentFilePlayer != null) {
+		if (mCurrentFilePlayer != null) {			
 			// If the track is already playing, keep on playing
 			if (mPlaylist.indexOf(mCurrentFilePlayer.getFile()) == filePos) {
 				if (!mCurrentFilePlayer.isMediaPlayerCreated()) mCurrentFilePlayer.initMediaPlayer();
@@ -84,7 +84,9 @@ public class JrPlaylistController implements
 		}
 		
 		if (filePos < 0) filePos = 0;
-        
+        if (filePos >= mPlaylist.size())
+        	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
+		
 		final JrFile file = mPlaylist.get(filePos);
 		final JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
 		filePlayer.addOnJrFileCompleteListener(this);
