@@ -73,7 +73,7 @@ public class FileListAdapter extends BaseAdapter {
 			@Override
 			public void onViewAttachedToWindow(View v) {
 				final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
-		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().isPlaying() && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
+		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
 		        	textView.setTypeface(null, Typeface.BOLD);
 		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
