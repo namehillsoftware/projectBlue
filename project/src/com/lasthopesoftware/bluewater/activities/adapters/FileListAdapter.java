@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.activities.adapters;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -50,7 +50,6 @@ public class FileListAdapter extends BaseAdapter {
 		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
-		final ImageView imgIsPlaying = (ImageView) returnView.findViewById(R.id.imgIsPlaying);
 		final JrFile file = mFiles.get(position);
         textView.setMarqueeRepeatLimit(1);
         textView.setText("Loading...");
@@ -60,15 +59,7 @@ public class FileListAdapter extends BaseAdapter {
 			
 			@Override
 			public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
-				imgIsPlaying.setVisibility(filePlayer.getFile().getKey() == file.getKey() ? View.VISIBLE : View.INVISIBLE);
-			}
-		};
-		
-		final OnNowPlayingStopListener onNowPlayingStop = new OnNowPlayingStopListener() {
-			
-			@Override
-			public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
-				imgIsPlaying.setVisibility(View.INVISIBLE);
+				textView.setTypeface(null, filePlayer.getFile().getKey() == file.getKey() ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};
 		
@@ -77,17 +68,15 @@ public class FileListAdapter extends BaseAdapter {
 			@Override
 			public void onViewDetachedFromWindow(View v) {
 				StreamingMusicService.removeOnStreamingStartListener(checkIfIsPlayingFileListener);
-				StreamingMusicService.removeOnStreamingStopListener(onNowPlayingStop);
 			}
 			
 			@Override
 			public void onViewAttachedToWindow(View v) {
 				final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
 		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().isPlaying() && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-		        	imgIsPlaying.setVisibility(View.VISIBLE);
+		        	textView.setTypeface(null, Typeface.BOLD);
 		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
-				StreamingMusicService.addOnStreamingStopListener(onNowPlayingStop);
 			}
 		});
         

@@ -197,7 +197,9 @@ public class ViewNowPlaying extends Activity implements
 		}
 		
 		// otherwise get it from the session
-		setView(new JrFile(mLibrary.getNowPlayingId()));
+		final JrPlaylistController psuedoController = new JrPlaylistController(this, mLibrary.getSavedTracksString());
+		psuedoController.seekTo(mLibrary.getNowPlayingId());
+		setView(psuedoController.getCurrentFilePlayer().getFile());
 		mSongProgressBar.setProgress(mLibrary.getNowPlayingProgress());
 	}
 	
