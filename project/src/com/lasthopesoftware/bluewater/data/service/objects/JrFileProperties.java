@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
@@ -20,9 +21,10 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 
 public class JrFileProperties {
 	private int mFileKey;
@@ -64,32 +66,33 @@ public class JrFileProperties {
 		mProperties.put(name, value);
 	}
 	
-	public String getProperty(String name) throws IOException {
+	public SortedMap<String, String> getProperties() throws IOException {
+		if (mProperties.size() == 0)
+			return getRefreshredProperties();
 		
-		if (mProperties.size() == 0 || !mProperties.containsKey(name))
-			return getRefreshedProperty(name);
-		
-		return mProperties.get(name);
+		return Collections.unmodifiableSortedMap(mProperties);
 	}
 	
-	public String getRefreshedProperty(String name) throws IOException {
-		String result = null;
+	public SortedMap<String, String> getRefreshredProperties() throws IOException {
+		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		SimpleTask<String, Void, Map<String,String>> filePropertiesTask = new SimpleTask<String, Void, Map<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, Map<String,String>>() {
+		SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>();
+		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, Map<String, String>> owner, String... params) throws IOException {
-				HashMap<String, String> returnProperties = new HashMap<String, String>();
-
+			public void onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+				TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+				
+				owner.setResult(returnProperties);
+				
 				try {
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
 					conn.setReadTimeout(45000);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
 				    	if (xml.size() < 1) return;
-				    	returnProperties = new HashMap<String, String>(xml.get(0).size());
+				    	
 				    	for (XmlElement el : xml.get(0))
 				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
 					} finally {
@@ -100,21 +103,19 @@ public class JrFileProperties {
 				} catch (XmlParseException e) {
 					LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 				}
-				
-				owner.setResult(returnProperties);
 			}
 		});
 		
-		filePropertiesTask.addOnErrorListener(new com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Map<String,String>>() {
+		filePropertiesTask.addOnErrorListener(new OnErrorListener<String, Void, SortedMap<String,String>>() {
 			
 			@Override
-			public boolean onError(ISimpleTask<String, Void, Map<String, String>> owner, Exception innerException) {
+			public boolean onError(ISimpleTask<String, Void, SortedMap<String, String>> owner, Exception innerException) {
 				return !(innerException instanceof IOException);
 			}
 		});
 
 		try {
-			Map<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
+			SortedMap<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
 			
 			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
 				for (Exception e : filePropertiesTask.getExceptions()) {
@@ -122,10 +123,9 @@ public class JrFileProperties {
 				}
 			}
 			
-			if (filePropertiesResult == null) return mProperties.containsKey(name) ? mProperties.get(name) : null;
+			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
 			
-			if (filePropertiesResult.containsKey(name))
-				result = filePropertiesResult.get(name);
+			result = Collections.unmodifiableSortedMap(filePropertiesResult);
 			
 			mProperties.putAll(filePropertiesResult);
 		} catch (InterruptedException e) {
@@ -135,6 +135,19 @@ public class JrFileProperties {
 		}
 		
 		return result;
+	}
+	
+	public String getProperty(String name) throws IOException {
+		
+		if (mProperties.size() == 0 || !mProperties.containsKey(name))
+			return getRefreshedProperty(name);
+		
+		return mProperties.get(name);
+	}
+	
+	public String getRefreshedProperty(String name) throws IOException {
+		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
+		return getRefreshredProperties().get(name);
 	}
 	
 	/* Utility string constants */
