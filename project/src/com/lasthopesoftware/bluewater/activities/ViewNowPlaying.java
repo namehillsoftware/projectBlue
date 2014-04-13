@@ -179,6 +179,9 @@ public class ViewNowPlaying extends Activity implements
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
+		if (StreamingMusicService.getPlaylistController() == null)
+			StreamingMusicService.resumeSavedPlaylist(this);
+		
 		// Get initial view state from playlist controller if it is active
 		if (StreamingMusicService.getPlaylistController() != null) {
 			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
@@ -195,12 +198,6 @@ public class ViewNowPlaying extends Activity implements
 			mPause.setVisibility(mFilePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 			return;
 		}
-		
-		// otherwise get it from the session
-		final JrPlaylistController psuedoController = new JrPlaylistController(this, mLibrary.getSavedTracksString());
-		psuedoController.seekTo(mLibrary.getNowPlayingId());
-		setView(psuedoController.getCurrentFilePlayer().getFile());
-		mSongProgressBar.setProgress(mLibrary.getNowPlayingProgress());
 	}
 	
 	@Override

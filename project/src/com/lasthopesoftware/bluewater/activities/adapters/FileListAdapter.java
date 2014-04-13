@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
@@ -51,6 +50,7 @@ public class FileListAdapter extends BaseAdapter {
 		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
 		final JrFile file = mFiles.get(position);
+		
         textView.setMarqueeRepeatLimit(1);
         textView.setText("Loading...");
         GetFileValueTask.getFileValue(position, file, (ListView)parent, textView);
@@ -72,6 +72,9 @@ public class FileListAdapter extends BaseAdapter {
 			
 			@Override
 			public void onViewAttachedToWindow(View v) {
+				if (StreamingMusicService.getPlaylistController() == null)
+					StreamingMusicService.resumeSavedPlaylist(v.getContext());
+				
 				final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
 		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
 		        	textView.setTypeface(null, Typeface.BOLD);

@@ -18,28 +18,33 @@ public class ProgressTrackerThread implements Runnable {
 	
 	@Override
 	public void run() {
-		Message msg;
+		if (mFilePlayer != null) {
+			mHandler.sendMessage(getUpdatePlayingMessage());
+		}
 		
-		while (true) {
+		while (mFilePlayer != null) {
 			try {
 				
-				msg = null;
-				if (mFilePlayer !=null && mFilePlayer.isPlaying()) {
-					msg = new Message();
-					msg.what = HandleViewNowPlayingMessages.UPDATE_PLAYING;
-					msg.arg1 = mFilePlayer.getCurrentPosition();
-					try {
-						msg.arg2 = mFilePlayer.getDuration();
-					} catch (IOException e) {
-						msg.what = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
-					}
-				}
-				if (msg != null) mHandler.sendMessage(msg);
+				if (mFilePlayer.isPlaying())
+					mHandler.sendMessage(getUpdatePlayingMessage());
 				
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				return;
 			}
 		}
+	}
+	
+	private Message getUpdatePlayingMessage() {
+		Message msg = new Message();
+		msg.what = HandleViewNowPlayingMessages.UPDATE_PLAYING;
+		msg.arg1 = mFilePlayer.getCurrentPosition();
+		try {
+			msg.arg2 = mFilePlayer.getDuration();
+		} catch (IOException e) {
+			msg.what = HandleViewNowPlayingMessages.SHOW_CONNECTION_LOST;
+		}
+		
+		return msg;
 	}
 }

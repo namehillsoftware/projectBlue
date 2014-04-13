@@ -108,6 +108,11 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	/* Begin streamer intent helpers */
+	public static void resumeSavedPlaylist(Context context) {
+		Library library = JrSession.GetLibrary(context);
+		initializePlaylist(context, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+	}
+	
 	public static void initializePlaylist(Context context, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);		
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
