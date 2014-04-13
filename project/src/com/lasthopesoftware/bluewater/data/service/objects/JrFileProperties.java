@@ -68,12 +68,12 @@ public class JrFileProperties {
 	
 	public SortedMap<String, String> getProperties() throws IOException {
 		if (mProperties.size() == 0)
-			return getRefreshredProperties();
+			return getRefreshedProperties();
 		
 		return Collections.unmodifiableSortedMap(mProperties);
 	}
 	
-	public SortedMap<String, String> getRefreshredProperties() throws IOException {
+	public SortedMap<String, String> getRefreshedProperties() throws IOException {
 		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
@@ -147,7 +147,7 @@ public class JrFileProperties {
 	
 	public String getRefreshedProperty(String name) throws IOException {
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		return getRefreshredProperties().get(name);
+		return getRefreshedProperties().get(name);
 	}
 	
 	/* Utility string constants */
