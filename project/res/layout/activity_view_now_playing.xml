@@ -35,7 +35,7 @@
 	        android:textColor="@color/white" />
 	
 	    <RatingBar
-	        android:id="@+id/ratingBar1"
+	        android:id="@+id/rbFileRating"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
 	        android:layout_above="@+id/sbNowPlaying"

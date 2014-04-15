@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/rlViewTrackDetails"
+    android:orientation="vertical" >
+
+	<RelativeLayout
+	    android:id="@+id/rlMainTrackInformation"
+	    android:layout_width="wrap_content"
+	    android:layout_height="100dp" >
+	    
+	    <ImageView
+	        android:id="@+id/imgFileThumbnail"
+	        android:layout_width="75dp"
+	        android:layout_height="75dp"
+	        android:layout_toLeftOf="@id/imgFileThumbnail"
+	        android:contentDescription="@string/lbl_track_img" />
+	    
+	    <TextView
+	        android:id="@+id/tvFileName"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_toLeftOf="@id/imgNowPlaying"
+	        android:layout_toRightOf="@id/imgFileThumbnail"
+	        android:ellipsize="end"
+	        android:lines="2"
+	        android:maxLines="2" />
+
+	    <RatingBar
+	        android:id="@+id/rbFileRating"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@id/tvFileName"
+	        android:layout_toRightOf="@id/imgFileThumbnail"
+	        android:indeterminate="false"
+	        android:isIndicator="false"
+	        android:minHeight="57dp" />
+	        
+	</RelativeLayout>
+
+	<RelativeLayout
+	    android:id="@+id/rlTrackDetails"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/rlMainTrackInformation" >
+
+		<ProgressBar
+		    android:id="@+id/pbLoadingTrackDetails"
+		    style="?android:attr/progressBarStyleLarge"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_centerInParent="true"
+		    android:visibility="invisible" />
+
+		<ListView
+		    android:id="@+id/lvTrackDetails"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent" >
+		</ListView>
+
+	</RelativeLayout>
+
+</RelativeLayout>

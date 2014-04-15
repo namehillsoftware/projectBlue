@@ -48,4 +48,5 @@
     <string name="lbl_starting_service">Starting %1$s</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
+    <string name="lbl_track_img">Track Image</string>
 </resources>
