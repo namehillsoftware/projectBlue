@@ -31,7 +31,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewFiles extends FragmentActivity {
 
-	public static final String KEY = "com.lasthopesoftware.ViewFiles.key";
+	public static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.key";
 	public static final String VALUE = "value";
 	public static final String VIEW_ITEM_FILES = "view_item_files";
 	public static final String VIEW_PLAYLIST_FILES = "view_playlist_files";
