@@ -5,12 +5,15 @@ import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 public class ViewTrackDetails extends Activity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
 	
-	JrFile mFile;
+	private ImageView mFileThumbnail;
+	
+	private JrFile mFile;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -22,6 +25,8 @@ public class ViewTrackDetails extends Activity {
         final int fileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
         
         if (fileKey < 0) return;
+        
+        mFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
         
         mFile = new JrFile(fileKey);
 	}
