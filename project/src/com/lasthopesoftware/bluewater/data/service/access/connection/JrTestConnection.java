@@ -41,6 +41,8 @@ public class JrTestConnection implements Callable<Boolean> {
 			JrSession.accessDao.resetUrl();
 		} catch (IOException e) {
 			LoggerFactory.getLogger(JrTestConnection.class).warn(e.getLocalizedMessage());
+		} catch (IllegalArgumentException i) {
+			LoggerFactory.getLogger(JrTestConnection.class).warn(i.toString(), i);
 		} finally {
 			conn.disconnect();
 		}

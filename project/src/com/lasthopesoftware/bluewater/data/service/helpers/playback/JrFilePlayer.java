@@ -120,7 +120,7 @@ public class JrFilePlayer implements
 //					LoggerFactory.getLogger(getClass()).debug("File path: " + file.getAbsolutePath());
 //				}
 				String uri = getMpUrl();
-				if (!uri.isEmpty()) {
+				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
 					preparing = true;
 					mp.prepareAsync();
@@ -136,7 +136,7 @@ public class JrFilePlayer implements
 		if (!preparing && !prepared) {
 			try {
 				String url = getMpUrl();
-				if (!url.isEmpty()) {
+				if (url != null && !url.isEmpty()) {
 					setMpDataSource(url);
 					
 					preparing = true;
