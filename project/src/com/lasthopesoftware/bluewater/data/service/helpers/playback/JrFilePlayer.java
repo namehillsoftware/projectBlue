@@ -293,15 +293,15 @@ public class JrFilePlayer implements
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
 				
-				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));				
+				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));	
+				
+				String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
+				mFile.setProperty("Last Played", lastPlayed);
 			} catch (IOException e) {
-				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+				LoggerFactory.getLogger(JrFilePlayer.class).warn(e.toString(), e);
 			} catch (NumberFormatException ne) {
-				LoggerFactory.getLogger(JrFile.class).error(ne.toString(), ne);
+				LoggerFactory.getLogger(JrFilePlayer.class).error(ne.toString(), ne);
 			}
-			
-			String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
-			mFile.setProperty("Last Played", lastPlayed);
 		}
 	}
 }
