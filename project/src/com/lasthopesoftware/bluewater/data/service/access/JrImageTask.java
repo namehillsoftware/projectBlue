@@ -15,7 +15,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
 
-	private static LruCache<String, Bitmap> imageCache;
+	private static LruCache<String, Bitmap> imageCache = new LruCache<String, Bitmap>(100);
 	private static Bitmap emptyBitmap;
 	
 	public JrImageTask() {
@@ -25,15 +25,17 @@ public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
 			
 			@Override
 			public void onExecute(ISimpleTask<String, Void, Bitmap> owner, String... params) throws Exception {
-				if (imageCache == null) imageCache = new LruCache<String, Bitmap>(100);
-				Bitmap returnBmp = null;
 				String uId = params[0];
 				String fileKey = params[1];
 				
-				if (imageCache.get(uId) != null) {
-					owner.setResult(imageCache.get(uId));
-					return;
+				synchronized (imageCache) {
+					if (imageCache.get(uId) != null) {
+						owner.setResult(imageCache.get(uId));
+						return;
+					}
 				}
+				
+				Bitmap returnBmp = null;
 				
 				try {
 					JrConnection conn = new JrConnection(
@@ -65,7 +67,9 @@ public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
 					returnBmp = emptyBitmap;
 				}
 				
-				imageCache.put(uId, returnBmp);				
+				synchronized (imageCache) {
+					imageCache.put(uId, returnBmp);				
+				}
 				
 				owner.setResult(returnBmp);
 			}
