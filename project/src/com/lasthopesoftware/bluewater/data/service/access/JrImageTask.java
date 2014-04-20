@@ -55,9 +55,9 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 						conn.disconnect();
 					}
 				} catch (FileNotFoundException fe) {
-					LoggerFactory.getLogger(ViewNowPlaying.class).warn("Image not found!");
+					LoggerFactory.getLogger(JrImageTask.class).warn("Image not found!");
 				} catch (Exception e) {
-					LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
+					LoggerFactory.getLogger(JrImageTask.class).error(e.toString(), e);
 				}
 				
 				if (returnBmp == null) {
