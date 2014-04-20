@@ -38,6 +38,7 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
 		final ImageButton btnViewFileDetails = (ImageButton) returnView.findViewById(R.id.btnViewDetails);
+		final ImageButton btnAddFile = (ImageButton) returnView.findViewById(R.id.btnAddFile);
 		final JrFile file = getItem(position);
 		
         textView.setMarqueeRepeatLimit(1);
@@ -79,6 +80,15 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 				Intent i = new Intent(v.getContext(), ViewFileDetails.class);
 				i.putExtra(ViewFileDetails.FILE_KEY, file.getKey());
 				v.getContext().startActivity(i);
+			}
+		});
+        
+        btnAddFile.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (StreamingMusicService.getPlaylistController() != null)
+					StreamingMusicService.getPlaylistController().addFile(file);
 			}
 		});
         
