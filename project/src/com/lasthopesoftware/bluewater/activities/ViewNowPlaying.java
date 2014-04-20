@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -11,11 +10,9 @@ import org.slf4j.LoggerFactory;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
-import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,7 +32,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.service.access.JrImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
@@ -76,7 +73,7 @@ public class ViewNowPlaying extends Activity implements
 	private ImageView mNowPlayingImg;
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
-	private static GetFileImage getFileImageTask;
+	private static JrImageTask getFileImageTask;
 	
 	private JrFilePlayer mFilePlayer = null;
 	
@@ -350,7 +347,19 @@ public class ViewNowPlaying extends Activity implements
 							getFileImageTask.cancel(true);
 						}
 						
-						getFileImageTask = new GetFileImage(mNowPlayingImg, mLoadingImg);
+						mNowPlayingImg.setVisibility(View.INVISIBLE);
+						mLoadingImg.setVisibility(View.VISIBLE);
+						getFileImageTask = new JrImageTask();
+						getFileImageTask.addOnCompleteListener(new OnCompleteListener<String, Void, Bitmap>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<String, Void, Bitmap> owner, Bitmap result) {
+								mNowPlayingImg.setImageBitmap(result);
+								mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+								mLoadingImg.setVisibility(View.INVISIBLE);
+								mNowPlayingImg.setVisibility(View.VISIBLE);
+							}
+						});
 						
 						getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, result == null ? String.valueOf(_file.getKey()) : result, String.valueOf(_file.getKey()));
 					} catch (Exception e) {
@@ -422,84 +431,6 @@ public class ViewNowPlaying extends Activity implements
 		});
 		WaitForConnectionDialog.show(this);
 	}
-	
-	private static class GetFileImage extends AsyncTask<String, Void, Bitmap> {
-		private ImageView mNowPlayingImg;
-		private ProgressBar mLoadingImg;
-		
-		private final int cacheSize = 5;			
-		private static LruCache<String, Bitmap> imageCache;
-		
-		private static Bitmap emptyBitmap;
-
-		public GetFileImage(ImageView nowPlayingImg, ProgressBar loadingImg) {
-			super();
-			mNowPlayingImg = nowPlayingImg;
-			mLoadingImg = loadingImg;
-			if (imageCache == null) imageCache = new LruCache<String, Bitmap>(cacheSize);
-		}
-		
-		@Override
-		protected void onPreExecute() {
-			mNowPlayingImg.setVisibility(View.INVISIBLE);
-			mLoadingImg.setVisibility(View.VISIBLE);
-		}
-		
-		@Override
-		protected Bitmap doInBackground(String... params) {
-			
-			Bitmap returnBmp = null;
-			String uId = params[0];
-			String fileKey = params[1];
-			
-			if (imageCache.get(uId) != null) {
-				return imageCache.get(uId);
-			}
-			
-			try {
-				JrConnection conn = new JrConnection(
-											"File/GetImage", 
-											"File=" + fileKey, 
-											"Type=Full", 
-											"Pad=1",
-											"Format=png",
-											"FillTransparency=ffffff");
-				
-				if (isCancelled()) return null;
-				
-				try {
-					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
-				} finally {
-					conn.disconnect();
-				}
-			} catch (FileNotFoundException fe) {
-				LoggerFactory.getLogger(ViewNowPlaying.class).warn("Image not found!");
-			} catch (Exception e) {
-				LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
-			}
-			
-			if (returnBmp == null) {
-				if (emptyBitmap == null) {
-					emptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-				}
-				
-				returnBmp = emptyBitmap;
-			}
-			
-			imageCache.put(uId, returnBmp);				
-			
-			return returnBmp;
-		}
-		
-		@Override
-		protected void onPostExecute(Bitmap result) {
-			mNowPlayingImg.setImageBitmap(result);
-			mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
-			mLoadingImg.setVisibility(View.INVISIBLE);
-			mNowPlayingImg.setVisibility(View.VISIBLE);
-		}
-	}
-	
 
 	@Override
 	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
