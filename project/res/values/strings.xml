@@ -11,9 +11,6 @@
     <string name="lbl_password">Password:</string>
     <string name="lbl_local_only">Local Connections Only</string>
     <string name="btn_connect">Connect!</string>
-    <string name="user_name_value" />
-    <string name="password_value"></string>
-    <string name="access_code"></string>
     <string name="title_activity_file_view">File View</string>
     <string name="title_activity_view_now_playing">Now Playing</string>
     <string name="lbl_song_title">Now Playing</string>
@@ -48,5 +45,7 @@
     <string name="lbl_starting_service">Starting %1$s</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
+    <string name="title_file_details">File Details</string>
     <string name="lbl_track_img">Track Image</string>
+    <string name="lbl_loading">Loading&#8230;</string>
 </resources>

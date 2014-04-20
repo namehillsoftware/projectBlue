@@ -13,24 +13,25 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnectio
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
+public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 
 	private static LruCache<String, Bitmap> imageCache = new LruCache<String, Bitmap>(100);
 	private static Bitmap emptyBitmap;
 	
-	public JrImageTask() {
+	public JrImageTask(String uniqueId, int fileKey) {
 		super();
 		
-		super.addOnExecuteListener(new OnExecuteListener<String, Void, Bitmap>() {
+		final String _uniqueId = uniqueId;
+		final int _fileKey = fileKey;
+		
+		super.addOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, Bitmap> owner, String... params) throws Exception {
-				String uId = params[0];
-				String fileKey = params[1];
+			public void onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 				
 				synchronized (imageCache) {
-					if (imageCache.get(uId) != null) {
-						owner.setResult(imageCache.get(uId));
+					if (imageCache.get(_uniqueId) != null) {
+						owner.setResult(imageCache.get(_uniqueId));
 						return;
 					}
 				}
@@ -40,7 +41,7 @@ public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
 				try {
 					JrConnection conn = new JrConnection(
 												"File/GetImage", 
-												"File=" + fileKey, 
+												"File=" + String.valueOf(_fileKey), 
 												"Type=Full", 
 												"Pad=1",
 												"Format=png",
@@ -68,7 +69,7 @@ public class JrImageTask extends SimpleTask<String, Void, Bitmap> {
 				}
 				
 				synchronized (imageCache) {
-					imageCache.put(uId, returnBmp);				
+					imageCache.put(_uniqueId, returnBmp);				
 				}
 				
 				owner.setResult(returnBmp);

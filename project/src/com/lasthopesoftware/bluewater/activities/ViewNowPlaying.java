@@ -349,11 +349,11 @@ public class ViewNowPlaying extends Activity implements
 						
 						mNowPlayingImg.setVisibility(View.INVISIBLE);
 						mLoadingImg.setVisibility(View.VISIBLE);
-						getFileImageTask = new JrImageTask();
-						getFileImageTask.addOnCompleteListener(new OnCompleteListener<String, Void, Bitmap>() {
+						getFileImageTask = new JrImageTask(result == null ? String.valueOf(_file.getKey()) : result, _file.getKey());
+						getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, Bitmap> owner, Bitmap result) {
+							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 								mNowPlayingImg.setImageBitmap(result);
 								mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
 								mLoadingImg.setVisibility(View.INVISIBLE);
@@ -361,7 +361,7 @@ public class ViewNowPlaying extends Activity implements
 							}
 						});
 						
-						getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, result == null ? String.valueOf(_file.getKey()) : result, String.valueOf(_file.getKey()));
+						getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 					} catch (Exception e) {
 						LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
 					}
