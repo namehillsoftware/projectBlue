@@ -11,11 +11,17 @@
 	    android:layout_width="wrap_content"
 	    android:layout_height="100dp" >
 	    
+	    <ProgressBar
+		    android:id="@+id/pbLoadingFileThumbnail"
+		    style="?android:attr/progressBarStyleLarge"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:visibility="invisible" />
+	    
 	    <ImageView
 	        android:id="@+id/imgFileThumbnail"
 	        android:layout_width="75dp"
 	        android:layout_height="75dp"
-	        android:layout_toLeftOf="@id/imgFileThumbnail"
 	        android:contentDescription="@string/lbl_track_img" />
 	    
 	    <TextView
@@ -23,7 +29,6 @@
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_alignParentTop="true"
-	        android:layout_toLeftOf="@id/imgNowPlaying"
 	        android:layout_toRightOf="@id/imgFileThumbnail"
 	        android:ellipsize="end"
 	        android:lines="2"
