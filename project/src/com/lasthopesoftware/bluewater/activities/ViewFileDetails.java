@@ -7,7 +7,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.ImageView;
 
-public class ViewTrackDetails extends Activity {
+public class ViewFileDetails extends Activity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
 	
@@ -20,7 +20,7 @@ public class ViewTrackDetails extends Activity {
 		super.onCreate(savedInstanceState);
         
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_track_details);
+        setContentView(R.layout.activity_view_file_details);
         
         final int fileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
         
