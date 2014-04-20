@@ -23,6 +23,8 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class FileListAdapter extends ArrayAdapter<JrFile> {
@@ -87,8 +89,18 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 			
 			@Override
 			public void onClick(View v) {
-				if (StreamingMusicService.getPlaylistController() != null)
-					StreamingMusicService.getPlaylistController().addFile(file);
+				final Library library = JrSession.GetLibrary(v.getContext());
+				if (library.getSavedTracksString() != null && !library.getSavedTracksString().isEmpty()) {
+					String savedTracksString = library.getSavedTracksString();
+					if (!savedTracksString.endsWith(";")) savedTracksString += ";";
+					library.setSavedTracksString(savedTracksString + String.valueOf(file.getKey()));
+				}
+								
+				JrSession.SaveSession(v.getContext());
+				
+				if (StreamingMusicService.getPlaylistController() == null) return;
+				
+				StreamingMusicService.getPlaylistController().addFile(file);
 			}
 		});
         
