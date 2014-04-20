@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.activities.adapters;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -9,7 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -21,26 +21,10 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
-public class FileListAdapter extends BaseAdapter {
-	private ArrayList<JrFile> mFiles;
-	
-	public FileListAdapter(ArrayList<JrFile> files) {
-		mFiles = files;
-	}
-	
-	@Override
-	public int getCount() {
-		return mFiles.size();
-	}
+public class FileListAdapter extends ArrayAdapter<JrFile> {
 
-	@Override
-	public Object getItem(int position) {
-		return mFiles.get(position);
-	}
-
-	@Override
-	public long getItemId(int position) {
-		return mFiles.get(position).getKey();
+	public FileListAdapter(Context context, int resource, List<JrFile> objects) {
+		super(context, resource, objects);
 	}
 	
 	@Override
@@ -49,7 +33,7 @@ public class FileListAdapter extends BaseAdapter {
 		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
-		final JrFile file = mFiles.get(position);
+		final JrFile file = getItem(position);
 		
         textView.setMarqueeRepeatLimit(1);
         textView.setText("Loading...");

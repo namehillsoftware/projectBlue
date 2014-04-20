@@ -41,7 +41,8 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         this.setTitle(R.string.title_view_now_playing_files);     
         
-        final Library library = JrSession.GetLibrary(this);
+        final ViewNowPlayingFiles _this = this;
+        final Library library = JrSession.GetLibrary(_this);
         
         final SimpleTask<Void, Void, ArrayList<JrFile>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<JrFile>>();
         
@@ -58,7 +59,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, ArrayList<JrFile> result) {
 				final ArrayList<JrFile> _result = result;
-				final FileListAdapter fileListAdapter = new FileListAdapter(_result);
+				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, _result);
 		        fileListView.setAdapter(fileListAdapter);
 		        fileListView.setOnItemClickListener(new OnItemClickListener() {
 
