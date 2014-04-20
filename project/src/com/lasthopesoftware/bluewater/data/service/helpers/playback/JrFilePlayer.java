@@ -288,14 +288,14 @@ public class JrFilePlayer implements
 		@Override
 		public void run() {
 			try {
-				String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
+				final String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
 				
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
 				
 				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));	
 				
-				String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
+				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
 				mFile.setProperty("Last Played", lastPlayed);
 			} catch (IOException e) {
 				LoggerFactory.getLogger(JrFilePlayer.class).warn(e.toString(), e);
