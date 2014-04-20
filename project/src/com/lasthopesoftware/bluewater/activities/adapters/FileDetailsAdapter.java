@@ -31,7 +31,7 @@ public class FileDetailsAdapter extends ArrayAdapter<JrFile> {
 	public View getView(int position, View convertView, ViewGroup parent) {
 	
 		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
+		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_details, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
 		final JrFile file = getItem(position);
 		

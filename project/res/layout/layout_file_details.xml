@@ -1,28 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linFileDetailsRow"
     style="?android:attr/buttonBarStyle"
-    android:id="@+id/linTrackDetailsRow"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:measureWithLargestChild="true"
     android:orientation="horizontal"
-    android:paddingTop="0dip"
     android:paddingLeft="2dip"
     android:paddingRight="2dip"
-    android:measureWithLargestChild="true">
+    android:paddingTop="0dip" >
 
     <TextView
-        android:id="@+id/tvTrackDetailName"
+        android:id="@+id/tvFileDetailName"
         android:layout_width="0dip"
         android:layout_height="match_parent"
-        android:text=""
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:text="" />
 
     <TextView
-        android:id="@+id/tvTrackDetailValue"
+        android:id="@+id/tvFileDetailValue"
         android:layout_width="0dip"
         android:layout_height="match_parent"
-        android:text=""
-        android:layout_weight="2" />
+        android:layout_weight="2"
+        android:text="" />
 
 </LinearLayout>
