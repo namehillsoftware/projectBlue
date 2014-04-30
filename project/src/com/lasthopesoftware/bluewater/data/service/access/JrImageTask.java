@@ -75,7 +75,8 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 				
 				if (!imageCache.contains(imageQueue.peek())) return;
 				
-				imageCache.remove(imageQueue.poll()).recycle();
+				Bitmap oldBmp = imageCache.remove(imageQueue.poll());
+				if (oldBmp != emptyBitmap) oldBmp.recycle();
 			}
 		});
 	}
