@@ -23,8 +23,6 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class FileListAdapter extends ArrayAdapter<JrFile> {
@@ -40,7 +38,6 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 		final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_file_item, null);
 		final TextView textView = (TextView) returnView.findViewById(R.id.tvSongName);
 		final ImageButton btnViewFileDetails = (ImageButton) returnView.findViewById(R.id.btnViewDetails);
-		final ImageButton btnAddFile = (ImageButton) returnView.findViewById(R.id.btnAddFile);
 		final JrFile file = getItem(position);
 		
         textView.setMarqueeRepeatLimit(1);
@@ -82,25 +79,6 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 				Intent i = new Intent(v.getContext(), ViewFileDetails.class);
 				i.putExtra(ViewFileDetails.FILE_KEY, file.getKey());
 				v.getContext().startActivity(i);
-			}
-		});
-        
-        btnAddFile.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				final Library library = JrSession.GetLibrary(v.getContext());
-				if (library.getSavedTracksString() != null && !library.getSavedTracksString().isEmpty()) {
-					String savedTracksString = library.getSavedTracksString();
-					if (!savedTracksString.endsWith(";")) savedTracksString += ";";
-					library.setSavedTracksString(savedTracksString + String.valueOf(file.getKey()));
-				}
-								
-				JrSession.SaveSession(v.getContext());
-				
-				if (StreamingMusicService.getPlaylistController() == null) return;
-				
-				StreamingMusicService.getPlaylistController().addFile(file);
 			}
 		});
         

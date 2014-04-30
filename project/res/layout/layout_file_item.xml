@@ -15,23 +15,12 @@
         android:contentDescription="@string/btn_view_song_details"
         android:src="@drawable/ic_list" />
     
-     <ImageButton
-         android:id="@+id/btnAddFile"
-         style="?android:attr/buttonBarButtonStyle"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_centerInParent="false"
-         android:layout_centerVertical="false"
-         android:layout_toLeftOf="@id/btnViewDetails"
-         android:contentDescription="@string/btn_add_file"
-         android:src="@drawable/content_new" />
-    
     <TextView
         android:id="@+id/tvSongName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/btnAddFile"
+        android:layout_toLeftOf="@id/btnViewDetails"
         android:ellipsize="end"
         android:gravity="left|center_vertical"
         android:padding="@dimen/standard_textview_padding"
