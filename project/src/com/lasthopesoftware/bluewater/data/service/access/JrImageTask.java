@@ -15,7 +15,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 
-	private static final int maxSize = 100;
+	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static ConcurrentLinkedQueue<String> imageQueue = new ConcurrentLinkedQueue<String>();
 	private static ConcurrentHashMap<String, Bitmap> imageCache = new ConcurrentHashMap<String, Bitmap>();
 	private static Bitmap emptyBitmap;
@@ -30,7 +30,6 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 			
 			@Override
 			public void onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-				
 				if (imageCache.containsKey(_uniqueId)) {
 					owner.setResult(imageCache.get(_uniqueId));
 					return;
