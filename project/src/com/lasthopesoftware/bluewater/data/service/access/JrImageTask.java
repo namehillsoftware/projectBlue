@@ -43,7 +43,7 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 												"File=" + String.valueOf(_fileKey), 
 												"Type=Full", 
 												"Pad=1",
-												"Format=png",
+												"Format=jpg",
 												"FillTransparency=ffffff");
 					
 					if (isCancelled()) return;
