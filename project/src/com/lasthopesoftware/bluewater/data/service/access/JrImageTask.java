@@ -1,21 +1,23 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.LoggerFactory;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.util.LruCache;
 
-import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 
-	private static LruCache<String, Bitmap> imageCache = new LruCache<String, Bitmap>(100);
+	private static final int maxSize = 100;
+	private static ConcurrentLinkedQueue<String> imageQueue = new ConcurrentLinkedQueue<String>();
+	private static ConcurrentHashMap<String, Bitmap> imageCache = new ConcurrentHashMap<String, Bitmap>();
 	private static Bitmap emptyBitmap;
 	
 	public JrImageTask(String uniqueId, int fileKey) {
@@ -29,11 +31,9 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 			@Override
 			public void onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 				
-				synchronized (imageCache) {
-					if (imageCache.get(_uniqueId) != null) {
-						owner.setResult(imageCache.get(_uniqueId));
-						return;
-					}
+				if (imageCache.containsKey(_uniqueId)) {
+					owner.setResult(imageCache.get(_uniqueId));
+					return;
 				}
 				
 				Bitmap returnBmp = null;
@@ -68,11 +68,14 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 					returnBmp = emptyBitmap;
 				}
 				
-				synchronized (imageCache) {
-					imageCache.put(_uniqueId, returnBmp);				
-				}
-				
 				owner.setResult(returnBmp);
+				imageCache.put(_uniqueId, returnBmp);
+				
+				if (imageQueue.size() <= maxSize) return;
+				
+				if (!imageCache.contains(imageQueue.peek())) return;
+				
+				imageCache.remove(imageQueue.poll()).recycle();
 			}
 		});
 	}

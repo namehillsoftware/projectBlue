@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -27,10 +28,12 @@ import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class JrFileProperties {
+	private static final int maxSize = 4000;
 	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static ConcurrentHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentHashMap<Integer, ConcurrentSkipListMap<String,String>>();
+	private static ConcurrentLinkedQueue<Integer> mPropertiesQueue = new ConcurrentLinkedQueue<Integer>();
 	
 	public JrFileProperties(int fileKey) {
 		
@@ -41,6 +44,13 @@ public class JrFileProperties {
 		if (mProperties == null) {
 			mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER); 
 			mPropertiesCache.put(mFileKey, mProperties);
+			mPropertiesQueue.add(mFileKey);
+			
+			if (mPropertiesCache.size() <= maxSize) return;
+			
+			if (!mPropertiesCache.contains(mPropertiesQueue.peek())) return;
+			
+			mPropertiesCache.remove(mPropertiesQueue.poll());
 		}
 	}
 	
@@ -51,13 +61,17 @@ public class JrFileProperties {
 			
 			@Override
 			protected Boolean doInBackground(String... params) {
+				JrConnection conn = null;
 				try {
-					JrConnection conn = new JrConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
+					conn = new JrConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
 					conn.setReadTimeout(5000);
 					conn.getInputStream();
 					return true;
 				} catch (Exception e) {
 					return false;
+				} finally {
+					if (conn != null)
+						conn.disconnect();
 				}
 			}
 		};
