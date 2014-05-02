@@ -69,6 +69,7 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 				
 				owner.setResult(returnBmp);
 				imageCache.put(_uniqueId, returnBmp);
+				imageQueue.add(_uniqueId);
 				
 				if (imageQueue.size() <= maxSize) return;
 				
