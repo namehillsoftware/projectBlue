@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
@@ -68,6 +69,8 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 						StreamingMusicService.streamMusic(view.getContext(), position);
 					}
 				});
+		        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
+		        
 		        fileListView.setVisibility(View.VISIBLE);
 		        pbLoading.setVisibility(View.INVISIBLE);
 			}

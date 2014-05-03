@@ -21,15 +21,6 @@
         android:src="@drawable/content_new" />
 
 	<ImageButton
-	    android:id="@+id/btnPlaySong"
-	    style="?android:attr/buttonBarButtonStyle"
-	    android:layout_width="0dip"
-	    android:layout_height="match_parent"
-	    android:layout_weight="1"
-	    android:contentDescription="@string/btn_play_files"
-	    android:src="@drawable/av_play" />
-
-	<ImageButton
 	    android:id="@+id/btnViewFileDetails"
 	    style="?android:attr/buttonBarButtonStyle"
 	    android:layout_width="0dip"
@@ -38,4 +29,14 @@
 	    android:contentDescription="@string/btn_view_song_details"
 	    android:src="@drawable/ic_list" />
 
+	
+	<ImageButton
+	    android:id="@+id/btnPlaySong"
+	    style="?android:attr/buttonBarButtonStyle"
+	    android:layout_width="0dip"
+	    android:layout_height="match_parent"
+	    android:layout_weight="1"
+	    android:contentDescription="@string/btn_play_files"
+	    android:src="@drawable/av_play" />
+	
 </LinearLayout>
