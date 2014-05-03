@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.activities.common;
+package com.lasthopesoftware.bluewater.activities.adapters.views;
 
 import java.io.IOException;
 
@@ -9,8 +9,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -19,6 +17,7 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
+import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
@@ -142,27 +141,6 @@ public class BrowseItemMenu {
     		intent.setAction(mItem instanceof JrPlaylist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
     		v.getContext().startActivity(intent);
-		}
-	}
-	
-	public static class LongClickListener implements OnItemLongClickListener {
-		@Override
-		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-			for (int i = 0; i < parent.getChildCount(); i++) {
-				View child = parent.getChildAt(i);
-				if (child instanceof ViewFlipper) {
-					ViewFlipper flipper = ((ViewFlipper)child); 
-					if (flipper.getDisplayedChild() == 0) continue;
-					
-					flipper.showPrevious();
-				}
-			}
-			if (view instanceof ViewFlipper) {
-				ViewFlipper parentView = (ViewFlipper)view;
-				parentView.showNext();
-				return true;
-			}
-			return false;
 		}
 	}
 }

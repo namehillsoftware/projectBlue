@@ -24,7 +24,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.WaitForConnection;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
-import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
@@ -130,7 +131,7 @@ public class CategoryFragment extends Fragment {
 					if (result == null) return;
 					
 					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
-					listView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
+					listView.setOnItemLongClickListener(new LongClickFlipListener());
 		    		listView.setAdapter(new PlaylistAdapter(getActivity(), R.id.tvStandard, result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
@@ -199,7 +200,7 @@ public class CategoryFragment extends Fragment {
 			    	        return true;
 			    	    }
 				    });
-			    	listView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
+			    	listView.setOnItemLongClickListener(new LongClickFlipListener());
 			    	
 			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<JrItem>)result));
 			    	pbLoading.setVisibility(View.INVISIBLE);

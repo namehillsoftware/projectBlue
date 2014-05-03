@@ -17,7 +17,7 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
-import com.lasthopesoftware.bluewater.activities.common.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
@@ -103,7 +103,7 @@ public class ViewPlaylists extends FragmentActivity {
         if (mPlaylist.getSubItems().size() > 0) {
         	playlistView.setAdapter(new PlaylistAdapter(thisContext, R.id.tvStandard, mPlaylist.getSubItems()));
         	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
-        	playlistView.setOnItemLongClickListener(new BrowseItemMenu.LongClickListener());
+        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
         } else {
         	playlistView.setVisibility(View.INVISIBLE);
         	pbLoading.setVisibility(View.VISIBLE);

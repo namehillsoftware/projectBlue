@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Intent;
@@ -15,6 +14,7 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
@@ -89,6 +89,7 @@ public class ViewFiles extends FragmentActivity {
 				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    			    	
 		    	fileListView.setOnItemClickListener(new ClickFileListener(((IJrFilesContainer)mItem).getJrFiles()));
+		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	fileListView.setAdapter(fileListAdapter);
 		    	
 		    	fileListView.setVisibility(View.VISIBLE);
