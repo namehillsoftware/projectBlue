@@ -68,10 +68,7 @@ public class JrPlaylistController implements
 		
 		if (mCurrentFilePlayer != null) {			
 			// If the track is already playing, keep on playing
-			if (mPlaylist.indexOf(mCurrentFilePlayer.getFile()) == filePos) {
-				if (!mCurrentFilePlayer.isMediaPlayerCreated()) mCurrentFilePlayer.initMediaPlayer();
-				return;
-			}
+			if (mPlaylist.indexOf(mCurrentFilePlayer.getFile()) == filePos && mCurrentFilePlayer.isMediaPlayerCreated()) return;
 			
 			// stop any playback that is in action
 			if (mCurrentFilePlayer.isPlaying()) {
