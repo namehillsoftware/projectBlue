@@ -226,7 +226,7 @@ public class JrFiles implements IJrItemFiles {
 		return files;
 	}
 	
-	public static String serializeFileStringList(ArrayList<JrFile> files) {
+	public static String serializeFileStringList(List<JrFile> files) {
 		StringBuilder sb = new StringBuilder("2;");
 		sb.append(files.size()).append(";-1;");
 		

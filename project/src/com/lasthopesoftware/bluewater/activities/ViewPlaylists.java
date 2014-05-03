@@ -114,6 +114,7 @@ public class ViewPlaylists extends FragmentActivity {
 				public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
 					playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
 		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getJrFiles()));
+		        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
 		        	
 		        	playlistView.setVisibility(View.VISIBLE);
 		        	pbLoading.setVisibility(View.INVISIBLE);

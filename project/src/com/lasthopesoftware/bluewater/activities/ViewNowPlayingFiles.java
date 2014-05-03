@@ -75,7 +75,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         getFileStringTask.execute();
 	}
-		
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);

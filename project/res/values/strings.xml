@@ -49,4 +49,5 @@
     <string name="lbl_track_img">Track Image</string>
     <string name="lbl_loading">Loading&#8230;</string>
     <string name="btn_add_file">Queue file for playback</string>
+    <string name="lbl_song_added_to_now_playing">Song added to Now Playing</string>
 </resources>
