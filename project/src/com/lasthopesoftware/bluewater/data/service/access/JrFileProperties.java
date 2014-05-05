@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.objects;
+package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -20,6 +20,7 @@ import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 import android.os.AsyncTask;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
@@ -32,8 +33,8 @@ public class JrFileProperties {
 	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static ConcurrentHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentHashMap<Integer, ConcurrentSkipListMap<String,String>>();
-	private static ConcurrentLinkedQueue<Integer> mPropertiesQueue = new ConcurrentLinkedQueue<Integer>();
+	private static ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
+//	private static ConcurrentLinkedQueue<Integer> mPropertiesQueue = new ConcurrentLinkedQueue<Integer>();
 	
 	public JrFileProperties(int fileKey) {
 		
@@ -44,13 +45,13 @@ public class JrFileProperties {
 		if (mProperties == null) {
 			mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER); 
 			mPropertiesCache.put(mFileKey, mProperties);
-			mPropertiesQueue.add(mFileKey);
+//			mPropertiesQueue.add(mFileKey);
 			
-			if (mPropertiesCache.size() <= maxSize) return;
+//			if (mPropertiesCache.size() <= maxSize) return;
 			
-			if (!mPropertiesCache.contains(mPropertiesQueue.peek())) return;
-			
-			mPropertiesCache.remove(mPropertiesQueue.poll());
+//			if (!mPropertiesCache.contains(mPropertiesQueue.peek())) return;
+//			
+//			mPropertiesCache.remove(mPropertiesQueue.poll());
 		}
 	}
 	

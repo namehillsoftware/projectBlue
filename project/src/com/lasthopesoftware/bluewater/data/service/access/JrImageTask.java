@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -16,8 +17,9 @@ import com.lasthopesoftware.threading.SimpleTask;
 public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
-	private static ConcurrentLinkedQueue<String> imageQueue = new ConcurrentLinkedQueue<String>();
-	private static ConcurrentHashMap<String, Bitmap> imageCache = new ConcurrentHashMap<String, Bitmap>();
+//	private static ConcurrentLinkedQueue<String> imageQueue = new ConcurrentLinkedQueue<String>();
+//	private static ConcurrentHashMap<String, Bitmap> imageCache = new ConcurrentHashMap<String, Bitmap>();
+	private static ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static Bitmap emptyBitmap;
 	
 	public JrImageTask(String uniqueId, int fileKey) {
@@ -69,14 +71,14 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 				
 				owner.setResult(returnBmp);
 				imageCache.put(_uniqueId, returnBmp);
-				imageQueue.add(_uniqueId);
-				
-				if (imageQueue.size() <= maxSize) return;
-				
-				if (!imageCache.contains(imageQueue.peek())) return;
-				
-				Bitmap oldBmp = imageCache.remove(imageQueue.poll());
-				if (oldBmp != emptyBitmap) oldBmp.recycle();
+//				imageQueue.add(_uniqueId);
+//				
+//				if (imageQueue.size() <= maxSize) return;
+//				
+//				if (!imageCache.contains(imageQueue.peek())) return;
+//				
+//				Bitmap oldBmp = imageCache.remove(imageQueue.poll());
+//				if (oldBmp != emptyBitmap) oldBmp.recycle();
 			}
 		});
 	}

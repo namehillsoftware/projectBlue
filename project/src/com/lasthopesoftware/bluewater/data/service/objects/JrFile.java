@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.LoggerFactory;
 
+import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrFile extends JrObject {

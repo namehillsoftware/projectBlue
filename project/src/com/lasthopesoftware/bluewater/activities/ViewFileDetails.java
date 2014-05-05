@@ -20,8 +20,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
+import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.JrImageTask;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFileProperties;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
