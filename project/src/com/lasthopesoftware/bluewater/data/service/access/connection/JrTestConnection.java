@@ -46,7 +46,7 @@ public class JrTestConnection implements Callable<Boolean> {
 	    	conn.setConnectTimeout(mTimeout);
 			JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
 	    	
-	    	result = responseDao != null && responseDao.isStatus() ? Boolean.TRUE : Boolean.FALSE;
+	    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
 		} catch (MalformedURLException e) {
 			LoggerFactory.getLogger(JrTestConnection.class).warn(e.toString(), e);
 		} catch (FileNotFoundException f) {
