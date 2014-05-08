@@ -68,14 +68,14 @@ public class ViewFiles extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+						PollConnectionTask.Instance.get(_this).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 								filesContainer.getFilesAsync();
 							}
 						});
-						PollConnectionTask.Instance.get().startPolling();
+						PollConnectionTask.Instance.get(_this).startPolling();
 						
 						_this.startActivity(new Intent(_this, WaitForConnection.class));
 						

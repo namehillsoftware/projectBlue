@@ -132,7 +132,7 @@ public class ViewNowPlaying extends Activity implements
 		StreamingMusicService.addOnStreamingChangeListener(this);
 		StreamingMusicService.addOnStreamingStopListener(this);
 		StreamingMusicService.addOnStreamingStartListener(this);
-		PollConnectionTask.Instance.get().addOnStartListener(this);
+		PollConnectionTask.Instance.get(this).addOnStartListener(this);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
 			
@@ -244,7 +244,7 @@ public class ViewNowPlaying extends Activity implements
 		StreamingMusicService.removeOnStreamingStartListener(this);
 		StreamingMusicService.removeOnStreamingChangeListener(this);
 		StreamingMusicService.removeOnStreamingStopListener(this);
-		PollConnectionTask.Instance.get().removeOnStartListener(this);
+		PollConnectionTask.Instance.get(this).removeOnStartListener(this);
 	}
 	
 	public FrameLayout getContentView() {
@@ -422,7 +422,7 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void resetViewOnReconnect(JrFile file) {
 		final JrFile _file = file;
-		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		PollConnectionTask.Instance.get(this).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {

@@ -341,7 +341,7 @@ public class StreamingMusicService extends Service implements
 		builder.setTicker(waitingText);
 		builder.setSubText(getText(R.string.lbl_click_to_cancel));
 		mNotificationMgr.notify(mId, builder.build());
-		PollConnectionTask checkConnection = PollConnectionTask.Instance.get();
+		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
 		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
@@ -413,7 +413,7 @@ public class StreamingMusicService extends Service implements
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
-		if (PollConnectionTask.Instance.get().isRunning()) return START_NOT_STICKY;
+		if (PollConnectionTask.Instance.get(thisContext).isRunning()) return START_NOT_STICKY;
 		
 		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 		
@@ -438,7 +438,7 @@ public class StreamingMusicService extends Service implements
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	PollConnectionTask.Instance.get().stopPolling();
+	        	PollConnectionTask.Instance.get(thisContext).stopPolling();
 	        }
 		} else if (mLibrary != null)  {
 			pausePlayback(true);

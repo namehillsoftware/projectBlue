@@ -65,7 +65,7 @@ public class BrowseLibrary extends FragmentActivity {
 			return;
 		}
 		
-		if (!JrTestConnection.doTest(30000)) {
+		if (!JrTestConnection.doTest(mBrowseLibrary, 30000)) {
 			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
 			return;
@@ -125,11 +125,11 @@ public class BrowseLibrary extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
 							
-							PollConnectionTask.Instance.get().startPolling();
+							PollConnectionTask.Instance.get(mBrowseLibrary).startPolling();
 							
 							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							
-							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -184,7 +184,7 @@ public class BrowseLibrary extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
-							PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -192,7 +192,7 @@ public class BrowseLibrary extends FragmentActivity {
 										JrSession.JrFs.getVisibleViewsAsync(_this);
 								}
 							});
-							PollConnectionTask.Instance.get().startPolling();
+							PollConnectionTask.Instance.get(mBrowseLibrary).startPolling();
 							
 							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							break;

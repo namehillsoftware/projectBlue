@@ -8,6 +8,8 @@ import java.util.concurrent.FutureTask;
 
 import org.slf4j.LoggerFactory;
 
+import android.content.Context;
+
 import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
@@ -15,18 +17,29 @@ public class JrTestConnection implements Callable<Boolean> {
 	
 	private static int stdTimeoutTime = 30000;
 	private int mTimeout;
+	private Context mContext;
 	
-	public JrTestConnection() {
-		mTimeout = stdTimeoutTime;
+	public JrTestConnection(Context context) {
+		this(context, stdTimeoutTime);
 	}
 	
-	public JrTestConnection(int timeout) {
+	public JrTestConnection(Context context, int timeout) {
 		mTimeout = timeout;
+		mContext = context;
 	}
 	
 	@Override
 	public Boolean call() throws Exception {
 		Boolean result = Boolean.FALSE;
+		
+		if (!JrSession.isActive()) {
+			JrSession.GetLibrary(mContext);
+			
+			if (!JrSession.isActive()) {
+				Thread.sleep(mTimeout);
+				return result;
+			}
+		}
 		
 		JrConnection conn = new JrConnection("Alive");
 		try {
@@ -50,12 +63,12 @@ public class JrTestConnection implements Callable<Boolean> {
 		return result;
 	}
 	
-	public static boolean doTest(int timeout) {
-		return doTest(new JrTestConnection(timeout));
+	public static boolean doTest(Context context, int timeout) {
+		return doTest(new JrTestConnection(context, timeout));
 	}
 	
-	public static boolean doTest() {
-		return doTest(new JrTestConnection());
+	public static boolean doTest(Context context) {
+		return doTest(new JrTestConnection(context));
 	}
 	
 	private static boolean doTest(JrTestConnection testConnection) {

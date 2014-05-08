@@ -179,7 +179,9 @@ public class JrSession {
 	}
 	
 	public static boolean isActive() {
-		return library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode());
+		boolean result = library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode());
+		if (!result) library = null;
+		return result;
 	}
 
 	private static boolean tryConnection(String accessCode) {

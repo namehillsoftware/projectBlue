@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.slf4j.LoggerFactory;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
 
@@ -18,6 +19,7 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	
 	private volatile boolean mStopWaitingForConnection = false;
 	private SimpleTask<String, Void, Boolean> mTask;
+	private Context mContext;
 	
 	private static CopyOnWriteArraySet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new CopyOnWriteArraySet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
 	private CopyOnWriteArraySet<OnExecuteListener<String, Void, Boolean>> mUniqueOnExecuteListeners = new CopyOnWriteArraySet<ISimpleTask.OnExecuteListener<String, Void, Boolean>>();
@@ -25,9 +27,10 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	private CopyOnWriteArraySet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new CopyOnWriteArraySet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
 	private CopyOnWriteArraySet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
 	
-	private PollConnectionTask() {
+	private PollConnectionTask(Context context) {
 		mTask = new SimpleTask<String, Void, Boolean>();
 		mTask.addOnExecuteListener(this);
+		mContext = context;
 		
 		for (OnStartListener<String, Void, Boolean> onStartListener : mUniqueOnStartListeners)
 			mTask.addOnStartListener(onStartListener);
@@ -35,7 +38,7 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 
 	@Override
 	public void onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
-		while (!JrTestConnection.doTest()) {
+		while (!JrTestConnection.doTest(mContext)) {
 			try {
 				Thread.sleep(3000);
 				if (mStopWaitingForConnection) {
@@ -167,8 +170,8 @@ public class PollConnectionTask implements ISimpleTask<String, Void, Boolean>, O
 	public static class Instance {
 		private static PollConnectionTask _instance = null;
 		
-		public synchronized static PollConnectionTask get() {
-			if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask();
+		public synchronized static PollConnectionTask get(Context context) {
+			if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask(context);
 			return _instance;
 		}
 	}

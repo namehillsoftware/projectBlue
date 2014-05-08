@@ -94,7 +94,7 @@ public class JrFilePlayer implements
 	}
 	
 	private String getMpUrl() {
-		if (!JrTestConnection.doTest()) {
+		if (mMpContext != null && !JrTestConnection.doTest(mMpContext)) {
 			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}

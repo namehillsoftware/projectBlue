@@ -22,7 +22,7 @@ public class WaitForConnection extends Activity {
 		final Intent selectServerIntent = new Intent(this, SelectServer.class);
 		final WaitForConnection _this = this;
 		
-		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		PollConnectionTask.Instance.get(_this).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -38,11 +38,11 @@ public class WaitForConnection extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				PollConnectionTask.Instance.get().stopPolling();
+				PollConnectionTask.Instance.get(_this).stopPolling();
 				_this.startActivity(selectServerIntent);
 			}
 		});
 		
-		PollConnectionTask.Instance.get().startPolling();
+		PollConnectionTask.Instance.get(_this).startPolling();
 	}
 }

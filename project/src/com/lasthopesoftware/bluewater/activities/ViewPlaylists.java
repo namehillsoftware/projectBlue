@@ -66,7 +66,7 @@ public class ViewPlaylists extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+						PollConnectionTask.Instance.get(thisContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -74,7 +74,7 @@ public class ViewPlaylists extends FragmentActivity {
 							}
 						});
 						
-						PollConnectionTask.Instance.get().startPolling();
+						PollConnectionTask.Instance.get(thisContext).startPolling();
 						
 						thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
 						break;

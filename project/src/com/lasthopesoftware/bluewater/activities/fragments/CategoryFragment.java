@@ -58,14 +58,14 @@ public class CategoryFragment extends Fragment {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+						PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 								JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
 							}
 						});
-						PollConnectionTask.Instance.get().startPolling();
+						PollConnectionTask.Instance.get(mContext).startPolling();
 						mContext.startActivity(mWaitForConnection);
 						break;
 					}
@@ -113,7 +113,7 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -121,7 +121,7 @@ public class CategoryFragment extends Fragment {
 										((JrPlaylists) mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnectionTask.Instance.get().startPolling();
+							PollConnectionTask.Instance.get(mContext).startPolling();
 							mContext.startActivity(mWaitForConnection);
 							break;
 						}
@@ -151,7 +151,7 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get().addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
 								
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -159,7 +159,7 @@ public class CategoryFragment extends Fragment {
 										((JrItem)mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnectionTask.Instance.get().startPolling();
+							PollConnectionTask.Instance.get(mContext).startPolling();
 							mContext.startActivity(mWaitForConnection);
 							break;
 						}

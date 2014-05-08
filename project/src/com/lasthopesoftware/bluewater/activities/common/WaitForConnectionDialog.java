@@ -18,10 +18,11 @@ public class WaitForConnectionDialog {
 	public synchronized static AlertDialog show(Context context) {
 		if (_instance != null && _instance.isShowing()) return _instance;
 		
-		final String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
-		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		final Context _context = context;
+		final String message = String.format(_context.getString(R.string.lbl_attempting_to_reconnect), _context.getString(R.string.app_name));
+		final AlertDialog.Builder builder = new AlertDialog.Builder(_context);
 		builder.setTitle(context.getText(R.string.lbl_connection_lost_title)).setMessage(message).setCancelable(true);
-		builder.setNegativeButton(context.getText(R.string.btn_cancel), new OnClickListener() {
+		builder.setNegativeButton(_context.getText(R.string.btn_cancel), new OnClickListener() {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -33,13 +34,13 @@ public class WaitForConnectionDialog {
 			
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				PollConnectionTask.Instance.get().stopPolling();
+				PollConnectionTask.Instance.get(_context).stopPolling();
 			}
 		});
 		
 		_instance = builder.show();
 					
-		PollConnectionTask.Instance.get().addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		PollConnectionTask.Instance.get(_context).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
@@ -47,7 +48,7 @@ public class WaitForConnectionDialog {
 			}
 		});
 		
-		PollConnectionTask.Instance.get().startPolling();
+		PollConnectionTask.Instance.get(_context).startPolling();
 		
 		return _instance;
 	}
