@@ -25,10 +25,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	protected TResult doInBackground(TParams... params) {
-		mState = SimpleTaskState.SUCCESS;
+		mState = SimpleTaskState.EXECUTING;
 		
 		try {
 			mResult = onExecuteListener.onExecute(this, params);
+			mState = SimpleTaskState.SUCCESS;
 		} catch (Exception ex) {
 			exceptions.add(ex);
 			mState = SimpleTaskState.ERROR;
@@ -51,6 +52,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	protected void onPostExecute(TResult result) {
 		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : onCompleteListeners) completeListener.onComplete(this, result);
+	}
+	
+	@Override
+	protected void onCancelled(TResult result) {
+		mState = SimpleTaskState.CANCELLED;
 	}
 	
 	@Override

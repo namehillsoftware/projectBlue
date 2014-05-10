@@ -34,7 +34,7 @@ public class JrPlaylistController implements
 	private int mFileKey = -1;
 	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
-	private FutureTask<Boolean> mBackgroundFilePreparerTask;
+	private BackgroundFilePreparer mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	
@@ -148,7 +148,7 @@ public class JrPlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
-		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel(true);
+		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 		
 		JrFile nextFile = mediaPlayer.getFile().getNextFile();
 		if (nextFile == null) {
@@ -173,11 +173,12 @@ public class JrPlaylistController implements
 		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
 		
 		BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
-    	if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel(true);
-    	mBackgroundFilePreparerTask = new FutureTask<Boolean>(backgroundFilePreparer);
+    	if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+    	mBackgroundFilePreparerTask = backgroundFilePreparer;
+    	mBackgroundFilePreparerTask.start();
 //    	mBackgroundFilePreparerTask.("Thread to prepare next file");
 //    	mBackgroundFilePreparerTask.setPriority(Thread.MIN_PRIORITY);
-    	mBackgroundFilePreparerTask.run();
+    	
 	}
 	
 	public void pause() {
@@ -207,7 +208,7 @@ public class JrPlaylistController implements
 			if (mIsRepeating) {
 				prepareNextFile(mPlaylist.get(0));
 			} else {
-				if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel(true);
+				if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
 			}
@@ -338,7 +339,6 @@ public class JrPlaylistController implements
 		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
 		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 		
-		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone())
-			mBackgroundFilePreparerTask.cancel(true);
+		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 	}
 }
