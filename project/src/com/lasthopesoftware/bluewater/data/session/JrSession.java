@@ -54,10 +54,10 @@ public class JrSession {
 		
 		final Context _context = context;
 		SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
-		writeToDatabaseTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
+		writeToDatabaseTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
+			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
 				DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
@@ -66,7 +66,8 @@ public class JrSession {
 					ChosenLibrary = library.getId();
 					_context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					
-					owner.setResult(library);
+					LoggerFactory.getLogger(JrSession.class).debug("Session saved.");
+					return library;
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -75,7 +76,7 @@ public class JrSession {
 					handler.close();
 				}
 				
-				LoggerFactory.getLogger(JrSession.class).debug("Session saved.");
+				return null;
 			}
 		});
 		if (onSaveComplete != null)
@@ -104,14 +105,14 @@ public class JrSession {
 		if (ChosenLibrary < 0) return library;
 		final Context _context = context;
 		SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
-		getLibraryTask.addOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
+		getLibraryTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
 				DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					owner.setResult(libraryAccess.queryForId(params[0]));
+					return libraryAccess.queryForId(params[0]);
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -119,6 +120,8 @@ public class JrSession {
 				} finally {
 					handler.close();
 				}
+				
+				return null;
 			}
 		});
 		
@@ -141,13 +144,13 @@ public class JrSession {
 	public static List<Library> GetLibraries(Context context) {
 		final Context _context = context;
 		SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<Void, Void, List<Library>>();
-		getLibrariesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, List<Library>>() {
+		getLibrariesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, List<Library>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
+			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
 				DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
-					owner.setResult(handler.getAccessObject(Library.class).queryForAll());
+					return handler.getAccessObject(Library.class).queryForAll();
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -155,6 +158,8 @@ public class JrSession {
 				} finally {
 					handler.close();
 				}
+				
+				return new ArrayList<Library>();
 			}
 		});
 		

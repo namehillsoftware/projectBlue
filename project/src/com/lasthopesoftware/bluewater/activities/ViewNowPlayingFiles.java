@@ -47,11 +47,11 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         final SimpleTask<Void, Void, ArrayList<JrFile>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<JrFile>>();
         
-        getFileStringTask.addOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<JrFile>>() {
+        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<JrFile>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, Void... params) throws Exception {
-				owner.setResult(JrFiles.deserializeFileStringList(library.getSavedTracksString()));
+			public ArrayList<JrFile> onExecute(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, Void... params) throws Exception {
+				return JrFiles.deserializeFileStringList(library.getSavedTracksString());
 			}
 		});
         

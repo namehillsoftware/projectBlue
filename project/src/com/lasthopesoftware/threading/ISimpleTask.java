@@ -7,20 +7,19 @@ import java.util.concurrent.ExecutionException;
 public interface ISimpleTask<TParams, TProgress, TResult> {
 
 	TResult getResult() throws ExecutionException, InterruptedException;
-	void setResult(TResult result);
 	
 	LinkedList<Exception> getExceptions();
 	
 	SimpleTaskState getState();
 	
 	void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	void addOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener);
 	void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
 	void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
+	void setOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener);
+	
 	void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	void removeOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener);
 	void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
 	void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
@@ -31,7 +30,7 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	}
 	
 	public interface OnExecuteListener<TParams, TProgress, TResult> {
-		void onExecute(ISimpleTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
+		TResult onExecute(ISimpleTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
 	}
 	
 	public interface OnProgressListener<TParams, TProgress, TResult> {

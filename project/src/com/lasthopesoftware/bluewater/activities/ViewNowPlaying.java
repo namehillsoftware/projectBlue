@@ -278,11 +278,11 @@ public class ViewNowPlaying extends Activity implements
 			};
 			
 			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
-			getArtistTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			getArtistTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
-				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					owner.setResult(_file.getProperty("Artist"));
+				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					return _file.getProperty("Artist");
 				}
 			});
 			getArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -301,11 +301,11 @@ public class ViewNowPlaying extends Activity implements
 			getArtistTask.execute();
 			
 			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
-			getTitleTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			getTitleTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
-				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					owner.setResult(_file.getValue());
+				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					return _file.getValue();
 				}
 			});
 			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -324,12 +324,14 @@ public class ViewNowPlaying extends Activity implements
 			getTitleTask.execute();
 			
 			final SimpleTask<Void, Void, String> getAlbumTask = new SimpleTask<Void, Void, String>();
-			getAlbumTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			getAlbumTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
-				public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
 					if (_file.getProperty("Album") != null)
-						owner.setResult(_file.getProperty("Artist") + ":" + _file.getProperty("Album"));
+						return _file.getProperty("Artist") + ":" + _file.getProperty("Album");
+					
+					return null;
 				}
 			});
 			getAlbumTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -371,13 +373,15 @@ public class ViewNowPlaying extends Activity implements
 			getAlbumTask.execute();
 			
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
-			getRatingsTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
+			getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
 				
 				@Override
-				public void onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
-					owner.setResult((float) 0);
+				public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+					
 					if (_file.getProperty("Rating") != null && !_file.getProperty("Rating").isEmpty())
-						owner.setResult(Float.valueOf(_file.getProperty("Rating")));
+						return Float.valueOf(_file.getProperty("Rating"));
+					
+					return (float) 0;
 				}
 			});
 			getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {

@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.LoggerFactory;
 
@@ -28,13 +26,12 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 		final String _uniqueId = uniqueId;
 		final int _fileKey = fileKey;
 		
-		super.addOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
+		super.setOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
+			public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 				if (imageCache.containsKey(_uniqueId)) {
-					owner.setResult(imageCache.get(_uniqueId));
-					return;
+					return imageCache.get(_uniqueId);
 				}
 				
 				Bitmap returnBmp = null;
@@ -48,7 +45,7 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 												"Format=jpg",
 												"FillTransparency=ffffff");
 					
-					if (isCancelled()) return;
+					if (isCancelled()) return null;
 					
 					try {
 						returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
@@ -69,8 +66,9 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 					returnBmp = emptyBitmap;
 				}
 				
-				owner.setResult(returnBmp);
 				imageCache.put(_uniqueId, returnBmp);
+				
+				return returnBmp;
 //				imageQueue.add(_uniqueId);
 //				
 //				if (imageQueue.size() <= maxSize) return;

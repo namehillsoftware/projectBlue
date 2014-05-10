@@ -11,7 +11,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private TResult mResult;
 	private SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
-	ConcurrentLinkedQueue<OnExecuteListener<TParams, TProgress, TResult>> onExecuteListeners = new ConcurrentLinkedQueue<OnExecuteListener<TParams, TProgress, TResult>>();
+	OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
 	ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = new ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>>();
 	ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = new ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>>();
 	ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = new ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>>();
@@ -26,17 +26,14 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	protected TResult doInBackground(TParams... params) {
 		mState = SimpleTaskState.SUCCESS;
-		for (OnExecuteListener<TParams, TProgress, TResult> workEvent : onExecuteListeners) {
-			try {
-				workEvent.onExecute(this, params);
-			} catch (Exception ex) {
-				exceptions.add(ex);
-				mState = SimpleTaskState.ERROR;
-				boolean continueExecution = true;
-				
-				for (OnErrorListener<TParams, TProgress, TResult> errorListener : onErrorListeners) continueExecution &= errorListener.onError(this, ex);
-				if (!continueExecution) break;
-			}
+		
+		try {
+			mResult = onExecuteListener.onExecute(this, params);
+		} catch (Exception ex) {
+			exceptions.add(ex);
+			mState = SimpleTaskState.ERROR;
+			
+			for (OnErrorListener<TParams, TProgress, TResult> errorListener : onErrorListeners) errorListener.onError(this, ex);
 		}
 		return mResult;
 	}
@@ -63,9 +60,8 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
-	public void addOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
-		if (listener != null)
-			onExecuteListeners.add(listener);
+	public void setOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
+		onExecuteListener = listener;
 	}
 
 
@@ -93,18 +89,8 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 
 	@Override
-	public void setResult(TResult result) {
-		mResult = result;		
-	}
-
-	@Override
 	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
 		if (onStartListeners.contains(listener)) onStartListeners.remove(listener);
-	}
-
-	@Override
-	public void removeOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
-		if (onExecuteListeners.contains(listener)) onExecuteListeners.remove(listener);		
 	}
 
 	@Override

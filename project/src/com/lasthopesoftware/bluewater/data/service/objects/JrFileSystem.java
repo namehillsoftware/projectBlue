@@ -86,10 +86,10 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	private SimpleTask<String, Void, ArrayList<IJrItem<?>>> getVisibleViewsTask() {
 		SimpleTask<String, Void, ArrayList<IJrItem<?>>> getViewsTask = new SimpleTask<String, Void, ArrayList<IJrItem<?>>>();
 				
-		getViewsTask.addOnExecuteListener(new OnExecuteListener<String, Void, ArrayList<IJrItem<?>>>() {
+		getViewsTask.setOnExecuteListener(new OnExecuteListener<String, Void, ArrayList<IJrItem<?>>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
+			public ArrayList<IJrItem<?>> onExecute(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, String... params) throws Exception {
 				synchronized(syncObject) {
 					if (mVisibleViews == null || mVisibleViews.size() == 0) {
 						List<IJrItem<?>> libraries = getSubItems();
@@ -118,8 +118,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 					}
 				}
 				
-				ArrayList<IJrItem<?>> result = new ArrayList<IJrItem<?>>(mVisibleViews);
-				owner.setResult(result);
+				return new ArrayList<IJrItem<?>>(mVisibleViews);
 			}
 		});
 		

@@ -534,11 +534,11 @@ public class StreamingMusicService extends Service implements
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 		
 		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>();
-		getNotificationPropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+		getNotificationPropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				owner.setResult(playingFile.getProperty("Artist") + " - " + playingFile.getValue());
+			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				return playingFile.getProperty("Artist") + " - " + playingFile.getValue();
 			}
 		});
 		getNotificationPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -560,16 +560,16 @@ public class StreamingMusicService extends Service implements
 		getNotificationPropertiesTask.execute();
 		
 		final SimpleTask<Void, Void, SparseArray<Object>> getBtPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>();
-		getBtPropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
+		getBtPropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
+			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
 				SparseArray<Object> result = new SparseArray<Object>(4);
 				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(JrFileProperties.ARTIST));
 				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(JrFileProperties.ALBUM));
 				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
 				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
-				owner.setResult(result);
+				return result;
 			}
 		});
 		getBtPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {

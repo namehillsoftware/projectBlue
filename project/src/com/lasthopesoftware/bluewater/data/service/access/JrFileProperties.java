@@ -5,8 +5,6 @@ import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -93,23 +91,23 @@ public class JrFileProperties {
 		
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>();
-		filePropertiesTask.addOnExecuteListener(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
+		filePropertiesTask.setOnExecuteListener(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+			public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
 				TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-				
-				owner.setResult(returnProperties);
 				
 				try {
 					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
 					conn.setReadTimeout(45000);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-				    	if (xml.size() < 1) return;
+				    	if (xml.size() < 1) return returnProperties;
 				    	
 				    	for (XmlElement el : xml.get(0))
 				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+				    	
+				    	return returnProperties;
 					} finally {
 						conn.disconnect();
 					}
@@ -118,6 +116,8 @@ public class JrFileProperties {
 				} catch (XmlParseException e) {
 					LoggerFactory.getLogger(JrFileProperties.class).error(e.toString(), e);
 				}
+				
+				return returnProperties;
 			}
 		});
 		

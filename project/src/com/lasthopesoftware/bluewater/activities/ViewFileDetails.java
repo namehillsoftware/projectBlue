@@ -60,11 +60,11 @@ public class ViewFileDetails extends Activity {
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>();
-        getFileNameTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+        getFileNameTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				owner.setResult(filePropertiesHelper.getProperty("Name"));
+			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				return filePropertiesHelper.getProperty("Name");
 			}
 		});
         getFileNameTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -77,13 +77,14 @@ public class ViewFileDetails extends Activity {
         getFileNameTask.execute();
         
         final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
-		getRatingsTask.addOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
+		getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
-				owner.setResult((float) 0);
+			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 				if (filePropertiesHelper.getProperty("Rating") != null && !filePropertiesHelper.getProperty("Rating").isEmpty())
-					owner.setResult(Float.valueOf(filePropertiesHelper.getProperty("Rating")));
+					return Float.valueOf(filePropertiesHelper.getProperty("Rating"));
+				
+				return (float) 0;
 			}
 		});
 		getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
@@ -111,17 +112,17 @@ public class ViewFileDetails extends Activity {
 		getRatingsTask.execute();
         
         final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>();
-        getFilePropertiesTask.addOnExecuteListener(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
+        getFilePropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
+			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
 				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				
 				for (Entry<String, String> entry : fileProperties.entrySet())
 					results.add(entry);
 				
-				owner.setResult(results);
+				return results;
 			}
 		});
         
@@ -138,11 +139,11 @@ public class ViewFileDetails extends Activity {
         getFilePropertiesTask.execute();
         
         SimpleTask<Void, Void, String> getAlbumKeyTask = new SimpleTask<Void, Void, String>();
-        getAlbumKeyTask.addOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+        getAlbumKeyTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
-			public void onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				owner.setResult(filePropertiesHelper.getProperty("Artist") + ":" + filePropertiesHelper.getProperty("Album"));
+			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				return filePropertiesHelper.getProperty("Artist") + ":" + filePropertiesHelper.getProperty("Album");
 			}
 		});
         

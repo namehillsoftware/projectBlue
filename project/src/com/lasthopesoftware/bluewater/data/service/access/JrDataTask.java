@@ -15,10 +15,10 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 	
 	public JrDataTask() {
 		super();
-		super.addOnExecuteListener(new OnExecuteListener<String, Void, TResult>() {
+		super.setOnExecuteListener(new OnExecuteListener<String, Void, TResult>() {
 
 			@Override
-			public void onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
+			public TResult onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
 				if (mResults == null) mResults = new ArrayList<TResult>();
 				mResults.clear();
 
@@ -31,7 +31,7 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 					conn.disconnect();
 				}
 				
-				owner.setResult(mResults.get(mResults.size() - 1));
+				return mResults.get(mResults.size() - 1);
 			}
 		});
 	}
@@ -46,7 +46,7 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 	}
 	
 	@Override
-	public void addOnExecuteListener(OnExecuteListener<String, Void, TResult> listener) throws UnsupportedOperationException {
+	public void setOnExecuteListener(OnExecuteListener<String, Void, TResult> listener) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("The OnExecuteListener operation is not supported in the Jr Data Task. Please use the OnConnectListener.");
 	}
 

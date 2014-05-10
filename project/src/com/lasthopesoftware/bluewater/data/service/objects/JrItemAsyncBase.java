@@ -108,11 +108,11 @@ public abstract class JrItemAsyncBase<T extends IJrItem<?>> extends JrObject imp
 				task.addOnCompleteListener(listener);
 		}
 		
-		task.addOnExecuteListener(new OnExecuteListener<String, Void, List<T>>() {
+		task.setOnExecuteListener(new OnExecuteListener<String, Void, List<T>>() {
 
 			@Override
-			public void onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
-				owner.setResult(mSubItems);
+			public List<T> onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
+				return mSubItems;
 			}
 		});
 		
