@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
+import android.app.Application;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -29,10 +30,22 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 
 public class JrConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
-		
-	public static boolean buildInstance(String accessCode) throws IOException {
-		mAccessConfiguration = buildAccessConfiguration(accessCode);
-		return mAccessConfiguration != null;
+	private static String mAccessCode;
+	
+	private static Object syncObj = new Object();
+	
+	public static boolean buildConfiguration(Context context, String accessCode) {
+		mAccessCode = accessCode;
+		synchronized(syncObj) {
+			mAccessConfiguration = buildAccessConfiguration(mAccessCode);
+		}
+		return mAccessConfiguration != null && JrTestConnection.doTest(context);
+	}
+	
+	public static boolean updateConfiguration(Context context) {
+		if (!JrTestConnection.doTest(context))
+			return buildConfiguration(context, mAccessCode);
+		return false;
 	}
 
 	private static JrAccessDao buildAccessConfiguration(String accessCode) {
@@ -89,8 +102,10 @@ public class JrConnectionManager {
 	}
 	
 	public static HttpURLConnection getConnection(String... params) throws IOException {
-		if (!mIsBuilt) return null;
-		return new JrConnection(params);
+		synchronized(syncObj) {
+			if (mAccessConfiguration == null) return null;
+			return new JrConnection(new URL(mAccessConfiguration.getJrUrl(params)));
+		}
 	}
 	
 	private static class JrConnection extends HttpURLConnection {
@@ -102,13 +117,9 @@ public class JrConnectionManager {
 	//	private InputStream mInputStream;
 	//	private boolean mIsFound;
 		
-		protected JrConnection(URL url) throws IOException {
+		public JrConnection(URL url) throws IOException {
 			super(url);
 			setConnection(url);
-		}
-	
-		public JrConnection(String... params) throws IOException {
-			this(new URL(JrSession.accessDao.getJrUrl(params)));
 		}
 		
 		public void setConnection(URL url) throws IOException {
