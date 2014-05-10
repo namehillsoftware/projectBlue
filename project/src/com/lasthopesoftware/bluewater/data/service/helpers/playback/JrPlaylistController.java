@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.FutureTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -148,7 +147,7 @@ public class JrPlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
-		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+		haltBackgroundPreparerThread();
 		
 		JrFile nextFile = mediaPlayer.getFile().getNextFile();
 		if (nextFile == null) {
@@ -173,15 +172,13 @@ public class JrPlaylistController implements
 		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
 		
 		BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
-    	if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+		haltBackgroundPreparerThread();
     	mBackgroundFilePreparerTask = backgroundFilePreparer;
     	mBackgroundFilePreparerTask.start();
-//    	mBackgroundFilePreparerTask.("Thread to prepare next file");
-//    	mBackgroundFilePreparerTask.setPriority(Thread.MIN_PRIORITY);
-    	
 	}
 	
 	public void pause() {
+		haltBackgroundPreparerThread();
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
@@ -208,7 +205,7 @@ public class JrPlaylistController implements
 			if (mIsRepeating) {
 				prepareNextFile(mPlaylist.get(0));
 			} else {
-				if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+				haltBackgroundPreparerThread();
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
 			}
@@ -339,6 +336,10 @@ public class JrPlaylistController implements
 		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
 		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 		
+		haltBackgroundPreparerThread();
+	}
+	
+	private void haltBackgroundPreparerThread() {
 		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 	}
 }
