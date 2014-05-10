@@ -19,20 +19,26 @@ import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
-import android.app.Application;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 
 public class JrConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
 	private static String mAccessCode;
+	private static String mAuthCode;
 	
 	private static Object syncObj = new Object();
+	
+	public static boolean buildConfiguration(Context context, String accessCode, String authCode) {
+		synchronized(syncObj) {
+			mAuthCode = authCode;
+		}
+		return buildConfiguration(context, accessCode);
+	}
 	
 	public static boolean buildConfiguration(Context context, String accessCode) {
 		mAccessCode = accessCode;
@@ -104,7 +110,8 @@ public class JrConnectionManager {
 	public static HttpURLConnection getConnection(String... params) throws IOException {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
-			return new JrConnection(new URL(mAccessConfiguration.getJrUrl(params)));
+			URL url = new URL(mAccessConfiguration.getJrUrl(params));
+			return mAuthCode == null ? new JrConnection(url) : new JrConnection(url, mAuthCode);
 		}
 	}
 	
@@ -122,16 +129,19 @@ public class JrConnectionManager {
 			setConnection(url);
 		}
 		
+		public JrConnection(URL url, String authCode) throws IOException {
+			this(url);
+			try {
+				mHttpConnection.setRequestProperty("Authorization", "basic " + authCode);
+			} catch (Exception e) {
+				LoggerFactory.getLogger(JrConnection.class).error(e.toString(), e);
+			}
+		}
+		
 		public void setConnection(URL url) throws IOException {
 			mHttpConnection = (HttpURLConnection)url.openConnection();
 			mHttpConnection.setConnectTimeout(5000);
 			mHttpConnection.setReadTimeout(180000);
-			try {
-				if (!JrSession.GetLibrary().getAuthKey().isEmpty())
-					mHttpConnection.setRequestProperty("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
-			} catch (Exception e) {
-				LoggerFactory.getLogger(JrConnection.class).error(e.toString(), e);
-			}
 		}
 		
 		@Override
