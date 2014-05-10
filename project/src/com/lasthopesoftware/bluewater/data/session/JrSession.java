@@ -23,6 +23,7 @@ import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -36,7 +37,7 @@ public class JrSession {
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	public static int ChosenLibrary = -1;
 
-	public static JrAccessDao accessDao;
+	public static JrConnectionManager ConnectionManager;
 
 	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
@@ -187,59 +188,5 @@ public class JrSession {
 		boolean result = library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode());
 		if (!result) library = null;
 		return result;
-	}
-
-	private static boolean tryConnection(String accessCode) {
-		boolean connectResult = false;
-		try {
-			JrSession.accessDao = new GetMcAccess().execute(accessCode).get();
-			connectResult = !JrSession.accessDao.getActiveUrl().isEmpty();
-		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		}
-
-		return connectResult;
-	}
-
-	private static class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
-
-		@Override
-		protected JrAccessDao doInBackground(String... params) {
-
-			JrAccessDao accessDao = null;
-			try {
-				accessDao = new JrAccessDao();
-				
-				if (UrlValidator.getInstance().isValid(params[0])) {
-					Uri jrUrl = Uri.parse(params[0]);
-					accessDao.setRemoteIp(jrUrl.getHost());
-					accessDao.setPort(jrUrl.getPort());
-					accessDao.setStatus(true);
-					library.setLocalOnly(false);
-				} else {
-					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
-					XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-					
-					
-					accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-					accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-					accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-					for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-						accessDao.getLocalIps().add(localIp);
-					for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-						accessDao.getMacAddresses().add(macAddress);
-				}
-			} catch (ClientProtocolException e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-			} catch (IOException e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-			} catch (Exception e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-			}
-
-			return accessDao;
-		}
 	}
 }
