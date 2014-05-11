@@ -55,9 +55,9 @@ public class ConnectionManager {
 	}
 	
 	public static boolean refreshConfiguration(Context context, int timeout) {
-		if ((timeout <= 0 && !JrTestConnection.doTest()) || JrTestConnection.doTest(timeout))
+		if ((timeout > 0 && !JrTestConnection.doTest(timeout)) || !JrTestConnection.doTest())
 			return buildConfiguration(context, mAccessCode, mAuthCode);
-		return false;
+		return true;
 	}
 	
 	public static HttpURLConnection getConnection(String... params) throws IOException {
@@ -102,13 +102,16 @@ public class ConnectionManager {
 			try {
 				accessDao = new JrAccessDao();
 				
-				if (UrlValidator.getInstance().isValid(params[0])) {
-					Uri jrUrl = Uri.parse(params[0]);
+				String accessCode = params[0];
+				if (accessCode.contains(":") && !accessCode.startsWith("http://")) accessCode = "http://" + accessCode;
+				
+				if (UrlValidator.getInstance().isValid(accessCode)) {
+					Uri jrUrl = Uri.parse(accessCode);
 					accessDao.setRemoteIp(jrUrl.getHost());
 					accessDao.setPort(jrUrl.getPort());
 					accessDao.setStatus(true);
 				} else {
-					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + params[0])).openConnection();
+					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessCode)).openConnection();
 					XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
 					
 					
