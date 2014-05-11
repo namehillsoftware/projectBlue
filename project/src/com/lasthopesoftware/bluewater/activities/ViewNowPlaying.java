@@ -101,20 +101,7 @@ public class ViewNowPlaying extends Activity implements
 			
 			@Override
 			public void onClick(View v) {
-				mControlNowPlaying.setVisibility(View.VISIBLE);
-				mContentView.invalidate();
-				if (mTimerTask != null) mTimerTask.cancel();
-				mHideTimer.purge();
-				mTimerTask = new TimerTask() {
-					
-					@Override
-					public void run() {
-						Message msg = new Message();
-						msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
-						mHandler.sendMessage(msg);
-					}
-				};
-				mHideTimer.schedule(mTimerTask, 5000);
+				showNowPlayingControls();
 			}
 		});
 
@@ -417,6 +404,23 @@ public class ViewNowPlaying extends Activity implements
 		}
 	}
 	
+	private void showNowPlayingControls() {
+		mControlNowPlaying.setVisibility(View.VISIBLE);
+		mContentView.invalidate();
+		if (mTimerTask != null) mTimerTask.cancel();
+		mHideTimer.purge();
+		mTimerTask = new TimerTask() {
+			
+			@Override
+			public void run() {
+				Message msg = new Message();
+				msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
+				mHandler.sendMessage(msg);
+			}
+		};
+		mHideTimer.schedule(mTimerTask, 5000);
+	}
+	
 	private boolean containsIoException(List<Exception> exceptions) {
 		for (Exception exception : exceptions)
 			if (exception instanceof IOException) return true;
@@ -450,6 +454,8 @@ public class ViewNowPlaying extends Activity implements
 		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
 		mTrackerThread.setName("Tracker Thread");
 		mTrackerThread.start();
+		
+		showNowPlayingControls();
 		
 		mPlay.setVisibility(View.INVISIBLE);
 		mPause.setVisibility(View.VISIBLE);
