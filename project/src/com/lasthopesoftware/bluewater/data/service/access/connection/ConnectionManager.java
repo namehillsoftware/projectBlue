@@ -77,7 +77,7 @@ public class ConnectionManager {
 	
 	private static JrAccessDao buildAccessConfiguration(String accessCode) {
 		try {
-			JrAccessDao access = GetMcAccess.get(accessCode);
+			JrAccessDao access = MediaCenterAccess.get(accessCode);
 			if (access.getActiveUrl() != null && !access.getActiveUrl().isEmpty())
 				return access;
 		} catch (InterruptedException e) {
@@ -89,10 +89,10 @@ public class ConnectionManager {
 		return null;
 	}
 	
-	private static class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
+	private static class MediaCenterAccess extends AsyncTask<String, Void, JrAccessDao> {
 
 		public static JrAccessDao get(String accessCode) throws ExecutionException, InterruptedException {
-			return new GetMcAccess().execute(accessCode).get();
+			return new MediaCenterAccess().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, accessCode).get();
 		}
 		
 		@Override
