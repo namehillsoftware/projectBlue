@@ -147,7 +147,7 @@ public class JrPlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
-		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+		haltBackgroundPreparerThread();
 		
 		JrFile nextFile = mediaPlayer.getFile().getNextFile();
 		if (nextFile == null) {
@@ -171,13 +171,14 @@ public class JrPlaylistController implements
 	private void prepareNextFile(JrFile nextFile) {
 		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
 		
-    	if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+		haltBackgroundPreparerThread();
     	
     	mBackgroundFilePreparerTask = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);;
     	mBackgroundFilePreparerTask.start();    	
 	}
 	
 	public void pause() {
+		haltBackgroundPreparerThread();
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
@@ -204,7 +205,7 @@ public class JrPlaylistController implements
 			if (mIsRepeating) {
 				prepareNextFile(mPlaylist.get(0));
 			} else {
-				if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
+				haltBackgroundPreparerThread();
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
 			}
@@ -335,6 +336,10 @@ public class JrPlaylistController implements
 		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
 		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 		
+		haltBackgroundPreparerThread();
+	}
+	
+	private void haltBackgroundPreparerThread() {
 		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 	}
 }
