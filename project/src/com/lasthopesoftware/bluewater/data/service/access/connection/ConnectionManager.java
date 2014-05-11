@@ -26,7 +26,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
 import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 

@@ -4,6 +4,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.lasthopesoftware.bluewater.data.service.access.connection.JrAccessDao;
+
 public class JrLookUpResponseHandler extends DefaultHandler {
 		
 	private JrAccessDao response;

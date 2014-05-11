@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.access;
+package com.lasthopesoftware.bluewater.data.service.access.connection;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -123,6 +123,7 @@ public class JrAccessDao {
 	public String getJrUrl(String... params) {
 		// Add base url
 		String url = getActiveUrl();
+		if (url.isEmpty()) return null;
 		// Add action
 		url += params[0];
 		
