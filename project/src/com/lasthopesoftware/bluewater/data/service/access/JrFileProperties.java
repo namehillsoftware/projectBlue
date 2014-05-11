@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.SortedMap;
@@ -19,7 +20,7 @@ import xmlwise.Xmlwise;
 import android.os.AsyncTask;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -60,9 +61,9 @@ public class JrFileProperties {
 			
 			@Override
 			protected Boolean doInBackground(String... params) {
-				JrConnection conn = null;
+				HttpURLConnection conn = null;
 				try {
-					conn = new JrConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
+					conn = ConnectionManager.getConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
 					conn.setReadTimeout(5000);
 					conn.getInputStream();
 					return true;
@@ -98,7 +99,7 @@ public class JrFileProperties {
 				TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 				
 				try {
-					JrConnection conn = new JrConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
+					HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
 					conn.setReadTimeout(45000);
 					try {
 				    	XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));

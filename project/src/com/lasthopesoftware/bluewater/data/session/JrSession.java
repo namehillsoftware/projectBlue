@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.data.session;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,20 +7,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.http.client.ClientProtocolException;
 import org.slf4j.LoggerFactory;
 
-import xmlwise.XmlElement;
-import xmlwise.Xmlwise;
 import android.content.Context;
-import android.net.Uri;
-import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnectionManager;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -36,8 +25,6 @@ public class JrSession {
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	public static int ChosenLibrary = -1;
-
-	public static JrConnectionManager ConnectionManager;
 
 	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
@@ -95,7 +82,7 @@ public class JrSession {
 
 	public static synchronized Library GetLibrary(Context context) {
 		if (library != null) {
-			if (JrFs == null && isActive()) JrFs = new JrFileSystem(library.getSelectedView());
+			if (JrFs == null && ConnectionManager.refreshConfiguration(context)) JrFs = new JrFileSystem(library.getSelectedView());
 			return library;
 		}
 		
@@ -134,7 +121,7 @@ public class JrSession {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		}
 		
-		if (isActive()) {
+		if (ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey())) {
 			JrFs = new JrFileSystem(library.getSelectedView());
 			LoggerFactory.getLogger(JrSession.class).debug("Session started.");
 		}
@@ -182,11 +169,5 @@ public class JrSession {
 		library = null;
 		
 		return GetLibrary(context);
-	}
-	
-	public static boolean isActive() {
-		boolean result = library != null && library.getAccessCode() != null && !library.getAccessCode().isEmpty() && tryConnection(library.getAccessCode());
-		if (!result) library = null;
-		return result;
 	}
 }

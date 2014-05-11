@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -65,7 +65,7 @@ public class BrowseLibrary extends FragmentActivity {
 			return;
 		}
 		
-		if (!JrTestConnection.doTest(mBrowseLibrary, 30000)) {
+		if (!ConnectionManager.refreshConfiguration(mBrowseLibrary, 30000)) {
 			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
 			return;

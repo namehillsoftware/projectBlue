@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
@@ -285,7 +286,7 @@ public class StreamingMusicService extends Service implements
 	private void restorePlaylistControllerFromStorage() {
 		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 		
-		if (JrSession.isActive())
+		if (ConnectionManager.refreshConfiguration(thisContext))
 			initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	}
 	
@@ -417,7 +418,7 @@ public class StreamingMusicService extends Service implements
 		
 		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 		
-		if (intent != null && JrSession.isActive()) {
+		if (intent != null && ConnectionManager.refreshConfiguration(thisContext)) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 				
@@ -472,7 +473,7 @@ public class StreamingMusicService extends Service implements
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-        	if (!JrSession.isActive()) return;
+        	if (!ConnectionManager.refreshConfiguration(thisContext)) return;
         	
         	if (mPlaylistController != null) {
         		mPlaylistController.setVolume(1.0f);

@@ -17,7 +17,7 @@ import android.net.Uri;
 import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrTestConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
@@ -94,7 +94,7 @@ public class JrFilePlayer implements
 	}
 	
 	private String getMpUrl() {
-		if (mMpContext != null && !JrTestConnection.doTest(mMpContext)) {
+		if (mMpContext != null && !ConnectionManager.refreshConfiguration(mMpContext)) {
 			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}

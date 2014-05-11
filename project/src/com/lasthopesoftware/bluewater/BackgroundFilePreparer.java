@@ -1,19 +1,16 @@
 package com.lasthopesoftware.bluewater;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.slf4j.LoggerFactory;
 
-import android.os.AsyncTask.Status;
-
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class BackgroundFilePreparer {
 

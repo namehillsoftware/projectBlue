@@ -3,13 +3,14 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
 import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 
 public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 
@@ -19,7 +20,7 @@ public class JrByteResponse extends AsyncTask<String, Void, byte[]> {
 		// Add base url
 	
 		try {
-			JrConnection conn = new JrConnection(params);
+			HttpURLConnection conn = ConnectionManager.getConnection(params);
 			try {
 				is = conn.getInputStream();
 				

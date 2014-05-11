@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
+import java.net.HttpURLConnection;
 
 import org.slf4j.LoggerFactory;
 
@@ -8,15 +9,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
-//	private static ConcurrentLinkedQueue<String> imageQueue = new ConcurrentLinkedQueue<String>();
-//	private static ConcurrentHashMap<String, Bitmap> imageCache = new ConcurrentHashMap<String, Bitmap>();
 	private static ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static Bitmap emptyBitmap;
 	
@@ -37,7 +36,7 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 				Bitmap returnBmp = null;
 				
 				try {
-					JrConnection conn = new JrConnection(
+					HttpURLConnection conn = ConnectionManager.getConnection(
 												"File/GetImage", 
 												"File=" + String.valueOf(_fileKey), 
 												"Type=Full", 
@@ -69,14 +68,6 @@ public class JrImageTask extends SimpleTask<Void, Void, Bitmap> {
 				imageCache.put(_uniqueId, returnBmp);
 				
 				return returnBmp;
-//				imageQueue.add(_uniqueId);
-//				
-//				if (imageQueue.size() <= maxSize) return;
-//				
-//				if (!imageCache.contains(imageQueue.peek())) return;
-//				
-//				Bitmap oldBmp = imageCache.remove(imageQueue.poll());
-//				if (oldBmp != emptyBitmap) oldBmp.recycle();
 			}
 		});
 	}

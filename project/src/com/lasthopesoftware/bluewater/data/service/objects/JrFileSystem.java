@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnConnectL
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.JrFsResponse;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -52,7 +52,7 @@ public class JrFileSystem extends JrItemAsyncBase<IJrItem<?>> implements IJrItem
 	}
 	
 	public String getSubItemUrl() {
-		return JrSession.accessDao.getJrUrl("Browse/Children");
+		return ConnectionManager.getFormattedUrl("Browse/Children");
 	}
 	
 	public void setVisibleViews(int... visibleViewKeys) {

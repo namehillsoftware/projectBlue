@@ -41,7 +41,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Boole
 
 	@Override
 	public Boolean onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
-		while (!JrTestConnection.doTest(mContext)) {
+		while (!ConnectionManager.refreshConfiguration(mContext)) {
 			try {
 				Thread.sleep(3000);
 				if (mStopWaitingForConnection) {

@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
-
 import android.os.AsyncTask;
+
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 
 public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 
@@ -16,7 +17,7 @@ public class JrStdXmlResponse extends AsyncTask<String, Void, JrResponse> {
 		JrResponse responseDao = null;
 		
 		try {
-			JrConnection conn = new JrConnection(params);
+			HttpURLConnection conn = ConnectionManager.getConnection(params);
 	    	
 			try {
 				responseDao = JrResponse.fromInputStream(conn.getInputStream());

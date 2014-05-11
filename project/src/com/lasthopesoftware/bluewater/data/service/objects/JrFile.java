@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.slf4j.LoggerFactory;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 
 public class JrFile extends JrObject {
 	private JrFile mNextFile, mPreviousFile;
@@ -53,7 +53,7 @@ public class JrFile extends JrObject {
 		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.; 
 		 * 2: Real-time playback, no playback statistics handling (default: )
 		 */
-		return JrSession.accessDao.getJrUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
+		return ConnectionManager.getFormattedUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
 	}
 		
 	public JrFile getNextFile() {

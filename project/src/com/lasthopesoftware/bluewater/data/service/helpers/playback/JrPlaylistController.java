@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.FutureTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -172,13 +171,10 @@ public class JrPlaylistController implements
 	private void prepareNextFile(JrFile nextFile) {
 		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
 		
-		BackgroundFilePreparer backgroundFilePreparer = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);
     	if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
-    	mBackgroundFilePreparerTask = backgroundFilePreparer;
-    	mBackgroundFilePreparerTask.start();
-//    	mBackgroundFilePreparerTask.("Thread to prepare next file");
-//    	mBackgroundFilePreparerTask.setPriority(Thread.MIN_PRIORITY);
     	
+    	mBackgroundFilePreparerTask = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);;
+    	mBackgroundFilePreparerTask.start();    	
 	}
 	
 	public void pause() {

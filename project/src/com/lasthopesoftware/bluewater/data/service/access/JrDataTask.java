@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrConnection;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -22,7 +23,7 @@ public class JrDataTask<TResult> extends SimpleTask<String, Void, TResult> imple
 				if (mResults == null) mResults = new ArrayList<TResult>();
 				mResults.clear();
 
-				JrConnection conn = new JrConnection(params);
+				HttpURLConnection conn = ConnectionManager.getConnection(params);
 				try {
 					InputStream is = conn.getInputStream();
 					for (OnConnectListener<TResult> workEvent : onConnectListeners)

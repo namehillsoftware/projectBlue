@@ -5,12 +5,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -24,39 +27,57 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
-public class JrConnectionManager {
+public class ConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
-	private static String mAccessCode;
-	private static String mAuthCode;
+	private static String mAccessCode = null;
+	private static String mAuthCode = null;
 	
 	private static Object syncObj = new Object();
 	
+	public static boolean buildConfiguration(Context context, String accessCode) {
+		return buildConfiguration(context, accessCode, null);
+	}
+	
 	public static boolean buildConfiguration(Context context, String accessCode, String authCode) {
+		mAccessCode = accessCode;		
 		synchronized(syncObj) {
 			mAuthCode = authCode;
-		}
-		return buildConfiguration(context, accessCode);
-	}
-	
-	public static boolean buildConfiguration(Context context, String accessCode) {
-		mAccessCode = accessCode;
-		synchronized(syncObj) {
 			mAccessConfiguration = buildAccessConfiguration(mAccessCode);
 		}
-		return mAccessConfiguration != null && JrTestConnection.doTest(context);
+		return mAccessConfiguration != null && JrTestConnection.doTest();
 	}
 	
-	public static boolean updateConfiguration(Context context) {
-		if (!JrTestConnection.doTest(context))
-			return buildConfiguration(context, mAccessCode);
+	public static boolean refreshConfiguration(Context context) {
+		return refreshConfiguration(context, -1);
+	}
+	
+	public static boolean refreshConfiguration(Context context, int timeout) {
+		if ((timeout <= 0 && !JrTestConnection.doTest()) || JrTestConnection.doTest(timeout))
+			return buildConfiguration(context, mAccessCode, mAuthCode);
 		return false;
 	}
-
+	
+	public static HttpURLConnection getConnection(String... params) throws IOException {
+		synchronized(syncObj) {
+			if (mAccessConfiguration == null) return null;
+			URL url = new URL(mAccessConfiguration.getJrUrl(params));
+			return mAuthCode == null ? new JrConnection(url) : new JrConnection(url, mAuthCode);
+		}
+	}
+	
+	public static String getFormattedUrl(String... params) {
+		synchronized(syncObj) {
+			if (mAccessConfiguration == null) return null;
+			return mAccessConfiguration.getJrUrl(params);
+		}
+	}
+	
 	private static JrAccessDao buildAccessConfiguration(String accessCode) {
 		try {
-			JrAccessDao access = new GetMcAccess().execute(accessCode).get();
+			JrAccessDao access = GetMcAccess.get(accessCode);
 			if (access.getActiveUrl() != null && !access.getActiveUrl().isEmpty())
 				return access;
 		} catch (InterruptedException e) {
@@ -70,6 +91,10 @@ public class JrConnectionManager {
 	
 	private static class GetMcAccess extends AsyncTask<String, Void, JrAccessDao> {
 
+		public static JrAccessDao get(String accessCode) throws ExecutionException, InterruptedException {
+			return new GetMcAccess().execute(accessCode).get();
+		}
+		
 		@Override
 		protected JrAccessDao doInBackground(String... params) {
 
@@ -104,14 +129,6 @@ public class JrConnectionManager {
 			}
 
 			return accessDao;
-		}
-	}
-	
-	public static HttpURLConnection getConnection(String... params) throws IOException {
-		synchronized(syncObj) {
-			if (mAccessConfiguration == null) return null;
-			URL url = new URL(mAccessConfiguration.getJrUrl(params));
-			return mAuthCode == null ? new JrConnection(url) : new JrConnection(url, mAuthCode);
 		}
 	}
 	
@@ -382,6 +399,68 @@ public class JrConnectionManager {
 		@Override
 		public boolean usingProxy() {
 			return mHttpConnection.usingProxy();
+		}
+	}
+	
+	private static class JrTestConnection implements Callable<Boolean> {
+		
+		private static int stdTimeoutTime = 30000;
+		private int mTimeout;
+		
+		public JrTestConnection() {
+			this(stdTimeoutTime);
+		}
+		
+		public JrTestConnection(int timeout) {
+			mTimeout = timeout;
+		}
+		
+		@Override
+		public Boolean call() throws Exception {
+			Boolean result = Boolean.FALSE;
+			
+			HttpURLConnection conn = getConnection("Alive");
+			try {
+		    	conn.setConnectTimeout(mTimeout);
+				JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
+		    	
+		    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
+			} catch (MalformedURLException e) {
+				LoggerFactory.getLogger(JrTestConnection.class).warn(e.toString(), e);
+			} catch (FileNotFoundException f) {
+				LoggerFactory.getLogger(JrTestConnection.class).warn(f.getLocalizedMessage());
+			} catch (IOException e) {
+				LoggerFactory.getLogger(JrTestConnection.class).warn(e.getLocalizedMessage());
+			} catch (IllegalArgumentException i) {
+				LoggerFactory.getLogger(JrTestConnection.class).warn(i.toString(), i);
+			} finally {
+				conn.disconnect();
+			}
+			
+			return result;
+		}
+		
+		public static boolean doTest(int timeout) {
+			return doTest(new JrTestConnection(timeout));
+		}
+		
+		public static boolean doTest() {
+			return doTest(new JrTestConnection());
+		}
+		
+		private static boolean doTest(JrTestConnection testConnection) {
+			try {
+				FutureTask<Boolean> statusTask = new FutureTask<Boolean>(testConnection);
+				Thread statusThread = new Thread(statusTask);
+				statusThread.setName("Checking connection status");
+				statusThread.setPriority(Thread.MIN_PRIORITY);
+				statusThread.start();
+				return statusTask.get().booleanValue();
+			} catch (Exception e) {
+				LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
+			}
+			
+			return false;
 		}
 	}
 }
