@@ -6,6 +6,7 @@ package com.lasthopesoftware.bluewater.services;
 
 import java.util.HashSet;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -94,6 +95,7 @@ public class StreamingMusicService extends Service implements
 	
 	// State dependent non-static variables
 	private static boolean mIsHwRegistered = false;
+	private static boolean mIsNotificationForeground = false;
 	
 	private static final Object syncHandlersObject = new Object();
 	private static final Object syncPlaylistControllerObject = new Object();
@@ -278,7 +280,8 @@ public class StreamingMusicService extends Service implements
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
-        startForeground(mId, builder.build());
+        
+		notifyForeground(builder.build());
         
         mPlaylistController.startAt(filePos, fileProgress);
 	}
@@ -359,8 +362,19 @@ public class StreamingMusicService extends Service implements
 		checkConnection.startPolling();
 	}
 	
+	private void notifyForeground(Notification notification) {
+		if (!mIsNotificationForeground) {
+			startForeground(mId, notification);
+			mIsNotificationForeground = true;
+			return;
+		}
+		
+		mNotificationMgr.notify(mId, notification);
+	}
+	
 	private void stopNotification() {
 		stopForeground(true);
+		mIsNotificationForeground = false;
 		mNotificationMgr.cancel(mId);
 	}
 	
@@ -554,7 +568,7 @@ public class StreamingMusicService extends Service implements
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(result == null ? "Error getting file properties." : result);
 				builder.setContentIntent(pi);
-				startForeground(mId, builder.build());
+				notifyForeground(builder.build());
 			}
 		});
 		
