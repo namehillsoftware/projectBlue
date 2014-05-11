@@ -9,7 +9,7 @@ import android.os.AsyncTask;
 public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult> {
 
 	private TResult mResult;
-	private SimpleTaskState mState = SimpleTaskState.INITIALIZED;
+	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
 	OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
 	ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = new ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>>();

@@ -39,9 +39,9 @@ public class BackgroundFilePreparer {
 				double bufferTime = -1;
 				while (owner.getState() != SimpleTaskState.CANCELLED && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
 					try {
-						if (owner.getState() != SimpleTaskState.CANCELLED) return Boolean.FALSE;
+						if (owner.getState() == SimpleTaskState.CANCELLED) return Boolean.FALSE;
 						Thread.sleep(SLEEP_TIME);
-						if (owner.getState() != SimpleTaskState.CANCELLED) return Boolean.FALSE;
+						if (owner.getState() == SimpleTaskState.CANCELLED) return Boolean.FALSE;
 					} catch (InterruptedException ie) {
 						return Boolean.FALSE;
 					}
