@@ -25,6 +25,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	protected TResult doInBackground(TParams... params) {
+		exceptions.clear();
 		mState = SimpleTaskState.EXECUTING;
 		
 		try {

@@ -24,6 +24,8 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
 	void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
+	boolean isCancelled();
+	
 	/* Events */
 	public interface OnStartListener<TParams, TProgress, TResult> {
 		void onStart(ISimpleTask<TParams, TProgress, TResult> owner);

@@ -34,17 +34,17 @@ public class BackgroundFilePreparer {
 				if (mNextFilePlayer == null) return Boolean.FALSE;
 				mNextFilePlayer.initMediaPlayer();
 				double bufferTime = -1;
-				while (owner.getState() != SimpleTaskState.CANCELLED && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
+				while (!owner.isCancelled() && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
 					try {
-						if (owner.getState() == SimpleTaskState.CANCELLED) return Boolean.FALSE;
+						if (owner.isCancelled()) return Boolean.FALSE;
 						Thread.sleep(SLEEP_TIME);
-						if (owner.getState() == SimpleTaskState.CANCELLED) return Boolean.FALSE;
+						if (owner.isCancelled()) return Boolean.FALSE;
 					} catch (InterruptedException ie) {
 						return Boolean.FALSE;
 					}
 					
 					try {
-						if (owner.getState() != SimpleTaskState.CANCELLED && bufferTime < 0) {
+						if (!owner.isCancelled() && bufferTime < 0) {
 							// figure out how much buffer time we need for this file if we're on the slowest 3G network
 							// and add 15secs for a dropped connection  
 							try {
@@ -57,7 +57,7 @@ public class BackgroundFilePreparer {
 							}
 						}
 					
-						if (owner.getState() != SimpleTaskState.CANCELLED && mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
+						if (!owner.isCancelled() && mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
 							mNextFilePlayer.prepareMpSynchronously();
 							return Boolean.TRUE;
 						}
