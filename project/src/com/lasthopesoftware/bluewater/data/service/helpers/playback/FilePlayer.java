@@ -94,7 +94,9 @@ public class FilePlayer implements
 	}
 	
 	private String getMpUrl() {
-		if (mMpContext != null || !ConnectionManager.refreshConfiguration(mMpContext)) {
+		if (mMpContext == null)
+			throw new NullPointerException("The file player's context cannot be null");
+		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
 			for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}
