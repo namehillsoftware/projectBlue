@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListene
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 
-public class JrPlaylistController implements
+public class PlaylistController implements
 	OnFilePreparedListener,
 	OnFileErrorListener, 
 	OnFileCompleteListener
@@ -31,17 +31,17 @@ public class JrPlaylistController implements
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
-	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
+	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
 	private BackgroundFilePreparer mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	
-	public JrPlaylistController(Context context, String playlistString) {
+	public PlaylistController(Context context, String playlistString) {
 		this(context, Files.deserializeFileStringList(playlistString));
 	}
 	
-	public JrPlaylistController(Context context, ArrayList<File> playlist) {
+	public PlaylistController(Context context, ArrayList<File> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}
@@ -85,7 +85,7 @@ public class JrPlaylistController implements
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 		
 		final File file = mPlaylist.get(filePos);
-		final JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
+		final FilePlayer filePlayer = new FilePlayer(mContext, file);
 		filePlayer.addOnJrFileCompleteListener(this);
 		filePlayer.addOnJrFilePreparedListener(this);
 		filePlayer.addOnJrFileErrorListener(this);
@@ -139,7 +139,7 @@ public class JrPlaylistController implements
 		return true;
 	}
 
-	private void startFilePlayback(JrFilePlayer mediaPlayer) {
+	private void startFilePlayback(FilePlayer mediaPlayer) {
 		mCurrentFilePlayer = mediaPlayer;
 		
 		mediaPlayer.setVolume(mVolume);
@@ -169,7 +169,7 @@ public class JrPlaylistController implements
 	}
 	
 	private void prepareNextFile(File nextFile) {
-		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
+		mNextFilePlayer = new FilePlayer(mContext, nextFile);
 		
 		haltBackgroundPreparerThread();
     	
@@ -227,7 +227,7 @@ public class JrPlaylistController implements
 		mPlaylist.add(file);
 	}
 	
-	public JrFilePlayer getCurrentFilePlayer() {
+	public FilePlayer getCurrentFilePlayer() {
 		return mCurrentFilePlayer;
 	}
 	
@@ -241,14 +241,14 @@ public class JrPlaylistController implements
 
 	/* Event handlers */
 	@Override
-	public void onJrFilePrepared(JrFilePlayer mediaPlayer) {
+	public void onJrFilePrepared(FilePlayer mediaPlayer) {
 		if (mediaPlayer.isPlaying()) return;
 		
 		startFilePlayback(mediaPlayer);
 	}
 	
 	@Override
-	public void onJrFileComplete(JrFilePlayer mediaPlayer) {
+	public void onJrFileComplete(FilePlayer mediaPlayer) {
 		throwStopEvent(mediaPlayer);
 		
 		mediaPlayer.releaseMediaPlayer();
@@ -256,7 +256,7 @@ public class JrPlaylistController implements
 		if (mNextFilePlayer == null) {
 			if (mediaPlayer.getFile().getNextFile() == null) return;
 			
-			mNextFilePlayer = new JrFilePlayer(mContext, mediaPlayer.getFile().getNextFile());
+			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}
 		
 		mNextFilePlayer.addOnJrFileCompleteListener(this);
@@ -271,8 +271,8 @@ public class JrPlaylistController implements
 	}
 	
 	@Override
-	public boolean onJrFileError(JrFilePlayer mediaPlayer, int what, int extra) {
-		LoggerFactory.getLogger(JrPlaylistController.class).error("JR File error - " + what + " - " + extra);
+	public boolean onJrFileError(FilePlayer mediaPlayer, int what, int extra) {
+		LoggerFactory.getLogger(PlaylistController.class).error("JR File error - " + what + " - " + extra);
 		pause();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners) {
@@ -284,12 +284,12 @@ public class JrPlaylistController implements
 	/* End event handlers */
 	
 	/* Listener callers */
-	private void throwChangeEvent(JrFilePlayer filePlayer) {
+	private void throwChangeEvent(FilePlayer filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, filePlayer);
 	}
 	
-	private void throwStopEvent(JrFilePlayer filePlayer) {
+	private void throwStopEvent(FilePlayer filePlayer) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
 			listener.onNowPlayingStop(this, filePlayer);
 	}

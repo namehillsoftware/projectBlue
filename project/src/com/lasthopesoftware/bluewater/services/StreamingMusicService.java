@@ -31,8 +31,8 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
@@ -91,7 +91,7 @@ public class StreamingMusicService extends Service implements
 	
 	// State dependent static variables
 	private static String mPlaylistString;
-	private static JrPlaylistController mPlaylistController;
+	private static PlaylistController mPlaylistController;
 	
 	// State dependent non-static variables
 	private static boolean mIsHwRegistered = false;
@@ -236,21 +236,21 @@ public class StreamingMusicService extends Service implements
 		}
 	}
 	
-	private void throwChangeEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	private void throwChangeEvent(PlaylistController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
 				onChangeListener.onNowPlayingChange(controller, filePlayer);
 		}
 	}
 
-	private void throwStartEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	private void throwStartEvent(PlaylistController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
 				onStartListener.onNowPlayingStart(controller, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	private void throwStopEvent(PlaylistController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onNowPlayingStop(controller, filePlayer);
@@ -258,7 +258,7 @@ public class StreamingMusicService extends Service implements
 	}
 	/* End Events */
 		
-	public static JrPlaylistController getPlaylistController() {
+	public static PlaylistController getPlaylistController() {
 		synchronized(syncPlaylistControllerObject) {
 			return mPlaylistController;
 		}
@@ -312,7 +312,7 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		synchronized(syncPlaylistControllerObject) {
-			mPlaylistController = new JrPlaylistController(thisContext, mPlaylistString);
+			mPlaylistController = new PlaylistController(thisContext, mPlaylistString);
 		}
 		mPlaylistController.setIsRepeating(mLibrary.isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
@@ -477,7 +477,7 @@ public class StreamingMusicService extends Service implements
 
 
 	@Override
-	public boolean onPlaylistStateControlError(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	public boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
 		buildErrorNotification();
 
 		return true;
@@ -519,7 +519,7 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
@@ -530,7 +530,7 @@ public class StreamingMusicService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
@@ -538,7 +538,7 @@ public class StreamingMusicService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mIsHwRegistered) registerHardwareListeners();

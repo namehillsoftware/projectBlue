@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 
 public interface OnPlaylistStateControlErrorListener {
-	boolean onPlaylistStateControlError(JrPlaylistController controller, JrFilePlayer filePlayer);
+	boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer);
 }

@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
-public class JrFilePlayer implements
+public class FilePlayer implements
 	OnPreparedListener, 
 	OnErrorListener, 
 	OnCompletionListener
@@ -41,7 +41,7 @@ public class JrFilePlayer implements
 	private LinkedList<OnFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
 	private LinkedList<OnFileErrorListener> onJrFileErrorListeners = new LinkedList<OnFileErrorListener>();
 	
-	public JrFilePlayer(Context context, File file) {
+	public FilePlayer(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
 	}
@@ -127,7 +127,7 @@ public class JrFilePlayer implements
 					return;
 				}
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrFilePlayer.class).error(e.toString(), e);
+				LoggerFactory.getLogger(FilePlayer.class).error(e.toString(), e);
 			}
 		}
 	}
@@ -298,9 +298,9 @@ public class JrFilePlayer implements
 				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
 				mFile.setProperty("Last Played", lastPlayed);
 			} catch (IOException e) {
-				LoggerFactory.getLogger(JrFilePlayer.class).warn(e.toString(), e);
+				LoggerFactory.getLogger(FilePlayer.class).warn(e.toString(), e);
 			} catch (NumberFormatException ne) {
-				LoggerFactory.getLogger(JrFilePlayer.class).error(ne.toString(), ne);
+				LoggerFactory.getLogger(FilePlayer.class).error(ne.toString(), ne);
 			}
 		}
 	}

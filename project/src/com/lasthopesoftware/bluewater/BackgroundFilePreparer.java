@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -14,13 +14,13 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class BackgroundFilePreparer {
 
-	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
+	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
 	private SimpleTask<Void, Void, Boolean> mTask;
 	
 	private static ExecutorService backgroundFileService = Executors.newSingleThreadExecutor();
 	
-	public BackgroundFilePreparer(JrFilePlayer currentPlayer, JrFilePlayer nextPlayer) {
+	public BackgroundFilePreparer(FilePlayer currentPlayer, FilePlayer nextPlayer) {
 		mCurrentFilePlayer = currentPlayer;
 		mNextFilePlayer = nextPlayer;
 	}

@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 
 public interface OnNowPlayingStartListener {
-	void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer);
+	void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer);
 }

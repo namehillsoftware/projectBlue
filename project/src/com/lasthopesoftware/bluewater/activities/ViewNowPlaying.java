@@ -34,8 +34,8 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressT
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
@@ -75,7 +75,7 @@ public class ViewNowPlaying extends Activity implements
 	private TextView mNowPlayingTitle;
 	private static ImageTask getFileImageTask;
 	
-	private JrFilePlayer mFilePlayer = null;
+	private FilePlayer mFilePlayer = null;
 	
 	private Library mLibrary;
 
@@ -441,13 +441,13 @@ public class ViewNowPlaying extends Activity implements
 	}
 
 	@Override
-	public void onNowPlayingChange(JrPlaylistController controller, JrFilePlayer filePlayer) {		
+	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {		
 		setView(filePlayer.getFile());
 		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 	}
 	
 	@Override
-	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
+	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 
 		mTrackerThread = new Thread(new ProgressTrackerThread(filePlayer, mHandler));
@@ -462,7 +462,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(JrPlaylistController controller, JrFilePlayer file) {
+	public void onNowPlayingStop(PlaylistController controller, FilePlayer file) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		try {

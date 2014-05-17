@@ -25,8 +25,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFileDetails;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
@@ -72,7 +72,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
         final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
-			public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
+			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
 				textView.setTypeface(null, filePlayer.getFile().getKey() == file.getKey() ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};
@@ -89,7 +89,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
 				if (StreamingMusicService.getPlaylistController() == null)
 					StreamingMusicService.resumeSavedPlaylist(v.getContext());
 				
-				final JrPlaylistController playlistController = StreamingMusicService.getPlaylistController();
+				final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
 		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
 		        	textView.setTypeface(null, Typeface.BOLD);
 		        
