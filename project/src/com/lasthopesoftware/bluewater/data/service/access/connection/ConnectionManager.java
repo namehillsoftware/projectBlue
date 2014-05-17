@@ -54,7 +54,7 @@ public class ConnectionManager {
 	}
 	
 	public static boolean refreshConfiguration(Context context, int timeout) {
-		if ((timeout > 0 && !JrTestConnection.doTest(timeout)) || !JrTestConnection.doTest())
+		if (mAccessConfiguration == null || ((timeout > 0 && !JrTestConnection.doTest(timeout)) || !JrTestConnection.doTest()))
 			return buildConfiguration(context, mAccessCode, mAuthCode);
 		return true;
 	}
@@ -77,7 +77,7 @@ public class ConnectionManager {
 	private static JrAccessDao buildAccessConfiguration(String accessCode) {
 		try {
 			JrAccessDao access = MediaCenterAccess.get(accessCode);
-			if (access.getActiveUrl() != null && !access.getActiveUrl().isEmpty())
+			if (access != null && access.getActiveUrl() != null && !access.getActiveUrl().isEmpty())
 				return access;
 		} catch (InterruptedException e) {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
@@ -96,13 +96,14 @@ public class ConnectionManager {
 		
 		@Override
 		protected JrAccessDao doInBackground(String... params) {
-
-			JrAccessDao accessDao = null;
 			try {
-				accessDao = new JrAccessDao();
+				JrAccessDao accessDao = new JrAccessDao();
 				
 				String accessCode = params[0];
-				if (accessCode.contains(":") && !accessCode.startsWith("http://")) accessCode = "http://" + accessCode;
+				if (accessCode.contains(".")) {
+					if (!accessCode.contains(":")) accessCode += ":80";
+					if (!accessCode.startsWith("http://")) accessCode = "http://" + accessCode;
+				}
 				
 				if (UrlValidator.getInstance().isValid(accessCode)) {
 					Uri jrUrl = Uri.parse(accessCode);
@@ -122,6 +123,7 @@ public class ConnectionManager {
 					for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
 						accessDao.getMacAddresses().add(macAddress);
 				}
+				return accessDao;
 			} catch (ClientProtocolException e) {
 				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 			} catch (IOException e) {
@@ -129,8 +131,8 @@ public class ConnectionManager {
 			} catch (Exception e) {
 				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 			}
-
-			return accessDao;
+			
+			return null;
 		}
 	}
 	
