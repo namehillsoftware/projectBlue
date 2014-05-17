@@ -86,9 +86,9 @@ public class PlaylistController implements
 		
 		final File file = mPlaylist.get(filePos);
 		final FilePlayer filePlayer = new FilePlayer(mContext, file);
-		filePlayer.addOnJrFileCompleteListener(this);
-		filePlayer.addOnJrFilePreparedListener(this);
-		filePlayer.addOnJrFileErrorListener(this);
+		filePlayer.addOnFileCompleteListener(this);
+		filePlayer.addOnFilePreparedListener(this);
+		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
 		filePlayer.seekTo(fileProgress < 0 ? filePlayer.getCurrentPosition() : fileProgress);
 		mCurrentFilePlayer = filePlayer;
@@ -259,10 +259,10 @@ public class PlaylistController implements
 			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}
 		
-		mNextFilePlayer.addOnJrFileCompleteListener(this);
-		mNextFilePlayer.addOnJrFileErrorListener(this);
+		mNextFilePlayer.addOnFileCompleteListener(this);
+		mNextFilePlayer.addOnFileErrorListener(this);
 		if (!mNextFilePlayer.isPrepared()) {
-			mNextFilePlayer.addOnJrFilePreparedListener(this);
+			mNextFilePlayer.addOnFilePreparedListener(this);
 			mNextFilePlayer.prepareMediaPlayer();
 			return;
 		}

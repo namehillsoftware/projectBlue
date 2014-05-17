@@ -37,37 +37,37 @@ public class FilePlayer implements
 	private Context mMpContext;
 	private File mFile;
 	
-	private LinkedList<OnFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
-	private LinkedList<OnFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
-	private LinkedList<OnFileErrorListener> onJrFileErrorListeners = new LinkedList<OnFileErrorListener>();
+	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
+	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
+	private LinkedList<OnFileErrorListener> onFileErrorListeners = new LinkedList<OnFileErrorListener>();
 	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
 	}
 	
-	public void addOnJrFileCompleteListener(OnFileCompleteListener listener) {
-		onJrFileCompleteListeners.add(listener);
+	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListeners.add(listener);
 	}
 	
-	public void removeOnJrFileCompleteListener(OnFileCompleteListener listener) {
-		if (onJrFileCompleteListeners.contains(listener)) onJrFileCompleteListeners.remove(listener);
+	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
+		if (onFileCompleteListeners.contains(listener)) onFileCompleteListeners.remove(listener);
 	}
 	
-	public void addOnJrFilePreparedListener(OnFilePreparedListener listener) {
-		onJrFilePreparedListeners.add(listener);
+	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
+		onFilePreparedListeners.add(listener);
 	}
 	
-	public void removeOnJrFilePreparedListener(OnFilePreparedListener listener) {
-		if (onJrFilePreparedListeners.contains(listener)) onJrFilePreparedListeners.remove(listener);
+	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
+		if (onFilePreparedListeners.contains(listener)) onFilePreparedListeners.remove(listener);
 	}
 	
-	public void addOnJrFileErrorListener(OnFileErrorListener listener) {
-		onJrFileErrorListeners.add(listener);
+	public void addOnFileErrorListener(OnFileErrorListener listener) {
+		onFileErrorListeners.add(listener);
 	}
 	
-	public void removeOnJrFileErrorListener(OnFileErrorListener listener) {
-		if (onJrFileErrorListeners.contains(listener)) onJrFileErrorListeners.remove(listener);
+	public void removeOnFileErrorListener(OnFileErrorListener listener) {
+		if (onFileErrorListeners.contains(listener)) onFileErrorListeners.remove(listener);
 	}
 	
 	public File getFile() {
@@ -94,8 +94,8 @@ public class FilePlayer implements
 	}
 	
 	private String getMpUrl() {
-		if (mMpContext != null && !ConnectionManager.refreshConfiguration(mMpContext)) {
-			for (OnFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+		if (mMpContext != null || !ConnectionManager.refreshConfiguration(mMpContext)) {
+			for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}
 		return mFile.getSubItemUrl();
@@ -185,7 +185,7 @@ public class FilePlayer implements
 	public void onPrepared(MediaPlayer mp) {
 		prepared = true;
 		preparing = false;
-		for (OnFilePreparedListener listener : onJrFilePreparedListeners) listener.onJrFilePrepared(this);
+		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
 	@Override
@@ -196,7 +196,7 @@ public class FilePlayer implements
 		updateStatsThread.start();
 		
 		releaseMediaPlayer();
-		for (OnFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
+		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onJrFileComplete(this);
 	}
 	
 	@Override
@@ -222,7 +222,7 @@ public class FilePlayer implements
 		}
 		resetMediaPlayer();
 		boolean handled = false;
-		for (OnFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
+		for (OnFileErrorListener listener : onFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
 		if (handled) releaseMediaPlayer();
 		return handled;
 	}
