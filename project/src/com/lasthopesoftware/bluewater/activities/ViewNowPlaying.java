@@ -32,14 +32,14 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.data.service.access.JrImageTask;
+import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
@@ -73,7 +73,7 @@ public class ViewNowPlaying extends Activity implements
 	private ImageView mNowPlayingImg;
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
-	private static JrImageTask getFileImageTask;
+	private static ImageTask getFileImageTask;
 	
 	private JrFilePlayer mFilePlayer = null;
 	
@@ -251,8 +251,8 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setView(JrFile file) {
-		final JrFile _file = file;
+	private void setView(File file) {
+		final File _file = file;
 				
 		try {
 			@SuppressWarnings("rawtypes")
@@ -338,7 +338,7 @@ public class ViewNowPlaying extends Activity implements
 						
 						mNowPlayingImg.setVisibility(View.INVISIBLE);
 						mLoadingImg.setVisibility(View.VISIBLE);
-						getFileImageTask = new JrImageTask(result == null ? String.valueOf(_file.getKey()) : result, _file.getKey());
+						getFileImageTask = new ImageTask(result == null ? String.valueOf(_file.getKey()) : result, _file.getKey());
 						getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 							
 							@Override
@@ -428,8 +428,8 @@ public class ViewNowPlaying extends Activity implements
 		return false;
 	}
 	
-	private void resetViewOnReconnect(JrFile file) {
-		final JrFile _file = file;
+	private void resetViewOnReconnect(File file) {
+		final File _file = file;
 		PollConnectionTask.Instance.get(this).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
 			
 			@Override

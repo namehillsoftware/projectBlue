@@ -13,7 +13,7 @@ import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -30,7 +30,7 @@ public class JrSession {
 	
 	private static Library library = null;
 
-	public static JrFileSystem JrFs;
+	public static FileSystem JrFs;
 	
 	public static void SaveSession(Context context) {
 		SaveSession(context, null);
@@ -82,7 +82,7 @@ public class JrSession {
 
 	public static synchronized Library GetLibrary(Context context) {
 		if (library != null) {
-			if (JrFs == null && ConnectionManager.refreshConfiguration(context)) JrFs = new JrFileSystem(library.getSelectedView());
+			if (JrFs == null && ConnectionManager.refreshConfiguration(context)) JrFs = new FileSystem(library.getSelectedView());
 			return library;
 		}
 		
@@ -122,7 +122,7 @@ public class JrSession {
 		}
 		
 		if (ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey())) {
-			JrFs = new JrFileSystem(library.getSelectedView());
+			JrFs = new FileSystem(library.getSelectedView());
 			LoggerFactory.getLogger(JrSession.class).debug("Session started.");
 		}
 		

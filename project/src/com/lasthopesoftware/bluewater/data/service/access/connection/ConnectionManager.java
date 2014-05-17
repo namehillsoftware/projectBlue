@@ -26,7 +26,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.JrResponse;
+import com.lasthopesoftware.bluewater.data.service.access.StandardRequest;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class ConnectionManager {
@@ -426,7 +426,7 @@ public class ConnectionManager {
 			HttpURLConnection conn = getConnection("Alive");
 			try {
 		    	conn.setConnectTimeout(mTimeout);
-				JrResponse responseDao = JrResponse.fromInputStream(conn.getInputStream());
+				StandardRequest responseDao = StandardRequest.fromInputStream(conn.getInputStream());
 		    	
 		    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
 			} catch (MalformedURLException e) {

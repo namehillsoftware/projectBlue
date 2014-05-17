@@ -26,10 +26,10 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -117,10 +117,10 @@ public class BrowseLibrary extends FragmentActivity {
 	public void displayLibrary() {		
 		final Library library = JrSession.GetLibrary(mBrowseLibrary);
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
-		JrSession.JrFs.setOnItemsCompleteListener(new IJrDataTask.OnCompleteListener<List<IJrItem<?>>>() {
+		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
@@ -145,9 +145,9 @@ public class BrowseLibrary extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				final List<IJrItem<?>> _views = result;
+				final List<IItem<?>> _views = result;
 				
-				for (IJrItem<?> item : _views) {
+				for (IItem<?> item : _views) {
 					if (item.getKey() != JrSession.GetLibrary(mBrowseLibrary).getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
@@ -176,11 +176,11 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		JrSession.JrFs.getSubItemsAsync();
 		
-		JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+		JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
-				final OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> _this = this;
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+				final OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {

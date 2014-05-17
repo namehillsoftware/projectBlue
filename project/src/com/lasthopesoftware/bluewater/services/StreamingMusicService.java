@@ -28,7 +28,7 @@ import android.util.SparseArray;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
+import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
@@ -539,7 +539,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onNowPlayingStart(JrPlaylistController controller, JrFilePlayer filePlayer) {
-		final JrFile playingFile = filePlayer.getFile();
+		final File playingFile = filePlayer.getFile();
 		
 		if (!mIsHwRegistered) registerHardwareListeners();
 		
@@ -580,8 +580,8 @@ public class StreamingMusicService extends Service implements
 			@Override
 			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
 				SparseArray<Object> result = new SparseArray<Object>(4);
-				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(JrFileProperties.ARTIST));
-				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(JrFileProperties.ALBUM));
+				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FileProperties.ARTIST));
+				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FileProperties.ALBUM));
 				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
 				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
 				return result;

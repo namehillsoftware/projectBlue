@@ -11,11 +11,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 
-public class SelectViewAdapter extends ArrayAdapter<IJrItem<?>> {
+public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 
-	public SelectViewAdapter(Context context, int resource, List<IJrItem<?>> views) {
+	public SelectViewAdapter(Context context, int resource, List<IItem<?>> views) {
 		super(context, resource, views);
 	}
 	

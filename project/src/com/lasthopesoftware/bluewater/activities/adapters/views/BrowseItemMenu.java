@@ -21,16 +21,16 @@ import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrFilesContainer;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseItemMenu {
-	public static View getView(IJrItem<?> item, View convertView, ViewGroup parent) {
+	public static View getView(IItem<?> item, View convertView, ViewGroup parent) {
 		final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
 	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		
@@ -58,11 +58,11 @@ public class BrowseItemMenu {
         fileMenu.setOnTouchListener(onSwipeListener);
         
         final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
-        shuffleButton.setOnClickListener(new ShuffleClickHandler((IJrFilesContainer)item));
+        shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
         shuffleButton.setOnTouchListener(onSwipeListener);
         
         final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
-        playButton.setOnClickListener(new PlayClickHandler((IJrFilesContainer)item));
+        playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
         playButton.setOnTouchListener(onSwipeListener);
         
         final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
@@ -75,9 +75,9 @@ public class BrowseItemMenu {
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
-		private IJrFilesContainer mItem;
+		private IFilesContainer mItem;
 		
-		public PlayClickHandler(IJrFilesContainer item) {
+		public PlayClickHandler(IFilesContainer item) {
 			mItem = item;
 		}
 		
@@ -102,16 +102,16 @@ public class BrowseItemMenu {
 	}
 	
 	private static class ShuffleClickHandler implements OnClickListener {
-		private IJrFilesContainer mItem;
+		private IFilesContainer mItem;
 		
-		public ShuffleClickHandler(IJrFilesContainer item) {
+		public ShuffleClickHandler(IFilesContainer item) {
 			mItem = item;
 		}
 		
 		@Override
 		public void onClick(View v) {
 			try {
-				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(JrFiles.GET_SHUFFLED));
+				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(Files.GET_SHUFFLED));
 			}  catch (IOException io) {
 				final View _view = v;
 				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
@@ -129,16 +129,16 @@ public class BrowseItemMenu {
 	}
 	
 	private static class ViewFilesClickHandler implements OnClickListener {
-		private IJrItem<?> mItem;
+		private IItem<?> mItem;
 		
-		public ViewFilesClickHandler(IJrItem<?> item) {
+		public ViewFilesClickHandler(IItem<?> item) {
 			mItem = item;
 		}
 		
 		@Override
 		public void onClick(View v) {
     		Intent intent = new Intent(v.getContext(), ViewFiles.class);
-    		intent.setAction(mItem instanceof JrPlaylist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
+    		intent.setAction(mItem instanceof Playlist ? ViewFiles.VIEW_PLAYLIST_FILES : ViewFiles.VIEW_ITEM_FILES);
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
     		v.getContext().startActivity(intent);
 		}

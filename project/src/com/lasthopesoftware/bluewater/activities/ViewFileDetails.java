@@ -20,8 +20,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
-import com.lasthopesoftware.bluewater.data.service.access.JrFileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.JrImageTask;
+import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
+import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -56,7 +56,7 @@ public class ViewFileDetails extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final JrFileProperties filePropertiesHelper = new JrFileProperties(fileKey);
+        final FileProperties filePropertiesHelper = new FileProperties(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>();
@@ -151,8 +151,8 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				final JrImageTask getFileImageTask;
-				getFileImageTask = new JrImageTask(result != null ? result : String.valueOf(fileKey), fileKey);
+				final ImageTask getFileImageTask;
+				getFileImageTask = new ImageTask(result != null ? result : String.valueOf(fileKey), fileKey);
 				
 				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 					

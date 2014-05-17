@@ -8,16 +8,16 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItemFiles;
+import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class ClickFileListener implements OnItemClickListener {
 
-	private IJrItemFiles mItem;
+	private IItemFiles mItem;
 	
-	public ClickFileListener(IJrItemFiles item) {
+	public ClickFileListener(IItemFiles item) {
 		mItem = item;
 	}
 	

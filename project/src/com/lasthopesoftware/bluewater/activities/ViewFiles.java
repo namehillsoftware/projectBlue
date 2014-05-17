@@ -17,14 +17,14 @@ import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
-import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrFilesContainer;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.service.objects.JrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.Item;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -37,7 +37,7 @@ public class ViewFiles extends FragmentActivity {
 	public static final String VIEW_PLAYLIST_FILES = "view_playlist_files";
 	
 	private int mItemId;
-	private IJrItem<?> mItem;
+	private IItem<?> mItem;
 	
 	private ProgressBar pbLoading;
 	private ListView fileListView;
@@ -55,15 +55,15 @@ public class ViewFiles extends FragmentActivity {
         pbLoading.setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
-        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new JrPlaylist(mItemId) : new JrItem(mItemId);
+        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
         
         this.setTitle(this.getIntent().getStringExtra(VALUE));
-        final JrFiles filesContainer = (JrFiles)((IJrFilesContainer)mItem).getJrFiles();
+        final Files filesContainer = (Files)((IFilesContainer)mItem).getJrFiles();
         final ViewFiles _this = this;
-        filesContainer.setOnFilesCompleteListener(new IJrDataTask.OnCompleteListener<List<JrFile>>() {
+        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<File>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
+			public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
@@ -88,7 +88,7 @@ public class ViewFiles extends FragmentActivity {
 				
 				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    			    	
-		    	fileListView.setOnItemClickListener(new ClickFileListener(((IJrFilesContainer)mItem).getJrFiles()));
+		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getJrFiles()));
 		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	fileListView.setAdapter(fileListAdapter);
 		    	

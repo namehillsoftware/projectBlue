@@ -8,12 +8,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 
-public class PlaylistAdapter extends ArrayAdapter<JrPlaylist> {
+public class PlaylistAdapter extends ArrayAdapter<Playlist> {
 		
 	
-	public PlaylistAdapter(Context context, int resource, List<JrPlaylist> objects) {
+	public PlaylistAdapter(Context context, int resource, List<Playlist> objects) {
 		super(context, resource, objects);
 	}
 

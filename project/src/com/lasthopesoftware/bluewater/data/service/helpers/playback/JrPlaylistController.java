@@ -14,22 +14,22 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 
 public class JrPlaylistController implements
-	OnJrFilePreparedListener,
-	OnJrFileErrorListener, 
-	OnJrFileCompleteListener
+	OnFilePreparedListener,
+	OnFileErrorListener, 
+	OnFileCompleteListener
 {
 	private HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
-	private ArrayList<JrFile> mPlaylist;
+	private ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
 	private JrFilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
@@ -38,10 +38,10 @@ public class JrPlaylistController implements
 	private boolean mIsRepeating = false;
 	
 	public JrPlaylistController(Context context, String playlistString) {
-		this(context, JrFiles.deserializeFileStringList(playlistString));
+		this(context, Files.deserializeFileStringList(playlistString));
 	}
 	
-	public JrPlaylistController(Context context, ArrayList<JrFile> playlist) {
+	public JrPlaylistController(Context context, ArrayList<File> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}
@@ -49,7 +49,7 @@ public class JrPlaylistController implements
 	/* Begin playlist control */
 	
 	/**
-	 * Seeks to the JrFile with the file key in the playlist and beginning of the file.
+	 * Seeks to the File with the file key in the playlist and beginning of the file.
 	 * If a file in the playlist is already playing, it will begin playback.
 	 * @param filePos The key of the file to seek to
 	 */
@@ -84,7 +84,7 @@ public class JrPlaylistController implements
         if (filePos >= mPlaylist.size())
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 		
-		final JrFile file = mPlaylist.get(filePos);
+		final File file = mPlaylist.get(filePos);
 		final JrFilePlayer filePlayer = new JrFilePlayer(mContext, file);
 		filePlayer.addOnJrFileCompleteListener(this);
 		filePlayer.addOnJrFilePreparedListener(this);
@@ -149,7 +149,7 @@ public class JrPlaylistController implements
 		
 		haltBackgroundPreparerThread();
 		
-		JrFile nextFile = mediaPlayer.getFile().getNextFile();
+		File nextFile = mediaPlayer.getFile().getNextFile();
 		if (nextFile == null) {
 			if (!mIsRepeating) {
 				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
@@ -168,7 +168,7 @@ public class JrPlaylistController implements
         	listener.onNowPlayingStart(this, mCurrentFilePlayer);
 	}
 	
-	private void prepareNextFile(JrFile nextFile) {
+	private void prepareNextFile(File nextFile) {
 		mNextFilePlayer = new JrFilePlayer(mContext, nextFile);
 		
 		haltBackgroundPreparerThread();
@@ -219,10 +219,10 @@ public class JrPlaylistController implements
 	/* End playlist control */
 	
 	public void addFile(int fileKey) {
-		addFile(new JrFile(fileKey));
+		addFile(new File(fileKey));
 	}
 	
-	public void addFile(JrFile file) {
+	public void addFile(File file) {
 		file.setPreviousFile(mPlaylist.get(mPlaylist.size() - 1));
 		mPlaylist.add(file);
 	}
@@ -231,7 +231,7 @@ public class JrPlaylistController implements
 		return mCurrentFilePlayer;
 	}
 	
-	public List<JrFile> getPlaylist() {
+	public List<File> getPlaylist() {
 		return Collections.unmodifiableList(mPlaylist);
 	}
 	

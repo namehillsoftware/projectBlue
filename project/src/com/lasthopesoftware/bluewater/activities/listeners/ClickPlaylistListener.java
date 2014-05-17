@@ -9,14 +9,14 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.activities.ViewPlaylists;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 
 public class ClickPlaylistListener implements OnItemClickListener {
 
-	private ArrayList<JrPlaylist> mPlaylists;
+	private ArrayList<Playlist> mPlaylists;
 	private Context mContext;
 	
-	public ClickPlaylistListener(Context context, ArrayList<JrPlaylist> playlists) {
+	public ClickPlaylistListener(Context context, ArrayList<Playlist> playlists) {
 		mContext = context;
 		mPlaylists = playlists;
 	}

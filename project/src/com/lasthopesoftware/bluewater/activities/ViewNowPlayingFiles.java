@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
@@ -45,21 +45,21 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         final ViewNowPlayingFiles _this = this;
         final Library library = JrSession.GetLibrary(_this);
         
-        final SimpleTask<Void, Void, ArrayList<JrFile>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<JrFile>>();
+        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>();
         
-        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<JrFile>>() {
+        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<File>>() {
 			
 			@Override
-			public ArrayList<JrFile> onExecute(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, Void... params) throws Exception {
-				return JrFiles.deserializeFileStringList(library.getSavedTracksString());
+			public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
+				return Files.deserializeFileStringList(library.getSavedTracksString());
 			}
 		});
         
-        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<JrFile>>() {
+        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, ArrayList<JrFile>> owner, ArrayList<JrFile> result) {
-				final ArrayList<JrFile> _result = result;
+			public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
+				final ArrayList<File> _result = result;
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, _result);
 		        fileListView.setAdapter(fileListAdapter);
 		        fileListView.setOnItemClickListener(new OnItemClickListener() {

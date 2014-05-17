@@ -21,13 +21,13 @@ import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
-import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -36,14 +36,14 @@ public class ViewPlaylists extends FragmentActivity {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewPlaylist.key";
 	private int mPlaylistId;
-	private JrPlaylist mPlaylist;
+	private Playlist mPlaylist;
 
 	private ProgressBar pbLoading;
 	private ListView playlistView;
 
 	private Context thisContext = this;
 	
-	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> visibleViewsAsyncComplete;
+	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> visibleViewsAsyncComplete;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,10 +58,10 @@ public class ViewPlaylists extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
@@ -84,10 +84,10 @@ public class ViewPlaylists extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				for (IJrItem<?> item : result) {
+				for (IItem<?> item : result) {
 					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
 					
-					mPlaylist = ((JrPlaylists)item).getMappedPlaylists().get(mPlaylistId);
+					mPlaylist = ((Playlists)item).getMappedPlaylists().get(mPlaylistId);
 					break;
 				}
 				
@@ -107,11 +107,11 @@ public class ViewPlaylists extends FragmentActivity {
         } else {
         	playlistView.setVisibility(View.INVISIBLE);
         	pbLoading.setVisibility(View.VISIBLE);
-        	JrFiles filesContainer = (JrFiles)mPlaylist.getJrFiles();
-        	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<JrFile>>() {
+        	Files filesContainer = (Files)mPlaylist.getJrFiles();
+        	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<File>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<JrFile>> owner, List<JrFile> result) {
+				public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
 					playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
 		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getJrFiles()));
 		        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());

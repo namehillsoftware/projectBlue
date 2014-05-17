@@ -18,9 +18,9 @@ import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFileSystem;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -59,12 +59,12 @@ public class SetConnection extends FragmentActivity {
 					
 					if (JrSession.ChooseLibrary(_context, result.getId()) == null) return;
 		        	
-		        	if (JrSession.JrFs == null) JrSession.JrFs = new JrFileSystem();
+		        	if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
 		        	
-		        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IJrItem<?>>>() {
+		        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IItem<?>>>() {
 						
 						@Override
-						public void onComplete(ISimpleTask<String, Void, List<IJrItem<?>>> owner, List<IJrItem<?>> result) {
+						public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
 							if (result == null) return;
 							
 							if (result.size() == 0) {
@@ -72,7 +72,7 @@ public class SetConnection extends FragmentActivity {
 								return;
 							}
 							
-							JrSession.JrFs = new JrFileSystem(result.get(0).getKey());
+							JrSession.JrFs = new FileSystem(result.get(0).getKey());
 							JrSession.GetLibrary(_context).setSelectedView(result.get(0).getKey());
 							JrSession.SaveSession(_context);
 							

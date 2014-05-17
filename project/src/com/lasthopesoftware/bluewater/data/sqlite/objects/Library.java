@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
@@ -109,8 +109,8 @@ public class Library {
 		this.savedTracksString = savedTracksString;
 	}
 		
-	public void setSavedTracks(ArrayList<JrFile> files) {
-		savedTracksString = JrFiles.serializeFileStringList(files);
+	public void setSavedTracks(ArrayList<File> files) {
+		savedTracksString = Files.serializeFileStringList(files);
 	}
 	/**
 	 * @return the id

@@ -28,16 +28,16 @@ import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwi
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.JrPlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFiles;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
-public class FileListAdapter extends ArrayAdapter<JrFile> {
+public class FileListAdapter extends ArrayAdapter<File> {
 	
-	private List<JrFile> mFiles;
+	private List<File> mFiles;
 	
-	public FileListAdapter(Context context, int resource, List<JrFile> files) {
+	public FileListAdapter(Context context, int resource, List<File> files) {
 		super(context, resource, files);
 		
 		mFiles = files;
@@ -63,7 +63,7 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 		final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		final RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, null);
 		final TextView textView = (TextView) rl.findViewById(R.id.tvStandard);
-		final JrFile file = getItem(position);
+		final File file = getItem(position);
 		
         textView.setMarqueeRepeatLimit(1);
         textView.setText(rl.getContext().getText(R.string.lbl_loading));
@@ -120,24 +120,24 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
-		private List<JrFile> mFiles;
+		private List<File> mFiles;
 		private int mPosition;
 		
-		public PlayClickHandler(int position, List<JrFile> files) {
+		public PlayClickHandler(int position, List<File> files) {
 			mPosition = position;
 			mFiles = files;
 		}
 		
 		@Override
 		public void onClick(View v) {
-			StreamingMusicService.streamMusic(v.getContext(), mPosition, JrFiles.serializeFileStringList(mFiles));
+			StreamingMusicService.streamMusic(v.getContext(), mPosition, Files.serializeFileStringList(mFiles));
 		}
 	}
 	
 	private static class AddClickHandler implements OnClickListener {
-		private JrFile mFile;
+		private File mFile;
 		
-		public AddClickHandler(JrFile file) {
+		public AddClickHandler(File file) {
 			mFile = file;
 		}
 		
@@ -156,9 +156,9 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 	}
 	
 	private static class ViewFileDetailsClickHandler implements OnClickListener {
-		private JrFile mFile;
+		private File mFile;
 		
-		public ViewFileDetailsClickHandler(JrFile file) {
+		public ViewFileDetailsClickHandler(File file) {
 			mFile = file;
 		}
 		
@@ -174,13 +174,13 @@ public class FileListAdapter extends ArrayAdapter<JrFile> {
 		private int mPosition;
 		private ListView mParentListView;
 		private TextView mTextView;
-		private JrFile mFile;
+		private File mFile;
 		
-		public static GetFileValueTask getFileValue(int position, JrFile file, ListView parentListView, TextView textView) {
+		public static GetFileValueTask getFileValue(int position, File file, ListView parentListView, TextView textView) {
 			return (GetFileValueTask) (new GetFileValueTask(position, file, parentListView, textView)).execute();
 		}
 		
-		private GetFileValueTask(int position, JrFile file, ListView parentListView, TextView textView) {
+		private GetFileValueTask(int position, File file, ListView parentListView, TextView textView) {
 			mPosition = position;
 			mParentListView = parentListView;
 			mFile = file;

@@ -18,10 +18,10 @@ import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.objects.JrFile;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnJrFilePreparedListener;
+import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class JrFilePlayer implements
@@ -35,42 +35,42 @@ public class JrFilePlayer implements
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
 	private Context mMpContext;
-	private JrFile mFile;
+	private File mFile;
 	
-	private LinkedList<OnJrFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnJrFileCompleteListener>();
-	private LinkedList<OnJrFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnJrFilePreparedListener>();
-	private LinkedList<OnJrFileErrorListener> onJrFileErrorListeners = new LinkedList<OnJrFileErrorListener>();
+	private LinkedList<OnFileCompleteListener> onJrFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
+	private LinkedList<OnFilePreparedListener> onJrFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
+	private LinkedList<OnFileErrorListener> onJrFileErrorListeners = new LinkedList<OnFileErrorListener>();
 	
-	public JrFilePlayer(Context context, JrFile file) {
+	public JrFilePlayer(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
 	}
 	
-	public void addOnJrFileCompleteListener(OnJrFileCompleteListener listener) {
+	public void addOnJrFileCompleteListener(OnFileCompleteListener listener) {
 		onJrFileCompleteListeners.add(listener);
 	}
 	
-	public void removeOnJrFileCompleteListener(OnJrFileCompleteListener listener) {
+	public void removeOnJrFileCompleteListener(OnFileCompleteListener listener) {
 		if (onJrFileCompleteListeners.contains(listener)) onJrFileCompleteListeners.remove(listener);
 	}
 	
-	public void addOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
+	public void addOnJrFilePreparedListener(OnFilePreparedListener listener) {
 		onJrFilePreparedListeners.add(listener);
 	}
 	
-	public void removeOnJrFilePreparedListener(OnJrFilePreparedListener listener) {
+	public void removeOnJrFilePreparedListener(OnFilePreparedListener listener) {
 		if (onJrFilePreparedListeners.contains(listener)) onJrFilePreparedListeners.remove(listener);
 	}
 	
-	public void addOnJrFileErrorListener(OnJrFileErrorListener listener) {
+	public void addOnJrFileErrorListener(OnFileErrorListener listener) {
 		onJrFileErrorListeners.add(listener);
 	}
 	
-	public void removeOnJrFileErrorListener(OnJrFileErrorListener listener) {
+	public void removeOnJrFileErrorListener(OnFileErrorListener listener) {
 		if (onJrFileErrorListeners.contains(listener)) onJrFileErrorListeners.remove(listener);
 	}
 	
-	public JrFile getFile() {
+	public File getFile() {
 		return mFile;
 	}
 	
@@ -95,7 +95,7 @@ public class JrFilePlayer implements
 	
 	private String getMpUrl() {
 		if (mMpContext != null && !ConnectionManager.refreshConfiguration(mMpContext)) {
-			for (OnJrFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			for (OnFileErrorListener listener : onJrFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}
 		return mFile.getSubItemUrl();
@@ -147,7 +147,7 @@ public class JrFilePlayer implements
 				
 				preparing = false;
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrFile.class).error(e.toString(), e);
+				LoggerFactory.getLogger(File.class).error(e.toString(), e);
 				resetMediaPlayer();
 				preparing = false;
 			}
@@ -185,7 +185,7 @@ public class JrFilePlayer implements
 	public void onPrepared(MediaPlayer mp) {
 		prepared = true;
 		preparing = false;
-		for (OnJrFilePreparedListener listener : onJrFilePreparedListeners) listener.onJrFilePrepared(this);
+		for (OnFilePreparedListener listener : onJrFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
 	@Override
@@ -196,12 +196,12 @@ public class JrFilePlayer implements
 		updateStatsThread.start();
 		
 		releaseMediaPlayer();
-		for (OnJrFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
+		for (OnFileCompleteListener listener : onJrFileCompleteListeners) listener.onJrFileComplete(this);
 	}
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		Logger logger = (Logger) LoggerFactory.getLogger(JrFile.class);
+		Logger logger = (Logger) LoggerFactory.getLogger(File.class);
 		logger.error("Media Player error.");
 		logger.error("What: ");
 		logger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
@@ -222,7 +222,7 @@ public class JrFilePlayer implements
 		}
 		resetMediaPlayer();
 		boolean handled = false;
-		for (OnJrFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
+		for (OnFileErrorListener listener : onJrFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
 		if (handled) releaseMediaPlayer();
 		return handled;
 	}
@@ -279,9 +279,9 @@ public class JrFilePlayer implements
 	}
 	
 	private static class UpdatePlayStatsRunner implements Runnable {
-		private JrFile mFile;
+		private File mFile;
 		
-		public UpdatePlayStatsRunner(JrFile file) {
+		public UpdatePlayStatsRunner(File file) {
 			mFile = file;
 		}
 		

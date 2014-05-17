@@ -10,23 +10,23 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.lasthopesoftware.bluewater.activities.fragments.CategoryFragment;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 
 /**
  * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
  * one of the primary sections of the app.
  */
 public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
-	private ArrayList<IJrItem<?>> mLibraryViews;
+	private ArrayList<IItem<?>> mLibraryViews;
 	private ArrayList<CategoryFragment> fragments;
 	
 	public ViewChildPagerAdapter(FragmentManager fm) {
 		super(fm);
-		mLibraryViews = new ArrayList<IJrItem<?>>();
+		mLibraryViews = new ArrayList<IItem<?>>();
 		fragments = new ArrayList<CategoryFragment>();
 	}
 		
-	public void setLibraryViews(ArrayList<IJrItem<?>> libraryViews) {
+	public void setLibraryViews(ArrayList<IItem<?>> libraryViews) {
 		mLibraryViews = libraryViews;
 		fragments = new ArrayList<CategoryFragment>(libraryViews.size());
 	}
@@ -54,7 +54,7 @@ public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
 		return !mLibraryViews.get(position).getValue().isEmpty() ? mLibraryViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
 	}
 
-	public ArrayList<IJrItem<?>> getPages() {
+	public ArrayList<IItem<?>> getPages() {
 		return mLibraryViews;
 	}
 }

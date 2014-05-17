@@ -27,33 +27,33 @@ import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
-import com.lasthopesoftware.bluewater.data.service.access.IJrDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IJrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrItem;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylist;
-import com.lasthopesoftware.bluewater.data.service.objects.JrPlaylists;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.Item;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
+import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class CategoryFragment extends Fragment {
-	private IJrItem<?> mCategory;
+	private IItem<?> mCategory;
 	private ListView listView;
 	private ProgressBar pbLoading;
 	private RelativeLayout mLayout;
 	
-	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>> mVisibleViewsComplete;
+	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> mVisibleViewsComplete;
 	private Context mContext;
 	private Intent mWaitForConnection;
 	
     public CategoryFragment() {
     	super();
     	
-    	mVisibleViewsComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IJrItem<?>>>() {
+    	mVisibleViewsComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IJrItem<?>>> owner, ArrayList<IJrItem<?>> result) {
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
@@ -102,13 +102,13 @@ public class CategoryFragment extends Fragment {
     }
     
     private void BuildView() {
-    	if (mCategory instanceof JrPlaylists) {
+    	if (mCategory instanceof Playlists) {
     		listView = new ListView(mLayout.getContext());
     		listView.setVisibility(View.INVISIBLE);
-    		OnCompleteListener<List<JrPlaylist>> onPlaylistCompleteListener = new OnCompleteListener<List<JrPlaylist>>() {
+    		OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<JrPlaylist>> owner, List<JrPlaylist> result) {
+				public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
 					if (owner.getState() == SimpleTaskState.ERROR) {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
@@ -118,7 +118,7 @@ public class CategoryFragment extends Fragment {
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 									if (result)
-										((JrPlaylists) mCategory).getSubItemsAsync();
+										((Playlists) mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get(mContext).startPolling();
@@ -130,23 +130,23 @@ public class CategoryFragment extends Fragment {
 					
 					if (result == null) return;
 					
-					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<JrPlaylist>) result));
+					listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<Playlist>) result));
 					listView.setOnItemLongClickListener(new LongClickFlipListener());
 		    		listView.setAdapter(new PlaylistAdapter(getActivity(), R.id.tvStandard, result));
 		    		pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
 				}
 			};
-			((JrPlaylists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
-			((JrPlaylists) mCategory).getSubItemsAsync();
+			((Playlists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
+			((Playlists) mCategory).getSubItemsAsync();
     	} else {
 	    	listView = new ExpandableListView(mLayout.getContext());
 	    	listView.setVisibility(View.INVISIBLE);
 	    	
-	    	OnCompleteListener<List<JrItem>> onItemCompleteListener = new OnCompleteListener<List<JrItem>>() {
+	    	OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
 
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<JrItem>> owner, List<JrItem> result) {
+				public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
 					if (owner.getState() == SimpleTaskState.ERROR) {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
@@ -156,7 +156,7 @@ public class CategoryFragment extends Fragment {
 								@Override
 								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
 									if (result)
-										((JrItem)mCategory).getSubItemsAsync();
+										((Item)mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get(mContext).startPolling();
@@ -173,7 +173,7 @@ public class CategoryFragment extends Fragment {
 						@Override
 						public boolean onGroupClick(ExpandableListView parent, View v,
 								int groupPosition, long id) {
-							JrItem selection = (JrItem)parent.getExpandableListAdapter().getGroup(groupPosition);
+							Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
 							try {
 								if (selection.getSubItems().size() > 0) return false;
 							} catch (IOException e) {
@@ -191,7 +191,7 @@ public class CategoryFragment extends Fragment {
 			    	((ExpandableListView)listView).setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
 			    	    @Override
 			    	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
-			    	    	JrItem selection = (JrItem)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
+			    	    	Item selection = (Item)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
 				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
@@ -202,22 +202,22 @@ public class CategoryFragment extends Fragment {
 				    });
 			    	listView.setOnItemLongClickListener(new LongClickFlipListener());
 			    	
-			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<JrItem>)result));
+			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<Item>)result));
 			    	pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);
 				}
 			};
-			((JrItem)mCategory).setOnItemsCompleteListener(onItemCompleteListener);
-			((JrItem)mCategory).getSubItemsAsync();
+			((Item)mCategory).setOnItemsCompleteListener(onItemCompleteListener);
+			((Item)mCategory).getSubItemsAsync();
     	}
     	mLayout.addView(listView);
     }
     
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	Context mContext;
-    	private ArrayList<JrItem> mCategoryItems;
+    	private ArrayList<Item> mCategoryItems;
     	
-    	public ExpandableItemListAdapter(Context context, ArrayList<JrItem> categoryItems) {
+    	public ExpandableItemListAdapter(Context context, ArrayList<Item> categoryItems) {
     		mContext = context;
     		mCategoryItems = categoryItems;
     	}
@@ -235,7 +235,7 @@ public class CategoryFragment extends Fragment {
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
 			try {
-				return ((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
+				return ((Item)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
 			} catch (IOException e) {
 				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
 				return 0;
@@ -245,7 +245,7 @@ public class CategoryFragment extends Fragment {
 		@Override
 		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 			try {
-				return BrowseItemMenu.getView(((JrItem)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
+				return BrowseItemMenu.getView(((Item)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
 			} catch (IOException e) {
 				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
 				return null;
