@@ -47,6 +47,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
+	public void reportProgress(TProgress... values) {
+		this.publishProgress(values);
+	}
+	
+	@Override
 	protected void onProgressUpdate(TProgress... values) {
 		if (onProgressListeners == null) return;
 		for (OnProgressListener<TParams, TProgress, TResult> progressListener : onProgressListeners) progressListener.onReportProgress(this, values);

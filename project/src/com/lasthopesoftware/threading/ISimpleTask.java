@@ -26,6 +26,8 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	boolean isCancelled();
 	
+	void reportProgress(TProgress... values);
+	
 	/* Events */
 	public interface OnStartListener<TParams, TProgress, TResult> {
 		void onStart(ISimpleTask<TParams, TProgress, TResult> owner);
