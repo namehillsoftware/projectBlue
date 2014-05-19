@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -167,7 +168,7 @@ public class BrowseLibrary extends FragmentActivity {
 						
 						library.setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(mBrowseLibrary);
-						JrSession.JrFs.setVisibleViews(_views.get(position).getKey());
+						JrSession.JrFs = new FileSystem(_views.get(position).getKey());
 						displayLibrary();
 					}
 				});
