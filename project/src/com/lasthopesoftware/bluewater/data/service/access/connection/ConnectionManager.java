@@ -63,7 +63,7 @@ public class ConnectionManager {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
 			URL url = new URL(mAccessConfiguration.getJrUrl(params));
-			return mAuthCode == null ? new JrConnection(url) : new JrConnection(url, mAuthCode);
+			return mAuthCode == null || mAuthCode.isEmpty() ? new JrConnection(url) : new JrConnection(url, mAuthCode);
 		}
 	}
 	
