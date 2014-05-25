@@ -25,6 +25,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	protected TResult doInBackground(TParams... params) {
 		exceptions.clear();
 		mState = SimpleTaskState.EXECUTING;
@@ -47,11 +48,13 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public void reportProgress(TProgress... values) {
 		this.publishProgress(values);
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	protected void onProgressUpdate(TProgress... values) {
 		if (onProgressListeners == null) return;
 		for (OnProgressListener<TParams, TProgress, TResult> progressListener : onProgressListeners) progressListener.onReportProgress(this, values);

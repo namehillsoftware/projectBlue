@@ -26,6 +26,7 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	boolean isCancelled();
 	
+	@SuppressWarnings("unchecked")
 	void reportProgress(TProgress... values);
 	
 	/* Events */
@@ -34,10 +35,12 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	}
 	
 	public interface OnExecuteListener<TParams, TProgress, TResult> {
+		@SuppressWarnings("unchecked")
 		TResult onExecute(ISimpleTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
 	}
 	
 	public interface OnProgressListener<TParams, TProgress, TResult> {
+		@SuppressWarnings("unchecked")
 		void onReportProgress(ISimpleTask<TParams, TProgress, TResult> owner, TProgress...progresses);
 	}
 	

@@ -83,7 +83,6 @@ public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesCont
 		return mItemConnectListener;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected List<OnCompleteListener<List<Item>>> getOnItemsCompleteListeners() {
 		return Arrays.asList(mItemCompleteListener);
