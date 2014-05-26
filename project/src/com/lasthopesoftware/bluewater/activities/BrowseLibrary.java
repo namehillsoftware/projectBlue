@@ -55,6 +55,8 @@ public class BrowseLibrary extends FragmentActivity {
 	
 	private CharSequence mOldTitle;
 	
+	private boolean mIsStopped = false;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -111,7 +113,12 @@ public class BrowseLibrary extends FragmentActivity {
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 		
 		mViewPager = (ViewPager) findViewById(R.id.pager);
-		
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		mIsStopped = false;
 		displayLibrary();
 	}
 
@@ -122,6 +129,7 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
+				if (mIsStopped) return;
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
@@ -181,6 +189,7 @@ public class BrowseLibrary extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+				if (mIsStopped) return;
 				final OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
@@ -260,6 +269,12 @@ public class BrowseLibrary extends FragmentActivity {
 			mViewPager.setCurrentItem(savedInstanceState.getInt(SAVED_TAB_KEY));
 			mViewPager.setScrollY(savedInstanceState.getInt(SAVED_SCROLL_POS));
 		}
+	}
+	
+	@Override
+	public void onStop() {
+		super.onStop();
+		mIsStopped = true;
 	}
 
 	public ViewPager getViewPager() {
