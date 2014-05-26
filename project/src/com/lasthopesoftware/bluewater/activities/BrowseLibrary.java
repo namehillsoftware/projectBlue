@@ -113,13 +113,16 @@ public class BrowseLibrary extends FragmentActivity {
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 		
 		mViewPager = (ViewPager) findViewById(R.id.pager);
+		
+		displayLibrary();
 	}
 	
 	@Override
 	public void onStart() {
 		super.onStart();
 		mIsStopped = false;
-		displayLibrary();
+		
+		if (mViewPager.getAdapter() == null) displayLibrary();
 	}
 
 	public void displayLibrary() {		
@@ -273,8 +276,8 @@ public class BrowseLibrary extends FragmentActivity {
 	
 	@Override
 	public void onStop() {
-		super.onStop();
 		mIsStopped = true;
+		super.onStop();
 	}
 
 	public ViewPager getViewPager() {
