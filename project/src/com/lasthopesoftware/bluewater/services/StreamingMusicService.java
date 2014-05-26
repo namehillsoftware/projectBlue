@@ -428,8 +428,6 @@ public class StreamingMusicService extends Service implements
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
-		if (PollConnectionTask.Instance.get(thisContext).isRunning()) return START_NOT_STICKY;
-		
 		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 		
 		if (intent != null && ConnectionManager.refreshConfiguration(thisContext)) {
