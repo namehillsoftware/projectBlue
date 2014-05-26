@@ -111,10 +111,8 @@ public class BrowseLibrary extends FragmentActivity {
 		};
 		
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
-		
+		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		mViewPager = (ViewPager) findViewById(R.id.pager);
-		
-		displayLibrary();
 	}
 	
 	@Override
@@ -122,12 +120,12 @@ public class BrowseLibrary extends FragmentActivity {
 		super.onStart();
 		mIsStopped = false;
 		
-		if (mViewPager.getAdapter() == null) displayLibrary();
+		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) displayLibrary();
 	}
 
 	public void displayLibrary() {		
 		final Library library = JrSession.GetLibrary(mBrowseLibrary);
-		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
+		
 		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
