@@ -80,6 +80,20 @@ public class FileProperties {
 		mProperties.put(name, value);
 	}
 	
+
+	public String getProperty(String name) throws IOException {
+		
+		if (mProperties.size() == 0 || !mProperties.containsKey(name))
+			return getRefreshedProperty(name);
+		
+		return mProperties.get(name);
+	}
+	
+	public String getRefreshedProperty(String name) throws IOException {
+		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
+		return getRefreshedProperties().get(name);
+	}
+	
 	public SortedMap<String, String> getProperties() throws IOException {
 		if (mProperties.size() == 0)
 			return getRefreshedProperties();
@@ -153,22 +167,11 @@ public class FileProperties {
 		return result;
 	}
 	
-	public String getProperty(String name) throws IOException {
-		
-		if (mProperties.size() == 0 || !mProperties.containsKey(name))
-			return getRefreshedProperty(name);
-		
-		return mProperties.get(name);
-	}
-	
-	public String getRefreshedProperty(String name) throws IOException {
-		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		return getRefreshedProperties().get(name);
-	}
-	
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM = "Album";
 	public static final String DURATION = "Duration";
 	public static final String NAME = "Name";
+	public static final String FILENAME = "Filename";
+	public static final String TRACK = "Track #";
 }

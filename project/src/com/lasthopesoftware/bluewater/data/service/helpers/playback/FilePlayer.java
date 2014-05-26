@@ -15,11 +15,14 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
 
+import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -39,6 +42,12 @@ public class FilePlayer implements
 	private float mVolume = 1.0f;
 	private Context mMpContext;
 	private File mFile;
+	
+	private static final String mediaQuery = 	"(" + MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
+												MediaStore.Audio.Media.ARTIST + " = ? AND " +
+												MediaStore.Audio.Media.ALBUM + " = ? AND " +
+												MediaStore.Audio.Media.TITLE + " = ? AND " +
+												MediaStore.Audio.Media.TRACK + " = ?)";
 	
 	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
 	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
@@ -96,35 +105,43 @@ public class FilePlayer implements
 		return prepared;
 	}
 	
-	private String getMpUrl() {
+	private String getMpUri() throws IOException {
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
+		
 		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
 			for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 			return null;
 		}
+		
+		final String[] proj = { MediaStore.Audio.Media.DATA };
+		String filename = mFile.getProperty(FileProperties.FILENAME).substring(mFile.getProperty(FileProperties.FILENAME).lastIndexOf('\\') + 1);
+		filename = filename.substring(0, filename.lastIndexOf('.'));
+		
+		final String[] params = { 	filename,
+									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
+									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
+									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
+									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
+		CursorLoader loader = new CursorLoader(mMpContext, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
+	    Cursor cursor = null;
+	    try {
+	    	cursor = loader.loadInBackground();
+		    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+		    if (cursor.moveToFirst()) return cursor.getString(column_index);
+	    } finally {
+	    	if (cursor != null)
+	    		cursor.close();
+	    }
 		return mFile.getSubItemUrl();
 	}
 	
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
 			try {
-				String[] proj = { MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA };
-				String fileName = mFile.getProperty("Filename").substring(mFile.getProperty("Filename").lastIndexOf('\\') + 1);
-				CursorLoader loader = new CursorLoader(mMpContext, MediaStore.Audio.Media.INTERNAL_CONTENT_URI, proj, MediaStore.Audio.Media.TITLE + " = ?", new String[] { mFile.getValue() }, null);
-			    Cursor cursor = loader.loadInBackground();
-			    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-			    if (cursor.getCount() > 0) {
-				    cursor.moveToFirst();
-				    String fileUri = cursor.getString(column_index);
-				    LoggerFactory.getLogger(getClass()).debug("File URI: " + fileUri);
-			    }
 			    
-//				File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-//				for (File file : directory.listFiles()) {
-//					LoggerFactory.getLogger(getClass()).debug("File path: " + file.getAbsolutePath());
-//				}
-				String uri = getMpUrl();
+			    String uri = getMpUri();
+			    
 				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
 					preparing = true;
@@ -132,7 +149,7 @@ public class FilePlayer implements
 					return;
 				}
 			} catch (Exception e) {
-				LoggerFactory.getLogger(FilePlayer.class).error(e.toString(), e);
+				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			}
 		}
 	}
@@ -140,9 +157,9 @@ public class FilePlayer implements
 	public void prepareMpSynchronously() {
 		if (!preparing && !prepared) {
 			try {
-				String url = getMpUrl();
-				if (url != null && !url.isEmpty()) {
-					setMpDataSource(url);
+				String uri = getMpUri();
+				if (uri != null && !uri.isEmpty()) {
+					setMpDataSource(uri);
 					
 					preparing = true;
 					mp.prepare();
@@ -152,7 +169,7 @@ public class FilePlayer implements
 				
 				preparing = false;
 			} catch (Exception e) {
-				LoggerFactory.getLogger(File.class).error(e.toString(), e);
+				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 				resetMediaPlayer();
 				preparing = false;
 			}
