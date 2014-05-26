@@ -115,18 +115,16 @@ public class FilePlayer implements
 		}
 		
 		final String[] proj = { MediaStore.Audio.Media.DATA };
-		String filename = mFile.getProperty(FileProperties.FILENAME).substring(mFile.getProperty(FileProperties.FILENAME).lastIndexOf('\\') + 1);
-		filename = filename.substring(0, filename.lastIndexOf('.'));
+		final String filename = mFile.getProperty(FileProperties.FILENAME).substring(mFile.getProperty(FileProperties.FILENAME).lastIndexOf('\\') + 1, mFile.getProperty(FileProperties.FILENAME).lastIndexOf('.'));
 		
 		final String[] params = { 	filename,
 									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
 									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
 									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
 									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
-		CursorLoader loader = new CursorLoader(mMpContext, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
 	    Cursor cursor = null;
 	    try {
-	    	cursor = loader.loadInBackground();
+	    	cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
 		    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 		    if (cursor.moveToFirst()) return cursor.getString(column_index);
 	    } finally {
