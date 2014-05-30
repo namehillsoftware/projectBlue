@@ -11,15 +11,17 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private TResult mResult;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
-	OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
-	ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = null;
-	ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = null;
-	ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = null;
-	ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = null;
-	LinkedList<Exception> exceptions = new LinkedList<Exception>();
+	private OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
+	private ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = null;
+	private ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = null;
+	private ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = null;
+	private ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = null;
+	private ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = null;
+	private LinkedList<Exception> exceptions = new LinkedList<Exception>();
 		
 	@Override
 	protected void onPreExecute() {
+		super.onPreExecute();
 		if (onStartListeners == null) return;
 		for (OnStartListener<TParams, TProgress, TResult> listener : onStartListeners) listener.onStart(this);
 	}
@@ -27,8 +29,8 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected TResult doInBackground(TParams... params) {
-		exceptions.clear();
 		mState = SimpleTaskState.EXECUTING;
+		exceptions.clear();
 		
 		try {
 			mResult = onExecuteListener.onExecute(this, params);
@@ -62,6 +64,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	protected void onPostExecute(TResult result) {
+		super.onPostExecute(result);
 		if (onCompleteListeners == null) return;
 		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : onCompleteListeners) completeListener.onComplete(this, result);
 	}
@@ -136,7 +139,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 
 	@Override
-	public SimpleTaskState getState() {
+	public synchronized SimpleTaskState getState() {
 		return mState;
 	}
 }

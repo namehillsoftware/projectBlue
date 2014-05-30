@@ -24,11 +24,14 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Boole
 	private volatile boolean mStopWaitingForConnection = false;
 	private SimpleTask<String, Void, Boolean> mTask;
 	private Context mContext;
+	private int mSleepTime = 2000;
+	
+	private static Object syncObj = new Object();
 	
 	private static CopyOnWriteArraySet<OnStartListener<String, Void, Boolean>> mUniqueOnStartListeners = new CopyOnWriteArraySet<ISimpleTask.OnStartListener<String, Void, Boolean>>();
 	private CopyOnWriteArraySet<OnCompleteListener<String, Void, Boolean>> mUniqueOnCompleteListeners = new CopyOnWriteArraySet<ISimpleTask.OnCompleteListener<String, Void, Boolean>>();
 	private CopyOnWriteArraySet<OnProgressListener<String, Void, Boolean>> mUniqueOnProgressListeners = new CopyOnWriteArraySet<ISimpleTask.OnProgressListener<String, Void, Boolean>>();
-	private CopyOnWriteArraySet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String,Void,Boolean>>(); 
+	private CopyOnWriteArraySet<OnErrorListener<String, Void, Boolean>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String,Void,Boolean>>();
 	
 	private PollConnectionTask(Context context) {
 		mTask = new SimpleTask<String, Void, Boolean>();
@@ -41,24 +44,26 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Boole
 
 	@Override
 	public Boolean onExecute(ISimpleTask<String, Void, Boolean> owner, String... params) throws Exception {
+		// Don't use timeout since if it can't resolve a host it will throw an exception immediately
 		while (!ConnectionManager.refreshConfiguration(mContext)) {
+			// Build the wait time up to 32 seconds
 			try {
-				Thread.sleep(3000);
-				if (mStopWaitingForConnection) {
-					
-					return Boolean.FALSE;
-				}
-			} catch (InterruptedException e) {
-				LoggerFactory.getLogger(PollConnectionTask.class).warn("Poll Connection Task interrupted.", e);
+				Thread.sleep(mSleepTime);
+			} catch (InterruptedException ie) {
 				return Boolean.FALSE;
 			}
+			if (mStopWaitingForConnection) return Boolean.FALSE;
+			
+			if (mSleepTime < 32000) mSleepTime *= 2;			
 		}
 		
 		return Boolean.TRUE;
 	}
 	
-	public synchronized void startPolling() {
-		if (mTask.getStatus() != Status.RUNNING) mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	public void startPolling() {
+		synchronized (syncObj) {
+			if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		}
 	}
 	
 	public void stopPolling() {
@@ -70,7 +75,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Boole
 	}
 	
 	public boolean isFinished() {
-		return mTask.getStatus() == Status.FINISHED;
+		return mTask != null ? (mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING)  : true;
 	}
 
 	public Boolean getResult() throws ExecutionException, InterruptedException {
@@ -141,11 +146,14 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Boole
 	}
 	
 	public static class Instance {
-		private static PollConnectionTask _instance = null;
+		private static volatile PollConnectionTask _instance = null;
+		private static Object syncObj = new Object();
 		
-		public synchronized static PollConnectionTask get(Context context) {
-			if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask(context);
-			return _instance;
+		public static PollConnectionTask get(Context context) {
+			synchronized (syncObj) {
+				if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask(context);
+				return _instance;
+			}
 		}
 	}
 }

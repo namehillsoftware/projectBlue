@@ -106,21 +106,6 @@ public class FilePlayer implements
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
 			try {
-//				String[] proj = { MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA };
-//				String fileName = mFile.getProperty("Filename").substring(mFile.getProperty("Filename").lastIndexOf('\\') + 1);
-//				CursorLoader loader = new CursorLoader(mMpContext, MediaStore.Audio.Media.INTERNAL_CONTENT_URI, proj, MediaStore.Audio.Media.TITLE + " = ?", new String[] { mFile.getValue() }, null);
-//			    Cursor cursor = loader.loadInBackground();
-//			    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-//			    if (cursor.getCount() > 0) {
-//				    cursor.moveToFirst();
-//				    String fileUri = cursor.getString(column_index);
-//				    LoggerFactory.getLogger(getClass()).debug("File URI: " + fileUri);
-//			    }
-			    
-//				File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-//				for (File file : directory.listFiles()) {
-//					LoggerFactory.getLogger(getClass()).debug("File path: " + file.getAbsolutePath());
-//				}
 				String uri = getMpUrl();
 				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
