@@ -56,25 +56,28 @@ public class BrowseLibrary extends FragmentActivity {
 	private CharSequence mOldTitle;
 	
 	private boolean mIsStopped = false;
-	
+		
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_browse_library);		
 		
-		Intent selectServer = new Intent(mBrowseLibrary, SelectServer.class);
-		if (JrSession.GetLibrary(mBrowseLibrary) == null || JrSession.GetLibrary(mBrowseLibrary).getSelectedView() <= 0) {
+		final Intent selectServer = new Intent(mBrowseLibrary, SelectServer.class);
+		final Library library = JrSession.GetLibrary(mBrowseLibrary);
+		if (library == null || library.getSelectedView() <= 0) {
 			Toast.makeText(mBrowseLibrary, "Please select a valid server", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
+			finish();
 			return;
 		}
 		
 		if (!ConnectionManager.refreshConfiguration(mBrowseLibrary, 30000)) {
 			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
 			startActivity(selectServer);
+			finish();
 			return;
 		}
 		
-		setContentView(R.layout.activity_browse_library);
 		setTitle("Library");
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -119,7 +122,6 @@ public class BrowseLibrary extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		mIsStopped = false;
-		
 		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) displayLibrary();
 	}
 
