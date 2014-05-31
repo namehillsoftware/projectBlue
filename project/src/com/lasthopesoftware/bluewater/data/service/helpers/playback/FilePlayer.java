@@ -8,16 +8,13 @@ import java.util.Map;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
-import android.content.CursorLoader;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
