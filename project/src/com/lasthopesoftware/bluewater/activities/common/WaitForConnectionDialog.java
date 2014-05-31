@@ -40,10 +40,18 @@ public class WaitForConnectionDialog {
 		
 		_instance = builder.show();
 					
-		PollConnectionTask.Instance.get(_context).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		PollConnectionTask.Instance.get(_context).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+				_instance.dismiss();
+			}
+		});
+		
+		PollConnectionTask.Instance.get(_context).addOnCancelListener(new ISimpleTask.OnCancelListener<String, Void, Void>() {
+			
+			@Override
+			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
 				_instance.dismiss();
 			}
 		});

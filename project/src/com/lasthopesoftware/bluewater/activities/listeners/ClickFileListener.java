@@ -32,12 +32,11 @@ public class ClickFileListener implements OnItemClickListener {
 			final int _position = position;
 			final long _id = id;
 			
-			PollConnectionTask.Instance.get(view.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+			PollConnectionTask.Instance.get(view.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-					if (result)
-						onItemClick(_parent, _view, _position, _id);
+				public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+					onItemClick(_parent, _view, _position, _id);
 				}
 			});
 			

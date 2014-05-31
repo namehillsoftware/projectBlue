@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -348,16 +349,24 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
-		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.FALSE || mLibrary == null) {
+			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+				if (mLibrary == null) {
 					stopSelf();
 					return;
 				}
 
 				startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+			}
+		});
+		
+		checkConnection.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
+			
+			@Override
+			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+				stopSelf();
 			}
 		});
 		

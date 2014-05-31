@@ -66,10 +66,10 @@ public class ViewPlaylists extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(thisContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+						PollConnectionTask.Instance.get(thisContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Void>() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+							public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
 								JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 							}
 						});

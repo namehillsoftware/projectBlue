@@ -141,12 +141,11 @@ public class BrowseLibrary extends FragmentActivity {
 							
 							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 								
 								@Override
-								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									if (result)
-										JrSession.JrFs.getSubItemsAsync();
+								public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+									JrSession.JrFs.getSubItemsAsync();
 								}
 							});
 							break;
@@ -197,12 +196,11 @@ public class BrowseLibrary extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 								
 								@Override
-								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									if (result)
-										JrSession.JrFs.getVisibleViewsAsync(_this);
+								public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+									JrSession.JrFs.getVisibleViewsAsync(_this);
 								}
 							});
 							PollConnectionTask.Instance.get(mBrowseLibrary).startPolling();

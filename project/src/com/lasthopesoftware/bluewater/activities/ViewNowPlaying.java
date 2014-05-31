@@ -54,7 +54,7 @@ public class ViewNowPlaying extends Activity implements
 	OnNowPlayingChangeListener, 
 	OnNowPlayingStopListener,
 	OnNowPlayingStartListener,
-	ISimpleTask.OnStartListener<String, Void, Boolean>
+	ISimpleTask.OnStartListener<String, Void, Void>
 {
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
@@ -200,18 +200,18 @@ public class ViewNowPlaying extends Activity implements
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_connection_settings:
-			startActivity(new Intent(this, SelectServer.class));
-			return true;
-		case R.id.menu_repeat_playlist:
-			StreamingMusicService.setIsRepeating(this, !mLibrary.isRepeating());
-			setRepeatingIcon(item);
-			return true;
-		case R.id.menu_view_now_playing_files:
-			startActivity(new Intent(this, ViewNowPlayingFiles.class));
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
+			case R.id.menu_connection_settings:
+				startActivity(new Intent(this, SelectServer.class));
+				return true;
+			case R.id.menu_repeat_playlist:
+				StreamingMusicService.setIsRepeating(this, !mLibrary.isRepeating());
+				setRepeatingIcon(item);
+				return true;
+			case R.id.menu_view_now_playing_files:
+				startActivity(new Intent(this, ViewNowPlayingFiles.class));
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
 		}
 	}
 	
@@ -430,11 +430,11 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void resetViewOnReconnect(File file) {
 		final File _file = file;
-		PollConnectionTask.Instance.get(this).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		PollConnectionTask.Instance.get(this).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) setView(_file);
+			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+				setView(_file);
 			}
 		});
 		WaitForConnectionDialog.show(this);
@@ -477,7 +477,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 
 	@Override
-	public void onStart(ISimpleTask<String, Void, Boolean> owner) {
+	public void onStart(ISimpleTask<String, Void, Void> owner) {
 		WaitForConnectionDialog.show(this);
 	}
 }
