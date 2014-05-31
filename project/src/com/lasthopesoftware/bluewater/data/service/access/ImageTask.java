@@ -44,12 +44,13 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 												"Format=jpg",
 												"FillTransparency=ffffff");
 					
-					if (isCancelled()) return null;
+					if (conn == null || isCancelled()) return null;
 					
 					try {
 						returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 					} finally {
-						conn.disconnect();
+						
+							conn.disconnect();
 					}
 				} catch (FileNotFoundException fe) {
 					LoggerFactory.getLogger(ImageTask.class).warn("Image not found!");

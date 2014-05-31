@@ -11,15 +11,17 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private TResult mResult;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
-	OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
-	ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = null;
-	ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = null;
-	ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = null;
-	ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = null;
-	LinkedList<Exception> exceptions = new LinkedList<Exception>();
+	private OnExecuteListener<TParams, TProgress, TResult> onExecuteListener = null;
+	private ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> onProgressListeners = null;
+	private ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> onCompleteListeners = null;
+	private ConcurrentLinkedQueue<OnCancelListener<TParams, TProgress, TResult>> onCancelListeners = null;
+	private ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> onStartListeners = null;
+	private ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> onErrorListeners = null;
+	private LinkedList<Exception> exceptions = new LinkedList<Exception>();
 		
 	@Override
 	protected void onPreExecute() {
+		super.onPreExecute();
 		if (onStartListeners == null) return;
 		for (OnStartListener<TParams, TProgress, TResult> listener : onStartListeners) listener.onStart(this);
 	}
@@ -27,8 +29,8 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected TResult doInBackground(TParams... params) {
-		exceptions.clear();
 		mState = SimpleTaskState.EXECUTING;
+		exceptions.clear();
 		
 		try {
 			mResult = onExecuteListener.onExecute(this, params);
@@ -62,6 +64,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	protected void onPostExecute(TResult result) {
+		super.onPostExecute(result);
 		if (onCompleteListeners == null) return;
 		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : onCompleteListeners) completeListener.onComplete(this, result);
 	}
@@ -69,13 +72,9 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	protected void onCancelled(TResult result) {
 		mState = SimpleTaskState.CANCELLED;
-	}
-	
-	@Override
-	public void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
-		if (listener == null) return;
-		if (onStartListeners == null) onStartListeners = new ConcurrentLinkedQueue<ISimpleTask.OnStartListener<TParams,TProgress,TResult>>(); 
-		onStartListeners.add(listener);
+		super.onCancelled(result);
+		if (onCancelListeners == null) return;
+		for (OnCancelListener<TParams, TProgress, TResult> cancelListener : onCancelListeners) cancelListener.onCancel(this, result);
 	}
 	
 	@Override
@@ -83,60 +82,75 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 		onExecuteListener = listener;
 	}
 
-
-	@Override
-	public void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
-		if (listener == null) return;
-		if (onProgressListeners == null) onProgressListeners = new ConcurrentLinkedQueue<ISimpleTask.OnProgressListener<TParams,TProgress,TResult>>();
-		onProgressListeners.add(listener);
-	}
-	
-	@Override
-	public void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
-		if (listener == null) return;
-		if (onCompleteListeners == null) onCompleteListeners = new ConcurrentLinkedQueue<ISimpleTask.OnCompleteListener<TParams,TProgress,TResult>>();
-		onCompleteListeners.add(listener);
-	}
-
-	@Override
-	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		if (listener == null) return;
-		if (onErrorListeners == null) onErrorListeners = new ConcurrentLinkedQueue<ISimpleTask.OnErrorListener<TParams,TProgress,TResult>>();
-		onErrorListeners.add(listener);
-	}
-
 	@Override
 	public TResult getResult() throws ExecutionException, InterruptedException {
 		return this.get();
 	}
+	
+	@Override
+	public void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
+		onStartListeners = addListener(listener, onStartListeners);
+	}
+
+	@Override
+	public void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
+		onProgressListeners = addListener(listener, onProgressListeners);
+	}
+	
+	@Override
+	public void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
+		onCompleteListeners = addListener(listener, onCompleteListeners);
+	}
+	
+	@Override
+	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
+		onCancelListeners = addListener(listener, onCancelListeners);
+	}
+
+	@Override
+	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+		onErrorListeners = addListener(listener, onErrorListeners);
+	}
 
 	@Override
 	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
-		if (onStartListeners == null || !onStartListeners.contains(listener)) return;
-		onStartListeners.remove(listener);
+		removeListener(listener, onStartListeners);
 	}
 
 	@Override
 	public void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
-		if (onCompleteListeners == null || !onCompleteListeners.contains(listener)) return;
-		onCompleteListeners.remove(listener);		
+		removeListener(listener, onCompleteListeners);
 	}
 
 	@Override
-	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		if (onErrorListeners == null || !onErrorListeners.contains(listener)) return;
-		onErrorListeners.remove(listener);		
+	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
+		removeListener(listener, onCancelListeners);
 	}
-
+	
+	@Override
+	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+		removeListener(listener, onErrorListeners);
+	}
 
 	@Override
 	public void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
-		if (onProgressListeners == null || !onProgressListeners.contains(listener)) return;
-		onProgressListeners.remove(listener);		
+		removeListener(listener, onProgressListeners);
+	}
+	
+	private <T> ConcurrentLinkedQueue<T> addListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
+		if (listener == null) return listenerQueue;
+		if (listenerQueue == null) listenerQueue = new ConcurrentLinkedQueue<T>();
+		listenerQueue.add(listener);
+		return listenerQueue;
+	}
+	
+	private <T> void removeListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
+		if (listenerQueue == null || !listenerQueue.contains(listener)) return;
+		listenerQueue.remove(listener);
 	}
 
 	@Override
-	public SimpleTaskState getState() {
+	public synchronized SimpleTaskState getState() {
 		return mState;
 	}
 }

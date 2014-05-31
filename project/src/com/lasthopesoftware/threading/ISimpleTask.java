@@ -15,6 +15,7 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
 	void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
+	void addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
 	void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
 	void setOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener);
@@ -22,6 +23,7 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
 	void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
+	void removeOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
 	void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
 	boolean isCancelled();
@@ -46,6 +48,10 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	public interface OnCompleteListener<TParams, TProgress, TResult> {
 		void onComplete(ISimpleTask<TParams, TProgress, TResult> owner, TResult result);
+	}
+	
+	public interface OnCancelListener<TParams, TProgress, TResult> {
+		void onCancel(ISimpleTask<TParams, TProgress, TResult> owner, TResult result);
 	}
 	
 	public interface OnErrorListener<TParams, TProgress, TResult> {

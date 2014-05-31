@@ -58,10 +58,10 @@ public class CategoryFragment extends Fragment {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+						PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Void>() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
+							public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
 								JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
 							}
 						});
@@ -113,12 +113,11 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Void>() {
 								
 								@Override
-								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									if (result)
-										((Playlists) mCategory).getSubItemsAsync();
+								public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+									((Playlists) mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get(mContext).startPolling();
@@ -151,12 +150,11 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Boolean>() {
+							PollConnectionTask.Instance.get(mContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Void>() {
 								
 								@Override
-								public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-									if (result)
-										((Item)mCategory).getSubItemsAsync();
+								public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+									((Item)mCategory).getSubItemsAsync();
 								}
 							});
 							PollConnectionTask.Instance.get(mContext).startPolling();

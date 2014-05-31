@@ -137,9 +137,7 @@ public class FilePlayer implements
 	public void prepareMediaPlayer() {
 		if (!preparing && !prepared) {
 			try {
-			    
-			    String uri = getMpUri();
-			    
+				String uri = getMpUri();
 				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
 					preparing = true;

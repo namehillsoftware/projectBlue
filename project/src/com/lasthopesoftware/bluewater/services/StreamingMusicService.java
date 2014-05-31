@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -332,11 +333,12 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void buildErrorNotification() {
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
-		Intent intent = new Intent(ACTION_STOP_WAITING_FOR_CONNECTION);
+		final Intent intent = new Intent(thisContext, StreamingMusicService.class);
+		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
 		
@@ -344,18 +346,27 @@ public class StreamingMusicService extends Service implements
 		builder.setContentTitle(waitingText);
 		builder.setTicker(waitingText);
 		builder.setSubText(getText(R.string.lbl_click_to_cancel));
-		mNotificationMgr.notify(mId, builder.build());
+		notifyForeground(builder.build());
 		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
-		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-				mNotificationMgr.cancelAll();
-				if (result == Boolean.FALSE) return;
-				Library library = mLibrary;
-				if (library != null)
-					streamMusic(thisContext, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());							
+			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+				if (mLibrary == null) {
+					stopSelf();
+					return;
+				}
+
+				startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+			}
+		});
+		
+		checkConnection.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
+			
+			@Override
+			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+				stopSelf();
 			}
 		});
 		
@@ -430,7 +441,7 @@ public class StreamingMusicService extends Service implements
 		
 		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
 		
-		if (intent != null && ConnectionManager.refreshConfiguration(thisContext)) {
+		if (intent != null) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
 				

@@ -27,7 +27,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.StandardRequest;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
 
 public class ConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
@@ -37,14 +36,22 @@ public class ConnectionManager {
 	private static Object syncObj = new Object();
 	
 	public static boolean buildConfiguration(Context context, String accessCode) {
-		return buildConfiguration(context, accessCode, null);
+		return buildConfiguration(context, accessCode, 30000);
+	}
+	
+	public static boolean buildConfiguration(Context context, String accessCode, int timeout) {
+		return buildConfiguration(context, accessCode, null, timeout);
 	}
 	
 	public static boolean buildConfiguration(Context context, String accessCode, String authCode) {
+		return buildConfiguration(context, accessCode, authCode, 30000);
+	}
+	
+	public static boolean buildConfiguration(Context context, String accessCode, String authCode, int timeout) {
 		mAccessCode = accessCode;		
 		synchronized(syncObj) {
 			mAuthCode = authCode;
-			mAccessConfiguration = buildAccessConfiguration(mAccessCode);
+			mAccessConfiguration = buildAccessConfiguration(mAccessCode, timeout);
 		}
 		return mAccessConfiguration != null && JrTestConnection.doTest();
 	}
@@ -55,7 +62,7 @@ public class ConnectionManager {
 	
 	public static boolean refreshConfiguration(Context context, int timeout) {
 		if (mAccessConfiguration == null || ((timeout > 0 && !JrTestConnection.doTest(timeout)) || !JrTestConnection.doTest()))
-			return buildConfiguration(context, mAccessCode, mAuthCode);
+			return timeout > 0 ? buildConfiguration(context, mAccessCode, mAuthCode, timeout) : buildConfiguration(context, mAccessCode, mAuthCode);
 		return true;
 	}
 	
@@ -74,15 +81,15 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static JrAccessDao buildAccessConfiguration(String accessCode) {
+	private static JrAccessDao buildAccessConfiguration(String accessCode, int timeout) {
 		try {
-			JrAccessDao access = MediaCenterAccess.get(accessCode);
+			JrAccessDao access = MediaCenterAccess.get(accessCode, timeout);
 			if (access != null && access.getActiveUrl() != null && !access.getActiveUrl().isEmpty())
 				return access;
 		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+			LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
 		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+			LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
 		}
 
 		return null;
@@ -90,8 +97,19 @@ public class ConnectionManager {
 	
 	private static class MediaCenterAccess extends AsyncTask<String, Void, JrAccessDao> {
 
-		public static JrAccessDao get(String accessCode) throws ExecutionException, InterruptedException {
-			return new MediaCenterAccess().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, accessCode).get();
+		private int mTimeout = 30000;
+		
+		public static JrAccessDao get(String accessCode, int timeout) throws ExecutionException, InterruptedException {
+			return new MediaCenterAccess(timeout).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, accessCode).get();
+		}
+		
+		private MediaCenterAccess() {
+			
+		}
+		
+		private MediaCenterAccess(int timeout) {
+			this();
+			mTimeout = timeout;
 		}
 		
 		@Override
@@ -112,6 +130,7 @@ public class ConnectionManager {
 					accessDao.setStatus(true);
 				} else {
 					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessCode)).openConnection();
+					conn.setConnectTimeout(mTimeout);
 					XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
 					
 					
@@ -125,11 +144,11 @@ public class ConnectionManager {
 				}
 				return accessDao;
 			} catch (ClientProtocolException e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
 			} catch (IOException e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+				LoggerFactory.getLogger(ConnectionManager.class).warn(e.toString());
 			}
 			
 			return null;

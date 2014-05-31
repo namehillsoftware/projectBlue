@@ -87,12 +87,11 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
 			} catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 					
 					@Override
-					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						if (result)
-							onClick(_view);
+					public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+						onClick(_view);
 					}
 				});
 				
@@ -114,12 +113,11 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(Files.GET_SHUFFLED));
 			}  catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Boolean>() {
+				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 					
 					@Override
-					public void onComplete(ISimpleTask<String, Void, Boolean> owner, Boolean result) {
-						if (result)
-							onClick(_view);
+					public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+						onClick(_view);
 					}
 				});
 				
