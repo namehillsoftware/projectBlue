@@ -119,15 +119,15 @@ public class FilePlayer implements
 									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
 									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
 									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
-	    Cursor cursor = null;
+	    
+		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
 	    try {
-	    	cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
-		    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-		    if (cursor.moveToFirst()) return cursor.getString(column_index);
+		    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+		    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
 	    } finally {
-	    	if (cursor != null)
-	    		cursor.close();
+	    	cursor.close();
 	    }
+	    
 		return mFile.getSubItemUrl();
 	}
 	
