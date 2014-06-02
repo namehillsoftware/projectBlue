@@ -40,11 +40,13 @@ public class FilePlayer implements
 	private Context mMpContext;
 	private File mFile;
 	
-	private static final String mediaQuery = 	"(" + MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
+	private static final String mediaQuery = "(" + 
+												MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
 												MediaStore.Audio.Media.ARTIST + " = ? AND " +
 												MediaStore.Audio.Media.ALBUM + " = ? AND " +
 												MediaStore.Audio.Media.TITLE + " = ? AND " +
-												MediaStore.Audio.Media.TRACK + " = ?)";
+												MediaStore.Audio.Media.TRACK + " = ?" +
+											 ")";
 	
 	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
 	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
