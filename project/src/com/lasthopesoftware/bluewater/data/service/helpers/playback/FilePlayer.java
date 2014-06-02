@@ -40,13 +40,13 @@ public class FilePlayer implements
 	private Context mMpContext;
 	private File mFile;
 	
-	private static final String mediaQuery = "(" + 
+	private static final String MEDIA_QUERY = "(" + 
 												MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
 												MediaStore.Audio.Media.ARTIST + " = ? AND " +
 												MediaStore.Audio.Media.ALBUM + " = ? AND " +
 												MediaStore.Audio.Media.TITLE + " = ? AND " +
 												MediaStore.Audio.Media.TRACK + " = ?" +
-											 ")";
+											  ")";
 	
 	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
 	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
@@ -122,7 +122,7 @@ public class FilePlayer implements
 									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
 									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
 	    
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, mediaQuery, params, null);
+		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, MEDIA_QUERY, params, null);
 	    try {
 		    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 		    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
