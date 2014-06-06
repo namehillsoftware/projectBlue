@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -343,10 +344,21 @@ public class ViewNowPlaying extends Activity implements
 							
 							@Override
 							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-								mNowPlayingImg.setImageBitmap(result);
-								mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
-								mLoadingImg.setVisibility(View.INVISIBLE);
-								mNowPlayingImg.setVisibility(View.VISIBLE);
+								if (result != null)
+									mNowPlayingImg.setImageBitmap(result);
+								
+								displayImageBitmap();
+							}
+						});
+						
+						getFileImageTask.addOnCancelListener(new OnCancelListener<Void, Void, Bitmap>() {
+							
+							@Override
+							public void onCancel(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+								if (result != null)
+									mNowPlayingImg.setImageBitmap(result);
+								
+								displayImageBitmap();
 							}
 						});
 						
@@ -402,6 +414,12 @@ public class ViewNowPlaying extends Activity implements
 		} catch (IOException ioE) {
 			resetViewOnReconnect(_file);
 		}
+	}
+	
+	private void displayImageBitmap() {
+		mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+		mLoadingImg.setVisibility(View.INVISIBLE);
+		mNowPlayingImg.setVisibility(View.VISIBLE);	
 	}
 	
 	private void showNowPlayingControls() {
@@ -465,12 +483,15 @@ public class ViewNowPlaying extends Activity implements
 	public void onNowPlayingStop(PlaylistController controller, FilePlayer file) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
+		int duration = 100;
 		try {
-			mSongProgressBar.setMax(file.getDuration());
-			mSongProgressBar.setProgress(file.getCurrentPosition());
+			duration = file.getDuration();
 		} catch (IOException e) {
-			LoggerFactory.getLogger(ViewNowPlaying.class).error(e.getMessage(), e);
+			LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
 		}
+		
+		mSongProgressBar.setMax(duration);
+		mSongProgressBar.setProgress(file.getCurrentPosition());
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);

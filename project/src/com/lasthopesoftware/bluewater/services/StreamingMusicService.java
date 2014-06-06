@@ -45,6 +45,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnStartListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -104,6 +105,14 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	
+	private final OnStartListener<String, Void, Void> mPollConnectionTaskListener = new OnStartListener<String, Void, Void>() {
+		
+		@Override
+		public void onStart(ISimpleTask<String, Void, Void> owner) {
+			buildErrorNotification();
+		}
+	};
 	
 	private static Intent getNewSelfIntent(Context context, String action) {
 		Intent newIntent = new Intent(context, StreamingMusicService.class);
@@ -474,6 +483,7 @@ public class StreamingMusicService extends Service implements
     public void onCreate() {
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+		PollConnectionTask.Instance.get(thisContext).addOnStartListener(mPollConnectionTaskListener);
 	}
 	
 	/* (non-Javadoc)
@@ -487,7 +497,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
-		buildErrorNotification();
+		PollConnectionTask.Instance.get(thisContext).startPolling();
 
 		return true;
 	}
@@ -638,6 +648,8 @@ public class StreamingMusicService extends Service implements
 		if (mIsHwRegistered) unregisterHardwareListeners();
 		
 		mPlaylistString = null;
+		
+		PollConnectionTask.Instance.get(thisContext).removeOnStartListener(mPollConnectionTaskListener);
 	}
 
 	/* End Event Handlers */
