@@ -126,6 +126,8 @@ public class FilePlayer implements
 	    try {
 		    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 		    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
+	    } catch (IllegalArgumentException ie) {
+	    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
 	    } finally {
 	    	cursor.close();
 	    }
