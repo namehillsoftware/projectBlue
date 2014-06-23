@@ -110,6 +110,8 @@ public class StreamingMusicService extends Service implements
 		
 		@Override
 		public void onStart(ISimpleTask<String, Void, Void> owner) {
+			if (mPlaylistController != null) mPlaylistController.pause();
+			
 			buildErrorNotification();
 		}
 	};
