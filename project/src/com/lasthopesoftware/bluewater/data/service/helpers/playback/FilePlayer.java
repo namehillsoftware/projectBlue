@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-
 import org.slf4j.LoggerFactory;
-
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -16,7 +15,6 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
-
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -93,11 +91,14 @@ public class FilePlayer implements
 		return prepared;
 	}
 	
+	@SuppressLint("InlinedApi")
 	private String getMpUrl() {
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
-			for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			if (android.os.Build.VERSION.SDK_INT >= 17)
+				for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			
 			return null;
 		}
 		return mFile.getSubItemUrl();

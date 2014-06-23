@@ -5,7 +5,7 @@ package com.lasthopesoftware.bluewater.services;
 
 
 import java.util.HashSet;
-
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -13,22 +13,25 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
 import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
+import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
@@ -574,7 +577,7 @@ public class StreamingMusicService extends Service implements
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return playingFile.getProperty("Artist") + " - " + playingFile.getValue();
+				return playingFile.getProperty(FileProperties.ARTIST) + " - " + playingFile.getValue();
 			}
 		});
 		getNotificationPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -608,24 +611,41 @@ public class StreamingMusicService extends Service implements
 				return result;
 			}
 		});
+		
 		getBtPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
+				final String artist = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+				final String album = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+				
 				if (mRemoteControlClient != null) {
 					final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
 					metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));				
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
 					metaData.apply();
+					
+					final ImageTask getBtImageTask = new ImageTask(artist + ":" + album, playingFile.getKey());
+				    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+						
+						@TargetApi(Build.VERSION_CODES.KITKAT)
+						@Override
+						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+							if (result == null || android.os.Build.VERSION.SDK_INT < 19) return;
+							
+							metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result);
+							metaData.apply();
+						}
+					});
 				}
 				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
-				pebbleIntent.putExtra("artist", (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-				pebbleIntent.putExtra("album", (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+				pebbleIntent.putExtra("artist", artist);
+				pebbleIntent.putExtra("album", album);
 				pebbleIntent.putExtra("track", (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));
 			    
 			    sendBroadcast(pebbleIntent);
