@@ -109,7 +109,9 @@ public class FilePlayer implements
 			throw new NullPointerException("The file player's context cannot be null");
 		
 		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
-			for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			if (android.os.Build.VERSION.SDK_INT >= 17)
+				for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			
 			return null;
 		}
 		

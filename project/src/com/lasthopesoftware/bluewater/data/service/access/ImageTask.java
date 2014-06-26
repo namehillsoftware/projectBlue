@@ -17,7 +17,7 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
-	private static Bitmap emptyBitmap;
+	private static Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);;
 	
 	public ImageTask(String uniqueId, int fileKey) {
 		super();
@@ -29,12 +29,9 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 			
 			@Override
 			public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-				if (imageCache.containsKey(_uniqueId)) {
-					return imageCache.get(_uniqueId);
-				}
+				if (imageCache.containsKey(_uniqueId)) return imageCache.get(_uniqueId);
 				
 				Bitmap returnBmp = null;
-				
 				try {
 					HttpURLConnection conn = ConnectionManager.getConnection(
 												"File/GetImage", 
@@ -44,27 +41,23 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 												"Format=jpg",
 												"FillTransparency=ffffff");
 					
-					if (conn == null || isCancelled()) return null;
+					// Connection failed to build or isCancelled was called, return an empty bitmap
+					// but do not put it into the cache
+					if (conn == null || isCancelled()) return mEmptyBitmap;
 					
 					try {
 						returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
 					} finally {
-						
-							conn.disconnect();
+						conn.disconnect();
 					}
 				} catch (FileNotFoundException fe) {
-					LoggerFactory.getLogger(ImageTask.class).warn("Image not found!");
+					LoggerFactory.getLogger(getClass()).warn("Image not found!");
 				} catch (Exception e) {
-					LoggerFactory.getLogger(ImageTask.class).error(e.toString(), e);
+					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 				}
 				
-				if (returnBmp == null) {
-					if (emptyBitmap == null) {
-						emptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-					}
-					
-					returnBmp = emptyBitmap;
-				}
+				if (returnBmp == null)
+					returnBmp = mEmptyBitmap;
 				
 				imageCache.put(_uniqueId, returnBmp);
 				
