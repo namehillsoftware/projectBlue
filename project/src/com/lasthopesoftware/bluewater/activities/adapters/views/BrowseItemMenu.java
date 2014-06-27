@@ -21,13 +21,12 @@ import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseItemMenu {
 	public static View getView(IItem<?> item, View convertView, ViewGroup parent) {
@@ -87,10 +86,10 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
 			} catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
+				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
 					
 					@Override
-					public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+					public void onConnectionRegained() {
 						onClick(_view);
 					}
 				});
@@ -113,10 +112,10 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(Files.GET_SHUFFLED));
 			}  catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
+				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
 					
 					@Override
-					public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+					public void onConnectionRegained() {
 						onClick(_view);
 					}
 				});

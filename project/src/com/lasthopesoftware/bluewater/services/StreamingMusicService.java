@@ -5,6 +5,7 @@ package com.lasthopesoftware.bluewater.services;
 
 
 import java.util.HashSet;
+
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -27,6 +28,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
@@ -34,6 +36,8 @@ import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -48,7 +52,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnStartListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -109,10 +112,10 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
-	private final OnStartListener<String, Void, Void> mPollConnectionTaskListener = new OnStartListener<String, Void, Void>() {
+	private final IOnConnectionLostListener mPollConnectionTaskListener = new IOnConnectionLostListener() {
 		
 		@Override
-		public void onStart(ISimpleTask<String, Void, Void> owner) {
+		public void onConnectionLost() {
 			if (mPlaylistController != null) mPlaylistController.pause();
 			
 			buildErrorNotification();
@@ -363,10 +366,10 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
-		checkConnection.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
+		checkConnection.addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+			public void onConnectionRegained() {
 				if (mLibrary == null) {
 					stopSelf();
 					return;
@@ -488,7 +491,7 @@ public class StreamingMusicService extends Service implements
     public void onCreate() {
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-		PollConnectionTask.Instance.get(thisContext).addOnStartListener(mPollConnectionTaskListener);
+		PollConnectionTask.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 	
 	/* (non-Javadoc)
@@ -671,7 +674,7 @@ public class StreamingMusicService extends Service implements
 		
 		mPlaylistString = null;
 		
-		PollConnectionTask.Instance.get(thisContext).removeOnStartListener(mPollConnectionTaskListener);
+		PollConnectionTask.Instance.get(thisContext).removeOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 
 	/* End Event Handlers */
