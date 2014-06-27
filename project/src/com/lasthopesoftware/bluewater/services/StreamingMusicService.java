@@ -38,6 +38,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionM
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionLostListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -379,10 +380,10 @@ public class StreamingMusicService extends Service implements
 			}
 		});
 		
-		checkConnection.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
+		checkConnection.addOnPollingCancelledListener(new IOnPollingCancelledListener() {
 			
 			@Override
-			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+			public void onPollingCancelled() {
 				stopSelf();
 			}
 		});

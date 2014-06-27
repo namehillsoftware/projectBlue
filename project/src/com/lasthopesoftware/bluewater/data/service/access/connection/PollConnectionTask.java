@@ -26,7 +26,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	
 	private static CopyOnWriteArraySet<IOnConnectionLostListener> mUniqueOnConnectionLostListeners = new CopyOnWriteArraySet<IOnConnectionLostListener>();
 	private static CopyOnWriteArraySet<IOnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<IOnConnectionRegainedListener>();
-	private static CopyOnWriteArraySet<OnCancelListener<String, Void, Void>> mUniqueOnCancelListeners = new CopyOnWriteArraySet<ISimpleTask.OnCancelListener<String, Void, Void>>();
+	private static CopyOnWriteArraySet<IOnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<IOnPollingCancelledListener>();
 	private CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnectionTask(Context context) {
@@ -61,7 +61,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 				@Override
 				public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
 					synchronized (syncObj) {
-						for (OnCancelListener<String, Void, Void> onCancelListener : mUniqueOnCancelListeners) onCancelListener.onCancel(owner, result);
+						for (IOnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
 						
 						clearCompleteListeners();
 					}
@@ -136,7 +136,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
-	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<String, Void, Void> listener) {
+	public void addOnPollingCancelledListener(IOnPollingCancelledListener listener) {
 		mUniqueOnCancelListeners.add(listener);
 	}
 
@@ -152,6 +152,10 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	public void removeOnConnectionRegainedListener(IOnConnectionRegainedListener listener) {
 		mUniqueOnConnectionRegainedListener.remove(listener);
 	}
+	
+	public void removeOnPollingCancelledListener(IOnPollingCancelledListener listener) {
+		mUniqueOnCancelListeners.remove(listener);
+	}
 
 	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
 		if (mUniqueOnErrorListeners.remove(listener))
@@ -164,6 +168,10 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	
 	public interface IOnConnectionRegainedListener {
 		void onConnectionRegained();
+	}
+	
+	public interface IOnPollingCancelledListener {
+		void onPollingCancelled();
 	}
 	
 	public static class Instance {

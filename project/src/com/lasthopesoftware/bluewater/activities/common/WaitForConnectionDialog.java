@@ -9,6 +9,7 @@ import android.content.DialogInterface.OnClickListener;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnPollingCancelledListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -49,10 +50,10 @@ public class WaitForConnectionDialog {
 			}
 		});
 		
-		PollConnectionTask.Instance.get(_context).addOnCancelListener(new ISimpleTask.OnCancelListener<String, Void, Void>() {
+		PollConnectionTask.Instance.get(_context).addOnPollingCancelledListener(new IOnPollingCancelledListener() {
 			
 			@Override
-			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+			public void onPollingCancelled() {
 				_instance.dismiss();
 			}
 		});
