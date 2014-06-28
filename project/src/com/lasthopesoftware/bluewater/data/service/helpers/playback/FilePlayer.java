@@ -28,8 +28,8 @@ public class FilePlayer implements
 	OnCompletionListener
 {
 	private MediaPlayer mp;
-	private boolean prepared = false;
-	private boolean preparing = false;
+	private boolean isPrepared = false;
+	private boolean isPreparing = false;
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
 	private Context mMpContext;
@@ -88,7 +88,7 @@ public class FilePlayer implements
 	}
 	
 	public boolean isPrepared() {
-		return prepared;
+		return isPrepared;
 	}
 	
 	@SuppressLint("InlinedApi")
@@ -96,8 +96,8 @@ public class FilePlayer implements
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
-			if (android.os.Build.VERSION.SDK_INT >= 17)
-				for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			for (OnFileErrorListener listener : onFileErrorListeners)
+				listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, android.os.Build.VERSION.SDK_INT >= 17 ? MediaPlayer.MEDIA_ERROR_IO : MediaPlayer.MEDIA_ERROR_UNKNOWN);
 			
 			return null;
 		}
@@ -105,12 +105,12 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMediaPlayer() {
-		if (!preparing && !prepared) {
+		if (!isPreparing && !isPrepared) {
 			try {
 				String uri = getMpUrl();
 				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
-					preparing = true;
+					isPreparing = true;
 					mp.prepareAsync();
 					return;
 				}
@@ -121,23 +121,23 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMpSynchronously() {
-		if (!preparing && !prepared) {
+		if (!isPreparing && !isPrepared) {
 			try {
 				String url = getMpUrl();
 				if (url != null && !url.isEmpty()) {
 					setMpDataSource(url);
 					
-					preparing = true;
+					isPreparing = true;
 					mp.prepare();
-					prepared = true;
+					isPrepared = true;
 					return;
 				}
 				
-				preparing = false;
+				isPreparing = false;
 			} catch (Exception e) {
 				LoggerFactory.getLogger(File.class).error(e.toString(), e);
 				resetMediaPlayer();
-				preparing = false;
+				isPreparing = false;
 			}
 		}
 	}
@@ -166,13 +166,13 @@ public class FilePlayer implements
 	public void releaseMediaPlayer() {
 		if (mp != null) mp.release();
 		mp = null;
-		prepared = false;
+		isPrepared = false;
 	}
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		prepared = true;
-		preparing = false;
+		isPrepared = true;
+		isPreparing = false;
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
@@ -236,6 +236,15 @@ public class FilePlayer implements
 	}
 
 	public void pause() {
+		if (isPreparing) {
+			try {
+				mp.reset();
+			} catch (Exception e) {
+				initMediaPlayer();
+				return;
+			}
+		}
+		
 		mPosition = mp.getCurrentPosition();
 		mp.pause();
 	}
