@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
@@ -66,10 +67,10 @@ public class ViewPlaylists extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(thisContext).addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, Void>() {
+						PollConnectionTask.Instance.get(thisContext).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+							public void onConnectionRegained() {
 								JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 							}
 						});

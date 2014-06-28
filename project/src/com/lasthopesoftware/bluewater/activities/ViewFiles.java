@@ -19,14 +19,14 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
-import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewFiles extends FragmentActivity {
@@ -68,10 +68,10 @@ public class ViewFiles extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(_this).addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
+						PollConnectionTask.Instance.get(_this).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+							public void onConnectionRegained() {
 								filesContainer.getFilesAsync();
 							}
 						});
