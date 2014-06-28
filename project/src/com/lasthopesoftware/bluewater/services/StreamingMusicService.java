@@ -517,13 +517,13 @@ public class StreamingMusicService extends Service implements
 			// resume playback
         	if (!ConnectionManager.refreshConfiguration(thisContext)) return;
         	
-        	if (mPlaylistController != null) {
-        		mPlaylistController.setVolume(1.0f);
-        	        	
-	        	if (!mPlaylistController.isPlaying()) {
-	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
-	        	}
-        	}
+        	if (mPlaylistController == null) return;
+        	
+    		mPlaylistController.setVolume(1.0f);
+    	        	
+        	if (mPlaylistController.isPlaying()) return;
+        	
+        	startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
         	
             return;
 		}
@@ -570,6 +570,7 @@ public class StreamingMusicService extends Service implements
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mIsHwRegistered) registerHardwareListeners();
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		
 		// Set the notification area
 		final Intent viewIntent = new Intent(this, ViewNowPlaying.class);
