@@ -261,7 +261,6 @@ public class FilePlayer implements
 
 	public void start() {
 		mp.seekTo(mPosition);
-//		mp.setVolume(mVolume, mVolume);
 		mp.start();
 	}
 	
