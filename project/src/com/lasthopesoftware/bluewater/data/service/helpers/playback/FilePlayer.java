@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.slf4j.LoggerFactory;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioManager;
@@ -15,6 +18,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.PowerManager;
 import ch.qos.logback.classic.Logger;
+
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -28,8 +32,8 @@ public class FilePlayer implements
 	OnCompletionListener
 {
 	private MediaPlayer mp;
-	private boolean isPrepared = false;
-	private boolean isPreparing = false;
+	private AtomicBoolean isPrepared = new AtomicBoolean();
+	private AtomicBoolean isPreparing = new AtomicBoolean();
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
 	private Context mMpContext;
@@ -88,7 +92,7 @@ public class FilePlayer implements
 	}
 	
 	public boolean isPrepared() {
-		return isPrepared;
+		return isPrepared.get();
 	}
 	
 	@SuppressLint("InlinedApi")
@@ -105,12 +109,12 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMediaPlayer() {
-		if (!isPreparing && !isPrepared) {
+		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
 				String uri = getMpUrl();
 				if (uri != null && !uri.isEmpty()) {
 					setMpDataSource(uri);
-					isPreparing = true;
+					isPreparing.set(true);
 					mp.prepareAsync();
 					return;
 				}
@@ -121,23 +125,23 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMpSynchronously() {
-		if (!isPreparing && !isPrepared) {
+		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
 				String url = getMpUrl();
 				if (url != null && !url.isEmpty()) {
 					setMpDataSource(url);
 					
-					isPreparing = true;
+					isPreparing.set(true);
 					mp.prepare();
-					isPrepared = true;
+					isPrepared.set(true);
 					return;
 				}
 				
-				isPreparing = false;
+				isPreparing.set(false);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(File.class).error(e.toString(), e);
 				resetMediaPlayer();
-				isPreparing = false;
+				isPreparing.set(false);
 			}
 		}
 	}
@@ -166,13 +170,13 @@ public class FilePlayer implements
 	public void releaseMediaPlayer() {
 		if (mp != null) mp.release();
 		mp = null;
-		isPrepared = false;
+		isPrepared.set(false);
 	}
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		isPrepared = true;
-		isPreparing = false;
+		isPrepared.set(true);
+		isPreparing.set(false);
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
@@ -236,10 +240,11 @@ public class FilePlayer implements
 	}
 
 	public void pause() {
-		if (isPreparing) {
+		if (isPreparing.get()) {
 			try {
 				mp.reset();
 			} catch (Exception e) {
+				releaseMediaPlayer();
 				initMediaPlayer();
 				return;
 			}
