@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.LoggerFactory;
 
-
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -23,7 +22,6 @@ import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -108,6 +106,7 @@ public class FilePlayer implements
 		return isPrepared.get();
 	}
 	
+	@SuppressLint("InlinedApi")
 	private String getMpUri() throws IOException {
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
