@@ -648,6 +648,8 @@ public class StreamingMusicService extends Service implements
 							metaData.apply();
 						}
 					});
+				    
+				    getBtImageTask.execute();
 				}
 				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
