@@ -625,12 +625,13 @@ public class StreamingMusicService extends Service implements
 				
 				final String artist = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
 				final String album = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+				final String title = (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
 				
 				if (mRemoteControlClient != null) {
 					final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
 					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
 					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));				
+					metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);				
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
 					metaData.apply();
 					
@@ -642,6 +643,7 @@ public class StreamingMusicService extends Service implements
 						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 							if (result == null || android.os.Build.VERSION.SDK_INT < 19) return;
 							
+							final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
 							metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result);
 							metaData.apply();
 						}
@@ -651,7 +653,7 @@ public class StreamingMusicService extends Service implements
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);
 				pebbleIntent.putExtra("album", album);
-				pebbleIntent.putExtra("track", (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE));
+				pebbleIntent.putExtra("track", title);
 			    
 			    sendBroadcast(pebbleIntent);
 			}
