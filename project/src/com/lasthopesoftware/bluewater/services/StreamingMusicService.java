@@ -562,6 +562,7 @@ public class StreamingMusicService extends Service implements
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
+		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		throwChangeEvent(controller, filePlayer);
 	}
 
@@ -570,7 +571,6 @@ public class StreamingMusicService extends Service implements
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mIsHwRegistered) registerHardwareListeners();
-		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		
 		// Set the notification area
 		final Intent viewIntent = new Intent(this, ViewNowPlaying.class);
