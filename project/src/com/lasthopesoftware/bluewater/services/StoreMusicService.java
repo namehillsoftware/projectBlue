@@ -7,6 +7,10 @@ import android.os.IBinder;
 
 public class StoreMusicService extends Service {
 
+	public StoreMusicService() {
+		
+	}
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		return mBinder;
