@@ -49,10 +49,9 @@ public class FileSystemResponseHandler<T extends BaseObject> extends DefaultHand
 				newItem.setValue(currentKey);
 				items.add(newItem);
 			} catch (InstantiationException e) {
-				LoggerFactory.getLogger(FileSystemResponseHandler.class).error(e.toString(), e);
+				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				LoggerFactory.getLogger(FileSystemResponseHandler.class).error(e.toString(), e);
+				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			}
 		}
 	}
