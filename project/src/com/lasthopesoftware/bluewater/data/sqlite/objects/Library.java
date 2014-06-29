@@ -39,10 +39,10 @@ public class Library {
 	private String savedTracksString;
 	
 	@ForeignCollectionField(eager = true)
-	private Collection<StoredFile> StoredFiles;
+	private Collection<StoredFile> storedFiles = null;
 	
 	@ForeignCollectionField(eager = true)
-	private Collection<StoredList> StoredLists;
+	private Collection<StoredList> storedLists = null;
 	
 	/**
 	 * @return the nowPlayingId
@@ -56,7 +56,6 @@ public class Library {
 	public void setNowPlayingId(int nowPlayingId) {
 		this.nowPlayingId = nowPlayingId;
 	}
-	
 	
 	/**
 	 * @return the mLibraryName
@@ -161,5 +160,17 @@ public class Library {
 	 */
 	public void setRepeating(boolean isRepeating) {
 		this.isRepeating = isRepeating;
+	}
+	
+	public Collection<StoredFile> getStoredFiles() {
+		if (storedFiles == null)
+			storedFiles = new ArrayList<StoredFile>();
+		return storedFiles;
+	}
+	
+	public Collection<StoredList> getStoredLists() {
+		if (storedLists == null)
+			storedLists = new ArrayList<StoredList>();
+		return storedLists;
 	}
 }
