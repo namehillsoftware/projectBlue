@@ -23,26 +23,21 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	private static int DATABASE_VERSION = 3;
 	private static final String DATABASE_NAME = "sessions_db";
 	
-	@SuppressWarnings("rawtypes")
-	private static Class[] version2Tables = { Library.class };
-	@SuppressWarnings("rawtypes")
-	private static Class[] version3Tables = { StoredFile.class, StoredList.class };
-	@SuppressWarnings("rawtypes")
-	private static Class[][] allTables = { version2Tables, version3Tables };
+	private static Class<?>[] version2Tables = { Library.class };
+	private static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
+	private static Class<?>[][] allTables = { version2Tables, version3Tables };
 	
 	public DatabaseHandler(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
-		for (Class[] tableArray : allTables) createTables(conn, tableArray);
+		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void createTables(ConnectionSource conn, Class[] tableClasses) {
-		for (Class table : tableClasses) {
+	private void createTables(ConnectionSource conn, Class<?>[] tableClasses) {
+		for (Class<?> table : tableClasses) {
 			try {
 				TableUtils.createTable(conn, table);
 			} catch (SQLException e) {
@@ -51,11 +46,10 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
 		if (oldVersion < 2) {
-			for (Class table : version2Tables) {
+			for (Class<?> table : version2Tables) {
 				try {
 					TableUtils.dropTable(conn, table, true);
 				} catch (SQLException e) {
