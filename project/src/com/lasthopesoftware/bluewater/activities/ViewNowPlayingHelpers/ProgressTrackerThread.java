@@ -22,7 +22,7 @@ public class ProgressTrackerThread implements Runnable {
 			mHandler.sendMessage(getUpdatePlayingMessage());
 		}
 		
-		while (mFilePlayer != null) {
+		while (mFilePlayer != null && mFilePlayer.isMediaPlayerCreated()) {
 			try {
 				
 				if (mFilePlayer.isPlaying())

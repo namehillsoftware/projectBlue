@@ -43,6 +43,8 @@ public class FilePlayer implements
 	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
 	private LinkedList<OnFileErrorListener> onFileErrorListeners = new LinkedList<OnFileErrorListener>();
 	
+	private Object syncObj = new Object();
+	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
@@ -79,16 +81,20 @@ public class FilePlayer implements
 	public void initMediaPlayer() {
 		if (mp != null) return;
 		
-		mp = new MediaPlayer(); // initialize it here
-		mp.setOnPreparedListener(this);
-		mp.setOnErrorListener(this);
-		mp.setOnCompletionListener(this);
-		mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		synchronized (syncObj) {
+			mp = new MediaPlayer(); // initialize it here
+			mp.setOnPreparedListener(this);
+			mp.setOnErrorListener(this);
+			mp.setOnCompletionListener(this);
+			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
+			mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		}
 	}
 	
 	public boolean isMediaPlayerCreated() {
-		return mp != null;
+		synchronized (syncObj) {
+			return mp != null;
+		}
 	}
 	
 	public boolean isPrepared() {
@@ -154,23 +160,27 @@ public class FilePlayer implements
 	}
 	
 	private void resetMediaPlayer() {
-		if (mp == null) {
-			initMediaPlayer();
-			return;
+		synchronized (syncObj) {
+			if (mp == null) {
+				initMediaPlayer();
+				return;
+			}
+			
+			mp.reset();
+			
+			if (mMpContext != null)
+				mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
+			
+			mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		}
-		
-		mp.reset();
-		
-		if (mMpContext != null)
-			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public void releaseMediaPlayer() {
-		if (mp != null) mp.release();
-		mp = null;
-		isPrepared.set(false);
+		synchronized (syncObj) {
+			if (mp != null) mp.release();
+			mp = null;
+			isPrepared.set(false);
+		}
 	}
 	
 	@Override
@@ -220,30 +230,38 @@ public class FilePlayer implements
 	}
 
 	public int getBufferPercentage() {
-		return (mp.getCurrentPosition() * 100) / mp.getDuration();
+		synchronized (syncObj) {
+			return mp == null ? 0 : (mp.getCurrentPosition() * 100) / mp.getDuration();
+		}
 	}
 
 	public int getCurrentPosition() {
-		if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+		synchronized (syncObj) {
+			if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+		}
 		return mPosition;
 	}
 	
 	public int getDuration() throws IOException {
-		if (mp == null || !isPrepared())
-			return mFile.getDuration();
-		
-		return mp.getDuration();
+		synchronized (syncObj) {
+			if (mp == null || !isPrepared())
+				return mFile.getDuration();
+			
+			return mp.getDuration();
+		}
 	}
 
 	public boolean isPlaying() {
-		return mp != null && mp.isPlaying();
+		synchronized (syncObj) {
+			return mp != null && mp.isPlaying();
+		}
 	}
 
 	public void pause() {
 		if (isPreparing.get()) {
 			try {
 				mp.reset();
-			} catch (Exception e) {
+			} catch (IllegalStateException e) {
 				releaseMediaPlayer();
 				initMediaPlayer();
 				return;
@@ -256,7 +274,9 @@ public class FilePlayer implements
 
 	public void seekTo(int pos) {
 		mPosition = pos;
-		if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
+		synchronized (syncObj) {
+			if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
+		}
 	}
 
 	public void start() {
@@ -275,8 +295,11 @@ public class FilePlayer implements
 	
 	public void setVolume(float volume) {
 		mVolume = volume;
-		if (mp != null)
-			mp.setVolume(mVolume, mVolume);
+		
+		synchronized (syncObj) {
+			if (mp != null)
+				mp.setVolume(mVolume, mVolume);
+		}
 	}
 	
 	private static class UpdatePlayStatsRunner implements Runnable {
