@@ -129,18 +129,23 @@ public class ConnectionManager {
 					accessDao.setPort(jrUrl.getPort());
 					accessDao.setStatus(true);
 				} else {
-					URLConnection conn = (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessCode)).openConnection();
+					HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessCode)).openConnection();
+					
 					conn.setConnectTimeout(mTimeout);
-					XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-					
-					
-					accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-					accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-					accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-					for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-						accessDao.getLocalIps().add(localIp);
-					for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-						accessDao.getMacAddresses().add(macAddress);
+					try {
+						XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
+						
+						accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
+						accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+						accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+						for (String localIp : xml.getUnique("localiplist").getValue().split(","))
+							accessDao.getLocalIps().add(localIp);
+						for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
+							accessDao.getMacAddresses().add(macAddress);
+						
+					} finally {
+						conn.disconnect();
+					}
 				}
 				return accessDao;
 			} catch (ClientProtocolException e) {
