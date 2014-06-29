@@ -34,7 +34,7 @@ public class FilePlayer implements
 	OnErrorListener, 
 	OnCompletionListener
 {
-	private MediaPlayer mp;
+	private volatile MediaPlayer mp;
 	private AtomicBoolean isPrepared = new AtomicBoolean();
 	private AtomicBoolean isPreparing = new AtomicBoolean();
 	private int mPosition = 0;
@@ -89,7 +89,7 @@ public class FilePlayer implements
 	
 	public void initMediaPlayer() {
 		if (mp != null) return;
-		
+	
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
 		mp.setOnErrorListener(this);
@@ -252,7 +252,7 @@ public class FilePlayer implements
 	}
 
 	public int getBufferPercentage() {
-		return (mp.getCurrentPosition() * 100) / mp.getDuration();
+		return mp == null ? 0 : (mp.getCurrentPosition() * 100) / mp.getDuration();
 	}
 
 	public int getCurrentPosition() {
@@ -275,7 +275,7 @@ public class FilePlayer implements
 		if (isPreparing.get()) {
 			try {
 				mp.reset();
-			} catch (Exception e) {
+			} catch (IllegalStateException e) {
 				releaseMediaPlayer();
 				initMediaPlayer();
 				return;
@@ -307,6 +307,7 @@ public class FilePlayer implements
 	
 	public void setVolume(float volume) {
 		mVolume = volume;
+		
 		if (mp != null)
 			mp.setVolume(mVolume, mVolume);
 	}

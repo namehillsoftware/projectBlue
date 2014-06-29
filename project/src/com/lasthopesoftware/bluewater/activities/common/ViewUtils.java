@@ -78,7 +78,6 @@ public class ViewUtils {
 		
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			// TODO Auto-generated method stub
 			mResult = which == DialogInterface.BUTTON_POSITIVE;
 		}
 		

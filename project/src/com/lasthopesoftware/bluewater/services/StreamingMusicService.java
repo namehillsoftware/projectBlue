@@ -319,6 +319,7 @@ public class StreamingMusicService extends Service implements
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
 		
+		// First try to get the playlist string from the database
 		if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = mLibrary.getSavedTracksString();
 		
 		mLibrary.setSavedTracksString(mPlaylistString);

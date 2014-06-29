@@ -279,7 +279,7 @@ public class CategoryFragment extends Fragment {
 		@Override
 		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
 			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, null);
+			final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, parent, false);
 			
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);			
 
