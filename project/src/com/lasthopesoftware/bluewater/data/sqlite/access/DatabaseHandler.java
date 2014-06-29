@@ -76,10 +76,10 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
             // try to use our new reflection magic
             DatabaseTableConfig<T> tableConfig = DatabaseTableConfigUtil.fromClass(connectionSource, c);
             if (tableConfig == null) {
-                    /**
-                     * TODO: we have to do this to get to see if they are using the deprecated annotations like
-                     * {@link DatabaseFieldSimple}.
-                     */
+	            /**
+	             * TODO: we have to do this to get to see if they are using the deprecated annotations like
+	             * {@link DatabaseFieldSimple}.
+	             */
                 dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, c);
             } else {
                 dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, tableConfig);
