@@ -41,6 +41,9 @@ public class Library {
 	@ForeignCollectionField(eager = true)
 	private Collection<StoredFile> StoredFiles;
 	
+	@ForeignCollectionField(eager = true)
+	private Collection<StoredList> StoredLists;
+	
 	/**
 	 * @return the nowPlayingId
 	 */

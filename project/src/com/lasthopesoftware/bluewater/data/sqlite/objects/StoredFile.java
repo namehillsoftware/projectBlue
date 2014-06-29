@@ -17,4 +17,28 @@ public class StoredFile {
 	
 	@DatabaseField
 	private int serviceId;
+
+	public Library getLibrary() {
+		return library;
+	}
+
+	public void setLibrary(Library library) {
+		this.library = library;
+	}
+
+	public int getStoredMediaId() {
+		return storedMediaId;
+	}
+
+	public void setStoredMediaId(int storedMediaId) {
+		this.storedMediaId = storedMediaId;
+	}
+
+	public int getServiceId() {
+		return serviceId;
+	}
+
+	public void setServiceId(int serviceId) {
+		this.serviceId = serviceId;
+	}
 }
