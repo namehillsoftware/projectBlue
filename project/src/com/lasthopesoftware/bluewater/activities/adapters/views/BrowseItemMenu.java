@@ -48,12 +48,12 @@ public class BrowseItemMenu {
 		parentView.setOnTouchListener(onSwipeListener);
 		        
         final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, null);
+        final RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, parentView, false);
         final TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
         textView.setText(item.getValue());
         parentView.addView(rl);
         
-        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, null);
+        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
         fileMenu.setOnTouchListener(onSwipeListener);
         
         final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);

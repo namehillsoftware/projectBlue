@@ -11,8 +11,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnPollingCancelledListener;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 
 public class WaitForConnection extends Activity {
 	
