@@ -137,39 +137,20 @@ public class ViewFileDetails extends Activity {
 		});
         
         getFilePropertiesTask.execute();
-        
-        SimpleTask<Void, Void, String> getAlbumKeyTask = new SimpleTask<Void, Void, String>();
-        getAlbumKeyTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+                
+        final ImageTask getFileImageTask = new ImageTask(fileKey);
+		getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 			
 			@Override
-			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesHelper.getProperty("Artist") + ":" + filePropertiesHelper.getProperty("Album");
+			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+				imgFileThumbnail.setImageBitmap(result);
+				imgFileThumbnail.setScaleType(ScaleType.CENTER_INSIDE);
+				
+				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}
 		});
-        
-        getAlbumKeyTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				final ImageTask getFileImageTask;
-				getFileImageTask = new ImageTask(result != null ? result : String.valueOf(fileKey), fileKey);
-				
-				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						imgFileThumbnail.setImageBitmap(result);
-						imgFileThumbnail.setScaleType(ScaleType.CENTER_INSIDE);
-						
-						pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-						imgFileThumbnail.setVisibility(View.VISIBLE);
-					}
-				});
-				
-				getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-			}
-		});
-        
-        getAlbumKeyTask.execute();
+		
+		getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 }

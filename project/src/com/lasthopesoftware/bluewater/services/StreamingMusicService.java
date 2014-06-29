@@ -635,7 +635,7 @@ public class StreamingMusicService extends Service implements
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
 					metaData.apply();
 					
-					final ImageTask getBtImageTask = new ImageTask(artist + ":" + album, playingFile.getKey());
+					final ImageTask getBtImageTask = new ImageTask(playingFile);
 				    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 						
 						@TargetApi(Build.VERSION_CODES.KITKAT)

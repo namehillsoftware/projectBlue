@@ -312,66 +312,42 @@ public class ViewNowPlaying extends Activity implements
 			});
 			getTitleTask.addOnErrorListener(onSimpleIoExceptionErrors);
 			getTitleTask.execute();
-			
-			final SimpleTask<Void, Void, String> getAlbumTask = new SimpleTask<Void, Void, String>();
-			getAlbumTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
-				
-				@Override
-				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					if (_file.getProperty("Album") != null)
-						return _file.getProperty("Artist") + ":" + _file.getProperty("Album");
-					
-					return null;
-				}
-			});
-			getAlbumTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_file);
-						return;
-					}
-					
-					try {			
-						// Cancel the getFileImageTask if it is already in progress
-						if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
-							getFileImageTask.cancel(true);
-						}
-						
-						mNowPlayingImg.setVisibility(View.INVISIBLE);
-						mLoadingImg.setVisibility(View.VISIBLE);
-						getFileImageTask = new ImageTask(result == null ? String.valueOf(_file.getKey()) : result, _file.getKey());
-						getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 							
-							@Override
-							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-								if (result != null)
-									mNowPlayingImg.setImageBitmap(result);
-								
-								displayImageBitmap();
-							}
-						});
-						
-						getFileImageTask.addOnCancelListener(new OnCancelListener<Void, Void, Bitmap>() {
-							
-							@Override
-							public void onCancel(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-								if (result != null)
-									mNowPlayingImg.setImageBitmap(result);
-								
-								displayImageBitmap();
-							}
-						});
-						
-						getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-					} catch (Exception e) {
-						LoggerFactory.getLogger(ViewNowPlaying.class).error(e.toString(), e);
-					}
+			try {			
+				// Cancel the getFileImageTask if it is already in progress
+				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
+					getFileImageTask.cancel(true);
 				}
-			});
-			getAlbumTask.addOnErrorListener(onSimpleIoExceptionErrors);
-			getAlbumTask.execute();
+				
+				mNowPlayingImg.setVisibility(View.INVISIBLE);
+				mLoadingImg.setVisibility(View.VISIBLE);
+				getFileImageTask = new ImageTask(_file);
+				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						if (result != null)
+							mNowPlayingImg.setImageBitmap(result);
+						
+						displayImageBitmap();
+					}
+				});
+				
+				getFileImageTask.addOnCancelListener(new OnCancelListener<Void, Void, Bitmap>() {
+					
+					@Override
+					public void onCancel(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						if (result != null)
+							mNowPlayingImg.setImageBitmap(result);
+						
+						displayImageBitmap();
+					}
+				});
+				
+				getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			} catch (Exception e) {
+				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+			}
 			
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
 			getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
