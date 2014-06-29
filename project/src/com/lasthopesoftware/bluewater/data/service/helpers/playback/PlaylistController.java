@@ -38,7 +38,7 @@ public class PlaylistController implements
 	private boolean mIsRepeating = false;
 	
 	public PlaylistController(Context context, String playlistString) {
-		this(context, Files.deserializeFileStringList(playlistString));
+		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
 	}
 	
 	public PlaylistController(Context context, ArrayList<File> playlist) {

@@ -31,7 +31,7 @@ public class FilePlayer implements
 	OnErrorListener, 
 	OnCompletionListener
 {
-	private MediaPlayer mp;
+	private volatile MediaPlayer mp;
 	private AtomicBoolean isPrepared = new AtomicBoolean();
 	private AtomicBoolean isPreparing = new AtomicBoolean();
 	private int mPosition = 0;
@@ -42,8 +42,6 @@ public class FilePlayer implements
 	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
 	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
 	private LinkedList<OnFileErrorListener> onFileErrorListeners = new LinkedList<OnFileErrorListener>();
-	
-	private Object syncObj = new Object();
 	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;
@@ -80,21 +78,17 @@ public class FilePlayer implements
 	
 	public void initMediaPlayer() {
 		if (mp != null) return;
-		
-		synchronized (syncObj) {
-			mp = new MediaPlayer(); // initialize it here
-			mp.setOnPreparedListener(this);
-			mp.setOnErrorListener(this);
-			mp.setOnCompletionListener(this);
-			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-			mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		}
+	
+		mp = new MediaPlayer(); // initialize it here
+		mp.setOnPreparedListener(this);
+		mp.setOnErrorListener(this);
+		mp.setOnCompletionListener(this);
+		mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public boolean isMediaPlayerCreated() {
-		synchronized (syncObj) {
-			return mp != null;
-		}
+		return mp != null;
 	}
 	
 	public boolean isPrepared() {
@@ -160,27 +154,23 @@ public class FilePlayer implements
 	}
 	
 	private void resetMediaPlayer() {
-		synchronized (syncObj) {
-			if (mp == null) {
-				initMediaPlayer();
-				return;
-			}
-			
-			mp.reset();
-			
-			if (mMpContext != null)
-				mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-			
-			mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		if (mp == null) {
+			initMediaPlayer();
+			return;
 		}
+		
+		mp.reset();
+		
+		if (mMpContext != null)
+			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
+		
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public void releaseMediaPlayer() {
-		synchronized (syncObj) {
-			if (mp != null) mp.release();
-			mp = null;
-			isPrepared.set(false);
-		}
+		if (mp != null) mp.release();
+		mp = null;
+		isPrepared.set(false);
 	}
 	
 	@Override
@@ -230,31 +220,23 @@ public class FilePlayer implements
 	}
 
 	public int getBufferPercentage() {
-		synchronized (syncObj) {
-			return mp == null ? 0 : (mp.getCurrentPosition() * 100) / mp.getDuration();
-		}
+		return mp == null ? 0 : (mp.getCurrentPosition() * 100) / mp.getDuration();
 	}
 
 	public int getCurrentPosition() {
-		synchronized (syncObj) {
-			if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
-		}
+		if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
 		return mPosition;
 	}
 	
 	public int getDuration() throws IOException {
-		synchronized (syncObj) {
-			if (mp == null || !isPrepared())
-				return mFile.getDuration();
-			
-			return mp.getDuration();
-		}
+		if (mp == null || !isPrepared())
+			return mFile.getDuration();
+		
+		return mp.getDuration();
 	}
 
 	public boolean isPlaying() {
-		synchronized (syncObj) {
-			return mp != null && mp.isPlaying();
-		}
+		return mp != null && mp.isPlaying();
 	}
 
 	public void pause() {
@@ -274,9 +256,7 @@ public class FilePlayer implements
 
 	public void seekTo(int pos) {
 		mPosition = pos;
-		synchronized (syncObj) {
-			if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
-		}
+		if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
 	}
 
 	public void start() {
@@ -296,10 +276,8 @@ public class FilePlayer implements
 	public void setVolume(float volume) {
 		mVolume = volume;
 		
-		synchronized (syncObj) {
-			if (mp != null)
-				mp.setVolume(mVolume, mVolume);
-		}
+		if (mp != null)
+			mp.setVolume(mVolume, mVolume);
 	}
 	
 	private static class UpdatePlayStatsRunner implements Runnable {

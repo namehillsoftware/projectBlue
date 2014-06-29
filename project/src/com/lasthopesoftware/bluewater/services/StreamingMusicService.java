@@ -50,7 +50,6 @@ import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -320,6 +319,7 @@ public class StreamingMusicService extends Service implements
 	private void initializePlaylist(String playlistString) {
 		mPlaylistString = playlistString;
 		
+		// First try to get the playlist string from the database
 		if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = mLibrary.getSavedTracksString();
 		
 		mLibrary.setSavedTracksString(mPlaylistString);
