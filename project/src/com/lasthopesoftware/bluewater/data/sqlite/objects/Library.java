@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
@@ -20,9 +22,9 @@ public class Library {
 	private String accessCode;
 	@DatabaseField(columnDefinition = "VARCHAR(100)")
 	private String authKey;
-	@DatabaseField()
+	@DatabaseField
 	private boolean isLocalOnly = false;
-	@DatabaseField()
+	@DatabaseField
 	private boolean isRepeating = false;
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
@@ -33,8 +35,11 @@ public class Library {
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int selectedView = -1;
 	
-	@DatabaseField()
+	@DatabaseField
 	private String savedTracksString;
+	
+	@ForeignCollectionField(eager = true)
+	private Collection<StoredFile> StoredFiles;
 	
 	/**
 	 * @return the nowPlayingId
