@@ -74,10 +74,6 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	             * TODO: we have to do this to get to see if they are using the deprecated annotations like
 	             * {@link DatabaseFieldSimple}.
 	             */
-                /**
-                 * TODO: we have to do this to get to see if they are using the deprecated annotations like
-                 * {@link DatabaseFieldSimple}.
-                 */
                 dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, c);
             } else {
                 dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, tableConfig);
