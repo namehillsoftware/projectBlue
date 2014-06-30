@@ -1,23 +1,33 @@
 package com.lasthopesoftware.bluewater;
 
 import org.slf4j.LoggerFactory;
-import com.lasthopesoftware.bluewater.exceptions.LoggerUncaughtExceptionHandler;
+
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.StrictMode;
+
+import com.lasthopesoftware.bluewater.exceptions.LoggerUncaughtExceptionHandler;
 
 public class MainApplication extends Application {
 	
-	private static final boolean DEVELOPER_MODE = true;
+	public static boolean DEBUG_MODE = false;
 	
 	@SuppressLint("DefaultLocale")
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
-		LoggerFactory.getLogger(MainApplication.class).info("Uncaught exceptions logging to custom uncaught exception handler.");
+		LoggerFactory.getLogger(MainApplication.class).info("Uncaught exceptions logging to custom uncaught exception handler."); 
 		
-		if (DEVELOPER_MODE) {
+		try {
+			DEBUG_MODE = (ApplicationInfo.FLAG_DEBUGGABLE & getPackageManager().getPackageInfo(getPackageName(), 0).applicationInfo.flags) != 0;
+		} catch (NameNotFoundException e) {
+		    LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
+		}
+		
+		if (DEBUG_MODE) {
 	         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
 	                 .detectDiskReads()
 	                 .detectDiskWrites()
