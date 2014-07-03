@@ -8,7 +8,7 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
@@ -31,7 +31,7 @@ public class ClickFileListener implements OnItemClickListener {
 			final int _position = position;
 			final long _id = id;
 			
-			PollConnectionTask.Instance.get(view.getContext()).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+			PollConnectionTask.Instance.get(view.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 				
 				@Override
 				public void onConnectionRegained() {

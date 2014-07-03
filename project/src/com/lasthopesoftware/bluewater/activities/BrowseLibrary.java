@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -142,7 +142,7 @@ public class BrowseLibrary extends FragmentActivity {
 							
 							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
@@ -197,7 +197,7 @@ public class BrowseLibrary extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {

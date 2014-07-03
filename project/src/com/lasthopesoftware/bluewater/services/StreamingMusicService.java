@@ -36,9 +36,9 @@ import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -112,7 +112,7 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
-	private final IOnConnectionLostListener mPollConnectionTaskListener = new IOnConnectionLostListener() {
+	private final OnConnectionLostListener mPollConnectionTaskListener = new OnConnectionLostListener() {
 		
 		@Override
 		public void onConnectionLost() {
@@ -367,7 +367,7 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
-		checkConnection.addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+		checkConnection.addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
@@ -380,7 +380,7 @@ public class StreamingMusicService extends Service implements
 			}
 		});
 		
-		checkConnection.addOnPollingCancelledListener(new IOnPollingCancelledListener() {
+		checkConnection.addOnPollingCancelledListener(new OnPollingCancelledListener() {
 			
 			@Override
 			public void onPollingCancelled() {

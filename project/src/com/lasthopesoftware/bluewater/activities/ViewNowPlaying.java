@@ -34,8 +34,8 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressT
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -57,7 +57,7 @@ public class ViewNowPlaying extends Activity implements
 	OnNowPlayingChangeListener, 
 	OnNowPlayingStopListener,
 	OnNowPlayingStartListener,
-	IOnConnectionLostListener
+	OnConnectionLostListener
 {
 	private Thread mTrackerThread;
 	private HandleViewNowPlayingMessages mHandler;
@@ -426,7 +426,7 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void resetViewOnReconnect(File file) {
 		final File _file = file;
-		PollConnectionTask.Instance.get(this).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+		PollConnectionTask.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
