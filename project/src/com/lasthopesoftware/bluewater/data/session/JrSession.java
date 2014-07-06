@@ -73,31 +73,31 @@ public class JrSession {
 		writeToDatabaseTask.executeOnExecutor(databaseExecutor);
 	}
 	
-	public static synchronized Library GetLibrary() throws Exception {
+	public static synchronized Library GetLibrary() throws NullPointerException {
 		if (library == null)
-			throw new Exception("The library has not been initialized correctly. Please call GetLibrary(Context context)) first.");
+			throw new NullPointerException("The library has not been initialized correctly. Please call GetLibrary(Context context)) first.");
 		
 		return library;
 	}
 
-	public static synchronized Library GetLibrary(Context context) {
-		if (library != null) {
-			if (JrFs == null && ConnectionManager.refreshConfiguration(context)) JrFs = new FileSystem(library.getSelectedView());
-			return library;
-		}
+	public static synchronized void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		
-		library = new Library();
-				
-		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
-		
-		if (ChosenLibrary < 0) return library;
-		final Context _context = context;
-		SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
+		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
 		getLibraryTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				DatabaseHandler handler = new DatabaseHandler(_context);
+				if (library != null) {
+					return library;
+				}
+				
+				Library result = new Library();
+						
+				ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+				
+				if (ChosenLibrary < 0) return result;
+				
+				DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					return libraryAccess.queryForId(params[0]);
@@ -113,20 +113,53 @@ public class JrSession {
 			}
 		});
 		
-		try {
-			library = getLibraryTask.executeOnExecutor(databaseExecutor, ChosenLibrary).get();
-		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+		if (library != null) {
+			getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
+	
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					if (JrFs != null) {
+						onGetLibraryComplete.onComplete(owner, result);
+						return;
+					}
+					
+					ConnectionManager.refreshConfiguration(context, new OnCompleteListener<Integer, Void, Boolean>() {
+
+						@Override
+						public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+							if (result == Boolean.FALSE) return;
+							JrFs = new FileSystem(library.getSelectedView());
+							onGetLibraryComplete.onComplete(getLibraryTask, library);
+						}
+						
+					});
+				}
+				
+			});
+			
+		} else {
+			getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					library = result;
+					ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), new OnCompleteListener<Integer, Void, Boolean>() {
+
+						@Override
+						public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+							if (result == Boolean.FALSE) return;
+							JrFs = new FileSystem(library.getSelectedView());
+							LoggerFactory.getLogger(JrSession.class).debug("Session started.");
+							onGetLibraryComplete.onComplete(getLibraryTask, library);
+						}
+						
+					});
+				}
+				
+			});
 		}
 		
-		if (ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey())) {
-			JrFs = new FileSystem(library.getSelectedView());
-			LoggerFactory.getLogger(JrSession.class).debug("Session started.");
-		}
-		
-		return library;
+		getLibraryTask.executeOnExecutor(databaseExecutor, ChosenLibrary);
 	}
 	
 	public static List<Library> GetLibraries(Context context) {
@@ -163,11 +196,13 @@ public class JrSession {
 		return new ArrayList<Library>();
 	}
 		
-	public synchronized static Library ChooseLibrary(Context context, int libraryKey) {
-		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+	public synchronized static void ChooseLibrary(Context context, int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
 		
-		library = null;
+		if (libraryKey >= 0 && libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
+			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+			library = null;
+		}
 		
-		return GetLibrary(context);
+		GetLibrary(context, onLibraryChangeComplete);
 	}
 }

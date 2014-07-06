@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -14,6 +15,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.ServerListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class SelectServer extends Activity {
 
@@ -30,9 +34,15 @@ public class SelectServer extends Activity {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				JrSession.ChooseLibrary(view.getContext(), (int)id);
+				final Context _context = view.getContext();
+				JrSession.ChooseLibrary(view.getContext(), (int)id, new OnCompleteListener<Integer, Void, Library>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						_context.startActivity(new Intent(_context, SetConnection.class));
+					}
+				});
 				
-				view.getContext().startActivity(new Intent(view.getContext(), SetConnection.class));
 			}
 		});
 	}

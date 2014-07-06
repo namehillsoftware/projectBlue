@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import org.slf4j.LoggerFactory;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
@@ -79,14 +80,10 @@ public class ViewNowPlaying extends Activity implements
 	private static ImageTask getFileImageTask;
 	
 	private FilePlayer mFilePlayer = null;
-	
-	private Library mLibrary;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		mLibrary = JrSession.GetLibrary(this);
 		
 		mContentView = new FrameLayout(this);
 		setContentView(mContentView);
@@ -207,8 +204,16 @@ public class ViewNowPlaying extends Activity implements
 				startActivity(new Intent(this, SelectServer.class));
 				return true;
 			case R.id.menu_repeat_playlist:
-				StreamingMusicService.setIsRepeating(this, !mLibrary.isRepeating());
-				setRepeatingIcon(item);
+				final Context _context = this;
+				final MenuItem _item = item;
+				JrSession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						StreamingMusicService.setIsRepeating(_context, !result.isRepeating());
+						setRepeatingIcon(_item);
+					}
+				});
 				return true;
 			case R.id.menu_view_now_playing_files:
 				startActivity(new Intent(this, ViewNowPlayingFiles.class));
@@ -219,7 +224,15 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void setRepeatingIcon(MenuItem item) {
-		item.setIcon(mLibrary.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+		final MenuItem _item = item;
+		JrSession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				_item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+			}
+			
+		});
 	}
 	
 	@Override

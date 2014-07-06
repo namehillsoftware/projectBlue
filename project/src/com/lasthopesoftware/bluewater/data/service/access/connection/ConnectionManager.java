@@ -10,10 +10,7 @@ import java.net.URL;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -28,7 +25,6 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.StandardRequest;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -38,26 +34,29 @@ public class ConnectionManager {
 	private static String mAccessCode = null;
 	private static String mAuthCode = null;
 	
+	private static final int stdTimeoutTime = 30000;
+	
 	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<OnAccessStateChange>();
 	
 	private static Object syncObj = new Object();
 	
-	public static void buildConfiguration(Context context, String accessCode) {
-		buildConfiguration(context, accessCode, 30000);
+	public static void buildConfiguration(Context context, String accessCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessCode, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, int timeout) {
-		buildConfiguration(context, accessCode, null, timeout);
+	public static void buildConfiguration(Context context, String accessCode, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessCode, null, timeout, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, String authCode) {
-		buildConfiguration(context, accessCode, authCode, 30000);
+	public static void buildConfiguration(Context context, String accessCode, String authCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessCode, authCode, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, String authCode, int timeout) {
+	public static void buildConfiguration(Context context, String accessCode, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
 		mAccessCode = accessCode;		
 		synchronized(syncObj) {
 			mAuthCode = authCode;
+			if (timeout <= 0) timeout = stdTimeoutTime;
 			buildAccessConfiguration(mAccessCode, timeout, new OnCompleteListener<String, Void, JrAccessDao>() {
 				
 				@Override
@@ -66,28 +65,57 @@ public class ConnectionManager {
 						mAccessConfiguration = result;
 					}
 					
-					SimpleTask<Void, Void, Boolean> testConnectionTask = new SimpleTask<Void, Void, Boolean>();
-					testConnectionTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Boolean>() {
-						
-						@Override
-						public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
-							return mAccessConfiguration != null && ConnectionTester.doTest();
-						}
-					});					
+					if (mAccessConfiguration == null) {
+						final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(); 
+						pseudoTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
+
+							@Override
+							public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+								return Boolean.FALSE;
+							}
+							
+						});
+						pseudoTask.addOnCompleteListener(onBuildComplete);
+						pseudoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+						return;
+					}
+
+					ConnectionTester.doTest(onBuildComplete);
 				}
 			});
 		}
 	}
 	
-	public static void refreshConfiguration(Context context) {
-		refreshConfiguration(context, -1);
+	public static void refreshConfiguration(Context context, OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+		refreshConfiguration(context, -1, onRefreshComplete);
 	}
 	
-	public static void refreshConfiguration(Context context, int timeout) {
-		if (mAccessConfiguration == null || ((timeout > 0 && !ConnectionTester.doTest(timeout)) || !ConnectionTester.doTest()))
-			return timeout > 0 ? buildConfiguration(context, mAccessCode, mAuthCode, timeout) : buildConfiguration(context, mAccessCode, mAuthCode);
-		return true;
-	}
+	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+		if (mAccessConfiguration == null) {
+			buildConfiguration(context, mAccessCode, mAuthCode, timeout, onRefreshComplete);
+			return;
+		}
+		
+		final OnCompleteListener<Integer, Void, Boolean> mTestConnectionCompleteListener = new OnCompleteListener<Integer, Void, Boolean>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+				if (result == Boolean.TRUE) {
+					onRefreshComplete.onComplete(owner, result);
+					return;
+				}
+				
+				buildConfiguration(context, mAccessCode, mAuthCode, timeout, onRefreshComplete);
+			}
+		
+		};
+		
+		
+		if (timeout > 0)
+			ConnectionTester.doTest(timeout, mTestConnectionCompleteListener);
+		else
+			ConnectionTester.doTest(mTestConnectionCompleteListener);
+	}	
 	
 	public static HttpURLConnection getConnection(String... params) throws IOException {
 		synchronized(syncObj) {
@@ -437,66 +465,48 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static class ConnectionTester implements Callable<Boolean> {
+	private static class ConnectionTester {
 		
-		private static int stdTimeoutTime = 30000;
-		private int mTimeout;
-		
-		public ConnectionTester() {
-			this(stdTimeoutTime);
+		public static void doTest(OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+			doTest(stdTimeoutTime, onTestComplete);
 		}
 		
-		public ConnectionTester(int timeout) {
-			mTimeout = timeout;
-		}
-		
-		@Override
-		public Boolean call() throws Exception {
-			Boolean result = Boolean.FALSE;
+		public static void doTest(int timeout, OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<Integer, Void, Boolean>();
+			connectionTestTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
+
+				@Override
+				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+					Boolean result = Boolean.FALSE;
+					
+					HttpURLConnection conn = getConnection("Alive");
+					try {
+				    	conn.setConnectTimeout(params[0]);
+						StandardRequest responseDao = StandardRequest.fromInputStream(conn.getInputStream());
+				    	
+				    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
+					} catch (MalformedURLException e) {
+						LoggerFactory.getLogger(ConnectionTester.class).warn(e.toString(), e);
+					} catch (FileNotFoundException f) {
+						LoggerFactory.getLogger(ConnectionTester.class).warn(f.getLocalizedMessage());
+					} catch (IOException e) {
+						LoggerFactory.getLogger(ConnectionTester.class).warn(e.getLocalizedMessage());
+					} catch (IllegalArgumentException i) {
+						LoggerFactory.getLogger(ConnectionTester.class).warn(i.toString(), i);
+					} finally {
+						conn.disconnect();
+					}
+					
+					return result;
+				}
+				
+			});
 			
-			HttpURLConnection conn = getConnection("Alive");
-			try {
-		    	conn.setConnectTimeout(mTimeout);
-				StandardRequest responseDao = StandardRequest.fromInputStream(conn.getInputStream());
-		    	
-		    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
-			} catch (MalformedURLException e) {
-				LoggerFactory.getLogger(ConnectionTester.class).warn(e.toString(), e);
-			} catch (FileNotFoundException f) {
-				LoggerFactory.getLogger(ConnectionTester.class).warn(f.getLocalizedMessage());
-			} catch (IOException e) {
-				LoggerFactory.getLogger(ConnectionTester.class).warn(e.getLocalizedMessage());
-			} catch (IllegalArgumentException i) {
-				LoggerFactory.getLogger(ConnectionTester.class).warn(i.toString(), i);
-			} finally {
-				conn.disconnect();
-			}
+			if (onTestComplete != null)
+				connectionTestTask.addOnCompleteListener(onTestComplete);
 			
-			return result;
-		}
-		
-		public static boolean doTest(int timeout) {
-			return doTest(new ConnectionTester(timeout));
-		}
-		
-		public static boolean doTest() {
-			return doTest(new ConnectionTester());
-		}
-		
-		private static boolean doTest(ConnectionTester testConnection) {
-			try {
-				FutureTask<Boolean> statusTask = new FutureTask<Boolean>(testConnection);
-				Thread statusThread = new Thread(statusTask);
-				statusThread.setName("Checking connection status");
-				statusThread.setPriority(Thread.MIN_PRIORITY);
-				statusThread.start();
-				return statusTask.get().booleanValue();
-			} catch (Exception e) {
-				LoggerFactory.getLogger(ConnectionTester.class).error(e.toString(), e);
-			}
-			
-			return false;
-		}
+			connectionTestTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, timeout);
+		}		
 	}
 	
 	public interface OnAccessStateChange {

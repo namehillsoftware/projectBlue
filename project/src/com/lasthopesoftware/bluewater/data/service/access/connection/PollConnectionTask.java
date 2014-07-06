@@ -78,6 +78,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	@Override
 	public Void onExecute(ISimpleTask<String, Void, Void> owner, String... params) throws Exception {
 		// Don't use timeout since if it can't resolve a host it will throw an exception immediately
+		// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
 		while (!ConnectionManager.refreshConfiguration(mContext)) {
 			// Build the wait time up to 32 seconds
 			try {

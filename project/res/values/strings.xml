@@ -11,6 +11,7 @@
     <string name="lbl_password">Password:</string>
     <string name="lbl_local_only">Local Connections Only</string>
     <string name="btn_connect">Connect!</string>
+    <string name="btn_connected">Connected.</string>
     <string name="title_activity_file_view">File View</string>
     <string name="title_activity_view_now_playing">Now Playing</string>
     <string name="lbl_song_title">Now Playing</string>

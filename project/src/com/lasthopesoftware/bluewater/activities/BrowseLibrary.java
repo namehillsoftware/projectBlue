@@ -64,20 +64,34 @@ public class BrowseLibrary extends FragmentActivity {
 		setContentView(R.layout.activity_browse_library);		
 		
 		final Intent selectServer = new Intent(mBrowseLibrary, SelectServer.class);
-		final Library library = JrSession.GetLibrary(mBrowseLibrary);
-		if (library == null || library.getSelectedView() <= 0) {
-			Toast.makeText(mBrowseLibrary, "Please select a valid server", Toast.LENGTH_LONG).show();
-			startActivity(selectServer);
-			finish();
-			return;
-		}
-		
-		if (!ConnectionManager.refreshConfiguration(mBrowseLibrary, 30000)) {
-			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
-			startActivity(selectServer);
-			finish();
-			return;
-		}
+
+		JrSession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null || result.getSelectedView() <= 0) {
+					Toast.makeText(mBrowseLibrary, "Please select a valid server", Toast.LENGTH_LONG).show();
+					startActivity(selectServer);
+					finish();
+					return;
+				}
+				
+				ConnectionManager.refreshConfiguration(mBrowseLibrary, 30000, new OnCompleteListener<Integer, Void, Boolean>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+						if (result == Boolean.FALSE) {
+							Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
+							startActivity(selectServer);
+							finish();
+							return;
+						}
+					}
+					
+				});
+			}
+			
+		});
 		
 		setTitle("Library");
 		
@@ -123,12 +137,20 @@ public class BrowseLibrary extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		mIsStopped = false;
-		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) displayLibrary();
+		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) {
+			JrSession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					displayLibrary(result);
+				}
+				
+			});
+			
+		}
 	}
 
-	public void displayLibrary() {		
-		final Library library = JrSession.GetLibrary(mBrowseLibrary);
-		
+	public void displayLibrary(final Library library) {		
 		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
@@ -160,7 +182,7 @@ public class BrowseLibrary extends FragmentActivity {
 				final List<IItem<?>> _views = result;
 				
 				for (IItem<?> item : _views) {
-					if (item.getKey() != JrSession.GetLibrary(mBrowseLibrary).getSelectedView()) continue;
+					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
 					break;
@@ -180,7 +202,7 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(mBrowseLibrary);
 						JrSession.JrFs = new FileSystem(_views.get(position).getKey());
-						displayLibrary();
+						displayLibrary(library);
 					}
 				});
 			}
