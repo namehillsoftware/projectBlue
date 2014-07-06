@@ -11,6 +11,7 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
@@ -31,6 +32,8 @@ public class ConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
 	private static String mAccessCode = null;
 	private static String mAuthCode = null;
+	
+	private CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<OnAccessStateChange>();
 	
 	private static Object syncObj = new Object();
 	
@@ -489,5 +492,11 @@ public class ConnectionManager {
 			
 			return false;
 		}
+	}
+	
+	public interface OnAccessStateChange {
+		public void gettingUri();
+		public void establishingConnection();
+		public void establishingConnectionCompleted();
 	}
 }
