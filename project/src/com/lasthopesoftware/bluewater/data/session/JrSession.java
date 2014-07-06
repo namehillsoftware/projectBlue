@@ -100,7 +100,7 @@ public class JrSession {
 				DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					return libraryAccess.queryForId(params[0]);
+					return libraryAccess.queryForId(ChosenLibrary);
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -143,6 +143,11 @@ public class JrSession {
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 					library = result;
+					if (library == null) {
+						onGetLibraryComplete.onComplete(getLibraryTask, library);
+						return;
+					}
+					
 					ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), new OnCompleteListener<Integer, Void, Boolean>() {
 
 						@Override
@@ -159,7 +164,7 @@ public class JrSession {
 			});
 		}
 		
-		getLibraryTask.executeOnExecutor(databaseExecutor, ChosenLibrary);
+		getLibraryTask.executeOnExecutor(databaseExecutor);
 	}
 	
 	public static List<Library> GetLibraries(Context context) {

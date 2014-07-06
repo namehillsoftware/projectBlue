@@ -13,6 +13,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.SelectServer;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class ViewUtils {
 
@@ -53,9 +56,15 @@ public class ViewUtils {
 		
 	}
 	
-	public static boolean displayNowPlayingMenu(Context context) {
-		if (context == null) return false;
-		return JrSession.GetLibrary() != null && JrSession.GetLibrary().getNowPlayingId() > -1;
+	public static void displayNowPlayingInMenu(final Context context, final OnGetNowPlayingSetListener listener) {
+		
+		JrSession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				listener.onGetNowPlayingSetComplete(result.getNowPlayingId() >= 0);
+			}
+		});
 	}
 	
 	public static void CreateNowPlayingView(Context context) {
@@ -85,5 +94,9 @@ public class ViewUtils {
 		public boolean getResult() {
 			return mResult;
 		}
+	}
+	
+	public interface OnGetNowPlayingSetListener {
+		void onGetNowPlayingSetComplete(Boolean isSet);
 	}
 }

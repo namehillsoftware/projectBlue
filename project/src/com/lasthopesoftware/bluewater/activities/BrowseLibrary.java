@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
@@ -93,7 +94,7 @@ public class BrowseLibrary extends FragmentActivity {
 			
 		});
 		
-		setTitle("Library");
+		setTitle(R.string.title_activity_library);
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
@@ -142,7 +143,8 @@ public class BrowseLibrary extends FragmentActivity {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					displayLibrary(result);
+					if (result != null)
+						displayLibrary(result);
 				}
 				
 			});
@@ -250,7 +252,15 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		return true;
 	}
 

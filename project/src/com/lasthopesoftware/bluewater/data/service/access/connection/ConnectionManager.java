@@ -198,11 +198,6 @@ public class ConnectionManager {
 	private static class MediaCenterConnection extends HttpURLConnection {
 	
 		private HttpURLConnection mHttpConnection;
-	//	private String[] mParams;
-	//	private int resets = 0, maxResets = -1;
-	//	private static final String failedResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n";
-	//	private InputStream mInputStream;
-	//	private boolean mIsFound;
 		
 		public MediaCenterConnection(URL url) throws IOException {
 			super(url);

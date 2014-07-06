@@ -6,6 +6,7 @@
     <string name="title_activity_stream_media">Stream Media</string>
     <string name="title_activity_set_up_connection">Connection Settings</string>
     <string name="title_activity_select_library">Select Library</string>
+    <string name="title_activity_library">Library</string>
     <string name="lbl_user_name">User Name:</string>
     <string name="lbl_access_code">Access Code:</string>
     <string name="lbl_password">Password:</string>

@@ -14,6 +14,7 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.ServerListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -50,7 +51,15 @@ public class SelectServer extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		menu.findItem(R.id.menu_connection_settings).setVisible(false);
 		return true;
 	}

@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
@@ -140,7 +141,15 @@ public class ViewPlaylists extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		return true;
 	}
 

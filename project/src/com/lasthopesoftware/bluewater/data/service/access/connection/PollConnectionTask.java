@@ -2,6 +2,9 @@ package com.lasthopesoftware.bluewater.data.service.access.connection;
 
 import java.util.LinkedList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -18,16 +21,22 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class PollConnectionTask implements OnExecuteListener<String, Void, Void> {
 	
-	private SimpleTask<String, Void, Void> mTask;
-	private Context mContext;
-	private int mSleepTime = 2000;
+	private static final ExecutorService pollService = Executors.newSingleThreadExecutor(); 
 	
-	private static Object syncObj = new Object();
+	private final SimpleTask<String, Void, Void> mTask;
+	private final Context mContext;
+	private static final int mSleepTime = 2000;
+	private int mConnectionTime = 2000;
 	
-	private static CopyOnWriteArraySet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new CopyOnWriteArraySet<OnConnectionLostListener>();
-	private static CopyOnWriteArraySet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<OnConnectionRegainedListener>();
-	private static CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
-	private CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
+	private final AtomicBoolean mIsConnectionRestored = new AtomicBoolean();
+	private final AtomicBoolean mIsRefreshing = new AtomicBoolean();
+	
+	private static final Object syncObj = new Object();
+	
+	private static final CopyOnWriteArraySet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new CopyOnWriteArraySet<OnConnectionLostListener>();
+	private static final CopyOnWriteArraySet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<OnConnectionRegainedListener>();
+	private static final CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
+	private final CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnectionTask(Context context) {
 		synchronized (syncObj) {
@@ -79,15 +88,28 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	public Void onExecute(ISimpleTask<String, Void, Void> owner, String... params) throws Exception {
 		// Don't use timeout since if it can't resolve a host it will throw an exception immediately
 		// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
-		while (!ConnectionManager.refreshConfiguration(mContext)) {
-			// Build the wait time up to 32 seconds
+		while (!mIsConnectionRestored.get()) {
+			
 			try {
 				Thread.sleep(mSleepTime);
 			} catch (InterruptedException ie) {
 				return null;
 			}
-						
-			if (mSleepTime < 32000) mSleepTime *= 2;			
+			
+			if (!mIsRefreshing.get()) {
+				mIsRefreshing.set(true);
+				ConnectionManager.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
+	
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+						mIsRefreshing.set(false);
+						if (result == Boolean.TRUE) mIsConnectionRestored.set(true);
+						// Build the connect time up to 32 seconds
+						if (mConnectionTime < 32000) mConnectionTime *= 2;	
+					}
+					
+				});
+			}
 		}
 		
 		return null;
@@ -95,7 +117,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	
 	public void startPolling() {
 		synchronized (syncObj) {
-			if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
 		}
 	}
 	

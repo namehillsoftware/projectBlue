@@ -422,6 +422,7 @@ public class StreamingMusicService extends Service implements
 			
 			@Override
 			public void onPollingCancelled() {
+				unregisterHardwareListeners();
 				stopSelf();
 			}
 		});
@@ -621,7 +622,6 @@ public class StreamingMusicService extends Service implements
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
-		mPlaylistController.setVolume(mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED ? 1.0f : 0.1f);
 		throwChangeEvent(controller, filePlayer);
 	}
 
