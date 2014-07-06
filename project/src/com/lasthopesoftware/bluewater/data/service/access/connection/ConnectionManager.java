@@ -31,7 +31,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class ConnectionManager {
 	private static JrAccessDao mAccessConfiguration;
-	private static String mAccessCode = null;
+	private static String mAccessString = null;
 	private static String mAuthCode = null;
 	
 	private static final int stdTimeoutTime = 30000;
@@ -40,24 +40,24 @@ public class ConnectionManager {
 	
 	private static Object syncObj = new Object();
 	
-	public static void buildConfiguration(Context context, String accessCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessCode, stdTimeoutTime, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessCode, null, timeout, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, null, timeout, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, String authCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessCode, authCode, stdTimeoutTime, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, String authCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, authCode, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessCode, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		mAccessCode = accessCode;		
+	public static void buildConfiguration(Context context, String accessString, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		mAccessString = accessString;
 		synchronized(syncObj) {
 			mAuthCode = authCode;
 			if (timeout <= 0) timeout = stdTimeoutTime;
-			buildAccessConfiguration(mAccessCode, timeout, new OnCompleteListener<String, Void, JrAccessDao>() {
+			buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, JrAccessDao>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<String, Void, JrAccessDao> owner, JrAccessDao result) {
@@ -92,7 +92,7 @@ public class ConnectionManager {
 	
 	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
 		if (mAccessConfiguration == null) {
-			buildConfiguration(context, mAccessCode, mAuthCode, timeout, onRefreshComplete);
+			buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
 			return;
 		}
 		
@@ -105,7 +105,7 @@ public class ConnectionManager {
 					return;
 				}
 				
-				buildConfiguration(context, mAccessCode, mAuthCode, timeout, onRefreshComplete);
+				buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
 			}
 		
 		};
