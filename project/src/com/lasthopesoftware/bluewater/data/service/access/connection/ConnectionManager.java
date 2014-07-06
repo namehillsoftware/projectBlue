@@ -52,7 +52,7 @@ public class ConnectionManager {
 			mAuthCode = authCode;
 			mAccessConfiguration = buildAccessConfiguration(mAccessCode, timeout);
 		}
-		return mAccessConfiguration != null && JrTestConnection.doTest();
+		return mAccessConfiguration != null && ConnectionTester.doTest();
 	}
 	
 	public static boolean refreshConfiguration(Context context) {
@@ -60,7 +60,7 @@ public class ConnectionManager {
 	}
 	
 	public static boolean refreshConfiguration(Context context, int timeout) {
-		if (mAccessConfiguration == null || ((timeout > 0 && !JrTestConnection.doTest(timeout)) || !JrTestConnection.doTest()))
+		if (mAccessConfiguration == null || ((timeout > 0 && !ConnectionTester.doTest(timeout)) || !ConnectionTester.doTest()))
 			return timeout > 0 ? buildConfiguration(context, mAccessCode, mAuthCode, timeout) : buildConfiguration(context, mAccessCode, mAuthCode);
 		return true;
 	}
@@ -69,7 +69,7 @@ public class ConnectionManager {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
 			URL url = new URL(mAccessConfiguration.getJrUrl(params));
-			return mAuthCode == null || mAuthCode.isEmpty() ? new JrConnection(url) : new JrConnection(url, mAuthCode);
+			return mAuthCode == null || mAuthCode.isEmpty() ? new MediaCenterConnection(url) : new MediaCenterConnection(url, mAuthCode);
 		}
 	}
 	
@@ -159,7 +159,7 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static class JrConnection extends HttpURLConnection {
+	private static class MediaCenterConnection extends HttpURLConnection {
 	
 		private HttpURLConnection mHttpConnection;
 	//	private String[] mParams;
@@ -168,17 +168,17 @@ public class ConnectionManager {
 	//	private InputStream mInputStream;
 	//	private boolean mIsFound;
 		
-		public JrConnection(URL url) throws IOException {
+		public MediaCenterConnection(URL url) throws IOException {
 			super(url);
 			setConnection(url);
 		}
 		
-		public JrConnection(URL url, String authCode) throws IOException {
+		public MediaCenterConnection(URL url, String authCode) throws IOException {
 			this(url);
 			try {
 				mHttpConnection.setRequestProperty("Authorization", "basic " + authCode);
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrConnection.class).error(e.toString(), e);
+				LoggerFactory.getLogger(MediaCenterConnection.class).error(e.toString(), e);
 			}
 		}
 		
@@ -429,16 +429,16 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static class JrTestConnection implements Callable<Boolean> {
+	private static class ConnectionTester implements Callable<Boolean> {
 		
 		private static int stdTimeoutTime = 30000;
 		private int mTimeout;
 		
-		public JrTestConnection() {
+		public ConnectionTester() {
 			this(stdTimeoutTime);
 		}
 		
-		public JrTestConnection(int timeout) {
+		public ConnectionTester(int timeout) {
 			mTimeout = timeout;
 		}
 		
@@ -453,13 +453,13 @@ public class ConnectionManager {
 		    	
 		    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
 			} catch (MalformedURLException e) {
-				LoggerFactory.getLogger(JrTestConnection.class).warn(e.toString(), e);
+				LoggerFactory.getLogger(ConnectionTester.class).warn(e.toString(), e);
 			} catch (FileNotFoundException f) {
-				LoggerFactory.getLogger(JrTestConnection.class).warn(f.getLocalizedMessage());
+				LoggerFactory.getLogger(ConnectionTester.class).warn(f.getLocalizedMessage());
 			} catch (IOException e) {
-				LoggerFactory.getLogger(JrTestConnection.class).warn(e.getLocalizedMessage());
+				LoggerFactory.getLogger(ConnectionTester.class).warn(e.getLocalizedMessage());
 			} catch (IllegalArgumentException i) {
-				LoggerFactory.getLogger(JrTestConnection.class).warn(i.toString(), i);
+				LoggerFactory.getLogger(ConnectionTester.class).warn(i.toString(), i);
 			} finally {
 				conn.disconnect();
 			}
@@ -468,14 +468,14 @@ public class ConnectionManager {
 		}
 		
 		public static boolean doTest(int timeout) {
-			return doTest(new JrTestConnection(timeout));
+			return doTest(new ConnectionTester(timeout));
 		}
 		
 		public static boolean doTest() {
-			return doTest(new JrTestConnection());
+			return doTest(new ConnectionTester());
 		}
 		
-		private static boolean doTest(JrTestConnection testConnection) {
+		private static boolean doTest(ConnectionTester testConnection) {
 			try {
 				FutureTask<Boolean> statusTask = new FutureTask<Boolean>(testConnection);
 				Thread statusThread = new Thread(statusTask);
@@ -484,7 +484,7 @@ public class ConnectionManager {
 				statusThread.start();
 				return statusTask.get().booleanValue();
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrTestConnection.class).error(e.toString(), e);
+				LoggerFactory.getLogger(ConnectionTester.class).error(e.toString(), e);
 			}
 			
 			return false;
