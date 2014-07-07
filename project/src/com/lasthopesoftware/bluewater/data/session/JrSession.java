@@ -118,11 +118,10 @@ public class JrSession {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				library = result;
+				if (onGetLibraryComplete != null)
+					onGetLibraryComplete.onComplete(owner, result);
 			}
 		});
-		
-		if (onGetLibraryComplete != null)
-			getLibraryTask.addOnCompleteListener(onGetLibraryComplete);
 		
 		getLibraryTask.executeOnExecutor(databaseExecutor);
 	}

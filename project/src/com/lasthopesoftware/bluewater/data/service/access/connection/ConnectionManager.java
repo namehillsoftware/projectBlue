@@ -24,13 +24,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.StandardRequest;
+import com.lasthopesoftware.bluewater.data.service.objects.AccessConfiguration;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class ConnectionManager {
-	private static JrAccessDao mAccessConfiguration;
+	private static AccessConfiguration mAccessConfiguration;
 	private static String mAccessString = null;
 	private static String mAuthCode = null;
 	
@@ -57,10 +58,10 @@ public class ConnectionManager {
 		synchronized(syncObj) {
 			mAuthCode = authCode;
 			if (timeout <= 0) timeout = stdTimeoutTime;
-			buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, JrAccessDao>() {
+			buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, JrAccessDao> owner, JrAccessDao result) {
+				public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
 					synchronized(syncObj) {
 						mAccessConfiguration = result;
 					}
@@ -132,20 +133,20 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static void buildAccessConfiguration(String accessString, int timeout, OnCompleteListener<String, Void, JrAccessDao> onGetAccessComplete) {
+	private static void buildAccessConfiguration(String accessString, int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) {
 		for (OnAccessStateChange onAccessStateChange : mOnAccessStateChangeListeners)
 			onAccessStateChange.gettingUri(accessString);
 		
 		final int _timeout = timeout;
 		
-		final SimpleTask<String, Void, JrAccessDao> mediaCenterAccessTask = new SimpleTask<String, Void, JrAccessDao>();
+		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<String, Void, AccessConfiguration>();
 		
-		mediaCenterAccessTask.setOnExecuteListener(new OnExecuteListener<String, Void, JrAccessDao>() {
+		mediaCenterAccessTask.setOnExecuteListener(new OnExecuteListener<String, Void, AccessConfiguration>() {
 			
 			@Override
-			public JrAccessDao onExecute(ISimpleTask<String, Void, JrAccessDao> owner, String... params) throws Exception {
+			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
 				try {
-					JrAccessDao accessDao = new JrAccessDao();
+					AccessConfiguration accessDao = new AccessConfiguration();
 					String accessString = params[0];
 					if (accessString.contains(".")) {
 						if (!accessString.contains(":")) accessString += ":80";

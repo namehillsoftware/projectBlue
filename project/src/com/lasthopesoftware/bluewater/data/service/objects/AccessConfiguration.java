@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.access.connection;
+package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 
-public class JrAccessDao {
+public class AccessConfiguration {
 	private boolean status;
 	private volatile String mActiveUrl = "";
 	private String remoteIp;
@@ -18,7 +18,7 @@ public class JrAccessDao {
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
 	
-	public JrAccessDao() {
+	public AccessConfiguration() {
 	}
 
 	/**
@@ -87,7 +87,7 @@ public class JrAccessDao {
 			try {
 				/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 			} catch (Exception e) {
-				LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
+				LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 			}
 		}
 		
@@ -98,7 +98,7 @@ public class JrAccessDao {
 			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
 				} catch (Exception e) {
 					mActiveUrl = "";
-					LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
+					LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 				}
 			} else { 
 				for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
@@ -107,13 +107,13 @@ public class JrAccessDao {
 			        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
 					} catch (Exception e) {
 						mActiveUrl = "";
-						LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
+						LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 					}
 				}
 			}
 		} catch (Exception e) {
 			mActiveUrl = "";
-			LoggerFactory.getLogger(JrAccessDao.class).error(e.toString(), e);
+			LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 		}
 		
 		mActiveUrl = "";
@@ -128,32 +128,29 @@ public class JrAccessDao {
 		url += params[0];
 		
 		url += "?";
-		// Add token
-//		if (mToken != null)
-//			url += "Token=" + getToken() + "&";
 		
 		// add arguments
 		if (params.length > 1) {
 			for (int i = 1; i < params.length; i++) {
 				String[] keyValue = params[i].split("=");
-				try {
-					url += URLEncoder.encode(keyValue[0], "UTF-8").replace("+", "%20");
-				} catch (UnsupportedEncodingException e) {
-					url += keyValue[0];
-				}
-				if (keyValue.length > 1) {
-					url += "=";
-					try {
-						url += URLEncoder.encode(keyValue[1], "UTF-8").replace("+", "%20");
-					} catch (UnsupportedEncodingException e) {
-						url += keyValue[1];
-					}
-				}
+				url += encodeParameter(keyValue[0]);
+				
+				if (keyValue.length > 1)
+					url += "=" + encodeParameter(keyValue[1]);
+
 				url += "&";
 			}
 		}
 		
 		return url;
+	}
+	
+	private String encodeParameter(String parameter) {
+		try {
+			return URLEncoder.encode(parameter, "UTF-8").replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			return parameter;
+		}
 	}
 	
 }
