@@ -83,7 +83,7 @@ public class BrowseItemMenu {
 		@Override
 		public void onClick(View v) {
 			try {
-				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList());
+				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList());
 			} catch (IOException io) {
 				final View _view = v;
 				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
@@ -109,7 +109,7 @@ public class BrowseItemMenu {
 		@Override
 		public void onClick(View v) {
 			try {
-				StreamingMusicService.streamMusic(v.getContext(), mItem.getJrFiles().getFileStringList(Files.GET_SHUFFLED));
+				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList(Files.GET_SHUFFLED));
 			}  catch (IOException io) {
 				final View _view = v;
 				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {

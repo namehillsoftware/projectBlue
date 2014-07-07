@@ -59,7 +59,7 @@ public class ViewFiles extends FragmentActivity {
         mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
         
         this.setTitle(this.getIntent().getStringExtra(VALUE));
-        final Files filesContainer = (Files)((IFilesContainer)mItem).getJrFiles();
+        final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final ViewFiles _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<File>>() {
 			
@@ -89,7 +89,7 @@ public class ViewFiles extends FragmentActivity {
 				
 				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    			    	
-		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getJrFiles()));
+		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getFiles()));
 		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	fileListView.setAdapter(fileListAdapter);
 		    	

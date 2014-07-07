@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -40,7 +41,11 @@ public class ViewFileDetails extends Activity {
         
         final int fileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
         
-        if (fileKey < 0) return;
+        if (fileKey < 0) {
+        	startActivity(new Intent(this, BrowseLibrary.class));
+        	finish();
+        	return;
+        };
         
         final ViewFileDetails _this = this;
         final ListView lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
