@@ -56,7 +56,7 @@ public class SetConnection extends FragmentActivity {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							mConnectionButton.setText(R.string.btn_connected);
+							mConnectionButton.setText(R.string.lbl_connected);
 							
 							final Library library = result;
 							if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
@@ -74,12 +74,12 @@ public class SetConnection extends FragmentActivity {
 										return;
 									}
 									
-									JrSession.JrFs = new FileSystem(result.get(0).getKey());
-									library.setSelectedView(result.get(0).getKey());
+									if (library.getSelectedView() < 0)
+										library.setSelectedView(result.get(0).getKey());
+									
 									JrSession.SaveSession(_context);
 									
-									Intent intent = new Intent(_context, BrowseLibrary.class);
-									thisContext.startActivity(intent);
+									thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
 								}
 							});
 				        	

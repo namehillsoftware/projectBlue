@@ -12,7 +12,7 @@
     <string name="lbl_password">Password:</string>
     <string name="lbl_local_only">Local Connections Only</string>
     <string name="btn_connect">Connect!</string>
-    <string name="btn_connected">Connected.</string>
+    <string name="lbl_connected">Connected!</string>
     <string name="title_activity_file_view">File View</string>
     <string name="title_activity_view_now_playing">Now Playing</string>
     <string name="lbl_song_title">Now Playing</string>
@@ -43,7 +43,7 @@
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
     <string name="title_svc_now_playing">%1$s Now Playing</string>
-    <string name="something_went_wrong">Something went wrong! Attempting to reconnect.</string>
+    <string name="lbl_something_went_wrong">Something went wrong! Attempting to reconnect.</string>
     <string name="lbl_starting_service">Starting %1$s</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
@@ -52,4 +52,8 @@
     <string name="lbl_loading">Loading&#8230;</string>
     <string name="btn_add_file">Queue file for playback</string>
     <string name="lbl_song_added_to_now_playing">Song added to Now Playing</string>
+    <string name="lbl_getting_library_details">Getting library details</string>
+    <string name="lbl_connecting_to_server_library">Connecting to server library</string>
+    <string name="lbl_please_connect_to_valid_server">Please connect to a valid server</string>
+    <string name="lbl_error_connecting_try_again">There was an error connecting to the server, try again later!</string>
 </resources>

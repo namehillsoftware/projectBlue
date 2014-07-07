@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -67,6 +66,7 @@ public class JrSession {
 				return null;
 			}
 		});
+		
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
 		
@@ -113,56 +113,16 @@ public class JrSession {
 			}
 		});
 		
-		if (library != null) {
-			getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
-	
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					if (JrFs != null) {
-						onGetLibraryComplete.onComplete(owner, result);
-						return;
-					}
-					
-					ConnectionManager.refreshConfiguration(context, new OnCompleteListener<Integer, Void, Boolean>() {
-
-						@Override
-						public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-							if (result == Boolean.FALSE) return;
-							JrFs = new FileSystem(library.getSelectedView());
-							onGetLibraryComplete.onComplete(getLibraryTask, library);
-						}
-						
-					});
-				}
-				
-			});
+		getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
 			
-		} else {
-			getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					library = result;
-					if (library == null) {
-						onGetLibraryComplete.onComplete(getLibraryTask, library);
-						return;
-					}
-					
-					ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), new OnCompleteListener<Integer, Void, Boolean>() {
-
-						@Override
-						public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-							if (result == Boolean.FALSE) return;
-							JrFs = new FileSystem(library.getSelectedView());
-							LoggerFactory.getLogger(JrSession.class).debug("Session started.");
-							onGetLibraryComplete.onComplete(getLibraryTask, library);
-						}
-						
-					});
-				}
-				
-			});
-		}
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				library = result;
+			}
+		});
+		
+		if (onGetLibraryComplete != null)
+			getLibraryTask.addOnCompleteListener(onGetLibraryComplete);
 		
 		getLibraryTask.executeOnExecutor(databaseExecutor);
 	}
