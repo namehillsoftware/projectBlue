@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
 import java.net.HttpURLConnection;
-import java.util.Map;
 
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
-	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);;
+	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
 	public ImageTask(int fileKey) {
 		this(new File(fileKey));

@@ -16,10 +16,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
@@ -58,7 +59,7 @@ public class ViewFiles extends FragmentActivity {
         mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
         
         this.setTitle(this.getIntent().getStringExtra(VALUE));
-        final Files filesContainer = (Files)((IFilesContainer)mItem).getJrFiles();
+        final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final ViewFiles _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<File>>() {
 			
@@ -68,7 +69,7 @@ public class ViewFiles extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(_this).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+						PollConnectionTask.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
@@ -88,7 +89,7 @@ public class ViewFiles extends FragmentActivity {
 				
 				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    			    	
-		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getJrFiles()));
+		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getFiles()));
 		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	fileListView.setAdapter(fileListAdapter);
 		    	
@@ -115,7 +116,15 @@ public class ViewFiles extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		return true;
 	}
 	

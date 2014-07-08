@@ -4,14 +4,14 @@
     android:layout_height="match_parent" >
 
     <TextView
-        android:id="@+id/lblSomethingWrong"
+        android:id="@+id/lblConnectionStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="115dp"
         android:gravity="center"
-        android:text="@string/something_went_wrong"
+        android:text=""
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <Button

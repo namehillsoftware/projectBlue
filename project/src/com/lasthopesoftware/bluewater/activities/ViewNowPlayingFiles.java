@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -43,46 +44,61 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         this.setTitle(R.string.title_view_now_playing_files);     
         
         final ViewNowPlayingFiles _this = this;
-        final Library library = JrSession.GetLibrary(_this);
-        
-        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>();
-        
-        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<File>>() {
-			
-			@Override
-			public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
-				return Files.deserializeFileStringList(library.getSavedTracksString());
-			}
-		});
-        
-        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
-				final ArrayList<File> _result = result;
-				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, _result);
-		        fileListView.setAdapter(fileListAdapter);
-		        fileListView.setOnItemClickListener(new OnItemClickListener() {
+        JrSession.GetLibrary(_this, new OnCompleteListener<Integer, Void, Library>() {
 
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				final Library library = result;
+		        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>();
+		        
+		        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<File>>() {
+					
 					@Override
-					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						StreamingMusicService.streamMusic(view.getContext(), position);
+					public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
+						return Files.deserializeFileStringList(library.getSavedTracksString());
 					}
 				});
-		        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		        
-		        fileListView.setVisibility(View.VISIBLE);
-		        pbLoading.setVisibility(View.INVISIBLE);
+
+		        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
+						final ArrayList<File> _result = result;
+						final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, _result);
+				        fileListView.setAdapter(fileListAdapter);
+				        fileListView.setOnItemClickListener(new OnItemClickListener() {
+
+							@Override
+							public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+								StreamingMusicService.streamMusic(view.getContext(), position);
+							}
+						});
+				        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
+				        
+				        fileListView.setVisibility(View.VISIBLE);
+				        pbLoading.setVisibility(View.INVISIBLE);
+					}
+				});
+		        
+		        getFileStringTask.execute();
 			}
-		});
-        
-        getFileStringTask.execute();
+        	
+        });
 	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		return true;
 	}
 	

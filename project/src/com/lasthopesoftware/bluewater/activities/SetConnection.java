@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
@@ -31,59 +32,65 @@ public class SetConnection extends FragmentActivity {
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
-        	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-        	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-        	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
+        	final EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
+        	final EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
+        	final EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
         	
         	final Context _context = v.getContext();
         	
-        	Library library = JrSession.GetLibrary(_context);
+        	JrSession.GetLibrary(_context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
-        	if (library != null) {
-        		library.setAccessCode(txtAccessCode.getText().toString());
-	        	library.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-	        	
-	        	library.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
-        	}
-        	
-        	
-        	mConnectionButton.setText(R.string.btn_connecting);
-        	mConnectionButton.setEnabled(false);
-        	
-        	JrSession.SaveSession(_context, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
-				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-					mConnectionButton.setText(R.string.btn_connect);
-					mConnectionButton.setEnabled(true);
-					
-					if (JrSession.ChooseLibrary(_context, result.getId()) == null) return;
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					if (result != null) {
+						result.setAccessCode(txtAccessCode.getText().toString());
+						result.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
+			        	
+						result.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
+		        	}
 		        	
-		        	if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
+		        	mConnectionButton.setText(R.string.btn_connecting);
+		        	mConnectionButton.setEnabled(false);
 		        	
-		        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IItem<?>>>() {
+		        	JrSession.SaveSession(_context, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
-						public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
-							if (result == null) return;
+						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+							mConnectionButton.setText(R.string.lbl_connected);
 							
-							if (result.size() == 0) {
-								Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
-								return;
-							}
-							
-							JrSession.JrFs = new FileSystem(result.get(0).getKey());
-							JrSession.GetLibrary(_context).setSelectedView(result.get(0).getKey());
-							JrSession.SaveSession(_context);
-							
-							Intent intent = new Intent(_context, BrowseLibrary.class);
-							thisContext.startActivity(intent);
+							final Library library = result;
+							if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
+				        	
+				        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IItem<?>>>() {
+								
+								@Override
+								public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
+									if (result == null) return;
+									
+									if (result.size() == 0) {
+										Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
+										mConnectionButton.setText(R.string.btn_connect);
+										mConnectionButton.setEnabled(true);
+										return;
+									}
+									
+									if (library.getSelectedView() < 0)
+										library.setSelectedView(result.get(0).getKey());
+									
+									JrSession.SaveSession(_context);
+									
+									thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
+								}
+							});
+				        	
+				        	JrSession.JrFs.getSubItemsAsync();
 						}
 					});
-		        	
-		        	JrSession.JrFs.getSubItemsAsync();
 				}
-			});
+        		
+        	});
+
+        	
         }
     };
 	
@@ -96,29 +103,43 @@ public class SetConnection extends FragmentActivity {
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
         
-        Library library = JrSession.GetLibrary(this);
-        if (library == null) return;
+        JrSession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null) return;
+		        
+		    	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
+		    	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
+		    	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
+		    	
+		    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(result.isLocalOnly());
+		    	
+		    	txtAccessCode.setText(result.getAccessCode());
+		    	if (result.getAuthKey() == null) return;
+		    	String decryptedUserAuth = new String(Base64.decode(result.getAuthKey(), Base64.DEFAULT));
+		    	if (!decryptedUserAuth.isEmpty()) {
+			    	String[] userDetails = decryptedUserAuth.split(":",2);
+			    	txtUserName.setText(userDetails[0]);
+			    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
+		    	}
+			}
+        });
         
-    	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-    	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-    	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
-    	
-    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(library.isLocalOnly());
-    	
-    	txtAccessCode.setText(library.getAccessCode());
-    	if (library.getAuthKey() == null) return;
-    	String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
-    	if (!decryptedUserAuth.isEmpty()) {
-	    	String[] userDetails = decryptedUserAuth.split(":",2);
-	    	txtUserName.setText(userDetails[0]);
-	    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
-    	}
 	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		menu.findItem(R.id.menu_connection_settings).setVisible(false);
 		return true;
 	}

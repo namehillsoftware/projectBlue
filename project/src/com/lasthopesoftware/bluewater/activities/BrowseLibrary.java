@@ -19,17 +19,16 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -61,25 +60,9 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_browse_library);		
+		setContentView(R.layout.activity_browse_library);
 		
-		final Intent selectServer = new Intent(mBrowseLibrary, SelectServer.class);
-		final Library library = JrSession.GetLibrary(mBrowseLibrary);
-		if (library == null || library.getSelectedView() <= 0) {
-			Toast.makeText(mBrowseLibrary, "Please select a valid server", Toast.LENGTH_LONG).show();
-			startActivity(selectServer);
-			finish();
-			return;
-		}
-		
-		if (!ConnectionManager.refreshConfiguration(mBrowseLibrary, 30000)) {
-			Toast.makeText(mBrowseLibrary, "There was an error connecting to the server, try again later!", Toast.LENGTH_LONG).show();
-			startActivity(selectServer);
-			finish();
-			return;
-		}
-		
-		setTitle("Library");
+		setTitle(R.string.title_activity_library);
 		
 		getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
@@ -123,12 +106,21 @@ public class BrowseLibrary extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		mIsStopped = false;
-		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) displayLibrary();
+		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) {
+			JrSession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					if (result != null)
+						displayLibrary(result);
+				}
+				
+			});
+			
+		}
 	}
 
-	public void displayLibrary() {		
-		final Library library = JrSession.GetLibrary(mBrowseLibrary);
-		
+	public void displayLibrary(final Library library) {		
 		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
@@ -142,7 +134,7 @@ public class BrowseLibrary extends FragmentActivity {
 							
 							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
 							
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
@@ -160,7 +152,7 @@ public class BrowseLibrary extends FragmentActivity {
 				final List<IItem<?>> _views = result;
 				
 				for (IItem<?> item : _views) {
-					if (item.getKey() != JrSession.GetLibrary(mBrowseLibrary).getSelectedView()) continue;
+					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
 					break;
@@ -180,7 +172,7 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(_views.get(position).getKey());
 						JrSession.SaveSession(mBrowseLibrary);
 						JrSession.JrFs = new FileSystem(_views.get(position).getKey());
-						displayLibrary();
+						displayLibrary(library);
 					}
 				});
 			}
@@ -197,7 +189,7 @@ public class BrowseLibrary extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR) {
 					for (Exception exception : owner.getExceptions()) {
 						if (exception instanceof IOException) {
-							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
@@ -228,7 +220,15 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		menu.findItem(R.id.menu_view_now_playing).setVisible(ViewUtils.displayNowPlayingMenu(this));
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
 		return true;
 	}
 

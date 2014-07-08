@@ -56,7 +56,7 @@ public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesCont
 //	}
 	
 	@Override
-	public IItemFiles getJrFiles() {
+	public IItemFiles getFiles() {
 		if (mJrFiles == null) mJrFiles = new Files("Browse/Files", "ID=" + String.valueOf(this.getKey()));
 		return mJrFiles;
 	}

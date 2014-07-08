@@ -80,7 +80,7 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 	}
 
 	@Override
-	public IItemFiles getJrFiles() {
+	public IItemFiles getFiles() {
 		if (mJrFiles == null) mJrFiles = new Files("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()));
 		return mJrFiles;
 	}

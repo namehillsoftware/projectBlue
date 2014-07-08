@@ -22,7 +22,6 @@ import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
@@ -111,12 +110,12 @@ public class FilePlayer implements
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		
-		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
-			for (OnFileErrorListener listener : onFileErrorListeners)
-				listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, android.os.Build.VERSION.SDK_INT >= 17 ? MediaPlayer.MEDIA_ERROR_IO : MediaPlayer.MEDIA_ERROR_UNKNOWN);
-			
-			return null;
-		}
+//		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
+//			for (OnFileErrorListener listener : onFileErrorListeners)
+//				listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, android.os.Build.VERSION.SDK_INT >= 17 ? MediaPlayer.MEDIA_ERROR_IO : MediaPlayer.MEDIA_ERROR_UNKNOWN);
+//			
+//			return null;
+//		}
 		
 		final String[] proj = { MediaStore.Audio.Media.DATA };
 		final String filename = mFile.getProperty(FileProperties.FILENAME).substring(mFile.getProperty(FileProperties.FILENAME).lastIndexOf('\\') + 1, mFile.getProperty(FileProperties.FILENAME).lastIndexOf('.'));
@@ -180,8 +179,10 @@ public class FilePlayer implements
 	
 	private void setMpDataSource(String url) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
 		Map<String, String> headers = new HashMap<String, String>();
-		if (!JrSession.GetLibrary(mMpContext).getAuthKey().isEmpty())
-			headers.put("Authorization", "basic " + JrSession.GetLibrary(mMpContext).getAuthKey());
+		if (mMpContext == null)
+			throw new NullPointerException("The file player's context cannot be null");
+		if (!JrSession.GetLibrary().getAuthKey().isEmpty())
+			headers.put("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
 		mp.setDataSource(mMpContext, Uri.parse(url), headers);
 	}
 	

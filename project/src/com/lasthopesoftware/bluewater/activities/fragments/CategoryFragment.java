@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
@@ -59,7 +59,7 @@ public class CategoryFragment extends Fragment {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+						PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
@@ -114,7 +114,7 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
@@ -151,7 +151,7 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {

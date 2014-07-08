@@ -36,9 +36,9 @@ import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.IOnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -112,7 +112,7 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	
-	private final IOnConnectionLostListener mPollConnectionTaskListener = new IOnConnectionLostListener() {
+	private final OnConnectionLostListener mPollConnectionTaskListener = new OnConnectionLostListener() {
 		
 		@Override
 		public void onConnectionLost() {
@@ -122,32 +122,37 @@ public class StreamingMusicService extends Service implements
 		}
 	};
 	
-	private static Intent getNewSelfIntent(Context context, String action) {
+	private static Intent getNewSelfIntent(final Context context, String action) {
 		Intent newIntent = new Intent(context, StreamingMusicService.class);
 		newIntent.setAction(action);
 		return newIntent;
 	}
 	
 	/* Begin streamer intent helpers */
-	public static void resumeSavedPlaylist(Context context) {
-		Library library = JrSession.GetLibrary(context);
-		initializePlaylist(context, library.getNowPlayingId(), library.getNowPlayingProgress(), library.getSavedTracksString());
+	public static void resumeSavedPlaylist(final Context context) {
+		JrSession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				initializePlaylist(context, result.getNowPlayingId(), result.getNowPlayingProgress(), result.getSavedTracksString());
+			}
+		});
 	}
 	
-	public static void initializePlaylist(Context context, String serializedFileList) {
+	public static void initializePlaylist(final Context context, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);		
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
-	public static void initializePlaylist(Context context, int filePos, String serializedFileList) {
+	public static void initializePlaylist(final Context context, int filePos, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
 	
-	public static void initializePlaylist(Context context, int filePos, int fileProgress, String serializedFileList) {
+	public static void initializePlaylist(final Context context, int filePos, int fileProgress, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -155,14 +160,14 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void streamMusic(Context context, String serializedFileList) {
+	public static void streamMusic(final Context context, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int filePos, String serializedFileList) {
+	public static void streamMusic(final Context context, int filePos, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -170,7 +175,7 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int filePos, int fileProgress, String serializedFileList) {
+	public static void streamMusic(final Context context, int filePos, int fileProgress, String serializedFileList) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
@@ -179,14 +184,14 @@ public class StreamingMusicService extends Service implements
 		ViewUtils.CreateNowPlayingView(context);
 	}
 	
-	public static void streamMusic(Context context, int filePos) { 
+	public static void streamMusic(final Context context, int filePos) { 
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
 		context.startService(svcIntent);
 	}
 	
-	public static void streamMusic(Context context, int filePos, int fileProgress) { 
+	public static void streamMusic(final Context context, int filePos, int fileProgress) { 
 		Intent svcIntent = getNewSelfIntent(context, ACTION_START);
 		svcIntent.putExtra(BAG_FILE_KEY, filePos);
 		svcIntent.putExtra(BAG_PLAYLIST, mPlaylistString);
@@ -194,28 +199,34 @@ public class StreamingMusicService extends Service implements
 		context.startService(svcIntent);
 	}
 	
-	public static void play(Context context) {
+	public static void play(final Context context) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_PLAY);
 		context.startService(svcIntent);
 	}
 	
-	public static void pause(Context context) {
+	public static void pause(final Context context) {
 		Intent svcIntent = getNewSelfIntent(context, ACTION_PAUSE);
 		context.startService(svcIntent);
 	}
 	
-	public static void next(Context context) {
+	public static void next(final Context context) {
 		context.startService(getNewSelfIntent(context, ACTION_NEXT));
 	}
 	
-	public static void previous(Context context) {
+	public static void previous(final Context context) {
 		context.startService(getNewSelfIntent(context, ACTION_PREVIOUS));
 	}
 	
-	public static void setIsRepeating(Context context, boolean isRepeating) {
-		JrSession.GetLibrary(context).setRepeating(isRepeating);
-		JrSession.SaveSession(context);
-		if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
+	public static void setIsRepeating(final Context context, final boolean isRepeating) {
+		JrSession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				result.setRepeating(isRepeating);
+				JrSession.SaveSession(context);
+				if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
+			}
+		});
 	}
 	
 	/* End streamer intent helpers */
@@ -285,7 +296,14 @@ public class StreamingMusicService extends Service implements
 	public StreamingMusicService() {
 		super();
 		thisContext = this;
-		mLibrary = JrSession.GetLibrary(thisContext);
+		JrSession.GetLibrary(thisContext, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				mLibrary = result;
+			}
+			
+		});
 	}
 	
 	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
@@ -305,10 +323,30 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void restorePlaylistControllerFromStorage() {
-		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
+		if (mLibrary != null) {
+
+			ConnectionManager.refreshConfiguration(thisContext, new OnCompleteListener<Integer, Void, Boolean>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+					initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+				}
+				
+			});
+			
+			return;
+		}
 		
-		if (ConnectionManager.refreshConfiguration(thisContext))
-			initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+		JrSession.GetLibrary(thisContext, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				mLibrary = result;
+				
+				restorePlaylistControllerFromStorage();					
+			}
+			
+		});
 	}
 	
 	private void initializePlaylist(String playlistString, int filePos, int fileProgress) {
@@ -367,7 +405,7 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
 		
-		checkConnection.addOnConnectionRegainedListener(new IOnConnectionRegainedListener() {
+		checkConnection.addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
@@ -380,10 +418,11 @@ public class StreamingMusicService extends Service implements
 			}
 		});
 		
-		checkConnection.addOnPollingCancelledListener(new IOnPollingCancelledListener() {
+		checkConnection.addOnPollingCancelledListener(new OnPollingCancelledListener() {
 			
 			@Override
 			public void onPollingCancelled() {
+				unregisterHardwareListeners();
 				stopSelf();
 			}
 		});
@@ -457,8 +496,27 @@ public class StreamingMusicService extends Service implements
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
-		if (mLibrary == null) mLibrary = JrSession.GetLibrary(thisContext);
+		if (thisContext == null) thisContext = this;
 		
+		if (mLibrary != null) {
+			actOnIntent(intent);
+		} else {
+			final Intent _intent = intent;
+
+			JrSession.GetLibrary(thisContext, new OnCompleteListener<Integer, Void, Library>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					mLibrary = result;
+					actOnIntent(_intent);
+				}
+			});
+		}
+		
+		return START_NOT_STICKY;
+	}
+	
+	private void actOnIntent(final Intent intent) {
 		if (intent != null) {
 			// 3/5 times it's going to be this so let's see if we can get
 			// some improved prefetching by the processor
@@ -485,7 +543,6 @@ public class StreamingMusicService extends Service implements
 		} else if (mLibrary != null)  {
 			pausePlayback(true);
 		}
-		return START_NOT_STICKY;
 	}
 	
 	@Override
@@ -515,15 +572,18 @@ public class StreamingMusicService extends Service implements
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-        	if (!ConnectionManager.refreshConfiguration(thisContext)) return;
-        	
-        	if (mPlaylistController == null) return;
-        	
-    		mPlaylistController.setVolume(1.0f);
-    	        	
-        	if (mPlaylistController.isPlaying()) return;
-        	
-        	startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+			if (mPlaylistController == null) return;
+			mPlaylistController.setVolume(1.0f);
+    		if (mPlaylistController.isPlaying()) return;
+    		
+        	ConnectionManager.refreshConfiguration(thisContext, new OnCompleteListener<Integer, Void, Boolean>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+		        	startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+				}
+        		
+        	});
         	
             return;
 		}
@@ -562,7 +622,6 @@ public class StreamingMusicService extends Service implements
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
-		mPlaylistController.setVolume(mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED ? 1.0f : 0.1f);
 		throwChangeEvent(controller, filePlayer);
 	}
 

@@ -4,18 +4,18 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.JrAccessDao;
+import com.lasthopesoftware.bluewater.data.service.objects.AccessConfiguration;
 
 public class LookUpResponseHandler extends DefaultHandler {
 		
-	private JrAccessDao response;
+	private AccessConfiguration response;
 	private String currentValue;
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
 		currentValue = "";
 		if (qName.equalsIgnoreCase("response")) {
-			response = new JrAccessDao();
+			response = new AccessConfiguration();
 			response.setStatus(attributes.getValue("Status").equalsIgnoreCase("OK"));
 		}
 	}
@@ -45,7 +45,7 @@ public class LookUpResponseHandler extends DefaultHandler {
 	/**
 	 * @return the response
 	 */
-	public JrAccessDao getResponse() {
+	public AccessConfiguration getResponse() {
 		return response;
 	}
 }

@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -67,40 +66,41 @@ public class JrSession {
 				return null;
 			}
 		});
+		
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
 		
 		writeToDatabaseTask.executeOnExecutor(databaseExecutor);
 	}
 	
-	public static synchronized Library GetLibrary() throws Exception {
+	public static synchronized Library GetLibrary() throws NullPointerException {
 		if (library == null)
-			throw new Exception("The library has not been initialized correctly. Please call GetLibrary(Context context)) first.");
+			throw new NullPointerException("The library has not been initialized correctly. Please call GetLibrary(Context context)) first.");
 		
 		return library;
 	}
 
-	public static synchronized Library GetLibrary(Context context) {
-		if (library != null) {
-			if (JrFs == null && ConnectionManager.refreshConfiguration(context)) JrFs = new FileSystem(library.getSelectedView());
-			return library;
-		}
+	public static synchronized void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		
-		library = new Library();
-				
-		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
-		
-		if (ChosenLibrary < 0) return library;
-		final Context _context = context;
-		SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
+		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
 		getLibraryTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				DatabaseHandler handler = new DatabaseHandler(_context);
+				if (library != null) {
+					return library;
+				}
+				
+				Library result = new Library();
+						
+				ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+				
+				if (ChosenLibrary < 0) return result;
+				
+				DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					return libraryAccess.queryForId(params[0]);
+					return libraryAccess.queryForId(ChosenLibrary);
 				} catch (SQLException e) {
 					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 				} catch (Exception e) {
@@ -113,20 +113,17 @@ public class JrSession {
 			}
 		});
 		
-		try {
-			library = getLibraryTask.executeOnExecutor(databaseExecutor, ChosenLibrary).get();
-		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
-		}
+		getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				library = result;
+				if (onGetLibraryComplete != null)
+					onGetLibraryComplete.onComplete(owner, result);
+			}
+		});
 		
-		if (ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey())) {
-			JrFs = new FileSystem(library.getSelectedView());
-			LoggerFactory.getLogger(JrSession.class).debug("Session started.");
-		}
-		
-		return library;
+		getLibraryTask.executeOnExecutor(databaseExecutor);
 	}
 	
 	public static List<Library> GetLibraries(Context context) {
@@ -163,11 +160,13 @@ public class JrSession {
 		return new ArrayList<Library>();
 	}
 		
-	public synchronized static Library ChooseLibrary(Context context, int libraryKey) {
-		context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+	public synchronized static void ChooseLibrary(Context context, int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
 		
-		library = null;
+		if (libraryKey >= 0 && libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
+			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+			library = null;
+		}
 		
-		return GetLibrary(context);
+		GetLibrary(context, onLibraryChangeComplete);
 	}
 }

@@ -31,7 +31,10 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class FileListAdapter extends ArrayAdapter<File> {
 	
@@ -143,15 +146,26 @@ public class FileListAdapter extends ArrayAdapter<File> {
 		
 		@Override
 		public void onClick(View v) {
+			final Context _context = v.getContext();
 			if (StreamingMusicService.getPlaylistController() == null) 
-				StreamingMusicService.resumeSavedPlaylist(v.getContext());
-			StreamingMusicService.getPlaylistController().addFile(mFile);
-			String newFileString = JrSession.GetLibrary(v.getContext()).getSavedTracksString();
-			if (!newFileString.endsWith(";")) newFileString += ";";
-			newFileString += mFile.getKey() + ";";
-			JrSession.GetLibrary(v.getContext()).setSavedTracksString(newFileString);
+				StreamingMusicService.resumeSavedPlaylist(_context);
 			
-			Toast.makeText(v.getContext(), v.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();;
+			StreamingMusicService.getPlaylistController().addFile(mFile);
+			
+			JrSession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
+
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					String newFileString = result.getSavedTracksString();
+					if (!newFileString.endsWith(";")) newFileString += ";";
+					newFileString += mFile.getKey() + ";";
+					result.setSavedTracksString(newFileString);
+					
+					Toast.makeText(_context, _context.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();;
+				}
+				
+			});
+			
 		}
 	}
 	
