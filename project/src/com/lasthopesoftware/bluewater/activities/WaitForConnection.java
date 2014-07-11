@@ -18,9 +18,7 @@ public class WaitForConnection extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_connection_status);
-		
-		((TextView)findViewById(R.id.lblConnectionStatus)).setText(R.string.lbl_something_went_wrong);
+		setContentView(R.layout.activity_wait_for_connection);
 		
 		final Intent selectServerIntent = new Intent(this, SelectServer.class);
 		final WaitForConnection _this = this;

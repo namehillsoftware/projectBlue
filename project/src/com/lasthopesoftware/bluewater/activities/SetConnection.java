@@ -59,31 +59,7 @@ public class SetConnection extends FragmentActivity {
 							mConnectionButton.setText(R.string.lbl_connected);
 							
 							final Library library = result;
-							if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
-				        	
-				        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IItem<?>>>() {
-								
-								@Override
-								public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
-									if (result == null) return;
-									
-									if (result.size() == 0) {
-										Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
-										mConnectionButton.setText(R.string.btn_connect);
-										mConnectionButton.setEnabled(true);
-										return;
-									}
-									
-									if (library.getSelectedView() < 0)
-										library.setSelectedView(result.get(0).getKey());
-									
-									JrSession.SaveSession(_context);
-									
-									thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
-								}
-							});
-				        	
-				        	JrSession.JrFs.getSubItemsAsync();
+							thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
 						}
 					});
 				}

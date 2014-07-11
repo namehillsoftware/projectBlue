@@ -56,4 +56,6 @@
     <string name="lbl_connecting_to_server_library">Connecting to server library</string>
     <string name="lbl_please_connect_to_valid_server">Please connect to a valid server</string>
     <string name="lbl_error_connecting_try_again">There was an error connecting to the server, try again later!</string>
+    <string name="lbl_library_no_views">This library doesn\'t contain any views</string>
+    <string name="lbl_getting_library_views">Getting library views</string>
 </resources>
