@@ -43,7 +43,7 @@ public class InstantiateSessionConnection extends Activity {
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				
 				
-				if (result == null) {
+				if (result == null || result.getAccessCode() == null || result.getAccessCode().isEmpty()) {
 					lblConnectionStatus.setText(R.string.lbl_please_connect_to_valid_server);
 					launchActivityDelayed(selectServerIntent);
 					return;
@@ -85,12 +85,19 @@ public class InstantiateSessionConnection extends Activity {
 									return;
 								}
 								
-								library.setSelectedView(result.get(0).getKey());
+								final int selectedView = result.get(0).getKey();
+								JrSession.JrFs.setVisibleViews(selectedView);
+								library.setSelectedView(selectedView);
 								
-								JrSession.SaveSession(_this);
-								
-								lblConnectionStatus.setText(R.string.lbl_connected);
-								launchActivityDelayed(browseLibraryIntent);
+								JrSession.SaveSession(_this, new OnCompleteListener<Void, Void, Library>() {
+									
+									@Override
+									public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+
+										lblConnectionStatus.setText(R.string.lbl_connected);
+										launchActivityDelayed(browseLibraryIntent);
+									}
+								});
 							}
 						});
 			        	

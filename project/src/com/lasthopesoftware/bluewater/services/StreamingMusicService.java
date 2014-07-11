@@ -222,6 +222,7 @@ public class StreamingMusicService extends Service implements
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null) return;
 				result.setRepeating(isRepeating);
 				JrSession.SaveSession(context);
 				if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
@@ -341,6 +342,7 @@ public class StreamingMusicService extends Service implements
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null) return;
 				mLibrary = result;
 				
 				restorePlaylistControllerFromStorage();					
@@ -507,6 +509,7 @@ public class StreamingMusicService extends Service implements
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					if (result == null) return;
 					mLibrary = result;
 					actOnIntent(_intent);
 				}

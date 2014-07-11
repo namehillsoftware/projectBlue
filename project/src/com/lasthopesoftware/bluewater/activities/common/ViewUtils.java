@@ -62,7 +62,8 @@ public class ViewUtils {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				listener.onGetNowPlayingSetComplete(result.getNowPlayingId() >= 0);
+				if (result != null)
+					listener.onGetNowPlayingSetComplete(result.getNowPlayingId() >= 0);
 			}
 		});
 	}

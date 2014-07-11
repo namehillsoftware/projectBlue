@@ -27,18 +27,20 @@ public class JrSession {
 
 	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
-	private static Library library = null;
+	private static Library mLibrary = null;
 
 	public static FileSystem JrFs;
 	
-	public static void SaveSession(Context context) {
+	public static void SaveSession(final Context context) {
 		SaveSession(context, null);
 	}
 
-	public static void SaveSession(Context context, OnCompleteListener<Void, Void, Library> onSaveComplete) { 
-		
-		if (library == null) library = new Library();
-		
+	public static void SaveSession(final Context context, final OnCompleteListener<Void, Void, Library> onSaveComplete) {
+		SaveSession(context, mLibrary, onSaveComplete);
+	}
+	
+	public static void SaveSession(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
+	
 		final Context _context = context;
 		SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
 		writeToDatabaseTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
@@ -74,10 +76,10 @@ public class JrSession {
 	}
 	
 	public static synchronized Library GetLibrary() throws NullPointerException {
-		if (library == null)
-			throw new NullPointerException("The library has not been initialized correctly. Please call GetLibrary(Context context)) first.");
+		if (mLibrary == null)
+			throw new NullPointerException("The mLibrary has not been initialized correctly. Please call GetLibrary(Context context)) first.");
 		
-		return library;
+		return mLibrary;
 	}
 
 	public static synchronized void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
@@ -87,15 +89,13 @@ public class JrSession {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				if (library != null) {
-					return library;
+				if (mLibrary != null) {
+					return mLibrary;
 				}
-				
-				Library result = new Library();
 						
 				ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 				
-				if (ChosenLibrary < 0) return result;
+				if (ChosenLibrary < 0) return null;
 				
 				DatabaseHandler handler = new DatabaseHandler(context);
 				try {
@@ -117,7 +117,7 @@ public class JrSession {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				library = result;
+				mLibrary = result;
 				if (onGetLibraryComplete != null)
 					onGetLibraryComplete.onComplete(owner, result);
 			}
@@ -156,7 +156,7 @@ public class JrSession {
 			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
 		}
 		
-		// Exceptions occurred, return an empty library
+		// Exceptions occurred, return an empty mLibrary
 		return new ArrayList<Library>();
 	}
 		
@@ -164,7 +164,7 @@ public class JrSession {
 		
 		if (libraryKey >= 0 && libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
 			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
-			library = null;
+			mLibrary = null;
 		}
 		
 		GetLibrary(context, onLibraryChangeComplete);
