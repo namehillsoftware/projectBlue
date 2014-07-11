@@ -210,6 +210,7 @@ public class ViewNowPlaying extends Activity implements
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						if (result == null) return;
 						StreamingMusicService.setIsRepeating(_context, !result.isRepeating());
 						setRepeatingIcon(_item);
 					}
@@ -229,7 +230,8 @@ public class ViewNowPlaying extends Activity implements
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				_item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+				if (result != null)
+					_item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
 			}
 			
 		});

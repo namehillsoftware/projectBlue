@@ -53,45 +53,52 @@ public class ConnectionManager {
 		buildConfiguration(context, accessString, authCode, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessString, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+	public static void buildConfiguration(Context context, String accessString, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
 		mAccessString = accessString;
 		synchronized(syncObj) {
 			mAuthCode = authCode;
 			if (timeout <= 0) timeout = stdTimeoutTime;
-			buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
-					synchronized(syncObj) {
-						mAccessConfiguration = result;
-					}
+			try {
+				buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
 					
-					if (mAccessConfiguration == null) {
-						final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(); 
-						pseudoTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
-
-							@Override
-							public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-								return Boolean.FALSE;
-							}
-							
-						});
-						pseudoTask.addOnCompleteListener(onBuildComplete);
-						pseudoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-						return;
+					@Override
+					public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
+						synchronized(syncObj) {
+							mAccessConfiguration = result;
+						}
+						
+						if (mAccessConfiguration == null) {
+							final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(); 
+							pseudoTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
+	
+								@Override
+								public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+									return Boolean.FALSE;
+								}
+								
+							});
+							pseudoTask.addOnCompleteListener(onBuildComplete);
+							pseudoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+							return;
+						}
+	
+						ConnectionTester.doTest(onBuildComplete);
 					}
-
-					ConnectionTester.doTest(onBuildComplete);
-				}
-			});
+				});
+			} catch (NullPointerException ne) {
+				throw ne;
+			}
 		}
 	}
 	
-	public static void refreshConfiguration(Context context, OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+	public static void refreshConfiguration(Context context, OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
 		refreshConfiguration(context, -1, onRefreshComplete);
 	}
 	
-	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
+		if (mAccessString == null)
+			throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
+		
 		if (mAccessConfiguration == null) {
 			buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
 			return;
@@ -133,7 +140,10 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static void buildAccessConfiguration(String accessString, int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) {
+	private static void buildAccessConfiguration(String accessString, int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+		if (accessString == null)
+			throw new NullPointerException("The access string cannot be null");
+		
 		for (OnAccessStateChange onAccessStateChange : mOnAccessStateChangeListeners)
 			onAccessStateChange.gettingUri(accessString);
 		

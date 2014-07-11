@@ -29,6 +29,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 public class SetConnection extends FragmentActivity {
 	private Button mConnectionButton;
 	private Context thisContext = this;
+	private Library mLibrary;
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
@@ -38,57 +39,25 @@ public class SetConnection extends FragmentActivity {
         	
         	final Context _context = v.getContext();
         	
-        	JrSession.GetLibrary(_context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-
+        	if (mLibrary == null) mLibrary = new Library();
+        	
+        	mLibrary.setAccessCode(txtAccessCode.getText().toString());
+        	mLibrary.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
+        	
+        	mLibrary.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
+		        	
+        	mConnectionButton.setText(R.string.btn_connecting);
+        	mConnectionButton.setEnabled(false);
+        	
+        	JrSession.SaveSession(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
+				
 				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					if (result != null) {
-						result.setAccessCode(txtAccessCode.getText().toString());
-						result.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-			        	
-						result.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
-		        	}
-		        	
-		        	mConnectionButton.setText(R.string.btn_connecting);
-		        	mConnectionButton.setEnabled(false);
-		        	
-		        	JrSession.SaveSession(_context, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							mConnectionButton.setText(R.string.lbl_connected);
-							
-							final Library library = result;
-							if (JrSession.JrFs == null) JrSession.JrFs = new FileSystem();
-				        	
-				        	JrSession.JrFs.setOnItemsCompleteListener(new OnCompleteListener<List<IItem<?>>>() {
-								
-								@Override
-								public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
-									if (result == null) return;
-									
-									if (result.size() == 0) {
-										Toast.makeText(thisContext, "This library doesn't contain any views", Toast.LENGTH_LONG).show();
-										mConnectionButton.setText(R.string.btn_connect);
-										mConnectionButton.setEnabled(true);
-										return;
-									}
-									
-									if (library.getSelectedView() < 0)
-										library.setSelectedView(result.get(0).getKey());
-									
-									JrSession.SaveSession(_context);
-									
-									thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
-								}
-							});
-				        	
-				        	JrSession.JrFs.getSubItemsAsync();
-						}
-					});
+				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+					mConnectionButton.setText(R.string.lbl_connected);
+					
+					thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
 				}
-        		
-        	});
+			});
 
         	
         }
@@ -108,16 +77,17 @@ public class SetConnection extends FragmentActivity {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
-		        
+				
+				mLibrary = result;
 		    	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
 		    	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
 		    	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
 		    	
-		    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(result.isLocalOnly());
+		    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(mLibrary.isLocalOnly());
 		    	
-		    	txtAccessCode.setText(result.getAccessCode());
-		    	if (result.getAuthKey() == null) return;
-		    	String decryptedUserAuth = new String(Base64.decode(result.getAuthKey(), Base64.DEFAULT));
+		    	txtAccessCode.setText(mLibrary.getAccessCode());
+		    	if (mLibrary.getAuthKey() == null) return;
+		    	String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
 		    	if (!decryptedUserAuth.isEmpty()) {
 			    	String[] userDetails = decryptedUserAuth.split(":",2);
 			    	txtUserName.setText(userDetails[0]);

@@ -156,6 +156,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					if (result == null) return;
 					String newFileString = result.getSavedTracksString();
 					if (!newFileString.endsWith(";")) newFileString += ";";
 					newFileString += mFile.getKey() + ";";

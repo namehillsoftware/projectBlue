@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
@@ -18,9 +17,7 @@ public class WaitForConnection extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_connection_status);
-		
-		((TextView)findViewById(R.id.lblConnectionStatus)).setText(R.string.lbl_something_went_wrong);
+		setContentView(R.layout.activity_wait_for_connection);
 		
 		final Intent selectServerIntent = new Intent(this, SelectServer.class);
 		final WaitForConnection _this = this;

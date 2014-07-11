@@ -232,18 +232,27 @@ public class FilePlayer implements
 		logger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
 		logger.error("Extra: ");
 		switch (extra) {
-		case MediaPlayer.MEDIA_ERROR_IO:
-			logger.error("MEDIA_ERROR_IO");
-			break;
-		case MediaPlayer.MEDIA_ERROR_MALFORMED:
-			logger.error("MEDIA_ERROR_MALFORMED");
-			break;
-		case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-			logger.error("MEDIA_ERROR_UNSUPPORTED");
-			break;
-		case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-			logger.error("MEDIA_ERROR_TIMED_OUT");
-			break;
+			case MediaPlayer.MEDIA_ERROR_IO:
+				logger.error("MEDIA_ERROR_IO");
+				break;
+			case MediaPlayer.MEDIA_ERROR_MALFORMED:
+				logger.error("MEDIA_ERROR_MALFORMED");
+				break;
+			case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+				logger.error("MEDIA_ERROR_UNSUPPORTED");
+				break;
+			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+				logger.error("MEDIA_ERROR_TIMED_OUT");
+				break;
+			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+				logger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
+				break;
+			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+				logger.error("MEDIA_ERROR_SERVER_DIED");
+				break;
+			default:
+				logger.error("Unknown");
+				break;
 		}
 		resetMediaPlayer();
 		boolean handled = false;
