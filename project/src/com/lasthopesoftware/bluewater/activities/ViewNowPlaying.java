@@ -224,14 +224,14 @@ public class ViewNowPlaying extends Activity implements
 		}
 	}
 	
-	private void setRepeatingIcon(MenuItem item) {
-		final MenuItem _item = item;
+	private void setRepeatingIcon(final MenuItem item) {
+		item.setIcon(R.drawable.av_no_repeat_dark);
 		JrSession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
-					_item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+					item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
 			}
 			
 		});
