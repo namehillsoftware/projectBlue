@@ -34,6 +34,7 @@ public class InstantiateSessionConnection extends Activity {
 		lblConnectionStatus.setText(R.string.lbl_getting_library_details);
 		
 		final Intent selectServerIntent = new Intent(this, SelectServer.class);
+		final Intent browseLibraryIntent = new Intent(this, BrowseLibrary.class);
 		final InstantiateSessionConnection _this = this;
 		
 		JrSession.GetLibrary(_this, new OnCompleteListener<Integer, Void, Library>() {
@@ -67,7 +68,7 @@ public class InstantiateSessionConnection extends Activity {
 						if (library.getSelectedView() >= 0) {
 							JrSession.JrFs = new FileSystem(library.getSelectedView());
 							LoggerFactory.getLogger(JrSession.class).debug("Session started.");
-							launchActivityDelayed(new Intent(_this, BrowseLibrary.class));
+							launchActivityDelayed(browseLibraryIntent);
 							return;
 						}
 			        	
@@ -77,10 +78,10 @@ public class InstantiateSessionConnection extends Activity {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
-								if (result == null) return;
 								
-								if (result.size() == 0) {
+								if (result == null || result.size() == 0) {
 									lblConnectionStatus.setText(R.string.lbl_library_no_views);
+									launchActivityDelayed(selectServerIntent);
 									return;
 								}
 								
@@ -89,7 +90,7 @@ public class InstantiateSessionConnection extends Activity {
 								JrSession.SaveSession(_this);
 								
 								lblConnectionStatus.setText(R.string.lbl_connected);
-								launchActivityDelayed(new Intent(_this, BrowseLibrary.class));
+								launchActivityDelayed(browseLibraryIntent);
 							}
 						});
 			        	
