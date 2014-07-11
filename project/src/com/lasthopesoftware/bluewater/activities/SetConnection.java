@@ -58,7 +58,6 @@ public class SetConnection extends FragmentActivity {
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
 							mConnectionButton.setText(R.string.lbl_connected);
 							
-							final Library library = result;
 							thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
 						}
 					});
