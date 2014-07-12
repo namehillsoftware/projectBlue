@@ -103,7 +103,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
         
 		parentView.addView(rl);
 		
-		final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, null);
+		final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, parentView, false);
         fileMenu.setOnTouchListener(onSwipeListener);
         
         final ImageButton addButton = (ImageButton)fileMenu.findViewById(R.id.btnAddToPlaylist);
