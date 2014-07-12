@@ -8,9 +8,9 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnection extends Activity {
 	
@@ -22,7 +22,7 @@ public class WaitForConnection extends Activity {
 		final Intent selectServerIntent = new Intent(this, SelectServer.class);
 		final WaitForConnection _this = this;
 		
-		PollConnectionTask.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+		PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
@@ -30,7 +30,7 @@ public class WaitForConnection extends Activity {
 			}
 		});
 		
-		PollConnectionTask.Instance.get(_this).addOnPollingCancelledListener(new OnPollingCancelledListener() {
+		PollConnection.Instance.get(_this).addOnPollingCancelledListener(new OnPollingCancelledListener() {
 			
 			@Override
 			public void onPollingCancelled() {
@@ -45,11 +45,11 @@ public class WaitForConnection extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				PollConnectionTask.Instance.get(_this).stopPolling();
+				PollConnection.Instance.get(_this).stopPolling();
 				_this.startActivity(selectServerIntent);
 			}
 		});
 		
-		PollConnectionTask.Instance.get(_this).startPolling();
+		PollConnection.Instance.get(_this).startPolling();
 	}
 }

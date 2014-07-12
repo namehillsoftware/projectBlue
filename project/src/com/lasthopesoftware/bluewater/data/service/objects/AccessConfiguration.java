@@ -120,7 +120,7 @@ public class AccessConfiguration {
 		return mActiveUrl;
 	}
 	
-	public String getJrUrl(String... params) {
+	public String getMediaCenterUrl(String... params) {
 		// Add base url
 		String url = getActiveUrl();
 		if (url.isEmpty()) return null;

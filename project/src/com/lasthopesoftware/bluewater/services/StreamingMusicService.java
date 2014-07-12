@@ -35,10 +35,10 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -405,7 +405,7 @@ public class StreamingMusicService extends Service implements
 		builder.setTicker(waitingText);
 		builder.setSubText(getText(R.string.lbl_click_to_cancel));
 		notifyForeground(builder.build());
-		PollConnectionTask checkConnection = PollConnectionTask.Instance.get(thisContext);
+		PollConnection checkConnection = PollConnection.Instance.get(thisContext);
 		
 		checkConnection.addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
@@ -541,7 +541,7 @@ public class StreamingMusicService extends Service implements
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	PollConnectionTask.Instance.get(thisContext).stopPolling();
+	        	PollConnection.Instance.get(thisContext).stopPolling();
 	        }
 		} else if (mLibrary != null)  {
 			pausePlayback(true);
@@ -552,7 +552,7 @@ public class StreamingMusicService extends Service implements
     public void onCreate() {
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-		PollConnectionTask.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 	
 	/* (non-Javadoc)
@@ -566,7 +566,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
-		PollConnectionTask.Instance.get(thisContext).startPolling();
+		PollConnection.Instance.get(thisContext).startPolling();
 
 		return true;
 	}
@@ -742,7 +742,7 @@ public class StreamingMusicService extends Service implements
 		
 		mPlaylistString = null;
 		
-		PollConnectionTask.Instance.get(thisContext).removeOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(thisContext).removeOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 
 	/* End Event Handlers */

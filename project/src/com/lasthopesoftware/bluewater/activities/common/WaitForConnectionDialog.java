@@ -7,9 +7,9 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnectionDialog {
 
@@ -34,13 +34,13 @@ public class WaitForConnectionDialog {
 			
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				PollConnectionTask.Instance.get(_context).stopPolling();
+				PollConnection.Instance.get(_context).stopPolling();
 			}
 		});
 		
 		_instance = builder.show();
 					
-		PollConnectionTask.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+		PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
@@ -48,7 +48,7 @@ public class WaitForConnectionDialog {
 			}
 		});
 		
-		PollConnectionTask.Instance.get(_context).addOnPollingCancelledListener(new OnPollingCancelledListener() {
+		PollConnection.Instance.get(_context).addOnPollingCancelledListener(new OnPollingCancelledListener() {
 			
 			@Override
 			public void onPollingCancelled() {
@@ -56,7 +56,7 @@ public class WaitForConnectionDialog {
 			}
 		});
 		
-		PollConnectionTask.Instance.get(_context).startPolling();
+		PollConnection.Instance.get(_context).startPolling();
 		
 		return _instance;
 	}

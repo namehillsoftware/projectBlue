@@ -128,7 +128,7 @@ public class ConnectionManager {
 	public static MediaCenterConnection getConnection(String... params) throws IOException {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
-			URL url = new URL(mAccessConfiguration.getJrUrl(params));
+			URL url = new URL(mAccessConfiguration.getMediaCenterUrl(params));
 			return mAuthCode == null || mAuthCode.isEmpty() ? new MediaCenterConnection(url) : new MediaCenterConnection(url, mAuthCode);
 		}
 	}
@@ -136,7 +136,7 @@ public class ConnectionManager {
 	public static String getFormattedUrl(String... params) {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
-			return mAccessConfiguration.getJrUrl(params);
+			return mAccessConfiguration.getMediaCenterUrl(params);
 		}
 	}
 	
