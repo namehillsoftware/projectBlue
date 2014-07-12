@@ -58,6 +58,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
 		final ImageButton viewFileDetailsButton;
 		
 		GetFileValueTask getFileValueTask;
+		OnAttachStateChangeListener onAttachStateChangeListener;
 	}
 	
 	public FileListAdapter(Context context, int resource, List<File> files) {
@@ -129,7 +130,10 @@ public class FileListAdapter extends ArrayAdapter<File> {
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
         viewHolder.getFileValueTask = GetFileValueTask.getFileValue(position, file, (ListView)parent, viewHolder.textView);
 
-		viewHolder.textLayout.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
+        if (viewHolder.onAttachStateChangeListener != null)
+        	viewHolder.textView.removeOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
+        
+        viewHolder.onAttachStateChangeListener = new OnAttachStateChangeListener() {
 			
 			private final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 				
@@ -148,7 +152,9 @@ public class FileListAdapter extends ArrayAdapter<File> {
 			public void onViewAttachedToWindow(View v) {		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
 			}
-		});
+		};
+		
+		viewHolder.textLayout.addOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
         
 		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickHandler(file));
 		viewHolder.addButton.setOnClickListener(new AddClickHandler(file));
