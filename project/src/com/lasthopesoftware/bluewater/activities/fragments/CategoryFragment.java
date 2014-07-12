@@ -278,15 +278,20 @@ public class CategoryFragment extends Fragment {
 
 		@Override
 		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			final RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, parent, false);
+			if (convertView == null) {
+				final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				convertView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, parent, false);
+				
+				final TextView heldTextView = (TextView) convertView.findViewById(R.id.tvStandard);			
+	
+				heldTextView.setPadding(64, 20, 20, 20);
+		        
+		        convertView.setTag(heldTextView);
+			}
 			
-			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);			
+			((TextView)convertView.getTag()).setText(mCategoryItems.get(groupPosition).getValue());
 
-	        textView.setPadding(64, 20, 20, 20);
-		    textView.setText(mCategoryItems.get(groupPosition).getValue());
-
-		    return returnView;
+		    return convertView;
 		}
 
 		@Override
