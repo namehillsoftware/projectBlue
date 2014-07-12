@@ -20,8 +20,8 @@ import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
@@ -86,7 +86,7 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList());
 			} catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+				PollConnection.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 					
 					@Override
 					public void onConnectionRegained() {
@@ -112,7 +112,7 @@ public class BrowseItemMenu {
 				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList(Files.GET_SHUFFLED));
 			}  catch (IOException io) {
 				final View _view = v;
-				PollConnectionTask.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+				PollConnection.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 					
 					@Override
 					public void onConnectionRegained() {

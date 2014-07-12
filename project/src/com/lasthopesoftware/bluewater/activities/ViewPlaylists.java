@@ -23,8 +23,8 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayin
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
@@ -68,7 +68,7 @@ public class ViewPlaylists extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(thisContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+						PollConnection.Instance.get(thisContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
@@ -76,7 +76,7 @@ public class ViewPlaylists extends FragmentActivity {
 							}
 						});
 						
-						PollConnectionTask.Instance.get(thisContext).startPolling();
+						PollConnection.Instance.get(thisContext).startPolling();
 						
 						thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
 						break;

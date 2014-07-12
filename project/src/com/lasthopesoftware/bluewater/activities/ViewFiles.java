@@ -19,8 +19,8 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
@@ -69,14 +69,14 @@ public class ViewFiles extends FragmentActivity {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+						PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
 								filesContainer.getFilesAsync();
 							}
 						});
-						PollConnectionTask.Instance.get(_this).startPolling();
+						PollConnection.Instance.get(_this).startPolling();
 						
 						_this.startActivity(new Intent(_this, WaitForConnection.class));
 						

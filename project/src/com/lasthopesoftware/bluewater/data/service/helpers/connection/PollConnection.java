@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.access.connection;
+package com.lasthopesoftware.bluewater.data.service.helpers.connection;
 
 import java.util.LinkedList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -10,6 +10,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
 
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -19,7 +20,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnStartListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class PollConnectionTask implements OnExecuteListener<String, Void, Void> {
+public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	
 	private static final ExecutorService pollService = Executors.newSingleThreadExecutor(); 
 	
@@ -38,7 +39,7 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	private static final CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
 	private final CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
-	private PollConnectionTask(Context context) {
+	private PollConnection(Context context) {
 		synchronized (syncObj) {
 			mContext = context;
 			
@@ -198,12 +199,12 @@ public class PollConnectionTask implements OnExecuteListener<String, Void, Void>
 	}
 	
 	public static class Instance {
-		private static volatile PollConnectionTask _instance = null;
+		private static volatile PollConnection _instance = null;
 		private static Object syncObj = new Object();
 		
-		public static PollConnectionTask get(Context context) {
+		public static PollConnection get(Context context) {
 			synchronized (syncObj) {
-				if (_instance == null || _instance.isFinished()) _instance = new PollConnectionTask(context);
+				if (_instance == null || _instance.isFinished()) _instance = new PollConnection(context);
 				return _instance;
 			}
 		}

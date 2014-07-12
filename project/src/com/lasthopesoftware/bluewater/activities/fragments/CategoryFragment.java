@@ -28,8 +28,8 @@ import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
@@ -59,14 +59,14 @@ public class CategoryFragment extends Fragment {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+						PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
 								JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
 							}
 						});
-						PollConnectionTask.Instance.get(mContext).startPolling();
+						PollConnection.Instance.get(mContext).startPolling();
 						mContext.startActivity(mWaitForConnection);
 						break;
 					}
@@ -114,14 +114,14 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+							PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
 									((Playlists) mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnectionTask.Instance.get(mContext).startPolling();
+							PollConnection.Instance.get(mContext).startPolling();
 							mContext.startActivity(mWaitForConnection);
 							break;
 						}
@@ -151,14 +151,14 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnectionTask.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+							PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
 									((Item)mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnectionTask.Instance.get(mContext).startPolling();
+							PollConnection.Instance.get(mContext).startPolling();
 							mContext.startActivity(mWaitForConnection);
 							break;
 						}

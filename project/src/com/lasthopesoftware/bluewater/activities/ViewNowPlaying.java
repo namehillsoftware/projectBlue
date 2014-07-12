@@ -34,9 +34,9 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleVie
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.access.connection.PollConnectionTask.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
@@ -119,7 +119,7 @@ public class ViewNowPlaying extends Activity implements
 		StreamingMusicService.addOnStreamingChangeListener(this);
 		StreamingMusicService.addOnStreamingStopListener(this);
 		StreamingMusicService.addOnStreamingStartListener(this);
-		PollConnectionTask.Instance.get(this).addOnConnectionLostListener(this);
+		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
 			
@@ -249,7 +249,7 @@ public class ViewNowPlaying extends Activity implements
 		StreamingMusicService.removeOnStreamingStartListener(this);
 		StreamingMusicService.removeOnStreamingChangeListener(this);
 		StreamingMusicService.removeOnStreamingStopListener(this);
-		PollConnectionTask.Instance.get(this).removeOnConnectionLostListener(this);
+		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
 	}
 	
 	public FrameLayout getContentView() {
@@ -441,7 +441,7 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void resetViewOnReconnect(File file) {
 		final File _file = file;
-		PollConnectionTask.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
