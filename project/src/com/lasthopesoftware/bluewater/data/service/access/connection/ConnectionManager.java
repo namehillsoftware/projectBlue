@@ -125,7 +125,7 @@ public class ConnectionManager {
 			ConnectionTester.doTest(mTestConnectionCompleteListener);
 	}	
 	
-	public static HttpURLConnection getConnection(String... params) throws IOException {
+	public static MediaCenterConnection getConnection(String... params) throws IOException {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
 			URL url = new URL(mAccessConfiguration.getJrUrl(params));
@@ -206,16 +206,16 @@ public class ConnectionManager {
 		mediaCenterAccessTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
 	}
 		
-	private static class MediaCenterConnection extends HttpURLConnection {
+	public static class MediaCenterConnection extends HttpURLConnection {
 	
 		private HttpURLConnection mHttpConnection;
 		
-		public MediaCenterConnection(URL url) throws IOException {
+		private MediaCenterConnection(URL url) throws IOException {
 			super(url);
 			setConnection(url);
 		}
 		
-		public MediaCenterConnection(URL url, String authCode) throws IOException {
+		private MediaCenterConnection(URL url, String authCode) throws IOException {
 			this(url);
 			try {
 				mHttpConnection.setRequestProperty("Authorization", "basic " + authCode);
