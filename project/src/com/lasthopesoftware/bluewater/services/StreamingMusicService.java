@@ -134,6 +134,7 @@ public class StreamingMusicService extends Service implements
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null || result.getSavedTracksString() == null) return;
 				initializePlaylist(context, result.getNowPlayingId(), result.getNowPlayingProgress(), result.getSavedTracksString());
 			}
 		});
@@ -353,7 +354,9 @@ public class StreamingMusicService extends Service implements
 	
 	private void initializePlaylist(String playlistString, int filePos, int fileProgress) {
 		initializePlaylist(playlistString);
-		mPlaylistController.seekTo(filePos, fileProgress);
+		
+		if (!playlistString.isEmpty())
+			mPlaylistController.seekTo(filePos, fileProgress);
 	}
 		
 	private void initializePlaylist(String playlistString) {

@@ -18,6 +18,7 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
@@ -145,7 +146,7 @@ public class FileProperties {
 			
 			mProperties.putAll(filePropertiesResult);
 		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+			Log.d(getClass().toString(), e.getMessage());
 		} catch (ExecutionException e) {
 			LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
 		}

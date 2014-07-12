@@ -40,6 +40,26 @@ public class FileListAdapter extends ArrayAdapter<File> {
 	
 	private List<File> mFiles;
 	
+	private static class ViewHolder {
+		public ViewHolder(final CharSequence loadingText, final RelativeLayout textLayout, final TextView textView, final ImageButton addButton, final ImageButton playButton, final ImageButton viewFileDetailsButton) {
+			this.loadingText = loadingText;
+			this.textLayout = textLayout;
+			this.textView = textView;
+			this.addButton = addButton;
+			this.playButton = playButton;
+			this.viewFileDetailsButton = viewFileDetailsButton;
+		}
+		
+		final CharSequence loadingText;
+		final RelativeLayout textLayout;
+		final TextView textView;
+		final ImageButton addButton;
+		final ImageButton playButton;
+		final ImageButton viewFileDetailsButton;
+		
+		GetFileValueTask getFileValueTask;
+	}
+	
 	public FileListAdapter(Context context, int resource, List<File> files) {
 		super(context, resource, files);
 		
@@ -48,43 +68,72 @@ public class FileListAdapter extends ArrayAdapter<File> {
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-	
-		final ViewFlipper parentView = new ViewFlipper(parent.getContext());
-		parentView.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		
-		final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
-		onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
+		if (convertView == null) {
+			convertView = new ViewFlipper(parent.getContext());
+		
+			final ViewFlipper parentView = (ViewFlipper)convertView;
+			parentView.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 			
-			@Override
-			public boolean onSwipeRight(View view) {
-				parentView.showPrevious();
-				return true;
-			}
-		});
-		parentView.setOnTouchListener(onSwipeListener);
-		        
-		final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		final RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, null);
-		final TextView textView = (TextView) rl.findViewById(R.id.tvStandard);
-		final File file = getItem(position);
+			final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
+			onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
+				
+				@Override
+				public boolean onSwipeRight(View view) {
+					parentView.showPrevious();
+					return true;
+				}
+			});
+			parentView.setOnTouchListener(onSwipeListener);
+			
+			final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			final RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, parentView, false);
+			final TextView textView = (TextView) rl.findViewById(R.id.tvStandard);
+			
 		
-        textView.setMarqueeRepeatLimit(1);
-        textView.setText(rl.getContext().getText(R.string.lbl_loading));
-        GetFileValueTask.getFileValue(position, file, (ListView)parent, textView);
+			textView.setMarqueeRepeatLimit(1);
+			
+			parentView.addView(rl);
+			
+			final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, parentView, false);
+	        fileMenu.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton addButton = (ImageButton)fileMenu.findViewById(R.id.btnAddToPlaylist);
+	        addButton.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlaySong);
+	        playButton.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton viewFileDetailsButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFileDetails);
+	        viewFileDetailsButton.setOnTouchListener(onSwipeListener);
+			
+			parentView.addView(fileMenu);
+			
+			convertView.setTag(new ViewHolder(parent.getContext().getText(R.string.lbl_loading), rl, textView, addButton, playButton, viewFileDetailsButton));
+		}
+		
+		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
         
-        final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
+		viewHolder.textView.setText(viewHolder.loadingText);
+        
+        final File file = getItem(position);
+        if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
+        viewHolder.getFileValueTask = GetFileValueTask.getFileValue(position, file, (ListView)parent, viewHolder.textView);
+        
+		viewHolder.textLayout.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
 			
-			@Override
-			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-				textView.setTypeface(null, filePlayer.getFile().getKey() == file.getKey() ? Typeface.BOLD : Typeface.NORMAL);
-			}
-		};
-		
-		rl.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
+			private final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
+				
+				@Override
+				public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
+					viewHolder.textView.setTypeface(null, filePlayer.getFile().getKey() == file.getKey() ? Typeface.BOLD : Typeface.NORMAL);
+				}
+			};
 			
 			@Override
 			public void onViewDetachedFromWindow(View v) {
 				StreamingMusicService.removeOnStreamingStartListener(checkIfIsPlayingFileListener);
+				v.removeOnAttachStateChangeListener(this);
 			}
 			
 			@Override
@@ -94,32 +143,17 @@ public class FileListAdapter extends ArrayAdapter<File> {
 				
 				final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
 		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-		        	textView.setTypeface(null, Typeface.BOLD);
+		        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
 		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
 			}
 		});
         
-		parentView.addView(rl);
+		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickHandler(file));
+		viewHolder.addButton.setOnClickListener(new AddClickHandler(file));
+		viewHolder.playButton.setOnClickListener(new PlayClickHandler(position, mFiles));
 		
-		final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, null);
-        fileMenu.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton addButton = (ImageButton)fileMenu.findViewById(R.id.btnAddToPlaylist);
-        addButton.setOnClickListener(new AddClickHandler(file));
-        addButton.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlaySong);
-        playButton.setOnClickListener(new PlayClickHandler(position, mFiles));
-        playButton.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton viewFileDetailsButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFileDetails);
-        viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickHandler(file));
-        viewFileDetailsButton.setOnTouchListener(onSwipeListener);
-		
-		parentView.addView(fileMenu);
-        
-		return parentView;
+		return convertView;
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
@@ -204,7 +238,7 @@ public class FileListAdapter extends ArrayAdapter<File> {
 
 		@Override
 		protected String doInBackground(String... params) {
-			if ((mPosition < mParentListView.getFirstVisiblePosition() - 10) || (mPosition > mParentListView.getLastVisiblePosition() + 10)) return null;
+			if (isCancelled() || (mPosition < mParentListView.getFirstVisiblePosition() - 10) || (mPosition > mParentListView.getLastVisiblePosition() + 10)) return null;
 			return mFile.getValue();
 		}
 		
