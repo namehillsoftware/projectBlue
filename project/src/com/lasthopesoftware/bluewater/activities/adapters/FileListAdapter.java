@@ -117,9 +117,18 @@ public class FileListAdapter extends ArrayAdapter<File> {
 		viewHolder.textView.setText(viewHolder.loadingText);
         
         final File file = getItem(position);
+        
+        viewHolder.textView.setTypeface(null, Typeface.NORMAL);
+        if (StreamingMusicService.getPlaylistController() == null)
+			StreamingMusicService.resumeSavedPlaylist(convertView.getContext());
+		
+		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
+        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
+        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
+        
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
         viewHolder.getFileValueTask = GetFileValueTask.getFileValue(position, file, (ListView)parent, viewHolder.textView);
-        
+
 		viewHolder.textLayout.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
 			
 			private final OnNowPlayingStartListener checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
@@ -133,18 +142,10 @@ public class FileListAdapter extends ArrayAdapter<File> {
 			@Override
 			public void onViewDetachedFromWindow(View v) {
 				StreamingMusicService.removeOnStreamingStartListener(checkIfIsPlayingFileListener);
-				v.removeOnAttachStateChangeListener(this);
 			}
 			
 			@Override
-			public void onViewAttachedToWindow(View v) {
-				if (StreamingMusicService.getPlaylistController() == null)
-					StreamingMusicService.resumeSavedPlaylist(v.getContext());
-				
-				final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
-		        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-		        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
-		        
+			public void onViewAttachedToWindow(View v) {		        
 				StreamingMusicService.addOnStreamingStartListener(checkIfIsPlayingFileListener);
 			}
 		});
