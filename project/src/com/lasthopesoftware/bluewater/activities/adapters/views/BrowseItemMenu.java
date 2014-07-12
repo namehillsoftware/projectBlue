@@ -29,48 +29,71 @@ import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 
 public class BrowseItemMenu {
+	private static class ViewHolder {
+		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
+			this.textView = textView;
+			this.shuffleButton = shuffleButton;
+			this.playButton = playButton;
+			this.viewButton = viewButton;
+		}
+		
+		final TextView textView;
+		final ImageButton shuffleButton;
+		final ImageButton playButton;
+		final ImageButton viewButton;
+	}
+	
 	public static View getView(IItem<?> item, View convertView, ViewGroup parent) {
-		final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-	            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		if (convertView == null) {
 		
-		final ViewFlipper parentView = new ViewFlipper(parent.getContext());
-		parentView.setLayoutParams(lp);
-		
-		final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
-		onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
+			final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+		            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 			
-			@Override
-			public boolean onSwipeRight(View view) {
-				parentView.showPrevious();
-				return true;
-			}
-		});
-		parentView.setOnTouchListener(onSwipeListener);
-		        
-        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, parentView, false);
-        final TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
-        textView.setText(item.getValue());
-        parentView.addView(rl);
-        
-        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
-        fileMenu.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
-        shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
-        shuffleButton.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
-        playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
-        playButton.setOnTouchListener(onSwipeListener);
-        
-        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
-        viewButton.setOnClickListener(new ViewFilesClickHandler(item));
-        viewButton.setOnTouchListener(onSwipeListener);
+			convertView = new ViewFlipper(parent.getContext());
+			final ViewFlipper parentView = (ViewFlipper) convertView;
+			parentView.setLayoutParams(lp);
+			
+			final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
+			onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
+				
+				@Override
+				public boolean onSwipeRight(View view) {
+					parentView.showPrevious();
+					return true;
+				}
+			});
+			parentView.setOnTouchListener(onSwipeListener);
+			        
+	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	        final RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, parentView, false);
+	        final TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
+	        
+	        parentView.addView(rl);
+	        
+	        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
+	        fileMenu.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);	        
+	        shuffleButton.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);	        
+	        playButton.setOnTouchListener(onSwipeListener);
+	        
+	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
+	        viewButton.setOnTouchListener(onSwipeListener);
+			
+			parentView.addView(fileMenu);
+			
+			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
+		}
 		
-		parentView.addView(fileMenu);
+		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+		viewHolder.textView.setText(item.getValue());
+		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
+		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
+		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
 		
-		return parentView;
+		return convertView;
 	}
 	
 	private static class PlayClickHandler implements OnClickListener {
