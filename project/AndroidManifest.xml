@@ -24,7 +24,8 @@
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.InstantiateSessionConnection"
             android:label="@string/app_name"
-            android:noHistory="true" >
+            android:noHistory="true"
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -102,6 +103,7 @@
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.WaitForConnection"
             android:label="@string/title_activity_wait_for_connection"
+            android:noHistory="true"
             android:launchMode="singleTop" >
         </activity>
 
