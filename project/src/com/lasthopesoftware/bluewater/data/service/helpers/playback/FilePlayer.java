@@ -122,8 +122,8 @@ public class FilePlayer implements
 			final String[] projection = { MediaStore.Audio.Media.DATA };
 			final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
 		    try {
-			    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-			    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
+			    if (cursor.moveToFirst())
+			    	return cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
 		    } catch (IllegalArgumentException ie) {
 		    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
 		    } finally {
