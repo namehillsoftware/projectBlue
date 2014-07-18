@@ -109,32 +109,27 @@ public class FilePlayer implements
 	private String getMpUri() throws IOException {
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
-		
-//		if (!ConnectionManager.refreshConfiguration(mMpContext)) {
-//			for (OnFileErrorListener listener : onFileErrorListeners)
-//				listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, android.os.Build.VERSION.SDK_INT >= 17 ? MediaPlayer.MEDIA_ERROR_IO : MediaPlayer.MEDIA_ERROR_UNKNOWN);
-//			
-//			return null;
-//		}
-		
-		final String[] proj = { MediaStore.Audio.Media.DATA };
-		final String filename = mFile.getProperty(FileProperties.FILENAME).substring(mFile.getProperty(FileProperties.FILENAME).lastIndexOf('\\') + 1, mFile.getProperty(FileProperties.FILENAME).lastIndexOf('.'));
-		
-		final String[] params = { 	filename,
-									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
-									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
-									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
-									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
-	    
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj, MEDIA_QUERY, params, null);
-	    try {
-		    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-		    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
-	    } catch (IllegalArgumentException ie) {
-	    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
-	    } finally {
-	    	cursor.close();
-	    }
+				
+		final String originalFilename = mFile.getProperty(FileProperties.FILENAME);		
+		if (originalFilename != null) {
+			final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
+			final String[] params = { 	filename,
+										mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
+										mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
+										mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
+										mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
+		    
+			final String[] projection = { MediaStore.Audio.Media.DATA };
+			final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
+		    try {
+			    final int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+			    if (cursor.moveToFirst()) return cursor.getString(columnIndex);
+		    } catch (IllegalArgumentException ie) {
+		    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
+		    } finally {
+		    	cursor.close();
+		    }
+		}
 	    
 		return mFile.getSubItemUrl();
 	}
