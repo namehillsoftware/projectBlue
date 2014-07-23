@@ -23,7 +23,7 @@ public class PlaylistXmlHandler extends DefaultHandler {
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
 		currentValue = "";
-
+		valueSb = new StringBuilder();
 		if (qName.equalsIgnoreCase("item"))
 			currentPlaylist = new Playlist();
 		
@@ -32,7 +32,7 @@ public class PlaylistXmlHandler extends DefaultHandler {
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		valueSb = FileUtils.HandleBadXml(valueSb, ch, start, length);
+		FileUtils.HandleBadXml(valueSb, ch, start, length);
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
