@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessi
 
 public class InstantiateSessionConnection extends Activity {
 	
-	private static final int ACTIVITY_LAUNCH_DELAY = 3000;
+	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
 	
 	private TextView lblConnectionStatus;		
 	private Intent selectServerIntent;
@@ -37,12 +37,7 @@ public class InstantiateSessionConnection extends Activity {
 			}
 		}));
 	}
-	
-	private void launchActivityDelayed(Intent intent) {
-		final Handler handler = new Handler();
-		handler.postDelayed(new LaunchRunnable(this, intent), ACTIVITY_LAUNCH_DELAY);
-	}
-	
+		
 	private void handleBuildStatusChange(BuildingSessionConnectionStatus status) {
 		switch (status) {
 		case GETTING_LIBRARY:
@@ -71,6 +66,11 @@ public class InstantiateSessionConnection extends Activity {
 			launchActivityDelayed(browseLibraryIntent);
 			return;
 		}
+	}
+	
+	private void launchActivityDelayed(Intent intent) {
+		final Handler handler = new Handler();
+		handler.postDelayed(new LaunchRunnable(this, intent), ACTIVITY_LAUNCH_DELAY);
 	}
 	
 	private static class LaunchRunnable implements Runnable {

@@ -56,14 +56,11 @@ public class BuildSessionConnection {
 						
 						if (library.getSelectedView() >= 0) {
 							JrSession.JrFs = new FileSystem(library.getSelectedView());
-							// TODO throw event
-//							LoggerFactory.getLogger(JrSession.class).debug("Session started.");
+
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 							return;
 						}
 			        	
-						// TODO throw event
-//						lblConnectionStatus.setText(R.string.lbl_getting_library_views);
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 						JrSession.JrFs = new FileSystem();
 			        	JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
@@ -72,7 +69,6 @@ public class BuildSessionConnection {
 							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
 								
 								if (result == null || result.size() == 0) {
-									// TODO throw event
 									doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
 									return;
 								}
@@ -86,7 +82,6 @@ public class BuildSessionConnection {
 									
 									@Override
 									public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-										// TODO throw event
 										doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 									}
 								});
@@ -104,10 +99,11 @@ public class BuildSessionConnection {
 	}
 	
 	private static void doStateChange(final BuildingSessionConnectionStatus status) {
+		mBuildingStatus = status;
+		
 		if (mRunningConditions.contains(status))
 			isRunning.set(true);
 		
-		mBuildingStatus = status;
 		for (OnBuildSessionStateChangeListener listener : mBuildSessionListeners)
 			listener.onBuildSessionStatusChange(status);
 		

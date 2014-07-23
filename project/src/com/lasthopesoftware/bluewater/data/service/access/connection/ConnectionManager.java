@@ -54,6 +54,9 @@ public class ConnectionManager {
 	}
 	
 	public static void buildConfiguration(Context context, String accessString, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
+		if (accessString == null)
+			throw new NullPointerException("The access string cannot be null.");
+		
 		mAccessString = accessString;
 		synchronized(syncObj) {
 			mAuthCode = authCode;
@@ -96,10 +99,13 @@ public class ConnectionManager {
 	}
 	
 	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-		if (mAccessString == null)
-			throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
-		
 		if (mAccessConfiguration == null) {
+			if (mAccessString == null || mAccessString.isEmpty())
+				throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
+			
+			if (mAuthCode == null)
+				throw new NullPointerException("The static auth code has been lost. Please reset the connection session.");
+			
 			buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
 			return;
 		}
