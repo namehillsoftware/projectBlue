@@ -253,7 +253,6 @@ public class FilePlayer implements
 		resetMediaPlayer();
 		boolean handled = false;
 		for (OnFileErrorListener listener : onFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
-		if (handled) releaseMediaPlayer();
 		return handled;
 	}
 
