@@ -114,6 +114,8 @@ public class FileListAdapter extends ArrayAdapter<File> {
 			convertView.setTag(new ViewHolder(parent.getContext().getText(R.string.lbl_loading), rl, textView, addButton, playButton, viewFileDetailsButton));
 		}
 		
+		if (((ViewFlipper)convertView).getDisplayedChild() != 0) ((ViewFlipper)convertView).showPrevious();
+		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
         
 		viewHolder.textView.setText(viewHolder.loadingText);

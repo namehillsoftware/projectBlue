@@ -62,6 +62,7 @@ public class BrowseItemMenu {
 					return true;
 				}
 			});
+			
 			parentView.setOnTouchListener(onSwipeListener);
 			        
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -86,6 +87,8 @@ public class BrowseItemMenu {
 			
 			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
 		}
+		
+		if (((ViewFlipper)convertView).getDisplayedChild() != 0) ((ViewFlipper)convertView).showPrevious();
 		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		viewHolder.textView.setText(item.getValue());
