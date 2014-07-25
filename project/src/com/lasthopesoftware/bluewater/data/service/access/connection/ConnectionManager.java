@@ -103,9 +103,6 @@ public class ConnectionManager {
 			if (mAccessString == null || mAccessString.isEmpty())
 				throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
 			
-			if (mAuthCode == null)
-				throw new NullPointerException("The static auth code has been lost. Please reset the connection session.");
-			
 			buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
 			return;
 		}
