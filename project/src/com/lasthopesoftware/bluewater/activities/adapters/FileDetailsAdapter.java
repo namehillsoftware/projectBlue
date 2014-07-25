@@ -40,7 +40,7 @@ public class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
 			convertView = returnView;
 		}
 		
-		ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		
 		final Entry<String, String> fileProperty = getItem(position);
 		viewHolder.fileDetailName.setText(fileProperty.getKey());
