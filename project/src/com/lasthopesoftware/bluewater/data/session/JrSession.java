@@ -162,7 +162,7 @@ public class JrSession {
 		
 	public synchronized static void ChooseLibrary(Context context, int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
 		
-		if (libraryKey >= 0 && libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
+		if (libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
 			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
 			mLibrary = null;
 		}
