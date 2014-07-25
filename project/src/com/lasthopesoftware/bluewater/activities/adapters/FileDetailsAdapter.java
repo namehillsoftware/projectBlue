@@ -15,6 +15,11 @@ import com.lasthopesoftware.bluewater.R;
 
 public class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
 	
+	private static class ViewHolder {
+		TextView fileDetailName;
+		TextView fileDetailValue;
+	}
+	
 	public FileDetailsAdapter(Context context, int resource, List<Entry<String, String>> objects) {
 		super(context, resource, objects);
 	}
@@ -22,12 +27,25 @@ public class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 	
+		if (convertView == null) {
+			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			final LinearLayout returnView = (LinearLayout) inflator.inflate(R.layout.layout_file_details, parent, false);
+			
+			ViewHolder viewHolder = new ViewHolder();
+			
+			viewHolder.fileDetailName = (TextView) returnView.findViewById(R.id.tvFileDetailName);
+			viewHolder.fileDetailValue = (TextView) returnView.findViewById(R.id.tvFileDetailValue);
+			returnView.setTag(viewHolder);
+			
+			convertView = returnView;
+		}
+		
+		ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+		
 		final Entry<String, String> fileProperty = getItem(position);
-		final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		final LinearLayout returnView = (LinearLayout) inflator.inflate(R.layout.layout_file_details, null);
-		((TextView) returnView.findViewById(R.id.tvFileDetailName)).setText(fileProperty.getKey());;
-		((TextView) returnView.findViewById(R.id.tvFileDetailValue)).setText(fileProperty.getValue());;
+		viewHolder.fileDetailName.setText(fileProperty.getKey());
+		viewHolder.fileDetailValue.setText(fileProperty.getValue());
         
-		return returnView;
+		return convertView;
 	}
 }
