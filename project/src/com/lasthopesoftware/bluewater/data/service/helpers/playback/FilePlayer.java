@@ -5,10 +5,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.slf4j.LoggerFactory;
-
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -17,10 +16,10 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
-
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -145,6 +144,8 @@ public class FilePlayer implements
 					mp.prepareAsync();
 					return;
 				}
+			} catch (IOException io) {
+				throwIoErrorEvent();
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			}
@@ -165,12 +166,19 @@ public class FilePlayer implements
 				}
 				
 				isPreparing.set(false);
+			} catch (IOException io) {
+				throwIoErrorEvent();
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 				resetMediaPlayer();
 				isPreparing.set(false);
 			}
 		}
+	}
+	
+	private void throwIoErrorEvent() {
+		for (OnFileErrorListener listener : onFileErrorListeners)
+			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
 	
 	private void setMpDataSource(String url) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
@@ -242,9 +250,6 @@ public class FilePlayer implements
 				break;
 			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
 				logger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
-				break;
-			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-				logger.error("MEDIA_ERROR_SERVER_DIED");
 				break;
 			default:
 				logger.error("Unknown");
