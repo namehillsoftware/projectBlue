@@ -77,8 +77,8 @@ public class InstantiateSessionConnection extends Activity {
 			lblConnectionStatus.setText(R.string.lbl_connected);
 			if (getIntent() == null || getIntent().getAction() == null || !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
 				launchActivityDelayed(browseLibraryIntent);
-			
-			finish();
+			else
+				finish();
 			return;
 		}
 	}
