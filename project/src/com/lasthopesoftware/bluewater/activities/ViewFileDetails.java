@@ -158,4 +158,11 @@ public class ViewFileDetails extends Activity {
 		
 		getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		InstantiateSessionConnection.startForReturn(this);
+	}
 }

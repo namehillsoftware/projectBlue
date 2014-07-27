@@ -104,6 +104,13 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	}
 	
 	@Override
+	public void onResume() {
+		super.onResume();
+		
+		InstantiateSessionConnection.startForReturn(this);
+	}
+	
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);

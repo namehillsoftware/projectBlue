@@ -100,6 +100,13 @@ public class ViewPlaylists extends FragmentActivity {
         JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 	}
 	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		InstantiateSessionConnection.startForReturn(this);
+	}
+	
 	private void BuildPlaylistView() {
                 
         if (mPlaylist.getSubItems().size() > 0) {

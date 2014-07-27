@@ -119,6 +119,13 @@ public class BrowseLibrary extends FragmentActivity {
 			
 		}
 	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		InstantiateSessionConnection.startForReturn(this);
+	}
 
 	public void displayLibrary(final Library library) {		
 		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {

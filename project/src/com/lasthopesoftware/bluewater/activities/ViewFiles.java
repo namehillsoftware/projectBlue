@@ -102,6 +102,13 @@ public class ViewFiles extends FragmentActivity {
 	}
 	
 	@Override
+	public void onResume() {
+		super.onResume();
+		
+		InstantiateSessionConnection.startForReturn(this);
+	}
+	
+	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
 		savedInstanceState.putInt(KEY, mItemId);
