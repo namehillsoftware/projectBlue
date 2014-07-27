@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.slf4j.LoggerFactory;
+
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -16,10 +17,10 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
-import android.os.Build;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
+
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
@@ -105,7 +106,7 @@ public class FilePlayer implements
 	}
 	
 	@SuppressLint("InlinedApi")
-	private String getMpUri() throws IOException {
+	private Uri getMpUri() throws IOException {
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 				
@@ -124,21 +125,21 @@ public class FilePlayer implements
 		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
 	    try {
 		    if (cursor.moveToFirst())
-		    	return cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+		    	return Uri.fromFile(new java.io.File(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))));
 	    } catch (IllegalArgumentException ie) {
 	    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
 	    } finally {
 	    	cursor.close();
 	    }
 	    
-		return mFile.getSubItemUrl();
+		return Uri.parse(mFile.getSubItemUrl());
 	}
 	
 	public void prepareMediaPlayer() {
 		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
-				String uri = getMpUri();
-				if (uri != null && !uri.isEmpty()) {
+				Uri uri = getMpUri();
+				if (uri != null) {
 					setMpDataSource(uri);
 					isPreparing.set(true);
 					mp.prepareAsync();
@@ -155,8 +156,8 @@ public class FilePlayer implements
 	public void prepareMpSynchronously() {
 		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
-				String uri = getMpUri();
-				if (uri != null && !uri.isEmpty()) {
+				Uri uri = getMpUri();
+				if (uri != null) {
 					setMpDataSource(uri);
 					
 					isPreparing.set(true);
@@ -181,13 +182,13 @@ public class FilePlayer implements
 			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
 	
-	private void setMpDataSource(String url) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
+	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
 		Map<String, String> headers = new HashMap<String, String>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		if (!JrSession.GetLibrary().getAuthKey().isEmpty())
 			headers.put("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
-		mp.setDataSource(mMpContext, Uri.parse(url), headers);
+		mp.setDataSource(mMpContext, uri, headers);
 	}
 	
 	private void resetMediaPlayer() {
