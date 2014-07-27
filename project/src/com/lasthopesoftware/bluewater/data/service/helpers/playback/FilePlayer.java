@@ -147,44 +147,43 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMediaPlayer() {
-		if (!isPreparing.get() && !isPrepared.get()) {
-			try {
-				final Uri uri = getMpUri();
-				if (uri != null) {
-					setMpDataSource(uri);
-					isPreparing.set(true);
-					mp.prepareAsync();
-					return;
-				}
-			} catch (IOException io) {
-				throwIoErrorEvent();
-			} catch (Exception e) {
-				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+		if (isPreparing.get() || isPrepared.get()) return;
+		
+		try {
+			final Uri uri = getMpUri();
+			if (uri != null) {
+				setMpDataSource(uri);
+				isPreparing.set(true);
+				mp.prepareAsync();
 			}
+		} catch (IOException io) {
+			throwIoErrorEvent();
+		} catch (Exception e) {
+			LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 		}
 	}
 	
 	public void prepareMpSynchronously() {
-		if (!isPreparing.get() && !isPrepared.get()) {
-			try {
-				final Uri uri = getMpUri();
-				if (uri != null) {
-					setMpDataSource(uri);
-					
-					isPreparing.set(true);
-					mp.prepare();
-					isPrepared.set(true);
-					return;
-				}
+		if (isPreparing.get() || isPrepared.get()) return;
+		
+		try {
+			final Uri uri = getMpUri();
+			if (uri != null) {
+				setMpDataSource(uri);
 				
-				isPreparing.set(false);
-			} catch (IOException io) {
-				throwIoErrorEvent();
-			} catch (Exception e) {
-				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
-				resetMediaPlayer();
-				isPreparing.set(false);
+				isPreparing.set(true);
+				mp.prepare();
+				isPrepared.set(true);
+				return;
 			}
+			
+			isPreparing.set(false);
+		} catch (IOException io) {
+			throwIoErrorEvent();
+		} catch (Exception e) {
+			LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+			resetMediaPlayer();
+			isPreparing.set(false);
 		}
 	}
 	
