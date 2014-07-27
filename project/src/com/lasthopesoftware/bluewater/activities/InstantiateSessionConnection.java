@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.OnBuildSessionStateChangeListener;
@@ -22,8 +23,11 @@ public class InstantiateSessionConnection extends Activity {
 	private Intent selectServerIntent;
 	private Intent browseLibraryIntent;
 	
-	public static void startForReturn(Context context) {
-		Intent intent = new Intent(context, InstantiateSessionConnection.class);
+	public static void restoreSessionConnection(Context context) {
+		// Check to see that a URL can still be built
+		if (ConnectionManager.getFormattedUrl() != null) return;
+		
+		final Intent intent = new Intent(context, InstantiateSessionConnection.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);
 		context.startActivity(intent);
 	}
@@ -71,8 +75,9 @@ public class InstantiateSessionConnection extends Activity {
 			return;
 		case BUILDING_SESSION_COMPLETE:
 			lblConnectionStatus.setText(R.string.lbl_connected);
-			if (getIntent() != null && getIntent().getAction() != null && !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
+			if (getIntent() == null || getIntent().getAction() == null || !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
 				launchActivityDelayed(browseLibraryIntent);
+			
 			finish();
 			return;
 		}

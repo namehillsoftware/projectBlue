@@ -160,9 +160,9 @@ public class ViewFileDetails extends Activity {
 	}
 	
 	@Override
-	public void onResume() {
-		super.onResume();
+	public void onStart() {
+		super.onStart();
 		
-		InstantiateSessionConnection.startForReturn(this);
+		InstantiateSessionConnection.restoreSessionConnection(this);
 	}
 }

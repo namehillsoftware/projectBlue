@@ -185,10 +185,10 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@Override
-	public void onResume() {
-		super.onResume();
+	public void onStart() {
+		super.onStart();
 		
-		InstantiateSessionConnection.startForReturn(this);
+		InstantiateSessionConnection.restoreSessionConnection(this);
 	}
 	
 	@Override

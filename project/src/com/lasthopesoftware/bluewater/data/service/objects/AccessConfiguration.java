@@ -123,7 +123,10 @@ public class AccessConfiguration {
 	public String getMediaCenterUrl(String... params) {
 		// Add base url
 		String url = getActiveUrl();
-		if (url.isEmpty()) return null;
+		if (url == null || url.isEmpty()) return null;
+		
+		if (params.length == 0) return url;
+		
 		// Add action
 		url += params[0];
 		

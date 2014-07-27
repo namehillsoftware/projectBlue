@@ -105,6 +105,9 @@ public class BrowseLibrary extends FragmentActivity {
 	@Override
 	public void onStart() {
 		super.onStart();
+		
+		InstantiateSessionConnection.restoreSessionConnection(this);
+		
 		mIsStopped = false;
 		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) {
 			JrSession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
@@ -118,13 +121,6 @@ public class BrowseLibrary extends FragmentActivity {
 			});
 			
 		}
-	}
-	
-	@Override
-	public void onResume() {
-		super.onResume();
-		
-		InstantiateSessionConnection.startForReturn(this);
 	}
 
 	public void displayLibrary(final Library library) {		
