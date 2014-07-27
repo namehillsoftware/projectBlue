@@ -41,6 +41,7 @@ public class FilePlayer implements
 	private Context mMpContext;
 	private File mFile;
 	
+	private static final String FILE_URI_SCHEME = "file://";
 	private static final String MEDIA_QUERY = "(" + 
 												MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
 												MediaStore.Audio.Media.ARTIST + " = ? AND " +
@@ -124,21 +125,31 @@ public class FilePlayer implements
 		final String[] projection = { MediaStore.Audio.Media.DATA };
 		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
 	    try {
-		    if (cursor.moveToFirst())
-		    	return Uri.fromFile(new java.io.File(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))));
+		    if (cursor.moveToFirst()) {
+		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+		    	if (fileUriString != null && !fileUriString.isEmpty()) {
+		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME, ""));
+		    		
+		    		if (file != null) return Uri.fromFile(file);
+		    	}
+		    }
 	    } catch (IllegalArgumentException ie) {
 	    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
 	    } finally {
 	    	cursor.close();
 	    }
 	    
-		return Uri.parse(mFile.getSubItemUrl());
+	    final String itemUrl = mFile.getSubItemUrl();
+	    if (itemUrl != null && !itemUrl.isEmpty())
+	    	return Uri.parse(itemUrl);
+	    
+	    return null;
 	}
 	
 	public void prepareMediaPlayer() {
 		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
-				Uri uri = getMpUri();
+				final Uri uri = getMpUri();
 				if (uri != null) {
 					setMpDataSource(uri);
 					isPreparing.set(true);
@@ -156,7 +167,7 @@ public class FilePlayer implements
 	public void prepareMpSynchronously() {
 		if (!isPreparing.get() && !isPrepared.get()) {
 			try {
-				Uri uri = getMpUri();
+				final Uri uri = getMpUri();
 				if (uri != null) {
 					setMpDataSource(uri);
 					
@@ -183,7 +194,7 @@ public class FilePlayer implements
 	}
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
-		Map<String, String> headers = new HashMap<String, String>();
+		final Map<String, String> headers = new HashMap<String, String>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		if (!JrSession.GetLibrary().getAuthKey().isEmpty())
