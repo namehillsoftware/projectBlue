@@ -18,9 +18,9 @@ public class InstantiateSessionConnection extends Activity {
 	
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
 	
-	private final TextView lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
-	private final Intent selectServerIntent = new Intent(this, SelectServer.class);
-	private final Intent browseLibraryIntent = new Intent(this, BrowseLibrary.class);
+	private TextView lblConnectionStatus;		
+	private Intent selectServerIntent;
+	private Intent browseLibraryIntent;
 	
 	public static void startForReturn(Context context) {
 		Intent intent = new Intent(context, InstantiateSessionConnection.class);
@@ -32,6 +32,10 @@ public class InstantiateSessionConnection extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_status);
+		
+		lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
+		selectServerIntent = new Intent(this, SelectServer.class);
+		browseLibraryIntent = new Intent(this, BrowseLibrary.class);
 		
 		handleBuildStatusChange(BuildSessionConnection.build(this, new OnBuildSessionStateChangeListener() {
 			
@@ -67,7 +71,7 @@ public class InstantiateSessionConnection extends Activity {
 			return;
 		case BUILDING_SESSION_COMPLETE:
 			lblConnectionStatus.setText(R.string.lbl_connected);
-			if (!getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
+			if (getIntent() != null && getIntent().getAction() != null && !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
 				launchActivityDelayed(browseLibraryIntent);
 			finish();
 			return;
