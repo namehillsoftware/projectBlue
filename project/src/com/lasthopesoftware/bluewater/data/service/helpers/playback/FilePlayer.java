@@ -184,6 +184,7 @@ public class FilePlayer implements
 			isPreparing.set(false);
 		} catch (IOException io) {
 			throwIoErrorEvent();
+			isPreparing.set(false);
 		} catch (Exception e) {
 			LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			resetMediaPlayer();
