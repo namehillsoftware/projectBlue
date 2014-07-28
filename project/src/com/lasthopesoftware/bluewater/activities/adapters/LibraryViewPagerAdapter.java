@@ -16,11 +16,11 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
  * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
  * one of the primary sections of the app.
  */
-public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
+public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IItem<?>> mLibraryViews;
 	private ArrayList<CategoryFragment> fragments;
 	
-	public ViewChildPagerAdapter(FragmentManager fm) {
+	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
 		mLibraryViews = new ArrayList<IItem<?>>();
 		fragments = new ArrayList<CategoryFragment>();

@@ -23,7 +23,7 @@ import android.widget.ListView;
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.activities.adapters.ViewChildPagerAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.LibraryViewPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
@@ -210,7 +210,7 @@ public class BrowseLibrary extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				ViewChildPagerAdapter viewChildPagerAdapter = new ViewChildPagerAdapter(getSupportFragmentManager());
+				LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
 				viewChildPagerAdapter.setLibraryViews(result);
 
 				// Set up the ViewPager with the sections adapter.
