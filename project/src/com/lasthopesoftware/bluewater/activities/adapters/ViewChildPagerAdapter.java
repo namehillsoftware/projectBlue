@@ -33,15 +33,18 @@ public class ViewChildPagerAdapter extends  FragmentStatePagerAdapter {
 
 	@Override
 	public Fragment getItem(int i) {
-		if (fragments.size() <= i) {
-			CategoryFragment fragment = new CategoryFragment();
+		CategoryFragment returnFragment = null;
+		if (fragments.size() > i) returnFragment = fragments.get(i);
+		if (returnFragment == null) {
+			returnFragment = new CategoryFragment();
 			Bundle args = new Bundle();
 			args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
-			fragment.setArguments(args);
-			fragments.add(fragment);
+			returnFragment.setArguments(args);
+			if (fragments.size() > i) fragments.set(i, returnFragment);
+			else fragments.add(returnFragment);
 		}
 		
-		return fragments.get(i);
+		return returnFragment;
 	}
 
 	@Override
