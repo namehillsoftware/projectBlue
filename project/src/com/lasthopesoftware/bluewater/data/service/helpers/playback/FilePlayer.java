@@ -17,6 +17,7 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import ch.qos.logback.classic.Logger;
@@ -27,6 +28,9 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListene
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class FilePlayer implements
 	OnPreparedListener, 
@@ -230,10 +234,8 @@ public class FilePlayer implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		Thread updateStatsThread = new Thread(new UpdatePlayStatsRunner(mFile));
-		updateStatsThread.setName("Asynchronous Update Stats Thread for " + mFile.getValue());
-		updateStatsThread.setPriority(Thread.MIN_PRIORITY);
-		updateStatsThread.start();
+		SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
+		updateStatsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		
 		releaseMediaPlayer();
 		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onJrFileComplete(this);
@@ -333,15 +335,15 @@ public class FilePlayer implements
 			mp.setVolume(mVolume, mVolume);
 	}
 	
-	private static class UpdatePlayStatsRunner implements Runnable {
+	private static class UpdatePlayStatsOnExecute implements OnExecuteListener<Void, Void, Void> {
 		private File mFile;
 		
-		public UpdatePlayStatsRunner(File file) {
+		public UpdatePlayStatsOnExecute(File file) {
 			mFile = file;
 		}
 		
 		@Override
-		public void run() {
+		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
 				final String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
 				
@@ -357,6 +359,8 @@ public class FilePlayer implements
 			} catch (NumberFormatException ne) {
 				LoggerFactory.getLogger(FilePlayer.class).error(ne.toString(), ne);
 			}
+			
+			return null;
 		}
 	}
 }
