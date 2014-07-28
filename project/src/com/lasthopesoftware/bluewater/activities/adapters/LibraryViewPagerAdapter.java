@@ -18,30 +18,30 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
  */
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IItem<?>> mLibraryViews;
-	private ArrayList<CategoryFragment> fragments;
+	private ArrayList<CategoryFragment> mFragments;
 	
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
 		mLibraryViews = new ArrayList<IItem<?>>();
-		fragments = new ArrayList<CategoryFragment>();
+		mFragments = new ArrayList<CategoryFragment>();
 	}
 		
 	public void setLibraryViews(ArrayList<IItem<?>> libraryViews) {
 		mLibraryViews = libraryViews;
-		fragments = new ArrayList<CategoryFragment>(libraryViews.size());
+		mFragments = new ArrayList<CategoryFragment>(libraryViews.size());
 	}
 
 	@Override
 	public Fragment getItem(int i) {
 		CategoryFragment returnFragment = null;
-		if (fragments.size() > i) returnFragment = fragments.get(i);
+		if (mFragments.size() > i) returnFragment = mFragments.get(i);
 		if (returnFragment == null) {
 			returnFragment = new CategoryFragment();
-			Bundle args = new Bundle();
+			final Bundle args = new Bundle();
 			args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
 			returnFragment.setArguments(args);
-			if (fragments.size() > i) fragments.set(i, returnFragment);
-			else fragments.add(returnFragment);
+			if (mFragments.size() > i) mFragments.set(i, returnFragment);
+			else mFragments.add(returnFragment);
 		}
 		
 		return returnFragment;
