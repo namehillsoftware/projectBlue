@@ -23,9 +23,9 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class Files implements IItemFiles {
 	private final String[] mParams;
-	private final ArrayList<OnStartListener<List<File>>> mFileStartListeners = new ArrayList<IDataTask.OnStartListener<List<File>>>(1);
-	private final ArrayList<OnErrorListener<List<File>>> mFileErrorListeners = new ArrayList<IDataTask.OnErrorListener<List<File>>>(1);
-	private final ArrayList<IDataTask.OnCompleteListener<List<File>>> mFileCompleteListeners = new ArrayList<OnCompleteListener<List<File>>>(2);
+	private OnStartListener<List<File>> mFileStartListener;
+	private OnErrorListener<List<File>> mFileErrorListener;
+	private IDataTask.OnCompleteListener<List<File>> mFileCompleteListener;
 	public static final int GET_SHUFFLED = 1;
 
 	private OnConnectListener<List<File>> mFileConnectListener = new OnConnectListener<List<File>>() {
@@ -42,19 +42,10 @@ public class Files implements IItemFiles {
 		}
 	};
 	
-	private OnCompleteListener<List<File>> mFileCompleteListener = new OnCompleteListener<List<File>>() {
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
-			
-		}
-	};
-	
 	public Files(String... fileParams) {
 		mParams = new String[fileParams.length + 1];
 		System.arraycopy(fileParams, 0, mParams, 0, fileParams.length);
 		mParams[fileParams.length] = "Action=Serialize";
-		mFileCompleteListeners.add(mFileCompleteListener);
 	}
 	
 	/* Required Methods for File Async retrieval */
@@ -75,34 +66,19 @@ public class Files implements IItemFiles {
 	}
 
 	public void setOnFilesCompleteListener(OnCompleteListener<List<File>> listener) {
-		if (mFileCompleteListeners.size() < 2) mFileCompleteListeners.add(listener);
-		else mFileCompleteListeners.set(1, listener);
+		mFileCompleteListener = listener;
 	}
 
 	public void setOnFilesStartListener(OnStartListener<List<File>> listener) {
-		if (mFileStartListeners.size() < 1) mFileStartListeners.add(listener);
-		mFileStartListeners.set(0, listener);
+		mFileStartListener = listener;
 	}
 
 	public void setOnFilesErrorListener(OnErrorListener<List<File>> listener) {
-		if (mFileErrorListeners.size() < 1) mFileErrorListeners.add(listener);
-		mFileErrorListeners.set(0, listener);
+		mFileErrorListener = listener;
 	}
 
 	protected OnConnectListener<List<File>> getOnFileConnectListener() {
 		return mFileConnectListener;
-	}
-
-	protected List<OnCompleteListener<List<File>>> getOnFilesCompleteListeners() {
-		return mFileCompleteListeners;
-	}
-
-	protected List<OnStartListener<List<File>>> getOnFilesStartListeners() {
-		return mFileStartListeners;
-	}
-
-	protected List<OnErrorListener<List<File>>> getOnFilesErrorListeners() {
-		return mFileErrorListeners;
 	}
 	
 	@Override
@@ -178,19 +154,16 @@ public class Files implements IItemFiles {
 	protected DataTask<List<File>> getNewFilesTask() {
 		final DataTask<List<File>> fileTask = new DataTask<List<File>>();
 		
-		if (getOnFilesCompleteListeners() != null) {
-			for (OnCompleteListener<List<File>> listener : getOnFilesCompleteListeners()) fileTask.addOnCompleteListener(listener);
-		}
+		if (mFileCompleteListener != null)
+			fileTask.addOnCompleteListener(mFileCompleteListener);
 			
-		if (getOnFilesStartListeners() != null) {
-			for (OnStartListener<List<File>> listener : getOnFilesStartListeners()) fileTask.addOnStartListener(listener);
-		}
+		if (mFileStartListener != null)
+			fileTask.addOnStartListener(mFileStartListener);
 		
 		fileTask.addOnConnectListener(getOnFileConnectListener());
 		
-		if (getOnFilesErrorListeners() != null) {
-			for (OnErrorListener<List<File>> listener : getOnFilesErrorListeners()) fileTask.addOnErrorListener(listener);
-		}
+		if (mFileErrorListener != null)
+			fileTask.addOnErrorListener(mFileErrorListener);
 		
 		return fileTask;
 	}
