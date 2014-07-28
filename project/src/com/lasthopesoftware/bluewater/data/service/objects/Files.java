@@ -22,10 +22,10 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 
 public class Files implements IItemFiles {
-	private String[] mParams;
-	private ArrayList<OnStartListener<List<File>>> mFileStartListeners = new ArrayList<IDataTask.OnStartListener<List<File>>>(1);
-	private ArrayList<OnErrorListener<List<File>>> mFileErrorListeners = new ArrayList<IDataTask.OnErrorListener<List<File>>>(1);
-	private ArrayList<IDataTask.OnCompleteListener<List<File>>> mFileCompleteListeners;
+	private final String[] mParams;
+	private final ArrayList<OnStartListener<List<File>>> mFileStartListeners = new ArrayList<IDataTask.OnStartListener<List<File>>>(1);
+	private final ArrayList<OnErrorListener<List<File>>> mFileErrorListeners = new ArrayList<IDataTask.OnErrorListener<List<File>>>(1);
+	private final ArrayList<IDataTask.OnCompleteListener<List<File>>> mFileCompleteListeners = new ArrayList<OnCompleteListener<List<File>>>(2);
 	public static final int GET_SHUFFLED = 1;
 
 	private OnConnectListener<List<File>> mFileConnectListener = new OnConnectListener<List<File>>() {
@@ -54,7 +54,6 @@ public class Files implements IItemFiles {
 		mParams = new String[fileParams.length + 1];
 		System.arraycopy(fileParams, 0, mParams, 0, fileParams.length);
 		mParams[fileParams.length] = "Action=Serialize";
-		mFileCompleteListeners = new ArrayList<OnCompleteListener<List<File>>>(2);
 		mFileCompleteListeners.add(mFileCompleteListener);
 	}
 	
@@ -63,10 +62,10 @@ public class Files implements IItemFiles {
 		return mParams;
 	}
 	
-	protected String[] getFileParams(int option) {
+	protected String[] getFileParams(final int option) {
 		switch (option) {
 			case GET_SHUFFLED:
-				String[] fileParams = new String[mParams.length + 1];
+				final String[] fileParams = new String[mParams.length + 1];
 				System.arraycopy(mParams, 0, fileParams, 0, mParams.length);
 				fileParams[mParams.length] = "Shuffle=1";
 				return fileParams;
@@ -137,7 +136,7 @@ public class Files implements IItemFiles {
 	}
 	
 	public String getFileStringList(int option) throws IOException {
-		DataTask<String> getStringListTask = new DataTask<String>();
+		final DataTask<String> getStringListTask = new DataTask<String>();
 		getStringListTask.addOnConnectListener(new OnConnectListener<String>() {
 			
 			@Override
@@ -177,7 +176,7 @@ public class Files implements IItemFiles {
 	}
 
 	protected DataTask<List<File>> getNewFilesTask() {
-		DataTask<List<File>> fileTask = new DataTask<List<File>>();
+		final DataTask<List<File>> fileTask = new DataTask<List<File>>();
 		
 		if (getOnFilesCompleteListeners() != null) {
 			for (OnCompleteListener<List<File>> listener : getOnFilesCompleteListeners()) fileTask.addOnCompleteListener(listener);
@@ -196,38 +195,30 @@ public class Files implements IItemFiles {
 		return fileTask;
 	}
 
-	public static ArrayList<File> deserializeFileStringList(String fileList) {
-		ArrayList<File> files = new ArrayList<File>();
+	public static final ArrayList<File> deserializeFileStringList(String fileList) {
+		final String[] keys = fileList.split(";");
+		final int keyLength = keys.length;
 		
-		String[] keys = fileList.split(";");
+		final int offset = Integer.parseInt(keys[0]) + 1;
+		final ArrayList<File> files = new ArrayList<File>(Integer.parseInt(keys[1]));
 		
-		int offset = -1;
 		File newFile = null, prevFile = null;
-		for (int i = 0; i < keys.length; i++) {
+		for (int i = offset; i < keyLength; i++) {
 			int intKey = Integer.parseInt(keys[i]);
-			if (i == 0) {
-				offset = intKey;
-				continue;
-			}
-			if (i == 1) {
-				files = new ArrayList<File>(intKey);
-				continue;
-			}	
-			if (i > offset) { 
-				newFile = new File(intKey);
-				if (prevFile != null)
-					prevFile.setNextFile(newFile);
+			
+			newFile = new File(intKey);
+			if (prevFile != null)
+				prevFile.setNextFile(newFile);
 
-				files.add(newFile);
-				prevFile = newFile;
-			}
+			files.add(newFile);
+			prevFile = newFile;
 		}
 		
 		return files;
 	}
 	
-	public static String serializeFileStringList(List<File> files) {
-		StringBuilder sb = new StringBuilder("2;");
+	public static final String serializeFileStringList(List<File> files) {
+		final StringBuilder sb = new StringBuilder("2;");
 		sb.append(files.size()).append(";-1;");
 		
 		for (File file : files)
