@@ -13,4 +13,11 @@
         android:icon="@drawable/av_play_dark"
         android:visible="false" />
     
+    <item android:id="@+id/search"
+          android:title="@string/lbl_search"
+          android:orderInCategory="300"
+          android:icon="@drawable/ic_search"
+          android:showAsAction="collapseActionView|ifRoom"
+          android:actionViewClass="android.widget.SearchView" />
+    
 </menu>
