@@ -29,7 +29,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
-	protected void onPreExecute() {
+	protected final void onPreExecute() {
 		super.onPreExecute();
 		if (mOnStartListeners == null) return;
 		for (OnStartListener<TParams, TProgress, TResult> listener : mOnStartListeners) listener.onStart(this);
@@ -60,26 +60,26 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public void reportProgress(TProgress... values) {
+	public final void reportProgress(TProgress... values) {
 		this.publishProgress(values);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	protected void onProgressUpdate(TProgress... values) {
+	protected final void onProgressUpdate(TProgress... values) {
 		if (mOnProgressListeners == null) return;
 		for (OnProgressListener<TParams, TProgress, TResult> progressListener : mOnProgressListeners) progressListener.onReportProgress(this, values);
 	}
 	
 	@Override
-	protected void onPostExecute(TResult result) {
+	protected final void onPostExecute(TResult result) {
 		super.onPostExecute(result);
 		if (mOnCompleteListeners == null) return;
 		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : mOnCompleteListeners) completeListener.onComplete(this, result);
 	}
 	
 	@Override
-	protected void onCancelled(TResult result) {
+	protected final void onCancelled(TResult result) {
 		mState = SimpleTaskState.CANCELLED;
 		super.onCancelled(result);
 		if (mOnCancelListeners == null) return;
