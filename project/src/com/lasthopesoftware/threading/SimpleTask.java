@@ -37,7 +37,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	protected TResult doInBackground(TParams... params) {
+	protected final TResult doInBackground(TParams... params) {
 		mState = SimpleTaskState.EXECUTING;
 		exceptions.clear();
 		

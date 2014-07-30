@@ -16,7 +16,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 
-	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 100 ? 100 : (int) (Runtime.getRuntime().maxMemory() / 32768);
+	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 50 ? 50 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
@@ -24,16 +24,14 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 		this(new File(fileKey));
 	}
 	
-	public ImageTask(File file) {
+	public ImageTask(final File file) {
 		super();
-		
-		final File _file = file;
-		
+				
 		super.setOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
 			
 			@Override
 			public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-				final String uniqueId = _file.getProperty(FileProperties.ARTIST) + ":" + _file.getProperty(FileProperties.ALBUM);
+				final String uniqueId = file.getProperty(FileProperties.ARTIST) + ":" + file.getProperty(FileProperties.ALBUM);
 				
 				if (imageCache.containsKey(uniqueId))
 					return getBitmapCopy(imageCache.get(uniqueId));
@@ -42,7 +40,7 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 				try {
 					HttpURLConnection conn = ConnectionManager.getConnection(
 												"File/GetImage", 
-												"File=" + String.valueOf(_file.getKey()), 
+												"File=" + String.valueOf(file.getKey()), 
 												"Type=Full", 
 												"Pad=1",
 												"Format=jpg",
@@ -71,6 +69,11 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 				return getBitmapCopy(returnBmp);
 			}
 		});
+	}
+	
+	@Override
+	public final void setOnExecuteListener(OnExecuteListener<Void, Void, Bitmap> listener) {
+		throw new UnsupportedOperationException("The on execute listener cannot be set for an ImageTask. It is already set in the constructor.");
 	}
 	
 	private Bitmap getBitmapCopy(Bitmap src) {
