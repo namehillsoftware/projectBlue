@@ -23,7 +23,7 @@ public class InstantiateSessionConnection extends Activity {
 	private Intent selectServerIntent;
 	private Intent browseLibraryIntent;
 	
-	public static void restoreSessionConnection(Context context) {
+	public static void restoreSessionConnection(final Context context) {
 		// Check to see that a URL can still be built
 		if (ConnectionManager.getFormattedUrl() != null) return;
 		
