@@ -34,7 +34,6 @@ public class FileProperties {
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
-//	private static ConcurrentLinkedQueue<Integer> mPropertiesQueue = new ConcurrentLinkedQueue<Integer>();
 	
 	public FileProperties(int fileKey) {
 		
@@ -45,13 +44,6 @@ public class FileProperties {
 		if (mProperties == null) {
 			mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER); 
 			mPropertiesCache.put(mFileKey, mProperties);
-//			mPropertiesQueue.add(mFileKey);
-			
-//			if (mPropertiesCache.size() <= maxSize) return;
-			
-//			if (!mPropertiesCache.contains(mPropertiesQueue.peek())) return;
-//			
-//			mPropertiesCache.remove(mPropertiesQueue.poll());
 		}
 	}
 	
