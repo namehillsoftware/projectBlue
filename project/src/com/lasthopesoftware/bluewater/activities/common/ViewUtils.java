@@ -68,8 +68,8 @@ public class ViewUtils {
 		});
 	}
 	
-	public static void CreateNowPlayingView(Context context) {
-    	Intent viewIntent = new Intent(context, ViewNowPlaying.class);
+	public static void CreateNowPlayingView(final Context context) {
+    	final Intent viewIntent = new Intent(context, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		context.startActivity(viewIntent);
     }

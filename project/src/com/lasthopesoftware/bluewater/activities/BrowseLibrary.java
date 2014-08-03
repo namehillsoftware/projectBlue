@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.SearchView;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
@@ -232,6 +235,11 @@ public class BrowseLibrary extends FragmentActivity {
 				nowPlayingItem.setVisible(isSet);
 			}
 		});
+		
+		final SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+	    searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
 		return true;
 	}
 

@@ -59,4 +59,7 @@
     <string name="lbl_library_no_views">This library doesn\'t contain any views</string>
     <string name="lbl_getting_library_views">Getting library views</string>
     <string name="lbl_search">Search</string>
+    <string name="title_activity_search_files">Search Files</string>
+    <string name="lbl_search_hint">Search for files</string>
+    <string name="title_activity_search_results">Search Results for &quot;%1$s&quot;</string>
 </resources>
