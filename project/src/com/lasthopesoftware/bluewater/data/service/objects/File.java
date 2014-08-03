@@ -60,7 +60,7 @@ public class File extends BaseObject {
 		return mNextFile;
 	}
 	
-	public void setNextFile(File file) {
+	public void setNextFile(final File file) {
 		if (mNextFile == file) return;
 		mNextFile = file;
 		file.setPreviousFile(this);
@@ -70,7 +70,7 @@ public class File extends BaseObject {
 		return mPreviousFile;
 	}
 	
-	public void setPreviousFile(File file) {
+	public void setPreviousFile(final File file) {
 		if (mPreviousFile == file) return;
 		mPreviousFile = file;
 		file.setNextFile(this);
