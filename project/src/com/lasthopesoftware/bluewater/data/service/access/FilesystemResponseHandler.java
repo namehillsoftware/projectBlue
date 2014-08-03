@@ -10,7 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.lasthopesoftware.bluewater.data.service.objects.BaseObject;
 
-public class FileSystemResponseHandler<T extends BaseObject> extends DefaultHandler {
+public class FilesystemResponseHandler<T extends BaseObject> extends DefaultHandler {
 	
 	private String currentValue;
 	private String currentKey;
@@ -19,7 +19,7 @@ public class FileSystemResponseHandler<T extends BaseObject> extends DefaultHand
 	
 	private Class<T> newClass;
 	
-	public FileSystemResponseHandler(Class<T> c) {
+	public FilesystemResponseHandler(Class<T> c) {
 		items = new ArrayList<T>();
 		newClass = c;
 	}

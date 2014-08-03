@@ -24,7 +24,7 @@ public class FilesystemResponse {
 			
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser sp = parserFactory.newSAXParser();
-	    	FileSystemResponseHandler<Item> jrResponseHandler = new FileSystemResponseHandler<Item>(Item.class);
+	    	FilesystemResponseHandler<Item> jrResponseHandler = new FilesystemResponseHandler<Item>(Item.class);
 	    	sp.parse(is, jrResponseHandler);
 	    	
 	    	items = jrResponseHandler.items;
