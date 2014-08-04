@@ -619,8 +619,6 @@ public class StreamingMusicService extends Service implements
 		stopNotification();
 		
 		throwStopEvent(controller, filePlayer);
-		
-		stopSelf(mStartId);
 	}
 
 	@Override
