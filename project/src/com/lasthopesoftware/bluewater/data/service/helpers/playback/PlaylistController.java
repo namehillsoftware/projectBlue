@@ -201,16 +201,24 @@ public class PlaylistController implements
 	public void setIsRepeating(boolean isRepeating) {
 		mIsRepeating = isRepeating;
 		
-		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying() && mCurrentFilePlayer.getFile().getNextFile() == null) {
-			if (mIsRepeating) {
-				mPlaylist.get(mPlaylist.size() - 1).setNextFile(mPlaylist.get(0));
-				prepareNextFile(mPlaylist.get(0));
-			} else {
-				haltBackgroundPreparerThread();
-				if (mPlaylist.get(mPlaylist.size() - 1).getNextFile() != null) mPlaylist.get(mPlaylist.size() - 1).setNextFile(null);
+		if (mCurrentFilePlayer == null) return;
+		
+		final File lastFile = mPlaylist.get(mPlaylist.size() - 1);
+		if (mIsRepeating) {
+			lastFile.setNextFile(mPlaylist.get(0));
+			if (lastFile == mCurrentFilePlayer.getFile()) {
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-				mNextFilePlayer = null;
+				prepareNextFile(mPlaylist.get(0));
 			}
+			return;
+		}
+		
+		if (lastFile.getNextFile() != null) lastFile.setNextFile(null);
+		
+		if (lastFile == mCurrentFilePlayer.getFile()) {
+			haltBackgroundPreparerThread();
+			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+			mNextFilePlayer = null;
 		}
 	}
 	
