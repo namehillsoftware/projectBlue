@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistCont
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -57,6 +58,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
+	OnNowPlayingStopListener,
 	OnNowPlayingStartListener,
 	OnConnectionLostListener
 {
@@ -474,18 +476,27 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaylistController controller, FilePlayer file) {
+	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
+		handleNowPlayingStopping(controller, filePlayer);
+	}
+
+	@Override
+	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
+		handleNowPlayingStopping(controller, filePlayer);
+	}
+	
+	private void handleNowPlayingStopping(PlaylistController controller, FilePlayer filePlayer) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		int duration = 100;
 		try {
-			duration = file.getDuration();
+			duration = filePlayer.getDuration();
 		} catch (IOException e) {
 			LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
 		}
 		
 		mSongProgressBar.setMax(duration);
-		mSongProgressBar.setProgress(file.getCurrentPosition());
+		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
