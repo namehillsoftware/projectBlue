@@ -11,6 +11,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
@@ -28,6 +29,7 @@ public class PlaylistController implements
 	private HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	private HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
@@ -248,8 +250,6 @@ public class PlaylistController implements
 	
 	@Override
 	public void onJrFileComplete(FilePlayer mediaPlayer) {
-		throwStopEvent(mediaPlayer);
-		
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
@@ -319,6 +319,15 @@ public class PlaylistController implements
 	public void removeOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		if (mOnNowPlayingStopListeners.contains(listener))
 			mOnNowPlayingStopListeners.remove(listener);
+	}
+	
+	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
+		mOnNowPlayingPauseListeners.add(listener);
+	}
+	
+	public void removeOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
+		if (mOnNowPlayingPauseListeners.contains(listener))
+			mOnNowPlayingPauseListeners.remove(listener);
 	}
 	
 	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
