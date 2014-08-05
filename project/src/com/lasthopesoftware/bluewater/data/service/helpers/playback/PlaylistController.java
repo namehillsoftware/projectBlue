@@ -152,8 +152,6 @@ public class PlaylistController implements
 		if (nextFile == null) {
 			if (!mIsRepeating) {
 				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
-				mNextFilePlayer = null;
-				throwStopEvent(mCurrentFilePlayer);
 				return;
 			} else {
 				nextFile = mPlaylist.get(0);
@@ -183,7 +181,8 @@ public class PlaylistController implements
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
-		throwStopEvent(mCurrentFilePlayer);
+		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
+			onPauseListener.onNowPlayingPause(this, mCurrentFilePlayer);
 	}
 	
 	public boolean isPrepared() {
@@ -204,9 +203,11 @@ public class PlaylistController implements
 		
 		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying() && mCurrentFilePlayer.getFile().getNextFile() == null) {
 			if (mIsRepeating) {
+				mPlaylist.get(mPlaylist.size() - 1).setNextFile(mPlaylist.get(0));
 				prepareNextFile(mPlaylist.get(0));
 			} else {
 				haltBackgroundPreparerThread();
+				if (mPlaylist.get(mPlaylist.size() - 1).getNextFile() != null) mPlaylist.get(mPlaylist.size() - 1).setNextFile(null);
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
 			}
@@ -253,7 +254,10 @@ public class PlaylistController implements
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
-			if (mediaPlayer.getFile().getNextFile() == null) return;
+			if (mediaPlayer.getFile().getNextFile() == null) {
+				throwStopEvent(mediaPlayer);
+				return;
+			}
 			
 			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}

@@ -63,7 +63,7 @@ public class File extends BaseObject {
 	public void setNextFile(final File file) {
 		if (mNextFile == file) return;
 		mNextFile = file;
-		file.setPreviousFile(this);
+		if (file != null) file.setPreviousFile(this);
 	}
 	
 	public File getPreviousFile() {
@@ -73,7 +73,7 @@ public class File extends BaseObject {
 	public void setPreviousFile(final File file) {
 		if (mPreviousFile == file) return;
 		mPreviousFile = file;
-		file.setNextFile(this);
+		if (file != null) file.setNextFile(this);
 	}
 	
 	public void setProperty(String name, String value) {
