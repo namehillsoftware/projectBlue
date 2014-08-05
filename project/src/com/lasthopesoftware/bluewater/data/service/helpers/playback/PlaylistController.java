@@ -152,7 +152,7 @@ public class PlaylistController implements
 		if (nextFile == null) {
 			if (!mIsRepeating) {
 				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
-				return;
+				mNextFilePlayer = null;
 			} else {
 				nextFile = mPlaylist.get(0);
 			}

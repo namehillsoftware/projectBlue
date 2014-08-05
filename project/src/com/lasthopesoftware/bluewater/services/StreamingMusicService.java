@@ -637,9 +637,10 @@ public class StreamingMusicService extends Service implements
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		JrSession.SaveSession(thisContext);
 		
-		throwStopEvent(controller, filePlayer);
+		stopNotification();
+		if (mIsHwRegistered) unregisterHardwareListeners();
 		
-		stopSelf(mStartId);
+		throwStopEvent(controller, filePlayer);
 	}
 	
 
