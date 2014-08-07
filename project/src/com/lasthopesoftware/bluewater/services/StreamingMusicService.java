@@ -93,7 +93,7 @@ public class StreamingMusicService extends Service implements
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
 	private NotificationManager mNotificationMgr;
-	private Context thisContext;
+	private Context mThis;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
@@ -104,7 +104,7 @@ public class StreamingMusicService extends Service implements
 	private static PlaylistController mPlaylistController;
 	
 	// State dependent non-static variables
-	private static boolean mIsHwRegistered = false;
+	private static boolean mAreListenersRegistered = false;
 	private static boolean mIsNotificationForeground = false;
 	
 	private static final Object syncHandlersObject = new Object();
@@ -329,8 +329,8 @@ public class StreamingMusicService extends Service implements
 	
 	public StreamingMusicService() {
 		super();
-		thisContext = this;
-		JrSession.GetLibrary(thisContext, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		mThis = this;
+		JrSession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -359,7 +359,7 @@ public class StreamingMusicService extends Service implements
 	private void restorePlaylistControllerFromStorage() {
 		if (mLibrary != null) {
 
-			ConnectionManager.refreshConfiguration(thisContext, new OnCompleteListener<Integer, Void, Boolean>() {
+			ConnectionManager.refreshConfiguration(mThis, new OnCompleteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
@@ -371,7 +371,7 @@ public class StreamingMusicService extends Service implements
 			return;
 		}
 		
-		JrSession.GetLibrary(thisContext, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		JrSession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -398,7 +398,7 @@ public class StreamingMusicService extends Service implements
 		if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = mLibrary.getSavedTracksString();
 		
 		mLibrary.setSavedTracksString(mPlaylistString);
-		JrSession.SaveSession(thisContext);
+		JrSession.SaveSession(mThis);
 		
 		if (mPlaylistController != null) {
 			mPlaylistController.pause();
@@ -406,7 +406,7 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		synchronized(syncPlaylistControllerObject) {
-			mPlaylistController = new PlaylistController(thisContext, mPlaylistString);
+			mPlaylistController = new PlaylistController(mThis, mPlaylistString);
 		}
 		mPlaylistController.setIsRepeating(mLibrary.isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
@@ -418,7 +418,7 @@ public class StreamingMusicService extends Service implements
 	private void pausePlayback(boolean isUserInterrupted) {
 		if (mPlaylistController != null) {
 			if (mPlaylistController.isPlaying()) {
-				if (isUserInterrupted & mIsHwRegistered) unregisterHardwareListeners();
+				if (isUserInterrupted & mAreListenersRegistered) unregisterListeners();
 				mPlaylistController.pause();
 			}
 		}
@@ -430,7 +430,7 @@ public class StreamingMusicService extends Service implements
         builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(thisContext, StreamingMusicService.class);
+		final Intent intent = new Intent(mThis, StreamingMusicService.class);
 		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
@@ -440,7 +440,7 @@ public class StreamingMusicService extends Service implements
 		builder.setTicker(waitingText);
 		builder.setSubText(getText(R.string.lbl_click_to_cancel));
 		notifyForeground(builder.build());
-		PollConnection checkConnection = PollConnection.Instance.get(thisContext);
+		PollConnection checkConnection = PollConnection.Instance.get(mThis);
 		
 		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
 		
@@ -448,7 +448,7 @@ public class StreamingMusicService extends Service implements
 			
 			@Override
 			public void onPollingCancelled() {
-				unregisterHardwareListeners();
+				unregisterListeners();
 				stopSelf();
 			}
 		});
@@ -472,7 +472,7 @@ public class StreamingMusicService extends Service implements
 		mNotificationMgr.cancel(mId);
 	}
 	
-	private void registerHardwareListeners() {
+	private void registerListeners() {
 		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
 		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
@@ -483,7 +483,7 @@ public class StreamingMusicService extends Service implements
         // build the PendingIntent for the remote control client
 		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 		mediaButtonIntent.setComponent(mRemoteControlReceiver);
-		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(thisContext, 0, mediaButtonIntent, 0);
+		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mThis, 0, mediaButtonIntent, 0);
 		// create and register the remote control client
 		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
 		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
@@ -496,12 +496,12 @@ public class StreamingMusicService extends Service implements
 		
 		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 		
-		PollConnection.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(mThis).addOnConnectionLostListener(mPollConnectionTaskListener);
 		
-		mIsHwRegistered = true;
+		mAreListenersRegistered = true;
 	}
 	
-	private void unregisterHardwareListeners() {
+	private void unregisterListeners() {
 		mAudioManager.abandonAudioFocus(this);
 		if (mRemoteControlClient != null) mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
 		if (mRemoteControlReceiver != null) mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
@@ -510,11 +510,11 @@ public class StreamingMusicService extends Service implements
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
-		final PollConnection pollConnection = PollConnection.Instance.get(thisContext);
+		final PollConnection pollConnection = PollConnection.Instance.get(mThis);
 		pollConnection.removeOnConnectionLostListener(mPollConnectionTaskListener);
 		pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
 		
-		mIsHwRegistered = false;
+		mAreListenersRegistered = false;
 	}
 	
 	/* Begin Event Handlers */
@@ -527,14 +527,14 @@ public class StreamingMusicService extends Service implements
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
-		if (thisContext == null) thisContext = this;
+		if (mThis == null) mThis = this;
 		
 		if (mLibrary != null) {
 			actOnIntent(intent);
 		} else {
 			final Intent _intent = intent;
 
-			JrSession.GetLibrary(thisContext, new OnCompleteListener<Integer, Void, Library>() {
+			JrSession.GetLibrary(mThis, new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -570,7 +570,7 @@ public class StreamingMusicService extends Service implements
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	PollConnection.Instance.get(thisContext).stopPolling();
+	        	PollConnection.Instance.get(mThis).stopPolling();
 	        }
 		} else if (mLibrary != null)  {
 			pausePlayback(true);
@@ -594,7 +594,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
-		PollConnection.Instance.get(thisContext).startPolling();
+		PollConnection.Instance.get(mThis).startPolling();
 
 		return true;
 	}
@@ -607,7 +607,7 @@ public class StreamingMusicService extends Service implements
 			mPlaylistController.setVolume(1.0f);
     		if (mPlaylistController.isPlaying()) return;
     		
-        	ConnectionManager.refreshConfiguration(thisContext, new OnCompleteListener<Integer, Void, Boolean>() {
+        	ConnectionManager.refreshConfiguration(mThis, new OnCompleteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
@@ -641,10 +641,10 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(thisContext);
+		JrSession.SaveSession(mThis);
 		
 		stopNotification();
-		if (mIsHwRegistered) unregisterHardwareListeners();
+		if (mAreListenersRegistered) unregisterListeners();
 		
 		throwStopEvent(controller, filePlayer);
 	}
@@ -654,7 +654,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(thisContext);
+		JrSession.SaveSession(mThis);
 		
 		stopNotification();
 		
@@ -665,7 +665,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(thisContext);
+		JrSession.SaveSession(mThis);
 		throwChangeEvent(controller, filePlayer);
 	}
 
@@ -673,7 +673,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
 		final File playingFile = filePlayer.getFile();
 		
-		if (!mIsHwRegistered) registerHardwareListeners();
+		if (!mAreListenersRegistered) registerListeners();
 		
 		// Set the notification area
 		final Intent viewIntent = new Intent(this, ViewNowPlaying.class);
@@ -694,7 +694,7 @@ public class StreamingMusicService extends Service implements
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				NotificationCompat.Builder builder = new NotificationCompat.Builder(thisContext);
+				NotificationCompat.Builder builder = new NotificationCompat.Builder(mThis);
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -779,11 +779,11 @@ public class StreamingMusicService extends Service implements
 			mPlaylistController = null;
 		}
 		
-		if (mIsHwRegistered) unregisterHardwareListeners();
+		if (mAreListenersRegistered) unregisterListeners();
 		
 		mPlaylistString = null;
 		
-		PollConnection.Instance.get(thisContext).removeOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(mThis).removeOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 
 	/* End Event Handlers */
