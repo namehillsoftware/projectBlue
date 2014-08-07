@@ -85,8 +85,7 @@ public class SearchFiles extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
-		    			    	
+				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    	fileListView.setOnItemClickListener(new ClickFileListener(filesContainer));
 		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	fileListView.setAdapter(fileListAdapter);

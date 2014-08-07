@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
@@ -56,6 +57,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
+	OnNowPlayingPauseListener,
 	OnNowPlayingStopListener,
 	OnNowPlayingStartListener,
 	OnConnectionLostListener
@@ -117,7 +119,7 @@ public class ViewNowPlaying extends Activity implements
 		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
 		
 		StreamingMusicService.addOnStreamingChangeListener(this);
-		StreamingMusicService.addOnStreamingStopListener(this);
+		StreamingMusicService.addOnStreamingPauseListener(this);
 		StreamingMusicService.addOnStreamingStartListener(this);
 		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
@@ -249,7 +251,7 @@ public class ViewNowPlaying extends Activity implements
 		if (mTrackerThread != null) mTrackerThread.interrupt();
 		StreamingMusicService.removeOnStreamingStartListener(this);
 		StreamingMusicService.removeOnStreamingChangeListener(this);
-		StreamingMusicService.removeOnStreamingStopListener(this);
+		StreamingMusicService.removeOnStreamingPauseListener(this);
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
 	}
 	
@@ -474,18 +476,27 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(PlaylistController controller, FilePlayer file) {
+	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
+		handleNowPlayingStopping(controller, filePlayer);
+	}
+
+	@Override
+	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
+		handleNowPlayingStopping(controller, filePlayer);
+	}
+	
+	private void handleNowPlayingStopping(PlaylistController controller, FilePlayer filePlayer) {
 		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
 		
 		int duration = 100;
 		try {
-			duration = file.getDuration();
+			duration = filePlayer.getDuration();
 		} catch (IOException e) {
 			LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
 		}
 		
 		mSongProgressBar.setMax(duration);
-		mSongProgressBar.setProgress(file.getCurrentPosition());
+		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);

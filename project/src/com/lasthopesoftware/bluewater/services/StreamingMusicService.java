@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
@@ -64,7 +65,8 @@ public class StreamingMusicService extends Service implements
 	OnAudioFocusChangeListener, 
 	OnNowPlayingChangeListener, 
 	OnNowPlayingStartListener,
-	OnNowPlayingStopListener, 
+	OnNowPlayingStopListener,
+	OnNowPlayingPauseListener, 
 	OnPlaylistStateControlErrorListener
 {
 	/* String constant actions */
@@ -111,6 +113,7 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	
 	private final OnConnectionLostListener mPollConnectionTaskListener = new OnConnectionLostListener() {
 		
@@ -256,7 +259,11 @@ public class StreamingMusicService extends Service implements
 	public static void addOnStreamingStopListener(OnNowPlayingStopListener listener) {
 		mOnStreamingStopListeners.add(listener);
 	}
-		
+	
+	public static void addOnStreamingPauseListener(OnNowPlayingPauseListener listener) {
+		mOnStreamingPauseListeners.add(listener);
+	}
+	
 	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
 		synchronized(syncHandlersObject) {
 			if (mOnStreamingChangeListeners.contains(listener))
@@ -278,6 +285,13 @@ public class StreamingMusicService extends Service implements
 		}
 	}
 	
+	public static void removeOnStreamingPauseListener(OnNowPlayingPauseListener listener) {
+		synchronized(syncHandlersObject) {
+			if (mOnStreamingPauseListeners.contains(listener))
+				mOnStreamingPauseListeners.remove(listener);
+		}
+	}
+	
 	private void throwChangeEvent(PlaylistController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
@@ -296,6 +310,13 @@ public class StreamingMusicService extends Service implements
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onNowPlayingStop(controller, filePlayer);
+		}
+	}
+	
+	private void throwPauseEvent(PlaylistController controller, FilePlayer filePlayer) {
+		synchronized(syncHandlersObject) {
+			for (OnNowPlayingPauseListener onPauseListener : mOnStreamingPauseListeners)
+				onPauseListener.onNowPlayingPause(controller, filePlayer);
 		}
 	}
 	/* End Events */
@@ -623,8 +644,21 @@ public class StreamingMusicService extends Service implements
 		JrSession.SaveSession(thisContext);
 		
 		stopNotification();
+		if (mIsHwRegistered) unregisterHardwareListeners();
 		
 		throwStopEvent(controller, filePlayer);
+	}
+	
+
+	@Override
+	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
+		mLibrary.setNowPlayingId(controller.getCurrentPosition());
+		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
+		JrSession.SaveSession(thisContext);
+		
+		stopNotification();
+		
+		throwPauseEvent(controller, filePlayer);
 	}
 
 	@Override
@@ -764,4 +798,5 @@ public class StreamingMusicService extends Service implements
 
     private final IBinder mBinder = new StreamingMusicServiceBinder();
 	/* End Binder Code */
+
 }

@@ -11,6 +11,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
@@ -28,6 +29,7 @@ public class PlaylistController implements
 	private HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
+	private HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	private HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
@@ -151,8 +153,6 @@ public class PlaylistController implements
 			if (!mIsRepeating) {
 				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
-				throwStopEvent(mCurrentFilePlayer);
-				return;
 			} else {
 				nextFile = mPlaylist.get(0);
 			}
@@ -181,7 +181,8 @@ public class PlaylistController implements
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
-		throwStopEvent(mCurrentFilePlayer);
+		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
+			onPauseListener.onNowPlayingPause(this, mCurrentFilePlayer);
 	}
 	
 	public boolean isPrepared() {
@@ -200,14 +201,24 @@ public class PlaylistController implements
 	public void setIsRepeating(boolean isRepeating) {
 		mIsRepeating = isRepeating;
 		
-		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying() && mCurrentFilePlayer.getFile().getNextFile() == null) {
-			if (mIsRepeating) {
-				prepareNextFile(mPlaylist.get(0));
-			} else {
-				haltBackgroundPreparerThread();
+		if (mCurrentFilePlayer == null) return;
+		
+		final File lastFile = mPlaylist.get(mPlaylist.size() - 1);
+		if (mIsRepeating) {
+			lastFile.setNextFile(mPlaylist.get(0));
+			if (lastFile == mCurrentFilePlayer.getFile()) {
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-				mNextFilePlayer = null;
+				prepareNextFile(mPlaylist.get(0));
 			}
+			return;
+		}
+		
+		if (lastFile.getNextFile() != null) lastFile.setNextFile(null);
+		
+		if (lastFile == mCurrentFilePlayer.getFile()) {
+			haltBackgroundPreparerThread();
+			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+			mNextFilePlayer = null;
 		}
 	}
 	
@@ -248,12 +259,13 @@ public class PlaylistController implements
 	
 	@Override
 	public void onJrFileComplete(FilePlayer mediaPlayer) {
-		throwStopEvent(mediaPlayer);
-		
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
-			if (mediaPlayer.getFile().getNextFile() == null) return;
+			if (mediaPlayer.getFile().getNextFile() == null) {
+				throwStopEvent(mediaPlayer);
+				return;
+			}
 			
 			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}
@@ -319,6 +331,15 @@ public class PlaylistController implements
 	public void removeOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		if (mOnNowPlayingStopListeners.contains(listener))
 			mOnNowPlayingStopListeners.remove(listener);
+	}
+	
+	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
+		mOnNowPlayingPauseListeners.add(listener);
+	}
+	
+	public void removeOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
+		if (mOnNowPlayingPauseListeners.contains(listener))
+			mOnNowPlayingPauseListeners.remove(listener);
 	}
 	
 	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
