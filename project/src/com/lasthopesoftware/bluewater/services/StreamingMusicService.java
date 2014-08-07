@@ -115,7 +115,7 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	
-	private final OnConnectionLostListener mPollConnectionTaskListener = new OnConnectionLostListener() {
+	private final OnConnectionLostListener mConnectionLostListener = new OnConnectionLostListener() {
 		
 		@Override
 		public void onConnectionLost() {
@@ -496,7 +496,7 @@ public class StreamingMusicService extends Service implements
 		
 		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 		
-		PollConnection.Instance.get(mThis).addOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(mThis).addOnConnectionLostListener(mConnectionLostListener);
 		
 		mAreListenersRegistered = true;
 	}
@@ -511,7 +511,7 @@ public class StreamingMusicService extends Service implements
 			mWifiLock = null;
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(mThis);
-		pollConnection.removeOnConnectionLostListener(mPollConnectionTaskListener);
+		pollConnection.removeOnConnectionLostListener(mConnectionLostListener);
 		pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
 		
 		mAreListenersRegistered = false;
@@ -783,7 +783,7 @@ public class StreamingMusicService extends Service implements
 		
 		mPlaylistString = null;
 		
-		PollConnection.Instance.get(mThis).removeOnConnectionLostListener(mPollConnectionTaskListener);
+		PollConnection.Instance.get(mThis).removeOnConnectionLostListener(mConnectionLostListener);
 	}
 
 	/* End Event Handlers */
