@@ -122,6 +122,19 @@ public class StreamingMusicService extends Service implements
 		}
 	};
 	
+	private final OnConnectionRegainedListener mConnectionRegainedListener = new OnConnectionRegainedListener() {
+		
+		@Override
+		public void onConnectionRegained() {
+			if (mLibrary == null) {
+				stopSelf();
+				return;
+			}
+
+			startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+		}
+	};
+	
 	private static Intent getNewSelfIntent(final Context context, String action) {
 		final Intent newIntent = new Intent(context, StreamingMusicService.class);
 		newIntent.setAction(action);
@@ -408,18 +421,7 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnection checkConnection = PollConnection.Instance.get(thisContext);
 		
-		checkConnection.addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-			
-			@Override
-			public void onConnectionRegained() {
-				if (mLibrary == null) {
-					stopSelf();
-					return;
-				}
-
-				startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
-			}
-		});
+		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
 		
 		checkConnection.addOnPollingCancelledListener(new OnPollingCancelledListener() {
 			
@@ -473,6 +475,8 @@ public class StreamingMusicService extends Service implements
 		
 		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 		
+		PollConnection.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
+		
 		mIsHwRegistered = true;
 	}
 	
@@ -485,6 +489,9 @@ public class StreamingMusicService extends Service implements
 			if (mWifiLock.isHeld()) mWifiLock.release();
 			mWifiLock = null;
 		}
+		final PollConnection pollConnection = PollConnection.Instance.get(thisContext);
+		pollConnection.removeOnConnectionLostListener(mPollConnectionTaskListener);
+		pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
 		
 		mIsHwRegistered = false;
 	}
@@ -553,7 +560,6 @@ public class StreamingMusicService extends Service implements
     public void onCreate() {
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-		PollConnection.Instance.get(thisContext).addOnConnectionLostListener(mPollConnectionTaskListener);
 	}
 	
 	/* (non-Javadoc)
