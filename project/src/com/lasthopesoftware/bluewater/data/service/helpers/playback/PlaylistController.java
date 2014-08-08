@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
@@ -38,6 +39,8 @@ public class PlaylistController implements
 	private BackgroundFilePreparerTask mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
+	
+	private static final Logger mLogger = LoggerFactory.getLogger(PlaylistController.class);
 	
 	public PlaylistController(Context context, String playlistString) {
 		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
@@ -273,7 +276,7 @@ public class PlaylistController implements
 		mNextFilePlayer.addOnFileCompleteListener(this);
 		mNextFilePlayer.addOnFileErrorListener(this);
 		if (!mNextFilePlayer.isPrepared()) {
-			LoggerFactory.getLogger(getClass()).warn("File " + mNextFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
+			mLogger.warn("File " + mNextFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
 			mNextFilePlayer.addOnFilePreparedListener(this);
 			mNextFilePlayer.prepareMediaPlayer();
 			return;
@@ -284,7 +287,7 @@ public class PlaylistController implements
 	
 	@Override
 	public boolean onJrFileError(FilePlayer mediaPlayer, int what, int extra) {
-		LoggerFactory.getLogger(PlaylistController.class).error("JR File error - " + what + " - " + extra);
+		mLogger.error("JR File error - " + what + " - " + extra);
 		pause();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners) {
