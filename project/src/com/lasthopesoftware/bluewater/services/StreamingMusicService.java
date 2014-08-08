@@ -125,18 +125,9 @@ public class StreamingMusicService extends Service implements
 		}
 	};
 	
-	private final OnConnectionRegainedListener mConnectionRegainedListener = new OnConnectionRegainedListener() {
-		
-		@Override
-		public void onConnectionRegained() {
-			if (mLibrary == null) {
-				stopSelf();
-				return;
-			}
-
-			startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
-		}
-	};
+	private OnConnectionRegainedListener mConnectionRegainedListener;
+	
+	private OnPollingCancelledListener mOnPollingCancelledListener;
 	
 	private static Intent getNewSelfIntent(final Context context, String action) {
 		final Intent newIntent = new Intent(context, StreamingMusicService.class);
@@ -442,16 +433,34 @@ public class StreamingMusicService extends Service implements
 		notifyForeground(builder.build());
 		PollConnection checkConnection = PollConnection.Instance.get(mThis);
 		
+		if (mConnectionRegainedListener == null) {
+			mConnectionRegainedListener = new OnConnectionRegainedListener() {
+				
+				@Override
+				public void onConnectionRegained() {
+					if (mLibrary == null) {
+						stopSelf();
+						return;
+					}
+
+					startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+				}
+			};
+		}
+		
 		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
 		
-		checkConnection.addOnPollingCancelledListener(new OnPollingCancelledListener() {
-			
-			@Override
-			public void onPollingCancelled() {
-				unregisterListeners();
-				stopSelf();
-			}
-		});
+		if (mOnPollingCancelledListener == null) {
+			mOnPollingCancelledListener = new OnPollingCancelledListener() {
+				
+				@Override
+				public void onPollingCancelled() {
+					unregisterListeners();
+					stopSelf();
+				}
+			};
+		}
+		checkConnection.addOnPollingCancelledListener(mOnPollingCancelledListener);
 		
 		checkConnection.startPolling();
 	}
@@ -512,7 +521,10 @@ public class StreamingMusicService extends Service implements
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(mThis);
 		pollConnection.removeOnConnectionLostListener(mConnectionLostListener);
-		pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
+		if (mConnectionRegainedListener != null)
+			pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
+		if (mOnPollingCancelledListener != null)
+			pollConnection.removeOnPollingCancelledListener(mOnPollingCancelledListener);
 		
 		mAreListenersRegistered = false;
 	}
