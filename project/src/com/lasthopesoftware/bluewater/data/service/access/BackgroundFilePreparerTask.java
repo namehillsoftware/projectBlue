@@ -57,7 +57,7 @@ public class BackgroundFilePreparerTask {
 								if (mNextFilePlayer.getDuration() < 0) continue;
 								bufferTime = (((mNextFilePlayer.getDuration() * 128) / 384) * 1.2) + 15000;
 							} catch (IOException e) {
-								mLogger.warn("Couldn't retrieve song duration. Trying again in {0} seconds", SLEEP_TIME/1000);
+								mLogger.warn("Couldn't retrieve song duration. Trying again in " + String.valueOf(SLEEP_TIME/1000) + " seconds");
 								bufferTime = -1;
 								continue;
 							}
@@ -67,7 +67,7 @@ public class BackgroundFilePreparerTask {
 						
 						if (mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
 							mNextFilePlayer.prepareMpSynchronously();
-							mLogger.info("File {0} prepared", mNextFilePlayer.getFile().getValue());
+							mLogger.info("File " + mNextFilePlayer.getFile().getValue() + " prepared");
 							return Boolean.TRUE;
 						}
 					} catch (Exception e) {

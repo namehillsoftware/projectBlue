@@ -402,6 +402,7 @@ public class StreamingMusicService extends Service implements
 		mPlaylistController.setIsRepeating(mLibrary.isRepeating());
 		mPlaylistController.addOnNowPlayingChangeListener(this);
 		mPlaylistController.addOnNowPlayingStopListener(this);
+		mPlaylistController.addOnNowPlayingPauseListener(this);
 		mPlaylistController.addOnPlaylistStateControlErrorListener(this);
 		mPlaylistController.addOnNowPlayingStartListener(this);
 	}

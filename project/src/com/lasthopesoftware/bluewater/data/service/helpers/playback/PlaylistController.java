@@ -273,6 +273,7 @@ public class PlaylistController implements
 		mNextFilePlayer.addOnFileCompleteListener(this);
 		mNextFilePlayer.addOnFileErrorListener(this);
 		if (!mNextFilePlayer.isPrepared()) {
+			LoggerFactory.getLogger(getClass()).warn("File " + mNextFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
 			mNextFilePlayer.addOnFilePreparedListener(this);
 			mNextFilePlayer.prepareMediaPlayer();
 			return;
