@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.BackgroundFilePreparer;
+import com.lasthopesoftware.bluewater.data.service.access.BackgroundFilePreparerTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
@@ -35,7 +35,7 @@ public class PlaylistController implements
 	private int mFileKey = -1;
 	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private Context mContext;
-	private BackgroundFilePreparer mBackgroundFilePreparerTask;
+	private BackgroundFilePreparerTask mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	
@@ -172,7 +172,7 @@ public class PlaylistController implements
 		
 		haltBackgroundPreparerThread();
     	
-    	mBackgroundFilePreparerTask = new BackgroundFilePreparer(mCurrentFilePlayer, mNextFilePlayer);;
+    	mBackgroundFilePreparerTask = new BackgroundFilePreparerTask(mCurrentFilePlayer, mNextFilePlayer);;
     	mBackgroundFilePreparerTask.start();    	
 	}
 	

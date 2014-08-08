@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater;
+package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
@@ -12,15 +13,17 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class BackgroundFilePreparer {
+public class BackgroundFilePreparerTask {
 
 	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
 	private SimpleTask<Void, Void, Boolean> mTask;
 	
+	private static final Logger mLogger = LoggerFactory.getLogger(BackgroundFilePreparerTask.class);
+	
 	private static ExecutorService backgroundFileService = Executors.newSingleThreadExecutor();
 	
-	public BackgroundFilePreparer(FilePlayer currentPlayer, FilePlayer nextPlayer) {
+	public BackgroundFilePreparerTask(FilePlayer currentPlayer, FilePlayer nextPlayer) {
 		mCurrentFilePlayer = currentPlayer;
 		mNextFilePlayer = nextPlayer;
 	}
@@ -32,6 +35,7 @@ public class BackgroundFilePreparer {
 			@Override
 			public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
 				if (mNextFilePlayer == null) return Boolean.FALSE;
+
 				mNextFilePlayer.initMediaPlayer();
 				double bufferTime = -1;
 				while (!owner.isCancelled() && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
@@ -43,22 +47,27 @@ public class BackgroundFilePreparer {
 						return Boolean.FALSE;
 					}
 					
+					if (owner.isCancelled()) return Boolean.FALSE;
+					
 					try {
-						if (!owner.isCancelled() && bufferTime < 0) {
+						if (bufferTime < 0) {
 							// figure out how much buffer time we need for this file if we're on the slowest 3G network
 							// and add 15secs for a dropped connection  
 							try {
 								if (mNextFilePlayer.getDuration() < 0) continue;
 								bufferTime = (((mNextFilePlayer.getDuration() * 128) / 384) * 1.2) + 15000;
 							} catch (IOException e) {
-								LoggerFactory.getLogger(BackgroundFilePreparer.class).warn(e.toString(), e);
+								mLogger.warn("Couldn't retrieve song duration. Trying again in {0} seconds", SLEEP_TIME/1000);
 								bufferTime = -1;
 								continue;
 							}
 						}
-					
-						if (!owner.isCancelled() && mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
+						
+						if (owner.isCancelled()) return Boolean.FALSE;
+						
+						if (mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
 							mNextFilePlayer.prepareMpSynchronously();
+							mLogger.info("File {0} prepared", mNextFilePlayer.getFile().getValue());
 							return Boolean.TRUE;
 						}
 					} catch (Exception e) {
@@ -77,6 +86,7 @@ public class BackgroundFilePreparer {
 	}
 
 	public boolean isDone() {
-		return mTask != null ? (mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING)  : true;		
+		if (mTask == null) return true;
+		return mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING;
 	}
 }
