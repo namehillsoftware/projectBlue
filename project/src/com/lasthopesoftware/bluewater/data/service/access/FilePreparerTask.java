@@ -15,7 +15,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class FilePreparerTask {
 
-	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
+	private final FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
 	private SimpleTask<Void, Void, Boolean> mTask;
 	
@@ -23,7 +23,7 @@ public class FilePreparerTask {
 	
 	private static final ExecutorService backgroundFileService = Executors.newSingleThreadExecutor();
 	
-	public FilePreparerTask(FilePlayer currentPlayer, FilePlayer nextPlayer) {
+	public FilePreparerTask(final FilePlayer currentPlayer, final FilePlayer nextPlayer) {
 		mCurrentFilePlayer = currentPlayer;
 		mNextFilePlayer = nextPlayer;
 	}
