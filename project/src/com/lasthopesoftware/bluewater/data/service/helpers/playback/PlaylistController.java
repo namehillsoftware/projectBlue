@@ -35,18 +35,18 @@ public class PlaylistController implements
 	private ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
 	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
-	private Context mContext;
+	private final Context mContext;
 	private FilePreparerTask mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaylistController.class);
 	
-	public PlaylistController(Context context, String playlistString) {
+	public PlaylistController(final Context context, final String playlistString) {
 		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
 	}
 	
-	public PlaylistController(Context context, ArrayList<File> playlist) {
+	public PlaylistController(final Context context, final ArrayList<File> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}
