@@ -15,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.ClientProtocolException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
@@ -36,6 +37,7 @@ public class ConnectionManager {
 	private static String mAuthCode = null;
 	
 	private static final int stdTimeoutTime = 30000;
+	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionManager.class);
 	
 	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<OnAccessStateChange>();
 	
@@ -191,12 +193,12 @@ public class ConnectionManager {
 						}
 					}
 					return accessDao;
-				} catch (ClientProtocolException e) {
-					LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
-				} catch (IOException e) {
-					LoggerFactory.getLogger(ConnectionManager.class).error(e.toString(), e);
+				} catch (ClientProtocolException c) {
+					mLogger.error(c.getMessage());
+				} catch (IOException i) {
+					mLogger.error(i.getMessage());
 				} catch (Exception e) {
-					LoggerFactory.getLogger(ConnectionManager.class).warn(e.toString());
+					mLogger.warn(e.toString());
 				}
 				
 				return null;
@@ -476,6 +478,8 @@ public class ConnectionManager {
 	
 	private static class ConnectionTester {
 		
+		private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class); 
+		
 		public static void doTest(OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
 			doTest(stdTimeoutTime, onTestComplete);
 		}
@@ -494,14 +498,14 @@ public class ConnectionManager {
 						StandardRequest responseDao = StandardRequest.fromInputStream(conn.getInputStream());
 				    	
 				    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
-					} catch (MalformedURLException e) {
-						LoggerFactory.getLogger(ConnectionTester.class).warn(e.toString(), e);
+					} catch (MalformedURLException m) {
+						mLogger.warn(m.getMessage());
 					} catch (FileNotFoundException f) {
-						LoggerFactory.getLogger(ConnectionTester.class).warn(f.getLocalizedMessage());
+						mLogger.warn(f.getMessage());
 					} catch (IOException e) {
-						LoggerFactory.getLogger(ConnectionTester.class).warn(e.getLocalizedMessage());
+						mLogger.warn(e.getMessage());
 					} catch (IllegalArgumentException i) {
-						LoggerFactory.getLogger(ConnectionTester.class).warn(i.toString(), i);
+						mLogger.warn(i.getMessage());
 					} finally {
 						conn.disconnect();
 					}
