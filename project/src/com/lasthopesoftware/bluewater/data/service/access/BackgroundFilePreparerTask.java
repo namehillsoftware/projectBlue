@@ -21,7 +21,7 @@ public class BackgroundFilePreparerTask {
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(BackgroundFilePreparerTask.class);
 	
-	private static ExecutorService backgroundFileService = Executors.newSingleThreadExecutor();
+	private static final ExecutorService backgroundFileService = Executors.newSingleThreadExecutor();
 	
 	public BackgroundFilePreparerTask(FilePlayer currentPlayer, FilePlayer nextPlayer) {
 		mCurrentFilePlayer = currentPlayer;

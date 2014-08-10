@@ -32,8 +32,9 @@ public class FileProperties {
 	private static final int maxSize = 4000;
 	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
-	private static ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
+	
+	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
+	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
 	
 	public FileProperties(int fileKey) {
 		

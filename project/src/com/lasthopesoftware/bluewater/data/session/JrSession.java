@@ -25,7 +25,7 @@ public class JrSession {
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	public static int ChosenLibrary = -1;
 
-	private static ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
+	private static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
 	private static Library mLibrary = null;
 
