@@ -576,10 +576,10 @@ public class StreamingMusicService extends Service implements
 	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 	        } else if (action.equals(ACTION_PREVIOUS)) {
 	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() - 1);	        	
+	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() > 0 ? mPlaylistController.getCurrentPosition() - 1 : mPlaylistController.getPlaylist().size() - 1);
 	        } else if (action.equals(ACTION_NEXT)) {
 	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() + 1);
+	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() >= mPlaylistController.getPlaylist().size() ? mPlaylistController.getCurrentPosition() + 1 : 0);
 	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
 	        	pausePlayback(true);
 	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
