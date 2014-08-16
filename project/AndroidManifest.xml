@@ -72,8 +72,7 @@
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary"
-                android:launchMode="singleTask" />
+                android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
         </activity>
         
         <activity
@@ -102,6 +101,10 @@
 		    </intent-filter>
 		    
 			<meta-data android:name="android.app.searchable" android:resource="@xml/searchable" />
+			
+			<meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.activities.BrowseLibrary" />
 		</activity>
         
         <activity

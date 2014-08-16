@@ -7,6 +7,8 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -14,6 +16,8 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
+import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
@@ -32,7 +36,7 @@ public class SearchFiles extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
@@ -41,6 +45,21 @@ public class SearchFiles extends FragmentActivity {
         pbLoading.setVisibility(View.VISIBLE);
         
         handleIntent(getIntent());
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
+		return true;
 	}
 	
 	@Override
