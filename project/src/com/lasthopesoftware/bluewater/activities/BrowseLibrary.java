@@ -225,22 +225,7 @@ public class BrowseLibrary extends FragmentActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
-		nowPlayingItem.setVisible(false);
-		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
-			
-			@Override
-			public void onGetNowPlayingSetComplete(Boolean isSet) {
-				nowPlayingItem.setVisible(isSet);
-			}
-		});
-		
-		final SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
-	    searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-
-		return true;
+		return ViewUtils.buildStandardMenu(this, menu);
 	}
 
 	@Override

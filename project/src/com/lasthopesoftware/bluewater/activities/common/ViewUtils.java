@@ -2,13 +2,17 @@ package com.lasthopesoftware.bluewater.activities.common;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.SearchView;
+import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.SelectServer;
@@ -31,6 +35,14 @@ public class ViewUtils {
 				nowPlayingItem.setVisible(isSet);
 			}
 		});
+		
+		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
+	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
+		
+		final int id = searchView.getResources().getIdentifier("android:id/search_src_text", null, null);
+		final TextView textView = (TextView) searchView.findViewById(id);
+		textView.setTextColor(Color.WHITE);
 		return true;
 	}
 	
