@@ -90,17 +90,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
-		nowPlayingItem.setVisible(false);
-		ViewUtils.displayNowPlayingInMenu(this, new OnGetNowPlayingSetListener() {
-			
-			@Override
-			public void onGetNowPlayingSetComplete(Boolean isSet) {
-				nowPlayingItem.setVisible(isSet);
-			}
-		});
-		return true;
+		return ViewUtils.buildStandardMenu(this, menu);
 	}
 	
 	@Override

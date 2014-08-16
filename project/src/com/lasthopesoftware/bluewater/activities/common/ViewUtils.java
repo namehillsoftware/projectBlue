@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.view.Menu;
 import android.view.MenuItem;
 
 import com.lasthopesoftware.bluewater.R;
@@ -19,7 +20,21 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class ViewUtils {
 
-	public static boolean handleMenuClicks(Context context, MenuItem item) {
+	public final static boolean buildStandardMenu(final Activity activity, final Menu menu) {
+		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
+		nowPlayingItem.setVisible(false);
+		ViewUtils.displayNowPlayingInMenu(activity, new OnGetNowPlayingSetListener() {
+			
+			@Override
+			public void onGetNowPlayingSetComplete(Boolean isSet) {
+				nowPlayingItem.setVisible(isSet);
+			}
+		});
+		return true;
+	}
+	
+	public final static boolean handleMenuClicks(final Context context, final MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
 				context.startActivity(new Intent(context, SelectServer.class));
@@ -32,7 +47,7 @@ public class ViewUtils {
 		}
 	}
 	
-	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
+	public final static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				Intent upIntent = NavUtils.getParentActivityIntent(activity);
@@ -56,7 +71,7 @@ public class ViewUtils {
 		
 	}
 	
-	public static void displayNowPlayingInMenu(final Context context, final OnGetNowPlayingSetListener listener) {
+	public final static void displayNowPlayingInMenu(final Context context, final OnGetNowPlayingSetListener listener) {
 		
 		JrSession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 			
@@ -68,34 +83,11 @@ public class ViewUtils {
 		});
 	}
 	
-	public static void CreateNowPlayingView(final Context context) {
+	public final static void CreateNowPlayingView(final Context context) {
     	final Intent viewIntent = new Intent(context, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		context.startActivity(viewIntent);
     }
-	
-	public static boolean OkCancelDialog(Context context, String title, String message) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-		builder.setTitle(title).setMessage(message);
-		OkCancelListener listener = new OkCancelListener();
-		builder.setPositiveButton(R.string.btn_ok, listener);
-		builder.setNegativeButton(R.string.btn_cancel, listener);
-		builder.create();
-		return listener.getResult();
-	}
-	
-	private static class OkCancelListener implements DialogInterface.OnClickListener {
-		boolean mResult = false;
-		
-		@Override
-		public void onClick(DialogInterface dialog, int which) {
-			mResult = which == DialogInterface.BUTTON_POSITIVE;
-		}
-		
-		public boolean getResult() {
-			return mResult;
-		}
-	}
 	
 	public interface OnGetNowPlayingSetListener {
 		void onGetNowPlayingSetComplete(Boolean isSet);
