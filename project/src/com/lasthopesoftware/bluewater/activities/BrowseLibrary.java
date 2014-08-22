@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -21,14 +19,12 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.SearchView;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.LibraryViewPagerAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
