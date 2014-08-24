@@ -63,7 +63,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 			
 			viewFlipper.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 			
-			final OnSwipeListener onSwipeListener = new OnSwipeListener(parent.getContext());
+			final OnSwipeListener onSwipeListener = new OnSwipeListener(viewFlipper.getContext());
 			onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
 				
 				@Override
@@ -72,7 +72,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 					return true;
 				}
 			});
-			parent.setOnTouchListener(onSwipeListener);
+			viewFlipper.setOnTouchListener(onSwipeListener);
 			
 			final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			final RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, viewFlipper, false);
@@ -135,7 +135,9 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		
 		viewHolder.textLayout.addOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
 		
+		((ViewFlipper)convertView).removeView(viewHolder.menuView);
 		viewHolder.menuView = getMenuView(position, viewHolder.menuView, viewHolder.viewFlipper);
+		((ViewFlipper)convertView).addView(viewHolder.menuView);
 		
 		return convertView;
 	}
