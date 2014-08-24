@@ -94,8 +94,6 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 			if (StreamingMusicService.getPlaylistController() == null) 
 				StreamingMusicService.resumeSavedPlaylist(_context);
 			
-			StreamingMusicService.getPlaylistController().removeFileAt(mPosition);
-			
 			JrSession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
@@ -109,6 +107,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+							StreamingMusicService.getPlaylistController().removeFileAt(mPosition);
 							mAdapter.remove(mAdapter.getItem(mPosition));
 						}
 					});

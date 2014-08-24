@@ -247,13 +247,25 @@ public class PlaylistController implements
 	public void removeFile(final File file) {
 		if (!mPlaylist.remove(file)) return;
 		
-		if (file.getNextFile() != null) {
-			file.getNextFile().setPreviousFile(file.getPreviousFile());
+		final File nextFile = file.getNextFile();
+		final File previousFile = file.getPreviousFile();
+		
+		if (previousFile != null)
+			previousFile.setNextFile(nextFile);
+		
+		if (nextFile != null)
+			nextFile.setPreviousFile(previousFile);
+		
+		if (file != mCurrentFilePlayer.getFile()) return;
+		
+		if (nextFile != null) {
+			seekTo(mPlaylist.indexOf(nextFile));
+			return;
 		}
 		
-		if (file.getPreviousFile() != null) {
-			file.getPreviousFile().setNextFile(file);
-		}
+		mCurrentFilePlayer.stop();
+		if (previousFile != null)
+			seekTo(mPlaylist.indexOf(previousFile));
 	}
 	
 	public FilePlayer getCurrentFilePlayer() {
