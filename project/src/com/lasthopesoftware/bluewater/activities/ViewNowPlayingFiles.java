@@ -13,10 +13,9 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.activities.adapters.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.adapters.filelist.NowPlayingFileListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.activities.common.ViewUtils.OnGetNowPlayingSetListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.session.JrSession;
@@ -60,13 +59,12 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 					}
 				});
 		        
-
 		        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
 						final ArrayList<File> _result = result;
-						final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, _result);
+						final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(_this, R.id.tvStandard, _result);
 				        fileListView.setAdapter(fileListAdapter);
 				        fileListView.setOnItemClickListener(new OnItemClickListener() {
 

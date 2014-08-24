@@ -231,13 +231,29 @@ public class PlaylistController implements
 	
 	/* End playlist control */
 	
-	public void addFile(int fileKey) {
+	public void addFile(final int fileKey) {
 		addFile(new File(fileKey));
 	}
 	
-	public void addFile(File file) {
+	public void addFile(final File file) {
 		file.setPreviousFile(mPlaylist.get(mPlaylist.size() - 1));
 		mPlaylist.add(file);
+	}
+	
+	public void removeFileAt(final int position) {
+		removeFile(mPlaylist.get(position));
+	}
+	
+	public void removeFile(final File file) {
+		if (!mPlaylist.remove(file)) return;
+		
+		if (file.getNextFile() != null) {
+			file.getNextFile().setPreviousFile(file.getPreviousFile());
+		}
+		
+		if (file.getPreviousFile() != null) {
+			file.getPreviousFile().setNextFile(file);
+		}
 	}
 	
 	public FilePlayer getCurrentFilePlayer() {

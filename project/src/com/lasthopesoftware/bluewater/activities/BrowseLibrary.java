@@ -166,7 +166,7 @@ public class BrowseLibrary extends FragmentActivity {
 
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						mDrawerLayout.closeDrawer(Gravity.LEFT);
+						mDrawerLayout.closeDrawer(Gravity.START);
 						mDrawerToggle.syncState();
 						
 						if (library.getSelectedView() == _views.get(position).getKey()) return;

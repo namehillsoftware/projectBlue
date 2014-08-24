@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="?android:attr/buttonBarStyle"
+    android:id="@+id/linFileItemMenu"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="0dip"
+    android:paddingLeft="2dip"
+    android:paddingRight="2dip"
+    android:measureWithLargestChild="true">
+
+	<ImageButton
+	    android:id="@+id/btnViewFileDetails"
+	    style="?android:attr/buttonBarButtonStyle"
+	    android:layout_width="0dip"
+	    android:layout_height="match_parent"
+	    android:layout_weight="1"
+	    android:contentDescription="@string/btn_view_song_details"
+	    android:src="@drawable/ic_list" />
+
+	
+	<ImageButton
+	    android:id="@+id/btnPlaySong"
+	    style="?android:attr/buttonBarButtonStyle"
+	    android:layout_width="0dip"
+	    android:layout_height="match_parent"
+	    android:layout_weight="1"
+	    android:contentDescription="@string/btn_play_files"
+	    android:src="@drawable/av_play" />
+	
+	<ImageButton
+        android:id="@+id/btnRemoveFromPlaylist"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:contentDescription="@string/btn_remove_file"
+        android:src="@drawable/content_discard" />
+	
+</LinearLayout>
