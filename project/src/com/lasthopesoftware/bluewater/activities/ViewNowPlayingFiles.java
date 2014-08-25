@@ -75,6 +75,9 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 						});
 				        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 				        
+				        if (library.getNowPlayingId() < _result.size())
+				        	fileListView.setSelection(library.getNowPlayingId());
+				        
 				        fileListView.setVisibility(View.VISIBLE);
 				        pbLoading.setVisibility(View.INVISIBLE);
 					}
