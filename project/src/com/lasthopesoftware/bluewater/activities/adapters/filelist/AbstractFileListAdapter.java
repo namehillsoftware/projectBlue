@@ -4,14 +4,12 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -24,6 +22,9 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistCont
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 
@@ -44,7 +45,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		public final TextView textView;
 		
 		public View menuView;
-		public GetFileValueTask getFileValueTask;
+		public SimpleTask<Void, Void, String> getFileValueTask;
 		public OnNowPlayingStartListener checkIfIsPlayingFileListener;
 		public OnAttachStateChangeListener onAttachStateChangeListener;
 	}
@@ -105,7 +106,22 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         	viewHolder.textView.setTypeface(null, Typeface.BOLD);
         
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
-        viewHolder.getFileValueTask = GetFileValueTask.getFileValue(position, file, (ListView)parent, viewHolder.textView);
+        viewHolder.getFileValueTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
+
+			@Override
+			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				return !owner.isCancelled() ? file.getValue() : null;
+			}
+		});
+        viewHolder.getFileValueTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+				if (result != null)
+					viewHolder.textView.setText(result);
+			}
+		});
+        viewHolder.getFileValueTask.execute();
 
 		if (viewHolder.checkIfIsPlayingFileListener != null) StreamingMusicService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
 		viewHolder.checkIfIsPlayingFileListener = viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
@@ -148,40 +164,5 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 	
 	public final List<File> getFiles() {
 		return mFiles;
-	}
-
-	private static class GetFileValueTask extends AsyncTask<String, Void, String> {
-		private final int mPosition;
-		private final ListView mParentListView;
-		private final TextView mTextView;
-		private final File mFile;
-		
-		public static GetFileValueTask getFileValue(final int position, final File file, final ListView parentListView, final TextView textView) {
-			return (GetFileValueTask) (new GetFileValueTask(position, file, parentListView, textView)).execute();
-		}
-		
-		private GetFileValueTask(final int position, final File file, final ListView parentListView, final TextView textView) {
-			mPosition = position;
-			mParentListView = parentListView;
-			mFile = file;
-			mTextView = textView;
-		}
-
-		@Override
-		protected String doInBackground(String... params) {
-			if (mParentListView.getSelectedItem() != mFile) {
-				if (isCancelled()) return null;
-				if (mPosition < mParentListView.getFirstVisiblePosition() - 10) return null;
-				if (mPosition > mParentListView.getLastVisiblePosition() + 10) return null;
-			}
-			
-			return mFile.getValue();
-		}
-		
-		@Override
-		protected void onPostExecute(String result) {
-			if (result != null)
-				mTextView.setText(result);
-		}
 	}
 }
