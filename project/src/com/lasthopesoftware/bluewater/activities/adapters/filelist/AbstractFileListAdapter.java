@@ -150,17 +150,17 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		return mFiles;
 	}
 
-	public static class GetFileValueTask extends AsyncTask<String, Void, String> {
-		private int mPosition;
-		private ListView mParentListView;
-		private TextView mTextView;
-		private File mFile;
+	private static class GetFileValueTask extends AsyncTask<String, Void, String> {
+		private final int mPosition;
+		private final ListView mParentListView;
+		private final TextView mTextView;
+		private final File mFile;
 		
-		public static GetFileValueTask getFileValue(int position, File file, ListView parentListView, TextView textView) {
+		public static GetFileValueTask getFileValue(final int position, final File file, final ListView parentListView, final TextView textView) {
 			return (GetFileValueTask) (new GetFileValueTask(position, file, parentListView, textView)).execute();
 		}
 		
-		private GetFileValueTask(int position, File file, ListView parentListView, TextView textView) {
+		private GetFileValueTask(final int position, final File file, final ListView parentListView, final TextView textView) {
 			mPosition = position;
 			mParentListView = parentListView;
 			mFile = file;
@@ -169,7 +169,12 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 
 		@Override
 		protected String doInBackground(String... params) {
-			if (isCancelled() || (mPosition < mParentListView.getFirstVisiblePosition() - 10) || (mPosition > mParentListView.getLastVisiblePosition() + 10)) return null;
+			if (mParentListView.getSelectedItem() != mFile) {
+				if (isCancelled()) return null;
+				if (mPosition < mParentListView.getFirstVisiblePosition() - 10) return null;
+				if (mPosition > mParentListView.getLastVisiblePosition() + 10) return null;
+			}
+			
 			return mFile.getValue();
 		}
 		
