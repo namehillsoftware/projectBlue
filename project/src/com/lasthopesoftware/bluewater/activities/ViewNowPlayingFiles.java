@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
@@ -75,12 +76,8 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 						});
 				        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
 				        
-				        if (library.getNowPlayingId() < _result.size()) {
+				        if (library.getNowPlayingId() < _result.size())
 				        	fileListView.setSelection(library.getNowPlayingId());
-				        	
-				        	if (fileListView.getTop() - fileListView.getSelectedView().getTop() > 0)
-				        		fileListView.setSelectionFromTop(library.getNowPlayingId(), fileListView.getHeight() - fileListView.getSelectedView().getTop());
-				        }
 				        
 				        fileListView.setVisibility(View.VISIBLE);
 				        pbLoading.setVisibility(View.INVISIBLE);
