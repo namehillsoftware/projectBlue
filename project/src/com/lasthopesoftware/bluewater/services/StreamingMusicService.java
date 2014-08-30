@@ -412,7 +412,11 @@ public class StreamingMusicService extends Service implements
 		
 		if (mPlaylistController == null || !mPlaylistController.isPlaying()) return;
 
-		if (isUserInterrupted && mAreListenersRegistered) unregisterListeners();
+		if (isUserInterrupted && mAreListenersRegistered) {
+			unregisterListeners();
+		} else {
+			mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+		}
 		mPlaylistController.pause();
 	}
 	
@@ -483,36 +487,41 @@ public class StreamingMusicService extends Service implements
 	
 	private void registerListeners() {
 		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
 		
 		mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
         mWifiLock.acquire();
-        
-        // build the PendingIntent for the remote control client
-		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-		mediaButtonIntent.setComponent(mRemoteControlReceiver);
-		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mThis, 0, mediaButtonIntent, 0);
-		// create and register the remote control client
-		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
-		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-		mRemoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-		
-		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 		
 		PollConnection.Instance.get(mThis).addOnConnectionLostListener(mConnectionLostListener);
+		
+		if (mRemoteControlReceiver == null) {
+			mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+			mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+		}
+		
+		if (mRemoteControlClient == null) {
+			// build the PendingIntent for the remote control client
+			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+			mediaButtonIntent.setComponent(mRemoteControlReceiver);
+			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mThis, 0, mediaButtonIntent, 0);
+			
+			// create and register the remote control client
+			mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
+			mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+			mRemoteControlClient.setTransportControlFlags(
+					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+	                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+	                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+	                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+			
+			mAudioManager.registerRemoteControlClient(mRemoteControlClient);
+		}
 		
 		mAreListenersRegistered = true;
 	}
 	
 	private void unregisterListeners() {
 		mAudioManager.abandonAudioFocus(this);
-		if (mRemoteControlClient != null) mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
-		if (mRemoteControlReceiver != null) mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
+
 		// release the wifilock if we still have it
 		if (mWifiLock != null) {
 			if (mWifiLock.isHeld()) mWifiLock.release();
@@ -791,6 +800,8 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		if (mAreListenersRegistered) unregisterListeners();
+		if (mRemoteControlClient != null) mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
+		if (mRemoteControlReceiver != null) mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
 		
 		mPlaylistString = null;
 		
