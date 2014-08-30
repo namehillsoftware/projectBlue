@@ -408,13 +408,12 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
-		if (mPlaylistController != null) {
-			if (mPlaylistController.isPlaying()) {
-				if (isUserInterrupted & mAreListenersRegistered) unregisterListeners();
-				mPlaylistController.pause();
-			}
-		}
 		stopNotification();
+		
+		if (mPlaylistController == null || !mPlaylistController.isPlaying()) return;
+
+		if (isUserInterrupted && mAreListenersRegistered) unregisterListeners();
+		mPlaylistController.pause();
 	}
 	
 	private void buildErrorNotification() {
@@ -498,8 +497,7 @@ public class StreamingMusicService extends Service implements
 		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
 		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
 		mRemoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-                RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
                 RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
                 RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
                 RemoteControlClient.FLAG_KEY_MEDIA_STOP);
