@@ -11,6 +11,15 @@
     android:paddingRight="2dip"
     android:measureWithLargestChild="true">
 
+    <ImageButton
+        android:id="@+id/btnRemoveFromPlaylist"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:contentDescription="@string/btn_remove_file"
+        android:src="@drawable/content_discard" />
+    
 	<ImageButton
 	    android:id="@+id/btnViewFileDetails"
 	    style="?android:attr/buttonBarButtonStyle"
@@ -29,14 +38,5 @@
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_play_files"
 	    android:src="@drawable/av_play" />
-	
-	<ImageButton
-        android:id="@+id/btnRemoveFromPlaylist"
-        style="?android:attr/buttonBarButtonStyle"
-        android:layout_width="0dip"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:contentDescription="@string/btn_remove_file"
-        android:src="@drawable/content_discard" />
 	
 </LinearLayout>
