@@ -483,11 +483,12 @@ public class StreamingMusicService extends Service implements
 	
 	private void registerListeners() {
 		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
-		
+				
 		mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
         mWifiLock.acquire();
+        
+        mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
         
         // build the PendingIntent for the remote control client
 		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
