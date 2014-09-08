@@ -44,19 +44,18 @@ public class LibrarySession {
 	
 	public static void SaveSession(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
 	
-		final Context _context = context;
 		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
 		writeToDatabaseTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
-				final DatabaseHandler handler = new DatabaseHandler(_context);
+				final DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					
 					libraryAccess.createOrUpdate(library);
 					ChosenLibrary = library.getId();
-					_context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
+					context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					
 					mLogger.debug("Session saved.");
 					return library;
