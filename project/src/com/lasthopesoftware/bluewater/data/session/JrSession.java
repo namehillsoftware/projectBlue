@@ -25,9 +25,9 @@ public class JrSession {
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(JrSession.class);
 	
-	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
+	private static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
-	public static int ChosenLibrary = -1;
+	private static int ChosenLibrary = -1;
 
 	private static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
