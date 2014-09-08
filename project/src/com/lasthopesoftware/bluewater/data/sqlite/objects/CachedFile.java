@@ -17,6 +17,9 @@ public class CachedFile {
 	@DatabaseField()
 	private Calendar lastAccessedTime;
 	
+	@DatabaseField(unique = true)
+	private String uniqueKey;
+	
 	@DatabaseField()
 	private String fileName;
 	

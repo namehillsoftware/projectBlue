@@ -44,6 +44,9 @@ public class Library {
 	@ForeignCollectionField(eager = true)
 	private Collection<StoredList> storedLists = null;
 	
+	@ForeignCollectionField()
+	private Collection<CachedFile> cachedFiles = null;
+	
 	/**
 	 * @return the nowPlayingId
 	 */
@@ -165,12 +168,23 @@ public class Library {
 	public Collection<StoredFile> getStoredFiles() {
 		if (storedFiles == null)
 			storedFiles = new ArrayList<StoredFile>();
+		
 		return storedFiles;
 	}
 	
 	public Collection<StoredList> getStoredLists() {
 		if (storedLists == null)
 			storedLists = new ArrayList<StoredList>();
+		
 		return storedLists;
+	}
+	/**
+	 * @return the cachedFiles
+	 */
+	public final Collection<CachedFile> getCachedFiles() {
+		if (cachedFiles == null)
+			cachedFiles = new ArrayList<CachedFile>();
+		
+		return cachedFiles;
 	}
 }

@@ -2,6 +2,9 @@ package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
 import java.net.HttpURLConnection;
+import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.LoggerFactory;
 
@@ -11,30 +14,40 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
-public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
+public class ImageTask {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 50 ? 50 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
+	private static final ExecutorService mImageAccessExecutor = Executors.newSingleThreadExecutor();
+	
 	private final Context mContext;
 	
-	public ImageTask(final Context context, final int fileKey) {
-		this(context, new File(fileKey));
+	private final SimpleTask<Void, Void, Bitmap> mGetImageTask;
+	
+	public ImageTask(final Context context, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		this(context, new File(fileKey), onGetBitmapComplete);
 	}
 	
-	public ImageTask(final Context context, final File file) {
+	public ImageTask(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		super();
 		
 		mContext = context;
-		
-		super.setOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
-			
+		mGetImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
+
 			@Override
 			public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 				final String uniqueId = file.getProperty(FileProperties.ARTIST) + ":" + file.getProperty(FileProperties.ALBUM);
@@ -54,7 +67,7 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 					
 					// Connection failed to build or isCancelled was called, return an empty bitmap
 					// but do not put it into the cache
-					if (conn == null || isCancelled()) return getBitmapCopy(mEmptyBitmap);
+					if (conn == null || owner.isCancelled()) return getBitmapCopy(mEmptyBitmap);
 					
 					try {
 						returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
@@ -75,15 +88,53 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 				return getBitmapCopy(returnBmp);
 			}
 		});
-	}
-	
-	@Override
-	public final void setOnExecuteListener(OnExecuteListener<Void, Void, Bitmap> listener) {
-		throw new UnsupportedOperationException("The on execute listener cannot be set for an ImageTask. It is already set in the constructor.");
+		
+		mGetImageTask.executeOnExecutor(mImageAccessExecutor);
 	}
 	
 	private Bitmap getBitmapCopy(Bitmap src) {
 		return src.copy(src.getConfig(), false);
+	}
+	
+	private void getCachedImage(final String uniqueKey, final OnCompleteListener<Integer, Void, Bitmap> onGetImageComplete) {
+		LibrarySession.GetLibrary(mContext, new OnCompleteListener<Integer, Void, Library>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				Bitmap bmpResult = null;
+				
+				final DatabaseHandler handler = new DatabaseHandler(mContext);
+				try {
+					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+					
+					final PreparedQuery<CachedFile> preparedQuery =
+							cachedFileAccess.queryBuilder()
+								.where()
+								.eq("libraryId", result.getId())
+								.and()
+								.eq("uniqueKey", uniqueKey).prepare();
+					
+					final CachedFile cachedFile = cachedFileAccess.queryForFirst(preparedQuery);
+					
+					if (cachedFile == null) {
+						onGetImageComplete.onComplete(null, bmpResult);
+						return;
+					}
+					
+					final java.io.File file = new java.io.File(cachedFile.getFileName());
+					if (file.exists())
+						bmpResult = BitmapFactory.decodeFile(cachedFile.getFileName());
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				finally {
+					handler.close();
+				}
+				
+				onGetImageComplete.onComplete(null, bmpResult);
+			}
+		});
 	}
 	
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external

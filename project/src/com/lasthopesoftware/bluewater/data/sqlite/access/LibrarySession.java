@@ -91,10 +91,8 @@ public class LibrarySession {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				if (mLibrary != null) {
-					return mLibrary;
-				}
-						
+				if (mLibrary != null) return mLibrary;
+				
 				ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 				
 				if (ChosenLibrary < 0) return null;
