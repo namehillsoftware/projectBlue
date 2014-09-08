@@ -5,8 +5,10 @@ import java.net.HttpURLConnection;
 
 import org.slf4j.LoggerFactory;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
@@ -20,11 +22,11 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
-	public ImageTask(int fileKey) {
-		this(new File(fileKey));
+	public ImageTask(final Context context, final int fileKey) {
+		this(context, new File(fileKey));
 	}
 	
-	public ImageTask(final File file) {
+	public ImageTask(final Context context, final File file) {
 		super();
 				
 		super.setOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
@@ -78,5 +80,18 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 	
 	private Bitmap getBitmapCopy(Bitmap src) {
 		return src.copy(src.getConfig(), false);
+	}
+	
+	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
+	// but if not mounted, falls back on internal storage.
+	private final static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
+	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
+	    // otherwise use internal cache dir
+	    final String cachePath =
+	            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
+            		context.getExternalCacheDir().getPath() :
+                    context.getCacheDir().getPath();
+
+	    return new java.io.File(cachePath + java.io.File.separator + uniqueName);
 	}
 }

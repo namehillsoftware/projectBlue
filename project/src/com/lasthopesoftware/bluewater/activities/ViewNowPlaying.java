@@ -333,28 +333,16 @@ public class ViewNowPlaying extends Activity implements
 							
 			try {			
 				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING)) {
-					getFileImageTask.cancel(true);
-				}
+				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING))
+					getFileImageTask.cancel(false);
 				
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
-				getFileImageTask = new ImageTask(_file);
+				getFileImageTask = new ImageTask(this, _file);
 				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						if (result != null)
-							mNowPlayingImg.setImageBitmap(result);
-						
-						displayImageBitmap();
-					}
-				});
-				
-				getFileImageTask.addOnCancelListener(new OnCancelListener<Void, Void, Bitmap>() {
-					
-					@Override
-					public void onCancel(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 						if (result != null)
 							mNowPlayingImg.setImageBitmap(result);
 						

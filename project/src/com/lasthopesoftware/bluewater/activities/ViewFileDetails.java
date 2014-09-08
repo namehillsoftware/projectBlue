@@ -143,7 +143,7 @@ public class ViewFileDetails extends Activity {
         
         getFilePropertiesTask.execute();
                 
-        final ImageTask getFileImageTask = new ImageTask(fileKey);
+        final ImageTask getFileImageTask = new ImageTask(this, fileKey);
 		getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 			
 			@Override
