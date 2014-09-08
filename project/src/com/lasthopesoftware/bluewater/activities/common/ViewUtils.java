@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.SelectServer;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -83,7 +83,7 @@ public class ViewUtils {
 	
 	public final static void displayNowPlayingInMenu(final Context context, final OnGetNowPlayingSetListener listener) {
 		
-		JrSession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

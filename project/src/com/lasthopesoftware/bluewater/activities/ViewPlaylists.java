@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -71,7 +71,7 @@ public class ViewPlaylists extends FragmentActivity {
 							
 							@Override
 							public void onConnectionRegained() {
-								JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
+								LibrarySession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 							}
 						});
 						
@@ -96,7 +96,7 @@ public class ViewPlaylists extends FragmentActivity {
 			}
 		};
 		
-        JrSession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
+        LibrarySession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
 	}
 	
 	@Override

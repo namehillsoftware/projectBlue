@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -94,7 +94,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 			if (StreamingMusicService.getPlaylistController() == null) 
 				StreamingMusicService.resumeSavedPlaylist(_context);
 			
-			JrSession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -103,7 +103,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 					String newFileString = Files.serializeFileStringList(StreamingMusicService.getPlaylistController().getPlaylist());					
 					result.setSavedTracksString(newFileString);
 					
-					JrSession.SaveSession(_context, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveSession(_context, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

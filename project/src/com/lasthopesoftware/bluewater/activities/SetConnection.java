@@ -15,7 +15,7 @@ import android.widget.EditText;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -42,7 +42,7 @@ public class SetConnection extends FragmentActivity {
         	mConnectionButton.setText(R.string.btn_connecting);
         	mConnectionButton.setEnabled(false);
         	
-        	JrSession.SaveSession(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
+        	LibrarySession.SaveSession(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
@@ -65,7 +65,7 @@ public class SetConnection extends FragmentActivity {
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
         
-        JrSession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

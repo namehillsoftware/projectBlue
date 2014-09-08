@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -201,8 +201,8 @@ public class FilePlayer implements
 		final Map<String, String> headers = new HashMap<String, String>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
-		if (!JrSession.GetLibrary().getAuthKey().isEmpty())
-			headers.put("Authorization", "basic " + JrSession.GetLibrary().getAuthKey());
+		if (!LibrarySession.GetLibrary().getAuthKey().isEmpty())
+			headers.put("Authorization", "basic " + LibrarySession.GetLibrary().getAuthKey());
 		mp.setDataSource(mMpContext, uri, headers);
 	}
 	

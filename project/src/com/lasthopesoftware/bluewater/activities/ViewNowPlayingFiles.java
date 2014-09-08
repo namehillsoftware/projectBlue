@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -43,7 +43,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         this.setTitle(R.string.title_view_now_playing_files);     
         
         final ViewNowPlayingFiles _this = this;
-        JrSession.GetLibrary(_this, new OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetLibrary(_this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

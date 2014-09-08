@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 
 public class AccessConfiguration {
 	private boolean status;
@@ -92,7 +92,7 @@ public class AccessConfiguration {
 		}
 		
 		try {
-			if (!JrSession.GetLibrary().isLocalOnly()) {
+			if (!LibrarySession.GetLibrary().isLocalOnly()) {
 				try {
 					mActiveUrl = getRemoteUrl();
 			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;

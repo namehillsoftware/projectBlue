@@ -14,7 +14,7 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.ServerListAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -28,14 +28,14 @@ public class SelectServer extends Activity {
 		
 		ListView serverList = (ListView) findViewById(R.id.lvServerList);
 		
-		serverList.setAdapter(new ServerListAdapter(this, JrSession.GetLibraries(this)));
+		serverList.setAdapter(new ServerListAdapter(this, LibrarySession.GetLibraries(this)));
 		
 		serverList.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				final Context _context = view.getContext();
-				JrSession.ChooseLibrary(view.getContext(), (int)id, new OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.ChooseLibrary(view.getContext(), (int)id, new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

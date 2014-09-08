@@ -47,7 +47,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -137,7 +137,7 @@ public class StreamingMusicService extends Service implements
 	
 	/* Begin streamer intent helpers */
 	public static void resumeSavedPlaylist(final Context context) {
-		JrSession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -224,13 +224,13 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		JrSession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 				result.setRepeating(isRepeating);
-				JrSession.SaveSession(context);
+				LibrarySession.SaveSession(context);
 				if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
 			}
 		});
@@ -321,7 +321,7 @@ public class StreamingMusicService extends Service implements
 	public StreamingMusicService() {
 		super();
 		mThis = this;
-		JrSession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -362,7 +362,7 @@ public class StreamingMusicService extends Service implements
 			return;
 		}
 		
-		JrSession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(mThis, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -389,7 +389,7 @@ public class StreamingMusicService extends Service implements
 		if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = mLibrary.getSavedTracksString();
 		
 		mLibrary.setSavedTracksString(mPlaylistString);
-		JrSession.SaveSession(mThis);
+		LibrarySession.SaveSession(mThis);
 		
 		if (mPlaylistController != null) {
 			mPlaylistController.pause();
@@ -546,7 +546,7 @@ public class StreamingMusicService extends Service implements
 		} else {
 			final Intent _intent = intent;
 
-			JrSession.GetLibrary(mThis, new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetLibrary(mThis, new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -653,7 +653,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(mThis);
+		LibrarySession.SaveSession(mThis);
 		
 		throwStopEvent(controller, filePlayer);
 		
@@ -666,7 +666,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(mThis);
+		LibrarySession.SaveSession(mThis);
 		
 		stopNotification();
 		
@@ -677,7 +677,7 @@ public class StreamingMusicService extends Service implements
 	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		JrSession.SaveSession(mThis);
+		LibrarySession.SaveSession(mThis);
 		throwChangeEvent(controller, filePlayer);
 	}
 
@@ -782,7 +782,7 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onDestroy() {
-		JrSession.SaveSession(this);
+		LibrarySession.SaveSession(this);
 		
 		stopNotification();
 		

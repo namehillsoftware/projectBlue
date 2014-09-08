@@ -44,7 +44,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -208,7 +208,7 @@ public class ViewNowPlaying extends Activity implements
 			case R.id.menu_repeat_playlist:
 				final Context _context = this;
 				final MenuItem _item = item;
-				JrSession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -228,7 +228,7 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void setRepeatingIcon(final MenuItem item) {
 		item.setIcon(R.drawable.av_no_repeat_dark);
-		JrSession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

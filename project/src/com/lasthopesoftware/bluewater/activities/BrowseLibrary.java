@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -109,7 +109,7 @@ public class BrowseLibrary extends FragmentActivity {
 		
 		mIsStopped = false;
 		if (mLvSelectViews.getAdapter() == null || mViewPager.getAdapter() == null) {
-			JrSession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -123,7 +123,7 @@ public class BrowseLibrary extends FragmentActivity {
 	}
 
 	public void displayLibrary(final Library library) {		
-		JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+		LibrarySession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
@@ -140,7 +140,7 @@ public class BrowseLibrary extends FragmentActivity {
 								
 								@Override
 								public void onConnectionRegained() {
-									JrSession.JrFs.getSubItemsAsync();
+									LibrarySession.JrFs.getSubItemsAsync();
 								}
 							});
 							break;
@@ -172,17 +172,17 @@ public class BrowseLibrary extends FragmentActivity {
 						if (library.getSelectedView() == _views.get(position).getKey()) return;
 						
 						library.setSelectedView(_views.get(position).getKey());
-						JrSession.SaveSession(mBrowseLibrary);
-						JrSession.JrFs = new FileSystem(_views.get(position).getKey());
+						LibrarySession.SaveSession(mBrowseLibrary);
+						LibrarySession.JrFs = new FileSystem(_views.get(position).getKey());
 						displayLibrary(library);
 					}
 				});
 			}
 		});
 		
-		JrSession.JrFs.getSubItemsAsync();
+		LibrarySession.JrFs.getSubItemsAsync();
 		
-		JrSession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+		LibrarySession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
@@ -195,7 +195,7 @@ public class BrowseLibrary extends FragmentActivity {
 								
 								@Override
 								public void onConnectionRegained() {
-									JrSession.JrFs.getVisibleViewsAsync(_this);
+									LibrarySession.JrFs.getVisibleViewsAsync(_this);
 								}
 							});
 							PollConnection.Instance.get(mBrowseLibrary).startPolling();

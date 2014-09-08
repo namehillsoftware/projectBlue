@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.session;
+package com.lasthopesoftware.bluewater.data.sqlite.access;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,16 +14,15 @@ import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
-import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class JrSession {
+public class LibrarySession {
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(JrSession.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(LibrarySession.class);
 	
 	private static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";

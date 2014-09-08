@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -63,7 +63,7 @@ public class CategoryFragment extends Fragment {
 							
 							@Override
 							public void onConnectionRegained() {
-								JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
+								LibrarySession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
 							}
 						});
 						PollConnection.Instance.get(mContext).startPolling();
@@ -97,7 +97,7 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	mLayout.addView(pbLoading);
     	
-    	JrSession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
+    	LibrarySession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
     	
         return mLayout;
     }

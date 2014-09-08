@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.session.JrSession;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -32,7 +32,7 @@ public class BuildSessionConnection {
 		if (isRunning.get()) return mBuildingStatus;
 		
 		doStateChange(BuildingSessionConnectionStatus.GETTING_LIBRARY);
-		JrSession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {				
@@ -55,15 +55,15 @@ public class BuildSessionConnection {
 						}
 						
 						if (library.getSelectedView() >= 0) {
-							JrSession.JrFs = new FileSystem(library.getSelectedView());
+							LibrarySession.JrFs = new FileSystem(library.getSelectedView());
 
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 							return;
 						}
 			        	
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
-						JrSession.JrFs = new FileSystem();
-			        	JrSession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+						LibrarySession.JrFs = new FileSystem();
+			        	LibrarySession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
@@ -75,10 +75,10 @@ public class BuildSessionConnection {
 								
 								doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 								final int selectedView = result.get(0).getKey();
-								JrSession.JrFs.setVisibleViews(selectedView);
+								LibrarySession.JrFs.setVisibleViews(selectedView);
 								library.setSelectedView(selectedView);
 								
-								JrSession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
+								LibrarySession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
 									
 									@Override
 									public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
@@ -88,7 +88,7 @@ public class BuildSessionConnection {
 							}
 						});
 			        	
-			        	JrSession.JrFs.getSubItemsAsync();
+			        	LibrarySession.JrFs.getSubItemsAsync();
 					}
 				});
 			}
@@ -108,7 +108,7 @@ public class BuildSessionConnection {
 			listener.onBuildSessionStatusChange(status);
 		
 		if (status == BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE)
-			LoggerFactory.getLogger(JrSession.class).info("Session started.");
+			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
 		
 		if (mCompleteConditions.contains(status)) {
 			isRunning.set(false);
