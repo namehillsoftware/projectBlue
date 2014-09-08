@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
@@ -21,6 +22,9 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class JrSession {
+	
+	private static final Logger mLogger = LoggerFactory.getLogger(JrSession.class);
+	
 	public static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	public static int ChosenLibrary = -1;
@@ -55,12 +59,12 @@ public class JrSession {
 					ChosenLibrary = library.getId();
 					_context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					
-					LoggerFactory.getLogger(JrSession.class).debug("Session saved.");
+					mLogger.debug("Session saved.");
 					return library;
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} catch (Exception e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} finally {
 					handler.close();
 				}
@@ -97,14 +101,14 @@ public class JrSession {
 				
 				if (ChosenLibrary < 0) return null;
 				
-				DatabaseHandler handler = new DatabaseHandler(context);
+				final DatabaseHandler handler = new DatabaseHandler(context);
 				try {
-					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					return libraryAccess.queryForId(ChosenLibrary);
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} catch (Exception e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} finally {
 					handler.close();
 				}
@@ -137,9 +141,9 @@ public class JrSession {
 				try {
 					return handler.getAccessObject(Library.class).queryForAll();
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} catch (Exception e) {
-					LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				} finally {
 					handler.close();
 				}
@@ -151,9 +155,9 @@ public class JrSession {
 		try {
 			return getLibrariesTask.executeOnExecutor(databaseExecutor).get();
 		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(JrSession.class).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 		}
 		
 		// Exceptions occurred, return an empty mLibrary
