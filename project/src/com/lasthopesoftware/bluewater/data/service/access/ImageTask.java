@@ -22,13 +22,17 @@ public class ImageTask extends SimpleTask<Void, Void, Bitmap> {
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
+	private final Context mContext;
+	
 	public ImageTask(final Context context, final int fileKey) {
 		this(context, new File(fileKey));
 	}
 	
 	public ImageTask(final Context context, final File file) {
 		super();
-				
+		
+		mContext = context;
+		
 		super.setOnExecuteListener(new OnExecuteListener<Void, Void, Bitmap>() {
 			
 			@Override

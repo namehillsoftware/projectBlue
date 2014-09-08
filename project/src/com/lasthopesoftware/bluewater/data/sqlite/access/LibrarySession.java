@@ -45,14 +45,14 @@ public class LibrarySession {
 	public static void SaveSession(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
 	
 		final Context _context = context;
-		SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
+		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
 		writeToDatabaseTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
-				DatabaseHandler handler = new DatabaseHandler(_context);
+				final DatabaseHandler handler = new DatabaseHandler(_context);
 				try {
-					Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					
 					libraryAccess.createOrUpdate(library);
 					ChosenLibrary = library.getId();
