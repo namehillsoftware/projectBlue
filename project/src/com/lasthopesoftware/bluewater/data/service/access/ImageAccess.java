@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.FileNotFoundException;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,8 +27,9 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class ImageTask {
+public class ImageAccess {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 50 ? 50 : (int) (Runtime.getRuntime().maxMemory() / 32768);
 	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
@@ -38,11 +41,11 @@ public class ImageTask {
 	
 	private final SimpleTask<Void, Void, Bitmap> mGetImageTask;
 	
-	public ImageTask(final Context context, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		this(context, new File(fileKey), onGetBitmapComplete);
+	public ImageAccess(final Context context, final int fileKey) {
+		this(context, new File(fileKey));
 	}
 	
-	public ImageTask(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+	public ImageAccess(final Context context, final File file) {
 		super();
 		
 		mContext = context;
@@ -89,14 +92,18 @@ public class ImageTask {
 			}
 		});
 		
+		
+	}
+
+	public void getImage(final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		mGetImageTask.executeOnExecutor(mImageAccessExecutor);
 	}
 	
-	private Bitmap getBitmapCopy(Bitmap src) {
-		return src.copy(src.getConfig(), false);
+	public void cancel(boolean mayInterruptIfRunning) {
+		mGetImageTask.cancel(mayInterruptIfRunning);
 	}
 	
-	private void getCachedImage(final String uniqueKey, final OnCompleteListener<Integer, Void, Bitmap> onGetImageComplete) {
+	private void getCachedImage(final String uniqueKey, final OnCompleteListener<Void, Void, Bitmap> onGetImageComplete) {
 		LibrarySession.GetLibrary(mContext, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
@@ -117,7 +124,7 @@ public class ImageTask {
 					final CachedFile cachedFile = cachedFileAccess.queryForFirst(preparedQuery);
 					
 					if (cachedFile == null) {
-						onGetImageComplete.onComplete(null, bmpResult);
+						onGetImageComplete.onComplete(mGetImageTask, bmpResult);
 						return;
 					}
 					
@@ -132,7 +139,7 @@ public class ImageTask {
 					handler.close();
 				}
 				
-				onGetImageComplete.onComplete(null, bmpResult);
+				onGetImageComplete.onComplete(mGetImageTask, bmpResult);
 			}
 		});
 	}
@@ -149,4 +156,5 @@ public class ImageTask {
 
 	    return new java.io.File(cachePath + java.io.File.separator + uniqueName);
 	}
+	
 }
