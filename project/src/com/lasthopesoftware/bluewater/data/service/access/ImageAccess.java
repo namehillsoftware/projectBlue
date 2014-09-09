@@ -32,14 +32,15 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 public class ImageAccess {
 
 	private static final int maxSize = (Runtime.getRuntime().maxMemory() / 32768) > 50 ? 50 : (int) (Runtime.getRuntime().maxMemory() / 32768);
-	private static final ConcurrentLinkedHashMap<String, Bitmap> imageCache = new ConcurrentLinkedHashMap.Builder<String, Bitmap>().maximumWeightedCapacity(maxSize).build();
 	private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 	
 	private static final ExecutorService mImageAccessExecutor = Executors.newSingleThreadExecutor();
 	
 	private final Context mContext;
+	private final File mFile;
 	
-	private final SimpleTask<Void, Void, Bitmap> mGetImageTask;
+	private SimpleTask<Void, Void, Bitmap> mGetImageTask;
+	private OnCompleteListener<Void, Void, Bitmap> mOnGetBitmapComplete;
 	
 	public ImageAccess(final Context context, final int fileKey) {
 		this(context, new File(fileKey));
@@ -49,63 +50,92 @@ public class ImageAccess {
 		super();
 		
 		mContext = context;
-		mGetImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
+		mFile = file;
+	}
+		
+	public void getImage(final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		mOnGetBitmapComplete = onGetBitmapComplete;
+		
+		final SimpleTask<Void, Void, String> getUniqueIdTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
 
 			@Override
-			public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-				final String uniqueId = file.getProperty(FileProperties.ARTIST) + ":" + file.getProperty(FileProperties.ALBUM);
-				
-				if (imageCache.containsKey(uniqueId))
-					return getBitmapCopy(imageCache.get(uniqueId));
-				
-				Bitmap returnBmp = null;
-				try {
-					HttpURLConnection conn = ConnectionManager.getConnection(
-												"File/GetImage", 
-												"File=" + String.valueOf(file.getKey()), 
-												"Type=Full", 
-												"Pad=1",
-												"Format=jpg",
-												"FillTransparency=ffffff");
-					
-					// Connection failed to build or isCancelled was called, return an empty bitmap
-					// but do not put it into the cache
-					if (conn == null || owner.isCancelled()) return getBitmapCopy(mEmptyBitmap);
-					
-					try {
-						returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
-					} finally {
-						conn.disconnect();
-					}
-				} catch (FileNotFoundException fe) {
-					LoggerFactory.getLogger(getClass()).warn("Image not found!");
-				} catch (Exception e) {
-					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
-				}
-				
-				if (returnBmp == null)
-					returnBmp = mEmptyBitmap;
-				
-				imageCache.put(uniqueId, returnBmp);
-				
-				return getBitmapCopy(returnBmp);
+			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				return mFile.getProperty(FileProperties.ARTIST) + ":" + mFile.getProperty(FileProperties.ALBUM);
 			}
 		});
 		
+		getUniqueIdTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, String> owner, final String uniqueId) {
+				getCachedImage(uniqueId, new OnCompleteListener<Void, Void, Bitmap>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						if (result != null && mOnGetBitmapComplete != null) {
+							mOnGetBitmapComplete.onComplete(mGetImageTask, result);
+							return;
+						}
+						
+						mGetImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
+
+							@Override
+							public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
+								try {
+									final HttpURLConnection conn = ConnectionManager.getConnection(
+																"File/GetImage", 
+																"File=" + String.valueOf(mFile.getKey()), 
+																"Type=Full", 
+																"Pad=1",
+																"Format=jpg",
+																"FillTransparency=ffffff");
+									
+									// Connection failed to build or isCancelled was called, return an empty bitmap
+									// but do not put it into the cache
+									if (conn == null || owner.isCancelled()) return getBitmapCopy(mEmptyBitmap);
+									
+									try {
+										return BitmapFactory.decodeStream(conn.getInputStream());
+									} finally {
+										conn.disconnect();
+									}
+								} catch (FileNotFoundException fe) {
+									LoggerFactory.getLogger(getClass()).warn("Image not found!");
+								} catch (Exception e) {
+									LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+								}
+								
+								return null;
+							}
+						});
+						
+						mGetImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+							
+							@Override
+							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+								if (mOnGetBitmapComplete == null) return;
+								
+								mOnGetBitmapComplete.onComplete(owner, result != null ? getBitmapCopy(result) : getBitmapCopy(mEmptyBitmap));
+							}
+						});
+						
+						mGetImageTask.executeOnExecutor(mImageAccessExecutor);
+					}
+				});
+			}
+		});
 		
+		getUniqueIdTask.executeOnExecutor(mImageAccessExecutor);
 	}
 	
-	private Bitmap getBitmapCopy(Bitmap src) {
-		return src.copy(src.getConfig(), false);
-	}
-	
+
 	private void getCachedImage(final String uniqueKey, final OnCompleteListener<Void, Void, Bitmap> onGetImageComplete) {
 		LibrarySession.GetLibrary(mContext, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 			
-				final SimpleTask<Void, Void, Bitmap> getCachedImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
+				mGetImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
 
 					@Override
 					public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
@@ -139,11 +169,15 @@ public class ImageAccess {
 					}
 				});
 				
-				getCachedImageTask.addOnCompleteListener(onGetImageComplete);
+				mGetImageTask.addOnCompleteListener(onGetImageComplete);
 				
-				getCachedImageTask.executeOnExecutor(mImageAccessExecutor, null);
+				mGetImageTask.executeOnExecutor(mImageAccessExecutor);
 			}
 		});
+	}
+	
+	private static void cacheImage(String uniqueId, Bitmap image) {
+		
 	}
 	
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
@@ -159,7 +193,7 @@ public class ImageAccess {
 	    return new java.io.File(cachePath + java.io.File.separator + uniqueName);
 	}
 	
-	public void getImage(final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		mGetImageTask.executeOnExecutor(mImageAccessExecutor);
+	private static Bitmap getBitmapCopy(Bitmap src) {
+		return src.copy(src.getConfig(), false);
 	}
 }
