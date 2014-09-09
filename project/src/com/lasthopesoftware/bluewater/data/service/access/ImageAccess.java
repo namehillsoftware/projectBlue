@@ -94,52 +94,54 @@ public class ImageAccess {
 		
 		
 	}
-
-	public void getImage(final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		mGetImageTask.executeOnExecutor(mImageAccessExecutor);
-	}
 	
-	public void cancel(boolean mayInterruptIfRunning) {
-		mGetImageTask.cancel(mayInterruptIfRunning);
+	private Bitmap getBitmapCopy(Bitmap src) {
+		return src.copy(src.getConfig(), false);
 	}
 	
 	private void getCachedImage(final String uniqueKey, final OnCompleteListener<Void, Void, Bitmap> onGetImageComplete) {
 		LibrarySession.GetLibrary(mContext, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				Bitmap bmpResult = null;
-				
-				final DatabaseHandler handler = new DatabaseHandler(mContext);
-				try {
-					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-					
-					final PreparedQuery<CachedFile> preparedQuery =
-							cachedFileAccess.queryBuilder()
-								.where()
-								.eq("libraryId", result.getId())
-								.and()
-								.eq("uniqueKey", uniqueKey).prepare();
-					
-					final CachedFile cachedFile = cachedFileAccess.queryForFirst(preparedQuery);
-					
-					if (cachedFile == null) {
-						onGetImageComplete.onComplete(mGetImageTask, bmpResult);
-						return;
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			
+				final SimpleTask<Void, Void, Bitmap> getCachedImageTask = new SimpleTask<Void, Void, Bitmap>(new ISimpleTask.OnExecuteListener<Void, Void, Bitmap>() {
+
+					@Override
+					public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
+						final DatabaseHandler handler = new DatabaseHandler(mContext);
+						try {
+							final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+							
+							final PreparedQuery<CachedFile> preparedQuery =
+									cachedFileAccess.queryBuilder()
+										.where()
+										.eq("libraryId", library.getId())
+										.and()
+										.eq("uniqueKey", uniqueKey).prepare();
+							
+							final CachedFile cachedFile = cachedFileAccess.queryForFirst(preparedQuery);
+							
+							if (cachedFile == null) return null;
+							
+							final java.io.File file = new java.io.File(cachedFile.getFileName());
+							if (file.exists())
+								return BitmapFactory.decodeFile(cachedFile.getFileName());
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						finally {
+							handler.close();
+						}
+						
+						return null;
 					}
-					
-					final java.io.File file = new java.io.File(cachedFile.getFileName());
-					if (file.exists())
-						bmpResult = BitmapFactory.decodeFile(cachedFile.getFileName());
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				finally {
-					handler.close();
-				}
+				});
 				
-				onGetImageComplete.onComplete(mGetImageTask, bmpResult);
+				getCachedImageTask.addOnCompleteListener(onGetImageComplete);
+				
+				getCachedImageTask.executeOnExecutor(mImageAccessExecutor, null);
 			}
 		});
 	}
@@ -157,4 +159,7 @@ public class ImageAccess {
 	    return new java.io.File(cachePath + java.io.File.separator + uniqueName);
 	}
 	
+	public void getImage(final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		mGetImageTask.executeOnExecutor(mImageAccessExecutor);
+	}
 }
