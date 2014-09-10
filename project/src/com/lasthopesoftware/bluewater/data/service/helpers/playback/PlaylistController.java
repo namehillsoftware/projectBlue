@@ -39,6 +39,7 @@ public class PlaylistController implements
 	private FilePreparerTask mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
+	private boolean mIsPlaying = false;
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaylistController.class);
 	
@@ -142,6 +143,7 @@ public class PlaylistController implements
 	}
 
 	private void startFilePlayback(FilePlayer mediaPlayer) {
+		mIsPlaying = true;
 		mCurrentFilePlayer = mediaPlayer;
 		
 		mediaPlayer.setVolume(mVolume);
@@ -180,6 +182,7 @@ public class PlaylistController implements
 	}
 	
 	public void pause() {
+		mIsPlaying = false;
 		haltBackgroundPreparerThread();
 		if (mCurrentFilePlayer == null) return;
 		
@@ -193,7 +196,7 @@ public class PlaylistController implements
 	}
 	
 	public boolean isPlaying() {
-		return mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying();
+		return mIsPlaying;
 	}
 	
 	public void setVolume(float volume) {
@@ -385,6 +388,7 @@ public class PlaylistController implements
 	
 	// Release all heavy resources
 	public void release() {
+		mIsPlaying = false;
 		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
 		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 		

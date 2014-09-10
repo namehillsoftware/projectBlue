@@ -119,8 +119,10 @@ public class StreamingMusicService extends Service implements
 		
 		@Override
 		public void onConnectionLost() {
-			if (mPlaylistController != null) mPlaylistController.pause();
+			if (mPlaylistController == null) return;
+			if (!mPlaylistController.isPlaying()) return;
 			
+			mPlaylistController.pause();
 			buildErrorNotification();
 		}
 	};
