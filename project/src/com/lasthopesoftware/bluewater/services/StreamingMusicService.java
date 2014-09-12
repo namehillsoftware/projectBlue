@@ -124,7 +124,6 @@ public class StreamingMusicService extends Service implements
 				return;
 			}
 			
-			mPlaylistController.pause();
 			buildErrorNotification();
 		}
 	};

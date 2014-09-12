@@ -319,7 +319,6 @@ public class PlaylistController implements
 	@Override
 	public boolean onJrFileError(FilePlayer mediaPlayer, int what, int extra) {
 		mLogger.error("JR File error - " + what + " - " + extra);
-		pause();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners) {
 			if (listener.onPlaylistStateControlError(this, mediaPlayer)) return true;
