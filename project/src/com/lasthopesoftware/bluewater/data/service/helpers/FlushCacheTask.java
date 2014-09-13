@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.data.service.helpers;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,27 +41,59 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	protected Void doInBackground(Void... params) {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
-			final List<CachedFile> allCachedFiles = getAllCachedFiles(handler,  mCacheName);
+			List<CachedFile> allCachedFiles = getAllCachedFiles(handler,  mCacheName);
 			
 			while (calculateTotalSize(allCachedFiles) > mTargetSize) {
 				final CachedFile cachedFile = allCachedFiles.get(0);
 				final File fileToDelete = new File(cachedFile.getFileName());
-				if (fileToDelete.exists())
+				if (fileToDelete.exists()) 
 					fileToDelete.delete();
 				
 				try {
 					handler.getAccessObject(CachedFile.class).delete(cachedFile);
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					LoggerFactory.getLogger(getClass()).error("Error deleting file pointer from database", e);
+					// Reset the cached files list
+					allCachedFiles = getAllCachedFiles(handler,  mCacheName);
+					continue;
 				}
 				
 				allCachedFiles.remove(cachedFile);
 			}
+			
+			// Remove any files in the cache dir but not in the database
+			final File cachedFileDir = FileCache.getDiskCacheDir(mContext, mCacheName);
+			final File[] filesInCacheDir = cachedFileDir.listFiles();
+			if (filesInCacheDir == null)
+				return null;
+			
+			int i = 0;
+			while (i < filesInCacheDir.length) {
+				boolean isFileFound = false;
+				for (CachedFile cachedFile : allCachedFiles) {
+					try {
+						if (cachedFile.getFileName() == filesInCacheDir[i].getCanonicalPath()) {
+							isFileFound = true;
+							break;
+						}
+					} catch (IOException e) {
+						LoggerFactory.getLogger(getClass()).warn("Issue getting canonical file path.");
+					}
+				}
+				
+				// File wasn't found in cache, it shouldn't be here so delete it
+				if (!isFileFound) {
+					filesInCacheDir[i].delete();
+					continue;
+				}
+				
+				// Increment our pointer
+				i++;
+			}
 		} finally {
 			handler.close();
 		}
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 

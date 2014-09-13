@@ -130,7 +130,7 @@ public class FileCache {
 
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
 	// but if not mounted, falls back on internal storage.
-	private final static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
+	public final static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
 	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
 	    // otherwise use internal cache dir
 	    final String cachePath =
