@@ -72,8 +72,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			if (filesInCacheDir == null)
 				return null;
 			
-			int i = 0;
-			while (i < filesInCacheDir.length) {
+			for (int i = 0; i < filesInCacheDir.length; i++) {
 				boolean isFileFound = false;
 				for (CachedFile cachedFile : allCachedFiles) {
 					try {
@@ -87,13 +86,8 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				}
 				
 				// File wasn't found in cache, it shouldn't be here so delete it
-				if (!isFileFound) {
+				if (!isFileFound)
 					filesInCacheDir[i].delete();
-					continue;
-				}
-				
-				// Increment our pointer
-				i++;
 			}
 		} finally {
 			handler.close();
