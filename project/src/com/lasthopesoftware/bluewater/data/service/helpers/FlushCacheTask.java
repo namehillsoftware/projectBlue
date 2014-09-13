@@ -19,6 +19,11 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 import android.content.Context;
 import android.os.AsyncTask;
 
+/**
+ * Flush a given cache until it reaches the given target size
+ * @author david
+ *
+ */
 public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 
 	private final Context mContext;
