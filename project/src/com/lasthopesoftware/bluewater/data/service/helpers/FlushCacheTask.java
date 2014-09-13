@@ -118,7 +118,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
-						.orderBy("lastAccessedTime", true)
+						.orderBy("lastAccessedTime", false)
 						.where()
 						.eq("cacheName", cacheName)
 						.prepare();

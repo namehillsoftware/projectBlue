@@ -87,26 +87,6 @@ public class FileCache {
 	public boolean Contains(String uniqueKey) {
 		return Get(uniqueKey) != null;
 	}
-		
-	private final static List<CachedFile> getAllCachedFiles(final DatabaseHandler handler, final int libraryId, final String cacheName) {
-		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.orderBy("lastAccessedTime", true)
-						.where()
-						.eq("libraryId", libraryId)
-						.and()
-						.eq("cacheName", cacheName)
-						.prepare();
-			
-			return cachedFileAccess.query(preparedQuery);			
-		} catch (SQLException e) {
-			mLogger.error("SQLException", e);
-			return new ArrayList<CachedFile>();
-		}
-	}
 	
 	private final static CachedFile getCachedFile(final DatabaseHandler handler, final int libraryId, final String cacheName, final String uniqueKey) {
 		try {
