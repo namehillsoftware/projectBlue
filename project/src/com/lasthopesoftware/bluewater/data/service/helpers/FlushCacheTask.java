@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.j256.ormlite.dao.Dao;
@@ -15,6 +16,7 @@ import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -26,6 +28,8 @@ import android.os.AsyncTask;
  */
 public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 
+	private final static Logger mLogger = LoggerFactory.getLogger(FlushCacheTask.class);
+	
 	private final Context mContext;
 	private final String mCacheName;
 	private final long mTargetSize;
@@ -46,7 +50,9 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	protected Void doInBackground(Void... params) {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
-			List<CachedFile> allCachedFiles = getAllCachedFiles(handler,  mCacheName);
+			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+		
+			List<CachedFile> allCachedFiles = getAllCachedFiles(cachedFileAccess,  mCacheName);
 			
 			while (calculateTotalSize(allCachedFiles) > mTargetSize) {
 				final CachedFile cachedFile = allCachedFiles.get(0);
@@ -56,10 +62,10 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				
 				try {
 					handler.getAccessObject(CachedFile.class).delete(cachedFile);
-				} catch (SQLException e) {
-					LoggerFactory.getLogger(getClass()).error("Error deleting file pointer from database", e);
+				} catch (SQLException deleteException) {
+					mLogger.error("Error deleting file pointer from database", deleteException);
 					// Reset the cached files list
-					allCachedFiles = getAllCachedFiles(handler,  mCacheName);
+					allCachedFiles = getAllCachedFiles(cachedFileAccess,  mCacheName);
 					continue;
 				}
 				
@@ -81,7 +87,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 							break;
 						}
 					} catch (IOException e) {
-						LoggerFactory.getLogger(getClass()).warn("Issue getting canonical file path.");
+						mLogger.warn("Issue getting canonical file path.");
 					}
 				}
 				
@@ -89,6 +95,8 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				if (!isFileFound)
 					filesInCacheDir[i].delete();
 			}
+		} catch (SQLException accessException) {
+			mLogger.error("Error accessing cache", accessException);
 		} finally {
 			handler.close();
 		}
@@ -104,9 +112,8 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		return returnSize;
 	}
 	
-	private final static List<CachedFile> getAllCachedFiles(final DatabaseHandler handler, final String cacheName) {
+	private final static List<CachedFile> getAllCachedFiles(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
 		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
@@ -117,7 +124,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			
 			return cachedFileAccess.query(preparedQuery);			
 		} catch (SQLException e) {
-			LoggerFactory.getLogger(ImageAccess.class).error("SQLException", e);
+			mLogger.error("Error getting file list", e);
 			return new ArrayList<CachedFile>();
 		}
 	}
