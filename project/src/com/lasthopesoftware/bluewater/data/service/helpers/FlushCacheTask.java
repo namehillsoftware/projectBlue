@@ -11,15 +11,13 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
-import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-
 import android.content.Context;
 import android.os.AsyncTask;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 
 /**
  * Flush a given cache until it reaches the given target size
@@ -35,6 +33,9 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	private final long mTargetSize;
 	private static final ExecutorService flushExecutor = Executors.newSingleThreadExecutor();
 	
+	/*
+	 * Flush a given cache until it reaches the given target size
+	 */
 	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
 		final FlushCacheTask task = new FlushCacheTask(context, cacheName, targetSize);
 		task.executeOnExecutor(flushExecutor);

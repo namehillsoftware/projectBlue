@@ -7,19 +7,22 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
-import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 
 import android.content.Context;
 import android.os.Environment;
 
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+
 public class FileCache {
+	
+	private final static Logger mLogger = LoggerFactory.getLogger(FileCache.class); 
+	
 	private final Context mContext;
 	private final Library mLibrary;
 	private final String mCacheName;
@@ -55,8 +58,7 @@ public class FileCache {
 			try {
 				handler.getAccessObject(CachedFile.class).createOrUpdate(cachedFile);
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				mLogger.error("Error updating cached file", e);
 			}
 		} finally {
 			handler.close();
@@ -73,8 +75,7 @@ public class FileCache {
 				try {
 					handler.getAccessObject(CachedFile.class).update(cachedFile);
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					mLogger.error("Error updating cached file entity", e);
 				}
 			}
 			return cachedFile != null ? new File(cachedFile.getFileName()) : null;
@@ -102,7 +103,7 @@ public class FileCache {
 			
 			return cachedFileAccess.query(preparedQuery);			
 		} catch (SQLException e) {
-			LoggerFactory.getLogger(ImageAccess.class).error("SQLException", e);
+			mLogger.error("SQLException", e);
 			return new ArrayList<CachedFile>();
 		}
 	}
@@ -122,7 +123,7 @@ public class FileCache {
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);			
 		} catch (SQLException e) {
-			LoggerFactory.getLogger(ImageAccess.class).error("SQLException", e);
+			mLogger.error("SQLException", e);
 			return null;
 		}
 	}
