@@ -145,26 +145,14 @@ public class ImageAccess {
 					@Override
 					public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 						final DatabaseHandler handler = new DatabaseHandler(mContext);
-						try {
-							final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-							
-							final PreparedQuery<CachedFile> preparedQuery =
-									cachedFileAccess.queryBuilder()
-										.where()
-										.eq("libraryId", library.getId())
-										.and()
-										.eq("uniqueKey", uniqueKey).prepare();
-							
-							final CachedFile cachedFile = cachedFileAccess.queryForFirst(preparedQuery);
+						try {							
+							final CachedFile cachedFile = getCachedFile(handler, library.getId(), uniqueKey);
 							
 							if (cachedFile == null) return null;
 							
 							final java.io.File file = new java.io.File(cachedFile.getFileName());
 							if (file.exists())
 								return BitmapFactory.decodeFile(cachedFile.getFileName());
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
 						}
 						finally {
 							handler.close();
@@ -193,7 +181,7 @@ public class ImageAccess {
 					public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 						final DatabaseHandler handler = new DatabaseHandler(mContext);
 						
-						CachedFile cachedFile = getCachedFile(handler, uniqueId);
+						CachedFile cachedFile = getCachedFile(handler, library.getId(), uniqueId);
 						if (cachedFile == null) {
 							cachedFile = new CachedFile();
 							cachedFile.setUniqueKey(uniqueId);
@@ -219,14 +207,14 @@ public class ImageAccess {
 		});
 	}
 					
-	private static CachedFile getCachedFile(final DatabaseHandler handler, final String uniqueKey) {
+	private static CachedFile getCachedFile(final DatabaseHandler handler, final int libraryId, final String uniqueKey) {
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.where()
-						.eq("libraryId", library.getId())
+						.eq("libraryId", libraryId)
 						.and()
 						.eq("uniqueKey", uniqueKey).prepare();
 			
