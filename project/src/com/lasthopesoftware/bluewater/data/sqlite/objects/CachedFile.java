@@ -5,7 +5,7 @@ import java.util.Calendar;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-@DatabaseTable(tableName = "StoredFiles")
+@DatabaseTable(tableName = "CachedFile")
 public class CachedFile {
 
 	@DatabaseField(generatedId = true)
@@ -13,6 +13,9 @@ public class CachedFile {
 	
 	@DatabaseField(foreign = true, columnName = "libraryId")
 	private Library library;
+	
+	@DatabaseField()
+	private String cacheName;
 	
 	@DatabaseField()
 	private Calendar lastAccessedTime;
@@ -24,7 +27,7 @@ public class CachedFile {
 	private String fileName;
 	
 	@DatabaseField()
-	private int fileSize;
+	private long fileSize;
 
 	/**
 	 * @return the library
@@ -71,14 +74,14 @@ public class CachedFile {
 	/**
 	 * @return the fileSize
 	 */
-	public final int getFileSize() {
+	public final long getFileSize() {
 		return fileSize;
 	}
 
 	/**
 	 * @param fileSize the fileSize to set
 	 */
-	public final void setFileSize(int fileSize) {
+	public final void setFileSize(long fileSize) {
 		this.fileSize = fileSize;
 	}
 
@@ -94,5 +97,19 @@ public class CachedFile {
 	 */
 	public final void setUniqueKey(String uniqueKey) {
 		this.uniqueKey = uniqueKey;
+	}
+
+	/**
+	 * @return the cacheName
+	 */
+	public final String getCacheName() {
+		return cacheName;
+	}
+
+	/**
+	 * @param cacheName the cacheName to set
+	 */
+	public final void setCacheName(String cacheName) {
+		this.cacheName = cacheName;
 	}
 }

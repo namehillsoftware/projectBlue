@@ -91,25 +91,7 @@ public class LibrarySession {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				if (mLibrary != null) return mLibrary;
-				
-				ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
-				
-				if (ChosenLibrary < 0) return null;
-				
-				final DatabaseHandler handler = new DatabaseHandler(context);
-				try {
-					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					return libraryAccess.queryForId(ChosenLibrary);
-				} catch (SQLException e) {
-					mLogger.error(e.toString(), e);
-				} catch (Exception e) {
-					mLogger.error(e.toString(), e);
-				} finally {
-					handler.close();
-				}
-				
-				return null;
+				return GetLibrary(context);
 			}
 		});
 		
@@ -124,6 +106,31 @@ public class LibrarySession {
 		});
 		
 		getLibraryTask.executeOnExecutor(databaseExecutor);
+	}
+	
+	public static Library GetLibrary(final Context context) {
+		if ("UI thread".equals(Thread.currentThread().getName()))
+			throw new IllegalStateException("This method must be called from a background thread.");
+		
+		if (mLibrary != null) return mLibrary;
+		
+		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+		
+		if (ChosenLibrary < 0) return null;
+		
+		final DatabaseHandler handler = new DatabaseHandler(context);
+		try {
+			final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+			return libraryAccess.queryForId(ChosenLibrary);
+		} catch (SQLException e) {
+			mLogger.error(e.toString(), e);
+		} catch (Exception e) {
+			mLogger.error(e.toString(), e);
+		} finally {
+			handler.close();
+		}
+		
+		return null;
 	}
 	
 	public static List<Library> GetLibraries(Context context) {
