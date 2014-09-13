@@ -81,4 +81,18 @@ public class CachedFile {
 	public final void setFileSize(int fileSize) {
 		this.fileSize = fileSize;
 	}
+
+	/**
+	 * @return the uniqueKey
+	 */
+	public final String getUniqueKey() {
+		return uniqueKey;
+	}
+
+	/**
+	 * @param uniqueKey the uniqueKey to set
+	 */
+	public final void setUniqueKey(String uniqueKey) {
+		this.uniqueKey = uniqueKey;
+	}
 }

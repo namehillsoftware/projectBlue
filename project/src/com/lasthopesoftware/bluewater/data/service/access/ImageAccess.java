@@ -1,8 +1,13 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.net.HttpURLConnection;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -176,8 +181,63 @@ public class ImageAccess {
 		});
 	}
 	
-	private static void cacheImage(String uniqueId, Bitmap image) {
-		
+	private void cacheImage(final String uniqueId, final Bitmap image) {
+		LibrarySession.GetLibrary(mContext, new OnCompleteListener<Integer, Void, Library>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			
+				SimpleTask<Void, Void, Void> storeImageTask = new SimpleTask<Void, Void, Void>(new ISimpleTask.OnExecuteListener<Void, Void, Void>() {
+
+					@Override
+					public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+						final DatabaseHandler handler = new DatabaseHandler(mContext);
+						
+						CachedFile cachedFile = getCachedFile(handler, uniqueId);
+						if (cachedFile == null) {
+							cachedFile = new CachedFile();
+							cachedFile.setUniqueKey(uniqueId);
+							final java.io.File file = new java.io.File(getDiskCacheDir(mContext, "images"), uniqueId + ".jpg");
+							final String fileName = file.getCanonicalPath();
+							
+							final ByteBuffer byteBuffer = ByteBuffer.allocate(image.getByteCount());
+							image.copyPixelsToBuffer(byteBuffer);
+							
+							final FileOutputStream fos = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
+							fos.write(byteBuffer.array());
+							fos.close();
+							
+							cachedFile.setFileName(fileName);
+						}
+						
+						cachedFile.setLastAccessedTime(Calendar.getInstance());
+						
+						return null;
+					}
+				});
+			}
+		});
+	}
+					
+	private static CachedFile getCachedFile(final DatabaseHandler handler, final String uniqueKey) {
+		try {
+			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.where()
+						.eq("libraryId", library.getId())
+						.and()
+						.eq("uniqueKey", uniqueKey).prepare();
+			
+			return cachedFileAccess.queryForFirst(preparedQuery);			
+		} catch (SQLException e) {
+			LoggerFactory.getLogger(ImageAccess.class).error("SQLException", e);
+			return null;
+		}
+		finally {
+			handler.close();
+		}
 	}
 	
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
