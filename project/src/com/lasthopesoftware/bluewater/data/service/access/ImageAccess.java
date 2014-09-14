@@ -43,11 +43,10 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
 		private static final int maxSize = 100 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
 		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+		private static final String IMAGES_CACHE_NAME = "images";
 		
 		private final Context mContext;
 		private final File mFile;
-		
-		private static final String IMAGES_CACHE_NAME = "images";
 		
 		public GetFileImageOnExecute(final Context context, final File file) {
 			mContext = context;
