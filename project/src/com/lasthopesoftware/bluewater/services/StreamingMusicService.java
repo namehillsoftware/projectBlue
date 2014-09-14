@@ -27,6 +27,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.R;
@@ -35,7 +36,10 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.BuildingSessionConnectionStatus;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
@@ -538,29 +542,81 @@ public class StreamingMusicService extends Service implements
 	 * @see android.media.MediaPlayer.OnPreparedListener#onPrepared(android.media.MediaPlayer)
 	 */
 	
-	public int onStartCommand(Intent intent, int flags, int startId) {
+	public int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
 		if (mThis == null) mThis = this;
 		
-		if (mLibrary != null) {
-			actOnIntent(intent);
-		} else {
-			final Intent _intent = intent;
-
-			LibrarySession.GetLibrary(mThis, new OnCompleteListener<Integer, Void, Library>() {
-
+		if (ConnectionManager.getFormattedUrl() == null) {
+			// TODO this should probably be its own service soon
+			handleBuildStatusChange(BuildSessionConnection.build(mThis, new OnBuildSessionStateChangeListener() {
+				
 				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					if (result == null) return;
-					mLibrary = result;
-					actOnIntent(_intent);
+				public void onBuildSessionStatusChange(BuildingSessionConnectionStatus status) {
+					handleBuildStatusChange(status, intent);
 				}
-			});
+			}), intent);
+			
+			return START_NOT_STICKY;
 		}
 		
+		initializeSessionLibrary(intent);
+		
 		return START_NOT_STICKY;
+	}
+	
+	private void handleBuildStatusChange(final BuildingSessionConnectionStatus status, final Intent intentToRun) {
+		final Builder notifyBuilder = new Builder(mThis);
+		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
+		switch (status) {
+		case GETTING_LIBRARY:
+			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
+			break;
+		case GETTING_LIBRARY_FAILED:
+//			notifyBuilder.setContentText(getText(R.string.lbl_please_connect_to_valid_server));
+			stopSelf(mStartId);
+//			launchActivityDelayed(selectServerIntent);
+			return;
+		case BUILDING_CONNECTION:
+			notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
+			break;
+		case BUILDING_CONNECTION_FAILED:
+//			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
+//			launchActivityDelayed(selectServerIntent);
+			stopSelf(mStartId);
+			return;
+		case GETTING_VIEW:
+			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
+			return;
+		case GETTING_VIEW_FAILED:
+//			lblConnectionStatus.setText(R.string.lbl_library_no_views);
+//			launchActivityDelayed(selectServerIntent);
+			stopSelf(mStartId);
+			return;
+		case BUILDING_SESSION_COMPLETE:
+			notifyBuilder.setContentText(getText(R.string.lbl_connected));
+			initializeSessionLibrary(intentToRun);
+			break;
+		}
+		notifyForeground(notifyBuilder.build());
+	}
+		
+	private void initializeSessionLibrary(final Intent intentToRun) {
+		if (mLibrary != null) {
+			actOnIntent(intentToRun);
+			return;
+		}
+		
+		LibrarySession.GetLibrary(mThis, new OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				if (result == null) return;
+				mLibrary = result;
+				actOnIntent(intentToRun);
+			}
+		});
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -713,7 +769,7 @@ public class StreamingMusicService extends Service implements
 		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-				builder.setContentText(result == null ? "Error getting file properties." : result);
+				builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
 				builder.setContentIntent(pi);
 				notifyForeground(builder.build());
 			}

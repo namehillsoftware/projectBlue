@@ -63,4 +63,6 @@
     <string name="lbl_search_hint">Search for files</string>
     <string name="title_activity_search_results">Search Results for &quot;%1$s&quot;</string>
     <string name="btn_remove_file">Remove file from playlist</string>
+    <string name="lbl_error_getting_file_properties">Error getting file properties.</string>
+    <string name="title_svc_connecting_to_server">Connecting to server</string>
 </resources>
