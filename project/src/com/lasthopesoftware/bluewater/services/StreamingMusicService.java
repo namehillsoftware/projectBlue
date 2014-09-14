@@ -124,7 +124,7 @@ public class StreamingMusicService extends Service implements
 		@Override
 		public void onConnectionLost() {
 			if (mPlaylistController == null || !mPlaylistController.isPlaying()) {
-				stopSelf();
+				stopSelf(mStartId);
 				return;
 			}
 			
@@ -446,7 +446,7 @@ public class StreamingMusicService extends Service implements
 				@Override
 				public void onConnectionRegained() {
 					if (mLibrary == null) {
-						stopSelf();
+						stopSelf(mStartId);
 						return;
 					}
 
@@ -463,7 +463,7 @@ public class StreamingMusicService extends Service implements
 				@Override
 				public void onPollingCancelled() {
 					unregisterListeners();
-					stopSelf();
+					stopSelf(mStartId);
 				}
 			};
 		}
