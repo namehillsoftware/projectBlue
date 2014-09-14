@@ -67,7 +67,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			}
 			
 			final java.io.File imageCacheFile = imageCache.get(uniqueKey);
-			if (imageCacheFile != null && imageCacheFile.exists()) {
+			if (imageCacheFile != null) {
 				try {
 					return BitmapFactory.decodeFile(imageCacheFile.getCanonicalPath());
 				} catch (IOException ioE) {

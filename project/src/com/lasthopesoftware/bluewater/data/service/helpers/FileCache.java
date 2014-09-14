@@ -45,7 +45,9 @@ public class FileCache {
 			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 				final DatabaseHandler handler = new DatabaseHandler(mContext);
 				try {
-					CachedFile cachedFile = getCachedFile(handler, mLibrary.getId(), mCacheName, uniqueKey);
+					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+					
+					CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile == null) {
 						cachedFile = new CachedFile();
 						cachedFile.setCacheName(mCacheName);
@@ -86,16 +88,27 @@ public class FileCache {
 			public File onExecute(ISimpleTask<Void, Void, File> owner, Void... params) throws Exception {
 				final DatabaseHandler handler = new DatabaseHandler(mContext);
 				try {
-					final CachedFile cachedFile = getCachedFile(handler, mLibrary.getId(), mCacheName, uniqueKey);
+					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+					
+					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile != null) {
 						cachedFile.setLastAccessedTime(new Date());
 						try {
-							handler.getAccessObject(CachedFile.class).update(cachedFile);
+							cachedFileAccess.update(cachedFile);
 						} catch (SQLException e) {
 							mLogger.error("Error updating cached file entity", e);
 						}
 					}
-					return cachedFile != null ? new File(cachedFile.getFileName()) : null;
+					if (cachedFile == null)
+						return null;
+					
+					final File returnFile = new File(cachedFile.getFileName());
+					if (returnFile == null || !returnFile.exists()) {					
+						cachedFileAccess.delete(cachedFile);
+						return null;
+					}
+					
+					return returnFile;
 				} finally {
 					handler.close();
 				}
@@ -115,10 +128,8 @@ public class FileCache {
 		return get(uniqueKey) != null;
 	}
 	
-	private final static CachedFile getCachedFile(final DatabaseHandler handler, final int libraryId, final String cacheName, final String uniqueKey) {
+	private final static CachedFile getCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final int libraryId, final String cacheName, final String uniqueKey) {
 		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.where()
