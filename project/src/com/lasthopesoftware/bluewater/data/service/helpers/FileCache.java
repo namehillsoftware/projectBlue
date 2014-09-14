@@ -41,7 +41,7 @@ public class FileCache {
 	}
 	
 	public void put(final String uniqueKey, final File file, final byte[] fileData) {
-		SimpleTask<Void, Void, Void> writeFileTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+		final SimpleTask<Void, Void, Void> writeFileTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
 
 			@Override
 			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
