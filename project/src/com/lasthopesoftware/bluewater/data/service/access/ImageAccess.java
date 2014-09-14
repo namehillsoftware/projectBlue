@@ -96,6 +96,9 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
 					returnBmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+				} catch (FileNotFoundException fe) {
+					LoggerFactory.getLogger(getClass()).warn("Image not found!");
+					return getFillerBitmap();
 				} finally {
 					conn.disconnect();
 				}
@@ -120,9 +123,6 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				}
 				
 				return getBitmapCopy(returnBmp);
-			} catch (FileNotFoundException fe) {
-				LoggerFactory.getLogger(getClass()).warn("Image not found!");
-				return getFillerBitmap();
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			} finally {
