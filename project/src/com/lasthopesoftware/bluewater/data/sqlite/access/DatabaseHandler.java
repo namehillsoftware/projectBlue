@@ -14,18 +14,20 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredFile;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredList;
 
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 
-	private static int DATABASE_VERSION = 3;
+	private static int DATABASE_VERSION = 4;
 	private static final String DATABASE_NAME = "sessions_db";
 	
-	private static Class<?>[] version2Tables = { Library.class };
-	private static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
-	private static Class<?>[][] allTables = { version2Tables, version3Tables };
+	private final static Class<?>[] version2Tables = { Library.class };
+	private final static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
+	private final static Class<?>[] version4Tables = { CachedFile.class };
+	private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
 	
 	public DatabaseHandler(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -61,6 +63,9 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 		
 		if (oldVersion < 3)
 			createTables(conn, version3Tables);
+		
+		if (oldVersion < 4)
+			createTables(conn, version4Tables);
 	}
 	
 	public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException  {

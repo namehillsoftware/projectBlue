@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
-import java.util.Calendar;
+import java.util.Date;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -8,19 +8,24 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "CachedFile")
 public class CachedFile {
 
+	public static final String LIBRARY_ID = "libraryId";
+	public static final String LAST_ACCESSED_TIME = "lastAccessedTime";
+	public static final String UNIQUE_KEY = "uniqueKey";
+	public static final String CACHE_NAME = "cacheName";
+	
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = "libraryId")
+	@DatabaseField(foreign = true, columnName = LIBRARY_ID, uniqueCombo = true)
 	private Library library;
 	
-	@DatabaseField()
+	@DatabaseField(uniqueCombo = true)
 	private String cacheName;
 	
 	@DatabaseField()
-	private Calendar lastAccessedTime;
+	private Date lastAccessedTime;
 	
-	@DatabaseField(unique = true)
+	@DatabaseField(uniqueCombo = true)
 	private String uniqueKey;
 	
 	@DatabaseField()
@@ -46,14 +51,14 @@ public class CachedFile {
 	/**
 	 * @return the lastAccessedTime
 	 */
-	public final Calendar getLastAccessedTime() {
+	public final Date getLastAccessedTime() {
 		return lastAccessedTime;
 	}
 
 	/**
 	 * @param lastAccessedTime the lastAccessedTime to set
 	 */
-	public final void setLastAccessedTime(Calendar lastAccessedTime) {
+	public final void setLastAccessedTime(Date lastAccessedTime) {
 		this.lastAccessedTime = lastAccessedTime;
 	}
 

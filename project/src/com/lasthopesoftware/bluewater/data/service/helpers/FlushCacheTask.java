@@ -16,6 +16,7 @@ import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 
@@ -83,7 +84,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				boolean isFileFound = false;
 				for (CachedFile cachedFile : allCachedFiles) {
 					try {
-						if (cachedFile.getFileName() == filesInCacheDir[i].getCanonicalPath()) {
+						if (cachedFile.getFileName().equals(filesInCacheDir[i].getCanonicalPath())) {
 							isFileFound = true;
 							break;
 						}
@@ -118,9 +119,9 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
-						.orderBy("lastAccessedTime", false)
+						.orderBy(CachedFile.LAST_ACCESSED_TIME, false)
 						.where()
-						.eq("cacheName", cacheName)
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
 						.prepare();
 			
 			return cachedFileAccess.query(preparedQuery);			

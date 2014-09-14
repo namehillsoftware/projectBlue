@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
@@ -16,6 +17,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionM
 import com.lasthopesoftware.bluewater.data.service.helpers.FileCache;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -38,7 +40,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	}
 		
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
-		private static final int maxSize = 1024 * 1024 * 1024;
+		private static final int maxSize = 200 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
 		private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 		
 		private final Context mContext;
@@ -53,7 +55,8 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-			final FileCache imageCache = new FileCache(mContext, LibrarySession.GetLibrary(mContext), IMAGES_CACHE_NAME, maxSize);
+			final Library library = LibrarySession.GetLibrary(mContext);
+			final FileCache imageCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, maxSize);
 			
 			String uniqueKey = null;
 			try {
@@ -86,29 +89,32 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				// but do not put it into the cache
 				if (conn == null || owner.isCancelled()) return getBitmapCopy(mEmptyBitmap);
 				
+				byte[] imageBytes = null;
 				try {
-					returnBmp = BitmapFactory.decodeStream(conn.getInputStream());
+					imageBytes = IOUtils.toByteArray(conn.getInputStream());
+					returnBmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 				} finally {
 					conn.disconnect();
 				}
 				
 				if (returnBmp == null)
-					returnBmp = mEmptyBitmap;
-				
-				final java.io.File file = new java.io.File(FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME), uniqueKey + ".jpg");
-				String fileName;
+					return getBitmapCopy(mEmptyBitmap);
+								
+				final java.io.File cacheDir = FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
+				if (!cacheDir.exists())
+					cacheDir.mkdirs();
+				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, ".jpg", cacheDir);
 				try {
-					fileName = file.getCanonicalPath();
 
-					final ByteBuffer byteBuffer = ByteBuffer.allocate(returnBmp.getByteCount());
-					returnBmp.copyPixelsToBuffer(byteBuffer);
-					
-					final FileOutputStream fos = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
-					try {
-						fos.write(byteBuffer.array());
+					final FileOutputStream fos = new FileOutputStream(file);
+					try {						
+						fos.write(imageBytes);
+						fos.flush();
 					} finally {
-						fos.close();
+						fos.close();						
 					}
+					
+					imageCache.put(uniqueKey, file);
 				} catch (IOException e) {
 					LoggerFactory.getLogger(getClass()).error("Unable to write to file!", e);
 				}

@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.helpers;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +13,7 @@ import android.os.Environment;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -45,15 +44,15 @@ public class FileCache {
 				try {
 					cachedFile.setFileName(file.getCanonicalPath());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					mLogger.error("There was an error reading the canonical path", e);
+					return;
 				}
 				cachedFile.setFileSize(file.length());
 				cachedFile.setLibrary(mLibrary);
 				cachedFile.setUniqueKey(uniqueKey);
 			}
 			
-			cachedFile.setLastAccessedTime(Calendar.getInstance());
+			cachedFile.setLastAccessedTime(new Date());
 			
 			try {
 				handler.getAccessObject(CachedFile.class).createOrUpdate(cachedFile);
@@ -71,7 +70,7 @@ public class FileCache {
 		try {
 			final CachedFile cachedFile = getCachedFile(handler, mLibrary.getId(), mCacheName, uniqueKey);
 			if (cachedFile != null) {
-				cachedFile.setLastAccessedTime(Calendar.getInstance());
+				cachedFile.setLastAccessedTime(new Date());
 				try {
 					handler.getAccessObject(CachedFile.class).update(cachedFile);
 				} catch (SQLException e) {
@@ -95,11 +94,11 @@ public class FileCache {
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.where()
-						.eq("libraryId", libraryId)
+						.eq(CachedFile.LIBRARY_ID, new SelectArg(libraryId))
 						.and()
-						.eq("cacheName", cacheName)
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
 						.and()
-						.eq("uniqueKey", uniqueKey).prepare();
+						.eq(CachedFile.UNIQUE_KEY, new SelectArg(uniqueKey)).prepare();
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);			
 		} catch (SQLException e) {
