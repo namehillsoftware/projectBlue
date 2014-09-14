@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.nio.ByteBuffer;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
 		private static final int maxSize = 100 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
-		private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 		
 		private final Context mContext;
 		private final File mFile;
@@ -63,7 +62,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				uniqueKey = mFile.getProperty(FileProperties.ARTIST) + ":" + mFile.getProperty(FileProperties.ALBUM);
 			} catch (IOException ioE) {
 				LoggerFactory.getLogger(getClass()).error("Error getting file properties.", ioE);
-				return getBitmapCopy(mEmptyBitmap);
+				return getFillerBitmap();
 			}
 			
 			final java.io.File imageCacheFile = imageCache.get(uniqueKey);
@@ -87,13 +86,13 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				
 				// Connection failed to build or isCancelled was called, return an empty bitmap
 				// but do not put it into the cache
-				if (conn == null || owner.isCancelled()) return getBitmapCopy(mEmptyBitmap);
+				if (conn == null || owner.isCancelled()) return getFillerBitmap();
 				
 				byte[] imageBytes = null;
 				try {
 					imageBytes = IOUtils.toByteArray(conn.getInputStream());
 					if (imageBytes.length == 0)
-						return getBitmapCopy(mEmptyBitmap);
+						return getFillerBitmap();
 					returnBmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 				} finally {
 					conn.disconnect();
@@ -121,7 +120,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				return getBitmapCopy(returnBmp);
 			} catch (FileNotFoundException fe) {
 				LoggerFactory.getLogger(getClass()).warn("Image not found!");
-				return getBitmapCopy(mEmptyBitmap);
+				return getFillerBitmap();
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			} finally {
@@ -132,8 +131,12 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			return null;
 		}
 
-		private static Bitmap getBitmapCopy(Bitmap src) {
+		private static final Bitmap getBitmapCopy(Bitmap src) {
 			return src.copy(src.getConfig(), false);
+		}
+		
+		private static final Bitmap getFillerBitmap() {
+			return getBitmapCopy(mFillerBitmap);
 		}
 	}
 }
