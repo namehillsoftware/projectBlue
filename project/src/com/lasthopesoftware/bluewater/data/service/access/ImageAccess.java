@@ -21,7 +21,9 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
-		
+	
+	public static final String IMAGE_FORMAT = "jpg";
+	
 	public ImageAccess(final Context context, final int fileKey) {
 		this(context, new File(fileKey));
 	}
@@ -81,7 +83,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 											"File=" + String.valueOf(mFile.getKey()), 
 											"Type=Full", 
 											"Pad=1",
-											"Format=jpg",
+											"Format=" + IMAGE_FORMAT,
 											"FillTransparency=ffffff");
 				
 				// Connection failed to build or isCancelled was called, return an empty bitmap
@@ -101,7 +103,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				final java.io.File cacheDir = FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
 				if (!cacheDir.exists())
 					cacheDir.mkdirs();
-				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, ".jpg", cacheDir);
+				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 				try {
 
 					final FileOutputStream fos = new FileOutputStream(file);
