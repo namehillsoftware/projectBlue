@@ -22,7 +22,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
+import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -143,7 +143,7 @@ public class ViewFileDetails extends Activity {
         
         getFilePropertiesTask.execute();
                 
-        final ImageTask getFileImageTask = new ImageTask(this, fileKey);
+        final ImageAccess getFileImageTask = new ImageAccess(this, fileKey);
 		getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 			
 			@Override

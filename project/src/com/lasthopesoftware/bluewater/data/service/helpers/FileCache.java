@@ -35,7 +35,7 @@ public class FileCache {
 		mLibrary = library;
 	}
 	
-	public void Put(final String uniqueKey, final File file) {
+	public void put(final String uniqueKey, final File file) {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
 			CachedFile cachedFile = getCachedFile(handler, mLibrary.getId(), mCacheName, uniqueKey);
@@ -66,7 +66,7 @@ public class FileCache {
 		}
 	}
 	
-	public File Get(String uniqueKey) {
+	public File get(String uniqueKey) {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
 			final CachedFile cachedFile = getCachedFile(handler, mLibrary.getId(), mCacheName, uniqueKey);
@@ -84,8 +84,8 @@ public class FileCache {
 		}
 	}
 	
-	public boolean Contains(String uniqueKey) {
-		return Get(uniqueKey) != null;
+	public boolean containsKey(String uniqueKey) {
+		return get(uniqueKey) != null;
 	}
 	
 	private final static CachedFile getCachedFile(final DatabaseHandler handler, final int libraryId, final String cacheName, final String uniqueKey) {

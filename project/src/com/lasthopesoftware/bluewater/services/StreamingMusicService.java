@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlaying;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
+import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
@@ -753,7 +753,7 @@ public class StreamingMusicService extends Service implements
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
 					metaData.apply();
 					
-					final ImageTask getBtImageTask = new ImageTask(mThis, playingFile);
+					final ImageAccess getBtImageTask = new ImageAccess(mThis, playingFile);
 				    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 						
 						@TargetApi(Build.VERSION_CODES.KITKAT)

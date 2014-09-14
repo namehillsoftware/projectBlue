@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.data.service.access.ImageTask;
+import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
@@ -78,7 +78,7 @@ public class ViewNowPlaying extends Activity implements
 	private ImageView mNowPlayingImg;
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
-	private static ImageTask getFileImageTask;
+	private static ImageAccess getFileImageTask;
 	
 	private FilePlayer mFilePlayer = null;
 
@@ -337,7 +337,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
-				getFileImageTask = new ImageTask(this, _file);
+				getFileImageTask = new ImageAccess(this, _file);
 				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@Override
