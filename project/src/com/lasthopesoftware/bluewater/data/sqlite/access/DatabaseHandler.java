@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.data.sqlite.access;
 
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,8 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredFile;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredList;
 
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
-
+	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
+	
 	private static int DATABASE_VERSION = 4;
 	private static final String DATABASE_NAME = "sessions_db";
 	

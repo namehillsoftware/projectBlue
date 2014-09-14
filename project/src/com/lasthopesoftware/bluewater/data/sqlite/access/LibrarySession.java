@@ -27,8 +27,6 @@ public class LibrarySession {
 	private static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	private static int ChosenLibrary = -1;
-
-	private static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
 	private static Library mLibrary = null;
 
@@ -74,7 +72,7 @@ public class LibrarySession {
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
 		
-		writeToDatabaseTask.executeOnExecutor(databaseExecutor);
+		writeToDatabaseTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
 	public static synchronized Library GetLibrary() throws NullPointerException {
@@ -105,7 +103,7 @@ public class LibrarySession {
 			}
 		});
 		
-		getLibraryTask.executeOnExecutor(databaseExecutor);
+		getLibraryTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
 	public static Library GetLibrary(final Context context) {
@@ -156,7 +154,7 @@ public class LibrarySession {
 		});
 		
 		try {
-			return getLibrariesTask.executeOnExecutor(databaseExecutor).get();
+			return getLibrariesTask.executeOnExecutor(DatabaseHandler.databaseExecutor).get();
 		} catch (InterruptedException e) {
 			mLogger.error(e.toString(), e);
 		} catch (ExecutionException e) {

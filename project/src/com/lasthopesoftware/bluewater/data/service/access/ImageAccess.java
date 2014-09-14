@@ -40,7 +40,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	}
 		
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
-		private static final int maxSize = 200 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
+		private static final int maxSize = 100 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
 		private static final Bitmap mEmptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 		
 		private final Context mContext;
@@ -66,10 +66,10 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				return getBitmapCopy(mEmptyBitmap);
 			}
 			
-			
-			if (imageCache.containsKey(uniqueKey)) {
+			final java.io.File imageCacheFile = imageCache.get(uniqueKey);
+			if (imageCacheFile != null && imageCacheFile.exists()) {
 				try {
-					return BitmapFactory.decodeFile(imageCache.get(uniqueKey).getCanonicalPath());
+					return BitmapFactory.decodeFile(imageCacheFile.getCanonicalPath());
 				} catch (IOException ioE) {
 					LoggerFactory.getLogger(getClass()).error("Error getting file path.", ioE);
 				}

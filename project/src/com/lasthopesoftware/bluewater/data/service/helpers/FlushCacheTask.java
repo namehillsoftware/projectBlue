@@ -32,14 +32,13 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	private final Context mContext;
 	private final String mCacheName;
 	private final long mTargetSize;
-	private static final ExecutorService flushExecutor = Executors.newSingleThreadExecutor();
 	
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
 	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
 		final FlushCacheTask task = new FlushCacheTask(context, cacheName, targetSize);
-		task.executeOnExecutor(flushExecutor);
+		task.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
 	private FlushCacheTask(final Context context, final String cacheName, final long targetSize) {
