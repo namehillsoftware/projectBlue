@@ -92,13 +92,12 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				byte[] imageBytes = null;
 				try {
 					imageBytes = IOUtils.toByteArray(conn.getInputStream());
+					if (imageBytes.length == 0)
+						return getBitmapCopy(mEmptyBitmap);
 					returnBmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 				} finally {
 					conn.disconnect();
 				}
-				
-				if (returnBmp == null)
-					return getBitmapCopy(mEmptyBitmap);
 								
 				final java.io.File cacheDir = FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
 				if (!cacheDir.exists())
@@ -122,6 +121,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				return getBitmapCopy(returnBmp);
 			} catch (FileNotFoundException fe) {
 				LoggerFactory.getLogger(getClass()).warn("Image not found!");
+				return getBitmapCopy(mEmptyBitmap);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			} finally {
