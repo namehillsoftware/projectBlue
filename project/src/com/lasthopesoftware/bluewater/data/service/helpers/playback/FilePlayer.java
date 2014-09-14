@@ -270,9 +270,9 @@ public class FilePlayer implements
 				break;
 		}
 		resetMediaPlayer();
-		boolean handled = false;
-		for (OnFileErrorListener listener : onFileErrorListeners) handled |= listener.onJrFileError(this, what, extra);
-		return handled;
+		
+		for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, what, extra);
+		return true;
 	}
 
 	public int getBufferPercentage() {
