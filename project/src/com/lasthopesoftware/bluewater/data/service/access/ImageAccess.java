@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
@@ -75,7 +74,6 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				}
 			}
 			
-			Bitmap returnBmp = null;
 			try {
 				HttpURLConnection conn = ConnectionManager.getConnection(
 											"File/GetImage", 
@@ -94,39 +92,23 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 					imageBytes = IOUtils.toByteArray(conn.getInputStream());
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
-					returnBmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 				} catch (FileNotFoundException fe) {
 					LoggerFactory.getLogger(getClass()).warn("Image not found!");
 					return getFillerBitmap();
 				} finally {
 					conn.disconnect();
 				}
-								
+				
 				final java.io.File cacheDir = FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
 				if (!cacheDir.exists())
 					cacheDir.mkdirs();
 				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
-				try {
-
-					final FileOutputStream fos = new FileOutputStream(file);
-					try {						
-						fos.write(imageBytes);
-						fos.flush();
-					} finally {
-						fos.close();						
-					}
-					
-					imageCache.put(uniqueKey, file);
-				} catch (IOException e) {
-					LoggerFactory.getLogger(getClass()).error("Unable to write to file!", e);
-				}
 				
-				return getBitmapCopy(returnBmp);
+				imageCache.put(uniqueKey, file, imageBytes);
+					
+				return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
-			} finally {
-				if (returnBmp != null)
-					returnBmp.recycle();
 			}
 			
 			return null;

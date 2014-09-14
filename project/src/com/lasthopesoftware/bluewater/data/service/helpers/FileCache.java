@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.helpers;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Environment;
 
 import com.j256.ormlite.dao.Dao;
@@ -36,6 +38,35 @@ public class FileCache {
 		mCacheName = cacheName;
 		mMaxSize = maxSize;
 		mLibrary = library;
+	}
+	
+	public void put(final String uniqueKey, final File file, final byte[] fileData) {
+		SimpleTask<Void, Void, Void> writeFileTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+
+			@Override
+			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+				try {
+
+					final FileOutputStream fos = new FileOutputStream(file);
+					try {					
+						fos.write(fileData);
+						fos.flush();
+					} finally {
+						fos.close();						
+					}
+					
+					put(uniqueKey, file);
+				} catch (IOException e) {
+					mLogger.error("Unable to write to file!", e);
+				}
+				
+				return null;
+			}
+			
+		});
+		
+		// Just execute this on the thread pool executor as it doesn't write to the database
+		writeFileTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	public void put(final String uniqueKey, final File file) {

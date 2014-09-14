@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,10 +71,13 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				allCachedFiles.remove(cachedFile);
 			}
 			
-			// Remove any files in the cache dir but not in the database
-			final File cachedFileDir = FileCache.getDiskCacheDir(mContext, mCacheName);
-			final File[] filesInCacheDir = cachedFileDir.listFiles();
-			if (filesInCacheDir == null)
+			// Remove any files in the cache dir but not in the database			
+			final File[] filesInCacheDir = FileCache.getDiskCacheDir(mContext, mCacheName).listFiles();
+			
+			// If the # of files in the cache dir is equal to the database size, then
+			// hypothetically (and good enough for our purposes), they are in sync and we don't need
+			// to do additional processing
+			if (filesInCacheDir == null || filesInCacheDir.length == allCachedFiles.size())
 				return null;
 			
 			for (int i = 0; i < filesInCacheDir.length; i++) {
