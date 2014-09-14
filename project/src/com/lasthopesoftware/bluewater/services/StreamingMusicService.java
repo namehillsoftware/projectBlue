@@ -753,21 +753,22 @@ public class StreamingMusicService extends Service implements
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
 					metaData.apply();
 					
-					final ImageAccess getBtImageTask = new ImageAccess(mThis, playingFile);
-				    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
-						
-						@TargetApi(Build.VERSION_CODES.KITKAT)
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-							if (result == null || android.os.Build.VERSION.SDK_INT < 19) return;
+					if (android.os.Build.VERSION.SDK_INT >= 19) {					
+						final ImageAccess getBtImageTask = new ImageAccess(mThis, playingFile);
+					    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 							
-							final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
-							metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result);
-							metaData.apply();
-						}
-					});
-				    
-				    getBtImageTask.execute();
+							@TargetApi(Build.VERSION_CODES.KITKAT)
+							@Override
+							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+								if (result == null) return;
+								
+								final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
+								metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result);
+								metaData.apply();
+							}
+						});
+					    getBtImageTask.execute();
+					}
 				}
 				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
