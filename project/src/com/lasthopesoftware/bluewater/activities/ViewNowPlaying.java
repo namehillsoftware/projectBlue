@@ -119,6 +119,7 @@ public class ViewNowPlaying extends Activity implements
 		
 		StreamingMusicService.addOnStreamingChangeListener(this);
 		StreamingMusicService.addOnStreamingPauseListener(this);
+		StreamingMusicService.addOnStreamingStopListener(this);
 		StreamingMusicService.addOnStreamingStartListener(this);
 		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
@@ -271,9 +272,8 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setView(File file) {
-		final File _file = file;
-				
+	private void setView(final File file) {
+			
 		try {
 			@SuppressWarnings("rawtypes")
 			final OnErrorListener onSimpleIoExceptionErrors = new OnErrorListener() {
@@ -289,7 +289,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					return _file.getProperty("Artist");
+					return file.getProperty("Artist");
 				}
 			});
 			getArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -297,7 +297,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_file);
+						resetViewOnReconnect(file);
 						return;
 					}
 					
@@ -312,7 +312,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-					return _file.getValue();
+					return file.getValue();
 				}
 			});
 			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -320,7 +320,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_file);
+						resetViewOnReconnect(file);
 						return;
 					}
 					
@@ -337,7 +337,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
-				getFileImageTask = new ImageAccess(this, _file);
+				getFileImageTask = new ImageAccess(this, file);
 				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@Override
@@ -360,8 +360,8 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 					
-					if (_file.getProperty("Rating") != null && !_file.getProperty("Rating").isEmpty())
-						return Float.valueOf(_file.getProperty("Rating"));
+					if (file.getProperty("Rating") != null && !file.getProperty("Rating").isEmpty())
+						return Float.valueOf(file.getProperty("Rating"));
 					
 					return (float) 0;
 				}
@@ -371,7 +371,7 @@ public class ViewNowPlaying extends Activity implements
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
 					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(_file);
+						resetViewOnReconnect(file);
 						return;
 					}
 					
@@ -383,7 +383,7 @@ public class ViewNowPlaying extends Activity implements
 						@Override
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
-							_file.setProperty("Rating", String.valueOf(Math.round(rating)));
+							file.setProperty("Rating", String.valueOf(Math.round(rating)));
 						}
 					});
 				}
@@ -392,10 +392,10 @@ public class ViewNowPlaying extends Activity implements
 			getRatingsTask.execute();
 			
 			
-			mSongProgressBar.setMax(_file.getDuration());
+			mSongProgressBar.setMax(file.getDuration());
 			
 		} catch (IOException ioE) {
-			resetViewOnReconnect(_file);
+			resetViewOnReconnect(file);
 		}
 	}
 	
@@ -429,13 +429,12 @@ public class ViewNowPlaying extends Activity implements
 		return false;
 	}
 	
-	private void resetViewOnReconnect(File file) {
-		final File _file = file;
+	private void resetViewOnReconnect(final File file) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
-				setView(_file);
+				setView(file);
 			}
 		});
 		WaitForConnectionDialog.show(this);
@@ -487,6 +486,8 @@ public class ViewNowPlaying extends Activity implements
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
+		
+		mControlNowPlaying.invalidate();
 	}
 
 	@Override
