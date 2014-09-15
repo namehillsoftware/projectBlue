@@ -134,6 +134,7 @@ public class FilePlayer implements
 		    if (cursor.moveToFirst()) {
 		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
 		    	if (fileUriString != null && !fileUriString.isEmpty()) {
+		    		// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
 		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME, ""));
 		    		
 		    		if (file != null) return Uri.fromFile(file);
