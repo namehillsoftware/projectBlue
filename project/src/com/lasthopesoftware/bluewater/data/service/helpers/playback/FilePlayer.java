@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.annotation.SuppressLint;
@@ -20,7 +21,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.provider.MediaStore;
-import ch.qos.logback.classic.Logger;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
@@ -37,13 +37,15 @@ public class FilePlayer implements
 	OnErrorListener, 
 	OnCompletionListener
 {
+	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
+	
 	private volatile MediaPlayer mp;
 	private AtomicBoolean isPrepared = new AtomicBoolean();
 	private AtomicBoolean isPreparing = new AtomicBoolean();
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
-	private Context mMpContext;
-	private File mFile;
+	private final Context mMpContext;
+	private final File mFile;
 	
 	private static final String FILE_URI_SCHEME = "file://";
 	private static final String MEDIA_QUERY = "(" + 
@@ -138,7 +140,7 @@ public class FilePlayer implements
 		    	}
 		    }
 	    } catch (IllegalArgumentException ie) {
-	    	LoggerFactory.getLogger(getClass()).info("Illegal column name.", ie);
+	    	mLogger.info("Illegal column name.", ie);
 	    } finally {
 	    	cursor.close();
 	    }
@@ -158,12 +160,13 @@ public class FilePlayer implements
 			if (uri != null) {
 				setMpDataSource(uri);
 				isPreparing.set(true);
+				mLogger.info("Preparing " + mFile.getValue() + " asynchronously.");
 				mp.prepareAsync();
 			}
 		} catch (IOException io) {
 			throwIoErrorEvent();
 		} catch (Exception e) {
-			LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 		}
 	}
 	
@@ -176,6 +179,7 @@ public class FilePlayer implements
 				setMpDataSource(uri);
 				
 				isPreparing.set(true);
+				mLogger.info("Preparing " + mFile.getValue() + " synchronously.");
 				mp.prepare();
 				isPrepared.set(true);
 				return;
@@ -186,7 +190,7 @@ public class FilePlayer implements
 			throwIoErrorEvent();
 			isPreparing.set(false);
 		} catch (Exception e) {
-			LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 			resetMediaPlayer();
 			isPreparing.set(false);
 		}
@@ -230,6 +234,7 @@ public class FilePlayer implements
 	public void onPrepared(MediaPlayer mp) {
 		isPrepared.set(true);
 		isPreparing.set(false);
+		mLogger.info(mFile.getValue() + " prepared!");
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
@@ -244,29 +249,28 @@ public class FilePlayer implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		Logger logger = (Logger) LoggerFactory.getLogger(File.class);
-		logger.error("Media Player error.");
-		logger.error("What: ");
-		logger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
-		logger.error("Extra: ");
+		mLogger.error("Media Player error.");
+		mLogger.error("What: ");
+		mLogger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
+		mLogger.error("Extra: ");
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
-				logger.error("MEDIA_ERROR_IO");
+				mLogger.error("MEDIA_ERROR_IO");
 				break;
 			case MediaPlayer.MEDIA_ERROR_MALFORMED:
-				logger.error("MEDIA_ERROR_MALFORMED");
+				mLogger.error("MEDIA_ERROR_MALFORMED");
 				break;
 			case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-				logger.error("MEDIA_ERROR_UNSUPPORTED");
+				mLogger.error("MEDIA_ERROR_UNSUPPORTED");
 				break;
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-				logger.error("MEDIA_ERROR_TIMED_OUT");
+				mLogger.error("MEDIA_ERROR_TIMED_OUT");
 				break;
 			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-				logger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
+				mLogger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
 				break;
 			default:
-				logger.error("Unknown");
+				mLogger.error("Unknown");
 				break;
 		}
 		resetMediaPlayer();
@@ -316,6 +320,7 @@ public class FilePlayer implements
 	}
 
 	public void start() {
+		mLogger.info("Playback started on " + mFile.getValue());
 		mp.seekTo(mPosition);
 		mp.start();
 	}
@@ -356,9 +361,9 @@ public class FilePlayer implements
 				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
 				mFile.setProperty("Last Played", lastPlayed);
 			} catch (IOException e) {
-				LoggerFactory.getLogger(FilePlayer.class).warn(e.toString(), e);
+				mLogger.warn(e.toString(), e);
 			} catch (NumberFormatException ne) {
-				LoggerFactory.getLogger(FilePlayer.class).error(ne.toString(), ne);
+				mLogger.error(ne.toString(), ne);
 			}
 			
 			return null;
