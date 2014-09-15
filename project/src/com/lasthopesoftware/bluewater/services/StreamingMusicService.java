@@ -718,6 +718,8 @@ public class StreamingMusicService extends Service implements
 		
 		stopNotification();
 		if (mAreListenersRegistered) unregisterListeners();
+		
+		controller.seekTo(0);
 	}
 	
 

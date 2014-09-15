@@ -96,7 +96,7 @@ public class PlaylistController implements
 		filePlayer.addOnFilePreparedListener(this);
 		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
-		filePlayer.seekTo(fileProgress < 0 ? filePlayer.getCurrentPosition() : fileProgress);
+		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
 		mCurrentFilePlayer = filePlayer;
 		if (wasPlaying) mCurrentFilePlayer.prepareMediaPlayer();
 		throwChangeEvent(mCurrentFilePlayer);
@@ -296,7 +296,9 @@ public class PlaylistController implements
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
+			// Playlist is complete, throw stop event and get out
 			if (mediaPlayer.getFile().getNextFile() == null) {
+				mIsPlaying = false;
 				throwStopEvent(mediaPlayer);
 				return;
 			}
