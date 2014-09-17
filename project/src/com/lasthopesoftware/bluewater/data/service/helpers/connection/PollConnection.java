@@ -35,8 +35,8 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	private static final Object syncObj = new Object();
 	
 	private static final CopyOnWriteArraySet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new CopyOnWriteArraySet<OnConnectionLostListener>();
-	private static final CopyOnWriteArraySet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<OnConnectionRegainedListener>();
-	private static final CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
+	private final CopyOnWriteArraySet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<OnConnectionRegainedListener>();
+	private final CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
 	private final CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnection(Context context) {

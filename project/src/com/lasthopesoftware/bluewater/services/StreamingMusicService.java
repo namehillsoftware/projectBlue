@@ -37,10 +37,9 @@ import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.OnBuildSessionStateChangeListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
@@ -118,20 +117,7 @@ public class StreamingMusicService extends Service implements
 	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
-	
-	private final OnConnectionLostListener mConnectionLostListener = new OnConnectionLostListener() {
 		
-		@Override
-		public void onConnectionLost() {
-			if (mPlaylistController == null || !mPlaylistController.isPlaying()) {
-				stopSelf(mStartId);
-				return;
-			}
-			
-			buildErrorNotification();
-		}
-	};
-	
 	private OnConnectionRegainedListener mConnectionRegainedListener;
 	
 	private OnPollingCancelledListener mOnPollingCancelledListener;
@@ -445,12 +431,12 @@ public class StreamingMusicService extends Service implements
 				
 				@Override
 				public void onConnectionRegained() {
-					if (mLibrary == null) {
+					if (mLibrary == null || mPlaylistController == null || !mPlaylistController.isPlaying()) {
 						stopSelf(mStartId);
 						return;
 					}
 
-					startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+					mPlaylistController.resume();
 				}
 			};
 		}
@@ -512,8 +498,6 @@ public class StreamingMusicService extends Service implements
 		
 		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 		
-		PollConnection.Instance.get(mThis).addOnConnectionLostListener(mConnectionLostListener);
-		
 		mAreListenersRegistered = true;
 	}
 	
@@ -527,7 +511,6 @@ public class StreamingMusicService extends Service implements
 			mWifiLock = null;
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(mThis);
-		pollConnection.removeOnConnectionLostListener(mConnectionLostListener);
 		if (mConnectionRegainedListener != null)
 			pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
 		if (mOnPollingCancelledListener != null)
@@ -664,10 +647,14 @@ public class StreamingMusicService extends Service implements
 
 
 	@Override
-	public boolean onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
+	public void onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
+		mLibrary.setNowPlayingId(controller.getCurrentPosition());
+		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
+		LibrarySession.SaveSession(mThis);
+		
 		PollConnection.Instance.get(mThis).startPolling();
-
-		return true;
+		
+		buildErrorNotification();
 	}
 
 	@Override
@@ -856,8 +843,6 @@ public class StreamingMusicService extends Service implements
 		if (mAreListenersRegistered) unregisterListeners();
 		
 		mPlaylistString = null;
-		
-		PollConnection.Instance.get(mThis).removeOnConnectionLostListener(mConnectionLostListener);
 	}
 
 	/* End Event Handlers */
