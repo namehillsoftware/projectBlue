@@ -431,12 +431,12 @@ public class StreamingMusicService extends Service implements
 				
 				@Override
 				public void onConnectionRegained() {
-					if (mLibrary == null || mPlaylistController == null || !mPlaylistController.isPlaying()) {
+					if (mLibrary == null || (mPlaylistController != null && !mPlaylistController.isPlaying())) {
 						stopSelf(mStartId);
 						return;
 					}
 
-					mPlaylistController.resume();
+					startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
 				}
 			};
 		}
