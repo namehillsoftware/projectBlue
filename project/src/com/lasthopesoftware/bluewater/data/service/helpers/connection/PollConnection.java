@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.connection;
 
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,10 +34,10 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	
 	private static final Object syncObj = new Object();
 	
-	private static final CopyOnWriteArraySet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new CopyOnWriteArraySet<OnConnectionLostListener>();
-	private final CopyOnWriteArraySet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListener = new CopyOnWriteArraySet<OnConnectionRegainedListener>();
-	private final CopyOnWriteArraySet<OnPollingCancelledListener> mUniqueOnCancelListeners = new CopyOnWriteArraySet<OnPollingCancelledListener>();
-	private final CopyOnWriteArraySet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new CopyOnWriteArraySet<ISimpleTask.OnErrorListener<String, Void, Void>>();
+	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<OnConnectionLostListener>();
+	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<OnConnectionRegainedListener>();
+	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<OnPollingCancelledListener>();
+	private final HashSet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new HashSet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnection(Context context) {
 		synchronized (syncObj) {
@@ -50,7 +50,9 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 				
 				@Override
 				public void onStart(ISimpleTask<String, Void, Void> owner) {
-					for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
+					synchronized (mUniqueOnConnectionLostListeners) {
+						for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
+					}
 				}
 			});
 			
@@ -58,11 +60,9 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 				
 				@Override
 				public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
-					synchronized (syncObj) {
-						for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListener) onConnectionRegainedListener.onConnectionRegained();
-						
-						clearCompleteListeners();
-					}
+					for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
+					
+					clearCompleteListeners();
 				}
 			});
 			
@@ -70,18 +70,16 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 				
 				@Override
 				public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
-					synchronized (syncObj) {
-						for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
-						
-						clearCompleteListeners();
-					}
+					for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
+					
+					clearCompleteListeners();
 				}
 			});
 		}
 	}
 	
 	private void clearCompleteListeners() {
-		mUniqueOnConnectionRegainedListener.clear();
+		mUniqueOnConnectionRegainedListeners.clear();
 		mUniqueOnCancelListeners.clear();
 	}
 
@@ -147,43 +145,59 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener)
 	 */
 	public void addOnConnectionLostListener(OnConnectionLostListener listener) {
-		mUniqueOnConnectionLostListeners.add(listener);
+		synchronized(mUniqueOnConnectionLostListeners) {
+			mUniqueOnConnectionLostListeners.add(listener);
+		}
 	}
 
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
 	public void addOnConnectionRegainedListener(OnConnectionRegainedListener listener) {
-		mUniqueOnConnectionRegainedListener.add(listener);
+		synchronized(mUniqueOnConnectionRegainedListeners) {
+			mUniqueOnConnectionRegainedListeners.add(listener);
+		}
 	}
 	
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
 	public void addOnPollingCancelledListener(OnPollingCancelledListener listener) {
-		mUniqueOnCancelListeners.add(listener);
+		synchronized(mUniqueOnCancelListeners) {
+			mUniqueOnCancelListeners.add(listener);
+		}
 	}
 
 	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-		if (mUniqueOnErrorListeners.add(listener))
-			mTask.addOnErrorListener(listener);
+		synchronized(mUniqueOnErrorListeners) {
+			if (mUniqueOnErrorListeners.add(listener))
+				mTask.addOnErrorListener(listener);
+		}
 	}
 
 	public void removeOnConnectionLostListener(OnConnectionLostListener listener) {
-		mUniqueOnConnectionLostListeners.remove(listener);
+		synchronized(mUniqueOnConnectionLostListeners) {
+			mUniqueOnConnectionLostListeners.remove(listener);
+		}
 	}
 
 	public void removeOnConnectionRegainedListener(OnConnectionRegainedListener listener) {
-		mUniqueOnConnectionRegainedListener.remove(listener);
+		synchronized(mUniqueOnConnectionRegainedListeners) {
+			mUniqueOnConnectionRegainedListeners.remove(listener);
+		}
 	}
 	
 	public void removeOnPollingCancelledListener(OnPollingCancelledListener listener) {
-		mUniqueOnCancelListeners.remove(listener);
+		synchronized(mUniqueOnCancelListeners) {
+			mUniqueOnCancelListeners.remove(listener);
+		}
 	}
 
 	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-		if (mUniqueOnErrorListeners.remove(listener))
-			mTask.removeOnErrorListener(listener);
+		synchronized(mUniqueOnErrorListeners) {
+			if (mUniqueOnErrorListeners.remove(listener))
+				mTask.removeOnErrorListener(listener);
+		}
 	}
 	
 	public interface OnConnectionLostListener {
