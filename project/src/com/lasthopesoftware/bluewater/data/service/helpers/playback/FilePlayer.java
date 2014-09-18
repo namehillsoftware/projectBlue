@@ -217,12 +217,10 @@ public class FilePlayer implements
 			return;
 		}
 		
-		mp.reset();
+		releaseMediaPlayer();
 		
-		if (mMpContext != null)
-			mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		initMediaPlayer();
+		mp.seekTo(mPosition);
 	}
 	
 	public void releaseMediaPlayer() {
