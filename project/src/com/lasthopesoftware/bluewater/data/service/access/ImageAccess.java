@@ -134,7 +134,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			
 			final byte[] imageBytes = new byte[memoryImageBytes.length];
 			for (int i = 0; i < memoryImageBytes.length; i++)
-				imageBytes[i] = memoryImageBytes[i];
+				imageBytes[i] = memoryImageBytes[i].byteValue();
 			
 			return imageBytes;
 		}
@@ -162,7 +162,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			final Byte[] memoryImageBytes = new Byte[imageBytes.length];
 			
 			for (int i = 0; i < imageBytes.length; i++)
-				memoryImageBytes[i] = imageBytes[i];
+				memoryImageBytes[i] = Byte.valueOf(imageBytes[i]);
 			
 			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
 		}
