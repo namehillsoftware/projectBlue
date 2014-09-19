@@ -1,8 +1,11 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.helpers.FileCache;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
@@ -22,6 +26,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	
 	public static final String IMAGE_FORMAT = "jpg";
+
 	
 	public ImageAccess(final Context context, final int fileKey) {
 		this(context, new File(fileKey));
@@ -40,9 +45,12 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	}
 		
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
-		private static final int maxSize = 100 * 1024 * 1024; // 1024 * 1024 * 1024 for a gig of cache
-		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+		private static final int MAX_DISK_CACHE_SIZE = 100 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
+		private static final int MAX_MEMORY_CACHE_SIZE = 100;
 		private static final String IMAGES_CACHE_NAME = "images";
+		
+		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+		private static final ConcurrentLinkedHashMap<String, Byte[]> mImageMemoryCache = new ConcurrentLinkedHashMap.Builder<String, Byte[]>().maximumWeightedCapacity(MAX_MEMORY_CACHE_SIZE).build();
 		
 		private final Context mContext;
 		private final File mFile;
@@ -55,7 +63,9 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			final Library library = LibrarySession.GetLibrary(mContext);
-			final FileCache imageCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, maxSize);
+			final FileCache imageCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
+			
+			byte[] imageBytes = null;
 			
 			String uniqueKey = null;
 			try {
@@ -65,13 +75,14 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				return getFillerBitmap();
 			}
 			
+			imageBytes = getBitmapBytesFromMemory(uniqueKey);
+			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
+			
 			final java.io.File imageCacheFile = imageCache.get(uniqueKey);
 			if (imageCacheFile != null) {
-				try {
-					return BitmapFactory.decodeFile(imageCacheFile.getCanonicalPath());
-				} catch (IOException ioE) {
-					LoggerFactory.getLogger(getClass()).error("Error getting file path.", ioE);
-				}
+				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
+				if (imageBytes.length > 0)
+					return getBitmapFromBytes(imageBytes);
 			}
 			
 			try {
@@ -87,7 +98,6 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				// but do not put it into the cache
 				if (conn == null || owner.isCancelled()) return getFillerBitmap();
 				
-				byte[] imageBytes = null;
 				try {
 					imageBytes = IOUtils.toByteArray(conn.getInputStream());
 					if (imageBytes.length == 0)
@@ -105,16 +115,63 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 				
 				imageCache.put(uniqueKey, file, imageBytes);
+				putBitmapIntoMemory(uniqueKey, imageBytes);
 					
-				return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+				return getBitmapFromBytes(imageBytes);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			}
 			
 			return null;
 		}
+		
+		private static final byte[] getBitmapBytesFromMemory(final String uniqueKey) {		
+			if (!mImageMemoryCache.containsKey(uniqueKey)) return new byte[0];
+			
+			final Byte[] memoryImageBytes = mImageMemoryCache.get(uniqueKey);
+			if (memoryImageBytes == null || memoryImageBytes.length == 0)
+				return new byte[0];
+			
+			final byte[] imageBytes = new byte[memoryImageBytes.length];
+			for (int i = 0; i < memoryImageBytes.length; i++)
+				imageBytes[i] = memoryImageBytes[i];
+			
+			return imageBytes;
+		}
+		
+		private static final byte[] putBitmapIntoMemory(final String uniqueKey, final java.io.File file) {
+			final int size = (int) file.length();
+		    final byte[] bytes = new byte[size];
+		    try {
+		        final BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+		        buf.read(bytes, 0, bytes.length);
+		        buf.close();
+		    } catch (FileNotFoundException e) {
+		    	LoggerFactory.getLogger(ImageAccess.class).error("Could not find file.", e);
+		    	return new byte[0];
+		    } catch (IOException e) {
+		    	LoggerFactory.getLogger(ImageAccess.class).error("Error reading file.", e);
+		    	return new byte[0];
+		    }
+		    
+		    putBitmapIntoMemory(uniqueKey, bytes);
+		    return bytes;
+		}
+		
+		private static final void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {
+			final Byte[] memoryImageBytes = new Byte[imageBytes.length];
+			
+			for (int i = 0; i < imageBytes.length; i++)
+				memoryImageBytes[i] = imageBytes[i];
+			
+			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
+		}
 
-		private static final Bitmap getBitmapCopy(Bitmap src) {
+		private static final Bitmap getBitmapFromBytes(final byte[] imageBytes) {
+			return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+		}
+		
+		private static final Bitmap getBitmapCopy(final Bitmap src) {
 			return src.copy(src.getConfig(), false);
 		}
 		

@@ -13,7 +13,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
