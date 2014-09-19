@@ -13,6 +13,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
@@ -50,7 +51,9 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-		
+			final long calculatedDatabaseFileSize = getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName);
+			if (calculatedDatabaseFileSize > -1 && calculatedDatabaseFileSize <= mTargetSize) return null;
+			
 			List<CachedFile> allCachedFiles = getAllCachedFiles(cachedFileAccess,  mCacheName);
 			
 			while (calculateTotalSize(allCachedFiles) > mTargetSize) {
@@ -106,12 +109,29 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		return null;
 	}
 
-	private final static int calculateTotalSize(final List<CachedFile> cachedFiles) {
-		int returnSize = 0;
+	private final static long calculateTotalSize(final List<CachedFile> cachedFiles) {
+		long returnSize = 0;
 		for (CachedFile cachedFile : cachedFiles)
 			returnSize += cachedFile.getFileSize();
 		
 		return returnSize;
+	}
+	
+	private final static long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+		try {
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.selectRaw("SUM(FILESIZE)")
+						.where()
+						.eq(CachedFile.CACHE_NAME, new SelectArg())
+						.prepare();
+			
+			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName);
+		} catch (SQLException e) {
+			mLogger.error("Error getting file size", e);
+			return -1;
+		}
 	}
 	
 	private final static List<CachedFile> getAllCachedFiles(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
