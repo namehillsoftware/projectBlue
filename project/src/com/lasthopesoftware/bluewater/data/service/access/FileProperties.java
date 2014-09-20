@@ -163,6 +163,7 @@ public class FileProperties {
 	
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
+	public static final String ALBUM_ARTIST = "Album Artist";
 	public static final String ALBUM = "Album";
 	public static final String DURATION = "Duration";
 	public static final String NAME = "Name";

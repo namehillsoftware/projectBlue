@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -73,7 +72,13 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			
 			String uniqueKey = null;
 			try {
-				uniqueKey = mFile.getProperty(FileProperties.ARTIST) + ":" + mFile.getProperty(FileProperties.ALBUM);
+				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
+				// artists), and then by artist if that field is empty
+				String artist = mFile.getProperty(FileProperties.ALBUM_ARTIST);
+				if (artist == null || artist.isEmpty())
+					artist = mFile.getProperty(FileProperties.ARTIST);
+				
+				uniqueKey = artist + ":" + mFile.getProperty(FileProperties.ALBUM);
 			} catch (IOException ioE) {
 				mLogger.error("Error getting file properties.", ioE);
 				return getFillerBitmap();
