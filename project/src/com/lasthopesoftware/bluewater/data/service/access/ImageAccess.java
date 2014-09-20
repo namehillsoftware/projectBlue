@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
@@ -45,6 +46,9 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 	}
 		
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
+		
+		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
+		
 		private static final int MAX_DISK_CACHE_SIZE = 100 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 		private static final int MAX_MEMORY_CACHE_SIZE = 100;
 		private static final String IMAGES_CACHE_NAME = "images";
@@ -63,7 +67,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			final Library library = LibrarySession.GetLibrary(mContext);
-			final FileCache imageCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
+			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
 			
 			byte[] imageBytes = null;
 			
@@ -71,14 +75,14 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			try {
 				uniqueKey = mFile.getProperty(FileProperties.ARTIST) + ":" + mFile.getProperty(FileProperties.ALBUM);
 			} catch (IOException ioE) {
-				LoggerFactory.getLogger(getClass()).error("Error getting file properties.", ioE);
+				mLogger.error("Error getting file properties.", ioE);
 				return getFillerBitmap();
 			}
 			
 			imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 			
-			final java.io.File imageCacheFile = imageCache.get(uniqueKey);
+			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
 				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 				if (imageBytes.length > 0)
@@ -103,7 +107,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
 				} catch (FileNotFoundException fe) {
-					LoggerFactory.getLogger(getClass()).warn("Image not found!");
+					mLogger.warn("Image not found!");
 					return getFillerBitmap();
 				} finally {
 					conn.disconnect();
@@ -114,12 +118,12 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 					cacheDir.mkdirs();
 				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 				
-				imageCache.put(uniqueKey, file, imageBytes);
+				imageDiskCache.put(uniqueKey, file, imageBytes);
 				putBitmapIntoMemory(uniqueKey, imageBytes);
 					
 				return getBitmapFromBytes(imageBytes);
 			} catch (Exception e) {
-				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+				mLogger.error(e.toString(), e);
 			}
 			
 			return null;
@@ -147,10 +151,10 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		        buf.read(bytes, 0, bytes.length);
 		        buf.close();
 		    } catch (FileNotFoundException e) {
-		    	LoggerFactory.getLogger(ImageAccess.class).error("Could not find file.", e);
+		    	mLogger.error("Could not find file.", e);
 		    	return new byte[0];
 		    } catch (IOException e) {
-		    	LoggerFactory.getLogger(ImageAccess.class).error("Error reading file.", e);
+		    	mLogger.error("Error reading file.", e);
 		    	return new byte[0];
 		    }
 		    
