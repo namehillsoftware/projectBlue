@@ -46,13 +46,16 @@ public class FileProperties {
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
 	
-
-	private static final DateTimeFormatter mDateTimeFormatter = new DateTimeFormatterBuilder()
+	private static final DateTimeFormatterBuilder mDateFormatterBuilder = new DateTimeFormatterBuilder()
 																	.appendMonthOfYear(1)
 																	.appendLiteral('/')
 																	.appendDayOfMonth(1)
 																	.appendLiteral('/')
-																	.appendYear(4, 4)
+																	.appendYear(4, 4);
+	
+	private static final DateTimeFormatter mDateFormatter = mDateFormatterBuilder.toFormatter();
+	
+	private static final DateTimeFormatter mDateTimeFormatter = mDateFormatterBuilder
 																	.appendLiteral(" at ")
 																	.appendClockhourOfHalfday(1)
 																	.appendLiteral(':')
@@ -64,7 +67,8 @@ public class FileProperties {
 	private static final PeriodFormatter mMinutesAndSecondsFormatter = new PeriodFormatterBuilder()
 													    .appendMinutes()
 													    .appendSeparator(":")
-													    .printZeroAlways()
+													    .minimumPrintedDigits(2)
+													    .maximumParsedDigits(2)
 													    .appendSeconds()
 													    .toFormatter();
 	
@@ -228,6 +232,11 @@ public class FileProperties {
 			return dateTime.toString(mDateTimeFormatter);
 		}
 		
+		if (DATE.equals(name)) {
+			final DateTime dateTime = new DateTime(1899, 12, 30, 0, 0);
+			return dateTime.plusDays(Integer.parseInt(value)).toString(mDateFormatter);
+		}
+		
 		if (FILE_SIZE.equals(name)) {
 			final double filesizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
 			return String.valueOf(filesizeBytes) + " MB";
@@ -255,6 +264,14 @@ public class FileProperties {
 	public static final String DATE_IMPORTED = "Date Imported";
 	public static final String DATE_MODIFIED = "Date Modified";
 	public static final String FILE_SIZE = "File Size";
+	public static final String AUDIO_ANALYSIS_INFO = "Audio Analysis Info";
+	public static final String GET_COVER_ART_INFO = "Get Cover Art Info";
+	public static final String IMAGE_FILE = "Image File";
+	public static final String KEY = "Key";
+	public static final String STACK_FILES = "Stack Files";
+	public static final String STACK_TOP = "Stack Top";
+	public static final String STACK_VIEW = "Stack View";
+	public static final String DATE = "Date";
 	
 	public static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
 			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));

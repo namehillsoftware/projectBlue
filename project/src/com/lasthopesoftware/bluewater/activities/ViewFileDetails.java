@@ -1,9 +1,13 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -31,6 +35,16 @@ import com.lasthopesoftware.threading.SimpleTask;
 public class ViewFileDetails extends Activity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
+	
+	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+															new String[] {
+																FileProperties.AUDIO_ANALYSIS_INFO,
+																FileProperties.GET_COVER_ART_INFO,
+																FileProperties.IMAGE_FILE,
+																FileProperties.KEY,
+																FileProperties.STACK_FILES,
+																FileProperties.STACK_TOP,
+																FileProperties.STACK_VIEW })));
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -124,8 +138,10 @@ public class ViewFileDetails extends Activity {
 				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedFormattedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				
-				for (Entry<String, String> entry : fileProperties.entrySet())
+				for (Entry<String, String> entry : fileProperties.entrySet()) {
+					if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
 					results.add(entry);
+				}
 				
 				return results;
 			}
