@@ -90,7 +90,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			}
 			
 			try {
-				HttpURLConnection conn = ConnectionManager.getConnection(
+				final HttpURLConnection conn = ConnectionManager.getConnection(
 											"File/GetImage", 
 											"File=" + String.valueOf(mFile.getKey()), 
 											"Type=Full", 
