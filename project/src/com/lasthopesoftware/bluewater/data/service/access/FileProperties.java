@@ -18,7 +18,8 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.joda.time.Period;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,28 @@ public class FileProperties {
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
+	
+
+	private static final DateTimeFormatter mDateTimeFormatter = new DateTimeFormatterBuilder()
+																	.appendMonthOfYear(1)
+																	.appendLiteral('/')
+																	.appendDayOfMonth(1)
+																	.appendLiteral('/')
+																	.appendYear(4, 4)
+																	.appendLiteral(" at ")
+																	.appendClockhourOfHalfday(1)
+																	.appendLiteral(':')
+																	.appendMinuteOfHour(2)
+																	.appendLiteral(' ')
+																	.appendHalfdayOfDayText()
+																	.toFormatter();
+	
+	private static final PeriodFormatter mMinutesAndSecondsFormatter = new PeriodFormatterBuilder()
+													    .appendMinutes()
+													    .appendSeparator(":")
+													    .printZeroAlways()
+													    .appendSeconds()
+													    .toFormatter();
 	
 	public FileProperties(int fileKey) {
 		
@@ -188,8 +211,8 @@ public class FileProperties {
 	
 	/* Formatted properties helpers */
 	
-	private SortedMap<String, String> buildFormattedReadonlyProperties(SortedMap<String, String> unformattedProperties) {
-		SortedMap<String, String> formattedProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+	private static final SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
+		final SortedMap<String, String> formattedProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
 		for (Entry<String, String> property : unformattedProperties.entrySet())
 			formattedProperties.put(property.getKey(), getFormattedValue(property.getKey(), property.getValue()));
@@ -197,40 +220,26 @@ public class FileProperties {
 		return Collections.unmodifiableSortedMap(formattedProperties);
 	}
 	
-	private static String getFormattedValue(final String name, final String value) {
-		if (value == null || value.isEmpty()) return null;
+	private static final String getFormattedValue(final String name, final String value) {
+		if (value == null || value.isEmpty()) return "";
 		
-		if (mDateTimeProperties.contains(name))
-			return parseSecondsIntoDateTime(value).toString();
+		if (DATE_TIME_PROPERTIES.contains(name)) {
+			final DateTime dateTime = new DateTime(Double.valueOf(value).longValue() * 1000);
+			return dateTime.toString(mDateTimeFormatter);
+		}
 		
 		if (FILE_SIZE.equals(name)) {
-			final double filesizeBytes = Long.parseLong(value) / 1024 / 1024;
-			final String rawFilesizeString = String.valueOf(filesizeBytes);
-			final int periodIndex = rawFilesizeString.indexOf('.');
-			if (periodIndex > -1)
-				return rawFilesizeString.substring(0, periodIndex + 3) + " MB";
-			return rawFilesizeString + " MB";
+			final double filesizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
+			return String.valueOf(filesizeBytes) + " MB";
 		}
 		
 		if (DURATION.equals(name)) {
-			final Duration duration = Duration.standardSeconds(Long.parseLong(value));
-			final Period period = duration.toPeriod();
-			final PeriodFormatter minutesAndSeconds = new PeriodFormatterBuilder()
-			     .appendMinutes()
-			     .appendSeparator(":")
-			     .printZeroAlways()
-			     .appendSeconds()
-			     .toFormatter();
-			return period.toString(minutesAndSeconds);
+			return Duration.standardSeconds(Double.valueOf(value).longValue()).toPeriod().toString(mMinutesAndSecondsFormatter);
 		}
 		
 		return value;
 	}
-	
-	private static DateTime parseSecondsIntoDateTime(String secondsString) {
-		return new DateTime((long)(Double.parseDouble(secondsString) * 1000));
-	}
-	
+		
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM_ARTIST = "Album Artist";
@@ -247,7 +256,7 @@ public class FileProperties {
 	public static final String DATE_MODIFIED = "Date Modified";
 	public static final String FILE_SIZE = "File Size";
 	
-	private static final Set<String> mDateTimeProperties = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+	public static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
 			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
 	
 }
