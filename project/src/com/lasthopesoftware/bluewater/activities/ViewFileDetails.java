@@ -121,7 +121,7 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedProperties();
+				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedFormattedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				
 				for (Entry<String, String> entry : fileProperties.entrySet())
