@@ -355,10 +355,10 @@ public class FilePlayer implements
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
 				
-				mFile.setProperty("Number Plays", String.valueOf(++numberPlays));	
+				mFile.setProperty(FileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays));	
 				
 				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
-				mFile.setProperty("Last Played", lastPlayed);
+				mFile.setProperty(FileProperties.LAST_PLAYED, lastPlayed);
 			} catch (IOException e) {
 				mLogger.warn(e.toString(), e);
 			} catch (NumberFormatException ne) {

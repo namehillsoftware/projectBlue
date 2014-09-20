@@ -3,7 +3,11 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -12,6 +16,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
@@ -87,6 +96,14 @@ public class FileProperties {
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		return getRefreshedProperties().get(name);
 	}
+
+	public String getParsedProperty(final String name) throws IOException {
+		return getFormattedValue(name, getProperty(name));
+	}
+	
+	public String getRefreshedFormattedProperty(final String name) throws IOException {
+		return getFormattedValue(name, getRefreshedProperty(name));
+	}
 	
 	public SortedMap<String, String> getProperties() throws IOException {
 		if (mProperties.size() == 0)
@@ -95,6 +112,14 @@ public class FileProperties {
 		return Collections.unmodifiableSortedMap(mProperties);
 	}
 	
+	public SortedMap<String, String> getFormattedProperties() throws IOException {
+		return buildFormattedReadonlyProperties(getProperties());
+	}
+	
+	public SortedMap<String, String> getRefreshedFormattedProperties() throws IOException {
+		return buildFormattedReadonlyProperties(getRefreshedProperties());
+	}
+		
 	public SortedMap<String, String> getRefreshedProperties() throws IOException {
 		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
@@ -161,6 +186,51 @@ public class FileProperties {
 		return result;
 	}
 	
+	/* Formatted properties helpers */
+	
+	private SortedMap<String, String> buildFormattedReadonlyProperties(SortedMap<String, String> unformattedProperties) {
+		SortedMap<String, String> formattedProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+		
+		for (Entry<String, String> property : unformattedProperties.entrySet())
+			formattedProperties.put(property.getKey(), getFormattedValue(property.getKey(), property.getValue()));
+		
+		return Collections.unmodifiableSortedMap(formattedProperties);
+	}
+	
+	private static String getFormattedValue(final String name, final String value) {
+		if (value == null || value.isEmpty()) return null;
+		
+		if (mDateTimeProperties.contains(name))
+			return parseSecondsIntoDateTime(value).toString();
+		
+		if (FILE_SIZE.equals(name)) {
+			final double filesizeBytes = Long.parseLong(value) / 1024 / 1024;
+			final String rawFilesizeString = String.valueOf(filesizeBytes);
+			final int periodIndex = rawFilesizeString.indexOf('.');
+			if (periodIndex > -1)
+				return rawFilesizeString.substring(0, periodIndex + 3) + " MB";
+			return rawFilesizeString + " MB";
+		}
+		
+		if (DURATION.equals(name)) {
+			final Duration duration = Duration.standardSeconds(Long.parseLong(value));
+			final Period period = duration.toPeriod();
+			final PeriodFormatter minutesAndSeconds = new PeriodFormatterBuilder()
+			     .appendMinutes()
+			     .appendSeparator(":")
+			     .printZeroAlways()
+			     .appendSeconds()
+			     .toFormatter();
+			return period.toString(minutesAndSeconds);
+		}
+		
+		return value;
+	}
+	
+	private static DateTime parseSecondsIntoDateTime(String secondsString) {
+		return new DateTime((long)(Double.parseDouble(secondsString) * 1000));
+	}
+	
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM_ARTIST = "Album Artist";
@@ -169,4 +239,15 @@ public class FileProperties {
 	public static final String NAME = "Name";
 	public static final String FILENAME = "Filename";
 	public static final String TRACK = "Track #";
+	public static final String NUMBER_PLAYS = "Number Plays";
+	public static final String LAST_PLAYED = "Last Played";
+	public static final String LAST_SKIPPED = "Last Skipped";
+	public static final String DATE_CREATED = "Date Created";
+	public static final String DATE_IMPORTED = "Date Imported";
+	public static final String DATE_MODIFIED = "Date Modified";
+	public static final String FILE_SIZE = "File Size";
+	
+	private static final Set<String> mDateTimeProperties = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
+	
 }
