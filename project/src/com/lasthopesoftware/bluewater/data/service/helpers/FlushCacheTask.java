@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.data.service.helpers;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,13 +48,12 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-			final long calculatedDatabaseFileSize = getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName);
-			if (calculatedDatabaseFileSize > -1 && calculatedDatabaseFileSize <= mTargetSize) return null;
 			
-			List<CachedFile> allCachedFiles = getAllCachedFiles(cachedFileAccess,  mCacheName);
+			if (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) <= mTargetSize) return null;
 			
-			while (calculateTotalSize(allCachedFiles) > mTargetSize) {
-				final CachedFile cachedFile = allCachedFiles.get(0);
+			while (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) > mTargetSize) {
+				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess, mCacheName);
+				if (cachedFile == null) continue;
 				final File fileToDelete = new File(cachedFile.getFileName());
 				if (fileToDelete.exists()) 
 					fileToDelete.delete();
@@ -66,11 +63,8 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 				} catch (SQLException deleteException) {
 					mLogger.error("Error deleting file pointer from database", deleteException);
 					// Reset the cached files list
-					allCachedFiles = getAllCachedFiles(cachedFileAccess,  mCacheName);
 					continue;
 				}
-				
-				allCachedFiles.remove(cachedFile);
 			}
 			
 			// Remove any files in the cache dir but not in the database			
@@ -79,25 +73,16 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
-			if (filesInCacheDir == null || filesInCacheDir.length == allCachedFiles.size())
+			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(cachedFileAccess, mCacheName))
 				return null;
 			
 			for (int i = 0; i < filesInCacheDir.length; i++) {
-				boolean isFileFound = false;
-				for (CachedFile cachedFile : allCachedFiles) {
-					try {
-						if (cachedFile.getFileName().equals(filesInCacheDir[i].getCanonicalPath())) {
-							isFileFound = true;
-							break;
-						}
-					} catch (IOException e) {
-						mLogger.warn("Issue getting canonical file path.");
-					}
+				try {
+					if (getCachedFileByFilename(cachedFileAccess, filesInCacheDir[i].getCanonicalPath()) != null) continue;
+				} catch (IOException e) {
+					mLogger.warn("Issue getting canonical file path.");
 				}
-				
-				// File wasn't found in cache, it shouldn't be here so delete it
-				if (!isFileFound)
-					filesInCacheDir[i].delete();
+				filesInCacheDir[i].delete();
 			}
 		} catch (SQLException accessException) {
 			mLogger.error("Error accessing cache", accessException);
@@ -108,14 +93,6 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		return null;
 	}
 
-	private final static long calculateTotalSize(final List<CachedFile> cachedFiles) {
-		long returnSize = 0;
-		for (CachedFile cachedFile : cachedFiles)
-			returnSize += cachedFile.getFileSize();
-		
-		return returnSize;
-	}
-	
 	private final static long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
 		try {
 			
@@ -133,21 +110,53 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		}
 	}
 	
-	private final static List<CachedFile> getAllCachedFiles(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+	private final static CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
-						.orderBy(CachedFile.LAST_ACCESSED_TIME, false)
+						.orderBy(CachedFile.LAST_ACCESSED_TIME, true)
 						.where()
 						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
 						.prepare();
 			
-			return cachedFileAccess.query(preparedQuery);			
+			return cachedFileAccess.queryForFirst(preparedQuery);			
 		} catch (SQLException e) {
-			mLogger.error("Error getting file list", e);
-			return new ArrayList<CachedFile>();
+			mLogger.error("Error getting oldest cached file", e);
+			return null;
 		}
 	}
-
+	
+	private final static long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+		try {
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.setCountOf(true)
+						.where()
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
+						.prepare();
+			
+			return cachedFileAccess.countOf(preparedQuery);
+		} catch (SQLException e) {
+			mLogger.error("Error getting file count", e);
+			return -1;
+		}
+	}
+	
+	private final static CachedFile getCachedFileByFilename(final Dao<CachedFile, Integer> cachedFileAccess, final String fileName) {
+		try {
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.where()
+						.eq(CachedFile.FILE_NAME, new SelectArg(fileName))
+						.prepare();
+			
+			return cachedFileAccess.queryForFirst(preparedQuery);	
+		} catch (SQLException e) {
+			mLogger.error("Error getting cached file by filename", e);
+			return null;
+		}
+	}
 }

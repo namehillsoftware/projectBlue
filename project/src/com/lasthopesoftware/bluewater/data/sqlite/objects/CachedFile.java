@@ -12,6 +12,7 @@ public class CachedFile {
 	public static final String LAST_ACCESSED_TIME = "lastAccessedTime";
 	public static final String UNIQUE_KEY = "uniqueKey";
 	public static final String CACHE_NAME = "cacheName";
+	public static final String FILE_NAME = "fileName";
 	
 	@DatabaseField(generatedId = true)
 	private int id;
@@ -19,16 +20,16 @@ public class CachedFile {
 	@DatabaseField(foreign = true, columnName = LIBRARY_ID, uniqueCombo = true)
 	private Library library;
 	
-	@DatabaseField(uniqueCombo = true)
+	@DatabaseField(uniqueCombo = true, index = true)
 	private String cacheName;
 	
-	@DatabaseField()
+	@DatabaseField(index = true)
 	private Date lastAccessedTime;
 	
 	@DatabaseField(uniqueCombo = true)
 	private String uniqueKey;
 	
-	@DatabaseField()
+	@DatabaseField(unique = true)
 	private String fileName;
 	
 	@DatabaseField()
