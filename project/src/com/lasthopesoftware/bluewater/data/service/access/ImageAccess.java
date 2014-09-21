@@ -49,7 +49,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
 		
 		private static final int MAX_DISK_CACHE_SIZE = 100 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
-		private static final int MAX_MEMORY_CACHE_SIZE = 100;
+		private static final int MAX_MEMORY_CACHE_SIZE = 10;
 		private static final String IMAGES_CACHE_NAME = "images";
 		
 		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
