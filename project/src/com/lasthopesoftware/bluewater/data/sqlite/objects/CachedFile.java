@@ -13,6 +13,7 @@ public class CachedFile {
 	public static final String UNIQUE_KEY = "uniqueKey";
 	public static final String CACHE_NAME = "cacheName";
 	public static final String FILE_NAME = "fileName";
+	public static final String FILE_SIZE = "fileSize";
 	
 	@DatabaseField(generatedId = true)
 	private int id;

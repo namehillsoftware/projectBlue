@@ -166,8 +166,12 @@ public class FilePlayer implements
 			}
 		} catch (IOException io) {
 			throwIoErrorEvent();
+			resetMediaPlayer();
+			isPreparing.set(false);
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
+			resetMediaPlayer();
+			isPreparing.set(false);
 		}
 	}
 	
@@ -189,6 +193,7 @@ public class FilePlayer implements
 			isPreparing.set(false);
 		} catch (IOException io) {
 			throwIoErrorEvent();
+			resetMediaPlayer();
 			isPreparing.set(false);
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);

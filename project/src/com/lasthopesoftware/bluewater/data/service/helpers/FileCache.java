@@ -96,7 +96,7 @@ public class FileCache {
 					cachedFile.setLastAccessedTime(new Date());
 					
 					try {
-						handler.getAccessObject(CachedFile.class).createOrUpdate(cachedFile);
+						cachedFileAccess.createOrUpdate(cachedFile);
 					} catch (SQLException e) {
 						mLogger.error("Error updating cached file", e);
 					}

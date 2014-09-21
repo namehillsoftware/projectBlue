@@ -62,8 +62,6 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 					handler.getAccessObject(CachedFile.class).delete(cachedFile);
 				} catch (SQLException deleteException) {
 					mLogger.error("Error deleting file pointer from database", deleteException);
-					// Reset the cached files list
-					continue;
 				}
 			}
 			
@@ -98,7 +96,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
-						.selectRaw("SUM(FILESIZE)")
+						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
 						.where()
 						.eq(CachedFile.CACHE_NAME, new SelectArg())
 						.prepare();
