@@ -72,6 +72,8 @@ public class FileProperties {
 													    .appendSeconds()
 													    .toFormatter();
 	
+	private static final DateTime mExcelEpoch = new DateTime(1899, 12, 30, 0, 0);
+	
 	public FileProperties(int fileKey) {
 		
 		mFileKey = fileKey;
@@ -233,8 +235,12 @@ public class FileProperties {
 		}
 		
 		if (DATE.equals(name)) {
-			final DateTime dateTime = new DateTime(1899, 12, 30, 0, 0);
-			return dateTime.plusDays(Integer.parseInt(value)).toString(mDateFormatter);
+			String daysValue = value;
+			final int periodPos = daysValue.indexOf('.');
+			if (periodPos > -1)
+				daysValue = daysValue.substring(0, periodPos);
+			
+			return mExcelEpoch.plusDays(Integer.parseInt(daysValue)).toString(mDateFormatter);
 		}
 		
 		if (FILE_SIZE.equals(name)) {
