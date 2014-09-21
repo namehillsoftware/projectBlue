@@ -39,7 +39,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class FileProperties {
-	private static final int maxSize = 4000;
+	private static final int maxSize = 200;
 	private int mFileKey;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	
