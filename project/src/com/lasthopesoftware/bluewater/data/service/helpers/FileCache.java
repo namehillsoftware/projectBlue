@@ -122,16 +122,15 @@ public class FileCache {
 					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 					
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
-					if (cachedFile != null) {
-						cachedFile.setLastAccessedTime(new Date());
-						try {
-							cachedFileAccess.update(cachedFile);
-						} catch (SQLException e) {
-							mLogger.error("Error updating cached file entity", e);
-						}
+					
+					if (cachedFile == null) return null;
+					
+					cachedFile.setLastAccessedTime(new Date());
+					try {
+						cachedFileAccess.update(cachedFile);
+					} catch (SQLException e) {
+						mLogger.error("Error updating cached file entity", e);
 					}
-					if (cachedFile == null)
-						return null;
 					
 					final File returnFile = new File(cachedFile.getFileName());
 					if (returnFile == null || !returnFile.exists()) {					

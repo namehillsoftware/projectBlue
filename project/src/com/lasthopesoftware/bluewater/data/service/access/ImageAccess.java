@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.v4.util.LruCache;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.helpers.FileCache;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
@@ -53,7 +53,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		private static final String IMAGES_CACHE_NAME = "images";
 		
 		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-		private static final ConcurrentLinkedHashMap<String, Byte[]> mImageMemoryCache = new ConcurrentLinkedHashMap.Builder<String, Byte[]>().maximumWeightedCapacity(MAX_MEMORY_CACHE_SIZE).build();
+		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<String, Byte[]>(MAX_MEMORY_CACHE_SIZE);
 		
 		private final Context mContext;
 		private final File mFile;
@@ -67,8 +67,6 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			final Library library = LibrarySession.GetLibrary(mContext);
 			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
-			
-			byte[] imageBytes = null;
 			
 			String uniqueKey = null;
 			try {
@@ -84,7 +82,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				return getFillerBitmap();
 			}
 			
-			imageBytes = getBitmapBytesFromMemory(uniqueKey);
+			byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 			
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
@@ -134,12 +132,13 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			return null;
 		}
 		
-		private static final byte[] getBitmapBytesFromMemory(final String uniqueKey) {		
-			if (!mImageMemoryCache.containsKey(uniqueKey)) return new byte[0];
+		private static final byte[] getBitmapBytesFromMemory(final String uniqueKey) {
+			Byte[] memoryImageBytes = null;
+			synchronized(mImageMemoryCache) {
+				memoryImageBytes = mImageMemoryCache.get(uniqueKey);
+			}
 			
-			final Byte[] memoryImageBytes = mImageMemoryCache.get(uniqueKey);
-			if (memoryImageBytes == null || memoryImageBytes.length == 0)
-				return new byte[0];
+			if (memoryImageBytes == null || memoryImageBytes.length == 0) return new byte[0];
 			
 			final byte[] imageBytes = new byte[memoryImageBytes.length];
 			for (int i = 0; i < memoryImageBytes.length; i++)
@@ -173,7 +172,9 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			for (int i = 0; i < imageBytes.length; i++)
 				memoryImageBytes[i] = Byte.valueOf(imageBytes[i]);
 			
-			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
+			synchronized(mImageMemoryCache) {
+				mImageMemoryCache.put(uniqueKey, memoryImageBytes);
+			}
 		}
 
 		private static final Bitmap getBitmapFromBytes(final byte[] imageBytes) {
