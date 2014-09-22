@@ -42,6 +42,7 @@ public class FilePlayer implements
 	private volatile MediaPlayer mp;
 	private AtomicBoolean isPrepared = new AtomicBoolean();
 	private AtomicBoolean isPreparing = new AtomicBoolean();
+	private AtomicBoolean isInErrorState = new AtomicBoolean();
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
 	private final Context mMpContext;
@@ -96,6 +97,9 @@ public class FilePlayer implements
 	public void initMediaPlayer() {
 		if (mp != null) return;
 	
+		isPrepared.set(false);
+		isPreparing.set(false);
+		isInErrorState.set(false);
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
 		mp.setOnErrorListener(this);
@@ -166,7 +170,6 @@ public class FilePlayer implements
 			}
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			resetMediaPlayer();
 			isPreparing.set(false);
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
@@ -193,7 +196,6 @@ public class FilePlayer implements
 			isPreparing.set(false);
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			resetMediaPlayer();
 			isPreparing.set(false);
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
@@ -203,6 +205,8 @@ public class FilePlayer implements
 	}
 	
 	private void throwIoErrorEvent() {
+		isInErrorState.set(true);
+		resetMediaPlayer();
 		for (OnFileErrorListener listener : onFileErrorListeners)
 			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
@@ -253,6 +257,7 @@ public class FilePlayer implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		isInErrorState.set(true);
 		mLogger.error("Media Player error.");
 		mLogger.error("What: ");
 		mLogger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
@@ -288,19 +293,33 @@ public class FilePlayer implements
 	}
 
 	public int getCurrentPosition() {
-		if (mp != null && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+		try {
+			if (mp != null && !isInErrorState.get() && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+		} catch (IllegalStateException ie) {
+			handleIllegalStateException(ie);
+		}
 		return mPosition;
 	}
 	
 	public int getDuration() throws IOException {
-		if (mp == null || !isPrepared())
+		if (mp == null || isInErrorState.get() || !isPrepared())
 			return mFile.getDuration();
 		
-		return mp.getDuration();
+		try {
+			return mp.getDuration();
+		} catch (IllegalStateException ie) {
+			handleIllegalStateException(ie);
+			return mFile.getDuration();
+		}
 	}
 
 	public boolean isPlaying() {
-		return mp != null && mp.isPlaying();
+		try {
+			return mp != null && mp.isPlaying();
+		} catch (IllegalStateException ie) {
+			handleIllegalStateException(ie);
+			return false;
+		}
 	}
 
 	public void pause() {
@@ -308,28 +327,36 @@ public class FilePlayer implements
 			try {
 				mp.reset();
 			} catch (IllegalStateException e) {
-				releaseMediaPlayer();
-				initMediaPlayer();
+				handleIllegalStateException(e);
+				resetMediaPlayer();
 				return;
 			}
 		}
 		
-		mPosition = mp.getCurrentPosition();
-		mp.pause();
+		try {
+			mPosition = mp.getCurrentPosition();
+			mp.pause();
+		} catch (IllegalStateException ie) {
+			handleIllegalStateException(ie);
+		}
 	}
 
 	public void seekTo(int pos) {
 		mPosition = pos;
-		if (mp != null && isPrepared() && isPlaying()) mp.seekTo(mPosition);
+		try {
+			if (mp != null && !isInErrorState.get() && isPrepared() && isPlaying()) mp.seekTo(mPosition);
+		} catch (IllegalStateException ie) {
+			handleIllegalStateException(ie);
+		}
 	}
 
-	public void start() {
+	public void start() throws IllegalStateException {
 		mLogger.info("Playback started on " + mFile.getValue());
 		mp.seekTo(mPosition);
 		mp.start();
 	}
 	
-	public void stop() {
+	public void stop() throws IllegalStateException {
 		mPosition = 0;
 		mp.stop();
 	}
@@ -343,6 +370,10 @@ public class FilePlayer implements
 		
 		if (mp != null)
 			mp.setVolume(mVolume, mVolume);
+	}
+	
+	private void handleIllegalStateException(IllegalStateException ise) {
+		mLogger.warn("The media player was in an incorrect state.", ise);
 	}
 	
 	private static class UpdatePlayStatsOnExecute implements OnExecuteListener<Void, Void, Void> {
