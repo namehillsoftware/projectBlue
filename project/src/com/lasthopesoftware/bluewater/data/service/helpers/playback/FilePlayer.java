@@ -229,7 +229,7 @@ public class FilePlayer implements
 		releaseMediaPlayer();
 		
 		initMediaPlayer();
-		mp.seekTo(mPosition);
+		seekTo(mPosition);
 	}
 	
 	public void releaseMediaPlayer() {
