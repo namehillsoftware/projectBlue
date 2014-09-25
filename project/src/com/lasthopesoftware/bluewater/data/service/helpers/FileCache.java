@@ -124,7 +124,7 @@ public class FileCache {
 					
 					if (cachedFile == null) return null;
 					
-					doFileAccessedUpdate(uniqueKey);
+					doFileAccessedUpdate(uniqueKey, System.currentTimeMillis());
 					
 					final File returnFile = new File(cachedFile.getFileName());
 					if (returnFile == null || !returnFile.exists()) {					
@@ -152,7 +152,7 @@ public class FileCache {
 		return get(uniqueKey) != null;
 	}
 	
-	private final void doFileAccessedUpdate(final String uniqueKey) {
+	private final void doFileAccessedUpdate(final String uniqueKey, final long updateTime) {
 		final SimpleTask<Void, Void, Void> fileAccessUpdateTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
 
 			@Override
@@ -161,7 +161,7 @@ public class FileCache {
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
-					cachedFile.setLastAccessedTime(System.currentTimeMillis());
+					cachedFile.setLastAccessedTime(updateTime);
 					try {
 						cachedFileAccess.update(cachedFile);
 					} catch (SQLException e) {
