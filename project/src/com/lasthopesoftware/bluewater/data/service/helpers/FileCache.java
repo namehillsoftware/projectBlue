@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
@@ -21,8 +20,8 @@ import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileCache {
 	
@@ -93,7 +92,7 @@ public class FileCache {
 						cachedFile.setUniqueKey(uniqueKey);
 					}
 					
-					cachedFile.setLastAccessedTime(new Date());
+					cachedFile.setLastAccessedTime(System.currentTimeMillis());
 					
 					try {
 						cachedFileAccess.createOrUpdate(cachedFile);
@@ -125,7 +124,7 @@ public class FileCache {
 					
 					if (cachedFile == null) return null;
 					
-					cachedFile.setLastAccessedTime(new Date());
+					cachedFile.setLastAccessedTime(System.currentTimeMillis());
 					try {
 						cachedFileAccess.update(cachedFile);
 					} catch (SQLException e) {

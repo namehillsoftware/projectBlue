@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
-import java.util.Date;
-
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -25,7 +23,7 @@ public class CachedFile {
 	private String cacheName;
 	
 	@DatabaseField(index = true)
-	private Date lastAccessedTime;
+	private long lastAccessedTime;
 	
 	@DatabaseField(uniqueCombo = true)
 	private String uniqueKey;
@@ -53,14 +51,14 @@ public class CachedFile {
 	/**
 	 * @return the lastAccessedTime
 	 */
-	public final Date getLastAccessedTime() {
+	public final long getLastAccessedTime() {
 		return lastAccessedTime;
 	}
 
 	/**
 	 * @param lastAccessedTime the lastAccessedTime to set
 	 */
-	public final void setLastAccessedTime(Date lastAccessedTime) {
+	public final void setLastAccessedTime(long lastAccessedTime) {
 		this.lastAccessedTime = lastAccessedTime;
 	}
 
