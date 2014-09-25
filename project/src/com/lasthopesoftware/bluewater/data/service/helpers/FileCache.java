@@ -124,12 +124,7 @@ public class FileCache {
 					
 					if (cachedFile == null) return null;
 					
-					cachedFile.setLastAccessedTime(System.currentTimeMillis());
-					try {
-						cachedFileAccess.update(cachedFile);
-					} catch (SQLException e) {
-						mLogger.error("Error updating cached file entity", e);
-					}
+					doFileAccessedUpdate(uniqueKey);
 					
 					final File returnFile = new File(cachedFile.getFileName());
 					if (returnFile == null || !returnFile.exists()) {					
@@ -157,6 +152,31 @@ public class FileCache {
 		return get(uniqueKey) != null;
 	}
 	
+	private final void doFileAccessedUpdate(final String uniqueKey) {
+		final SimpleTask<Void, Void, Void> fileAccessUpdateTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+
+			@Override
+			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+				final DatabaseHandler handler = new DatabaseHandler(mContext);
+				try {
+					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
+					cachedFile.setLastAccessedTime(System.currentTimeMillis());
+					try {
+						cachedFileAccess.update(cachedFile);
+					} catch (SQLException e) {
+						mLogger.error("Error updating file accessed time", e);
+					}
+				} finally {
+					handler.close();
+				}
+				return null;
+			}
+		});
+		
+		fileAccessUpdateTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
+	}
+	
 	private final static CachedFile getCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final int libraryId, final String cacheName, final String uniqueKey) {
 		try {
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -170,7 +190,7 @@ public class FileCache {
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);			
 		} catch (SQLException e) {
-			mLogger.error("SQLException", e);
+			mLogger.error("Error retrieving file", e);
 			return null;
 		}
 	}
