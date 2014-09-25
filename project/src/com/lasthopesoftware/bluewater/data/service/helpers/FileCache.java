@@ -161,6 +161,7 @@ public class FileCache {
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
+					if (cachedFile == null) return null;
 					cachedFile.setLastAccessedTime(updateTime);
 					try {
 						cachedFileAccess.update(cachedFile);
