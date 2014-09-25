@@ -59,7 +59,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 					fileToDelete.delete();
 				
 				try {
-					handler.getAccessObject(CachedFile.class).delete(cachedFile);
+					cachedFileAccess.delete(cachedFile);
 				} catch (SQLException deleteException) {
 					mLogger.error("Error deleting file pointer from database", deleteException);
 				}
