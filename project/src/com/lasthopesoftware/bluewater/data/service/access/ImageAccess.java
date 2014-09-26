@@ -78,7 +78,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				
 				uniqueKey = artist + ":" + mFile.getProperty(FileProperties.ALBUM);
 			} catch (IOException ioE) {
-				mLogger.error("Error getting file properties.", ioE);
+				mLogger.error("Error getting file properties.");
 				return getFillerBitmap();
 			}
 			
