@@ -124,7 +124,7 @@ public class FileCache {
 					
 					if (cachedFile == null) return null;
 					
-					doFileAccessedUpdate(uniqueKey, System.currentTimeMillis());
+					doFileAccessedUpdate(uniqueKey);
 					
 					final File returnFile = new File(cachedFile.getFileName());
 					if (returnFile == null || !returnFile.exists()) {					
@@ -152,7 +152,8 @@ public class FileCache {
 		return get(uniqueKey) != null;
 	}
 	
-	private final void doFileAccessedUpdate(final String uniqueKey, final long updateTime) {
+	private final void doFileAccessedUpdate(final String uniqueKey) {
+		final long updateTime = System.currentTimeMillis();
 		final SimpleTask<Void, Void, Void> fileAccessUpdateTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
 
 			@Override
