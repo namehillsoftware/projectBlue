@@ -172,7 +172,7 @@ public class ViewNowPlaying extends Activity implements
 		if (StreamingMusicService.getPlaylistController() != null) {
 			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
 					
-			if (mTrackerTask != null) mTrackerTask.cancel(true);
+			if (mTrackerTask != null) mTrackerTask.cancel(false);
 	
 			mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
 			
@@ -245,7 +245,7 @@ public class ViewNowPlaying extends Activity implements
 			mHideTimer.purge();
 		}
 		
-		if (mTrackerTask != null) mTrackerTask.cancel(true);
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		StreamingMusicService.removeOnStreamingStartListener(this);
 		StreamingMusicService.removeOnStreamingChangeListener(this);
@@ -446,9 +446,9 @@ public class ViewNowPlaying extends Activity implements
 	
 	@Override
 	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-		if (mTrackerTask != null) mTrackerTask.cancel(true);
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
-		mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
+		mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
 		
 		showNowPlayingControls();
 		
@@ -467,7 +467,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void handleNowPlayingStopping(PlaylistController controller, FilePlayer filePlayer) {
-		if (mTrackerTask != null) mTrackerTask.cancel(true);
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		int duration = 100;
 		try {
