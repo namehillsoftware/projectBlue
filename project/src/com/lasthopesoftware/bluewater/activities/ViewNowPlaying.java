@@ -31,7 +31,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
-import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerThread;
+import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerTask;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
@@ -61,7 +61,7 @@ public class ViewNowPlaying extends Activity implements
 	OnNowPlayingStartListener,
 	OnConnectionLostListener
 {
-	private Thread mTrackerThread;
+	private ProgressTrackerTask mTrackerTask;
 	private HandleViewNowPlayingMessages mHandler;
 	private ImageButton mPlay;
 	private ImageButton mPause;
@@ -172,12 +172,9 @@ public class ViewNowPlaying extends Activity implements
 		if (StreamingMusicService.getPlaylistController() != null) {
 			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
 					
-			if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
+			if (mTrackerTask != null) mTrackerTask.cancel(true);
 	
-			mTrackerThread = new Thread(new ProgressTrackerThread(mFilePlayer, mHandler));
-			mTrackerThread.setPriority(Thread.MIN_PRIORITY);
-			mTrackerThread.setName("Song Progress Tracker Thread");
-			mTrackerThread.start();
+			mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
 			
 			setView(mFilePlayer.getFile());
 			mPlay.setVisibility(mFilePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
@@ -248,7 +245,8 @@ public class ViewNowPlaying extends Activity implements
 			mHideTimer.purge();
 		}
 		
-		if (mTrackerThread != null) mTrackerThread.interrupt();
+		if (mTrackerTask != null) mTrackerTask.cancel(true);
+		
 		StreamingMusicService.removeOnStreamingStartListener(this);
 		StreamingMusicService.removeOnStreamingChangeListener(this);
 		StreamingMusicService.removeOnStreamingPauseListener(this);
@@ -448,12 +446,9 @@ public class ViewNowPlaying extends Activity implements
 	
 	@Override
 	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
-
-		mTrackerThread = new Thread(new ProgressTrackerThread(filePlayer, mHandler));
-		mTrackerThread.setPriority(Thread.MIN_PRIORITY);
-		mTrackerThread.setName("Tracker Thread");
-		mTrackerThread.start();
+		if (mTrackerTask != null) mTrackerTask.cancel(true);
+		
+		mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
 		
 		showNowPlayingControls();
 		
@@ -472,7 +467,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void handleNowPlayingStopping(PlaylistController controller, FilePlayer filePlayer) {
-		if (mTrackerThread != null && mTrackerThread.isAlive()) mTrackerThread.interrupt();
+		if (mTrackerTask != null) mTrackerTask.cancel(true);
 		
 		int duration = 100;
 		try {
