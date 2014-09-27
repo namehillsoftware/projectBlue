@@ -79,8 +79,6 @@ public class ViewNowPlaying extends Activity implements
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 	private static ImageAccess getFileImageTask;
-	
-	private FilePlayer mFilePlayer = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -170,11 +168,11 @@ public class ViewNowPlaying extends Activity implements
 		
 		// Get initial view state from playlist controller if it is active
 		if (StreamingMusicService.getPlaylistController() != null) {
-			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
+			final FilePlayer filePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
 			
-			setView(mFilePlayer.getFile());
-			mPlay.setVisibility(mFilePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
-			mPause.setVisibility(mFilePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+			setView(filePlayer.getFile());
+			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
+			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 			return;
 		}
 	}
@@ -400,8 +398,14 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void showNowPlayingControls() {
+		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
+		if (playlistController != null)
+			showNowPlayingControls(playlistController.getCurrentFilePlayer());
+	}
+	
+	private void showNowPlayingControls(final FilePlayer filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
+		mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
 		
 		final OnNowPlayingStartListener onNowPlayingStartListener = new OnNowPlayingStartListener() {
 			
@@ -422,7 +426,7 @@ public class ViewNowPlaying extends Activity implements
 			
 			@Override
 			public void run() {
-				Message msg = new Message();
+				final Message msg = new Message();
 				msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
 				mHandler.sendMessage(msg);
 				StreamingMusicService.removeOnStreamingStartListener(onNowPlayingStartListener);
@@ -458,7 +462,7 @@ public class ViewNowPlaying extends Activity implements
 	
 	@Override
 	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {		
-		showNowPlayingControls();
+		showNowPlayingControls(filePlayer);
 		
 		mPlay.setVisibility(View.INVISIBLE);
 		mPause.setVisibility(View.VISIBLE);
