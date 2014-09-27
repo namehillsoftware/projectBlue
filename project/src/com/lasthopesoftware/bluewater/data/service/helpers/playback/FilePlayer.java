@@ -220,11 +220,14 @@ public class FilePlayer implements
 		mp.setDataSource(mMpContext, uri, headers);
 	}
 	
-	private void resetMediaPlayer() {		
+	private void resetMediaPlayer() {
+		final int position = getCurrentPosition();
 		releaseMediaPlayer();
 		
 		initMediaPlayer();
-		seekTo(mPosition);
+		
+		if (position > 0)
+			seekTo(position);
 	}
 	
 	public void releaseMediaPlayer() {
@@ -289,7 +292,7 @@ public class FilePlayer implements
 
 	public int getCurrentPosition() {
 		try {
-			if (mp != null && !isInErrorState.get() && isPrepared() && isPlaying()) mPosition = mp.getCurrentPosition();
+			if (mp != null) mPosition = mp.getCurrentPosition();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
