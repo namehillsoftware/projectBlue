@@ -221,6 +221,9 @@ public class FilePlayer implements
 	}
 	
 	private void resetMediaPlayer() {
+		if (mp != null)
+			mp.setOnErrorListener(null);
+		
 		final int position = getCurrentPosition();
 		releaseMediaPlayer();
 		
@@ -292,7 +295,7 @@ public class FilePlayer implements
 
 	public int getCurrentPosition() {
 		try {
-			if (mp != null) mPosition = mp.getCurrentPosition();
+			if (mp != null && isPrepared()) mPosition = mp.getCurrentPosition();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
