@@ -407,17 +407,6 @@ public class ViewNowPlaying extends Activity implements
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
 		
-		final OnNowPlayingStartListener onNowPlayingStartListener = new OnNowPlayingStartListener() {
-			
-			@Override
-			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-				if (mTrackerTask != null) mTrackerTask.cancel(false);
-				mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
-			}
-		};
-		
-		StreamingMusicService.addOnStreamingStartListener(onNowPlayingStartListener);
-		
 		mControlNowPlaying.setVisibility(View.VISIBLE);
 		mContentView.invalidate();
 		if (mTimerTask != null) mTimerTask.cancel();
@@ -429,7 +418,6 @@ public class ViewNowPlaying extends Activity implements
 				final Message msg = new Message();
 				msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
 				mHandler.sendMessage(msg);
-				StreamingMusicService.removeOnStreamingStartListener(onNowPlayingStartListener);
 				if (mTrackerTask != null) mTrackerTask.cancel(false);
 			}
 		};
