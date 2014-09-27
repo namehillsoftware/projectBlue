@@ -221,8 +221,6 @@ public class FilePlayer implements
 	}
 	
 	private void resetMediaPlayer() {
-		if (mp != null)
-			mp.setOnErrorListener(null);
 		
 		final int position = getCurrentPosition();
 		releaseMediaPlayer();
@@ -258,6 +256,7 @@ public class FilePlayer implements
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		mp.setOnErrorListener(null);
 		isInErrorState.set(true);
 		mLogger.error("Media Player error.");
 		mLogger.error("What: ");
