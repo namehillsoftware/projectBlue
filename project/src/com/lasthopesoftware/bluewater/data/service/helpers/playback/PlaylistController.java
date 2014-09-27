@@ -306,16 +306,19 @@ public class PlaylistController implements
 			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
 		}
 		
-		mNextFilePlayer.addOnFileCompleteListener(this);
-		mNextFilePlayer.addOnFileErrorListener(this);
-		if (!mNextFilePlayer.isPrepared()) {
-			mLogger.warn("File " + mNextFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
-			mNextFilePlayer.addOnFilePreparedListener(this);
-			mNextFilePlayer.prepareMediaPlayer();
+		// Move the pointer early so that getting the currently playing file is correctly
+		// returned
+		mCurrentFilePlayer = mNextFilePlayer;
+		mCurrentFilePlayer.addOnFileCompleteListener(this);
+		mCurrentFilePlayer.addOnFileErrorListener(this);
+		if (!mCurrentFilePlayer.isPrepared()) {
+			mLogger.warn("File " + mCurrentFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
+			mCurrentFilePlayer.addOnFilePreparedListener(this);
+			mCurrentFilePlayer.prepareMediaPlayer();
 			return;
 		}
 		
-		startFilePlayback(mNextFilePlayer);
+		startFilePlayback(mCurrentFilePlayer);
 	}
 	
 	@Override
