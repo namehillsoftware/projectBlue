@@ -340,7 +340,7 @@ public class StreamingMusicService extends Service implements
         mPlaylistController.startAt(filePos, fileProgress);
 	}
 	
-	private void restorePlaylistControllerFromStorage() {
+	private void restorePlaylistControllerFromStorage(final OnCompleteListener<Integer, Void, Boolean> onPlaylistRestored) {
 		if (mLibrary != null) {
 
 			ConnectionManager.refreshConfiguration(mThis, new OnCompleteListener<Integer, Void, Boolean>() {
@@ -348,6 +348,7 @@ public class StreamingMusicService extends Service implements
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
 					initializePlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+					onPlaylistRestored.onComplete(owner, result);
 				}
 				
 			});
@@ -362,7 +363,7 @@ public class StreamingMusicService extends Service implements
 				if (result == null) return;
 				mLibrary = result;
 				
-				restorePlaylistControllerFromStorage();					
+				restorePlaylistControllerFromStorage(onPlaylistRestored);
 			}
 			
 		});
@@ -603,32 +604,49 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	private void actOnIntent(final Intent intent) {
-		if (intent != null) {
-			// 3/5 times it's going to be this so let's see if we can get
-			// some improved prefetching by the processor
-				
-			String action = intent.getAction(); 
-			if (action.equals(ACTION_START)) {
-				startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
-	        } else if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
-	        	initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
-	        } else if (action.equals(ACTION_PLAY)) {
-	        	if (mPlaylistController == null || !mPlaylistController.resume())
-	        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
-	        } else if (action.equals(ACTION_PREVIOUS)) {
-	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() > 0 ? mPlaylistController.getCurrentPosition() - 1 : mPlaylistController.getPlaylist().size() - 1);
-	        } else if (action.equals(ACTION_NEXT)) {
-	        	if (mPlaylistController == null) restorePlaylistControllerFromStorage();
-	        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() < mPlaylistController.getPlaylist().size() - 1 ? mPlaylistController.getCurrentPosition() + 1 : 0);
-	        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
-	        	pausePlayback(true);
-	        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-	        	PollConnection.Instance.get(mThis).stopPolling();
-	        }
-		} else if (mLibrary != null)  {
-			pausePlayback(true);
+		if (intent == null) {
+			if (mLibrary != null) pausePlayback(true);
+			
+			return;
 		}
+		
+		final String action = intent.getAction(); 
+		if (action.equals(ACTION_START)) {
+			startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
+        } else if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
+        	initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0));
+        } else if (action.equals(ACTION_PLAY)) {
+        	if (mPlaylistController == null || !mPlaylistController.resume())
+        		startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+        } else if (action.equals(ACTION_PREVIOUS)) {
+        	if (mPlaylistController == null) {
+        		restorePlaylistControllerFromStorage(new OnCompleteListener<Integer, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+						actOnIntent(intent);
+					}
+				});
+        		return;
+        	}
+        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() > 0 ? mPlaylistController.getCurrentPosition() - 1 : mPlaylistController.getPlaylist().size() - 1);
+        } else if (action.equals(ACTION_NEXT)) {
+        	if (mPlaylistController == null) {
+        		restorePlaylistControllerFromStorage(new OnCompleteListener<Integer, Void, Boolean>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+						actOnIntent(intent);
+					}
+				});
+        		return;
+        	}
+        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() < mPlaylistController.getPlaylist().size() - 1 ? mPlaylistController.getCurrentPosition() + 1 : 0);
+        } else if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
+        	pausePlayback(true);
+        } else if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
+        	PollConnection.Instance.get(mThis).stopPolling();
+        }
 	}
 	
 	@Override
@@ -648,9 +666,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
-		mLibrary.setNowPlayingId(controller.getCurrentPosition());
-		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		LibrarySession.SaveSession(mThis);
+		saveStateToLibrary(controller, filePlayer);
 		
 		PollConnection.Instance.get(mThis).startPolling();
 		
@@ -697,9 +713,7 @@ public class StreamingMusicService extends Service implements
 	
 	@Override
 	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
-		mLibrary.setNowPlayingId(controller.getCurrentPosition());
-		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		LibrarySession.SaveSession(mThis);
+		saveStateToLibrary(controller, filePlayer);
 		
 		throwStopEvent(controller, filePlayer);
 		
@@ -712,9 +726,7 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
-		mLibrary.setNowPlayingId(controller.getCurrentPosition());
-		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
-		LibrarySession.SaveSession(mThis);
+		saveStateToLibrary(controller, filePlayer);
 		
 		stopNotification();
 		
@@ -723,10 +735,14 @@ public class StreamingMusicService extends Service implements
 
 	@Override
 	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {
+		saveStateToLibrary(controller, filePlayer);
+		throwChangeEvent(controller, filePlayer);
+	}
+	
+	private void saveStateToLibrary(PlaylistController controller, FilePlayer filePlayer) {
 		mLibrary.setNowPlayingId(controller.getCurrentPosition());
 		mLibrary.setNowPlayingProgress(filePlayer.getCurrentPosition());
 		LibrarySession.SaveSession(mThis);
-		throwChangeEvent(controller, filePlayer);
 	}
 
 	@Override
