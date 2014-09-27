@@ -171,10 +171,6 @@ public class ViewNowPlaying extends Activity implements
 		// Get initial view state from playlist controller if it is active
 		if (StreamingMusicService.getPlaylistController() != null) {
 			mFilePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
-					
-			if (mTrackerTask != null) mTrackerTask.cancel(false);
-	
-			mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
 			
 			setView(mFilePlayer.getFile());
 			mPlay.setVisibility(mFilePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
@@ -404,6 +400,20 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void showNowPlayingControls() {
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
+		mTrackerTask = ProgressTrackerTask.trackProgress(mFilePlayer, mHandler);
+		
+		final OnNowPlayingStartListener onNowPlayingStartListener = new OnNowPlayingStartListener() {
+			
+			@Override
+			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
+				if (mTrackerTask != null) mTrackerTask.cancel(false);
+				mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
+			}
+		};
+		
+		StreamingMusicService.addOnStreamingStartListener(onNowPlayingStartListener);
+		
 		mControlNowPlaying.setVisibility(View.VISIBLE);
 		mContentView.invalidate();
 		if (mTimerTask != null) mTimerTask.cancel();
@@ -415,6 +425,8 @@ public class ViewNowPlaying extends Activity implements
 				Message msg = new Message();
 				msg.what = HandleViewNowPlayingMessages.HIDE_CONTROLS;
 				mHandler.sendMessage(msg);
+				StreamingMusicService.removeOnStreamingStartListener(onNowPlayingStartListener);
+				if (mTrackerTask != null) mTrackerTask.cancel(false);
 			}
 		};
 		mHideTimer.schedule(mTimerTask, 5000);
@@ -445,11 +457,7 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		
-		mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
-		
+	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {		
 		showNowPlayingControls();
 		
 		mPlay.setVisibility(View.INVISIBLE);
