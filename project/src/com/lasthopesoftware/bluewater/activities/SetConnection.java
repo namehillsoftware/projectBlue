@@ -21,7 +21,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 public class SetConnection extends FragmentActivity {
 	private Button mConnectionButton;
-	private Context thisContext = this;
 	private Library mLibrary;
 
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
@@ -48,7 +47,7 @@ public class SetConnection extends FragmentActivity {
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
 					mConnectionButton.setText(R.string.lbl_connected);
 					
-					thisContext.startActivity(new Intent(_context, InstantiateSessionConnection.class));
+					_context.startActivity(new Intent(_context, InstantiateSessionConnection.class));
 				}
 			});
 
@@ -72,9 +71,9 @@ public class SetConnection extends FragmentActivity {
 				if (result == null) return;
 				
 				mLibrary = result;
-		    	EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-		    	EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-		    	EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
+		    	final EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
+		    	final EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
+		    	final EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
 		    	
 		    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(mLibrary.isLocalOnly());
 		    	
