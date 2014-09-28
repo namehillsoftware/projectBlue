@@ -173,7 +173,6 @@ public class ViewNowPlaying extends Activity implements
 			setView(filePlayer.getFile());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
 			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
-			return;
 		}
 	}
 	
@@ -424,7 +423,7 @@ public class ViewNowPlaying extends Activity implements
 		mHideTimer.schedule(mTimerTask, 5000);
 	}
 	
-	private boolean containsIoException(List<Exception> exceptions) {
+	private static boolean containsIoException(List<Exception> exceptions) {
 		for (Exception exception : exceptions)
 			if (exception instanceof IOException) return true;
 		
