@@ -28,7 +28,8 @@ public class Library {
 	private boolean isRepeating = false;
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
-	private int nowPlayingId = -1;
+	private int nowPlayingId;
+	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int nowPlayingProgress;
 	
