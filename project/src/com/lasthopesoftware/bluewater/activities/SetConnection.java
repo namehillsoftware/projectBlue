@@ -31,7 +31,10 @@ public class SetConnection extends FragmentActivity {
         	
         	final Context _context = v.getContext();
         	
-        	if (mLibrary == null) mLibrary = new Library();
+        	if (mLibrary == null) {
+        		mLibrary = new Library();
+        		mLibrary.setNowPlayingId(-1);
+        	}
         	
         	mLibrary.setAccessCode(txtAccessCode.getText().toString());
         	mLibrary.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
