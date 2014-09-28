@@ -21,12 +21,13 @@ public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		RelativeLayout returnView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, null);
-		
-		TextView tvViewName = (TextView) returnView.findViewById(R.id.tvViewName);
+		if (convertView == null) {
+			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			convertView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, parent, false);
+		}
+		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);
 		tvViewName.setText(getItem(position).getValue());
 		
-		return returnView;
+		return convertView;
 	}
 }
