@@ -82,7 +82,7 @@ public class FilePreparerTask {
 	}
 	
 	public void cancel() {
-		if (mTask != null) mTask.cancel(true);
+		if (mTask != null) mTask.cancel(false);
 	}
 
 	public boolean isDone() {
