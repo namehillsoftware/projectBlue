@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.helpers.playback;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -57,9 +57,9 @@ public class FilePlayer implements
 												MediaStore.Audio.Media.TRACK + " = ?" +
 											  ")";
 	
-	private LinkedList<OnFileCompleteListener> onFileCompleteListeners = new LinkedList<OnFileCompleteListener>();
-	private LinkedList<OnFilePreparedListener> onFilePreparedListeners = new LinkedList<OnFilePreparedListener>();
-	private LinkedList<OnFileErrorListener> onFileErrorListeners = new LinkedList<OnFileErrorListener>();
+	private HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
+	private HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
+	private HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
 	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;

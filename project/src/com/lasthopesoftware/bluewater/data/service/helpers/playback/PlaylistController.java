@@ -130,8 +130,13 @@ public class PlaylistController implements
 			return true;
 		}
 		
-		if (!mCurrentFilePlayer.isMediaPlayerCreated())
+		if (!mCurrentFilePlayer.isMediaPlayerCreated()) {
+			mCurrentFilePlayer.addOnFileCompleteListener(this);
+			mCurrentFilePlayer.addOnFilePreparedListener(this);
+			mCurrentFilePlayer.addOnFileErrorListener(this);
+			
 			mCurrentFilePlayer.initMediaPlayer();
+		}
 		
 		if (!mCurrentFilePlayer.isPrepared()) {
 			mCurrentFilePlayer.prepareMediaPlayer();
