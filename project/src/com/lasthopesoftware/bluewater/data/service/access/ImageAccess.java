@@ -160,10 +160,7 @@ public class ImageAccess {
 		}
 		
 		private static final byte[] getBitmapBytesFromMemory(final String uniqueKey) {
-			Byte[] memoryImageBytes = null;
-			synchronized(mImageMemoryCache) {
-				memoryImageBytes = mImageMemoryCache.get(uniqueKey);
-			}
+			final Byte[] memoryImageBytes = mImageMemoryCache.get(uniqueKey);
 			
 			if (memoryImageBytes == null) return new byte[0];
 			
@@ -205,9 +202,7 @@ public class ImageAccess {
 			for (int i = 0; i < imageBytes.length; i++)
 				memoryImageBytes[i] = Byte.valueOf(imageBytes[i]);
 			
-			synchronized(mImageMemoryCache) {
-				mImageMemoryCache.put(uniqueKey, memoryImageBytes);
-			}
+			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
 		}
 
 		private static final Bitmap getBitmapFromBytes(final byte[] imageBytes) {
