@@ -101,11 +101,13 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 											"Format=" + IMAGE_FORMAT,
 											"FillTransparency=ffffff");
 				
-				// Connection failed to build or isCancelled was called, return an empty bitmap
-				// but do not put it into the cache
-				if (conn == null || owner.isCancelled()) return getFillerBitmap();
+				// Connection failed to build
+				if (conn == null) return getFillerBitmap();
 				
 				try {
+					//isCancelled was called, return an empty bitmap but do not put it into the cache
+					if (owner.isCancelled()) return getFillerBitmap();
+						
 					imageBytes = IOUtils.toByteArray(conn.getInputStream());
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
@@ -120,7 +122,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				if (!cacheDir.exists())
 					cacheDir.mkdirs();
 				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
-				
+
 				imageDiskCache.put(uniqueKey, file, imageBytes);
 				putBitmapIntoMemory(uniqueKey, imageBytes);
 					
@@ -138,7 +140,7 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				memoryImageBytes = mImageMemoryCache.get(uniqueKey);
 			}
 			
-			if (memoryImageBytes == null || memoryImageBytes.length == 0) return new byte[0];
+			if (memoryImageBytes == null) return new byte[0];
 			
 			final byte[] imageBytes = new byte[memoryImageBytes.length];
 			for (int i = 0; i < memoryImageBytes.length; i++)
