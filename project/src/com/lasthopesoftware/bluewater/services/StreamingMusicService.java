@@ -815,8 +815,7 @@ public class StreamingMusicService extends Service implements
 					metaData.apply();
 					
 					if (android.os.Build.VERSION.SDK_INT >= 19) {					
-						final ImageAccess getBtImageTask = new ImageAccess(mThis, playingFile);
-					    getBtImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+						ImageAccess.getImage(mThis, playingFile, new OnCompleteListener<Void, Void, Bitmap>() {
 							
 							@TargetApi(Build.VERSION_CODES.KITKAT)
 							@Override
@@ -828,7 +827,6 @@ public class StreamingMusicService extends Service implements
 								metaData.apply();
 							}
 						});
-					    getBtImageTask.execute();
 					}
 				}
 				

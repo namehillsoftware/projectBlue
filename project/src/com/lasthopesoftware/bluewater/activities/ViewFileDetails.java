@@ -12,7 +12,6 @@ import java.util.Set;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -159,8 +158,7 @@ public class ViewFileDetails extends Activity {
         
         getFilePropertiesTask.execute();
                 
-        final ImageAccess getFileImageTask = new ImageAccess(this, fileKey);
-		getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+        ImageAccess.getImage(this, fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
@@ -171,8 +169,6 @@ public class ViewFileDetails extends Activity {
 				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}
 		});
-		
-		getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	@Override

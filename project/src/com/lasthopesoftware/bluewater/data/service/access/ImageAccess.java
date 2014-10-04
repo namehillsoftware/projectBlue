@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -22,29 +24,43 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
+public class ImageAccess {
 	
 	public static final String IMAGE_FORMAT = "jpg";
-
 	
-	public ImageAccess(final Context context, final int fileKey) {
-		this(context, new File(fileKey));
+	private static final ExecutorService imageAccessExecutor = Executors.newSingleThreadExecutor();
+	
+	public static ImageAccess getImage(final Context context, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		return getImage(context, new File(fileKey), onGetBitmapComplete);
 	}
 	
-	public ImageAccess(final Context context, final File file) {
+	public static ImageAccess getImage(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		final ImageAccess imageAccessTask = new ImageAccess(context, file, onGetBitmapComplete);
+		imageAccessTask.execute();
+		return imageAccessTask;
+	}
+
+	private SimpleTask<Void, Void, Bitmap> mImageAccessTask;
+	
+	private ImageAccess(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		super();
 		
-		super.setOnExecuteListener(new GetFileImageOnExecute(context, file));
+		mImageAccessTask = new SimpleTask<Void, Void, Bitmap>(new GetFileImageOnExecute(context, file));
+		mImageAccessTask.addOnCompleteListener(onGetBitmapComplete);
 	}
 	
-
-	@Override
-	public final void setOnExecuteListener(OnExecuteListener<Void, Void, Bitmap> listener) {
-		throw new UnsupportedOperationException("The on execute listener cannot be set for an ImageTask. It is already set in the constructor.");
+	private void execute() {
+		mImageAccessTask.executeOnExecutor(imageAccessExecutor);
 	}
 		
+	public void cancel() {
+		mImageAccessTask.cancel(false);
+	}
+	
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
 		
 		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);

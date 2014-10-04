@@ -11,7 +11,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.view.LayoutInflater;
@@ -323,13 +322,12 @@ public class ViewNowPlaying extends Activity implements
 							
 			try {			
 				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null && (getFileImageTask.getStatus() == AsyncTask.Status.PENDING || getFileImageTask.getStatus() == AsyncTask.Status.RUNNING))
-					getFileImageTask.cancel(false);
+				if (getFileImageTask != null)
+					getFileImageTask.cancel();
 				
 				mNowPlayingImg.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
-				getFileImageTask = new ImageAccess(this, file);
-				getFileImageTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+				getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
@@ -339,8 +337,6 @@ public class ViewNowPlaying extends Activity implements
 						displayImageBitmap();
 					}
 				});
-				
-				getFileImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			} catch (Exception e) {
 				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 			}
