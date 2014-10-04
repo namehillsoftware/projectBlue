@@ -161,7 +161,7 @@ public class ConnectionManager {
 			@Override
 			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
 				try {
-					AccessConfiguration accessDao = new AccessConfiguration();
+					final AccessConfiguration accessDao = new AccessConfiguration();
 					String accessString = params[0];
 					if (accessString.contains(".")) {
 						if (!accessString.contains(":")) accessString += ":80";
@@ -169,25 +169,29 @@ public class ConnectionManager {
 					}
 					
 					if (UrlValidator.getInstance().isValid(accessString)) {
-						Uri jrUrl = Uri.parse(accessString);
+						final Uri jrUrl = Uri.parse(accessString);
 						accessDao.setRemoteIp(jrUrl.getHost());
 						accessDao.setPort(jrUrl.getPort());
 						accessDao.setStatus(true);
 					} else {
-						HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
+						final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
 						
 						conn.setConnectTimeout(_timeout);
 						try {
-							XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-							
-							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-							accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-							for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-								accessDao.getLocalIps().add(localIp);
-							for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-								accessDao.getMacAddresses().add(macAddress);
-							
+							final InputStream is = conn.getInputStream();
+							try {
+								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+								
+								accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
+								accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+								accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+								for (String localIp : xml.getUnique("localiplist").getValue().split(","))
+									accessDao.getLocalIps().add(localIp);
+								for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
+									accessDao.getMacAddresses().add(macAddress);
+							} finally {
+								is.close();
+							}
 						} finally {
 							conn.disconnect();
 						}
@@ -360,12 +364,8 @@ public class ConnectionManager {
 		public InputStream getInputStream() throws IOException {
 			try {
 				return mHttpConnection.getInputStream();
-			} catch (FileNotFoundException fe) {
-				throw fe;
-			}
-			catch (IOException e) {
-				resetConnection(e);
-				return this.getInputStream();
+			} catch (IOException e) {
+				throw e;
 			}
 		}
 		
@@ -492,12 +492,17 @@ public class ConnectionManager {
 				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 					Boolean result = Boolean.FALSE;
 					
-					HttpURLConnection conn = getConnection("Alive");
+					final HttpURLConnection conn = getConnection("Alive");
 					try {
 				    	conn.setConnectTimeout(params[0]);
-						StandardRequest responseDao = StandardRequest.fromInputStream(conn.getInputStream());
-				    	
-				    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
+				    	final InputStream is = conn.getInputStream();
+				    	try {
+							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
+					    	
+					    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
+				    	} finally {
+				    		is.close();
+				    	}
 					} catch (MalformedURLException m) {
 						mLogger.warn(m.getMessage());
 					} catch (FileNotFoundException f) {

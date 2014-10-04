@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -17,18 +18,32 @@ public class StringRequest extends AsyncTask<String, Void, String> {
 	@Override
 	protected String doInBackground(String... params) {
 		try {
-			HttpURLConnection conn = ConnectionManager.getConnection(params);
+			final HttpURLConnection conn = ConnectionManager.getConnection(params);
 			try {
-				BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			
-				String line;
-				StringBuilder result = new StringBuilder();
-				
-				while ((line = br.readLine()) != null) {
-					result.append(line);
+				final InputStream is = conn.getInputStream();
+				try {
+					final InputStreamReader isr = new InputStreamReader(is);
+					try {
+						final BufferedReader br = new BufferedReader(isr);
+						
+						try {
+							String line;
+							final StringBuilder result = new StringBuilder();
+							
+							while ((line = br.readLine()) != null) {
+								result.append(line);
+							}
+						
+							return result.toString();
+						} finally {
+							br.close();
+						}
+					} finally {
+						isr.close();
+					}
+				} finally {
+					is.close();
 				}
-			
-				return result.toString();
 			} finally {
 				conn.disconnect();
 			}

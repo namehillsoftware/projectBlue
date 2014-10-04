@@ -23,11 +23,15 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> impleme
 				if (mResults == null) mResults = new ArrayList<TResult>();
 				mResults.clear();
 
-				HttpURLConnection conn = ConnectionManager.getConnection(params);
+				final HttpURLConnection conn = ConnectionManager.getConnection(params);
 				try {
-					InputStream is = conn.getInputStream();
-					for (OnConnectListener<TResult> workEvent : onConnectListeners)
-						mResults.add(workEvent.onConnect(is));
+					final InputStream is = conn.getInputStream();
+					try {
+						for (OnConnectListener<TResult> workEvent : onConnectListeners)
+							mResults.add(workEvent.onConnect(is));
+					} finally {
+						is.close();
+					}
 				} finally {
 					conn.disconnect();
 				}

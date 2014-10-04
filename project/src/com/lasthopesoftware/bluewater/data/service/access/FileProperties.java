@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
@@ -97,7 +98,7 @@ public class FileProperties {
 				try {
 					conn = ConnectionManager.getConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
 					conn.setReadTimeout(5000);
-					conn.getInputStream();
+					conn.getInputStream().close();
 					return true;
 				} catch (Exception e) {
 					return false;
@@ -164,13 +165,18 @@ public class FileProperties {
 					final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
 					conn.setReadTimeout(45000);
 					try {
-				    	final XmlElement xml = Xmlwise.createXml(IOUtils.toString(conn.getInputStream()));
-				    	if (xml.size() < 1) return returnProperties;
-				    	
-				    	for (XmlElement el : xml.get(0))
-				    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-				    	
-				    	return returnProperties;
+						final InputStream is = conn.getInputStream();
+						try {
+							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+							if (xml.size() < 1) return returnProperties;
+					    	
+					    	for (XmlElement el : xml.get(0))
+					    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+					    	
+					    	return returnProperties;
+						} finally {
+							is.close();
+						}
 					} finally {
 						conn.disconnect();
 					}

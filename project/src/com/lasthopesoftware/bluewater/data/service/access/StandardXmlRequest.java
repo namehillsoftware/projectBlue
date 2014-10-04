@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.access;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
@@ -20,7 +21,12 @@ public class StandardXmlRequest extends AsyncTask<String, Void, StandardRequest>
 			HttpURLConnection conn = ConnectionManager.getConnection(params);
 	    	
 			try {
-				responseDao = StandardRequest.fromInputStream(conn.getInputStream());
+				final InputStream is = conn.getInputStream();
+				try {
+					responseDao = StandardRequest.fromInputStream(is);
+				} finally {
+					is.close();
+				}
 			} finally {
 				conn.disconnect();
 			}

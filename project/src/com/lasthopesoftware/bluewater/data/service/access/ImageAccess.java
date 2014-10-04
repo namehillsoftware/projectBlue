@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 
 import org.apache.commons.io.IOUtils;
@@ -68,6 +69,8 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 			final Library library = LibrarySession.GetLibrary(mContext);
 			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
 			
+			if (owner.isCancelled()) return getFillerBitmap();
+			
 			String uniqueKey = null;
 			try {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
@@ -107,8 +110,14 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 				try {
 					//isCancelled was called, return an empty bitmap but do not put it into the cache
 					if (owner.isCancelled()) return getFillerBitmap();
-						
-					imageBytes = IOUtils.toByteArray(conn.getInputStream());
+					
+					final InputStream is = conn.getInputStream();
+					try {
+						imageBytes = IOUtils.toByteArray(is);
+					} finally {
+						is.close();
+					}
+					
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
 				} catch (FileNotFoundException fe) {
@@ -152,10 +161,16 @@ public class ImageAccess extends SimpleTask<Void, Void, Bitmap> {
 		private static final byte[] putBitmapIntoMemory(final String uniqueKey, final java.io.File file) {
 			final int size = (int) file.length();
 		    final byte[] bytes = new byte[size];
+		    
 		    try {
-		        final BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-		        buf.read(bytes, 0, bytes.length);
-		        buf.close();
+		    	final FileInputStream fis = new FileInputStream(file);
+		        final BufferedInputStream buffer = new BufferedInputStream(fis);
+		        try {
+		        	buffer.read(bytes, 0, bytes.length);
+		        } finally {
+		        	buffer.close();
+		        	fis.close();
+		        }
 		    } catch (FileNotFoundException e) {
 		    	mLogger.error("Could not find file.", e);
 		    	return new byte[0];
