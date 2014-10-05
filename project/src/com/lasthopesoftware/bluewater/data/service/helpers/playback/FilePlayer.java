@@ -49,13 +49,7 @@ public class FilePlayer implements
 	private final File mFile;
 	
 	private static final String FILE_URI_SCHEME = "file://";
-	private static final String MEDIA_QUERY = "(" + 
-												MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%') OR (" +
-												MediaStore.Audio.Media.ARTIST + " = ? AND " +
-												MediaStore.Audio.Media.ALBUM + " = ? AND " +
-												MediaStore.Audio.Media.TITLE + " = ? AND " +
-												MediaStore.Audio.Media.TRACK + " = ?" +
-											  ")";
+	private static final String MEDIA_QUERY = "(" + MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%')";
 	
 	private HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
 	private HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
@@ -126,11 +120,7 @@ public class FilePlayer implements
 			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
 		
 		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
-		final String[] params = { 	filename,
-									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
-									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
-									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
-									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
+		final String[] params = { filename };
 	    
 		final String[] projection = { MediaStore.Audio.Media.DATA };
 		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
@@ -141,7 +131,10 @@ public class FilePlayer implements
 		    		// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
 		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME, ""));
 		    		
-		    		if (file != null) return Uri.fromFile(file);
+		    		if (file != null && file.exists()) {
+		    			mLogger.info("Returning file URI from local disk.");
+		    			return Uri.fromFile(file);
+		    		}
 		    	}
 		    }
 	    } catch (IllegalArgumentException ie) {
@@ -150,6 +143,7 @@ public class FilePlayer implements
 	    	cursor.close();
 	    }
 	    
+	    mLogger.info("Returning file URL from server.");
 	    final String itemUrl = mFile.getSubItemUrl();
 	    if (itemUrl != null && !itemUrl.isEmpty())
 	    	return Uri.parse(itemUrl);
