@@ -101,6 +101,7 @@ public class StreamingMusicService extends Service implements
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
 	private Library mLibrary;
+	private Bitmap mMetadataBitmap;
 	
 	// State dependent static variables
 	private static String mPlaylistString;
@@ -805,42 +806,50 @@ public class StreamingMusicService extends Service implements
 				final String artist = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
 				final String album = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
 				final String title = (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
-				
-				if (mRemoteControlClient != null) {
-					final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-					metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);				
-					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION));
-					metaData.apply();
-					
-					if (android.os.Build.VERSION.SDK_INT >= 19) {					
-						ImageAccess.getImage(mThis, playingFile, new OnCompleteListener<Void, Void, Bitmap>() {
-							
-							@TargetApi(Build.VERSION_CODES.KITKAT)
-							@Override
-							public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-								if (result == null) return;
 								
-								final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
-								metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result);
-								metaData.apply();
-							}
-						});
-					}
-				}
-				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);
 				pebbleIntent.putExtra("album", album);
 				pebbleIntent.putExtra("track", title);
 			    
 			    sendBroadcast(pebbleIntent);
+				
+				if (mRemoteControlClient == null) return;
+				
+				final Long duration = (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
+				
+				final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
+				putFileDetailsInMetadata(metaData, artist, album, title, duration);
+				metaData.apply();
+				
+				if (android.os.Build.VERSION.SDK_INT < 19) return;		
+				
+				ImageAccess.getImage(mThis, playingFile, new OnCompleteListener<Void, Void, Bitmap>() {
+					
+					@TargetApi(Build.VERSION_CODES.KITKAT)
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						if (mMetadataBitmap != null) mMetadataBitmap.recycle();
+						mMetadataBitmap = result;
+						
+						final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
+						putFileDetailsInMetadata(metaData, artist, album, title, duration);
+						metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
+					}
+				});
+				
 			}
 		});
 		getBtPropertiesTask.execute();
 		
 		throwStartEvent(controller, filePlayer);
+	}
+	
+	private void putFileDetailsInMetadata(final MetadataEditor metaData, final String artist, final String album, final String title, final Long duration) {
+		metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
+		metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
+		metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);				
+		metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
 	}
 	
 	@Override
