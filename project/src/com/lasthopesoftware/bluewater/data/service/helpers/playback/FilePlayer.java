@@ -311,7 +311,7 @@ public class FilePlayer implements
 	}
 	
 	public int getDuration() throws IOException {
-		if (mp == null || isInErrorState.get() || !isPrepared())
+		if (mp == null || isInErrorState.get() || !isPlaying())
 			return mFile.getDuration();
 		
 		try {
