@@ -241,8 +241,23 @@ public class FilePlayer implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
-		updateStatsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					// Only update the last played data if the song could have actually played again
+					if ((System.currentTimeMillis() - getDuration()) > Long.valueOf(mFile.getProperty(FileProperties.LAST_PLAYED))) {
+						SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
+						updateStatsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+					}
+				} catch (NumberFormatException e) {
+					mLogger.error("There was an error parsing the last played time.");
+				} catch (IOException e) {
+					mLogger.warn("There was an error retrieving the duration or last played time data.");
+				}
+			}
+		});
 		
 		releaseMediaPlayer();
 		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onJrFileComplete(this);
@@ -366,12 +381,12 @@ public class FilePlayer implements
 			mp.setVolume(mVolume, mVolume);
 	}
 	
-	private void handleIllegalStateException(IllegalStateException ise) {
+	private static void handleIllegalStateException(IllegalStateException ise) {
 		mLogger.warn("The media player was in an incorrect state.", ise);
 	}
 	
 	private static class UpdatePlayStatsOnExecute implements OnExecuteListener<Void, Void, Void> {
-		private File mFile;
+		private final File mFile;
 		
 		public UpdatePlayStatsOnExecute(File file) {
 			mFile = file;

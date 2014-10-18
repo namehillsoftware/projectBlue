@@ -88,6 +88,9 @@ public class File extends BaseObject {
 		return mFileProperties.getRefreshedProperty(name);
 	}
 	
+	/*
+	 * Get the duration of the file in milliseconds
+	 */
 	public int getDuration() throws IOException {
 		String durationToParse = mFileProperties.getProperty(FileProperties.DURATION);
 		if (durationToParse != null && !durationToParse.isEmpty())
