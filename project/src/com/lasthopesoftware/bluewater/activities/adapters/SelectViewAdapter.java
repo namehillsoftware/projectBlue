@@ -15,8 +15,16 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 
 public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 
-	public SelectViewAdapter(Context context, int resource, List<IItem<?>> views) {
+	private final int mSelectedViewKey;
+	private static int mSelectedColor = -1;
+	
+	public SelectViewAdapter(Context context, int resource, List<IItem<?>> views, final int selectedViewKey) {
 		super(context, resource, views);
+		
+		mSelectedViewKey = selectedViewKey;
+		
+		if (mSelectedColor == -1)
+			mSelectedColor = context.getResources().getColor(android.R.color.holo_blue_light);
 	}
 	
 	@Override
@@ -25,8 +33,14 @@ public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			convertView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, parent, false);
 		}
+		
+		final IItem<?> item = getItem(position);
+		
 		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);
-		tvViewName.setText(getItem(position).getValue());
+		tvViewName.setText(item.getValue());
+		
+		if (item.getKey() == mSelectedViewKey)
+			tvViewName.setBackgroundColor(mSelectedColor);
 		
 		return convertView;
 	}

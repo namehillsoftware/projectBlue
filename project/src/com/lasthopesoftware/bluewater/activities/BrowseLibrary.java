@@ -159,11 +159,11 @@ public class BrowseLibrary extends FragmentActivity {
 					getActionBar().setTitle(mOldTitle);
 					break;
 				}
-				
-				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, _views));
+								
+				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, _views, library.getSelectedView()));
 				
 				mLvSelectViews.setOnItemClickListener(new OnItemClickListener() {
-
+					
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 						mDrawerLayout.closeDrawer(Gravity.START);
