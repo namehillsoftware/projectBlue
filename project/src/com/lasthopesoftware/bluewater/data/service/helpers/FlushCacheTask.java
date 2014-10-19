@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
  * @author david
  *
  */
-public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
+public class FlushCacheTask implements Runnable {
 
 	private final static Logger mLogger = LoggerFactory.getLogger(FlushCacheTask.class);
 	
@@ -36,8 +36,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	 * Flush a given cache until it reaches the given target size
 	 */
 	public static void doFlush(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
-		final FlushCacheTask task = new FlushCacheTask(context, cacheName, expirationTime, targetSize);
-		task.executeOnExecutor(DatabaseHandler.databaseExecutor);
+		DatabaseHandler.databaseExecutor.execute(new FlushCacheTask(context, cacheName, expirationTime, targetSize));
 	}
 	
 	private FlushCacheTask(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
@@ -48,20 +47,20 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 	}
 	
 	@Override
-	protected Void doInBackground(Void... params) {
+	public final void run() {
 		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
 			// remove expired files
-			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, mCacheName, System.currentTimeMillis() - mExpirationTime);
+			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
 			for (CachedFile cachedFile : expiredFiles)
 				deleteCachedFile(cachedFileAccess, cachedFile);
 			
-			if (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) <= mTargetSize) return null;
+			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
 			
-			while (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) > mTargetSize) {
-				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess, mCacheName);
+			while (getCachedFileSizeFromDatabase(cachedFileAccess) > mTargetSize) {
+				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess);
 				if (cachedFile != null)
 					deleteCachedFile(cachedFileAccess, cachedFile);
 			}
@@ -72,8 +71,8 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
-			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(cachedFileAccess, mCacheName))
-				return null;
+			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(cachedFileAccess))
+				return;
 			
 			for (int i = 0; i < filesInCacheDir.length; i++) {
 				try {
@@ -88,11 +87,9 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		} finally {
 			handler.close();
 		}
-		
-		return null;
 	}
 
-	private final static long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+	private final long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -102,21 +99,21 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 						.eq(CachedFile.CACHE_NAME, new SelectArg())
 						.prepare();
 			
-			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName);
+			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName);
 		} catch (SQLException e) {
 			mLogger.error("Error getting file size", e);
 			return -1;
 		}
 	}
 	
-	private final static CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+	private final CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.orderBy(CachedFile.LAST_ACCESSED_TIME, true)
 						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
+						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
 						.prepare();
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);			
@@ -126,13 +123,13 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		}
 	}
 	
-	private final static List<CachedFile> getCachedFilePastTime(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName, final long time) {
+	private final List<CachedFile> getCachedFilePastTime(final Dao<CachedFile, Integer> cachedFileAccess, final long time) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
+						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
 						.and()
 						.lt(CachedFile.CREATED_TIME, new SelectArg(time))
 						.prepare();
@@ -144,14 +141,14 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		}
 	}
 	
-	private final static long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
+	private final long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
 					cachedFileAccess.queryBuilder()
 						.setCountOf(true)
 						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
+						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
 						.prepare();
 			
 			return cachedFileAccess.countOf(preparedQuery);
