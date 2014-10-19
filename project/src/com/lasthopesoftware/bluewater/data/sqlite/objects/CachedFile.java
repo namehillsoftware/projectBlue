@@ -12,6 +12,7 @@ public class CachedFile {
 	public static final String CACHE_NAME = "cacheName";
 	public static final String FILE_NAME = "fileName";
 	public static final String FILE_SIZE = "fileSize";
+	public static final String CREATED_TIME = "createdTime";
 	
 	@DatabaseField(generatedId = true)
 	private int id;
@@ -24,6 +25,9 @@ public class CachedFile {
 	
 	@DatabaseField(index = true)
 	private long lastAccessedTime;
+	
+	@DatabaseField(index = true)
+	private long createdTime;
 	
 	@DatabaseField(uniqueCombo = true)
 	private String uniqueKey;
@@ -116,5 +120,19 @@ public class CachedFile {
 	 */
 	public final void setCacheName(String cacheName) {
 		this.cacheName = cacheName;
+	}
+
+	/**
+	 * @return the createdTime
+	 */
+	public final long getCreatedTime() {
+		return createdTime;
+	}
+
+	/**
+	 * @param createdTime the createdTime to set
+	 */
+	public final void setCreatedTime(long createdTime) {
+		this.createdTime = createdTime;
 	}
 }

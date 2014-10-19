@@ -90,6 +90,7 @@ public class FileCache {
 						cachedFile.setFileSize(file.length());
 						cachedFile.setLibrary(mLibrary);
 						cachedFile.setUniqueKey(uniqueKey);
+						cachedFile.setCreatedTime(System.currentTimeMillis());
 					}
 					
 					cachedFile.setLastAccessedTime(System.currentTimeMillis());

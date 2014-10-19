@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.data.service.helpers;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 
 	private final static Logger mLogger = LoggerFactory.getLogger(FlushCacheTask.class);
+	private final static long mThirtyDaysMs = 2592000000L;
 	
 	private final Context mContext;
 	private final String mCacheName;
@@ -49,20 +52,17 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
+			// remove expired files
+			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, mCacheName, System.currentTimeMillis() - mThirtyDaysMs);
+			for (CachedFile cachedFile : expiredFiles)
+				deleteCachedFile(cachedFileAccess, cachedFile);
+			
 			if (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) <= mTargetSize) return null;
 			
 			while (getCachedFileSizeFromDatabase(cachedFileAccess, mCacheName) > mTargetSize) {
 				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess, mCacheName);
-				if (cachedFile == null) continue;
-				final File fileToDelete = new File(cachedFile.getFileName());
-				if (fileToDelete.exists()) 
-					fileToDelete.delete();
-				
-				try {
-					cachedFileAccess.delete(cachedFile);
-				} catch (SQLException deleteException) {
-					mLogger.error("Error deleting file pointer from database", deleteException);
-				}
+				if (cachedFile != null)
+					deleteCachedFile(cachedFileAccess, cachedFile);
 			}
 			
 			// Remove any files in the cache dir but not in the database			
@@ -125,6 +125,25 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 		}
 	}
 	
+	private final static List<CachedFile> getCachedFilePastTime(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName, final long time) {
+		try {
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.orderBy(CachedFile.LAST_ACCESSED_TIME, true)
+						.where()
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
+						.and()
+						.lt(CachedFile.CREATED_TIME, new SelectArg(time))
+						.prepare();
+			
+			return cachedFileAccess.query(preparedQuery);			
+		} catch (SQLException e) {
+			mLogger.error("Error getting oldest cached file", e);
+			return new ArrayList<CachedFile>();
+		}
+	}
+	
 	private final static long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess, final String cacheName) {
 		try {
 			
@@ -156,5 +175,20 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			mLogger.error("Error getting cached file by filename", e);
 			return null;
 		}
+	}
+	
+	private final static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
+		final File fileToDelete = new File(cachedFile.getFileName());
+		if (fileToDelete.exists()) 
+			fileToDelete.delete();
+		
+		try {
+			cachedFileAccess.delete(cachedFile);
+			return true;
+		} catch (SQLException deleteException) {
+			mLogger.error("Error deleting file pointer from database", deleteException);
+		}
+		
+		return false;
 	}
 }
