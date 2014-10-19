@@ -25,7 +25,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileCache {
 	
-	private final static long mMsInDay = 86400000L;
+	private final static long MS_IN_DAY = 86400000L;
 	
 	private final static Logger mLogger = LoggerFactory.getLogger(FileCache.class); 
 	
@@ -40,14 +40,16 @@ public class FileCache {
 		mCacheName = cacheName;
 		mMaxSize = maxSize;
 		mLibrary = library;
-		mExpirationTime = expirationDays * mMsInDay;
+		mExpirationTime = expirationDays * MS_IN_DAY;
 	}
 	
 	public void put(final String uniqueKey, final File file, final byte[] fileData) {
-		final SimpleTask<Void, Void, Void> writeFileTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+		
+		// Just execute this on the thread pool executor as it doesn't write to the database
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
 
 			@Override
-			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+			public final void run() {
 				try {
 
 					final FileOutputStream fos = new FileOutputStream(file);
@@ -62,25 +64,19 @@ public class FileCache {
 				} catch (IOException e) {
 					mLogger.error("Unable to write to file!", e);
 				}
-				
-				return null;
 			}
-			
 		});
-		
-		// Just execute this on the thread pool executor as it doesn't write to the database
-		writeFileTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	public void put(final String uniqueKey, final File file) {
-		final SimpleTask<Void, Void, Void> putTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+		DatabaseHandler.databaseExecutor.execute(new Runnable() {
 
 			@Override
-			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+			public void run() {
 				final DatabaseHandler handler = new DatabaseHandler(mContext);
 				try {
-					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
-					
+					Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+										
 					CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile == null) {
 						cachedFile = new CachedFile();
@@ -89,7 +85,7 @@ public class FileCache {
 							cachedFile.setFileName(file.getCanonicalPath());
 						} catch (IOException e) {
 							mLogger.error("There was an error reading the canonical path", e);
-							return null;
+							return;
 						}
 						cachedFile.setFileSize(file.length());
 						cachedFile.setLibrary(mLibrary);
@@ -104,16 +100,16 @@ public class FileCache {
 					} catch (SQLException e) {
 						mLogger.error("Error updating cached file", e);
 					}
+				} catch (SQLException se) {
+					mLogger.warn("Couldn't get database access object.");
 				} finally {
 					handler.close();
 					FlushCacheTask.doFlush(mContext, mCacheName, mExpirationTime, mMaxSize);
 				}
 				
-				return null;
+				return;
 			}
 		});
-		
-		putTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
 	public File get(final String uniqueKey) {
@@ -159,29 +155,28 @@ public class FileCache {
 	
 	private final void doFileAccessedUpdate(final String uniqueKey) {
 		final long updateTime = System.currentTimeMillis();
-		final SimpleTask<Void, Void, Void> fileAccessUpdateTask = new SimpleTask<Void, Void, Void>(new OnExecuteListener<Void, Void, Void>() {
+		DatabaseHandler.databaseExecutor.execute(new Runnable() {
 
 			@Override
-			public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+			public void run() {
 				final DatabaseHandler handler = new DatabaseHandler(mContext);
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
-					if (cachedFile == null) return null;
+					if (cachedFile == null) return;
 					cachedFile.setLastAccessedTime(updateTime);
 					try {
 						cachedFileAccess.update(cachedFile);
 					} catch (SQLException e) {
-						mLogger.error("Error updating file accessed time", e);
+						mLogger.error("Error updating file accessed time.", e);
 					}
+				} catch (SQLException e) {
+					mLogger.error("Error getting database access object.", e);
 				} finally {
 					handler.close();
 				}
-				return null;
 			}
 		});
-		
-		fileAccessUpdateTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
 	private final static CachedFile getCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final int libraryId, final String cacheName, final String uniqueKey) {
