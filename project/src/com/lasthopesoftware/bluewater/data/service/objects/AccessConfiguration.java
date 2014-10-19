@@ -17,6 +17,7 @@ public class AccessConfiguration {
 	private List<String> localIps = new ArrayList<String>();
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
+	private volatile static long mUniqueRequestId = 0;
 	
 	public AccessConfiguration() {
 	}
@@ -120,35 +121,37 @@ public class AccessConfiguration {
 		return mActiveUrl;
 	}
 	
-	public String getMediaCenterUrl(String... params) {
+	public String buildMediaCenterUrl(String... params) {
 		// Add base url
-		String url = getActiveUrl();
-		if (url == null || url.isEmpty()) return null;
+		final String url = getActiveUrl();
+		if (url == null || url.isEmpty()) return null; 
 		
 		if (params.length == 0) return url;
 		
-		// Add action
-		url += params[0];
+		final StringBuilder urlBuilder = new StringBuilder(url);
 		
-		url += "?";
+		// Add action
+		urlBuilder.append(params[0]);
+		
+		urlBuilder.append("?uniqueId=").append(mUniqueRequestId++);
 		
 		// add arguments
 		if (params.length > 1) {
 			for (int i = 1; i < params.length; i++) {
+				urlBuilder.append('&');
+				
 				String[] keyValue = params[i].split("=");
-				url += encodeParameter(keyValue[0]);
+				urlBuilder.append(encodeParameter(keyValue[0]));
 				
 				if (keyValue.length > 1)
-					url += "=" + encodeParameter(keyValue[1]);
-
-				url += "&";
+					urlBuilder.append('=').append(encodeParameter(keyValue[1]));
 			}
 		}
 		
-		return url;
+		return urlBuilder.toString();
 	}
 	
-	private String encodeParameter(String parameter) {
+	private static String encodeParameter(String parameter) {
 		try {
 			return URLEncoder.encode(parameter, "UTF-8").replace("+", "%20");
 		} catch (UnsupportedEncodingException e) {
