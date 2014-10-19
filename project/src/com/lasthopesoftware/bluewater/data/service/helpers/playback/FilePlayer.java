@@ -246,9 +246,10 @@ public class FilePlayer implements
 			@Override
 			public void run() {
 				try {
+					final String lastPlayedString = mFile.getProperty(FileProperties.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
-					if ((System.currentTimeMillis() - getDuration()) > Long.valueOf(mFile.getProperty(FileProperties.LAST_PLAYED))) {
-						SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
+					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString)) {
+						final SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
 						updateStatsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 					}
 				} catch (NumberFormatException e) {
