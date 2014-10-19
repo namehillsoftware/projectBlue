@@ -25,18 +25,22 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileCache {
 	
+	private final static long mMsInDay = 86400000L;
+	
 	private final static Logger mLogger = LoggerFactory.getLogger(FileCache.class); 
 	
 	private final Context mContext;
 	private final Library mLibrary;
 	private final String mCacheName;
-	private final int mMaxSize;
+	private final long mMaxSize;
+	private final long mExpirationTime;
 	
-	public FileCache(Context context, Library library, String cacheName, int maxSize) {
+	public FileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
 		mContext = context;
 		mCacheName = cacheName;
 		mMaxSize = maxSize;
 		mLibrary = library;
+		mExpirationTime = expirationDays * mMsInDay;
 	}
 	
 	public void put(final String uniqueKey, final File file, final byte[] fileData) {
@@ -102,7 +106,7 @@ public class FileCache {
 					}
 				} finally {
 					handler.close();
-					FlushCacheTask.doFlush(mContext, mCacheName, mMaxSize);
+					FlushCacheTask.doFlush(mContext, mCacheName, mExpirationTime, mMaxSize);
 				}
 				
 				return null;

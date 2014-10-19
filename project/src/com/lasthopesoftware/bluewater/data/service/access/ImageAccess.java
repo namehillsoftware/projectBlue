@@ -67,6 +67,7 @@ public class ImageAccess {
 		
 		private static final int MAX_DISK_CACHE_SIZE = 100 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 		private static final int MAX_MEMORY_CACHE_SIZE = 5;
+		private static final int MAX_DAYS_IN_CACHE = 30;
 		private static final String IMAGES_CACHE_NAME = "images";
 		
 		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
@@ -83,7 +84,7 @@ public class ImageAccess {
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			final Library library = LibrarySession.GetLibrary(mContext);
-			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DISK_CACHE_SIZE);
+			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 			
 			if (owner.isCancelled()) return getFillerBitmap();
 			

@@ -26,24 +26,25 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
 public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 
 	private final static Logger mLogger = LoggerFactory.getLogger(FlushCacheTask.class);
-	private final static long mThirtyDaysMs = 2592000000L;
 	
 	private final Context mContext;
 	private final String mCacheName;
 	private final long mTargetSize;
+	private final long mExpirationTime;
 	
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
-		final FlushCacheTask task = new FlushCacheTask(context, cacheName, targetSize);
+	public static void doFlush(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
+		final FlushCacheTask task = new FlushCacheTask(context, cacheName, expirationTime, targetSize);
 		task.executeOnExecutor(DatabaseHandler.databaseExecutor);
 	}
 	
-	private FlushCacheTask(final Context context, final String cacheName, final long targetSize) {
+	private FlushCacheTask(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
 		mContext = context;
 		mCacheName = cacheName;
 		mTargetSize = targetSize;
+		mExpirationTime = expirationTime;
 	}
 	
 	@Override
@@ -53,7 +54,7 @@ public class FlushCacheTask extends AsyncTask<Void, Void, Void> {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
 			// remove expired files
-			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, mCacheName, System.currentTimeMillis() - mThirtyDaysMs);
+			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, mCacheName, System.currentTimeMillis() - mExpirationTime);
 			for (CachedFile cachedFile : expiredFiles)
 				deleteCachedFile(cachedFileAccess, cachedFile);
 			
