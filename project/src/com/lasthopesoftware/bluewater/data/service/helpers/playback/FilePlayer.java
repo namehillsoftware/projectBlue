@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.playback;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,11 +50,12 @@ public class FilePlayer implements
 	private final File mFile;
 	
 	private static final String FILE_URI_SCHEME = "file://";
-	private static final String MEDIA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' AND " +
-												MediaStore.Audio.Media.ARTIST + " = ? AND " +
-												MediaStore.Audio.Media.ALBUM + " = ? AND " +
-												MediaStore.Audio.Media.TITLE + " = ? AND " +
-												MediaStore.Audio.Media.TRACK + " = ?";
+	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' "; //AND " //+
+//												MediaStore.Audio.Media.ARTIST + " = ? AND " +
+//												MediaStore.Audio.Media.ALBUM + " = ? AND " +
+//												MediaStore.Audio.Media.TITLE + " = ? AND " +
+//												MediaStore.Audio.Media.TRACK + " = ?";
+	
 	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
 	
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
@@ -125,13 +127,25 @@ public class FilePlayer implements
 			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
 		
 		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
-		final String[] params = { 	filename,
-									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
-									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
-									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
-									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
-	    
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, MEDIA_QUERY, params, null);
+		
+		final StringBuilder querySb = new StringBuilder(MEDIA_DATA_QUERY);
+		querySb.append(" AND ");
+		
+		final ArrayList<String> params = new ArrayList<String>(5);
+		params.add(filename);
+		
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FileProperties.ARTIST));
+		querySb.append(" AND ");
+		
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FileProperties.ALBUM));
+		querySb.append(" AND ");
+		
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FileProperties.NAME));
+		querySb.append(" AND ");
+		
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FileProperties.TRACK));
+		
+		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, querySb.toString(), params.toArray(new String[params.size()]), null);
 	    try {
 		    if (cursor.moveToFirst()) {
 		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
@@ -157,6 +171,19 @@ public class FilePlayer implements
 	    	return Uri.parse(itemUrl);
 	    
 	    return null;
+	}
+	
+	private static StringBuilder appendPropertyFilter(StringBuilder querySb, ArrayList<String> params, final String key, final String value) {
+		querySb.append(' ').append(key).append(' ');
+		
+		if (value != null) {
+			querySb.append(" = ? ");
+			params.add(value);
+		} else {
+			querySb.append(" IS NULL ");
+		}
+		
+		return querySb;
 	}
 	
 	public void prepareMediaPlayer() {
@@ -209,6 +236,7 @@ public class FilePlayer implements
 	private void throwIoErrorEvent() {
 		isInErrorState.set(true);
 		resetMediaPlayer();
+		
 		for (OnFileErrorListener listener : onFileErrorListeners)
 			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
