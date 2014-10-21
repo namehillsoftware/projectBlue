@@ -40,20 +40,25 @@ public class FilePlayer implements
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
 	private volatile MediaPlayer mp;
-	private AtomicBoolean isPrepared = new AtomicBoolean();
-	private AtomicBoolean isPreparing = new AtomicBoolean();
-	private AtomicBoolean isInErrorState = new AtomicBoolean();
+	private final AtomicBoolean isPrepared = new AtomicBoolean();
+	private final AtomicBoolean isPreparing = new AtomicBoolean();
+	private final AtomicBoolean isInErrorState = new AtomicBoolean();
 	private int mPosition = 0;
 	private float mVolume = 1.0f;
 	private final Context mMpContext;
 	private final File mFile;
 	
 	private static final String FILE_URI_SCHEME = "file://";
-	private static final String MEDIA_QUERY = "(" + MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%')";
+	private static final String MEDIA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' AND " +
+												MediaStore.Audio.Media.ARTIST + " = ? AND " +
+												MediaStore.Audio.Media.ALBUM + " = ? AND " +
+												MediaStore.Audio.Media.TITLE + " = ? AND " +
+												MediaStore.Audio.Media.TRACK + " = ?";
+	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
 	
-	private HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
-	private HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
-	private HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
+	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
+	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
+	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
 	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;
@@ -120,10 +125,13 @@ public class FilePlayer implements
 			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
 		
 		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
-		final String[] params = { filename };
+		final String[] params = { 	filename,
+									mFile.getProperty(FileProperties.ARTIST) != null ? mFile.getProperty(FileProperties.ARTIST) : "",
+									mFile.getProperty(FileProperties.ALBUM) != null ? mFile.getProperty(FileProperties.ALBUM) : "",
+									mFile.getProperty(FileProperties.NAME) != null ? mFile.getProperty(FileProperties.NAME) : "",
+									mFile.getProperty(FileProperties.TRACK) != null ? mFile.getProperty(FileProperties.TRACK) : ""};
 	    
-		final String[] projection = { MediaStore.Audio.Media.DATA };
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, MEDIA_QUERY, params, null);
+		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, MEDIA_QUERY, params, null);
 	    try {
 		    if (cursor.moveToFirst()) {
 		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
