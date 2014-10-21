@@ -173,7 +173,7 @@ public class FilePlayer implements
 	    return null;
 	}
 	
-	private static StringBuilder appendPropertyFilter(StringBuilder querySb, ArrayList<String> params, final String key, final String value) {
+	private static StringBuilder appendPropertyFilter(final StringBuilder querySb, final ArrayList<String> params, final String key, final String value) {
 		querySb.append(' ').append(key).append(' ');
 		
 		if (value != null) {
