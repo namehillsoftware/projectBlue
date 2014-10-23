@@ -67,17 +67,19 @@ public class ViewNowPlaying extends Activity implements
 	private ImageButton mNext;
 	private ImageButton mPrevious;
 	private RatingBar mSongRating;
-	private static FrameLayout mContentView;
-	private static RelativeLayout mControlNowPlaying, mViewCoverArt;
+	private FrameLayout mContentView;
+	private RelativeLayout mControlNowPlaying, mViewCoverArt;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
 	private ProgressBar mSongProgressBar;
 	private ProgressBar mLoadingImg;
-	private ImageView mNowPlayingImg;
+	private ImageView mNowPlayingImageView;
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 	private static ImageAccess getFileImageTask;
+	
+	private Bitmap mNowPlayingImage;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +112,7 @@ public class ViewNowPlaying extends Activity implements
 		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
 		mSongProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
 		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
-		mNowPlayingImg = (ImageView) findViewById(R.id.imgNowPlaying);
+		mNowPlayingImageView = (ImageView) findViewById(R.id.imgNowPlaying);
 		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
 		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
 		
@@ -232,6 +234,9 @@ public class ViewNowPlaying extends Activity implements
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+		
+		if (mNowPlayingImage != null) mNowPlayingImage.recycle();
+		
 		if (mHideTimer != null) {
 			mHideTimer.cancel();
 			mHideTimer.purge();
@@ -325,14 +330,16 @@ public class ViewNowPlaying extends Activity implements
 				if (getFileImageTask != null)
 					getFileImageTask.cancel();
 				
-				mNowPlayingImg.setVisibility(View.INVISIBLE);
+				mNowPlayingImageView.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
 				getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						if (result != null)
-							mNowPlayingImg.setImageBitmap(result);
+						if (mNowPlayingImage != null) mNowPlayingImage.recycle();
+						mNowPlayingImage = result;
+						
+						mNowPlayingImageView.setImageBitmap(mNowPlayingImage);
 						
 						displayImageBitmap();
 					}
@@ -387,9 +394,9 @@ public class ViewNowPlaying extends Activity implements
 	}
 	
 	private void displayImageBitmap() {
-		mNowPlayingImg.setScaleType(ScaleType.CENTER_CROP);
+		mNowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
 		mLoadingImg.setVisibility(View.INVISIBLE);
-		mNowPlayingImg.setVisibility(View.VISIBLE);	
+		mNowPlayingImageView.setVisibility(View.VISIBLE);	
 	}
 	
 	private void showNowPlayingControls() {

@@ -35,6 +35,8 @@ public class ViewFileDetails extends Activity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
 	
+	private Bitmap mFileImage;
+	
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
 															new String[] {
 																FileProperties.AUDIO_ANALYSIS_INFO,
@@ -162,7 +164,9 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-				imgFileThumbnail.setImageBitmap(result);
+				mFileImage = result;
+				
+				imgFileThumbnail.setImageBitmap(mFileImage);
 				imgFileThumbnail.setScaleType(ScaleType.CENTER_INSIDE);
 				
 				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
@@ -176,5 +180,12 @@ public class ViewFileDetails extends Activity {
 		super.onStart();
 		
 		InstantiateSessionConnection.restoreSessionConnection(this);
+	}
+	
+	@Override
+	public void onDestroy() {
+		if (mFileImage != null) mFileImage.recycle();
+		
+		super.onDestroy();
 	}
 }
