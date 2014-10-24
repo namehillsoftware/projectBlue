@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -79,7 +80,33 @@ public class ViewNowPlaying extends Activity implements
 	private TextView mNowPlayingTitle;
 	private static ImageAccess getFileImageTask;
 	
-	private Bitmap mNowPlayingImage;
+	private ViewStructure mViewStructure;
+	
+	@SuppressWarnings("rawtypes")
+	private static final OnErrorListener mOnSimpleIoExceptionErrors = new OnErrorListener() {
+		
+		@Override
+		public boolean onError(ISimpleTask owner, Exception innerException) {
+			return !(innerException instanceof IOException);
+		}
+	};
+	
+	private static class ViewStructure {
+		public final File file;
+		public Bitmap nowPlayingImage;
+		public String nowPlayingArtist;
+		public String nowPlayingTitle;
+		public Float nowPlayingRating;
+		
+		public ViewStructure(final File file) {
+			this.file = file;
+		}
+		
+		public void release() {
+			if (nowPlayingImage != null)
+				nowPlayingImage.recycle();
+		}
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -235,7 +262,7 @@ public class ViewNowPlaying extends Activity implements
 	public void onDestroy() {
 		super.onDestroy();
 		
-		if (mNowPlayingImage != null) mNowPlayingImage.recycle();
+		if (mViewStructure != null) mViewStructure.release();
 		
 		if (mHideTimer != null) {
 			mHideTimer.cancel();
@@ -268,22 +295,25 @@ public class ViewNowPlaying extends Activity implements
 	
 	@SuppressWarnings("unchecked")
 	private void setView(final File file) {
-			
+		
 		try {
-			@SuppressWarnings("rawtypes")
-			final OnErrorListener onSimpleIoExceptionErrors = new OnErrorListener() {
-				
-				@Override
-				public boolean onError(ISimpleTask owner, Exception innerException) {
-					return !(innerException instanceof IOException);
-				}
-			};
 			
+			if (mViewStructure != null && mViewStructure.file != file) {
+				mViewStructure.release();
+				mViewStructure = null;
+			}
+			
+			if (mViewStructure == null)
+				mViewStructure = new ViewStructure(file);
+						
 			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
 			getArtistTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					if (mViewStructure.nowPlayingArtist != null)
+						return mViewStructure.nowPlayingArtist;
+					
 					return file.getProperty("Artist");
 				}
 			});
@@ -297,9 +327,10 @@ public class ViewNowPlaying extends Activity implements
 					}
 					
 					mNowPlayingArtist.setText(result);
+					mViewStructure.nowPlayingArtist = result;
 				}
 			});
-			getArtistTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getArtistTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getArtistTask.execute();
 			
 			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
@@ -307,6 +338,9 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+					if (mViewStructure.nowPlayingTitle != null)
+						return mViewStructure.nowPlayingTitle;
+					
 					return file.getValue();
 				}
 			});
@@ -320,32 +354,37 @@ public class ViewNowPlaying extends Activity implements
 					}
 					
 					mNowPlayingTitle.setText(result);
+					mViewStructure.nowPlayingTitle = result;
 				}
 			});
-			getTitleTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getTitleTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getTitleTask.execute();
-							
-			try {			
-				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null)
-					getFileImageTask.cancel();
-				
-				mNowPlayingImageView.setVisibility(View.INVISIBLE);
-				mLoadingImg.setVisibility(View.VISIBLE);
-				getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
+			
+			if (mViewStructure.nowPlayingImage == null) {
+				try {				
+					// Cancel the getFileImageTask if it is already in progress
+					if (getFileImageTask != null)
+						getFileImageTask.cancel();
 					
-					@Override
-					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						if (mNowPlayingImage != null) mNowPlayingImage.recycle();
-						mNowPlayingImage = result;
+					mNowPlayingImageView.setVisibility(View.INVISIBLE);
+					mLoadingImg.setVisibility(View.VISIBLE);
+					
+					getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
 						
-						mNowPlayingImageView.setImageBitmap(mNowPlayingImage);
-						
-						displayImageBitmap();
-					}
-				});
-			} catch (Exception e) {
-				LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+						@Override
+						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+							mNowPlayingImageView.setImageBitmap(result);
+							mViewStructure.nowPlayingImage = result;
+							displayImageBitmap();
+						}
+					});
+					
+				} catch (Exception e) {
+					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+				}
+			} else {
+				mNowPlayingImageView.setImageBitmap(mViewStructure.nowPlayingImage);
+				displayImageBitmap();
 			}
 			
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
@@ -353,6 +392,8 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+					if (mViewStructure.nowPlayingRating != null)
+						return mViewStructure.nowPlayingRating.floatValue();
 					
 					if (file.getProperty("Rating") != null && !file.getProperty("Rating").isEmpty())
 						return Float.valueOf(file.getProperty("Rating"));
@@ -369,6 +410,8 @@ public class ViewNowPlaying extends Activity implements
 						return;
 					}
 					
+					mViewStructure.nowPlayingRating = Float.valueOf(result);
+					
 					mSongRating.setRating(result);
 					mSongRating.invalidate();
 					
@@ -382,9 +425,8 @@ public class ViewNowPlaying extends Activity implements
 					});
 				}
 			});
-			getRatingsTask.addOnErrorListener(onSimpleIoExceptionErrors);
+			getRatingsTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getRatingsTask.execute();
-			
 			
 			mSongProgressBar.setMax(file.getDuration());
 			
@@ -392,7 +434,7 @@ public class ViewNowPlaying extends Activity implements
 			resetViewOnReconnect(file);
 		}
 	}
-	
+		
 	private void displayImageBitmap() {
 		mNowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
 		mLoadingImg.setVisibility(View.INVISIBLE);

@@ -108,6 +108,8 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	public void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
+		if (mState == SimpleTaskState.SUCCESS) listener.onComplete(this, mResult);
+
 		mOnCompleteListeners = addListener(listener, mOnCompleteListeners);
 	}
 	

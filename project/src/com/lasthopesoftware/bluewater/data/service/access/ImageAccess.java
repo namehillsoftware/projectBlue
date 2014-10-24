@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,8 +29,9 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class ImageAccess {
+public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	
 	public static final String IMAGE_FORMAT = "jpg";
 	
@@ -217,5 +220,85 @@ public class ImageAccess {
 		private static final Bitmap getFillerBitmap() {
 			return getBitmapCopy(mFillerBitmap);
 		}
+	}
+
+	@Override
+	public Bitmap getResult() throws ExecutionException, InterruptedException {
+		return mImageAccessTask.getResult();
+	}
+
+	@Override
+	public LinkedList<Exception> getExceptions() {
+		return mImageAccessTask.getExceptions();
+	}
+
+	@Override
+	public SimpleTaskState getState() {
+		return mImageAccessTask.getState();
+	}
+
+	@Override
+	public void addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnStartListener(listener);
+	}
+
+	@Override
+	public void addOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnProgressListener(listener);
+	}
+
+	@Override
+	public void addOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnCompleteListener(listener);
+	}
+
+	@Override
+	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnCancelListener(listener);
+	}
+
+	@Override
+	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnErrorListener(listener);
+	}
+
+	@Override
+	public void setOnExecuteListener(com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener<Void, Void, Bitmap> listener) {
+		throw new UnsupportedOperationException("The execute listener cannot be set");
+	}
+
+	@Override
+	public void removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnStartListener(listener);		
+	}
+
+	@Override
+	public void removeOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnProgressListener(listener);
+	}
+
+	@Override
+	public void removeOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnCompleteListener(listener);
+	}
+
+	@Override
+	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnCancelListener(listener);
+	}
+
+	@Override
+	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnErrorListener(listener);	
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return mImageAccessTask.isCancelled();
+	}
+
+	@Override
+	public void reportProgress(Void... values) {
+		mImageAccessTask.reportProgress(values);
 	}
 }
