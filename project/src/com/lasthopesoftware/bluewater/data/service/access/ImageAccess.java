@@ -26,8 +26,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
