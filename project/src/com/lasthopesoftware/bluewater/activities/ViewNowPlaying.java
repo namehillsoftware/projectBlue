@@ -91,14 +91,14 @@ public class ViewNowPlaying extends Activity implements
 	};
 	
 	private static class ViewStructure {
-		public final File file;
+		public final int fileKey;
 		public Bitmap nowPlayingImage;
 		public String nowPlayingArtist;
 		public String nowPlayingTitle;
 		public Float nowPlayingRating;
 		
 		public ViewStructure(final File file) {
-			this.file = file;
+			this.fileKey = file.getKey();
 		}
 		
 		public void release() {
@@ -297,7 +297,7 @@ public class ViewNowPlaying extends Activity implements
 		
 		try {
 			
-			if (mViewStructure != null && mViewStructure.file != file) {
+			if (mViewStructure != null && mViewStructure.fileKey != file.getKey()) {
 				mViewStructure.release();
 				mViewStructure = null;
 			}
