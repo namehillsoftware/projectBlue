@@ -304,7 +304,39 @@ public class ViewNowPlaying extends Activity implements
 			
 			if (mViewStructure == null)
 				mViewStructure = new ViewStructure(file);
+			
+
+			if (mViewStructure.nowPlayingImage == null) {
+				try {				
+					// Cancel the getFileImageTask if it is already in progress
+					if (getFileImageTask != null)
+						getFileImageTask.cancel();
+					
+					mNowPlayingImageView.setVisibility(View.INVISIBLE);
+					mLoadingImg.setVisibility(View.VISIBLE);
+					
+					getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
 						
+						@Override
+						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+							if (mViewStructure.nowPlayingImage != null)
+								mViewStructure.nowPlayingImage.recycle();
+							mViewStructure.nowPlayingImage = result;
+							
+							mNowPlayingImageView.setImageBitmap(result);
+							
+							displayImageBitmap();
+						}
+					});
+					
+				} catch (Exception e) {
+					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+				}
+			} else {
+				mNowPlayingImageView.setImageBitmap(mViewStructure.nowPlayingImage);
+				displayImageBitmap();
+			}
+			
 			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
 			getArtistTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
 				
@@ -358,38 +390,7 @@ public class ViewNowPlaying extends Activity implements
 			});
 			getTitleTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getTitleTask.execute();
-			
-			if (mViewStructure.nowPlayingImage == null) {
-				try {				
-					// Cancel the getFileImageTask if it is already in progress
-					if (getFileImageTask != null)
-						getFileImageTask.cancel();
-					
-					mNowPlayingImageView.setVisibility(View.INVISIBLE);
-					mLoadingImg.setVisibility(View.VISIBLE);
-					
-					getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
 						
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-							if (mViewStructure.nowPlayingImage != null)
-								mViewStructure.nowPlayingImage.recycle();
-							mViewStructure.nowPlayingImage = result;
-							
-							mNowPlayingImageView.setImageBitmap(result);
-							
-							displayImageBitmap();
-						}
-					});
-					
-				} catch (Exception e) {
-					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
-				}
-			} else {
-				mNowPlayingImageView.setImageBitmap(mViewStructure.nowPlayingImage);
-				displayImageBitmap();
-			}
-			
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
 			getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
 				
