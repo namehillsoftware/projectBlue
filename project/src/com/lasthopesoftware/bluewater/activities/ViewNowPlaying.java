@@ -372,12 +372,12 @@ public class ViewNowPlaying extends Activity implements
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-							mNowPlayingImageView.setImageBitmap(result);
-							
 							if (mViewStructure.nowPlayingImage != null)
 								mViewStructure.nowPlayingImage.recycle();
-							
 							mViewStructure.nowPlayingImage = result;
+							
+							mNowPlayingImageView.setImageBitmap(result);
+							
 							displayImageBitmap();
 						}
 					});
