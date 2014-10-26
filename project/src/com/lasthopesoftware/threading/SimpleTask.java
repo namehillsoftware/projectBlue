@@ -19,6 +19,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> mOnErrorListeners = null;
 	private LinkedList<Exception> exceptions = new LinkedList<Exception>();
 	
+	@Deprecated
 	public SimpleTask() {
 		super();
 	}
