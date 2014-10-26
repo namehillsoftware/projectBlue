@@ -6,9 +6,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 public interface IDataTask<TResult> extends ISimpleTask<String, Void, TResult> {
 
-	void addOnConnectListener(OnConnectListener<TResult> listener);
-	void removeOnConnectListener(OnConnectListener<TResult> listener);
-	
 	public interface OnConnectListener<TResult> {
 		TResult onConnect(InputStream is);
 	}

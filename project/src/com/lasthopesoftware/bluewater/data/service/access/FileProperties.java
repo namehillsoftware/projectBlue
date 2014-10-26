@@ -154,8 +154,7 @@ public class FileProperties {
 		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		final SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>();
-		filePropertiesTask.setOnExecuteListener(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
+		final SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
 			
 			@Override
 			public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {

@@ -84,9 +84,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem<?>>> getVisibleViewsTask() {
-		SimpleTask<String, Void, ArrayList<IItem<?>>> getViewsTask = new SimpleTask<String, Void, ArrayList<IItem<?>>>();
-				
-		getViewsTask.setOnExecuteListener(new OnExecuteListener<String, Void, ArrayList<IItem<?>>>() {
+		return new SimpleTask<String, Void, ArrayList<IItem<?>>>(new OnExecuteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
 			public ArrayList<IItem<?>> onExecute(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, String... params) throws Exception {
@@ -121,8 +119,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 				return new ArrayList<IItem<?>>(mVisibleViews);
 			}
 		});
-		
-		return getViewsTask;
 	}
 
 	@Override

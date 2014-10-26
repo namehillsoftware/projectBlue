@@ -79,8 +79,7 @@ public class ViewFileDetails extends Activity {
         final FileProperties filePropertiesHelper = new FileProperties(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
-        final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>();
-        getFileNameTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+        final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -96,8 +95,7 @@ public class ViewFileDetails extends Activity {
 		});
         getFileNameTask.execute();
         
-        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
-		getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
+        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 			
 			@Override
 			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
@@ -107,6 +105,7 @@ public class ViewFileDetails extends Activity {
 				return (float) 0;
 			}
 		});
+
 		getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
 			
 			@Override
@@ -131,8 +130,7 @@ public class ViewFileDetails extends Activity {
 		});
 		getRatingsTask.execute();
         
-        final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>();
-        getFilePropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
+        final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {

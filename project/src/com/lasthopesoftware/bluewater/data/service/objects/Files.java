@@ -112,8 +112,7 @@ public class Files implements IItemFiles {
 	}
 	
 	public String getFileStringList(int option) throws IOException {
-		final DataTask<String> getStringListTask = new DataTask<String>();
-		getStringListTask.addOnConnectListener(new OnConnectListener<String>() {
+		final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
 			
 			@Override
 			public String onConnect(InputStream is) {
@@ -152,15 +151,13 @@ public class Files implements IItemFiles {
 	}
 
 	protected DataTask<List<File>> getNewFilesTask() {
-		final DataTask<List<File>> fileTask = new DataTask<List<File>>();
+		final DataTask<List<File>> fileTask = new DataTask<List<File>>(getOnFileConnectListener());
 		
 		if (mFileCompleteListener != null)
 			fileTask.addOnCompleteListener(mFileCompleteListener);
 			
 		if (mFileStartListener != null)
 			fileTask.addOnStartListener(mFileStartListener);
-		
-		fileTask.addOnConnectListener(getOnFileConnectListener());
 		
 		if (mFileErrorListener != null)
 			fileTask.addOnErrorListener(mFileErrorListener);

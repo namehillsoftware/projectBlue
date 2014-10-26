@@ -757,8 +757,7 @@ public class StreamingMusicService extends Service implements
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 		
-		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>();
-		getNotificationPropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -783,8 +782,7 @@ public class StreamingMusicService extends Service implements
 		
 		getNotificationPropertiesTask.execute();
 		
-		final SimpleTask<Void, Void, SparseArray<Object>> getBtPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>();
-		getBtPropertiesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
+		final SimpleTask<Void, Void, SparseArray<Object>> getBtPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
 			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {

@@ -18,8 +18,6 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	void addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
 	void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
-	void setOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener);
-	
 	void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
 	void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);

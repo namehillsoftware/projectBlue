@@ -101,14 +101,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 		}
 		
 		// Simple task that just returns sub items if they are in memory
-		final SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>();
-		
-		if (getOnItemsCompleteListeners() != null) {
-			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
-				task.addOnCompleteListener(listener);
-		}
-		
-		task.setOnExecuteListener(new OnExecuteListener<String, Void, List<T>>() {
+		final SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>(new OnExecuteListener<String, Void, List<T>>() {
 
 			@Override
 			public List<T> onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
@@ -116,12 +109,17 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 			}
 		});
 		
+		if (getOnItemsCompleteListeners() != null) {
+			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
+				task.addOnCompleteListener(listener);
+		}
+		
 		task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	@SuppressWarnings("unchecked")
 	protected DataTask<List<T>> getNewSubItemsTask() {
-		final DataTask<List<T>> subItemsTask = new DataTask<List<T>>();
+		final DataTask<List<T>> subItemsTask = new DataTask<List<T>>(getOnItemConnectListener());
 
 		if (getOnItemsCompleteListeners() != null) {
 			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners()) subItemsTask.addOnCompleteListener(listener);
@@ -130,8 +128,6 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 		if (getOnItemsStartListeners() != null) {
 			for (OnStartListener<List<T>> listener : getOnItemsStartListeners()) subItemsTask.addOnStartListener(listener);
 		}
-		
-		subItemsTask.addOnConnectListener(getOnItemConnectListener());
 		
 		if (getOnItemsErrorListeners() != null) {
 			for (OnErrorListener<List<T>> listener : getOnItemsErrorListeners()) subItemsTask.addOnErrorListener(listener);

@@ -73,15 +73,14 @@ public class ConnectionManager {
 						}
 						
 						if (mAccessConfiguration == null) {
-							final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(); 
-							pseudoTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
+							final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
 	
 								@Override
 								public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 									return Boolean.FALSE;
 								}
 								
-							});
+							}); 
 							pseudoTask.addOnCompleteListener(onBuildComplete);
 							pseudoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 							return;
@@ -154,9 +153,7 @@ public class ConnectionManager {
 		
 		final int _timeout = timeout;
 		
-		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<String, Void, AccessConfiguration>();
-		
-		mediaCenterAccessTask.setOnExecuteListener(new OnExecuteListener<String, Void, AccessConfiguration>() {
+		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<String, Void, AccessConfiguration>(new OnExecuteListener<String, Void, AccessConfiguration>() {
 			
 			@Override
 			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
@@ -485,8 +482,7 @@ public class ConnectionManager {
 		}
 		
 		public static void doTest(int timeout, OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<Integer, Void, Boolean>();
-			connectionTestTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Boolean>() {
+			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {

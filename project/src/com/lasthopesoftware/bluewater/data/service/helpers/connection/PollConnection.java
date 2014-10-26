@@ -43,8 +43,7 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 		synchronized (syncObj) {
 			mContext = context;
 			
-			mTask = new SimpleTask<String, Void, Void>();
-			mTask.setOnExecuteListener(this);
+			mTask = new SimpleTask<String, Void, Void>(this);
 			
 			mTask.addOnStartListener(new OnStartListener<String, Void, Void>() {
 				

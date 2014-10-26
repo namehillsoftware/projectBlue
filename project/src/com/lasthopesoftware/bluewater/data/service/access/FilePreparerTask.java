@@ -29,8 +29,7 @@ public class FilePreparerTask {
 	}
 	
 	public void start() {
-		mTask = new SimpleTask<Void, Void, Boolean>();
-		mTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Boolean>() {
+		mTask = new SimpleTask<Void, Void, Boolean>(new OnExecuteListener<Void, Void, Boolean>() {
 			
 			@Override
 			public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {

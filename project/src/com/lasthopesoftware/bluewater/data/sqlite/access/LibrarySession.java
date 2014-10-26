@@ -40,8 +40,7 @@ public class LibrarySession {
 	
 	public static void SaveSession(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
 	
-		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>();
-		writeToDatabaseTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Library>() {
+		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>(new OnExecuteListener<Void, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
@@ -82,8 +81,7 @@ public class LibrarySession {
 
 	public static synchronized void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		
-		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>();
-		getLibraryTask.setOnExecuteListener(new OnExecuteListener<Integer, Void, Library>() {
+		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>(new OnExecuteListener<Integer, Void, Library>() {
 			
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
@@ -131,8 +129,7 @@ public class LibrarySession {
 	
 	public static List<Library> GetLibraries(Context context) {
 		final Context _context = context;
-		SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<Void, Void, List<Library>>();
-		getLibrariesTask.setOnExecuteListener(new OnExecuteListener<Void, Void, List<Library>>() {
+		SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<Void, Void, List<Library>>(new OnExecuteListener<Void, Void, List<Library>>() {
 			
 			@Override
 			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {

@@ -11,22 +11,16 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private TResult mResult;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
-	private OnExecuteListener<TParams, TProgress, TResult> mOnExecuteListener = null;
+	private final OnExecuteListener<TParams, TProgress, TResult> mOnExecuteListener;
 	private ConcurrentLinkedQueue<OnProgressListener<TParams, TProgress, TResult>> mOnProgressListeners = null;
 	private ConcurrentLinkedQueue<OnCompleteListener<TParams, TProgress, TResult>> mOnCompleteListeners = null;
 	private ConcurrentLinkedQueue<OnCancelListener<TParams, TProgress, TResult>> mOnCancelListeners = null;
 	private ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> mOnStartListeners = null;
 	private ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> mOnErrorListeners = null;
 	private LinkedList<Exception> exceptions = new LinkedList<Exception>();
-	
-	@Deprecated
-	public SimpleTask() {
-		super();
-	}
-	
+		
 	public SimpleTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
-		this();
-		setOnExecuteListener(onExecuteListener);
+		mOnExecuteListener = onExecuteListener;
 	}
 	
 	@Override
@@ -87,11 +81,6 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 		for (OnCancelListener<TParams, TProgress, TResult> cancelListener : mOnCancelListeners) cancelListener.onCancel(this, result);
 	}
 	
-	@Override
-	public void setOnExecuteListener(OnExecuteListener<TParams, TProgress, TResult> listener) {
-		mOnExecuteListener = listener;
-	}
-
 	@Override
 	public TResult getResult() throws ExecutionException, InterruptedException {
 		return this.get();

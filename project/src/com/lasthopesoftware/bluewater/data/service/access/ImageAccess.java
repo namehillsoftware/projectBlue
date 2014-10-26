@@ -261,11 +261,6 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public void setOnExecuteListener(com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener<Void, Void, Bitmap> listener) {
-		throw new UnsupportedOperationException("The execute listener cannot be set");
-	}
-
-	@Override
 	public void removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.removeOnStartListener(listener);		
 	}

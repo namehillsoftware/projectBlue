@@ -49,9 +49,7 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 				final Library library = result;
-		        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>();
-		        
-		        getFileStringTask.setOnExecuteListener(new OnExecuteListener<Void, Void, ArrayList<File>>() {
+		        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>(new OnExecuteListener<Void, Void, ArrayList<File>>() {
 					
 					@Override
 					public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
