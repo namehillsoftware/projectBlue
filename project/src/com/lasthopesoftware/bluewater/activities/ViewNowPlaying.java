@@ -337,8 +337,7 @@ public class ViewNowPlaying extends Activity implements
 				displayImageBitmap();
 			}
 			
-			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>();
-			getArtistTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -364,8 +363,7 @@ public class ViewNowPlaying extends Activity implements
 			getArtistTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getArtistTask.execute();
 			
-			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>();
-			getTitleTask.setOnExecuteListener(new OnExecuteListener<Void, Void, String>() {
+			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 				
 				@Override
 				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -375,6 +373,7 @@ public class ViewNowPlaying extends Activity implements
 					return file.getValue();
 				}
 			});
+
 			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
 				
 				@Override
@@ -391,8 +390,7 @@ public class ViewNowPlaying extends Activity implements
 			getTitleTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
 			getTitleTask.execute();
 						
-			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>();
-			getRatingsTask.setOnExecuteListener(new OnExecuteListener<Void, Void, Float>() {
+			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 				
 				@Override
 				public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
