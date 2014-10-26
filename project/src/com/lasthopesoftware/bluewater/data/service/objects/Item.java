@@ -38,23 +38,7 @@ public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesCont
 	public Item() {
 		super();
 	}
-	
-//	@Override
-//	public ArrayList<Item> getSubItems() {
-//		if (mSubItems != null && mSubItems.size() > 0) return mSubItems;
-//		
-//		mSubItems = new ArrayList<Item>();
-//		if (JrSession.accessDao == null) return mSubItems;
-//		try {
-//			List<Item> tempSubItems = getNewSubItemsTask().execute(getSubItemParams()).get();
-//			mSubItems.addAll(tempSubItems);
-//		} catch (Exception e) {
-//			LoggerFactory.getLogger(Item.class).error(e.toString(), e);
-//		}
-//		
-//		return mSubItems;
-//	}
-	
+		
 	@Override
 	public IItemFiles getFiles() {
 		if (mJrFiles == null) mJrFiles = new Files("Browse/Files", "ID=" + String.valueOf(this.getKey()));

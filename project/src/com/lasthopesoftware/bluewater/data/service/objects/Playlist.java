@@ -35,8 +35,10 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 	@Override
 	public ArrayList<Playlist> getSubItems() {
 		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
-		ArrayList<Playlist> returnList = new ArrayList<Playlist>(mSubItems.size());
-		for (int i = 0; i < mSubItems.size(); i++)
+		
+		final int subItemSize = mSubItems.size();
+		final ArrayList<Playlist> returnList = new ArrayList<Playlist>(subItemSize);
+		for (int i = 0; i < subItemSize; i++)
 			returnList.add(mSubItems.valueAt(i));
 		return returnList;
 	}
