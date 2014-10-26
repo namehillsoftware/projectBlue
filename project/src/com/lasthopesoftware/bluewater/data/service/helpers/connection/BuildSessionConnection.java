@@ -63,7 +63,7 @@ public class BuildSessionConnection {
 			        	
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 						LibrarySession.JrFs = new FileSystem();
-			        	LibrarySession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+			        	LibrarySession.JrFs.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {

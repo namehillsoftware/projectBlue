@@ -79,21 +79,8 @@ public class CategoryFragment extends Fragment {
 				}
 				
 				if (result == null) return;
-				final IItem<? extends IItem<?>> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
-				
-				category.addOnItemsCompleteListener(new OnCompleteListener<List<? extends IItem<?>>>() {
-
-					@Override
-					public void onComplete(
-							ISimpleTask<String, Void, List<? extends IItem<?>>> owner,
-							List<? extends IItem<?>> result) {
-						// TODO Auto-generated method stub
-						
-					}
-
-					
-				});
-				
+				final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+								
 				if (category instanceof Playlists)
 					layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
 				else if (category instanceof Item)

@@ -123,7 +123,7 @@ public class BrowseLibrary extends FragmentActivity {
 	}
 
 	public void displayLibrary(final Library library) {		
-		LibrarySession.JrFs.setOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+		LibrarySession.JrFs.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
