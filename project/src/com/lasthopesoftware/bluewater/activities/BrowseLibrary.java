@@ -209,7 +209,7 @@ public class BrowseLibrary extends FragmentActivity {
 				
 				if (result == null) return;
 				
-				LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
+				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
 				viewChildPagerAdapter.setLibraryViews(result);
 
 				// Set up the ViewPager with the sections adapter.

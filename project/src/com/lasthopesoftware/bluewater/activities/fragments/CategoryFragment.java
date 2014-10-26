@@ -44,14 +44,29 @@ public class CategoryFragment extends Fragment {
 	private ProgressBar pbLoading;
 	private RelativeLayout mLayout;
 	
-	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> mVisibleViewsComplete;
-	private Context mContext;
 	private Intent mWaitForConnection;
+	
+    public static final String ARG_CATEGORY_POSITION = "category_position";
+    public static final String IS_PLAYLIST = "Playlist";
 	
     public CategoryFragment() {
     	super();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    	mLayout = new RelativeLayout(getActivity());
+    	mLayout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
-    	mVisibleViewsComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+    	mWaitForConnection = new Intent(getActivity(), WaitForConnection.class);
+    	
+    	pbLoading = new ProgressBar(mLayout.getContext(), null, android.R.attr.progressBarStyleLarge);
+    	RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+    	pbLoading.setLayoutParams(pbParams);
+    	mLayout.addView(pbLoading);
+    	
+    	LibrarySession.JrFs.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
@@ -59,16 +74,17 @@ public class CategoryFragment extends Fragment {
 					for (Exception exception : owner.getExceptions()) {
 						if (!(exception instanceof IOException)) continue;
 						
-						PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+						final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
+						PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
-								LibrarySession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
+								LibrarySession.JrFs.getVisibleViewsAsync(_this);
 							}
 						});
-						PollConnection.Instance.get(mContext).startPolling();
-						mContext.startActivity(mWaitForConnection);
-						break;
+						PollConnection.Instance.get(getActivity()).startPolling();
+						getActivity().startActivity(mWaitForConnection);
+						return;
 					}
 					return;
 				}
@@ -77,34 +93,14 @@ public class CategoryFragment extends Fragment {
 				mCategory = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 				BuildView();
 			}
-		};
-    }
-
-    public static final String ARG_CATEGORY_POSITION = "category_position";
-    public static final String IS_PLAYLIST = "Playlist";
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    	mLayout = new RelativeLayout(getActivity());
-    	mLayout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-    	
-    	mContext = mLayout.getContext();
-    	mWaitForConnection = new Intent(mContext, WaitForConnection.class);
-    	
-    	pbLoading = new ProgressBar(mLayout.getContext(), null, android.R.attr.progressBarStyleLarge);
-    	RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-    	pbLoading.setLayoutParams(pbParams);
-    	mLayout.addView(pbLoading);
-    	
-    	LibrarySession.JrFs.getVisibleViewsAsync(mVisibleViewsComplete);
+		});
     	
         return mLayout;
     }
     
     private void BuildView() {
     	if (mCategory instanceof Playlists) {
-    		listView = new ListView(mLayout.getContext());
+    		listView = new ListView(getActivity());
     		listView.setVisibility(View.INVISIBLE);
     		OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
 				
@@ -114,15 +110,15 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+							PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
 									((Playlists) mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnection.Instance.get(mContext).startPolling();
-							mContext.startActivity(mWaitForConnection);
+							PollConnection.Instance.get(getActivity()).startPolling();
+							getActivity().startActivity(mWaitForConnection);
 							break;
 						}
 						return;
@@ -140,7 +136,7 @@ public class CategoryFragment extends Fragment {
 			((Playlists) mCategory).setOnItemsCompleteListener(onPlaylistCompleteListener);
 			((Playlists) mCategory).getSubItemsAsync();
     	} else {
-	    	listView = new ExpandableListView(mLayout.getContext());
+	    	listView = new ExpandableListView(getActivity());
 	    	listView.setVisibility(View.INVISIBLE);
 	    	
 	    	OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
@@ -151,15 +147,15 @@ public class CategoryFragment extends Fragment {
 						for (Exception exception : owner.getExceptions()) {
 							if (!(exception instanceof IOException)) continue;
 							
-							PollConnection.Instance.get(mContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+							PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
 								@Override
 								public void onConnectionRegained() {
 									((Item)mCategory).getSubItemsAsync();
 								}
 							});
-							PollConnection.Instance.get(mContext).startPolling();
-							mContext.startActivity(mWaitForConnection);
+							PollConnection.Instance.get(getActivity()).startPolling();
+							getActivity().startActivity(mWaitForConnection);
 							break;
 						}
 						return;
@@ -172,14 +168,14 @@ public class CategoryFragment extends Fragment {
 						@Override
 						public boolean onGroupClick(ExpandableListView parent, View v,
 								int groupPosition, long id) {
-							Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
+							final Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
 							try {
 								if (selection.getSubItems().size() > 0) return false;
 							} catch (IOException e) {
 								LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
 								return true;
 							}
-				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+							final Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
@@ -190,8 +186,8 @@ public class CategoryFragment extends Fragment {
 			    	((ExpandableListView)listView).setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
 			    	    @Override
 			    	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {        	    	
-			    	    	Item selection = (Item)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
-				    		Intent intent = new Intent(parent.getContext(), ViewFiles.class);
+			    	    	final Item selection = (Item)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
+				    		final Intent intent = new Intent(parent.getContext(), ViewFiles.class);
 				    		intent.setAction(ViewFiles.VIEW_ITEM_FILES);
 				    		intent.putExtra(ViewFiles.KEY, selection.getKey());
 				    		intent.putExtra(ViewFiles.VALUE, selection.getValue());
@@ -201,7 +197,7 @@ public class CategoryFragment extends Fragment {
 				    });
 			    	listView.setOnItemLongClickListener(new LongClickFlipListener());
 			    	
-			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter(getActivity(), (ArrayList<Item>)result));
+			    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter((ArrayList<Item>)result));
 			    	pbLoading.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);
 				}
@@ -213,11 +209,9 @@ public class CategoryFragment extends Fragment {
     }
     
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
-    	Context mContext;
-    	private ArrayList<Item> mCategoryItems;
+    	private final ArrayList<Item> mCategoryItems;
     	
-    	public ExpandableItemListAdapter(Context context, ArrayList<Item> categoryItems) {
-    		mContext = context;
+    	public ExpandableItemListAdapter(ArrayList<Item> categoryItems) {
     		mCategoryItems = categoryItems;
     	}
     	
