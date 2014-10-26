@@ -81,7 +81,10 @@ public class CategoryFragment extends Fragment {
 				if (result == null) return;
 				final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 				
-				layout.addView(category instanceof Playlists ? BuildPlaylistView((Playlists)category, pbLoading) : BuildStandardItemView(category, pbLoading));
+				if (category instanceof Playlists)
+					layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
+				else if (category instanceof Item)
+					layout.addView(BuildStandardItemView((Item)category, pbLoading));
 			}
 		});
     	
@@ -129,7 +132,7 @@ public class CategoryFragment extends Fragment {
 		return listView;
     }
 
-	private ExpandableListView BuildStandardItemView(final IItem<?> category, final View loadingView) {
+	private ExpandableListView BuildStandardItemView(final Item category, final View loadingView) {
 		final ExpandableListView listView = new ExpandableListView(getActivity());
     	listView.setVisibility(View.INVISIBLE);
     	
@@ -145,7 +148,7 @@ public class CategoryFragment extends Fragment {
 							
 							@Override
 							public void onConnectionRegained() {
-								((Item)category).getSubItemsAsync();
+								category.getSubItemsAsync();
 							}
 						});
 						PollConnection.Instance.get(getActivity()).startPolling();
@@ -160,8 +163,7 @@ public class CategoryFragment extends Fragment {
 				listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
 					
 					@Override
-					public boolean onGroupClick(ExpandableListView parent, View v,
-							int groupPosition, long id) {
+					public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
 						final Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
 						try {
 							if (selection.getSubItems().size() > 0) return false;
@@ -191,13 +193,13 @@ public class CategoryFragment extends Fragment {
 			    });
 		    	listView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	
-		    	((ExpandableListView)listView).setAdapter(new ExpandableItemListAdapter((ArrayList<Item>)result));
+		    	listView.setAdapter(new ExpandableItemListAdapter(result));
 		    	loadingView.setVisibility(View.INVISIBLE);
 	    		listView.setVisibility(View.VISIBLE);
 			}
 		};
-		((Item)category).setOnItemsCompleteListener(onItemCompleteListener);
-		((Item)category).getSubItemsAsync();
+		category.setOnItemsCompleteListener(onItemCompleteListener);
+		category.getSubItemsAsync();
 		
 		return listView;
 	}
@@ -206,8 +208,8 @@ public class CategoryFragment extends Fragment {
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	private final ArrayList<Item> mCategoryItems;
     	
-    	public ExpandableItemListAdapter(ArrayList<Item> categoryItems) {
-    		mCategoryItems = categoryItems;
+    	public ExpandableItemListAdapter(List<Item> categoryItems) {
+    		mCategoryItems = new ArrayList<Item>(categoryItems);
     	}
     	
 		@Override
