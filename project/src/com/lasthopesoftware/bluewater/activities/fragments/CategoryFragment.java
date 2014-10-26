@@ -39,13 +39,14 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class CategoryFragment extends Fragment {
-	private final Intent mWaitForConnection = new Intent(getActivity(), WaitForConnection.class);
+	private Intent mWaitForConnection;
 	
     public static final String ARG_CATEGORY_POSITION = "category_position";
     public static final String IS_PLAYLIST = "Playlist";
-	
+	    
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    	
     	final RelativeLayout layout = new RelativeLayout(getActivity());
     	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
@@ -72,7 +73,7 @@ public class CategoryFragment extends Fragment {
 							}
 						});
 						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(mWaitForConnection);
+						getActivity().startActivity(getWaitForConnectionIntent());
 						return;
 					}
 					return;
@@ -85,6 +86,8 @@ public class CategoryFragment extends Fragment {
 					layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
 				else if (category instanceof Item)
 					layout.addView(BuildStandardItemView((Item)category, pbLoading));
+				
+				category.getSubItemsAsync();
 			}
 		});
     	
@@ -95,7 +98,7 @@ public class CategoryFragment extends Fragment {
     	
 		final ListView listView = new ListView(getActivity());
 		listView.setVisibility(View.INVISIBLE);
-		OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
+		final OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
@@ -111,7 +114,7 @@ public class CategoryFragment extends Fragment {
 							}
 						});
 						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(mWaitForConnection);
+						getActivity().startActivity(getWaitForConnectionIntent());
 						break;
 					}
 					return;
@@ -127,7 +130,6 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onPlaylistCompleteListener);
-		category.getSubItemsAsync();
 	
 		return listView;
     }
@@ -136,7 +138,7 @@ public class CategoryFragment extends Fragment {
 		final ExpandableListView listView = new ExpandableListView(getActivity());
     	listView.setVisibility(View.INVISIBLE);
     	
-    	OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
+    	final OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
 
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
@@ -152,7 +154,7 @@ public class CategoryFragment extends Fragment {
 							}
 						});
 						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(mWaitForConnection);
+						getActivity().startActivity(getWaitForConnectionIntent());
 						break;
 					}
 					return;
@@ -199,11 +201,14 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onItemCompleteListener);
-		category.getSubItemsAsync();
 		
 		return listView;
 	}
-		
+	
+	private Intent getWaitForConnectionIntent() {
+		if (mWaitForConnection == null) mWaitForConnection = new Intent(getActivity(), WaitForConnection.class);
+		return mWaitForConnection;
+	}
 
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	private final ArrayList<Item> mCategoryItems;
