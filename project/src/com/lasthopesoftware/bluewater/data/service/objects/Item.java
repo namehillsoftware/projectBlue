@@ -2,20 +2,19 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 
 
 public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesContainer {
 	private ArrayList<OnStartListener<List<Item>>> mItemStartListeners = new ArrayList<OnStartListener<List<Item>>>(1);
 	private ArrayList<OnErrorListener<List<Item>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Item>>>(1);
-	private OnCompleteListener<List<Item>> mItemCompleteListener;
+	private ArrayList<OnCompleteListener<List<Item>>> mOnCompleteListeners;
 	private Files mJrFiles;
 	
 	private OnConnectListener<List<Item>> mItemConnectListener = new OnConnectListener<List<Item>>() {
@@ -46,8 +45,16 @@ public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesCont
 	}
 
 	@Override
-	public void setOnItemsCompleteListener(OnCompleteListener<List<Item>> listener) {
-		mItemCompleteListener = listener;
+	public void addOnItemsCompleteListener(OnCompleteListener<List<Item>> listener) {
+		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Item>>>();
+		
+		mOnCompleteListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnItemsCompleteListener(OnCompleteListener<List<Item>> listener) {
+		if (mOnCompleteListeners != null)
+			mOnCompleteListeners.remove(listener);
 	}
 
 	@Override
@@ -68,9 +75,8 @@ public class Item extends ItemAsyncBase<Item> implements IItem<Item>, IFilesCont
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	protected List<OnCompleteListener<List<Item>>> getOnItemsCompleteListeners() {
-		return Arrays.asList(mItemCompleteListener);
+		return mOnCompleteListeners;
 	}
 
 	@Override

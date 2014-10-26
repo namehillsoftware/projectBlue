@@ -25,7 +25,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	private Playlists mPlaylistsView;
 	private int[] mVisibleViewKeys;
 	
-	private OnCompleteListener<List<IItem<?>>> mOnCompleteClientListener;
+	private ArrayList<OnCompleteListener<List<IItem<?>>>> mOnCompleteClientListeners;
 	private OnStartListener<List<IItem<?>>> mOnStartListener;
 	private OnConnectListener<List<IItem<?>>> mOnConnectListener;
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
@@ -122,11 +122,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 
 	@Override
-	public void setOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
-		mOnCompleteClientListener = listener;
-	}
-
-	@Override
 	public void setOnItemsStartListener(OnStartListener<List<IItem<?>>> listener) {
 		mOnStartListener = listener;
 	}
@@ -143,9 +138,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 
 	@Override
 	protected List<OnCompleteListener<List<IItem<?>>>> getOnItemsCompleteListeners() {
-		LinkedList<OnCompleteListener<List<IItem<?>>>> listeners = new LinkedList<OnCompleteListener<List<IItem<?>>>>();
-		if (mOnCompleteClientListener != null) listeners.add(mOnCompleteClientListener);
-		return listeners;
+		return mOnCompleteClientListeners;
 	}
 
 	@Override
@@ -170,6 +163,19 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	@Override
 	public int compareTo(IItem<?> another) {
 		return 0;
+	}
+
+	@Override
+	public void addOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
+		if (mOnCompleteClientListeners == null) mOnCompleteClientListeners = new ArrayList<OnCompleteListener<List<IItem<?>>>>();
+		
+		mOnCompleteClientListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
+		if (mOnCompleteClientListeners != null)
+			mOnCompleteClientListeners.remove(listener);
 	}
 }
 

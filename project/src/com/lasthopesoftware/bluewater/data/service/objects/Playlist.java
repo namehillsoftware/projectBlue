@@ -1,8 +1,14 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import android.os.AsyncTask;
 import android.util.SparseArray;
+
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class Playlist extends BaseObject implements IItem<Playlist>, IFilesContainer {
 	private SparseArray<Playlist> mSubItems;
@@ -10,6 +16,8 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 	private String mPath;
 	private String mGroup;
 	private Files mJrFiles;
+	
+	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
 	
 	public Playlist() {
 		super();
@@ -41,6 +49,30 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 		for (int i = 0; i < subItemSize; i++)
 			returnList.add(mSubItems.valueAt(i));
 		return returnList;
+	}
+	
+	@Override
+	public void getSubItemsAsync() {
+		final SimpleTask<String, Void, List<Playlist>> getPlaylistsTask = new SimpleTask<String, Void, List<Playlist>>(new ISimpleTask.OnExecuteListener<String, Void, List<Playlist>>() {
+
+			@Override
+			public List<Playlist> onExecute(ISimpleTask<String, Void, List<Playlist>> owner, String... params) throws Exception {
+				return getSubItems();
+			}
+		});
+		
+		getPlaylistsTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<Playlist>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
+				if (mOnCompleteListeners == null) return;
+				
+				for (OnCompleteListener<List<Playlist>> onCompleteListener : mOnCompleteListeners)
+					onCompleteListener.onComplete(owner, result);
+			}
+		});
+		
+		getPlaylistsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	public void addPlaylist(Playlist playlist) {
@@ -92,5 +124,18 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 		int result = this.getValue().compareTo(another.getValue());
 		if (result == 0) result = this.getKey() - another.getKey();
 		return 0;
+	}
+
+	@Override
+	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
+		
+		mOnCompleteListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+		if (mOnCompleteListeners != null)
+			mOnCompleteListeners.remove(listener);
 	}
 }

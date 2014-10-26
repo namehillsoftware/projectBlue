@@ -79,7 +79,20 @@ public class CategoryFragment extends Fragment {
 				}
 				
 				if (result == null) return;
-				final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+				final IItem<? extends IItem<?>> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+				
+				category.addOnItemsCompleteListener(new OnCompleteListener<List<? extends IItem<?>>>() {
+
+					@Override
+					public void onComplete(
+							ISimpleTask<String, Void, List<? extends IItem<?>>> owner,
+							List<? extends IItem<?>> result) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					
+				});
 				
 				if (category instanceof Playlists)
 					layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
@@ -126,7 +139,7 @@ public class CategoryFragment extends Fragment {
 	    		listView.setVisibility(View.VISIBLE);					
 			}
 		};
-		category.setOnItemsCompleteListener(onPlaylistCompleteListener);
+		category.addOnItemsCompleteListener(onPlaylistCompleteListener);
 		category.getSubItemsAsync();
 	
 		return listView;
@@ -198,7 +211,7 @@ public class CategoryFragment extends Fragment {
 	    		listView.setVisibility(View.VISIBLE);
 			}
 		};
-		category.setOnItemsCompleteListener(onItemCompleteListener);
+		category.addOnItemsCompleteListener(onItemCompleteListener);
 		category.getSubItemsAsync();
 		
 		return listView;

@@ -18,11 +18,11 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListe
 public class Playlists extends ItemAsyncBase<Playlist> implements IItem<Playlist> {
 
 	private SparseArray<Playlist> mMappedPlaylists;
-	private ArrayList<OnStartListener<List<Playlist>>> mItemStartListeners = new ArrayList<OnStartListener<List<Playlist>>>(1);
-	private ArrayList<OnErrorListener<List<Playlist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Playlist>>>(1);
+	private final ArrayList<OnStartListener<List<Playlist>>> mItemStartListeners = new ArrayList<OnStartListener<List<Playlist>>>(1);
+	private final ArrayList<OnErrorListener<List<Playlist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Playlist>>>(1);
 	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
 	
-	private OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
+	private final OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
 		
 		@Override
 		public List<Playlist> onConnect(InputStream is) {
@@ -69,12 +69,16 @@ public class Playlists extends ItemAsyncBase<Playlist> implements IItem<Playlist
 	}
 
 	@Override
-	public void setOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-		if (mOnCompleteListeners == null) {
-			mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
-		}
-		if (mOnCompleteListeners.size() < 1) mOnCompleteListeners.add(listener);
-		mOnCompleteListeners.set(0, listener);
+	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
+		
+		mOnCompleteListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+		if (mOnCompleteListeners != null)
+			mOnCompleteListeners.remove(listener);
 	}
 
 	@Override

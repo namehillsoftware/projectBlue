@@ -35,7 +35,8 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 	
 	/* Required Methods for Sub Item Async retrieval */
 	protected abstract String[] getSubItemParams();
-	public abstract void setOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
+	public abstract void addOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
+	public abstract void removeOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
 	protected abstract OnConnectListener<List<T>> getOnItemConnectListener();
 	protected abstract List<OnCompleteListener<List<T>>> getOnItemsCompleteListeners();
 	protected abstract List<OnStartListener<List<T>>> getOnItemsStartListeners();
