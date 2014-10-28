@@ -31,6 +31,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerTask;
+import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
@@ -48,7 +49,6 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -80,16 +80,7 @@ public class ViewNowPlaying extends Activity implements
 	private static ImageAccess getFileImageTask;
 	
 	private ViewStructure mViewStructure;
-	
-	@SuppressWarnings("rawtypes")
-	private static final OnErrorListener mOnSimpleIoExceptionErrors = new OnErrorListener() {
 		
-		@Override
-		public boolean onError(ISimpleTask owner, Exception innerException) {
-			return !(innerException instanceof IOException);
-		}
-	};
-	
 	private static class ViewStructure {
 		public final int fileKey;
 		public Bitmap nowPlayingImage;
@@ -360,7 +351,7 @@ public class ViewNowPlaying extends Activity implements
 					mViewStructure.nowPlayingArtist = result;
 				}
 			});
-			getArtistTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
+			getArtistTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
 			getArtistTask.execute();
 			
 			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
@@ -387,7 +378,7 @@ public class ViewNowPlaying extends Activity implements
 					mViewStructure.nowPlayingTitle = result;
 				}
 			});
-			getTitleTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
+			getTitleTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
 			getTitleTask.execute();
 						
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -427,7 +418,7 @@ public class ViewNowPlaying extends Activity implements
 					});
 				}
 			});
-			getRatingsTask.addOnErrorListener(mOnSimpleIoExceptionErrors);
+			getRatingsTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
 			getRatingsTask.execute();
 			
 			mSongProgressBar.setMax(file.getDuration());

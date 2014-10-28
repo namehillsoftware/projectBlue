@@ -22,13 +22,12 @@ import android.widget.TextView;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
-import com.lasthopesoftware.bluewater.activities.WaitForConnection;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
+import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
@@ -36,10 +35,8 @@ import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class CategoryFragment extends Fragment {
-	private Intent mWaitForConnection;
 	
     public static final String ARG_CATEGORY_POSITION = "category_position";
     public static final String IS_PLAYLIST = "Playlist";
@@ -60,26 +57,17 @@ public class CategoryFragment extends Fragment {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (!(exception instanceof IOException)) continue;
-						
-						final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
-						PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+				final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
+				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
 							
 							@Override
 							public void onConnectionRegained() {
 								LibrarySession.JrFs.getVisibleViewsAsync(_this);
 							}
 						});
-						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(getWaitForConnectionIntent());
-						return;
-					}
-					return;
-				}
+								
+				if (isIoException || result == null) return;
 				
-				if (result == null) return;
 				final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 								
 				if (category instanceof Playlists)
@@ -102,29 +90,22 @@ public class CategoryFragment extends Fragment {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (!(exception instanceof IOException)) continue;
-						
-						PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-							
-							@Override
-							public void onConnectionRegained() {
-								((Playlists) category).getSubItemsAsync();
-							}
-						});
-						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(getWaitForConnectionIntent());
-						break;
+				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						category.getSubItemsAsync();
 					}
-					return;
-				}
+				});
 				
-				if (result == null) return;
+				if (isIoException || result == null) return;
 				
-				listView.setOnItemClickListener(new ClickPlaylistListener(getActivity(), (ArrayList<Playlist>) result));
+				final Context context = getActivity();
+				if (context == null) return;
+				
+				listView.setOnItemClickListener(new ClickPlaylistListener(context, (ArrayList<Playlist>) result));
 				listView.setOnItemLongClickListener(new LongClickFlipListener());
-	    		listView.setAdapter(new PlaylistAdapter(getActivity(), R.id.tvStandard, result));
+	    		listView.setAdapter(new PlaylistAdapter(context, R.id.tvStandard, result));
 	    		loadingView.setVisibility(View.INVISIBLE);
 	    		listView.setVisibility(View.VISIBLE);					
 			}
@@ -142,25 +123,18 @@ public class CategoryFragment extends Fragment {
 
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (!(exception instanceof IOException)) continue;
-						
-						PollConnection.Instance.get(getActivity()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-							
-							@Override
-							public void onConnectionRegained() {
-								category.getSubItemsAsync();
-							}
-						});
-						PollConnection.Instance.get(getActivity()).startPolling();
-						getActivity().startActivity(getWaitForConnectionIntent());
-						break;
+				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						category.getSubItemsAsync();
 					}
-					return;
-				}
+				});
 				
-				if (result == null) return;
+				if (isIoException || result == null) return;
+				
+				final Context context = getActivity();
+				if (context == null) return;
 				
 				listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
 					
@@ -203,11 +177,6 @@ public class CategoryFragment extends Fragment {
 		category.addOnItemsCompleteListener(onItemCompleteListener);
 		
 		return listView;
-	}
-	
-	private Intent getWaitForConnectionIntent() {
-		if (mWaitForConnection == null) mWaitForConnection = new Intent(getActivity(), WaitForConnection.class);
-		return mWaitForConnection;
 	}
 
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {

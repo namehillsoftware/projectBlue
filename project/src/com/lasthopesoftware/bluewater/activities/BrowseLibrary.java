@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -24,9 +22,9 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.LibraryViewPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
@@ -34,7 +32,6 @@ import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class BrowseLibrary extends FragmentActivity {
 
@@ -126,41 +123,27 @@ public class BrowseLibrary extends FragmentActivity {
 		LibrarySession.JrFs.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
+			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> result) {
 				if (mIsStopped) return;
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (exception instanceof IOException) {
-							
-							PollConnection.Instance.get(mBrowseLibrary).startPolling();
-							
-							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
-							
-							PollConnection.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-								
-								@Override
-								public void onConnectionRegained() {
-									LibrarySession.JrFs.getSubItemsAsync();
-								}
-							});
-							break;
-						}
+				
+				final boolean isIoError = ErrorHelpers.HandleViewIoException(mBrowseLibrary, owner, new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						LibrarySession.JrFs.getSubItemsAsync();
 					}
-					return;
-				}
+				});
 				
-				if (result == null) return;
+				if (isIoError || result == null) return;
 				
-				final List<IItem<?>> _views = result;
-				
-				for (IItem<?> item : _views) {
+				for (IItem<?> item : result) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
 					break;
 				}
 								
-				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, _views, library.getSelectedView()));
+				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, result, library.getSelectedView()));
 				
 				mLvSelectViews.setOnItemClickListener(new OnItemClickListener() {
 					
@@ -169,11 +152,11 @@ public class BrowseLibrary extends FragmentActivity {
 						mDrawerLayout.closeDrawer(Gravity.START);
 						mDrawerToggle.syncState();
 						
-						if (library.getSelectedView() == _views.get(position).getKey()) return;
+						if (library.getSelectedView() == result.get(position).getKey()) return;
 						
-						library.setSelectedView(_views.get(position).getKey());
+						library.setSelectedView(result.get(position).getKey());
 						LibrarySession.SaveSession(mBrowseLibrary);
-						LibrarySession.JrFs = new FileSystem(_views.get(position).getKey());
+						LibrarySession.JrFs = new FileSystem(result.get(position).getKey());
 						displayLibrary(library);
 					}
 				});
@@ -188,26 +171,16 @@ public class BrowseLibrary extends FragmentActivity {
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
 				if (mIsStopped) return;
 				final OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (exception instanceof IOException) {
-							PollConnection.Instance.get(mBrowseLibrary).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 								
-								@Override
-								public void onConnectionRegained() {
-									LibrarySession.JrFs.getVisibleViewsAsync(_this);
-								}
-							});
-							PollConnection.Instance.get(mBrowseLibrary).startPolling();
-							
-							mBrowseLibrary.startActivity(new Intent(mBrowseLibrary, WaitForConnection.class));
-							break;
-						}
+				final boolean isIoError = ErrorHelpers.HandleViewIoException(mBrowseLibrary, owner, new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						LibrarySession.JrFs.getVisibleViewsAsync(_this);
 					}
-					return;
-				}
+				});
 				
-				if (result == null) return;
+				if (isIoError || result == null) return;
 				
 				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
 				viewChildPagerAdapter.setLibraryViews(result);

@@ -24,8 +24,10 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
+import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
+import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -47,6 +49,16 @@ public class ViewFileDetails extends Activity {
 																FileProperties.STACK_TOP,
 																FileProperties.STACK_VIEW })));
 	
+	private int mFileKey = -1;
+	
+	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
+		
+		@Override
+		public void onConnectionRegained() {
+			setView(mFileKey);
+		}
+	};
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,15 +66,20 @@ public class ViewFileDetails extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_file_details);
         
-        final int fileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
+        mFileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
         
-        if (fileKey < 0) {
+        setView(mFileKey);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void setView(final int fileKey) {
+		if (fileKey < 0) {
         	startActivity(new Intent(this, BrowseLibrary.class));
         	finish();
         	return;
         };
         
-        final ViewFileDetails _this = this;
+		final ViewFileDetails _this = this;
         final ListView lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
         final ProgressBar pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
         final ImageView imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
@@ -90,15 +107,18 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+				if (handleIoError(owner)) return;
 				tvFileName.setText(result);
 			}
 		});
+        getFileNameTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
         getFileNameTask.execute();
         
         final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 			
 			@Override
 			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+				
 				if (filePropertiesHelper.getProperty("Rating") != null && !filePropertiesHelper.getProperty("Rating").isEmpty())
 					return Float.valueOf(filePropertiesHelper.getProperty("Rating"));
 				
@@ -110,10 +130,7 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
-//				if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-//					resetViewOnReconnect(_file);
-//					return;
-//				}
+				if (handleIoError(owner)) return;
 				
 				rbFileRating.setRating(result);
 				rbFileRating.invalidate();
@@ -128,6 +145,7 @@ public class ViewFileDetails extends Activity {
 				});
 			}
 		});
+		getRatingsTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
 		getRatingsTask.execute();
         
         final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
@@ -150,12 +168,14 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
+				if (handleIoError(owner)) return;
+				
 				lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
 				pbLoadingFileDetails.setVisibility(View.INVISIBLE);
 				lvFileDetails.setVisibility(View.VISIBLE);
 			}
 		});
-        
+        getFilePropertiesTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
         getFilePropertiesTask.execute();
                 
         ImageAccess.getImage(this, fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
@@ -171,6 +191,10 @@ public class ViewFileDetails extends Activity {
 				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}
 		});
+	}
+	
+	private boolean handleIoError(@SuppressWarnings("rawtypes") ISimpleTask task) {
+		return ErrorHelpers.HandleViewIoException(this, task, mOnConnectionRegainedListener);
 	}
 	
 	@Override
