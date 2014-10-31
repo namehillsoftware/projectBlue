@@ -105,7 +105,7 @@ public class BrowseLibrary extends FragmentActivity {
 		InstantiateSessionConnection.restoreSessionConnection(this);
 		
 		mIsStopped = false;
-		if (LibrarySession.JrFs == null || mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null) return;
+		if (LibrarySession.JrFs == null || (mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
 		
 		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
