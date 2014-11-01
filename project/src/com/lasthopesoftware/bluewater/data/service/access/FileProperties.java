@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
@@ -41,7 +40,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class FileProperties {
 	private static final int maxSize = 200;
-	private int mFileKey;
+	private final String mFileKeyString;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
@@ -79,38 +78,37 @@ public class FileProperties {
 	
 	public FileProperties(int fileKey) {
 		
-		mFileKey = fileKey;
+		mFileKeyString = String.valueOf(fileKey);
 		
-		if (mPropertiesCache.containsKey(mFileKey)) mProperties = mPropertiesCache.get(mFileKey);
+		if (mPropertiesCache.containsKey(fileKey))
+			mProperties = mPropertiesCache.get(fileKey);
 		
 		if (mProperties == null) {
 			mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER); 
-			mPropertiesCache.put(mFileKey, mProperties);
+			mPropertiesCache.put(fileKey, mProperties);
 		}
 	}
 	
-	public void setProperty(String name, String value) {
+	public void setProperty(final String name, final String value) {
 		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
 
-		AsyncTask<String, Void, Boolean> setPropertyTask = new AsyncTask<String, Void, Boolean>() {
+		filePropertiesExecutor.execute(new Runnable() {
 			
 			@Override
-			protected Boolean doInBackground(String... params) {
-				HttpURLConnection conn = null;
+			public void run() {
 				try {
-					conn = ConnectionManager.getConnection("File/SetInfo", "File=" + params[0], "Field=" + params[1], "Value=" + params[2]);
-					conn.setReadTimeout(5000);
-					conn.getInputStream().close();
-					return true;
-				} catch (Exception e) {
-					return false;
-				} finally {
-					if (conn != null)
+					final HttpURLConnection conn = ConnectionManager.getConnection("File/SetInfo", "File=" + mFileKeyString, "Field=" + name, "Value=" + value);;
+					try {
+						conn.setReadTimeout(5000);
+						conn.getInputStream().close();
+					} finally {
 						conn.disconnect();
-				}
+					}
+				} catch (Exception e) {
+					return;
+				} 
 			}
-		};
-		setPropertyTask.executeOnExecutor(filePropertiesExecutor, String.valueOf(mFileKey), name, value);
+		});
 		
 		mProperties.put(name, value);
 	}
@@ -163,7 +161,7 @@ public class FileProperties {
 				TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 				
 				try {
-					final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + String.valueOf(mFileKey));
+					final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
 					conn.setReadTimeout(45000);
 					try {
 						final InputStream is = conn.getInputStream();
