@@ -226,7 +226,9 @@ public class CacheFlusher implements Runnable {
 		
 		try {
 			cachedFileAccess.delete(cachedFile);
-			mCacheStateMap.get(mCacheName).cacheSize -= cachedFile.getFileSize();
+			final CacheState cacheState = mCacheStateMap.get(mCacheName);
+			if (cacheState != null)
+				cacheState.cacheSize -= cachedFile.getFileSize();
 			return true;
 		} catch (SQLException deleteException) {
 			mLogger.error("Error deleting file pointer from database", deleteException);
