@@ -94,7 +94,7 @@ public class ViewFileDetails extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FormattedFileProperties filePropertiesHelper = new FormattedFileProperties(fileKey);
+        final FileProperties filePropertiesHelper = new FileProperties(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
@@ -153,7 +153,8 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedProperties();
+				final FormattedFileProperties formattedFileProperties = new FormattedFileProperties(mFileKey);
+				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				
 				for (Entry<String, String> entry : fileProperties.entrySet()) {
