@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers;
+package com.lasthopesoftware.bluewater.data.service.helpers.cache;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -104,7 +104,7 @@ public class FileCache {
 					mLogger.warn("Couldn't get database access object.");
 				} finally {
 					handler.close();
-					FlushCacheTask.doFlush(mContext, mCacheName, mExpirationTime, mMaxSize);
+					CacheFlusher.doFlush(mContext, mCacheName, mExpirationTime, mMaxSize);
 				}
 				
 				return;

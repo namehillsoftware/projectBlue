@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.data.service.helpers;
+package com.lasthopesoftware.bluewater.data.service.helpers.cache;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -22,23 +23,30 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
  * @author david
  *
  */
-public class FlushCacheTask implements Runnable {
+public class CacheFlusher implements Runnable {
 
-	private final static Logger mLogger = LoggerFactory.getLogger(FlushCacheTask.class);
+	private final static Logger mLogger = LoggerFactory.getLogger(CacheFlusher.class);
 	
 	private final Context mContext;
 	private final String mCacheName;
 	private final long mTargetSize;
 	private final long mExpirationTime;
 	
+	private final static HashMap<String, CacheState> mCacheStateMap = new HashMap<String, CacheState>();
+	
+	private static class CacheState {
+		public long cacheSize;
+		public long stateUpdateTime;
+	}
+	
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
 	public static void doFlush(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
-		DatabaseHandler.databaseExecutor.execute(new FlushCacheTask(context, cacheName, expirationTime, targetSize));
+		DatabaseHandler.databaseExecutor.execute(new CacheFlusher(context, cacheName, expirationTime, targetSize));
 	}
 	
-	private FlushCacheTask(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
+	private CacheFlusher(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
 		mContext = context;
 		mCacheName = cacheName;
 		mTargetSize = targetSize;
@@ -52,13 +60,28 @@ public class FlushCacheTask implements Runnable {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
 			// remove expired files
-			final List<CachedFile> expiredFiles = getCachedFilePastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
+			final List<CachedFile> expiredFiles = getCachedFilesPastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
 			for (CachedFile cachedFile : expiredFiles)
 				deleteCachedFile(cachedFileAccess, cachedFile);
 			
-			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
+			CacheState cacheState = mCacheStateMap.get(mCacheName);
 			
-			while (getCachedFileSizeFromDatabase(cachedFileAccess) > mTargetSize) {
+			if (cacheState == null) {
+				cacheState = new CacheState();
+				mCacheStateMap.put(mCacheName, cacheState);
+			}
+			
+			final long updateTime = System.currentTimeMillis();
+			
+			final long cacheFileSize = getCacheSizeBetweenTimes(cachedFileAccess, cacheState.stateUpdateTime, updateTime); 
+			if (cacheFileSize > -1) {
+				cacheState.stateUpdateTime = updateTime;
+				cacheState.cacheSize += cacheFileSize;
+			}
+			
+			if (cacheState.cacheSize <= mTargetSize) return;
+			
+			while (cacheState.cacheSize > mTargetSize) {
 				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess);
 				if (cachedFile != null)
 					deleteCachedFile(cachedFileAccess, cachedFile);
@@ -105,6 +128,25 @@ public class FlushCacheTask implements Runnable {
 		}
 	}
 	
+	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
+		try {
+			
+			final PreparedQuery<CachedFile> preparedQuery =
+					cachedFileAccess.queryBuilder()
+						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
+						.where()
+						.eq(CachedFile.CACHE_NAME, new SelectArg())
+						.and()
+						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
+						.prepare();
+			
+			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName, String.valueOf(startTime), String.valueOf(endTime));
+		} catch (SQLException e) {
+			mLogger.error("Error getting file size", e);
+			return -1;
+		}
+	}
+	
 	private final CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
@@ -122,7 +164,7 @@ public class FlushCacheTask implements Runnable {
 		}
 	}
 	
-	private final List<CachedFile> getCachedFilePastTime(final Dao<CachedFile, Integer> cachedFileAccess, final long time) {
+	private final List<CachedFile> getCachedFilesPastTime(final Dao<CachedFile, Integer> cachedFileAccess, final long time) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -173,13 +215,14 @@ public class FlushCacheTask implements Runnable {
 		}
 	}
 	
-	private final static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
+	private final boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
 		final File fileToDelete = new File(cachedFile.getFileName());
 		if (fileToDelete.exists()) 
 			fileToDelete.delete();
 		
 		try {
 			cachedFileAccess.delete(cachedFile);
+			mCacheStateMap.get(mCacheName).cacheSize -= cachedFile.getFileSize();
 			return true;
 		} catch (SQLException deleteException) {
 			mLogger.error("Error deleting file pointer from database", deleteException);
