@@ -59,11 +59,6 @@ public class CacheFlusher implements Runnable {
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
-			// remove expired files
-			final List<CachedFile> expiredFiles = getCachedFilesPastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
-			for (CachedFile cachedFile : expiredFiles)
-				deleteCachedFile(cachedFileAccess, cachedFile);
-			
 			CacheState cacheState = mCacheStateMap.get(mCacheName);
 			
 			if (cacheState == null) {
@@ -79,6 +74,11 @@ public class CacheFlusher implements Runnable {
 				cacheState.cacheSize += cacheFileSize;
 			}
 			
+			// remove expired files
+			final List<CachedFile> expiredFiles = getCachedFilesPastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
+			for (CachedFile cachedFile : expiredFiles)
+				deleteCachedFile(cachedFileAccess, cachedFile);
+			
 			if (cacheState.cacheSize <= mTargetSize) return;
 			
 			while (cacheState.cacheSize > mTargetSize) {
@@ -87,8 +87,12 @@ public class CacheFlusher implements Runnable {
 					deleteCachedFile(cachedFileAccess, cachedFile);
 			}
 			
-			// Remove any files in the cache dir but not in the database			
-			final File[] filesInCacheDir = FileCache.getDiskCacheDir(mContext, mCacheName).listFiles();
+			// Remove any files in the cache dir but not in the database
+			final File cacheDir = FileCache.getDiskCacheDir(mContext, mCacheName);
+			
+			if (cacheDir == null) return;
+			
+			final File[] filesInCacheDir = cacheDir.listFiles();
 			
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
