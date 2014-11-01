@@ -54,8 +54,7 @@ public class FileProperties {
 																	.appendLiteral('/')
 																	.appendDayOfMonth(1)
 																	.appendLiteral('/')
-																	.append(mYearFormatter)
-																	.appendYear(4, 4);
+																	.append(mYearFormatter);
 	
 	private static final DateTimeFormatter mDateFormatter = mDateFormatterBuilder.toFormatter();
 	
