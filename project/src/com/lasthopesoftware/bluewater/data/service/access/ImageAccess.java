@@ -21,7 +21,7 @@ import android.graphics.BitmapFactory;
 import android.support.v4.util.LruCache;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.helpers.cache.FileCache;
+import com.lasthopesoftware.bluewater.data.service.cache.FileCache;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;

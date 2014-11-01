@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.cache;
+package com.lasthopesoftware.bluewater.data.service.cache;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class CacheFlusher implements Runnable {
 			// Remove any files in the cache dir but not in the database
 			final File cacheDir = FileCache.getDiskCacheDir(mContext, mCacheName);
 			
-			if (cacheDir == null) return;
+			if (cacheDir == null || !cacheDir.exists()) return;
 			
 			final File[] filesInCacheDir = cacheDir.listFiles();
 			

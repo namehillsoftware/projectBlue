@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.cache;
+package com.lasthopesoftware.bluewater.data.service.cache;
 
 import java.io.File;
 import java.io.FileOutputStream;
