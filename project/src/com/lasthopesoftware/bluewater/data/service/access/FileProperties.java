@@ -46,12 +46,15 @@ public class FileProperties {
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
+
+	private static final DateTimeFormatter mYearFormatter = new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
 	
 	private static final DateTimeFormatterBuilder mDateFormatterBuilder = new DateTimeFormatterBuilder()
 																	.appendMonthOfYear(1)
 																	.appendLiteral('/')
 																	.appendDayOfMonth(1)
 																	.appendLiteral('/')
+																	.append(mYearFormatter)
 																	.appendYear(4, 4);
 	
 	private static final DateTimeFormatter mDateFormatter = mDateFormatterBuilder.toFormatter();
@@ -245,7 +248,9 @@ public class FileProperties {
 			if (periodPos > -1)
 				daysValue = daysValue.substring(0, periodPos);
 			
-			return mExcelEpoch.plusDays(Integer.parseInt(daysValue)).toString(mDateFormatter);
+			final DateTime returnDate = mExcelEpoch.plusDays(Integer.parseInt(daysValue));
+			
+			return returnDate.toString(returnDate.getDayOfMonth() == 1 && returnDate.getMonthOfYear() == 1 ? mYearFormatter : mDateFormatter);
 		}
 		
 		if (FILE_SIZE.equals(name)) {
