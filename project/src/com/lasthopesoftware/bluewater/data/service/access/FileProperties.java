@@ -250,7 +250,7 @@ public class FileProperties {
 			
 			final DateTime returnDate = mExcelEpoch.plusDays(Integer.parseInt(daysValue));
 			
-			return returnDate.toString(returnDate.getDayOfMonth() == 1 && returnDate.getMonthOfYear() == 1 ? mYearFormatter : mDateFormatter);
+			return returnDate.toString(returnDate.getMonthOfYear() == 1 && returnDate.getDayOfMonth() == 1 ? mYearFormatter : mDateFormatter);
 		}
 		
 		if (FILE_SIZE.equals(name)) {
