@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
 import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
+import com.lasthopesoftware.bluewater.data.service.access.FormattedFileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -93,7 +94,7 @@ public class ViewFileDetails extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FileProperties filePropertiesHelper = new FileProperties(fileKey);
+        final FormattedFileProperties filePropertiesHelper = new FormattedFileProperties(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
@@ -119,8 +120,8 @@ public class ViewFileDetails extends Activity {
 			@Override
 			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 				
-				if (filePropertiesHelper.getProperty("Rating") != null && !filePropertiesHelper.getProperty("Rating").isEmpty())
-					return Float.valueOf(filePropertiesHelper.getProperty("Rating"));
+				if (filePropertiesHelper.getProperty(FileProperties.RATING) != null && !filePropertiesHelper.getProperty(FileProperties.RATING).isEmpty())
+					return Float.valueOf(filePropertiesHelper.getProperty(FileProperties.RATING));
 				
 				return (float) 0;
 			}
@@ -140,7 +141,7 @@ public class ViewFileDetails extends Activity {
 					@Override
 					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 						if (!fromUser) return;
-						filePropertiesHelper.setProperty("Rating", String.valueOf(Math.round(rating)));
+						filePropertiesHelper.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
 					}
 				});
 			}
@@ -152,7 +153,7 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedFormattedProperties();
+				final Map<String, String> fileProperties = filePropertiesHelper.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				
 				for (Entry<String, String> entry : fileProperties.entrySet()) {

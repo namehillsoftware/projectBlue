@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleVie
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerTask;
 import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
@@ -388,8 +389,8 @@ public class ViewNowPlaying extends Activity implements
 					if (mViewStructure.nowPlayingRating != null)
 						return mViewStructure.nowPlayingRating.floatValue();
 					
-					if (file.getProperty("Rating") != null && !file.getProperty("Rating").isEmpty())
-						return Float.valueOf(file.getProperty("Rating"));
+					if (file.getProperty(FileProperties.RATING) != null && !file.getProperty(FileProperties.RATING).isEmpty())
+						return Float.valueOf(file.getProperty(FileProperties.RATING));
 					
 					return (float) 0;
 				}
@@ -413,7 +414,7 @@ public class ViewNowPlaying extends Activity implements
 						@Override
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
-							file.setProperty("Rating", String.valueOf(Math.round(rating)));
+							file.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
 						}
 					});
 				}

@@ -4,11 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -17,12 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.LoggerFactory;
 
 import xmlwise.XmlElement;
@@ -45,36 +35,6 @@ public class FileProperties {
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
-
-	private static final DateTimeFormatter mYearFormatter = new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
-	
-	private static final DateTimeFormatterBuilder mDateFormatterBuilder = new DateTimeFormatterBuilder()
-																	.appendMonthOfYear(1)
-																	.appendLiteral('/')
-																	.appendDayOfMonth(1)
-																	.appendLiteral('/')
-																	.append(mYearFormatter);
-	
-	private static final DateTimeFormatter mDateFormatter = mDateFormatterBuilder.toFormatter();
-	
-	private static final DateTimeFormatter mDateTimeFormatter = mDateFormatterBuilder
-																	.appendLiteral(" at ")
-																	.appendClockhourOfHalfday(1)
-																	.appendLiteral(':')
-																	.appendMinuteOfHour(2)
-																	.appendLiteral(' ')
-																	.appendHalfdayOfDayText()
-																	.toFormatter();
-	
-	private static final PeriodFormatter mMinutesAndSecondsFormatter = new PeriodFormatterBuilder()
-													    .appendMinutes()
-													    .appendSeparator(":")
-													    .minimumPrintedDigits(2)
-													    .maximumParsedDigits(2)
-													    .appendSeconds()
-													    .toFormatter();
-	
-	private static final DateTime mExcelEpoch = new DateTime(1899, 12, 30, 0, 0);
 	
 	public FileProperties(int fileKey) {
 		
@@ -126,14 +86,6 @@ public class FileProperties {
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		return getRefreshedProperties().get(name);
 	}
-
-	public String getParsedProperty(final String name) throws IOException {
-		return getFormattedValue(name, getProperty(name));
-	}
-	
-	public String getRefreshedFormattedProperty(final String name) throws IOException {
-		return getFormattedValue(name, getRefreshedProperty(name));
-	}
 	
 	public SortedMap<String, String> getProperties() throws IOException {
 		if (mProperties.size() == 0)
@@ -142,14 +94,6 @@ public class FileProperties {
 		return Collections.unmodifiableSortedMap(mProperties);
 	}
 	
-	public SortedMap<String, String> getFormattedProperties() throws IOException {
-		return buildFormattedReadonlyProperties(getProperties());
-	}
-	
-	public SortedMap<String, String> getRefreshedFormattedProperties() throws IOException {
-		return buildFormattedReadonlyProperties(getRefreshedProperties());
-	}
-		
 	public SortedMap<String, String> getRefreshedProperties() throws IOException {
 		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		
@@ -219,48 +163,6 @@ public class FileProperties {
 		
 		return result;
 	}
-	
-	/* Formatted properties helpers */
-	
-	private static final SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
-		final SortedMap<String, String> formattedProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-		
-		for (Entry<String, String> property : unformattedProperties.entrySet())
-			formattedProperties.put(property.getKey(), getFormattedValue(property.getKey(), property.getValue()));
-		
-		return Collections.unmodifiableSortedMap(formattedProperties);
-	}
-	
-	private static final String getFormattedValue(final String name, final String value) {
-		if (value == null || value.isEmpty()) return "";
-		
-		if (DATE_TIME_PROPERTIES.contains(name)) {
-			final DateTime dateTime = new DateTime(Double.valueOf(value).longValue() * 1000);
-			return dateTime.toString(mDateTimeFormatter);
-		}
-		
-		if (DATE.equals(name)) {
-			String daysValue = value;
-			final int periodPos = daysValue.indexOf('.');
-			if (periodPos > -1)
-				daysValue = daysValue.substring(0, periodPos);
-			
-			final DateTime returnDate = mExcelEpoch.plusDays(Integer.parseInt(daysValue));
-			
-			return returnDate.toString(returnDate.getMonthOfYear() == 1 && returnDate.getDayOfMonth() == 1 ? mYearFormatter : mDateFormatter);
-		}
-		
-		if (FILE_SIZE.equals(name)) {
-			final double filesizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
-			return String.valueOf(filesizeBytes) + " MB";
-		}
-		
-		if (DURATION.equals(name)) {
-			return Duration.standardSeconds(Double.valueOf(value).longValue()).toPeriod().toString(mMinutesAndSecondsFormatter);
-		}
-		
-		return value;
-	}
 		
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
@@ -285,8 +187,5 @@ public class FileProperties {
 	public static final String STACK_TOP = "Stack Top";
 	public static final String STACK_VIEW = "Stack View";
 	public static final String DATE = "Date";
-	
-	public static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
-	
+	public static final String RATING = "Rating";
 }
