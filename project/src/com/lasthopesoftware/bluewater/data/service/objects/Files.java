@@ -89,11 +89,11 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFilesAsync() {
-		final SimpleTask<Void, Void, Boolean> revisionTask = RevisionChecker.getIsNewRevisionTask();
-		revisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
+		final SimpleTask<Void, Void, Integer> revisionTask = RevisionChecker.getRevisionTask();
+		revisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Integer>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, Boolean result) {
+			public void onComplete(ISimpleTask<Void, Void, Integer> owner, Integer result) {
 				getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 			}
 		});
@@ -103,7 +103,7 @@ public class Files implements IItemFiles {
 	@Override
 	public ArrayList<File> getFiles(int option) {
 		try {
-			RevisionChecker.getIsNewRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+			RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			return (ArrayList<File>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
 			LoggerFactory.getLogger(Files.class).error(e.toString(), e);

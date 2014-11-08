@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,8 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject implements IItem<T>, IItemAsync<T>, Comparable<T> {
 	private final static Logger mLogger = LoggerFactory.getLogger(ItemAsyncBase.class);
+	
+	private final AtomicInteger mRevision = new AtomicInteger(-1);
 	
 	protected ArrayList<T> mSubItems;
 	
@@ -56,9 +59,14 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 		}
 	};
 	
+	private boolean isNewRevision(Integer revisionResult) {
+		final int newRevision = revisionResult.intValue();
+		return newRevision != mRevision.getAndSet(newRevision);
+	}
+	
 	public ArrayList<T> getSubItems() throws IOException {
 		try {
-			if (RevisionChecker.getIsNewRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get() == Boolean.TRUE)
+			if (isNewRevision(RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get()))
 				mSubItems = null;
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error(e.toString(), e);
@@ -93,12 +101,12 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 	}
 	
 	public void getSubItemsAsync() {
-		final SimpleTask<Void, Void, Boolean> isNewRevisionTask = RevisionChecker.getIsNewRevisionTask();
-		isNewRevisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
+		final SimpleTask<Void, Void, Integer> isNewRevisionTask = RevisionChecker.getRevisionTask();
+		isNewRevisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Integer>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE || mSubItems == null || mSubItems.size() == 0) {
+			public void onComplete(ISimpleTask<Void, Void, Integer> owner, Integer result) {
+				if (isNewRevision(result) || mSubItems == null || mSubItems.size() == 0) {
 					final DataTask<List<T>>  itemTask = getNewSubItemsTask();
 					itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
 
