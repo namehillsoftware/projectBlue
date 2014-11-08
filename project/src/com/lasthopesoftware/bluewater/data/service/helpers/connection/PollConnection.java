@@ -206,7 +206,7 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	}
 	
 	public static class Instance {
-		private static volatile PollConnection _instance = null;
+		private static PollConnection _instance = null;
 		
 		public static synchronized PollConnection get(Context context) {
 			if (_instance == null || _instance.isFinished()) _instance = new PollConnection(context);

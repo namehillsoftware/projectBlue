@@ -17,7 +17,6 @@ public class AccessConfiguration {
 	private List<String> localIps = new ArrayList<String>();
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
-	private volatile static long mUniqueRequestId = 0;
 	
 	public AccessConfiguration() {
 	}
@@ -132,8 +131,6 @@ public class AccessConfiguration {
 		
 		// Add action
 		urlBuilder.append(params[0]);
-		
-		urlBuilder.append("?uniqueId=").append(mUniqueRequestId++);
 		
 		// add arguments
 		if (params.length > 1) {
