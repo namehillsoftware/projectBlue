@@ -151,11 +151,18 @@ public class BrowseLibrary extends FragmentActivity {
 						mDrawerLayout.closeDrawer(Gravity.START);
 						mDrawerToggle.syncState();
 						
-						if (library.getSelectedView() == result.get(position).getKey()) return;
+						final int selectedViewKey = result.get(position).getKey();
 						
-						library.setSelectedView(result.get(position).getKey());
+						if (library.getSelectedView() == selectedViewKey) return;
+						
+						library.setSelectedView(selectedViewKey);
 						LibrarySession.SaveSession(mBrowseLibrary);
-						LibrarySession.JrFs = new FileSystem(result.get(position).getKey());
+						
+						if (LibrarySession.JrFs == null)
+							LibrarySession.JrFs = new FileSystem(selectedViewKey);
+						else
+							LibrarySession.JrFs.setVisibleViews(selectedViewKey);
+						
 						displayLibrary(library);
 					}
 				});

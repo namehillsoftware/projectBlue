@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectLis
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.DataTask;
-import com.lasthopesoftware.bluewater.data.service.access.RevisionTask;
+import com.lasthopesoftware.bluewater.data.service.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -89,11 +89,11 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFilesAsync() {
-		final SimpleTask<Void, Void, String> revisionTask = RevisionTask.GetNewRevisionTask();
-		revisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, String>() {
+		final SimpleTask<Void, Void, Boolean> revisionTask = RevisionChecker.getIsNewRevisionTask();
+		revisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, Boolean result) {
 				getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 			}
 		});
@@ -103,7 +103,7 @@ public class Files implements IItemFiles {
 	@Override
 	public ArrayList<File> getFiles(int option) {
 		try {
-			RevisionTask.GetNewRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+			RevisionChecker.getIsNewRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			return (ArrayList<File>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
 			LoggerFactory.getLogger(Files.class).error(e.toString(), e);

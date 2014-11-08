@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class StandardRequest {
 
-	private boolean status;
+	private final boolean status;
 	public HashMap<String, String> items = new HashMap<String, String>();
 	
 	public StandardRequest(String status) {

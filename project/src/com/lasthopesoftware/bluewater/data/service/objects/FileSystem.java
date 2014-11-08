@@ -27,7 +27,18 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private ArrayList<OnCompleteListener<List<IItem<?>>>> mOnCompleteClientListeners;
 	private OnStartListener<List<IItem<?>>> mOnStartListener;
-	private OnConnectListener<List<IItem<?>>> mOnConnectListener;
+	private static final OnConnectListener<List<IItem<?>>> mOnConnectListener = new OnConnectListener<List<IItem<?>>>() {
+		
+		@Override
+		public List<IItem<?>> onConnect(InputStream is) {
+			ArrayList<IItem<?>> returnList = new ArrayList<IItem<?>>();
+			for (Item item : FilesystemResponse.GetItems(is))
+				returnList.add(item);
+			
+			return returnList;
+		}
+	};
+	
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
 	private static Object syncObject = new Object();
@@ -36,19 +47,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		super();
 		
 		mVisibleViewKeys = visibleViewKeys;
-		
-		mOnConnectListener = new OnConnectListener<List<IItem<?>>>() {
-			
-			@Override
-			public List<IItem<?>> onConnect(InputStream is) {
-				ArrayList<IItem<?>> returnList = new ArrayList<IItem<?>>();
-				for (Item item : FilesystemResponse.GetItems(is))
-					returnList.add(item);
-				
-				return returnList;
-			}
-		};
-		
 	}
 	
 	public String getSubItemUrl() {
