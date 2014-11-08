@@ -135,13 +135,17 @@ public class AccessConfiguration {
 		// add arguments
 		if (params.length > 1) {
 			for (int i = 1; i < params.length; i++) {
-				urlBuilder.append('&');
+				urlBuilder.append(i == 1 ? '?' : '&');
 				
-				String[] keyValue = params[i].split("=");
-				urlBuilder.append(encodeParameter(keyValue[0]));
+				final String param = params[i];
 				
-				if (keyValue.length > 1)
-					urlBuilder.append('=').append(encodeParameter(keyValue[1]));
+				final int equalityIndex = param.indexOf('=');
+				if (equalityIndex < 0) {
+					urlBuilder.append(encodeParameter(param));
+					continue;
+				}
+				
+				urlBuilder.append(encodeParameter(param.substring(0, equalityIndex))).append('=').append(encodeParameter(param.substring(equalityIndex + 1)));
 			}
 		}
 		
