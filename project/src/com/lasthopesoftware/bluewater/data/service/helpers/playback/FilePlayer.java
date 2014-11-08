@@ -50,11 +50,7 @@ public class FilePlayer implements
 	private final File mFile;
 	
 	private static final String FILE_URI_SCHEME = "file://";
-	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' "; //AND " //+
-//												MediaStore.Audio.Media.ARTIST + " = ? AND " +
-//												MediaStore.Audio.Media.ALBUM + " = ? AND " +
-//												MediaStore.Audio.Media.TITLE + " = ? AND " +
-//												MediaStore.Audio.Media.TRACK + " = ?";
+	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	
 	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
 	
@@ -129,19 +125,19 @@ public class FilePlayer implements
 		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
 		
 		final StringBuilder querySb = new StringBuilder(MEDIA_DATA_QUERY);
-		querySb.append(" AND ");
+		appendAnd(querySb);
 		
 		final ArrayList<String> params = new ArrayList<String>(5);
 		params.add(filename);
 		
 		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FileProperties.ARTIST));
-		querySb.append(" AND ");
+		appendAnd(querySb);
 		
 		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FileProperties.ALBUM));
-		querySb.append(" AND ");
+		appendAnd(querySb);
 		
 		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FileProperties.NAME));
-		querySb.append(" AND ");
+		appendAnd(querySb);
 		
 		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FileProperties.TRACK));
 		
@@ -184,6 +180,10 @@ public class FilePlayer implements
 		}
 		
 		return querySb;
+	}
+	
+	private final static StringBuilder appendAnd(final StringBuilder querySb) {
+		return querySb.append(" AND ");
 	}
 	
 	public void prepareMediaPlayer() {
