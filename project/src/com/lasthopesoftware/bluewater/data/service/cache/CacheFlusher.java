@@ -66,11 +66,11 @@ public class CacheFlusher implements Runnable {
 				mCacheStateMap.put(mCacheName, cacheState);
 			}
 			
-			final long updateTime = System.currentTimeMillis();
+			final long newUpdateTime = System.currentTimeMillis();
 			
-			final long cacheFileSize = getCacheSizeBetweenTimes(cachedFileAccess, cacheState.stateUpdateTime, updateTime); 
+			final long cacheFileSize = getCacheSizeBetweenTimes(cachedFileAccess, cacheState.stateUpdateTime, newUpdateTime); 
 			if (cacheFileSize > -1) {
-				cacheState.stateUpdateTime = updateTime;
+				cacheState.stateUpdateTime = newUpdateTime;
 				cacheState.cacheSize += cacheFileSize;
 			}
 			

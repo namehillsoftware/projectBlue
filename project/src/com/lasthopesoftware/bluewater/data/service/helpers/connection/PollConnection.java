@@ -32,49 +32,45 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	private final AtomicBoolean mIsConnectionRestored = new AtomicBoolean();
 	private final AtomicBoolean mIsRefreshing = new AtomicBoolean();
 	
-	private static final Object syncObj = new Object();
-	
 	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<OnConnectionLostListener>();
 	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<OnConnectionRegainedListener>();
 	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<OnPollingCancelledListener>();
 	private final HashSet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new HashSet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnection(Context context) {
-		synchronized (syncObj) {
-			mContext = context;
+		mContext = context;
+		
+		mTask = new SimpleTask<String, Void, Void>(this);
+		
+		mTask.addOnStartListener(new OnStartListener<String, Void, Void>() {
 			
-			mTask = new SimpleTask<String, Void, Void>(this);
-			
-			mTask.addOnStartListener(new OnStartListener<String, Void, Void>() {
-				
-				@Override
-				public void onStart(ISimpleTask<String, Void, Void> owner) {
-					synchronized (mUniqueOnConnectionLostListeners) {
-						for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
-					}
+			@Override
+			public void onStart(ISimpleTask<String, Void, Void> owner) {
+				synchronized (mUniqueOnConnectionLostListeners) {
+					for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
 				}
-			});
+			}
+		});
+		
+		mTask.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
-			mTask.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
+			@Override
+			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+				for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
 				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
-					for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
-					
-					clearCompleteListeners();
-				}
-			});
+				clearCompleteListeners();
+			}
+		});
+		
+		mTask.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
 			
-			mTask.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
+			@Override
+			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+				for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
 				
-				@Override
-				public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
-					for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
-					
-					clearCompleteListeners();
-				}
-			});
-		}
+				clearCompleteListeners();
+			}
+		});
 	}
 	
 	private void clearCompleteListeners() {
@@ -113,10 +109,8 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 		return null;
 	}
 	
-	public void startPolling() {
-		synchronized (syncObj) {
-			if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
-		}
+	public synchronized void startPolling() {
+		if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
 	}
 	
 	public void stopPolling() {
@@ -213,13 +207,10 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	
 	public static class Instance {
 		private static volatile PollConnection _instance = null;
-		private static Object syncObj = new Object();
 		
-		public static PollConnection get(Context context) {
-			synchronized (syncObj) {
-				if (_instance == null || _instance.isFinished()) _instance = new PollConnection(context);
-				return _instance;
-			}
+		public static synchronized PollConnection get(Context context) {
+			if (_instance == null || _instance.isFinished()) _instance = new PollConnection(context);
+			return _instance;
 		}
 	}
 }
