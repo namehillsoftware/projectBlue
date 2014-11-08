@@ -100,13 +100,13 @@ public class CacheFlusher implements Runnable {
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(cachedFileAccess))
 				return;
 			
-			for (int i = 0; i < filesInCacheDir.length; i++) {
+			for (File fileInCacheDir : filesInCacheDir) {
 				try {
-					if (getCachedFileByFilename(cachedFileAccess, filesInCacheDir[i].getCanonicalPath()) != null) continue;
+					if (getCachedFileByFilename(cachedFileAccess, fileInCacheDir.getCanonicalPath()) != null) continue;
 				} catch (IOException e) {
 					mLogger.warn("Issue getting canonical file path.");
 				}
-				filesInCacheDir[i].delete();
+				fileInCacheDir.delete();
 			}
 		} catch (SQLException accessException) {
 			mLogger.error("Error accessing cache", accessException);
