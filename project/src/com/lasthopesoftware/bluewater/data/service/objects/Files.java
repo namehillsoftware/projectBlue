@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
@@ -24,6 +25,8 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 
 public class Files implements IItemFiles {
+	private final static Logger mLogger = LoggerFactory.getLogger(Files.class);
+	
 	private final String[] mParams;
 	private OnStartListener<List<File>> mFileStartListener;
 	private OnErrorListener<List<File>> mFileErrorListener;
@@ -38,7 +41,7 @@ public class Files implements IItemFiles {
 			try {
 				files = deserializeFileStringList(IOUtils.toString(is));				
 			} catch (IOException e) {
-				LoggerFactory.getLogger(Files.class).error(e.toString(), e);
+				mLogger.error(e.toString(), e);
 			}
 			return files;
 		}
@@ -106,7 +109,7 @@ public class Files implements IItemFiles {
 			RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			return (ArrayList<File>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
-			LoggerFactory.getLogger(Files.class).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 			return getFiles();
 		}
 	}
@@ -116,6 +119,12 @@ public class Files implements IItemFiles {
 	}
 	
 	public String getFileStringList(int option) throws IOException {
+		try {
+			RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+		} catch (InterruptedException | ExecutionException e) {
+			mLogger.error(e.toString(), e);
+		}
+		
 		final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
 			
 			@Override
@@ -146,9 +155,9 @@ public class Files implements IItemFiles {
 				}
 			}
 		} catch (InterruptedException e) {
-			LoggerFactory.getLogger(Files.class).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 		} catch (ExecutionException e) {
-			LoggerFactory.getLogger(Files.class).error(e.toString(), e);
+			mLogger.error(e.toString(), e);
 		}
 		
 		return result;
