@@ -1,11 +1,12 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public interface IItemFiles {
 	ArrayList<File> getFiles();
 	ArrayList<File> getFiles(int option);
-	String getFileStringList() throws IOException;
-	String getFileStringList(int option) throws IOException;
+	void getFileStringList(ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete);
+	void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete);
 }

@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public class ClickFileListener implements OnItemClickListener {
 
@@ -21,26 +22,29 @@ public class ClickFileListener implements OnItemClickListener {
 	}
 	
 	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		
-		try {
-			StreamingMusicService.streamMusic(view.getContext(), position, mItem.getFileStringList());
-		} catch (IOException io) {
-			final AdapterView<?> _parent = parent;
-			final View _view = view;
-			final int _position = position;
-			final long _id = id;
+	public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+		mItem.getFileStringList(new ISimpleTask.OnCompleteListener<String, Void, String>() {
 			
-			PollConnection.Instance.get(view.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-				
-				@Override
-				public void onConnectionRegained() {
-					onItemClick(_parent, _view, _position, _id);
+			@Override
+			public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
+				for (Exception exception : owner.getExceptions()) {
+					if (exception instanceof IOException) {
+						PollConnection.Instance.get(view.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+							
+							@Override
+							public void onConnectionRegained() {
+								onItemClick(parent, view, position, id);
+							}
+						});
+						
+						WaitForConnectionDialog.show(view.getContext());
+						return;
+					}
 				}
-			});
-			
-			WaitForConnectionDialog.show(view.getContext());
-		}
+				
+				StreamingMusicService.streamMusic(view.getContext(), result);
+			}
+		});
 	}
 
 }

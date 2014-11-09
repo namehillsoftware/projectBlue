@@ -27,6 +27,8 @@ import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseItemMenu {
 	private static class ViewHolder {
@@ -107,21 +109,8 @@ public class BrowseItemMenu {
 		}
 		
 		@Override
-		public void onClick(View v) {
-			try {
-				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList());
-			} catch (IOException io) {
-				final View _view = v;
-				PollConnection.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						onClick(_view);
-					}
-				});
-				
-				WaitForConnectionDialog.show(v.getContext());
-			}
+		public void onClick(final View v) {
+			mItem.getFiles().getFileStringList(new OnGetFileStringListCompleteListener(v, this));
 		}
 	}
 	
@@ -134,20 +123,7 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			try {
-				StreamingMusicService.streamMusic(v.getContext(), mItem.getFiles().getFileStringList(Files.GET_SHUFFLED));
-			}  catch (IOException io) {
-				final View _view = v;
-				PollConnection.Instance.get(v.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						onClick(_view);
-					}
-				});
-				
-				WaitForConnectionDialog.show(v.getContext());
-			} 
+			mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListCompleteListener(v, this));
 		}
 	}
 	
@@ -165,5 +141,36 @@ public class BrowseItemMenu {
     		intent.putExtra(ViewFiles.KEY, mItem.getKey());
     		v.getContext().startActivity(intent);
 		}
+	}
+	
+	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String, Void, String> {
+		private final View mView;
+		private final OnClickListener mListener;
+		
+		public OnGetFileStringListCompleteListener(final View view, final OnClickListener listener) {
+			mView = view;
+			mListener = listener;
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
+			for (Exception exception : owner.getExceptions()) {
+				if (exception instanceof IOException) {
+					PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+						
+						@Override
+						public void onConnectionRegained() {
+							mListener.onClick(mView);
+						}
+					});
+					
+					WaitForConnectionDialog.show(mView.getContext());
+					return;
+				}
+			}
+			
+			StreamingMusicService.streamMusic(mView.getContext(), result); 
+		}
+		
 	}
 }
