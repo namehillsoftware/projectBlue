@@ -10,6 +10,8 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 	
+	private final static Integer mBadRevision = Integer.valueOf(-1);
+	
 	public static SimpleTask<Void, Void, Integer> getRevisionTask() {
 		return new SimpleTask<Void, Void, Integer>(new RevisionChecker());
 	}
@@ -22,12 +24,14 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 			try {
 				final String revisionValue = StandardRequest.fromInputStream(is).items.get("Sync");
 				
-				if (revisionValue == null || revisionValue.isEmpty()) return Integer.valueOf(-1);
+				if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
 								
 				return Integer.valueOf(revisionValue);
 			} finally {
 				is.close();
 			}
+		} catch (Exception e) {
+			return mBadRevision;
 		} finally {
 			conn.disconnect();
 		}
