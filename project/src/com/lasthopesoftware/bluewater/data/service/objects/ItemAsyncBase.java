@@ -61,6 +61,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 	
 	private boolean isNewRevision(Integer revisionResult) {
 		final int newRevision = revisionResult.intValue();
+		if (newRevision == -1 && mRevision.get() > -1) return false;
 		return newRevision != mRevision.getAndSet(newRevision);
 	}
 	
