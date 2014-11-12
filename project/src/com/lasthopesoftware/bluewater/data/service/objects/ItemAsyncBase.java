@@ -3,20 +3,17 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.data.service.access.DataTask;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.data.service.access.DataTask;
-import com.lasthopesoftware.bluewater.data.service.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -25,8 +22,6 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject implements IItem<T>, IItemAsync<T>, Comparable<T> {
 	private final static Logger mLogger = LoggerFactory.getLogger(ItemAsyncBase.class);
-	
-	private final AtomicInteger mRevision = new AtomicInteger(-1);
 	
 	protected ArrayList<T> mSubItems;
 	
@@ -58,22 +53,8 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 			return !(innerException instanceof IOException);
 		}
 	};
-	
-	private boolean isNewRevision(Integer revisionResult) {
-		final int newRevision = revisionResult.intValue();
-		if (newRevision == -1 && mRevision.get() > -1) return false;
-		return newRevision != mRevision.getAndSet(newRevision);
-	}
-	
-	public ArrayList<T> getSubItems() throws IOException {
-		try {
-			if (isNewRevision(RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get()))
-				mSubItems = null;
-		} catch (InterruptedException | ExecutionException e) {
-			mLogger.error(e.toString(), e);
-			mSubItems = null;
-		}
 		
+	public ArrayList<T> getSubItems() throws IOException {
 		if (mSubItems == null || mSubItems.size() == 0) {
 			try {
 				// This will call the onCompletes if they are attached.
@@ -102,49 +83,40 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 	}
 	
 	public void getSubItemsAsync() {
-		final SimpleTask<Void, Void, Integer> isNewRevisionTask = RevisionChecker.getRevisionTask();
-		isNewRevisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Integer>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Integer> owner, Integer result) {
-				if (isNewRevision(result) || mSubItems == null || mSubItems.size() == 0) {
-					final DataTask<List<T>>  itemTask = getNewSubItemsTask();
-					itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
+		
+		if (mSubItems == null || mSubItems.size() == 0) {
+			final DataTask<List<T>>  itemTask = getNewSubItemsTask();
+			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
 
-						@Override
-						public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
-							if (owner.getState() == SimpleTaskState.ERROR || result == null) {
-								mSubItems = new ArrayList<T>();
-								return;
-							}
-							mSubItems = new ArrayList<T>(result);
-						}
-						
-					});
-					
-					itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
-					return;
-				}
-				
-				// Simple task that just returns sub items if they are in memory
-				final SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>(new OnExecuteListener<String, Void, List<T>>() {
-
-					@Override
-					public List<T> onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
-						return mSubItems;
+				@Override
+				public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
+					if (owner.getState() == SimpleTaskState.ERROR || result == null) {
+						mSubItems = new ArrayList<T>();
+						return;
 					}
-				});
-				
-				if (getOnItemsCompleteListeners() != null) {
-					for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
-						task.addOnCompleteListener(listener);
+					mSubItems = new ArrayList<T>(result);
 				}
 				
-				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			});
+			
+			itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
+			return;
+		}
+		
+		// Simple task that just returns sub items if they are in memory
+		final SimpleTask<String, Void, List<T>> task = new SimpleTask<String, Void, List<T>>(new OnExecuteListener<String, Void, List<T>>() {
+
+			@Override
+			public List<T> onExecute(ISimpleTask<String, Void, List<T>> owner, String... params) throws Exception {
+				return mSubItems;
 			}
 		});
 		
-		isNewRevisionTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		if (getOnItemsCompleteListeners() != null) {
+			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
+				task.addOnCompleteListener(listener);
+		}
+		task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	@SuppressWarnings("unchecked")

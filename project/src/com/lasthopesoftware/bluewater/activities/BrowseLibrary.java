@@ -158,10 +158,7 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(selectedViewKey);
 						LibrarySession.SaveSession(mBrowseLibrary);
 						
-						if (LibrarySession.JrFs == null)
-							LibrarySession.JrFs = new FileSystem(selectedViewKey);
-						else
-							LibrarySession.JrFs.setVisibleViews(selectedViewKey);
+						LibrarySession.JrFs = new FileSystem(selectedViewKey);
 						
 						displayLibrary(library);
 					}

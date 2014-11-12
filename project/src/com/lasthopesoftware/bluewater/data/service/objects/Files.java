@@ -17,9 +17,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteLi
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.data.service.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
 
 
 public class Files implements IItemFiles {
@@ -90,21 +88,12 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFilesAsync() {
-		final SimpleTask<Void, Void, Integer> revisionTask = RevisionChecker.getRevisionTask();
-		revisionTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Integer>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Integer> owner, Integer result) {
-				getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
-			}
-		});
-		revisionTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 	}
 	
 	@Override
 	public ArrayList<File> getFiles(int option) {
 		try {
-			RevisionChecker.getRevisionTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
 			return (ArrayList<File>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
@@ -117,40 +106,29 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete) {
-		
-		final SimpleTask<Void, Void, Integer> revisionCheckerTask = RevisionChecker.getRevisionTask();
-		
-		revisionCheckerTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<Void, Void, Integer>() {
+		final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, Integer> owner, Integer result) {
-				final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
-					
-					@Override
-					public String onConnect(InputStream is) {
-						try {
-							return IOUtils.toString(is);
-						} catch (IOException e) {
-							LoggerFactory.getLogger(Files.class).error(e.toString(), e);
-							return null;
-						}
-					}
-				});
-				
-				getStringListTask.addOnErrorListener(new ISimpleTask.OnErrorListener<String, Void, String>() {
-					
-					@Override
-					public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
-						return innerException instanceof IOException;
-					}
-				});
-				
-				getStringListTask.addOnCompleteListener(onGetStringListComplete);
-				getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));
+			public String onConnect(InputStream is) {
+				try {
+					return IOUtils.toString(is);
+				} catch (IOException e) {
+					LoggerFactory.getLogger(Files.class).error(e.toString(), e);
+					return null;
+				}
 			}
 		});
 		
-		revisionCheckerTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		getStringListTask.addOnErrorListener(new ISimpleTask.OnErrorListener<String, Void, String>() {
+			
+			@Override
+			public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
+				return innerException instanceof IOException;
+			}
+		});
+		
+		getStringListTask.addOnCompleteListener(onGetStringListComplete);
+		getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));
 	}
 
 	protected DataTask<List<File>> getNewFilesTask() {
