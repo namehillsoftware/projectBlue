@@ -193,7 +193,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private static class OnGetLibraryComplete implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
 
-		private static int mInstanceVisibleViewKey;
+		private static int mInstanceVisibleViewKey = -1;
 		private static FileSystem mInstance;
 		
 		private final static Object syncObject = new Object();
