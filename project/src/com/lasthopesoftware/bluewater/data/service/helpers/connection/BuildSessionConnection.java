@@ -55,15 +55,13 @@ public class BuildSessionConnection {
 						}
 						
 						if (library.getSelectedView() >= 0) {
-							LibrarySession.JrFs = new FileSystem(library.getSelectedView());
-
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 							return;
 						}
 			        	
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
-						LibrarySession.JrFs = new FileSystem();
-			        	LibrarySession.JrFs.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+
+						FileSystem.getInstance(context).addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 							
 							@Override
 							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
@@ -75,7 +73,7 @@ public class BuildSessionConnection {
 								
 								doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 								final int selectedView = result.get(0).getKey();
-								LibrarySession.JrFs.setVisibleViews(selectedView);
+								FileSystem.getInstance(context).setVisibleViews(selectedView);
 								library.setSelectedView(selectedView);
 								
 								LibrarySession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
@@ -88,7 +86,7 @@ public class BuildSessionConnection {
 							}
 						});
 			        	
-			        	LibrarySession.JrFs.getSubItemsAsync();
+						FileSystem.getInstance(context).getSubItemsAsync();
 					}
 				});
 			}

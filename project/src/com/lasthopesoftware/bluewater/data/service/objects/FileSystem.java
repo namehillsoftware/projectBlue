@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
+import android.content.Context;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
@@ -16,6 +17,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListe
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -42,8 +44,17 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
 	private static Object syncObject = new Object();
+	private static int mInstanceVisibleViewKey;
+	private static FileSystem mInstance;
 	
-	public FileSystem(int... visibleViewKeys) {
+	public final static synchronized FileSystem getInstance(final Context context) {
+		final int storedSelectedViewKey = LibrarySession.GetLibrary(context).getSelectedView();
+		if (storedSelectedViewKey != mInstanceVisibleViewKey)
+			mInstance = new FileSystem(storedSelectedViewKey);
+		return mInstance;
+	}
+	
+	private FileSystem(int... visibleViewKeys) {
 		super();
 		
 		mVisibleViewKeys = visibleViewKeys;

@@ -25,11 +25,11 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteLi
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
-import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -71,7 +71,7 @@ public class ViewPlaylists extends FragmentActivity {
 							
 							@Override
 							public void onConnectionRegained() {
-								LibrarySession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
+								FileSystem.getInstance(thisContext).getVisibleViewsAsync(visibleViewsAsyncComplete);
 							}
 						});
 						
@@ -96,7 +96,7 @@ public class ViewPlaylists extends FragmentActivity {
 			}
 		};
 		
-        LibrarySession.JrFs.getVisibleViewsAsync(visibleViewsAsyncComplete);
+		FileSystem.getInstance(thisContext).getVisibleViewsAsync(visibleViewsAsyncComplete);
 	}
 	
 	@Override

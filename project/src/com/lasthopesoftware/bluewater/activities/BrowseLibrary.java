@@ -105,7 +105,7 @@ public class BrowseLibrary extends FragmentActivity {
 		InstantiateSessionConnection.restoreSessionConnection(this);
 		
 		mIsStopped = false;
-		if (LibrarySession.JrFs == null || (mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
+		if ((mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
 		
 		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
@@ -119,7 +119,7 @@ public class BrowseLibrary extends FragmentActivity {
 	}
 
 	public void displayLibrary(final Library library) {		
-		LibrarySession.JrFs.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+		FileSystem.getInstance(mBrowseLibrary).addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> result) {
@@ -129,7 +129,7 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						LibrarySession.JrFs.getSubItemsAsync();
+						FileSystem.getInstance(mBrowseLibrary).getSubItemsAsync();
 					}
 				});
 				
@@ -158,17 +158,15 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(selectedViewKey);
 						LibrarySession.SaveSession(mBrowseLibrary);
 						
-						LibrarySession.JrFs = new FileSystem(selectedViewKey);
-						
 						displayLibrary(library);
 					}
 				});
 			}
 		});
 		
-		LibrarySession.JrFs.getSubItemsAsync();
+		FileSystem.getInstance(mBrowseLibrary).getSubItemsAsync();
 		
-		LibrarySession.JrFs.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+		FileSystem.getInstance(mBrowseLibrary).getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
@@ -179,7 +177,7 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						LibrarySession.JrFs.getVisibleViewsAsync(_this);
+						FileSystem.getInstance(mBrowseLibrary).getVisibleViewsAsync(_this);
 					}
 				});
 				

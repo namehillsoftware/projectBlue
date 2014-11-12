@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -27,8 +26,6 @@ public class LibrarySession {
 	private static int ChosenLibrary = -1;
 	
 	private static Library mLibrary = null;
-
-	public static FileSystem JrFs;
 	
 	public static void SaveSession(final Context context) {
 		SaveSession(context, null);
