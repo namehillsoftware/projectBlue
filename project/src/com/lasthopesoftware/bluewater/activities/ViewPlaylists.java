@@ -72,7 +72,7 @@ public class ViewPlaylists extends FragmentActivity {
 							
 							@Override
 							public void onConnectionRegained() {
-								FileSystem.getInstance(thisContext, new OnGetFileSystemCompleteListener() {
+								FileSystem.Instance.get(thisContext, new OnGetFileSystemCompleteListener() {
 									
 									@Override
 									public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -103,7 +103,7 @@ public class ViewPlaylists extends FragmentActivity {
 			}
 		};
 		
-		FileSystem.getInstance(thisContext, new OnGetFileSystemCompleteListener() {
+		FileSystem.Instance.get(thisContext, new OnGetFileSystemCompleteListener() {
 			
 			@Override
 			public void onGetFileSystemComplete(FileSystem fileSystem) {

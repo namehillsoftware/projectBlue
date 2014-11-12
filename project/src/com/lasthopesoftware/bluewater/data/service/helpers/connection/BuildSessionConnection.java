@@ -62,7 +62,7 @@ public class BuildSessionConnection {
 			        	
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 
-						FileSystem.getInstance(context, new OnGetFileSystemCompleteListener() {
+						FileSystem.Instance.get(context, new OnGetFileSystemCompleteListener() {
 							
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {

@@ -46,14 +46,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private final static Object syncObject = new Object();
 	
-	public final static void getInstance(final Context context) {
-		getInstance(context, null);
-	}
-	
-	public final static void getInstance(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
-		LibrarySession.GetLibrary(context, new OnGetLibraryComplete(onGetFileSystemCompleteListener));
-	}
-	
 	private FileSystem(int... visibleViewKeys) {
 		super();
 		
@@ -191,7 +183,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		void onGetFileSystemComplete(FileSystem fileSystem);
 	}
 	
-	private static class OnGetLibraryComplete implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
+	public static class Instance implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
 
 		private static int mInstanceVisibleViewKey = -1;
 		private static FileSystem mInstance;
@@ -199,7 +191,15 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		private final static Object syncObject = new Object();
 		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
 		
-		public OnGetLibraryComplete(OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
+		public final static void get(final Context context) {
+			get(context, null);
+		}
+		
+		public final static void get(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
+			LibrarySession.GetLibrary(context, new Instance(onGetFileSystemCompleteListener));
+		}
+		
+		private Instance(OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
 			mOnGetFileSystemCompleteListener = onGetFileSystemCompleteListener;
 		}
 		

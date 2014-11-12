@@ -114,7 +114,7 @@ public class BrowseLibrary extends FragmentActivity {
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
 				if (result == null) return;
 				
-				FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 					
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -138,7 +138,7 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						FileSystem.getInstance(mBrowseLibrary);
+						FileSystem.Instance.get(mBrowseLibrary);
 					}
 				});
 				
@@ -167,7 +167,7 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(selectedViewKey);
 						LibrarySession.SaveSession(mBrowseLibrary);
 						
-						FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+						FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 							
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -192,7 +192,7 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+						FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 							
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {

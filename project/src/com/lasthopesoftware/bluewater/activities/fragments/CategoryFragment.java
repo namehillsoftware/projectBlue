@@ -54,7 +54,7 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
     	
-    	FileSystem.getInstance(getActivity(), new OnGetFileSystemCompleteListener() {
+    	FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
 			
 			@Override
 			public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -67,7 +67,7 @@ public class CategoryFragment extends Fragment {
 									
 									@Override
 									public void onConnectionRegained() {
-										FileSystem.getInstance(getActivity(), new OnGetFileSystemCompleteListener() {
+										FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
 											
 											@Override
 											public void onGetFileSystemComplete(FileSystem fileSystem) {
