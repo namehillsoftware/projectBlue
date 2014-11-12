@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
 import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
+import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
@@ -95,6 +96,7 @@ public class CategoryFragment extends Fragment {
         return layout;
     }
 
+	@SuppressWarnings("unchecked")
 	private ListView BuildPlaylistView(final Playlists category, final View loadingView) {
     	
 		final ListView listView = new ListView(getActivity());
@@ -103,15 +105,7 @@ public class CategoryFragment extends Fragment {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						category.getSubItemsAsync();
-					}
-				});
-				
-				if (isIoException || result == null) return;
+				if (result == null) return;
 				
 				final Context context = getActivity();
 				if (context == null) return;
@@ -124,6 +118,13 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onPlaylistCompleteListener);
+		category.setOnItemsErrorListener(new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						category.getSubItemsAsync();
+					}
+				}));
 	
 		return listView;
     }

@@ -44,16 +44,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 	protected abstract List<OnCompleteListener<List<T>>> getOnItemsCompleteListeners();
 	protected abstract List<OnStartListener<List<T>>> getOnItemsStartListeners();
 	protected abstract List<OnErrorListener<List<T>>> getOnItemsErrorListeners();
-	
-	@SuppressWarnings("rawtypes")
-	private static ISimpleTask.OnErrorListener onIoExceptionHandler = new ISimpleTask.OnErrorListener() {
-
-		@Override
-		public boolean onError(ISimpleTask owner, Exception innerException) {
-			return !(innerException instanceof IOException);
-		}
-	};
-		
+			
 	public ArrayList<T> getSubItems() throws IOException {
 		if (mSubItems == null || mSubItems.size() == 0) {
 			try {
@@ -61,19 +52,14 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 				DataTask<List<T>> getNewSubItemsTask = getNewSubItemsTask();
 				List<T> result = getNewSubItemsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
 				
+				if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR && getNewSubItemsTask.getException() instanceof IOException)
+					throw new IOException(getNewSubItemsTask.getException());
+				
 				if (result != null)
 					mSubItems = new ArrayList<T>(result);
 				else
 					mSubItems = new ArrayList<T>();
 				
-				if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : getNewSubItemsTask.getExceptions()) {
-						if (exception instanceof IOException)
-							throw exception;
-					}
-				}
-			} catch(IOException ioE) {
-				throw ioE;
 			} catch(Exception e) {
 				mLogger.error(e.toString(), e);
 			}
@@ -119,7 +105,6 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 		task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected DataTask<List<T>> getNewSubItemsTask() {
 		final DataTask<List<T>> subItemsTask = new DataTask<List<T>>(getOnItemConnectListener());
 
@@ -134,8 +119,6 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 		if (getOnItemsErrorListeners() != null) {
 			for (OnErrorListener<List<T>> listener : getOnItemsErrorListeners()) subItemsTask.addOnErrorListener(listener);
 		}
-		
-		subItemsTask.addOnErrorListener(onIoExceptionHandler);
 		
 		return subItemsTask;
 	}

@@ -77,9 +77,15 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 	
 	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onCompleteListener) {
+		getVisibleViewsAsync(onCompleteListener, null);
+	}
+	
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onCompleteListener,
+									 ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem<?>>> onErrorListener) {
 		SimpleTask<String, Void, ArrayList<IItem<?>>> getViewsTask = getVisibleViewsTask();
 		
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
+		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
 		
 		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}

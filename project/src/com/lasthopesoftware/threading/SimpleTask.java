@@ -1,6 +1,5 @@
 package com.lasthopesoftware.threading;
 
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 
@@ -17,7 +16,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	private ConcurrentLinkedQueue<OnCancelListener<TParams, TProgress, TResult>> mOnCancelListeners = null;
 	private ConcurrentLinkedQueue<OnStartListener<TParams, TProgress, TResult>> mOnStartListeners = null;
 	private ConcurrentLinkedQueue<OnErrorListener<TParams, TProgress, TResult>> mOnErrorListeners = null;
-	private LinkedList<Exception> exceptions = new LinkedList<Exception>();
+	private Exception mException;
 		
 	public SimpleTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
 		mOnExecuteListener = onExecuteListener;
@@ -34,23 +33,20 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@SuppressWarnings("unchecked")
 	protected final TResult doInBackground(TParams... params) {
 		mState = SimpleTaskState.EXECUTING;
-		exceptions.clear();
 		
 		try {
 			mResult = mOnExecuteListener.onExecute(this, params);
 			mState = SimpleTaskState.SUCCESS;
-		} catch (Exception ex) {
-			exceptions.add(ex);
+		} catch (Exception exception) {
+			mException = exception;
 			mState = SimpleTaskState.ERROR;
-			if (mOnErrorListeners != null)
-				for (OnErrorListener<TParams, TProgress, TResult> errorListener : mOnErrorListeners) errorListener.onError(this, ex);
 		}
 		return mResult;
 	}
 	
 	@Override
-	public LinkedList<Exception> getExceptions() {
-		return exceptions;
+	public Exception getException() {
+		return mException;
 	}
 	
 	@Override
@@ -68,17 +64,38 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	
 	@Override
 	protected final void onPostExecute(TResult result) {
+
+		if (isErrorHandled()) return;
+		
 		super.onPostExecute(result);
+		
 		if (mOnCompleteListeners == null) return;
 		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : mOnCompleteListeners) completeListener.onComplete(this, result);
 	}
-	
+		
 	@Override
 	protected final void onCancelled(TResult result) {
+		if (isErrorHandled()) return;
+		
 		mState = SimpleTaskState.CANCELLED;
 		super.onCancelled(result);
 		if (mOnCancelListeners == null) return;
 		for (OnCancelListener<TParams, TProgress, TResult> cancelListener : mOnCancelListeners) cancelListener.onCancel(this, result);
+	}
+	
+	/**
+	 * 
+	 * @return True if there is an error and it is handled
+	 */
+	private final boolean isErrorHandled() {
+		if (mState != SimpleTaskState.ERROR) return false;
+		if (mOnErrorListeners != null) {
+			boolean isHandled = false;
+			for (OnErrorListener<TParams, TProgress, TResult> errorListener : mOnErrorListeners)
+				isHandled |= errorListener.onError(this, isHandled, mException);
+			return isHandled;
+		}
+		return false;
 	}
 	
 	@Override

@@ -22,7 +22,7 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.LibraryViewPagerAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
+import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
@@ -53,6 +53,8 @@ public class BrowseLibrary extends FragmentActivity {
 	private CharSequence mOldTitle;
 	
 	private boolean mIsStopped = false;
+	
+	private OnCompleteListener<String, Void, ArrayList<IItem<?>>> mOnGetVisibleViewsCompleteListener;
 		
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -127,22 +129,13 @@ public class BrowseLibrary extends FragmentActivity {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	public void displayLibrary(final Library library, FileSystem fileSystem) {
 		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> result) {
-				if (mIsStopped) return;
-				
-				final boolean isIoError = ErrorHelpers.HandleViewIoException(mBrowseLibrary, owner, new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						FileSystem.Instance.get(mBrowseLibrary);
-					}
-				});
-				
-				if (isIoError || result == null) return;
+				if (mIsStopped || result == null) return;
 				
 				for (IItem<?> item : result) {
 					if (item.getKey() != library.getSelectedView()) continue;
@@ -179,39 +172,58 @@ public class BrowseLibrary extends FragmentActivity {
 			}
 		});
 		
-		fileSystem.getSubItemsAsync();
-		
-		fileSystem.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+		fileSystem.setOnItemsErrorListener(new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
-				if (mIsStopped) return;
-				final OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
-								
-				final boolean isIoError = ErrorHelpers.HandleViewIoException(mBrowseLibrary, owner, new OnConnectionRegainedListener() {
+			public void onConnectionRegained() {
+				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 					
 					@Override
-					public void onConnectionRegained() {
-						FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
-							
-							@Override
-							public void onGetFileSystemComplete(FileSystem fileSystem) {
-								fileSystem.getVisibleViewsAsync(_this);
-							}
-						});
+					public void onGetFileSystemComplete(FileSystem fileSystem) {
+						fileSystem.getSubItemsAsync();
 					}
 				});
-				
-				if (isIoError || result == null) return;
-				
-				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-				viewChildPagerAdapter.setLibraryViews(result);
-
-				// Set up the ViewPager with the sections adapter.
-				mViewPager.setAdapter(viewChildPagerAdapter);
-				((PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews)).setViewPager(mViewPager);
 			}
-		});
+		}));
+		
+		fileSystem.getSubItemsAsync();
+		
+		fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
+			new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
+
+				@Override
+				public void onConnectionRegained() {
+					FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+						
+						@Override
+						public void onGetFileSystemComplete(FileSystem fileSystem) {
+							fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
+						}
+					});
+				}
+			
+		}));
+	}
+	
+	private OnCompleteListener<String, Void, ArrayList<IItem<?>>> getOnVisibleViewsCompleteListener() {
+		if (mOnGetVisibleViewsCompleteListener == null) {
+			mOnGetVisibleViewsCompleteListener = new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+					if (mIsStopped || result == null) return;
+					
+					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
+					viewChildPagerAdapter.setLibraryViews(result);
+		
+					// Set up the ViewPager with the sections adapter.
+					mViewPager.setAdapter(viewChildPagerAdapter);
+					((PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews)).setViewPager(mViewPager);
+				}
+			};
+		}
+		
+		return mOnGetVisibleViewsCompleteListener;
 	}
 
 	@Override

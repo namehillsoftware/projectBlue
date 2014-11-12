@@ -125,8 +125,8 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 		return mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING;
 	}
 
-	public LinkedList<Exception> getExceptions() {
-		return mTask.getExceptions();
+	public Exception getException() {
+		return mTask.getException();
 	}
 
 	public SimpleTaskState getState() {

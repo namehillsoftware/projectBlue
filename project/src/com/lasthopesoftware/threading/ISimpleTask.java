@@ -1,6 +1,5 @@
 package com.lasthopesoftware.threading;
 
-import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
 
@@ -8,7 +7,7 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 
 	TResult getResult() throws ExecutionException, InterruptedException;
 	
-	LinkedList<Exception> getExceptions();
+	Exception getException();
 	
 	SimpleTaskState getState();
 	
@@ -53,6 +52,6 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	}
 	
 	public interface OnErrorListener<TParams, TProgress, TResult> {
-		boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, Exception innerException);
+		boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException);
 	}
 }
