@@ -63,10 +63,7 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 	
 	@Override
-	protected final void onPostExecute(TResult result) {
-
-		if (isErrorHandled()) return;
-		
+	protected final void onPostExecute(TResult result) {		
 		super.onPostExecute(result);
 		
 		if (mOnCompleteListeners == null) return;
@@ -75,29 +72,12 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 		
 	@Override
 	protected final void onCancelled(TResult result) {
-		if (isErrorHandled()) return;
-		
 		mState = SimpleTaskState.CANCELLED;
 		super.onCancelled(result);
 		if (mOnCancelListeners == null) return;
 		for (OnCancelListener<TParams, TProgress, TResult> cancelListener : mOnCancelListeners) cancelListener.onCancel(this, result);
 	}
-	
-	/**
-	 * 
-	 * @return True if there is an error and it is handled
-	 */
-	private final boolean isErrorHandled() {
-		if (mState != SimpleTaskState.ERROR) return false;
-		if (mOnErrorListeners != null) {
-			boolean isHandled = false;
-			for (OnErrorListener<TParams, TProgress, TResult> errorListener : mOnErrorListeners)
-				isHandled |= errorListener.onError(this, isHandled, mException);
-			return isHandled;
-		}
-		return false;
-	}
-	
+		
 	@Override
 	public TResult getResult() throws ExecutionException, InterruptedException {
 		return this.get();
@@ -126,11 +106,6 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 
 	@Override
-	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		mOnErrorListeners = addListener(listener, mOnErrorListeners);
-	}
-
-	@Override
 	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnStartListeners);
 	}
@@ -143,11 +118,6 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnCancelListeners);
-	}
-	
-	@Override
-	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
-		removeListener(listener, mOnErrorListeners);
 	}
 
 	@Override

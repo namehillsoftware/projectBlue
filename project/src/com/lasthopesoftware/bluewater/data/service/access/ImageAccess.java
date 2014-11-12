@@ -256,11 +256,6 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
-		mImageAccessTask.addOnErrorListener(listener);
-	}
-
-	@Override
 	public void removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.removeOnStartListener(listener);		
 	}
