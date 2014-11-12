@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListe
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -43,15 +44,14 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
-	private static Object syncObject = new Object();
-	private static int mInstanceVisibleViewKey;
-	private static FileSystem mInstance;
+	private final static Object syncObject = new Object();
 	
-	public final static synchronized FileSystem getInstance(final Context context) {
-		final int storedSelectedViewKey = LibrarySession.GetLibrary(context).getSelectedView();
-		if (storedSelectedViewKey != mInstanceVisibleViewKey)
-			mInstance = new FileSystem(storedSelectedViewKey);
-		return mInstance;
+	public final static void getInstance(final Context context) {
+		getInstance(context, null);
+	}
+	
+	public final static void getInstance(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
+		LibrarySession.GetLibrary(context, new OnGetLibraryComplete(onGetFileSystemCompleteListener));
 	}
 	
 	private FileSystem(int... visibleViewKeys) {
@@ -185,6 +185,36 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	public void removeOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
 		if (mOnCompleteClientListeners != null)
 			mOnCompleteClientListeners.remove(listener);
+	}
+	
+	public interface OnGetFileSystemCompleteListener {
+		void onGetFileSystemComplete(FileSystem fileSystem);
+	}
+	
+	private static class OnGetLibraryComplete implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
+
+		private static int mInstanceVisibleViewKey;
+		private static FileSystem mInstance;
+		
+		private final static Object syncObject = new Object();
+		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
+		
+		public OnGetLibraryComplete(OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
+			mOnGetFileSystemCompleteListener = onGetFileSystemCompleteListener;
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+			synchronized(syncObject) {
+				final int storedSelectedViewKey = result.getSelectedView();
+				if (storedSelectedViewKey != mInstanceVisibleViewKey)
+					mInstance = new FileSystem(storedSelectedViewKey);
+				
+				if (mOnGetFileSystemCompleteListener != null)
+					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
+			}
+		}
+		
 	}
 }
 

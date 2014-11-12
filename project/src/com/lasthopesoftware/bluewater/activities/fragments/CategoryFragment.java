@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
@@ -53,29 +54,41 @@ public class CategoryFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
     	
-    	FileSystem.getInstance(getActivity()).getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+    	FileSystem.getInstance(getActivity(), new OnGetFileSystemCompleteListener() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
-				final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
-				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
-							
-							@Override
-							public void onConnectionRegained() {
-								FileSystem.getInstance(getActivity()).getVisibleViewsAsync(_this);
-							}
-						});
-								
-				if (isIoException || result == null) return;
-				
-				final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
-								
-				if (category instanceof Playlists)
-					layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
-				else if (category instanceof Item)
-					layout.addView(BuildStandardItemView((Item)category, pbLoading));
-				
-				category.getSubItemsAsync();
+			public void onGetFileSystemComplete(FileSystem fileSystem) {
+				fileSystem.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+						final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
+						final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
+									
+									@Override
+									public void onConnectionRegained() {
+										FileSystem.getInstance(getActivity(), new OnGetFileSystemCompleteListener() {
+											
+											@Override
+											public void onGetFileSystemComplete(FileSystem fileSystem) {
+												fileSystem.getVisibleViewsAsync(_this);
+											}
+										});
+									}
+								});
+										
+						if (isIoException || result == null) return;
+						
+						final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+										
+						if (category instanceof Playlists)
+							layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
+						else if (category instanceof Item)
+							layout.addView(BuildStandardItemView((Item)category, pbLoading));
+						
+						category.getSubItemsAsync();
+					}
+				});
 			}
 		});
     	

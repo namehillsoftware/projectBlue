@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -110,16 +111,24 @@ public class BrowseLibrary extends FragmentActivity {
 		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				if (result != null)
-					displayLibrary(result);
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
+				if (result == null) return;
+				
+				FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+					
+					@Override
+					public void onGetFileSystemComplete(FileSystem fileSystem) {
+						displayLibrary(result, fileSystem);
+					}
+				});
+				
 			}
 			
 		});
 	}
 
-	public void displayLibrary(final Library library) {		
-		FileSystem.getInstance(mBrowseLibrary).addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+	public void displayLibrary(final Library library, FileSystem fileSystem) {
+		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> result) {
@@ -129,7 +138,7 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						FileSystem.getInstance(mBrowseLibrary).getSubItemsAsync();
+						FileSystem.getInstance(mBrowseLibrary);
 					}
 				});
 				
@@ -158,15 +167,21 @@ public class BrowseLibrary extends FragmentActivity {
 						library.setSelectedView(selectedViewKey);
 						LibrarySession.SaveSession(mBrowseLibrary);
 						
-						displayLibrary(library);
+						FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+							
+							@Override
+							public void onGetFileSystemComplete(FileSystem fileSystem) {
+								displayLibrary(library, fileSystem);
+							}
+						});
 					}
 				});
 			}
 		});
 		
-		FileSystem.getInstance(mBrowseLibrary).getSubItemsAsync();
+		fileSystem.getSubItemsAsync();
 		
-		FileSystem.getInstance(mBrowseLibrary).getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+		fileSystem.getVisibleViewsAsync(new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
@@ -177,7 +192,13 @@ public class BrowseLibrary extends FragmentActivity {
 					
 					@Override
 					public void onConnectionRegained() {
-						FileSystem.getInstance(mBrowseLibrary).getVisibleViewsAsync(_this);
+						FileSystem.getInstance(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+							
+							@Override
+							public void onGetFileSystemComplete(FileSystem fileSystem) {
+								fileSystem.getVisibleViewsAsync(_this);
+							}
+						});
 					}
 				});
 				

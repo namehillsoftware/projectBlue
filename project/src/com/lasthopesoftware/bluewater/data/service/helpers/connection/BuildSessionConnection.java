@@ -12,6 +12,7 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -61,32 +62,37 @@ public class BuildSessionConnection {
 			        	
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 
-						FileSystem.getInstance(context).addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+						FileSystem.getInstance(context, new OnGetFileSystemCompleteListener() {
 							
 							@Override
-							public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
-								
-								if (result == null || result.size() == 0) {
-									doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
-									return;
-								}
-								
-								doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
-								final int selectedView = result.get(0).getKey();
-								FileSystem.getInstance(context).setVisibleViews(selectedView);
-								library.setSelectedView(selectedView);
-								
-								LibrarySession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
+							public void onGetFileSystemComplete(FileSystem fileSystem) {
+								fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 									
 									@Override
-									public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-										doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+									public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
+										
+										if (result == null || result.size() == 0) {
+											doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
+											return;
+										}
+										
+										doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
+										final int selectedView = result.get(0).getKey();
+										library.setSelectedView(selectedView);
+										
+										LibrarySession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
+											
+											@Override
+											public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+												doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+											}
+										});
 									}
 								});
+								
+								fileSystem.getSubItemsAsync();
 							}
 						});
-			        	
-						FileSystem.getInstance(context).getSubItemsAsync();
 					}
 				});
 			}

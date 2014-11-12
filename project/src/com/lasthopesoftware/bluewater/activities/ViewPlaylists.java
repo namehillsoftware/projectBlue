@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
@@ -71,7 +72,13 @@ public class ViewPlaylists extends FragmentActivity {
 							
 							@Override
 							public void onConnectionRegained() {
-								FileSystem.getInstance(thisContext).getVisibleViewsAsync(visibleViewsAsyncComplete);
+								FileSystem.getInstance(thisContext, new OnGetFileSystemCompleteListener() {
+									
+									@Override
+									public void onGetFileSystemComplete(FileSystem fileSystem) {
+										fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete);
+									}
+								});
 							}
 						});
 						
@@ -96,7 +103,13 @@ public class ViewPlaylists extends FragmentActivity {
 			}
 		};
 		
-		FileSystem.getInstance(thisContext).getVisibleViewsAsync(visibleViewsAsyncComplete);
+		FileSystem.getInstance(thisContext, new OnGetFileSystemCompleteListener() {
+			
+			@Override
+			public void onGetFileSystemComplete(FileSystem fileSystem) {
+				fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete);
+			}
+		});
 	}
 	
 	@Override
