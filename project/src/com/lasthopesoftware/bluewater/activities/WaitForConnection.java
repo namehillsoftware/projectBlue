@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -13,6 +14,13 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnec
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnection extends Activity {
+	
+	public static void beginWaiting(final Context context, final OnConnectionRegainedListener onConnectionRegainedListener) {
+		final PollConnection pollConnectionInstance = PollConnection.Instance.get(context);
+		pollConnectionInstance.addOnConnectionRegainedListener(onConnectionRegainedListener);
+		pollConnectionInstance.startPolling();
+		context.startActivity(new Intent(context, WaitForConnection.class));
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

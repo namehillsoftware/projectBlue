@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 
 import android.os.AsyncTask;
 
-public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult>, Runnable {
+public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult> {
 
 	private final AsyncTask<TParams, TProgress, TResult> mTask;
 	
@@ -81,12 +81,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 		mTask.executeOnExecutor(exec, params);
 		return this;
 	}
-	
-	@Override
-	public void run() {
-		executeListener();
-	}
-	
+		
 	@SafeVarargs
 	private final TResult executeListener(TParams... params) {
 		mState = SimpleTaskState.EXECUTING;
