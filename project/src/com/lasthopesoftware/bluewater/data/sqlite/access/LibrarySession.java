@@ -147,9 +147,7 @@ public class LibrarySession {
 		
 		try {
 			return getLibrariesTask.executeOnExecutor(DatabaseHandler.databaseExecutor).get();
-		} catch (InterruptedException e) {
-			mLogger.error(e.toString(), e);
-		} catch (ExecutionException e) {
+		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 		}
 		

@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.views.BrowseItemMenu;
-import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
@@ -54,31 +53,18 @@ public class CategoryFragment extends Fragment {
     	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
-    	
+    	    	
     	FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
 			
+			@SuppressWarnings("unchecked")
 			@Override
 			public void onGetFileSystemComplete(FileSystem fileSystem) {
-				fileSystem.getVisibleViewsAsync(new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+
+		    	final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
-						final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> _this = this;
-						final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
-									
-									@Override
-									public void onConnectionRegained() {
-										FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
-											
-											@Override
-											public void onGetFileSystemComplete(FileSystem fileSystem) {
-												fileSystem.getVisibleViewsAsync(_this);
-											}
-										});
-									}
-								});
-										
-						if (isIoException || result == null) return;
+						if (result == null) return;
 						
 						final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 										
@@ -89,9 +75,26 @@ public class CategoryFragment extends Fragment {
 						
 						category.getSubItemsAsync();
 					}
+				};
+				
+				final HandleViewIoException handleViewIoException = new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+								
+					@Override
+					public void onConnectionRegained() {
+						final OnConnectionRegainedListener _this = this;
+						FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
+							
+							@Override
+							public void onGetFileSystemComplete(FileSystem fileSystem) {
+								fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(getActivity(), _this));
+							}
+						});
+					}
 				});
+				
+				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-		});
+    	});
     	
         return layout;
     }
@@ -129,6 +132,7 @@ public class CategoryFragment extends Fragment {
 		return listView;
     }
 
+	@SuppressWarnings("unchecked")
 	private ExpandableListView BuildStandardItemView(final Item category, final View loadingView) {
 		final ExpandableListView listView = new ExpandableListView(getActivity());
     	listView.setVisibility(View.INVISIBLE);
@@ -137,15 +141,7 @@ public class CategoryFragment extends Fragment {
 
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
-				final boolean isIoException = ErrorHelpers.HandleViewIoException(getActivity(), owner, new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						category.getSubItemsAsync();
-					}
-				});
-				
-				if (isIoException || result == null) return;
+				if (result == null) return;
 				
 				final Context context = getActivity();
 				if (context == null) return;
@@ -189,6 +185,13 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onItemCompleteListener);
+		category.setOnItemsErrorListener(new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+												
+												@Override
+												public void onConnectionRegained() {
+													category.getSubItemsAsync();
+												}
+											}));
 		
 		return listView;
 	}

@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteLi
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
-import com.lasthopesoftware.threading.ISimpleTask;
 
 
 public class Files implements IItemFiles {
@@ -101,11 +100,15 @@ public class Files implements IItemFiles {
 		}
 	}
 	
-	public void getFileStringList(ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete) {
+	public final void getFileStringList(OnCompleteListener< String> onGetStringListComplete) {
 		getFileStringList(-1, onGetStringListComplete);
 	}
 	
-	public void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete) {
+	public final void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete) {
+		getFileStringList(option, onGetStringListComplete, null);
+	}
+	
+	public void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete, final IDataTask.OnErrorListener<String> onGetStringListError) {
 		final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
 			
 			@Override
@@ -119,13 +122,8 @@ public class Files implements IItemFiles {
 			}
 		});
 		
-		getStringListTask.addOnErrorListener(new ISimpleTask.OnErrorListener<String, Void, String>() {
-			
-			@Override
-			public boolean onError(ISimpleTask<String, Void, String> owner, Exception innerException) {
-				return innerException instanceof IOException;
-			}
-		});
+		if (onGetStringListError != null)
+			getStringListTask.addOnErrorListener(onGetStringListError);
 		
 		getStringListTask.addOnCompleteListener(onGetStringListComplete);
 		getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));

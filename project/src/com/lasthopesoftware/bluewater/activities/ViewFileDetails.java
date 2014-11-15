@@ -24,7 +24,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.FileDetailsAdapter;
-import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
+import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.FormattedFileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
@@ -108,11 +108,11 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				if (handleIoError(owner)) return;
+				if (result == null) return;
 				tvFileName.setText(result);
 			}
 		});
-        getFileNameTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+        getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFileNameTask.execute();
         
         final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -131,8 +131,6 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
-				if (handleIoError(owner)) return;
-				
 				rbFileRating.setRating(result);
 				rbFileRating.invalidate();
 				
@@ -146,7 +144,7 @@ public class ViewFileDetails extends Activity {
 				});
 			}
 		});
-		getRatingsTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+		getRatingsTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
 		getRatingsTask.execute();
         
         final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
@@ -170,14 +168,13 @@ public class ViewFileDetails extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
-				if (handleIoError(owner)) return;
 				
 				lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
 				pbLoadingFileDetails.setVisibility(View.INVISIBLE);
 				lvFileDetails.setVisibility(View.VISIBLE);
 			}
 		});
-        getFilePropertiesTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+        getFilePropertiesTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFilePropertiesTask.execute();
                 
         ImageAccess.getImage(this, fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
@@ -194,11 +191,7 @@ public class ViewFileDetails extends Activity {
 			}
 		});
 	}
-	
-	private boolean handleIoError(@SuppressWarnings("rawtypes") ISimpleTask task) {
-		return ErrorHelpers.HandleViewIoException(this, task, mOnConnectionRegainedListener);
-	}
-	
+		
 	@Override
 	public void onStart() {
 		super.onStart();

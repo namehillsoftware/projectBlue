@@ -6,8 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.LinkedList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -221,13 +219,18 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public Bitmap getResult() throws ExecutionException, InterruptedException {
-		return mImageAccessTask.getResult();
+	public Bitmap get() throws Exception {
+		return mImageAccessTask.get();
 	}
 
 	@Override
-	public LinkedList<Exception> getExceptions() {
-		return mImageAccessTask.getExceptions();
+	public Exception getException() {
+		return mImageAccessTask.getException();
+	}
+
+	@Override
+	public void cancel(boolean interrupt) {
+		mImageAccessTask.cancel(interrupt);
 	}
 
 	@Override
@@ -253,6 +256,11 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	@Override
 	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnCancelListener(listener);
+	}
+
+	@Override
+	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.addOnErrorListener(listener);
 	}
 
 	@Override
@@ -283,10 +291,5 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	@Override
 	public boolean isCancelled() {
 		return mImageAccessTask.isCancelled();
-	}
-
-	@Override
-	public void reportProgress(Void... values) {
-		mImageAccessTask.reportProgress(values);
 	}
 }

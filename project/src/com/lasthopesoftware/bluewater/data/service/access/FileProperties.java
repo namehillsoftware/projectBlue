@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,7 +25,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class FileProperties {
 	private static final int maxSize = 200;
@@ -134,30 +132,30 @@ public class FileProperties {
 		});
 		
 		filePropertiesTask.addOnErrorListener(new OnErrorListener<String, Void, SortedMap<String,String>>() {
-			
+
 			@Override
-			public boolean onError(ISimpleTask<String, Void, SortedMap<String, String>> owner, Exception innerException) {
-				return !(innerException instanceof IOException);
+			public boolean onError(ISimpleTask<String, Void, SortedMap<String, String>> owner, boolean isHandled, Exception innerException) {
+				return !isHandled && innerException instanceof IOException;
 			}
+			
 		});
 
+		SortedMap<String, String> filePropertiesResult;
 		try {
-			SortedMap<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
+			filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
 			
-			if (filePropertiesTask.getState() == SimpleTaskState.ERROR) {
-				for (Exception e : filePropertiesTask.getExceptions()) {
-					if (e instanceof IOException) throw (IOException)e;
-				}
-			}
 			
 			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
 			
 			result = Collections.unmodifiableSortedMap(filePropertiesResult);
 			
 			mProperties.putAll(filePropertiesResult);
+			
+		} catch (IOException ioe) {
+			throw ioe;
 		} catch (InterruptedException e) {
 			Log.d(getClass().toString(), e.getMessage());
-		} catch (ExecutionException e) {
+		} catch (Exception e) {
 			LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
 		}
 		

@@ -143,7 +143,7 @@ public class FileCache {
 		
 		try {
 			return getTask.executeOnExecutor(DatabaseHandler.databaseExecutor).get();
-		} catch (InterruptedException | ExecutionException e) {
+		} catch (Exception e) {
 			mLogger.error("There was an error running the database task.", e);
 			return null;
 		}

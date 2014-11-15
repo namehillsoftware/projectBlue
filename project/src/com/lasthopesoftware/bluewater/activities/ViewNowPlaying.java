@@ -31,7 +31,6 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.HandleViewNowPlayingMessages;
 import com.lasthopesoftware.bluewater.activities.ViewNowPlayingHelpers.ProgressTrackerTask;
-import com.lasthopesoftware.bluewater.activities.common.ErrorHelpers;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
@@ -50,10 +49,12 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
+@SuppressWarnings("rawtypes")
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
@@ -343,16 +344,13 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (owner.getState() == SimpleTaskState.ERROR) return;
 					
 					mNowPlayingArtist.setText(result);
 					mViewStructure.nowPlayingArtist = result;
 				}
 			});
-			getArtistTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+			addOnErrorListener(getArtistTask, file);
 			getArtistTask.execute();
 			
 			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
@@ -370,16 +368,13 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (owner.getState() == SimpleTaskState.ERROR) return;
 					
 					mNowPlayingTitle.setText(result);
 					mViewStructure.nowPlayingTitle = result;
 				}
 			});
-			getTitleTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+			addOnErrorListener(getTitleTask, file);
 			getTitleTask.execute();
 						
 			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -399,10 +394,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
-					if (owner.getState() == SimpleTaskState.ERROR && containsIoException(owner.getExceptions())) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (owner.getState() == SimpleTaskState.ERROR) return;
 					
 					mViewStructure.nowPlayingRating = Float.valueOf(result);
 					
@@ -419,7 +411,7 @@ public class ViewNowPlaying extends Activity implements
 					});
 				}
 			});
-			getRatingsTask.addOnErrorListener(ErrorHelpers.OnSimpleIoExceptionErrors);
+			addOnErrorListener(getRatingsTask, file);
 			getRatingsTask.execute();
 			
 			mSongProgressBar.setMax(file.getDuration());
@@ -427,6 +419,18 @@ public class ViewNowPlaying extends Activity implements
 		} catch (IOException ioE) {
 			resetViewOnReconnect(file);
 		}
+	}
+	
+	private final <TParams, TProgress, TResult> void addOnErrorListener(final ISimpleTask<TParams, TProgress, TResult> simpleTask, final File file) {
+		simpleTask.addOnErrorListener(new OnErrorListener<TParams, TProgress, TResult>() {
+
+			@Override
+			public boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException) {
+				if (isHandled) return false;
+				resetViewOnReconnect(file);
+				return true;
+			}
+		});
 	}
 		
 	private void displayImageBitmap() {
@@ -460,13 +464,6 @@ public class ViewNowPlaying extends Activity implements
 			}
 		};
 		mHideTimer.schedule(mTimerTask, 5000);
-	}
-	
-	private static boolean containsIoException(List<Exception> exceptions) {
-		for (Exception exception : exceptions)
-			if (exception instanceof IOException) return true;
-		
-		return false;
 	}
 	
 	private void resetViewOnReconnect(final File file) {

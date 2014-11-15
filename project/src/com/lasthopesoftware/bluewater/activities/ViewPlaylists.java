@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -17,12 +15,12 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.PlaylistAdapter;
 import com.lasthopesoftware.bluewater.activities.adapters.filelist.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
@@ -64,33 +62,7 @@ public class ViewPlaylists extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (!(exception instanceof IOException)) continue;
-						
-						PollConnection.Instance.get(thisContext).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-							
-							@Override
-							public void onConnectionRegained() {
-								FileSystem.Instance.get(thisContext, new OnGetFileSystemCompleteListener() {
-									
-									@Override
-									public void onGetFileSystemComplete(FileSystem fileSystem) {
-										fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete);
-									}
-								});
-							}
-						});
-						
-						PollConnection.Instance.get(thisContext).startPolling();
-						
-						thisContext.startActivity(new Intent(thisContext, WaitForConnection.class));
-						break;
-					}
-					return;
-				}
-				
-				if (result == null) return;
+				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
 				for (IItem<?> item : result) {
 					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
@@ -105,9 +77,16 @@ public class ViewPlaylists extends FragmentActivity {
 		
 		FileSystem.Instance.get(thisContext, new OnGetFileSystemCompleteListener() {
 			
+			@SuppressWarnings("unchecked")
 			@Override
-			public void onGetFileSystemComplete(FileSystem fileSystem) {
-				fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete);
+			public void onGetFileSystemComplete(final FileSystem fileSystem) {
+				fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete, new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
+					
+					@Override
+					public void onConnectionRegained() {
+						fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete, new HandleViewIoException(thisContext, this));
+					}
+				}));
 			}
 		});
 	}

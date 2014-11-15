@@ -1,12 +1,14 @@
 package com.lasthopesoftware.threading;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 import android.os.AsyncTask;
 
-public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult> {
+public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult>, Runnable {
 
+	private AsyncTask<TParams, TProgress, TResult> mTask;
+	
 	private TResult mResult;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
@@ -21,17 +23,26 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	public SimpleTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
 		mOnExecuteListener = onExecuteListener;
 	}
+		
+	@SuppressWarnings("unchecked")
+	public final SimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
+		getTask().execute(params);
+		return this;
+	}
 	
-	@Override
-	protected final void onPreExecute() {
-		super.onPreExecute();
-		if (mOnStartListeners == null) return;
-		for (OnStartListener<TParams, TProgress, TResult> listener : mOnStartListeners) listener.onStart(this);
+	@SuppressWarnings("unchecked")
+	public final SimpleTask<TParams, TProgress, TResult> executeOnExecutor(Executor exec, TParams... params) {
+		getTask().executeOnExecutor(exec, params);
+		return this;
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
-	protected final TResult doInBackground(TParams... params) {
+	public void run() {
+		executeListener();
+	}
+	
+	@SafeVarargs
+	private final TResult executeListener(TParams... params) {
 		mState = SimpleTaskState.EXECUTING;
 		
 		try {
@@ -49,38 +60,91 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 		return mException;
 	}
 	
-	@Override
-	@SuppressWarnings("unchecked")
-	public final void reportProgress(TProgress... values) {
-		this.publishProgress(values);
+	
+	private final AsyncTask<TParams, TProgress, TResult> getTask() {
+		if (mTask != null) return mTask;
+		
+		final SimpleTask<TParams, TProgress, TResult> _this = this;
+		mTask = new AsyncTask<TParams, TProgress, TResult>() {
+
+			@Override
+			protected final void onPreExecute() {
+				super.onPreExecute();
+				if (mOnStartListeners == null) return;
+				for (OnStartListener<TParams, TProgress, TResult> listener : mOnStartListeners) listener.onStart(_this);
+			}
+			
+			@Override
+			@SuppressWarnings("unchecked")
+			protected final TResult doInBackground(TParams... params) {
+				return executeListener(params);
+			}
+			
+			@Override
+			@SuppressWarnings("unchecked")
+			protected final void onProgressUpdate(TProgress... values) {
+				if (mOnProgressListeners == null) return;
+				for (OnProgressListener<TParams, TProgress, TResult> progressListener : mOnProgressListeners) progressListener.onReportProgress(_this, values);
+			}
+			
+			@Override
+			protected final void onPostExecute(TResult result) {
+
+				if (isErrorHandled()) return;
+				
+				super.onPostExecute(result);
+				
+				if (mOnCompleteListeners == null) return;
+				for (OnCompleteListener<TParams, TProgress, TResult> completeListener : mOnCompleteListeners) completeListener.onComplete(_this, result);
+			}
+				
+			@Override
+			protected final void onCancelled(TResult result) {
+				if (isErrorHandled()) return;
+				
+				mState = SimpleTaskState.CANCELLED;
+				super.onCancelled(result);
+				if (mOnCancelListeners == null) return;
+				for (OnCancelListener<TParams, TProgress, TResult> cancelListener : mOnCancelListeners) cancelListener.onCancel(_this, result);
+			}
+			
+		};
+		
+		return mTask;
+	}
+	
+	/**
+	 * 
+	 * @return True if there is an error and it is handled
+	 */
+	private final boolean isErrorHandled() {
+		if (mState != SimpleTaskState.ERROR) return false;
+		if (mOnErrorListeners != null) {
+			boolean isHandled = false;
+			for (OnErrorListener<TParams, TProgress, TResult> errorListener : mOnErrorListeners)
+				isHandled |= errorListener.onError(this, isHandled, mException);
+			return isHandled;
+		}
+		return false;
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
-	protected final void onProgressUpdate(TProgress... values) {
-		if (mOnProgressListeners == null) return;
-		for (OnProgressListener<TParams, TProgress, TResult> progressListener : mOnProgressListeners) progressListener.onReportProgress(this, values);
+	public TResult get() throws Exception {
+		final TResult result = getTask().get();
+		
+		if (mException != null) throw mException;
+		
+		return result; 
+	}
+
+	@Override
+	public void cancel(boolean interrupt) {
+		getTask().cancel(interrupt);
 	}
 	
 	@Override
-	protected final void onPostExecute(TResult result) {		
-		super.onPostExecute(result);
-		
-		if (mOnCompleteListeners == null) return;
-		for (OnCompleteListener<TParams, TProgress, TResult> completeListener : mOnCompleteListeners) completeListener.onComplete(this, result);
-	}
-		
-	@Override
-	protected final void onCancelled(TResult result) {
-		mState = SimpleTaskState.CANCELLED;
-		super.onCancelled(result);
-		if (mOnCancelListeners == null) return;
-		for (OnCancelListener<TParams, TProgress, TResult> cancelListener : mOnCancelListeners) cancelListener.onCancel(this, result);
-	}
-		
-	@Override
-	public TResult getResult() throws ExecutionException, InterruptedException {
-		return this.get();
+	public boolean isCancelled() {
+		return mState == SimpleTaskState.CANCELLED;
 	}
 	
 	@Override
@@ -106,6 +170,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	}
 
 	@Override
+	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+		mOnErrorListeners = addListener(listener, mOnErrorListeners);
+	}
+
+	@Override
 	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnStartListeners);
 	}
@@ -118,6 +187,11 @@ public class SimpleTask<TParams, TProgress, TResult> extends AsyncTask<TParams, 
 	@Override
 	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnCancelListeners);
+	}
+	
+	@Override
+	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+		removeListener(listener, mOnErrorListeners);
 	}
 
 	@Override

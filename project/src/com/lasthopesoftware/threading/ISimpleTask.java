@@ -1,11 +1,10 @@
 package com.lasthopesoftware.threading;
 
-import java.util.concurrent.ExecutionException;
 
 
 public interface ISimpleTask<TParams, TProgress, TResult> {
 
-	TResult getResult() throws ExecutionException, InterruptedException;
+	TResult get() throws Exception;
 	
 	Exception getException();
 	
@@ -15,16 +14,16 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
 	void addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
+	void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
 	void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
 	void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
 	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
 	void removeOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
+	void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
+	void cancel(boolean interrupt);
 	boolean isCancelled();
-	
-	@SuppressWarnings("unchecked")
-	void reportProgress(TProgress... values);
 	
 	/* Events */
 	public interface OnStartListener<TParams, TProgress, TResult> {
@@ -47,5 +46,9 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	public interface OnCancelListener<TParams, TProgress, TResult> {
 		void onCancel(ISimpleTask<TParams, TProgress, TResult> owner, TResult result);
+	}
+	
+	public interface OnErrorListener<TParams, TProgress, TResult> {
+		boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException);
 	}
 }
