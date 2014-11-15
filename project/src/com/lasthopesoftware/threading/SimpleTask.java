@@ -7,7 +7,7 @@ import android.os.AsyncTask;
 
 public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TParams, TProgress, TResult>, Runnable {
 
-	private AsyncTask<TParams, TProgress, TResult> mTask;
+	private final AsyncTask<TParams, TProgress, TResult> mTask;
 	
 	private TResult mResult;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
@@ -22,47 +22,6 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 		
 	public SimpleTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
 		mOnExecuteListener = onExecuteListener;
-	}
-		
-	@SuppressWarnings("unchecked")
-	public final SimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
-		getTask().execute(params);
-		return this;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public final SimpleTask<TParams, TProgress, TResult> executeOnExecutor(Executor exec, TParams... params) {
-		getTask().executeOnExecutor(exec, params);
-		return this;
-	}
-	
-	@Override
-	public void run() {
-		executeListener();
-	}
-	
-	@SafeVarargs
-	private final TResult executeListener(TParams... params) {
-		mState = SimpleTaskState.EXECUTING;
-		
-		try {
-			mResult = mOnExecuteListener.onExecute(this, params);
-			mState = SimpleTaskState.SUCCESS;
-		} catch (Exception exception) {
-			mException = exception;
-			mState = SimpleTaskState.ERROR;
-		}
-		return mResult;
-	}
-	
-	@Override
-	public Exception getException() {
-		return mException;
-	}
-	
-	
-	private final AsyncTask<TParams, TProgress, TResult> getTask() {
-		if (mTask != null) return mTask;
 		
 		final SimpleTask<TParams, TProgress, TResult> _this = this;
 		mTask = new AsyncTask<TParams, TProgress, TResult>() {
@@ -109,8 +68,42 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 			}
 			
 		};
+	}
 		
-		return mTask;
+	@SuppressWarnings("unchecked")
+	public final SimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
+		mTask.execute(params);
+		return this;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public final SimpleTask<TParams, TProgress, TResult> executeOnExecutor(Executor exec, TParams... params) {
+		mTask.executeOnExecutor(exec, params);
+		return this;
+	}
+	
+	@Override
+	public void run() {
+		executeListener();
+	}
+	
+	@SafeVarargs
+	private final TResult executeListener(TParams... params) {
+		mState = SimpleTaskState.EXECUTING;
+		
+		try {
+			mResult = mOnExecuteListener.onExecute(this, params);
+			mState = SimpleTaskState.SUCCESS;
+		} catch (Exception exception) {
+			mException = exception;
+			mState = SimpleTaskState.ERROR;
+		}
+		return mResult;
+	}
+	
+	@Override
+	public Exception getException() {
+		return mException;
 	}
 	
 	/**
@@ -130,7 +123,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	
 	@Override
 	public TResult get() throws Exception {
-		final TResult result = getTask().get();
+		final TResult result = mTask.get();
 		
 		if (mException != null) throw mException;
 		
@@ -139,12 +132,17 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 
 	@Override
 	public void cancel(boolean interrupt) {
-		getTask().cancel(interrupt);
+		mTask.cancel(interrupt);
 	}
 	
 	@Override
 	public boolean isCancelled() {
 		return mState == SimpleTaskState.CANCELLED;
+	}
+
+	@Override
+	public SimpleTaskState getState() {
+		return mState;
 	}
 	
 	@Override
@@ -209,10 +207,5 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	private static final <T> void removeListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
 		if (listenerQueue == null || !listenerQueue.contains(listener)) return;
 		listenerQueue.remove(listener);
-	}
-
-	@Override
-	public synchronized SimpleTaskState getState() {
-		return mState;
 	}
 }

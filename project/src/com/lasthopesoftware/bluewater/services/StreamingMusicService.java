@@ -531,7 +531,7 @@ public class StreamingMusicService extends Service implements
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
 		
-		if (mThis == null) mThis = this;
+		mThis = this;
 		
 		if (ConnectionManager.getFormattedUrl() == null) {
 			// TODO this should probably be its own service soon

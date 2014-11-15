@@ -6,22 +6,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCancelListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnStartListener;
-import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
-public class PollConnection implements OnExecuteListener<String, Void, Void> {
+public class PollConnection {
 	
 	private static final ExecutorService pollService = Executors.newSingleThreadExecutor(); 
 	
-	private final SimpleTask<String, Void, Void> mTask;
+	private final AsyncTask<String, Void, Void> mTask;
 	private final Context mContext;
 	private static final int mSleepTime = 2000;
 	private int mConnectionTime = 2000;
@@ -37,99 +33,83 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	private PollConnection(Context context) {
 		mContext = context;
 		
-		mTask = new SimpleTask<String, Void, Void>(this);
-		
-		mTask.addOnStartListener(new OnStartListener<String, Void, Void>() {
-			
+		mTask = new AsyncTask<String, Void, Void>() {
+
 			@Override
-			public void onStart(ISimpleTask<String, Void, Void> owner) {
+			protected void onPreExecute() {
 				synchronized (mUniqueOnConnectionLostListeners) {
 					for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
 				}
 			}
-		});
-		
-		mTask.addOnCompleteListener(new OnCompleteListener<String, Void, Void>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, Void> owner, Void result) {
+			protected Void doInBackground(String... params) {
+				// Don't use timeout since if it can't resolve a host it will throw an exception immediately
+				// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
+				while (!isCancelled() && !mIsConnectionRestored.get()) {
+					
+					try {
+						Thread.sleep(mSleepTime);
+					} catch (InterruptedException ie) {
+						return null;
+					}
+					
+					if (isCancelled()) return null;
+					
+					if (!mIsRefreshing.get()) {
+						mIsRefreshing.set(true);
+						ConnectionManager.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
+			
+							@Override
+							public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+								mIsRefreshing.set(false);
+								if (result == Boolean.TRUE) mIsConnectionRestored.set(true);
+								// Build the connect time up to 32 seconds
+								if (mConnectionTime < 32000) mConnectionTime *= 2;	
+							}
+							
+						});
+					}
+				}
+				return null;
+			}
+			
+			@Override
+			protected void onPostExecute(Void result) {
 				for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
 				
 				clearCompleteListeners();
 			}
-		});
-		
-		mTask.addOnCancelListener(new OnCancelListener<String, Void, Void>() {
 			
 			@Override
-			public void onCancel(ISimpleTask<String, Void, Void> owner, Void result) {
+			protected void onCancelled(Void result) {
 				for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
 				
 				clearCompleteListeners();
 			}
-		});
+		};
 	}
 	
 	private void clearCompleteListeners() {
 		mUniqueOnConnectionRegainedListeners.clear();
 		mUniqueOnCancelListeners.clear();
 	}
-
-	@Override
-	public Void onExecute(ISimpleTask<String, Void, Void> owner, String... params) throws Exception {
-		// Don't use timeout since if it can't resolve a host it will throw an exception immediately
-		// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
-		while (!mIsConnectionRestored.get()) {
-			
-			try {
-				Thread.sleep(mSleepTime);
-			} catch (InterruptedException ie) {
-				return null;
-			}
-			
-			if (!mIsRefreshing.get()) {
-				mIsRefreshing.set(true);
-				ConnectionManager.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
-	
-					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-						mIsRefreshing.set(false);
-						if (result == Boolean.TRUE) mIsConnectionRestored.set(true);
-						// Build the connect time up to 32 seconds
-						if (mConnectionTime < 32000) mConnectionTime *= 2;	
-					}
-					
-				});
-			}
-		}
-		
-		return null;
-	}
 	
 	public synchronized void startPolling() {
-		if (mTask.getState() != SimpleTaskState.EXECUTING) mTask.executeOnExecutor(pollService);
+		if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
 	}
 	
-	public void stopPolling() {
+	public synchronized void stopPolling() {
 		mTask.cancel(true);
 	}
 	
 	public boolean isRunning() {
-		return mTask.getState() == SimpleTaskState.EXECUTING;
+		return mTask.getStatus() == AsyncTask.Status.RUNNING;
 	}
 	
-	public boolean isFinished() {
-		return mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING;
+	public synchronized boolean isFinished() {
+		return mTask.getStatus() == AsyncTask.Status.FINISHED;
 	}
-
-	public Exception getException() {
-		return mTask.getException();
-	}
-
-	public SimpleTaskState getState() {
-		return mTask.getState();
-	}
-
 	
 	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener)
@@ -157,13 +137,13 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 			mUniqueOnCancelListeners.add(listener);
 		}
 	}
-
-	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-		synchronized(mUniqueOnErrorListeners) {
-			if (mUniqueOnErrorListeners.add(listener))
-				mTask.addOnErrorListener(listener);
-		}
-	}
+//
+//	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
+//		synchronized(mUniqueOnErrorListeners) {
+//			if (mUniqueOnErrorListeners.add(listener))
+//				mTask.addOnErrorListener(listener);
+//		}
+//	}
 
 	public void removeOnConnectionLostListener(OnConnectionLostListener listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
@@ -182,13 +162,13 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 			mUniqueOnCancelListeners.remove(listener);
 		}
 	}
-
-	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-		synchronized(mUniqueOnErrorListeners) {
-			if (mUniqueOnErrorListeners.remove(listener))
-				mTask.removeOnErrorListener(listener);
-		}
-	}
+//
+//	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
+//		synchronized(mUniqueOnErrorListeners) {
+//			if (mUniqueOnErrorListeners.remove(listener))
+//				mTask.removeOnErrorListener(listener);
+//		}
+//	}
 	
 	public interface OnConnectionLostListener {
 		void onConnectionLost();
