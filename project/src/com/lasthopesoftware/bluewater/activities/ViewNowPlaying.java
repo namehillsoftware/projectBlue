@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -54,7 +53,6 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-@SuppressWarnings("rawtypes")
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
@@ -285,7 +283,6 @@ public class ViewNowPlaying extends Activity implements
 		return mSongProgressBar;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private void setView(final File file) {
 		
 		try {
@@ -426,7 +423,8 @@ public class ViewNowPlaying extends Activity implements
 
 			@Override
 			public boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException) {
-				if (isHandled) return false;
+				if (isHandled || !(innerException instanceof IOException)) return false;
+				
 				resetViewOnReconnect(file);
 				return true;
 			}

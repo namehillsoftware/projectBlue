@@ -1,14 +1,11 @@
 package com.lasthopesoftware.bluewater.data.service.helpers.connection;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.AsyncTask.Status;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -110,7 +107,7 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	}
 	
 	public synchronized void startPolling() {
-		if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
+		if (mTask.getState() != SimpleTaskState.EXECUTING) mTask.executeOnExecutor(pollService);
 	}
 	
 	public void stopPolling() {
@@ -118,7 +115,7 @@ public class PollConnection implements OnExecuteListener<String, Void, Void> {
 	}
 	
 	public boolean isRunning() {
-		return mTask.getStatus() == Status.RUNNING;
+		return mTask.getState() == SimpleTaskState.EXECUTING;
 	}
 	
 	public boolean isFinished() {

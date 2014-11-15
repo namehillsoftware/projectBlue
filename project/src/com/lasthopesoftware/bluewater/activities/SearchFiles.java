@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.activities;
 
-import java.io.IOException;
 import java.util.List;
 
 import android.app.SearchManager;
@@ -14,16 +13,15 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.filelist.FileListAdapter;
+import com.lasthopesoftware.bluewater.activities.common.HandleViewIoException;
 import com.lasthopesoftware.bluewater.activities.common.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.activities.common.ViewUtils;
 import com.lasthopesoftware.bluewater.activities.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class SearchFiles extends FragmentActivity {
 
@@ -56,6 +54,7 @@ public class SearchFiles extends FragmentActivity {
         handleIntent(intent);
     }
 	
+	@SuppressWarnings("unchecked")
 	private void handleIntent(Intent intent) {
 		if (!Intent.ACTION_SEARCH.equals(intent.getAction())) return;
         
@@ -70,26 +69,6 @@ public class SearchFiles extends FragmentActivity {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) {
-					for (Exception exception : owner.getExceptions()) {
-						if (!(exception instanceof IOException)) continue;
-						
-						PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-							
-							@Override
-							public void onConnectionRegained() {
-								filesContainer.getFilesAsync();
-							}
-						});
-						PollConnection.Instance.get(_this).startPolling();
-						
-						_this.startActivity(new Intent(_this, WaitForConnection.class));
-						
-						break;
-					}
-					return;
-				}
-				
 				if (result == null) return;
 				
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
@@ -100,6 +79,15 @@ public class SearchFiles extends FragmentActivity {
 		    	
 			}
 		});
+        
+        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new OnConnectionRegainedListener() {
+			
+				@Override
+				public void onConnectionRegained() {
+					filesContainer.getFilesAsync();
+				}
+			})
+        );
                 
         fileListView.setVisibility(View.VISIBLE);
         pbLoading.setVisibility(View.INVISIBLE);

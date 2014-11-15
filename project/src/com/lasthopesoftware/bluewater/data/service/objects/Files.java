@@ -101,7 +101,13 @@ public class Files implements IItemFiles {
 	}
 	
 	public final void getFileStringList(OnCompleteListener< String> onGetStringListComplete) {
-		getFileStringList(-1, onGetStringListComplete);
+		getFileStringList(onGetStringListComplete, null);
+	}
+	
+
+	@Override
+	public void getFileStringList(OnCompleteListener<String> onGetStringListComplete, OnErrorListener<String> onGetStringListError) {
+		getFileStringList(-1, onGetStringListComplete, onGetStringListError);
 	}
 	
 	public final void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete) {

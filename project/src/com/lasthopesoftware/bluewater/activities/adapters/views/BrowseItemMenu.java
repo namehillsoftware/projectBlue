@@ -20,6 +20,8 @@ import com.lasthopesoftware.bluewater.activities.ViewFiles;
 import com.lasthopesoftware.bluewater.activities.common.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener;
 import com.lasthopesoftware.bluewater.activities.listeners.OnSwipeListener.OnSwipeRightListener;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
 import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
@@ -28,7 +30,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class BrowseItemMenu {
 	private static class ViewHolder {
@@ -110,7 +111,7 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(final View v) {
-			mItem.getFiles().getFileStringList(new OnGetFileStringListCompleteListener(v, this));
+			mItem.getFiles().getFileStringList(new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
 		}
 	}
 	
@@ -123,7 +124,7 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onClick(View v) {
-			mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListCompleteListener(v, this));
+			mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
 		}
 	}
 	
@@ -143,33 +144,44 @@ public class BrowseItemMenu {
 		}
 	}
 	
-	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String, Void, String> {
-		private final View mView;
-		private final OnClickListener mListener;
+	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String> {
+		private final Context mContext;
 		
-		public OnGetFileStringListCompleteListener(final View view, final OnClickListener listener) {
-			mView = view;
-			mListener = listener;
+		public OnGetFileStringListCompleteListener(final Context context) {
+			mContext = context;
 		}
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
-			for (Exception exception : owner.getExceptions()) {
-				if (exception instanceof IOException) {
-					PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-						
-						@Override
-						public void onConnectionRegained() {
-							mListener.onClick(mView);
-						}
-					});
+			StreamingMusicService.streamMusic(mContext, result);
+		}
+		
+	}
+	
+	private static class OnGetFileStringListErrorListener implements OnErrorListener<String> {
+		private final View mView;
+		private final OnClickListener mOnClickListener;
+		
+		public OnGetFileStringListErrorListener(final View view, final OnClickListener onClickListener) {
+			mView = view;
+			mOnClickListener = onClickListener;
+		}		
+		
+		@Override
+		public boolean onError(ISimpleTask<String, Void, String> owner, boolean isHandled, Exception innerException) {
+			if (innerException instanceof IOException) {
+				PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 					
-					WaitForConnectionDialog.show(mView.getContext());
-					return;
-				}
+					@Override
+					public void onConnectionRegained() {
+						mOnClickListener.onClick(mView);
+					}
+				});
+				
+				WaitForConnectionDialog.show(mView.getContext());
+				return true;
 			}
-			
-			StreamingMusicService.streamMusic(mView.getContext(), result); 
+			return false;
 		}
 		
 	}
