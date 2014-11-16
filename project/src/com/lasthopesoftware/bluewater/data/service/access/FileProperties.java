@@ -22,7 +22,6 @@ import android.util.Log;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -95,45 +94,47 @@ public class FileProperties {
 	public SortedMap<String, String> getRefreshedProperties() throws IOException {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		final SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
-			
-			@Override
-			public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
-				final TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-				
-				try {
-					final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
-					conn.setReadTimeout(45000);
-					try {
-						final InputStream is = conn.getInputStream();
-						try {
-							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-							if (xml.size() < 1) return returnProperties;
-					    	
-					    	for (XmlElement el : xml.get(0))
-					    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-					    	
-					    	return returnProperties;
-						} finally {
-							is.close();
-						}
-					} finally {
-						conn.disconnect();
-					}
-				} catch (MalformedURLException e) {
-					LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
-				} catch (XmlParseException e) {
-					LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
-				}
-				
-				return returnProperties;
-			}
-		});
-		
 		try {
-			final SortedMap<String, String> filePropertiesResult = filePropertiesTask.execute(filePropertiesExecutor).get();
+			final SortedMap<String, String> filePropertiesResult = SimpleTask.startNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String,String>>() {
+				
+				@Override
+				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+					final TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+					if (mProperties != null)
+						returnProperties.putAll(mProperties);
+					
+					try {
+						final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
+						conn.setReadTimeout(45000);
+						try {
+							final InputStream is = conn.getInputStream();
+							try {
+								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+								if (xml.size() == 0) {
+									return returnProperties;
+								}
+						    	
+						    	for (XmlElement el : xml.get(0))
+						    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+						    	
+						    	return returnProperties;
+							} finally {
+								is.close();
+							}
+						} finally {
+							conn.disconnect();
+						}
+					} catch (MalformedURLException e) {
+						LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+					} catch (XmlParseException e) {
+						LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+					}
+					
+					return returnProperties;
+				}
+			}).get();
 			
-			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
+			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);
 			
 			mProperties.putAll(filePropertiesResult);
 			
@@ -148,7 +149,7 @@ public class FileProperties {
 		
 		return Collections.unmodifiableSortedMap(mProperties);
 	}
-		
+	
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM_ARTIST = "Album Artist";
