@@ -47,13 +47,9 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
+import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.AsyncExceptionTask;
-import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
