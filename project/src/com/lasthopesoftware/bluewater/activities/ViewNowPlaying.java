@@ -332,7 +332,7 @@ public class ViewNowPlaying extends Activity implements
 						return mViewStructure.nowPlayingArtist;
 					
 					try {
-						return file.getProperty("Artist");
+						return file.getProperty(FileProperties.ARTIST);
 					} catch (IOException e) {
 						setException(e);
 						return null;
