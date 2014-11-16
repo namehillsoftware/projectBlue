@@ -93,14 +93,13 @@ public class FileProperties {
 	}
 	
 	public SortedMap<String, String> getRefreshedProperties() throws IOException {
-		SortedMap<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-		
+	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		final SimpleTask<String, Void, SortedMap<String,String>> filePropertiesTask = new SimpleTask<String, Void, SortedMap<String,String>>(new OnExecuteListener<String, Void, SortedMap<String,String>>() {
 			
 			@Override
 			public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
-				TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+				final TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 				
 				try {
 					final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
@@ -131,25 +130,14 @@ public class FileProperties {
 			}
 		});
 		
-		filePropertiesTask.addOnErrorListener(new OnErrorListener<String, Void, SortedMap<String,String>>() {
-
-			@Override
-			public boolean onError(ISimpleTask<String, Void, SortedMap<String, String>> owner, boolean isHandled, Exception innerException) {
-				return !isHandled && innerException instanceof IOException;
-			}
-			
-		});
-
-		SortedMap<String, String> filePropertiesResult;
 		try {
-			filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
+			final SortedMap<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
 			
 			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
 			
-			result = Collections.unmodifiableSortedMap(filePropertiesResult);
-			
 			mProperties.putAll(filePropertiesResult);
 			
+			return Collections.unmodifiableSortedMap(filePropertiesResult);
 		} catch (IOException ioe) {
 			throw ioe;
 		} catch (InterruptedException e) {
@@ -158,7 +146,7 @@ public class FileProperties {
 			LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
 		}
 		
-		return result;
+		return Collections.unmodifiableSortedMap(mProperties);
 	}
 		
 	/* Utility string constants */
