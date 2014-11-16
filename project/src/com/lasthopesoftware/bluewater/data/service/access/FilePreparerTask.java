@@ -7,6 +7,8 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import android.os.AsyncTask;
+
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -17,7 +19,7 @@ public class FilePreparerTask {
 
 	private final FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private static final int SLEEP_TIME = 5000;
-	private SimpleTask<Void, Void, Boolean> mTask;
+	private AsyncTask<Void, Void, Boolean> mTask;
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePreparerTask.class);
 	
@@ -29,24 +31,24 @@ public class FilePreparerTask {
 	}
 	
 	public void start() {
-		mTask = new SimpleTask<Void, Void, Boolean>(new OnExecuteListener<Void, Void, Boolean>() {
-			
+		mTask = new AsyncTask<Void, Void, Boolean>() {
+
 			@Override
-			public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
+			protected Boolean doInBackground(Void... params) {
 				if (mNextFilePlayer == null) return Boolean.FALSE;
 
 				mNextFilePlayer.initMediaPlayer();
 				double bufferTime = -1;
-				while (!owner.isCancelled() && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
+				while (!isCancelled() && mCurrentFilePlayer != null && mCurrentFilePlayer.isMediaPlayerCreated()) {
 					try {
-						if (owner.isCancelled()) return Boolean.FALSE;
+						if (isCancelled()) return Boolean.FALSE;
 						Thread.sleep(SLEEP_TIME);
-						if (owner.isCancelled()) return Boolean.FALSE;
+						if (isCancelled()) return Boolean.FALSE;
 					} catch (InterruptedException ie) {
 						return Boolean.FALSE;
 					}
 					
-					if (owner.isCancelled()) return Boolean.FALSE;
+					if (isCancelled()) return Boolean.FALSE;
 					
 					try {
 						if (bufferTime < 0) {
@@ -62,7 +64,7 @@ public class FilePreparerTask {
 							}
 						}
 						
-						if (owner.isCancelled()) return Boolean.FALSE;
+						if (isCancelled()) return Boolean.FALSE;
 						
 						if (mCurrentFilePlayer.getCurrentPosition() > (mCurrentFilePlayer.getDuration() - bufferTime) && !mNextFilePlayer.isPrepared()) {
 							mNextFilePlayer.prepareMpSynchronously();
@@ -75,8 +77,8 @@ public class FilePreparerTask {
 				}
 				return Boolean.FALSE;
 			}
-		});
-		
+			
+		};
 		mTask.executeOnExecutor(backgroundFileService);
 	}
 	
@@ -85,7 +87,7 @@ public class FilePreparerTask {
 	}
 
 	public boolean isDone() {
-		if (mTask == null) return true;
-		return mTask.getState() != SimpleTaskState.INITIALIZED && mTask.getState() != SimpleTaskState.EXECUTING;
+		if (mTask == null) return false;
+		return mTask.getStatus() == AsyncTask.Status.FINISHED;
 	}
 }
