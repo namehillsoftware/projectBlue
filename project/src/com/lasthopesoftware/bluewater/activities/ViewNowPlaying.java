@@ -390,12 +390,16 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				protected void onPostExecute(Float result, Exception exception) {
-					if (handleIoException(file, exception)) return;
+					if (handleIoException(file, exception)) {
+						mSongRating.setRating(0f);
+						mSongRating.setOnRatingBarChangeListener(null);
+						
+						return;
+					}
 					
-					mViewStructure.nowPlayingRating = Float.valueOf(result);
+					mViewStructure.nowPlayingRating = result;
 					
-					mSongRating.setRating(mViewStructure.nowPlayingRating);
-					mSongRating.invalidate();
+					mSongRating.setRating(result.floatValue());
 					
 					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
 						
