@@ -10,6 +10,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	private AsyncTask<TParams, TProgress, TResult> mTask;
 	
 	private TResult mResult;
+	private volatile boolean mIsErrorHandled = false;
 	private volatile SimpleTaskState mState = SimpleTaskState.INITIALIZED;
 	
 	private final OnExecuteListener<TParams, TProgress, TResult> mOnExecuteListener;
@@ -69,7 +70,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 				
 				@Override
 				protected final void onPostExecute(TResult result) {
-					if (isErrorHandled()) return;
+					if (handleError()) return;
 					
 					super.onPostExecute(result);
 					
@@ -79,7 +80,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 					
 				@Override
 				protected final void onCancelled(TResult result) {
-					if (isErrorHandled()) return;
+					if (handleError()) return;
 					
 					mState = SimpleTaskState.CANCELLED;
 					super.onCancelled(result);
@@ -126,13 +127,13 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	 * 
 	 * @return True if there is an error and it is handled
 	 */
-	private final boolean isErrorHandled() {
+	private final boolean handleError() {
 		if (mState != SimpleTaskState.ERROR) return false;
+		if (mIsErrorHandled) return true;
 		if (mOnErrorListeners != null) {
-			boolean isHandled = false;
 			for (OnErrorListener<TParams, TProgress, TResult> errorListener : mOnErrorListeners)
-				isHandled |= errorListener.onError(this, isHandled, mException);
-			return isHandled;
+				mIsErrorHandled |= errorListener.onError(this, mIsErrorHandled, mException);
+			return mIsErrorHandled;
 		}
 		return false;
 	}
@@ -185,12 +186,16 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	
 	@Override
 	public ISimpleTask<TParams, TProgress, TResult> addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
+		if (mState == SimpleTaskState.CANCELLED) listener.onCancel(this, mResult);
+		
 		mOnCancelListeners = addListener(listener, mOnCancelListeners);
 		return this;
 	}
 
 	@Override
 	public ISimpleTask<TParams, TProgress, TResult> addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+		if (mState == SimpleTaskState.ERROR) listener.onError(this, mIsErrorHandled, mException);
+		
 		mOnErrorListeners = addListener(listener, mOnErrorListeners);
 		return this;
 	}
