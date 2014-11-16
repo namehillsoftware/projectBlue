@@ -296,7 +296,6 @@ public class ViewNowPlaying extends Activity implements
 			
 			if (mViewStructure == null)
 				mViewStructure = new ViewStructure(file);
-			
 
 			if (mViewStructure.nowPlayingImage == null) {
 				try {				
@@ -346,10 +345,7 @@ public class ViewNowPlaying extends Activity implements
 			
 				@Override
 				protected void onPostExecute(String result, Exception exception) {
-					if (hasError() && exception instanceof IOException) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (handleIoException(file, exception)) return;
 					
 					mNowPlayingArtist.setText(result);
 					mViewStructure.nowPlayingArtist = result;
@@ -369,10 +365,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				protected void onPostExecute(String result, Exception exception) {
-					if (hasError() && exception instanceof IOException) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (handleIoException(file, exception)) return;
 					
 					mNowPlayingTitle.setText(result);
 					mViewStructure.nowPlayingTitle = result;
@@ -401,10 +394,7 @@ public class ViewNowPlaying extends Activity implements
 				
 				@Override
 				protected void onPostExecute(Float result, Exception exception) {
-					if (hasError() && exception instanceof IOException) {
-						resetViewOnReconnect(file);
-						return;
-					}
+					if (handleIoException(file, exception)) return;
 					
 					mViewStructure.nowPlayingRating = Float.valueOf(result);
 					
@@ -430,19 +420,15 @@ public class ViewNowPlaying extends Activity implements
 		}
 	}
 	
-	private final <TParams, TProgress, TResult> void addOnErrorListener(final ISimpleTask<TParams, TProgress, TResult> simpleTask, final File file) {
-		simpleTask.addOnErrorListener(new OnErrorListener<TParams, TProgress, TResult>() {
-
-			@Override
-			public boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException) {
-				if (isHandled || !(innerException instanceof IOException)) return false;
-				
-				resetViewOnReconnect(file);
-				return true;
-			}
-		});
-	}
+	private boolean handleIoException(File file, Exception exception) {
+		if (exception != null && exception instanceof IOException) {
+			resetViewOnReconnect(file);
+			return true;
+		}
 		
+		return false;
+	}
+	
 	private void displayImageBitmap() {
 		mNowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
 		mLoadingImg.setVisibility(View.INVISIBLE);
