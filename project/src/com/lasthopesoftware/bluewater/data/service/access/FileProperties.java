@@ -100,8 +100,9 @@ public class FileProperties {
 				@Override
 				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
 					final TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-					if (mProperties != null)
-						returnProperties.putAll(mProperties);
+					
+					// Seed with old properties first
+					returnProperties.putAll(mProperties);
 					
 					try {
 						final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
@@ -110,10 +111,7 @@ public class FileProperties {
 							final InputStream is = conn.getInputStream();
 							try {
 								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-								if (xml.size() == 0) {
-									return returnProperties;
-								}
-						    	
+														    	
 						    	for (XmlElement el : xml.get(0))
 						    		returnProperties.put(el.getAttribute("Name"), el.getValue());
 						    	
