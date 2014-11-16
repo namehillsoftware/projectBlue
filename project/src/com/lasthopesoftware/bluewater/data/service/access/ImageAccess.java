@@ -53,7 +53,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 	
 	private void execute() {
-		mImageAccessTask.executeOnExecutor(imageAccessExecutor);
+		mImageAccessTask.execute(imageAccessExecutor);
 	}
 		
 	public void cancel() {
@@ -229,8 +229,9 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public void cancel(boolean interrupt) {
+	public ISimpleTask<Void, Void, Bitmap> cancel(boolean interrupt) {
 		mImageAccessTask.cancel(interrupt);
+		return this;
 	}
 
 	@Override
@@ -239,53 +240,63 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public void addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnStartListener(listener);
+		return this;
 	}
 
 	@Override
-	public void addOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> addOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnProgressListener(listener);
+		return this;
 	}
 
 	@Override
-	public void addOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> addOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnCompleteListener(listener);
+		return this;
 	}
 
 	@Override
-	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnCancelListener(listener);
+		return this;
 	}
 
 	@Override
-	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.addOnErrorListener(listener);
+		return this;
 	}
 
 	@Override
-	public void removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
-		mImageAccessTask.removeOnStartListener(listener);		
+	public ISimpleTask<Void, Void, Bitmap> removeOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnStartListener(listener);
+		return this;
 	}
 
 	@Override
-	public void removeOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> removeOnProgressListener(com.lasthopesoftware.threading.ISimpleTask.OnProgressListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.removeOnProgressListener(listener);
+		return this;
 	}
 
 	@Override
-	public void removeOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> removeOnCompleteListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.removeOnCompleteListener(listener);
+		return this;
 	}
 
 	@Override
-	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
+	public ISimpleTask<Void, Void, Bitmap> removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<Void, Void, Bitmap> listener) {
 		mImageAccessTask.removeOnCancelListener(listener);
+		return this;
 	}
 
 	@Override
-	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
-		mImageAccessTask.removeOnErrorListener(listener);	
+	public ISimpleTask<Void, Void, Bitmap> removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<Void, Void, Bitmap> listener) {
+		mImageAccessTask.removeOnErrorListener(listener);
+		return this;
 	}
 
 	@Override

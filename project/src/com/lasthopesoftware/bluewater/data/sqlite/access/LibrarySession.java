@@ -65,7 +65,7 @@ public class LibrarySession {
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
 		
-		writeToDatabaseTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
+		writeToDatabaseTask.execute(DatabaseHandler.databaseExecutor);
 	}
 	
 	public static synchronized Library GetLibrary() throws NullPointerException {
@@ -95,7 +95,7 @@ public class LibrarySession {
 			}
 		});
 		
-		getLibraryTask.executeOnExecutor(DatabaseHandler.databaseExecutor);
+		getLibraryTask.execute(DatabaseHandler.databaseExecutor);
 	}
 	
 	public static Library GetLibrary(final Context context) {
@@ -145,7 +145,7 @@ public class LibrarySession {
 		});
 		
 		try {
-			return getLibrariesTask.executeOnExecutor(DatabaseHandler.databaseExecutor).get();
+			return getLibrariesTask.execute(DatabaseHandler.databaseExecutor).get();
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 		}

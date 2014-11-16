@@ -87,13 +87,13 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFilesAsync() {
-		getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
+		getNewFilesTask().execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams());
 	}
 	
 	@Override
 	public ArrayList<File> getFiles(int option) {
 		try {
-			return (ArrayList<File>) getNewFilesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
+			return (ArrayList<File>) getNewFilesTask().execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 			return getFiles();
@@ -132,7 +132,7 @@ public class Files implements IItemFiles {
 			getStringListTask.addOnErrorListener(onGetStringListError);
 		
 		getStringListTask.addOnCompleteListener(onGetStringListComplete);
-		getStringListTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));
+		getStringListTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));
 	}
 
 	protected DataTask<List<File>> getNewFilesTask() {

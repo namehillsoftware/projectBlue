@@ -82,7 +82,7 @@ public class ConnectionManager {
 								
 							}); 
 							pseudoTask.addOnCompleteListener(onBuildComplete);
-							pseudoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+							pseudoTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 							return;
 						}
 	
@@ -209,7 +209,7 @@ public class ConnectionManager {
 		if (onGetAccessComplete != null)
 			mediaCenterAccessTask.addOnCompleteListener(onGetAccessComplete);
 		
-		mediaCenterAccessTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
+		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
 	}
 		
 	public static class MediaCenterConnection extends HttpURLConnection {
@@ -519,7 +519,7 @@ public class ConnectionManager {
 			if (onTestComplete != null)
 				connectionTestTask.addOnCompleteListener(onTestComplete);
 			
-			connectionTestTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, timeout);
+			connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, timeout);
 		}		
 	}
 	

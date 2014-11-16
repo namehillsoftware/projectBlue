@@ -1,5 +1,7 @@
 package com.lasthopesoftware.threading;
 
+import java.util.concurrent.Executor;
+
 
 
 public interface ISimpleTask<TParams, TProgress, TResult> {
@@ -10,19 +12,19 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	SimpleTaskState getState();
 	
-	void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
-	void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
-	void addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
-	void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
-	void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
-	void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
-	void removeOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
-	void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> removeOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
+	ISimpleTask<TParams, TProgress, TResult> removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
 	
-	void cancel(boolean interrupt);
+	ISimpleTask<TParams, TProgress, TResult> cancel(boolean interrupt);
 	boolean isCancelled();
 	
 	/* Events */

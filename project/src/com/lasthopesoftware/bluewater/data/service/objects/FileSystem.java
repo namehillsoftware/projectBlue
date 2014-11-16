@@ -66,7 +66,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	public ArrayList<IItem<?>> getVisibleViews() {
 		try {
-			return getVisibleViewsTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR).get();
+			return getVisibleViewsTask().execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
 		} catch (Exception e) {
 			return new ArrayList<IItem<?>>();
 		}
@@ -87,7 +87,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
 		
-		getViewsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		getViewsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem<?>>> getVisibleViewsTask() {

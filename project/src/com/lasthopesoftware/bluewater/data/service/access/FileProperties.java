@@ -131,7 +131,7 @@ public class FileProperties {
 		});
 		
 		try {
-			final SortedMap<String, String> filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
+			final SortedMap<String, String> filePropertiesResult = filePropertiesTask.execute(filePropertiesExecutor).get();
 			
 			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
 			

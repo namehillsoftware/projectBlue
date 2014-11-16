@@ -50,7 +50,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 			try {
 				// This will call the onCompletes if they are attached.
 				DataTask<List<T>> getNewSubItemsTask = getNewSubItemsTask();
-				List<T> result = getNewSubItemsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
+				List<T> result = getNewSubItemsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
 				
 				if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR && getNewSubItemsTask.getException() instanceof IOException)
 					throw new IOException(getNewSubItemsTask.getException());
@@ -85,7 +85,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 				
 			});
 			
-			itemTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
+			itemTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
 			return;
 		}
 		
@@ -102,7 +102,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject imple
 			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
 				task.addOnCompleteListener(listener);
 		}
-		task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		task.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	protected DataTask<List<T>> getNewSubItemsTask() {

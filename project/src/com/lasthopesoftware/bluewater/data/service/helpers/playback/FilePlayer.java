@@ -286,7 +286,7 @@ public class FilePlayer implements
 					// Only update the last played data if the song could have actually played again
 					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString)) {
 						final SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
-						updateStatsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+						updateStatsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 					}
 				} catch (NumberFormatException e) {
 					mLogger.error("There was an error parsing the last played time.");

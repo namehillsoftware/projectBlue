@@ -10,10 +10,6 @@ import org.slf4j.LoggerFactory;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class FilePreparerTask {
 

@@ -141,7 +141,7 @@ public class FileCache {
 		});
 		
 		try {
-			return getTask.executeOnExecutor(DatabaseHandler.databaseExecutor).get();
+			return getTask.execute(DatabaseHandler.databaseExecutor).get();
 		} catch (Exception e) {
 			mLogger.error("There was an error running the database task.", e);
 			return null;

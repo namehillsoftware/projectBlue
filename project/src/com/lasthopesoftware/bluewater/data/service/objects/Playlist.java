@@ -72,7 +72,7 @@ public class Playlist extends BaseObject implements IItem<Playlist>, IFilesConta
 			}
 		});
 		
-		getPlaylistsTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		getPlaylistsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	public void addPlaylist(Playlist playlist) {

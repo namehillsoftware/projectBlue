@@ -21,7 +21,21 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	private Exception mException;
 	
 	private final Object syncObj = new Object();
-		
+	
+	@SafeVarargs
+	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> startNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<TParams, TProgress, TResult>(onExecuteListener);
+		newSimpleTask.execute(params);
+		return newSimpleTask;
+	}
+	
+	@SafeVarargs
+	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> startNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<TParams, TProgress, TResult>(onExecuteListener);
+		newSimpleTask.execute(executor, params);
+		return newSimpleTask;
+	}
+	
 	public SimpleTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
 		mOnExecuteListener = onExecuteListener;
 	}
@@ -55,7 +69,6 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 				
 				@Override
 				protected final void onPostExecute(TResult result) {
-
 					if (isErrorHandled()) return;
 					
 					super.onPostExecute(result);
@@ -80,22 +93,20 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 		return mTask;
 	}
 		
-	@SuppressWarnings("unchecked")
+	@SafeVarargs
 	public final SimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
-		getTask().execute(params);
-		return this;
+		return execute(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final SimpleTask<TParams, TProgress, TResult> executeOnExecutor(Executor exec, TParams... params) {
+	public final SimpleTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
+		mState = SimpleTaskState.EXECUTING;
 		getTask().executeOnExecutor(exec, params);
 		return this;
 	}
 		
 	@SafeVarargs
-	private final TResult executeListener(TParams... params) {
-		mState = SimpleTaskState.EXECUTING;
-		
+	private final TResult executeListener(TParams... params) {	
 		try {
 			mResult = mOnExecuteListener.onExecute(this, params);
 			mState = SimpleTaskState.SUCCESS;
@@ -128,6 +139,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	
 	@Override
 	public TResult get() throws Exception {
+		if (mState != SimpleTaskState.EXECUTING) execute();
 		final TResult result = getTask().get();
 		
 		if (mException != null) throw mException;
@@ -136,8 +148,9 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	}
 
 	@Override
-	public void cancel(boolean interrupt) {
+	public ISimpleTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
 		getTask().cancel(interrupt);
+		return this;
 	}
 	
 	@Override
@@ -151,55 +164,65 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	}
 	
 	@Override
-	public void addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
 		mOnStartListeners = addListener(listener, mOnStartListeners);
+		return this;
 	}
 
 	@Override
-	public void addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
 		mOnProgressListeners = addListener(listener, mOnProgressListeners);
+		return this;
 	}
 	
 	@Override
-	public void addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
 		if (mState == SimpleTaskState.SUCCESS) listener.onComplete(this, mResult);
 
 		mOnCompleteListeners = addListener(listener, mOnCompleteListeners);
+		return this;
 	}
 	
 	@Override
-	public void addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> addOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
 		mOnCancelListeners = addListener(listener, mOnCancelListeners);
+		return this;
 	}
 
 	@Override
-	public void addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
 		mOnErrorListeners = addListener(listener, mOnErrorListeners);
+		return this;
 	}
 
 	@Override
-	public void removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnStartListeners);
+		return this;
 	}
 
 	@Override
-	public void removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnCompleteListeners);
+		return this;
 	}
 
 	@Override
-	public void removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> removeOnCancelListener(com.lasthopesoftware.threading.ISimpleTask.OnCancelListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnCancelListeners);
+		return this;
 	}
 	
 	@Override
-	public void removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnErrorListeners);
+		return this;
 	}
 
 	@Override
-	public void removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
+	public ISimpleTask<TParams, TProgress, TResult> removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener) {
 		removeListener(listener, mOnProgressListeners);
+		return this;
 	}
 	
 	private static final <T> ConcurrentLinkedQueue<T> addListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
