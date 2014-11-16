@@ -6,6 +6,14 @@ public abstract class AsyncExceptionTask<TParams, TProgress, TResult> extends As
 
 	private Exception mException;
 	
+	public final boolean hasError() {
+		return mException != null;
+	}
+	
+	protected final void setException(Exception exception) {
+		mException = exception;
+	}
+	
 	@Override
 	protected final void onPostExecute(TResult result) {
 		onPostExecute(result, mException);

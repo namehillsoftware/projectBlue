@@ -144,7 +144,6 @@ public class FileProperties {
 		try {
 			filePropertiesResult = filePropertiesTask.executeOnExecutor(filePropertiesExecutor).get();
 			
-			
 			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);  
 			
 			result = Collections.unmodifiableSortedMap(filePropertiesResult);

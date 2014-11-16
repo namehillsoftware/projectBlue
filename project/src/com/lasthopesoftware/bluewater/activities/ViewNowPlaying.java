@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.view.LayoutInflater;
@@ -50,6 +51,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
+import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -327,75 +329,86 @@ public class ViewNowPlaying extends Activity implements
 				displayImageBitmap();
 			}
 			
-			final SimpleTask<Void, Void, String> getArtistTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
-				
+			final AsyncTask<Void, Void, String> getArtistTask = new AsyncExceptionTask<Void, Void, String>() {
+
 				@Override
-				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				protected String doInBackground(Void... params) {
 					if (mViewStructure.nowPlayingArtist != null)
 						return mViewStructure.nowPlayingArtist;
 					
-					return file.getProperty("Artist");
+					try {
+						return file.getProperty("Artist");
+					} catch (IOException e) {
+						setException(e);
+						return null;
+					}
 				}
-			});
-			getArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
-				
+			
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-					if (owner.getState() == SimpleTaskState.ERROR) return;
+				protected void onPostExecute(String result, Exception exception) {
+					if (hasError() && exception instanceof IOException) {
+						resetViewOnReconnect(file);
+						return;
+					}
 					
 					mNowPlayingArtist.setText(result);
 					mViewStructure.nowPlayingArtist = result;
 				}
-			});
-			addOnErrorListener(getArtistTask, file);
+			};
 			getArtistTask.execute();
 			
-			final SimpleTask<Void, Void, String> getTitleTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
-				
+			final AsyncExceptionTask<Void, Void, String> getTitleTask = new AsyncExceptionTask<Void, Void, String>() {
+
 				@Override
-				public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+				protected String doInBackground(Void... params) {
 					if (mViewStructure.nowPlayingTitle != null)
 						return mViewStructure.nowPlayingTitle;
 					
 					return file.getValue();
 				}
-			});
-
-			getTitleTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-					if (owner.getState() == SimpleTaskState.ERROR) return;
+				protected void onPostExecute(String result, Exception exception) {
+					if (hasError() && exception instanceof IOException) {
+						resetViewOnReconnect(file);
+						return;
+					}
 					
 					mNowPlayingTitle.setText(result);
 					mViewStructure.nowPlayingTitle = result;
 				}
-			});
-			addOnErrorListener(getTitleTask, file);
+			};
 			getTitleTask.execute();
-						
-			final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
-				
+			
+			final AsyncExceptionTask<Void, Void, Float> getRatingsTask = new AsyncExceptionTask<Void, Void, Float>() {
+
 				@Override
-				public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+				protected Float doInBackground(Void... params) {
 					if (mViewStructure.nowPlayingRating != null)
-						return mViewStructure.nowPlayingRating.floatValue();
+						return mViewStructure.nowPlayingRating;
 					
-					if (file.getProperty(FileProperties.RATING) != null && !file.getProperty(FileProperties.RATING).isEmpty())
-						return Float.valueOf(file.getProperty(FileProperties.RATING));
+					try {
+						if (file.getProperty(FileProperties.RATING) != null && !file.getProperty(FileProperties.RATING).isEmpty())
+							return Float.valueOf(file.getProperty(FileProperties.RATING));
+					} catch (NumberFormatException | IOException e) {
+						setException(e);
+						
+						return Float.valueOf(0f);
+					}
 					
-					return (float) 0;
+					return Float.valueOf(0f);
 				}
-			});
-			getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
-					if (owner.getState() == SimpleTaskState.ERROR) return;
+				protected void onPostExecute(Float result, Exception exception) {
+					if (hasError() && exception instanceof IOException) {
+						resetViewOnReconnect(file);
+						return;
+					}
 					
 					mViewStructure.nowPlayingRating = Float.valueOf(result);
 					
-					mSongRating.setRating(result);
+					mSongRating.setRating(mViewStructure.nowPlayingRating);
 					mSongRating.invalidate();
 					
 					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
@@ -407,8 +420,7 @@ public class ViewNowPlaying extends Activity implements
 						}
 					});
 				}
-			});
-			addOnErrorListener(getRatingsTask, file);
+			};
 			getRatingsTask.execute();
 			
 			mSongProgressBar.setMax(file.getDuration());
