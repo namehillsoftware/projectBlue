@@ -24,14 +24,14 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	private final Object syncObj = new Object();
 	
 	@SafeVarargs
-	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> startNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
 		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<TParams, TProgress, TResult>(onExecuteListener);
 		newSimpleTask.execute(params);
 		return newSimpleTask;
 	}
 	
 	@SafeVarargs
-	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> startNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
 		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<TParams, TProgress, TResult>(onExecuteListener);
 		newSimpleTask.execute(executor, params);
 		return newSimpleTask;

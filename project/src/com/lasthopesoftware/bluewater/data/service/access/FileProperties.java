@@ -95,7 +95,7 @@ public class FileProperties {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		try {
-			final SortedMap<String, String> filePropertiesResult = SimpleTask.startNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String,String>>() {
+			final SortedMap<String, String> filePropertiesResult = SimpleTask.executeNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String,String>>() {
 				
 				@Override
 				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
