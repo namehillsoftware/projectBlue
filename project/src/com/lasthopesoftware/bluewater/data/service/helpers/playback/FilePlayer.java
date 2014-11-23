@@ -245,8 +245,11 @@ public class FilePlayer implements
 		final Map<String, String> headers = new HashMap<String, String>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
-		if (!LibrarySession.GetLibrary().getAuthKey().isEmpty())
-			headers.put("Authorization", "basic " + LibrarySession.GetLibrary().getAuthKey());
+		
+		final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
+		if (authKey != null && !authKey.isEmpty())
+			headers.put("Authorization", "basic " + authKey);
+		
 		mp.setDataSource(mMpContext, uri, headers);
 	}
 	

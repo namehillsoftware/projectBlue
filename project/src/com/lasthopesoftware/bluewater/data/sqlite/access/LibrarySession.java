@@ -98,7 +98,7 @@ public class LibrarySession {
 		getLibraryTask.execute(DatabaseHandler.databaseExecutor);
 	}
 	
-	public static Library GetLibrary(final Context context) {
+	public static synchronized Library GetLibrary(final Context context) {
 		if ("UI thread".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 		

@@ -6,6 +6,9 @@ package com.lasthopesoftware.bluewater.services;
 
 import java.util.HashSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -72,6 +75,8 @@ public class StreamingMusicService extends Service implements
 	OnNowPlayingPauseListener, 
 	OnPlaylistStateControlErrorListener
 {
+	private static final Logger mLogger = LoggerFactory.getLogger(StreamingMusicService.class);
+	
 	/* String constant actions */
 	private static final String ACTION_START = "com.lasthopesoftware.bluewater.ACTION_START";
 	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
@@ -324,23 +329,7 @@ public class StreamingMusicService extends Service implements
 			
 		});
 	}
-	
-	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
-		// If the playlist has changed, change that
-		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
-			initializePlaylist(playlistString);
-		}
 		
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
-        
-		notifyForeground(builder.build());
-        
-        mPlaylistController.startAt(filePos, fileProgress);
-	}
-	
 	private void restorePlaylistControllerFromStorage(final OnCompleteListener<Integer, Void, Boolean> onPlaylistRestored) {
 		if (mLibrary != null) {
 
@@ -369,6 +358,23 @@ public class StreamingMusicService extends Service implements
 			
 		});
 	}
+
+	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
+		// If the playlist has changed, change that
+		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
+			initializePlaylist(playlistString);
+		}
+		
+		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
+        
+		notifyForeground(builder.build());
+        
+		mLogger.info("Starting playback");
+        mPlaylistController.startAt(filePos, fileProgress);
+	}
 	
 	private void initializePlaylist(String playlistString, int filePos, int fileProgress) {
 		initializePlaylist(playlistString);
@@ -376,8 +382,9 @@ public class StreamingMusicService extends Service implements
 		if (!playlistString.isEmpty())
 			mPlaylistController.seekTo(filePos, fileProgress);
 	}
-		
+	
 	private void initializePlaylist(String playlistString) {
+		mLogger.info("Initializing playlist.");
 		mPlaylistString = playlistString;
 		
 		// First try to get the playlist string from the database
@@ -724,7 +731,6 @@ public class StreamingMusicService extends Service implements
 		controller.seekTo(0);
 	}
 	
-
 	@Override
 	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
