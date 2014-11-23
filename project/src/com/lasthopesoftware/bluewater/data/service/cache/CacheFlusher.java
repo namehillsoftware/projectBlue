@@ -29,13 +29,6 @@ public class CacheFlusher implements Runnable {
 	private final String mCacheName;
 	private final long mTargetSize;
 	
-	private final static HashMap<String, CacheState> mCacheStateMap = new HashMap<String, CacheState>();
-	
-	private static class CacheState {
-		public long cacheSize;
-		public long stateUpdateTime;
-	}
-	
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
@@ -55,24 +48,9 @@ public class CacheFlusher implements Runnable {
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 			
-			CacheState cacheState = mCacheStateMap.get(mCacheName);
+			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
 			
-			if (cacheState == null) {
-				cacheState = new CacheState();
-				mCacheStateMap.put(mCacheName, cacheState);
-			}
-			
-			final long newUpdateTime = System.currentTimeMillis();
-			
-			final long cacheFileSize = getCacheSizeBetweenTimes(cachedFileAccess, cacheState.stateUpdateTime, newUpdateTime); 
-			if (cacheFileSize > -1) {
-				cacheState.stateUpdateTime = newUpdateTime;
-				cacheState.cacheSize += cacheFileSize;
-			}
-			
-			if (cacheState.cacheSize <= mTargetSize) return;
-			
-			while (cacheState.cacheSize > mTargetSize) {
+			while (getCachedFileSizeFromDatabase(cachedFileAccess) > mTargetSize) {
 				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess);
 				if (cachedFile != null)
 					deleteCachedFile(cachedFileAccess, cachedFile);
@@ -199,9 +177,6 @@ public class CacheFlusher implements Runnable {
 		
 		try {
 			cachedFileAccess.delete(cachedFile);
-			final CacheState cacheState = mCacheStateMap.get(mCacheName);
-			if (cacheState != null)
-				cacheState.cacheSize -= cachedFile.getFileSize();
 			return true;
 		} catch (SQLException deleteException) {
 			mLogger.error("Error deleting file pointer from database", deleteException);
