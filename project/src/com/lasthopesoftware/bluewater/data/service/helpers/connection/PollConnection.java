@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 
 public class PollConnection {
 	
@@ -28,7 +27,6 @@ public class PollConnection {
 	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<OnConnectionLostListener>();
 	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<OnConnectionRegainedListener>();
 	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<OnPollingCancelledListener>();
-	private final HashSet<OnErrorListener<String, Void, Void>> mUniqueOnErrorListeners = new HashSet<ISimpleTask.OnErrorListener<String, Void, Void>>();
 	
 	private PollConnection(Context context) {
 		mContext = context;
@@ -76,6 +74,7 @@ public class PollConnection {
 			
 			@Override
 			protected void onPostExecute(Void result) {
+				
 				for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
 				
 				clearCompleteListeners();
@@ -137,13 +136,6 @@ public class PollConnection {
 			mUniqueOnCancelListeners.add(listener);
 		}
 	}
-//
-//	public void addOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-//		synchronized(mUniqueOnErrorListeners) {
-//			if (mUniqueOnErrorListeners.add(listener))
-//				mTask.addOnErrorListener(listener);
-//		}
-//	}
 
 	public void removeOnConnectionLostListener(OnConnectionLostListener listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
@@ -162,13 +154,6 @@ public class PollConnection {
 			mUniqueOnCancelListeners.remove(listener);
 		}
 	}
-//
-//	public void removeOnErrorListener(com.lasthopesoftware.threading.ISimpleTask.OnErrorListener<String, Void, Void> listener) {
-//		synchronized(mUniqueOnErrorListeners) {
-//			if (mUniqueOnErrorListeners.remove(listener))
-//				mTask.removeOnErrorListener(listener);
-//		}
-//	}
 	
 	public interface OnConnectionLostListener {
 		void onConnectionLost();

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -137,8 +138,9 @@ public class FileProperties {
 			mProperties.putAll(filePropertiesResult);
 			
 			return Collections.unmodifiableSortedMap(filePropertiesResult);
-		} catch (IOException ioe) {
-			throw ioe;
+		} catch (ExecutionException ee) {
+			if (ee.getCause() instanceof IOException)
+				throw new IOException(ee.getCause());
 		} catch (InterruptedException e) {
 			Log.d(getClass().toString(), e.getMessage());
 		} catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.threading;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 import android.os.AsyncTask;
@@ -139,11 +140,11 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	}
 	
 	@Override
-	public TResult get() throws Exception {
+	public TResult get() throws ExecutionException, InterruptedException {
 		if (mState != SimpleTaskState.EXECUTING) execute();
 		final TResult result = getTask().get();
 		
-		if (mException != null) throw mException;
+		if (mException != null) throw new ExecutionException(mException);
 		
 		return result; 
 	}

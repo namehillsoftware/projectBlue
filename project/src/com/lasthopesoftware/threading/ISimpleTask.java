@@ -1,12 +1,10 @@
 package com.lasthopesoftware.threading;
 
-import java.util.concurrent.Executor;
-
-
+import java.util.concurrent.ExecutionException;
 
 public interface ISimpleTask<TParams, TProgress, TResult> {
 
-	TResult get() throws Exception;
+	TResult get() throws ExecutionException, InterruptedException;
 	
 	Exception getException();
 	

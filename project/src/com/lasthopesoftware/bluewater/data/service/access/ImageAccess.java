@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -219,7 +220,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public Bitmap get() throws Exception {
+	public Bitmap get() throws ExecutionException, InterruptedException {
 		return mImageAccessTask.get();
 	}
 

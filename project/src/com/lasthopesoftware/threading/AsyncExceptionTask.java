@@ -19,6 +19,14 @@ public abstract class AsyncExceptionTask<TParams, TProgress, TResult> extends As
 		onPostExecute(result, mException);
 	}
 	
+	@Override
+	protected final void onCancelled(TResult result) {
+		onCancelled(result, mException);
+	}
+	
 	protected void onPostExecute(TResult result, Exception exception) {
+	}
+	
+	protected void onCancelled(TResult result, Exception exception) {
 	}
 }
