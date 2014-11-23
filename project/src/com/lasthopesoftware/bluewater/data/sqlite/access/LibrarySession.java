@@ -75,7 +75,7 @@ public class LibrarySession {
 		return mLibrary;
 	}
 
-	public static synchronized void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
+	public static void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		
 		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>(new OnExecuteListener<Integer, Void, Library>() {
 			
