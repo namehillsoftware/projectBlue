@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.cache;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +28,6 @@ public class CacheFlusher implements Runnable {
 	private final Context mContext;
 	private final String mCacheName;
 	private final long mTargetSize;
-	private final long mExpirationTime;
 	
 	private final static HashMap<String, CacheState> mCacheStateMap = new HashMap<String, CacheState>();
 	
@@ -42,15 +39,14 @@ public class CacheFlusher implements Runnable {
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	public static void doFlush(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
-		DatabaseHandler.databaseExecutor.execute(new CacheFlusher(context, cacheName, expirationTime, targetSize));
+	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
+		DatabaseHandler.databaseExecutor.execute(new CacheFlusher(context, cacheName, targetSize));
 	}
 	
-	private CacheFlusher(final Context context, final String cacheName, final long expirationTime, final long targetSize) {
+	private CacheFlusher(final Context context, final String cacheName, final long targetSize) {
 		mContext = context;
 		mCacheName = cacheName;
 		mTargetSize = targetSize;
-		mExpirationTime = expirationTime;
 	}
 	
 	@Override
@@ -73,11 +69,6 @@ public class CacheFlusher implements Runnable {
 				cacheState.stateUpdateTime = newUpdateTime;
 				cacheState.cacheSize += cacheFileSize;
 			}
-			
-			// remove expired files
-			final List<CachedFile> expiredFiles = getCachedFilesPastTime(cachedFileAccess, System.currentTimeMillis() - mExpirationTime);
-			for (CachedFile cachedFile : expiredFiles)
-				deleteCachedFile(cachedFileAccess, cachedFile);
 			
 			if (cacheState.cacheSize <= mTargetSize) return;
 			
@@ -165,24 +156,6 @@ public class CacheFlusher implements Runnable {
 		} catch (SQLException e) {
 			mLogger.error("Error getting oldest cached file", e);
 			return null;
-		}
-	}
-	
-	private final List<CachedFile> getCachedFilesPastTime(final Dao<CachedFile, Integer> cachedFileAccess, final long time) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
-						.and()
-						.lt(CachedFile.CREATED_TIME, new SelectArg(time))
-						.prepare();
-			
-			return cachedFileAccess.query(preparedQuery);			
-		} catch (SQLException e) {
-			mLogger.error("Error getting oldest cached file", e);
-			return new ArrayList<CachedFile>();
 		}
 	}
 	

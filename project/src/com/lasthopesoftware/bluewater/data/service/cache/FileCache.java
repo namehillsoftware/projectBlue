@@ -103,7 +103,7 @@ public class FileCache {
 					mLogger.warn("Couldn't get database access object.");
 				} finally {
 					handler.close();
-					CacheFlusher.doFlush(mContext, mCacheName, mExpirationTime, mMaxSize);
+					CacheFlusher.doFlush(mContext, mCacheName, mMaxSize);
 				}
 				
 				return;
@@ -123,14 +123,21 @@ public class FileCache {
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					
 					if (cachedFile == null) return null;
-					
-					doFileAccessedUpdate(uniqueKey);
-					
+										
 					final File returnFile = new File(cachedFile.getFileName());
 					if (returnFile == null || !returnFile.exists()) {					
 						cachedFileAccess.delete(cachedFile);
 						return null;
 					}
+					
+					// Remove the file and return null if it's past its expired time
+					if (cachedFile.getCreatedTime() < System.currentTimeMillis() - mExpirationTime) {
+						cachedFileAccess.delete(cachedFile);
+						returnFile.delete();
+						return null;
+					}
+										
+					doFileAccessedUpdate(uniqueKey);
 					
 					return returnFile;
 				} finally {
