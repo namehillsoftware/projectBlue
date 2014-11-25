@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -64,6 +66,15 @@ public class ConnectionManager {
 			mAuthCode = authCode;
 			if (timeout <= 0) timeout = stdTimeoutTime;
 			try {
+
+				final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+				final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+				
+				if (networkInfo == null || !networkInfo.isConnected()) {
+					executeReturnFalseTask(onBuildComplete);
+					return;
+				}
+				
 				buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
 					
 					@Override
@@ -73,16 +84,7 @@ public class ConnectionManager {
 						}
 						
 						if (mAccessConfiguration == null) {
-							final SimpleTask<Integer, Void, Boolean> pseudoTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
-	
-								@Override
-								public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-									return Boolean.FALSE;
-								}
-								
-							}); 
-							pseudoTask.addOnCompleteListener(onBuildComplete);
-							pseudoTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+							executeReturnFalseTask(onBuildComplete);
 							return;
 						}
 	
@@ -93,6 +95,20 @@ public class ConnectionManager {
 				throw ne;
 			}
 		}
+	}
+	
+	private static final void executeReturnFalseTask(OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
+		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
+			
+			@Override
+			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+				return Boolean.FALSE;
+			}
+			
+		});
+		
+		returnFalseTask.addOnCompleteListener(onReturnFalseListener);
+		returnFalseTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	public static void refreshConfiguration(Context context, OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
@@ -121,8 +137,7 @@ public class ConnectionManager {
 			}
 		
 		};
-		
-		
+				
 		if (timeout > 0)
 			ConnectionTester.doTest(timeout, mTestConnectionCompleteListener);
 		else
@@ -487,7 +502,7 @@ public class ConnectionManager {
 				@Override
 				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 					Boolean result = Boolean.FALSE;
-					
+										
 					final HttpURLConnection conn = getConnection("Alive");
 					try {
 				    	conn.setConnectTimeout(params[0]);
