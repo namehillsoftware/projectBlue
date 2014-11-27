@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.access.FilePreparerTask;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
@@ -25,7 +25,8 @@ import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListene
 public class PlaylistController implements
 	OnFilePreparedListener,
 	OnFileErrorListener, 
-	OnFileCompleteListener
+	OnFileCompleteListener,
+	OnFileBufferedListener
 {
 	private final HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
 	private final HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<OnNowPlayingStartListener>();
@@ -36,7 +37,6 @@ public class PlaylistController implements
 	private int mFileKey = -1;
 	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
 	private final Context mContext;
-	private FilePreparerTask mBackgroundFilePreparerTask;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	private boolean mIsPlaying = false;
@@ -156,8 +156,6 @@ public class PlaylistController implements
 		
 		mFileKey = mediaPlayer.getFile().getKey();
 		
-		haltBackgroundPreparerThread();
-		
 		File nextFile = mediaPlayer.getFile().getNextFile();
 		if (nextFile == null) {
 			if (!mIsRepeating) {
@@ -180,15 +178,26 @@ public class PlaylistController implements
 	private void prepareNextFile(File nextFile) {
 		mNextFilePlayer = new FilePlayer(mContext, nextFile);
 		
-		haltBackgroundPreparerThread();
-    	
-    	mBackgroundFilePreparerTask = new FilePreparerTask(mCurrentFilePlayer, mNextFilePlayer);;
-    	mBackgroundFilePreparerTask.start();    	
+		if (mCurrentFilePlayer == null) return;
+		
+		if (mCurrentFilePlayer.getBufferPercentage() < 100) {
+			mCurrentFilePlayer.addOnFileBufferedListener(this);
+			return;
+		}
+		
+		mNextFilePlayer.initMediaPlayer();
+		mNextFilePlayer.prepareMediaPlayer();
+	}
+
+	@Override
+	public void onFileBuffered(FilePlayer filePlayer) {
+		mNextFilePlayer.initMediaPlayer();
+		mNextFilePlayer.prepareMediaPlayer();
 	}
 	
 	public void pause() {
 		mIsPlaying = false;
-		haltBackgroundPreparerThread();
+
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
@@ -227,7 +236,6 @@ public class PlaylistController implements
 		if (lastFile.getNextFile() != null) lastFile.setNextFile(null);
 		
 		if (lastFile == mCurrentFilePlayer.getFile()) {
-			haltBackgroundPreparerThread();
 			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 			mNextFilePlayer = null;
 		}
@@ -400,11 +408,5 @@ public class PlaylistController implements
 		mIsPlaying = false;
 		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
 		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-		
-		haltBackgroundPreparerThread();
-	}
-	
-	private void haltBackgroundPreparerThread() {
-		if (mBackgroundFilePreparerTask != null && !mBackgroundFilePreparerTask.isDone()) mBackgroundFilePreparerTask.cancel();
 	}
 }

@@ -15,6 +15,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
@@ -24,6 +25,7 @@ import android.os.PowerManager;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
@@ -34,9 +36,10 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class FilePlayer implements
-	OnPreparedListener, 
+	OnPreparedListener,
 	OnErrorListener, 
-	OnCompletionListener
+	OnCompletionListener,
+	OnBufferingUpdateListener
 {
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
@@ -44,8 +47,9 @@ public class FilePlayer implements
 	private final AtomicBoolean isPrepared = new AtomicBoolean();
 	private final AtomicBoolean isPreparing = new AtomicBoolean();
 	private final AtomicBoolean isInErrorState = new AtomicBoolean();
-	private int mPosition = 0;
-	private float mVolume = 1.0f;
+	private volatile int mPosition = 0;
+	private volatile int mBufferPercentage = 0;
+	private volatile float mVolume = 1.0f;
 	private final Context mMpContext;
 	private final File mFile;
 	
@@ -57,34 +61,11 @@ public class FilePlayer implements
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
+	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<OnFileBufferedListener>();
 	
 	public FilePlayer(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
-	}
-	
-	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
-		onFileCompleteListeners.add(listener);
-	}
-	
-	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
-		if (onFileCompleteListeners.contains(listener)) onFileCompleteListeners.remove(listener);
-	}
-	
-	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
-		onFilePreparedListeners.add(listener);
-	}
-	
-	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
-		if (onFilePreparedListeners.contains(listener)) onFilePreparedListeners.remove(listener);
-	}
-	
-	public void addOnFileErrorListener(OnFileErrorListener listener) {
-		onFileErrorListeners.add(listener);
-	}
-	
-	public void removeOnFileErrorListener(OnFileErrorListener listener) {
-		if (onFileErrorListeners.contains(listener)) onFileErrorListeners.remove(listener);
 	}
 	
 	public File getFile() {
@@ -93,14 +74,17 @@ public class FilePlayer implements
 	
 	public void initMediaPlayer() {
 		if (mp != null) return;
-	
+		
 		isPrepared.set(false);
 		isPreparing.set(false);
 		isInErrorState.set(false);
+		mBufferPercentage = 0;
+		
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
 		mp.setOnErrorListener(this);
 		mp.setOnCompletionListener(this);
+		mp.setOnBufferingUpdateListener(this);
 		mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
 		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
@@ -337,10 +321,25 @@ public class FilePlayer implements
 		return true;
 	}
 
-	public int getBufferPercentage() {
-		return mp == null ? 0 : (mp.getCurrentPosition() * 100) / mp.getDuration();
-	}
+	@Override
+	public void onBufferingUpdate(MediaPlayer mp, int percent) {
+		// Handle weird exceptional behavior seen online http://stackoverflow.com/questions/21925454/android-mediaplayer-onbufferingupdatelistener-percentage-of-buffered-content-i
+        if (percent < 0 || percent > 100) {
+            mLogger.warn("Buffering percentage was bad: " + String.valueOf(percent));
+            percent = (int) Math.round((((Math.abs(percent)-1)*100.0/Integer.MAX_VALUE)));
+        }
 
+		mBufferPercentage = percent;
+		
+		if (percent < 100) return;
+		
+		// remove the listener
+		mp.setOnBufferingUpdateListener(null);
+		
+		for (OnFileBufferedListener onFileBufferedListener : onFileBufferedListeners)
+			onFileBufferedListener.onFileBuffered(this);
+	}
+	
 	public int getCurrentPosition() {
 		try {
 			if (mp != null && isPrepared()) mPosition = mp.getCurrentPosition();
@@ -348,6 +347,10 @@ public class FilePlayer implements
 			handleIllegalStateException(ie);
 		}
 		return mPosition;
+	}
+	
+	public int getBufferPercentage() {
+		return mBufferPercentage;
 	}
 	
 	public int getDuration() throws IOException {
@@ -452,5 +455,38 @@ public class FilePlayer implements
 			
 			return null;
 		}
+	}
+	
+	/* Listener methods */
+	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListeners.add(listener);
+	}
+	
+	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListeners.remove(listener);
+	}
+	
+	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
+		onFilePreparedListeners.add(listener);
+	}
+	
+	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
+		onFilePreparedListeners.remove(listener);
+	}
+	
+	public void addOnFileErrorListener(OnFileErrorListener listener) {
+		onFileErrorListeners.add(listener);
+	}
+	
+	public void removeOnFileErrorListener(OnFileErrorListener listener) {
+		onFileErrorListeners.remove(listener);
+	}
+	
+	public void addOnFileBufferedListener(OnFileBufferedListener listener) {
+		onFileBufferedListeners.add(listener);
+	}
+	
+	public void removeOnFileErrorListener(OnFileBufferedListener listener) {
+		onFileBufferedListeners.remove(listener);
 	}
 }
