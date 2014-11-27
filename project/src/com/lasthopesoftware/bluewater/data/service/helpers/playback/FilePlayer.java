@@ -47,13 +47,14 @@ public class FilePlayer implements
 	private final AtomicBoolean isPrepared = new AtomicBoolean();
 	private final AtomicBoolean isPreparing = new AtomicBoolean();
 	private final AtomicBoolean isInErrorState = new AtomicBoolean();
+	private volatile boolean mIsLocalFile = false;
 	private volatile int mPosition = 0;
 	private volatile int mBufferPercentage = 0;
 	private volatile float mVolume = 1.0f;
 	private final Context mMpContext;
 	private final File mFile;
 	
-	private static final int BUFFER_THRESHOLD = 90;
+	private static final int BUFFER_THRESHOLD = 97;
 	
 	private static final String FILE_URI_SCHEME = "file://";
 	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
@@ -81,6 +82,7 @@ public class FilePlayer implements
 		isPreparing.set(false);
 		isInErrorState.set(false);
 		mBufferPercentage = 0;
+		mIsLocalFile = false;
 		
 		mp = new MediaPlayer(); // initialize it here
 		mp.setOnPreparedListener(this);
@@ -137,6 +139,7 @@ public class FilePlayer implements
 		    		
 		    		if (file != null && file.exists()) {
 		    			mLogger.info("Returning file URI from local disk.");
+		    			mIsLocalFile = true;
 		    			return Uri.fromFile(file);
 		    		}
 		    	}
@@ -147,6 +150,7 @@ public class FilePlayer implements
 	    	cursor.close();
 	    }
 	    
+	    mIsLocalFile = false;
 	    mLogger.info("Returning file URL from server.");
 	    final String itemUrl = mFile.getSubItemUrl();
 	    if (itemUrl != null && !itemUrl.isEmpty())
@@ -333,7 +337,7 @@ public class FilePlayer implements
         
 		mBufferPercentage = percent;
 		
-		if (!isAboveBufferThreshold()) return;
+		if (!isBuffered()) return;
 		
 		// remove the listener
 		mp.setOnBufferingUpdateListener(null);
@@ -351,7 +355,13 @@ public class FilePlayer implements
 		return mPosition;
 	}
 	
-	public boolean isAboveBufferThreshold() {
+	public boolean isBuffered() {
+		// If this has been set to true, return true. If the file URI was never determined, that means it was never put into a 
+		// state to be buffered, so it being false is okay.
+		if (mIsLocalFile) {
+			mLogger.info("Is local file, already fully buffered.");
+			return true;
+		}
 		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(BUFFER_THRESHOLD) + "%");
 		return mBufferPercentage > BUFFER_THRESHOLD;
 	}
