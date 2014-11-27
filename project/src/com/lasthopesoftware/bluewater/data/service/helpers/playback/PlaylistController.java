@@ -180,13 +180,10 @@ public class PlaylistController implements
 		
 		if (mCurrentFilePlayer == null) return;
 		
-		if (mCurrentFilePlayer.getBufferPercentage() < 100) {
+		if (mCurrentFilePlayer.isAboveBufferThreshold())
+			onFileBuffered(mCurrentFilePlayer);
+		else
 			mCurrentFilePlayer.addOnFileBufferedListener(this);
-			return;
-		}
-		
-		mNextFilePlayer.initMediaPlayer();
-		mNextFilePlayer.prepareMediaPlayer();
 	}
 
 	@Override

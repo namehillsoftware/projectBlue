@@ -53,6 +53,8 @@ public class FilePlayer implements
 	private final Context mMpContext;
 	private final File mFile;
 	
+	private static final int BUFFER_THRESHOLD = 90;
+	
 	private static final String FILE_URI_SCHEME = "file://";
 	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	
@@ -328,10 +330,10 @@ public class FilePlayer implements
             mLogger.warn("Buffering percentage was bad: " + String.valueOf(percent));
             percent = (int) Math.round((((Math.abs(percent)-1)*100.0/Integer.MAX_VALUE)));
         }
-
+        
 		mBufferPercentage = percent;
 		
-		if (percent < 100) return;
+		if (!isAboveBufferThreshold()) return;
 		
 		// remove the listener
 		mp.setOnBufferingUpdateListener(null);
@@ -347,6 +349,11 @@ public class FilePlayer implements
 			handleIllegalStateException(ie);
 		}
 		return mPosition;
+	}
+	
+	public boolean isAboveBufferThreshold() {
+		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(BUFFER_THRESHOLD) + "%");
+		return mBufferPercentage > BUFFER_THRESHOLD;
 	}
 	
 	public int getBufferPercentage() {
