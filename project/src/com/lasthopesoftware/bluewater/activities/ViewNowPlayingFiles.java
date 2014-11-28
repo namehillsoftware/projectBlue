@@ -56,10 +56,10 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		
-		mFileListView.setVisibility(View.INVISIBLE);
-		mLoadingProgressBar.setVisibility(View.VISIBLE);
+		if (!InstantiateSessionConnection.restoreSessionConnection(this)) return;
 		
-		InstantiateSessionConnection.restoreSessionConnection(this);
+		mFileListView.setVisibility(View.INVISIBLE);
+		mLoadingProgressBar.setVisibility(View.VISIBLE);		
 	}
 	
 	@Override

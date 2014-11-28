@@ -25,13 +25,19 @@ public class InstantiateSessionConnection extends Activity {
 	private Intent selectServerIntent;
 	private Intent browseLibraryIntent;
 	
-	public static void restoreSessionConnection(final Activity activity) {
+	/*
+	 * Returns true if the session needs to be restored,
+	 * false if it doesn't
+	 */
+	public static boolean restoreSessionConnection(final Activity activity) {
 		// Check to see that a URL can still be built
-		if (ConnectionManager.getFormattedUrl() != null) return;
+		if (ConnectionManager.getFormattedUrl() != null) return false;
 		
 		final Intent intent = new Intent(activity, InstantiateSessionConnection.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);
 		activity.startActivityForResult(intent, ACTIVITY_ID);
+		
+		return true;
 	}
 	
 	@Override

@@ -106,14 +106,17 @@ public class BrowseLibrary extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		
-		InstantiateSessionConnection.restoreSessionConnection(this);
+		if (!InstantiateSessionConnection.restoreSessionConnection(this)) getLibrary();
 	}
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != InstantiateSessionConnection.ACTIVITY_ID) return;
-		
-		
+				
+		getLibrary();
+	}
+	
+	private void getLibrary() {
 		mIsStopped = false;
 		if ((mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
 		
