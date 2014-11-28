@@ -15,6 +15,8 @@ import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessi
 
 public class InstantiateSessionConnection extends Activity {
 	
+	public static final int ACTIVITY_ID = 2032;
+	
 	private static final String START_ACTIVITY_FOR_RETURN = "com.lasthopesoftware.bluewater.activities.InstantiateSessionConnection.START_ACTIVITY_FOR_RETURN";
 	
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
@@ -23,13 +25,13 @@ public class InstantiateSessionConnection extends Activity {
 	private Intent selectServerIntent;
 	private Intent browseLibraryIntent;
 	
-	public static void restoreSessionConnection(final Context context) {
+	public static void restoreSessionConnection(final Activity activity) {
 		// Check to see that a URL can still be built
 		if (ConnectionManager.getFormattedUrl() != null) return;
 		
-		final Intent intent = new Intent(context, InstantiateSessionConnection.class);
+		final Intent intent = new Intent(activity, InstantiateSessionConnection.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);
-		context.startActivity(intent);
+		activity.startActivityForResult(intent, ACTIVITY_ID);
 	}
 	
 	@Override

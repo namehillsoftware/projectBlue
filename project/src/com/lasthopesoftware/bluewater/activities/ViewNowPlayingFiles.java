@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.activities;
 
 import java.util.ArrayList;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -28,8 +30,8 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class ViewNowPlayingFiles extends FragmentActivity {
 	
-	private ProgressBar pbLoading;
-	private ListView fileListView;
+	private ListView mFileListView;
+	private ProgressBar mLoadingProgressBar;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,54 +39,12 @@ public class ViewNowPlayingFiles extends FragmentActivity {
         
         getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
-        fileListView = (ListView)findViewById(R.id.lvFilelist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+        mFileListView = (ListView)findViewById(R.id.lvFilelist);
+        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
         this.setTitle(R.string.title_view_now_playing_files);     
         
-        final ViewNowPlayingFiles _this = this;
-        LibrarySession.GetLibrary(_this, new OnCompleteListener<Integer, Void, Library>() {
-
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				if (result == null) return;
-				final Library library = result;
-		        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>(new OnExecuteListener<Void, Void, ArrayList<File>>() {
-					
-					@Override
-					public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
-						return Files.deserializeFileStringList(library.getSavedTracksString());
-					}
-				});
-		        
-		        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
-						final ArrayList<File> _result = result;
-						final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(_this, R.id.tvStandard, _result);
-				        fileListView.setAdapter(fileListAdapter);
-				        fileListView.setOnItemClickListener(new OnItemClickListener() {
-
-							@Override
-							public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-								StreamingMusicService.streamMusic(view.getContext(), position);
-							}
-						});
-				        fileListView.setOnItemLongClickListener(new LongClickFlipListener());
-				        
-				        if (library.getNowPlayingId() < _result.size())
-				        	fileListView.setSelection(library.getNowPlayingId());
-				        
-				        fileListView.setVisibility(View.VISIBLE);
-				        pbLoading.setVisibility(View.INVISIBLE);
-					}
-				});
-		        
-		        getFileStringTask.execute();
-			}
-        	
-        });
+        LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override
@@ -96,7 +56,17 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		
+		mFileListView.setVisibility(View.INVISIBLE);
+		mLoadingProgressBar.setVisibility(View.VISIBLE);
+		
 		InstantiateSessionConnection.restoreSessionConnection(this);
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode != InstantiateSessionConnection.ACTIVITY_ID) return;
+		
+		LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override
@@ -104,5 +74,56 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
 	}
+	
+	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
+		
+		private final Context mContext;
+		private final ListView mFileListView;
+		private final ProgressBar mLoadingProgressBar;
+		
+		public OnGetLibraryNowComplete(Context context, ListView fileListView, ProgressBar loadingProgressBar) {
+			mContext = context;
+			mFileListView = fileListView;
+			mLoadingProgressBar = loadingProgressBar;
+		}
+		
+		@Override
+		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+			if (result == null) return;
+			final Library library = result;
+	        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>(new OnExecuteListener<Void, Void, ArrayList<File>>() {
+				
+				@Override
+				public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
+					return Files.deserializeFileStringList(library.getSavedTracksString());
+				}
+			});
+	        
+	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
+				
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
+					final ArrayList<File> _result = result;
+					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mContext, R.id.tvStandard, _result);
+			        mFileListView.setAdapter(fileListAdapter);
+			        mFileListView.setOnItemClickListener(new OnItemClickListener() {
 
+						@Override
+						public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+							StreamingMusicService.streamMusic(view.getContext(), position);
+						}
+					});
+			        mFileListView.setOnItemLongClickListener(new LongClickFlipListener());
+			        
+			        if (library.getNowPlayingId() < _result.size())
+			        	mFileListView.setSelection(library.getNowPlayingId());
+			        
+			        mFileListView.setVisibility(View.VISIBLE);
+			        mLoadingProgressBar.setVisibility(View.INVISIBLE);
+				}
+			});
+	        
+	        getFileStringTask.execute();
+		}
+	}
 }
