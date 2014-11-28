@@ -418,55 +418,6 @@ public class StreamingMusicService extends Service implements
 		mPlaylistController.pause();
 	}
 	
-	private void buildErrorNotification() {
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		builder.setOngoing(true);
-		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(mThis, StreamingMusicService.class);
-		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
-		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		builder.setContentIntent(pi);
-		
-		final CharSequence waitingText = getText(R.string.lbl_waiting_for_connection);
-		builder.setContentTitle(waitingText);
-		builder.setTicker(waitingText);
-		builder.setSubText(getText(R.string.lbl_click_to_cancel));
-		notifyForeground(builder.build());
-		PollConnection checkConnection = PollConnection.Instance.get(mThis);
-		
-		if (mConnectionRegainedListener == null) {
-			mConnectionRegainedListener = new OnConnectionRegainedListener() {
-				
-				@Override
-				public void onConnectionRegained() {
-					if (mLibrary == null || (mPlaylistController != null && !mPlaylistController.isPlaying())) {
-						stopSelf(mStartId);
-						return;
-					}
-
-					startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
-				}
-			};
-		}
-		
-		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
-		
-		if (mOnPollingCancelledListener == null) {
-			mOnPollingCancelledListener = new OnPollingCancelledListener() {
-				
-				@Override
-				public void onPollingCancelled() {
-					unregisterListeners();
-					stopSelf(mStartId);
-				}
-			};
-		}
-		checkConnection.addOnPollingCancelledListener(mOnPollingCancelledListener);
-		
-		checkConnection.startPolling();
-	}
-	
 	private void notifyForeground(Notification notification) {
 		if (!mIsNotificationForeground) {
 			startForeground(mId, notification);
@@ -676,9 +627,51 @@ public class StreamingMusicService extends Service implements
 	public void onPlaylistStateControlError(PlaylistController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
-		PollConnection.Instance.get(mThis).startPolling();
+		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		builder.setOngoing(true);
+		// Add intent for canceling waiting for connection to come back
+		final Intent intent = new Intent(mThis, StreamingMusicService.class);
+		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
+		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(pi);
 		
-		buildErrorNotification();
+		final CharSequence waitingText = getText(R.string.lbl_waiting_for_connection);
+		builder.setContentTitle(waitingText);
+		builder.setContentText(getText(R.string.lbl_click_to_cancel));
+		notifyForeground(builder.build());
+		PollConnection checkConnection = PollConnection.Instance.get(mThis);
+		
+		if (mConnectionRegainedListener == null) {
+			mConnectionRegainedListener = new OnConnectionRegainedListener() {
+				
+				@Override
+				public void onConnectionRegained() {
+					if (mLibrary == null || (mPlaylistController != null && !mPlaylistController.isPlaying())) {
+						stopSelf(mStartId);
+						return;
+					}
+
+					startPlaylist(mLibrary.getSavedTracksString(), mLibrary.getNowPlayingId(), mLibrary.getNowPlayingProgress());
+				}
+			};
+		}
+		
+		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
+		
+		if (mOnPollingCancelledListener == null) {
+			mOnPollingCancelledListener = new OnPollingCancelledListener() {
+				
+				@Override
+				public void onPollingCancelled() {
+					unregisterListeners();
+					stopSelf(mStartId);
+				}
+			};
+		}
+		checkConnection.addOnPollingCancelledListener(mOnPollingCancelledListener);
+		
+		checkConnection.startPolling();
 	}
 
 	@Override
