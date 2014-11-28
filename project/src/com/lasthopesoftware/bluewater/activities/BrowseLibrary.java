@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -106,6 +107,12 @@ public class BrowseLibrary extends FragmentActivity {
 		super.onStart();
 		
 		InstantiateSessionConnection.restoreSessionConnection(this);
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode != InstantiateSessionConnection.ACTIVITY_ID) return;
+		
 		
 		mIsStopped = false;
 		if ((mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
