@@ -213,7 +213,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 			synchronized(syncObject) {
 				final int storedSelectedViewKey = result.getSelectedView();
-				if (storedSelectedViewKey != mInstanceVisibleViewKey)
+				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey)
 					mInstance = new FileSystem(storedSelectedViewKey);
 				
 				if (mOnGetFileSystemCompleteListener != null)
