@@ -110,7 +110,8 @@ public class StreamingMusicService extends Service implements
 	
 	// State dependent static variables
 	private static String mPlaylistString;
-	private static PlaylistController mPlaylistController;
+	// Declare as volatile so that every thread has the same version of the playlist controllers
+	private static volatile PlaylistController mPlaylistController;
 	
 	// State dependent non-static variables
 	private static boolean mAreListenersRegistered = false;
