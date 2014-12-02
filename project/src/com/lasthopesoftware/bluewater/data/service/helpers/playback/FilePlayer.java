@@ -54,7 +54,7 @@ public class FilePlayer implements
 	private final Context mMpContext;
 	private final File mFile;
 	
-	private static final int BUFFER_THRESHOLD = 97;
+	private static final int BUFFER_THRESHOLD = 100;
 	
 	private static final String FILE_URI_SCHEME = "file://";
 	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
@@ -363,7 +363,7 @@ public class FilePlayer implements
 			return true;
 		}
 		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(BUFFER_THRESHOLD) + "%");
-		return mBufferPercentage > BUFFER_THRESHOLD;
+		return mBufferPercentage >= BUFFER_THRESHOLD;
 	}
 	
 	public int getBufferPercentage() {
