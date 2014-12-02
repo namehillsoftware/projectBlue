@@ -182,7 +182,7 @@ public class FilePlayer implements
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
-			initializeFileBufferPercentage(uri);
+			initializeBufferPercentage(uri);
 			
 			mIsPreparing = true;
 			
@@ -206,7 +206,7 @@ public class FilePlayer implements
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
-			initializeFileBufferPercentage(uri);
+			initializeBufferPercentage(uri);
 			
 			mIsPreparing = true;
 			
@@ -225,13 +225,10 @@ public class FilePlayer implements
 		}
 	}
 	
-	private void initializeFileBufferPercentage(Uri uri) {
-		mBufferPercentage = mBufferMin;
-		
-		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) return;
-		
-		mLogger.info("Initializing local file buffer percentage to 100%.");
-		mBufferPercentage = mBufferMax;
+	private void initializeBufferPercentage(Uri uri) {
+		final String scheme = uri.getScheme();
+		mBufferPercentage = scheme.equalsIgnoreCase(FILE_URI_SCHEME) ? mBufferMax : mBufferMin;
+		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
 	}
 	
 	private void throwIoErrorEvent() {
