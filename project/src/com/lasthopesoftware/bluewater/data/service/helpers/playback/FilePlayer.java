@@ -227,7 +227,7 @@ public class FilePlayer implements
 		
 		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) return;
 		
-		mLogger.info("Is local file, setting buffer to 100%.");
+		mLogger.info("Initializing local file buffer percentage to 100%.");
 		mBufferPercentage = mBufferMax;
 	}
 	
