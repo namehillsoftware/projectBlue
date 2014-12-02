@@ -25,10 +25,10 @@ import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -236,7 +236,7 @@ public class FilePlayer implements
 		resetMediaPlayer();
 		
 		for (OnFileErrorListener listener : onFileErrorListeners)
-			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			listener.onFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
@@ -274,7 +274,7 @@ public class FilePlayer implements
 		mIsPreparing = false;
 		mLogger.info(mFile.getValue() + " prepared!");
 		
-		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
+		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
 	@Override
@@ -297,7 +297,7 @@ public class FilePlayer implements
 		});
 		
 		releaseMediaPlayer();
-		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onJrFileComplete(this);
+		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
 	}
 	
 	@Override
@@ -330,7 +330,7 @@ public class FilePlayer implements
 		}
 		resetMediaPlayer();
 		
-		for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, what, extra);
+		for (OnFileErrorListener listener : onFileErrorListeners) listener.onFileError(this, what, extra);
 		return true;
 	}
 
