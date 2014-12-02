@@ -43,12 +43,15 @@ public class FilePlayer implements
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
 	private volatile MediaPlayer mMediaPlayer;
+	
+	// FilePlayer State Variables
 	private volatile boolean mIsPrepared = false;
 	private volatile boolean mIsPreparing = false;
 	private volatile boolean mIsInErrorState = false;
 	private volatile int mPosition = 0;
 	private volatile int mBufferPercentage = 0;
 	private volatile float mVolume = 1.0f;
+	
 	private final Context mMpContext;
 	private final File mFile;
 	
@@ -246,8 +249,8 @@ public class FilePlayer implements
 		
 		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) {
 			final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
-			if (authKey != null && !authKey.isEmpty())
-				headers.put("Authorization", "basic " + authKey);
+			
+			if (authKey != null && !authKey.isEmpty()) headers.put("Authorization", "basic " + authKey);
 		}
 		
 		mMediaPlayer.setDataSource(mMpContext, uri, headers);
@@ -259,8 +262,7 @@ public class FilePlayer implements
 		
 		initMediaPlayer();
 		
-		if (position > 0)
-			seekTo(position);
+		if (position > 0) seekTo(position);
 	}
 	
 	public void releaseMediaPlayer() {
@@ -287,10 +289,8 @@ public class FilePlayer implements
 				try {
 					final String lastPlayedString = mFile.getProperty(FileProperties.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
-					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString)) {
-						final SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
-						updateStatsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-					}
+					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
+						SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(mFile));
 				} catch (NumberFormatException e) {
 					mLogger.error("There was an error parsing the last played time.");
 				} catch (IOException e) {
@@ -459,7 +459,7 @@ public class FilePlayer implements
 		@Override
 		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
-				final String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
+				final String numberPlaysString = mFile.getRefreshedProperty(FileProperties.NUMBER_PLAYS);
 				
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
