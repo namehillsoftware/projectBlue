@@ -227,7 +227,7 @@ public class FilePlayer implements
 	
 	private void initializeBufferPercentage(Uri uri) {
 		final String scheme = uri.getScheme();
-		mBufferPercentage = scheme.equalsIgnoreCase(FILE_URI_SCHEME) ? mBufferMax : mBufferMin;
+		mBufferPercentage = FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
 		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
 	}
 	
