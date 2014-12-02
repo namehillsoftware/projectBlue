@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,20 +42,19 @@ public class FilePlayer implements
 {
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
-	private volatile MediaPlayer mp;
-	private final AtomicBoolean isPrepared = new AtomicBoolean();
-	private final AtomicBoolean isPreparing = new AtomicBoolean();
-	private final AtomicBoolean isInErrorState = new AtomicBoolean();
-	private volatile boolean mIsLocalFile = false;
+	private volatile MediaPlayer mMediaPlayer;
+	private volatile boolean mIsPrepared = false;
+	private volatile boolean mIsPreparing = false;
+	private volatile boolean mIsInErrorState = false;
 	private volatile int mPosition = 0;
 	private volatile int mBufferPercentage = 0;
 	private volatile float mVolume = 1.0f;
 	private final Context mMpContext;
 	private final File mFile;
 	
-	private static final int BUFFER_THRESHOLD = 100;
+	private static final int mBufferMin = 0, mBufferMax = 100;
 	
-	private static final String FILE_URI_SCHEME = "file://";
+	private static final String FILE_URI_SCHEME = "file";
 	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	
 	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
@@ -76,29 +74,28 @@ public class FilePlayer implements
 	}
 	
 	public void initMediaPlayer() {
-		if (mp != null) return;
+		if (mMediaPlayer != null) return;
 		
-		isPrepared.set(false);
-		isPreparing.set(false);
-		isInErrorState.set(false);
-		mBufferPercentage = 0;
-		mIsLocalFile = false;
+		mIsPrepared = false;
+		mIsPreparing = false;
+		mIsInErrorState = false;
+		mBufferPercentage = mBufferMin;
 		
-		mp = new MediaPlayer(); // initialize it here
-		mp.setOnPreparedListener(this);
-		mp.setOnErrorListener(this);
-		mp.setOnCompletionListener(this);
-		mp.setOnBufferingUpdateListener(this);
-		mp.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mMediaPlayer = new MediaPlayer(); // initialize it here
+		mMediaPlayer.setOnPreparedListener(this);
+		mMediaPlayer.setOnErrorListener(this);
+		mMediaPlayer.setOnCompletionListener(this);
+		mMediaPlayer.setOnBufferingUpdateListener(this);
+		mMediaPlayer.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
+		mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public boolean isMediaPlayerCreated() {
-		return mp != null;
+		return mMediaPlayer != null;
 	}
 	
 	public boolean isPrepared() {
-		return isPrepared.get();
+		return mIsPrepared;
 	}
 	
 	@SuppressLint("InlinedApi")
@@ -135,11 +132,10 @@ public class FilePlayer implements
 		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
 		    	if (fileUriString != null && !fileUriString.isEmpty()) {
 		    		// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
-		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME, ""));
+		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME + "://", ""));
 		    		
 		    		if (file != null && file.exists()) {
 		    			mLogger.info("Returning file URI from local disk.");
-		    			mIsLocalFile = true;
 		    			return Uri.fromFile(file);
 		    		}
 		    	}
@@ -150,7 +146,6 @@ public class FilePlayer implements
 	    	cursor.close();
 	    }
 	    
-	    mIsLocalFile = false;
 	    mLogger.info("Returning file URL from server.");
 	    final String itemUrl = mFile.getSubItemUrl();
 	    if (itemUrl != null && !itemUrl.isEmpty())
@@ -177,54 +172,67 @@ public class FilePlayer implements
 	}
 	
 	public void prepareMediaPlayer() {
-		if (isPreparing.get() || isPrepared.get()) return;
+		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
 			final Uri uri = getMpUri();
-			if (uri != null) {
-				setMpDataSource(uri);
-				isPreparing.set(true);
-				mLogger.info("Preparing " + mFile.getValue() + " asynchronously.");
-				mp.prepareAsync();
-			}
+			if (uri == null) return;
+			
+			setMpDataSource(uri);
+			initializeFileBufferPercentage(uri);
+			
+			mIsPreparing = true;
+			
+			mLogger.info("Preparing " + mFile.getValue() + " asynchronously.");
+			mMediaPlayer.prepareAsync();
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			isPreparing.set(false);
+			mIsPreparing = false;
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 			resetMediaPlayer();
-			isPreparing.set(false);
+			mIsPreparing = false;
 		}
 	}
 	
 	public void prepareMpSynchronously() {
-		if (isPreparing.get() || isPrepared.get()) return;
+		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
 			final Uri uri = getMpUri();
-			if (uri != null) {
-				setMpDataSource(uri);
-				
-				isPreparing.set(true);
-				mLogger.info("Preparing " + mFile.getValue() + " synchronously.");
-				mp.prepare();
-				isPrepared.set(true);
-				return;
-			}
+			if (uri == null) return;
 			
-			isPreparing.set(false);
+			setMpDataSource(uri);
+			initializeFileBufferPercentage(uri);
+			
+			mIsPreparing = true;
+			
+			mLogger.info("Preparing " + mFile.getValue() + " synchronously.");
+			mMediaPlayer.prepare();
+			
+			mIsPrepared = true;
+			mIsPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			isPreparing.set(false);
+			mIsPreparing = false;
 		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 			resetMediaPlayer();
-			isPreparing.set(false);
+			mIsPreparing = false;
 		}
 	}
 	
+	private void initializeFileBufferPercentage(Uri uri) {
+		mBufferPercentage = mBufferMin;
+		
+		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) return;
+		
+		mLogger.info("Is local file, setting buffer to 100%.");
+		mBufferPercentage = mBufferMax;
+	}
+	
 	private void throwIoErrorEvent() {
-		isInErrorState.set(true);
+		mIsInErrorState = true;
 		resetMediaPlayer();
 		
 		for (OnFileErrorListener listener : onFileErrorListeners)
@@ -236,15 +244,16 @@ public class FilePlayer implements
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		
-		final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
-		if (authKey != null && !authKey.isEmpty())
-			headers.put("Authorization", "basic " + authKey);
+		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) {
+			final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
+			if (authKey != null && !authKey.isEmpty())
+				headers.put("Authorization", "basic " + authKey);
+		}
 		
-		mp.setDataSource(mMpContext, uri, headers);
+		mMediaPlayer.setDataSource(mMpContext, uri, headers);
 	}
 	
 	private void resetMediaPlayer() {
-		
 		final int position = getCurrentPosition();
 		releaseMediaPlayer();
 		
@@ -255,16 +264,17 @@ public class FilePlayer implements
 	}
 	
 	public void releaseMediaPlayer() {
-		if (mp != null) mp.release();
-		mp = null;
-		isPrepared.set(false);
+		if (mMediaPlayer != null) mMediaPlayer.release();
+		mMediaPlayer = null;
+		mIsPrepared = false;
 	}
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		isPrepared.set(true);
-		isPreparing.set(false);
+		mIsPrepared = true;
+		mIsPreparing = false;
 		mLogger.info(mFile.getValue() + " prepared!");
+		
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
 	}
 	
@@ -296,7 +306,7 @@ public class FilePlayer implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mp.setOnErrorListener(null);
-		isInErrorState.set(true);
+		mIsInErrorState = true;
 		mLogger.error("Media Player error.");
 		mLogger.error("What: ");
 		mLogger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
@@ -348,7 +358,7 @@ public class FilePlayer implements
 	
 	public int getCurrentPosition() {
 		try {
-			if (mp != null && isPrepared()) mPosition = mp.getCurrentPosition();
+			if (mMediaPlayer != null && isPrepared()) mPosition = mMediaPlayer.getCurrentPosition();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
@@ -356,14 +366,8 @@ public class FilePlayer implements
 	}
 	
 	public boolean isBuffered() {
-		// If this has been set to true, return true. If the file URI was never determined, that means it was never put into a 
-		// state to be buffered, so it being false is okay.
-		if (mIsLocalFile) {
-			mLogger.info("Is local file, already fully buffered.");
-			return true;
-		}
-		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(BUFFER_THRESHOLD) + "%");
-		return mBufferPercentage >= BUFFER_THRESHOLD;
+		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
+		return mBufferPercentage >= mBufferMax;
 	}
 	
 	public int getBufferPercentage() {
@@ -371,11 +375,11 @@ public class FilePlayer implements
 	}
 	
 	public int getDuration() throws IOException {
-		if (mp == null || isInErrorState.get() || !isPlaying())
+		if (mMediaPlayer == null || mIsInErrorState || !isPlaying())
 			return mFile.getDuration();
 		
 		try {
-			return mp.getDuration();
+			return mMediaPlayer.getDuration();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 			return mFile.getDuration();
@@ -384,7 +388,7 @@ public class FilePlayer implements
 
 	public boolean isPlaying() {
 		try {
-			return mp != null && mp.isPlaying();
+			return mMediaPlayer != null && mMediaPlayer.isPlaying();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 			return false;
@@ -392,9 +396,9 @@ public class FilePlayer implements
 	}
 
 	public void pause() {
-		if (isPreparing.get()) {
+		if (mIsPreparing) {
 			try {
-				mp.reset();
+				mMediaPlayer.reset();
 			} catch (IllegalStateException e) {
 				handleIllegalStateException(e);
 				resetMediaPlayer();
@@ -403,8 +407,8 @@ public class FilePlayer implements
 		}
 		
 		try {
-			mPosition = mp.getCurrentPosition();
-			mp.pause();
+			mPosition = mMediaPlayer.getCurrentPosition();
+			mMediaPlayer.pause();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
@@ -413,7 +417,7 @@ public class FilePlayer implements
 	public void seekTo(int pos) {
 		mPosition = pos;
 		try {
-			if (mp != null && !isInErrorState.get() && isPrepared() && isPlaying()) mp.seekTo(mPosition);
+			if (mMediaPlayer != null && !mIsInErrorState && isPrepared() && isPlaying()) mMediaPlayer.seekTo(mPosition);
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
@@ -421,13 +425,13 @@ public class FilePlayer implements
 
 	public void start() throws IllegalStateException {
 		mLogger.info("Playback started on " + mFile.getValue());
-		mp.seekTo(mPosition);
-		mp.start();
+		mMediaPlayer.seekTo(mPosition);
+		mMediaPlayer.start();
 	}
 	
 	public void stop() throws IllegalStateException {
 		mPosition = 0;
-		mp.stop();
+		mMediaPlayer.stop();
 	}
 	
 	public float getVolume() {
@@ -437,8 +441,8 @@ public class FilePlayer implements
 	public void setVolume(float volume) {
 		mVolume = volume;
 		
-		if (mp != null)
-			mp.setVolume(mVolume, mVolume);
+		if (mMediaPlayer != null)
+			mMediaPlayer.setVolume(mVolume, mVolume);
 	}
 	
 	private static void handleIllegalStateException(IllegalStateException ise) {
