@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.data.service.cache;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
