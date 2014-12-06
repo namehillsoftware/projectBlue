@@ -18,39 +18,38 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 public class ClickFileListener implements OnItemClickListener {
 
-	private IItemFiles mItem;
+	private final IItemFiles mItemFiles;
 	
-	public ClickFileListener(IItemFiles item) {
-		mItem = item;
+	public ClickFileListener(IItemFiles itemFiles) {
+		mItemFiles = itemFiles;
 	}
 	
 	@Override
 	public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-		mItem.getFileStringList(new OnCompleteListener<String>() {
+		mItemFiles.getFileStringList(new OnCompleteListener<String>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				StreamingMusicService.streamMusic(view.getContext(), result);
+				StreamingMusicService.streamMusic(view.getContext(), position, result);
 			}
 		}, new OnErrorListener<String>() {
 
 			@Override
 			public boolean onError(ISimpleTask<String, Void, String> owner, boolean isHandled, Exception innerException) {
-				if (innerException instanceof IOException) {
-					PollConnection.Instance.get(view.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-						
-						@Override
-						public void onConnectionRegained() {
-							onItemClick(parent, view, position, id);
-						}
-					});
+				if (!(innerException instanceof IOException)) return false;
+				
+				PollConnection.Instance.get(view.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 					
-					WaitForConnectionDialog.show(view.getContext());
-					return true;
-				}
-				return false;
+					@Override
+					public void onConnectionRegained() {
+						onItemClick(parent, view, position, id);
+					}
+				});
+				
+				WaitForConnectionDialog.show(view.getContext());
+				return true;
 			}
 		});
 	}
