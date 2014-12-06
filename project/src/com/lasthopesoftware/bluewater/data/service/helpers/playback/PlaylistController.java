@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
@@ -18,9 +21,6 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 
 public class PlaylistController implements
 	OnFilePreparedListener,
@@ -295,14 +295,14 @@ public class PlaylistController implements
 
 	/* Event handlers */
 	@Override
-	public void onJrFilePrepared(FilePlayer mediaPlayer) {
+	public void onFilePrepared(FilePlayer mediaPlayer) {
 		if (mediaPlayer.isPlaying()) return;
 		
 		startFilePlayback(mediaPlayer);
 	}
 	
 	@Override
-	public void onJrFileComplete(FilePlayer mediaPlayer) {
+	public void onFileComplete(FilePlayer mediaPlayer) {
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
@@ -335,7 +335,7 @@ public class PlaylistController implements
 	}
 	
 	@Override
-	public void onJrFileError(FilePlayer mediaPlayer, int what, int extra) {
+	public void onFileError(FilePlayer mediaPlayer, int what, int extra) {
 		mLogger.error("JR File error - " + what + " - " + extra);
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)

@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.data.service.objects;
+package com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 
 public interface OnFilePreparedListener {
-	void onJrFilePrepared(FilePlayer mediaPlayer);
+	void onFilePrepared(FilePlayer mediaPlayer);
 }

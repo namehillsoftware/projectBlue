@@ -25,10 +25,10 @@ import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.objects.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -43,12 +43,15 @@ public class FilePlayer implements
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
 	private volatile MediaPlayer mMediaPlayer;
+	
+	// FilePlayer State Variables
 	private volatile boolean mIsPrepared = false;
 	private volatile boolean mIsPreparing = false;
 	private volatile boolean mIsInErrorState = false;
 	private volatile int mPosition = 0;
 	private volatile int mBufferPercentage = 0;
 	private volatile float mVolume = 1.0f;
+	
 	private final Context mMpContext;
 	private final File mFile;
 	
@@ -179,7 +182,7 @@ public class FilePlayer implements
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
-			initializeFileBufferPercentage(uri);
+			initializeBufferPercentage(uri);
 			
 			mIsPreparing = true;
 			
@@ -203,7 +206,7 @@ public class FilePlayer implements
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
-			initializeFileBufferPercentage(uri);
+			initializeBufferPercentage(uri);
 			
 			mIsPreparing = true;
 			
@@ -222,13 +225,10 @@ public class FilePlayer implements
 		}
 	}
 	
-	private void initializeFileBufferPercentage(Uri uri) {
-		mBufferPercentage = mBufferMin;
-		
-		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) return;
-		
-		mLogger.info("Initializing local file buffer percentage to 100%.");
-		mBufferPercentage = mBufferMax;
+	private void initializeBufferPercentage(Uri uri) {
+		final String scheme = uri.getScheme();
+		mBufferPercentage = FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
+		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
 	}
 	
 	private void throwIoErrorEvent() {
@@ -236,7 +236,7 @@ public class FilePlayer implements
 		resetMediaPlayer();
 		
 		for (OnFileErrorListener listener : onFileErrorListeners)
-			listener.onJrFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
+			listener.onFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
@@ -246,8 +246,8 @@ public class FilePlayer implements
 		
 		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) {
 			final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
-			if (authKey != null && !authKey.isEmpty())
-				headers.put("Authorization", "basic " + authKey);
+			
+			if (authKey != null && !authKey.isEmpty()) headers.put("Authorization", "basic " + authKey);
 		}
 		
 		mMediaPlayer.setDataSource(mMpContext, uri, headers);
@@ -259,8 +259,7 @@ public class FilePlayer implements
 		
 		initMediaPlayer();
 		
-		if (position > 0)
-			seekTo(position);
+		if (position > 0) seekTo(position);
 	}
 	
 	public void releaseMediaPlayer() {
@@ -275,7 +274,7 @@ public class FilePlayer implements
 		mIsPreparing = false;
 		mLogger.info(mFile.getValue() + " prepared!");
 		
-		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onJrFilePrepared(this);
+		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
 	@Override
@@ -287,10 +286,8 @@ public class FilePlayer implements
 				try {
 					final String lastPlayedString = mFile.getProperty(FileProperties.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
-					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString)) {
-						final SimpleTask<Void, Void, Void> updateStatsTask = new SimpleTask<Void, Void, Void>(new UpdatePlayStatsOnExecute(mFile));
-						updateStatsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-					}
+					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
+						SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(mFile));
 				} catch (NumberFormatException e) {
 					mLogger.error("There was an error parsing the last played time.");
 				} catch (IOException e) {
@@ -300,7 +297,7 @@ public class FilePlayer implements
 		});
 		
 		releaseMediaPlayer();
-		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onJrFileComplete(this);
+		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
 	}
 	
 	@Override
@@ -333,7 +330,7 @@ public class FilePlayer implements
 		}
 		resetMediaPlayer();
 		
-		for (OnFileErrorListener listener : onFileErrorListeners) listener.onJrFileError(this, what, extra);
+		for (OnFileErrorListener listener : onFileErrorListeners) listener.onFileError(this, what, extra);
 		return true;
 	}
 
@@ -459,7 +456,7 @@ public class FilePlayer implements
 		@Override
 		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
-				final String numberPlaysString = mFile.getRefreshedProperty("Number Plays");
+				final String numberPlaysString = mFile.getRefreshedProperty(FileProperties.NUMBER_PLAYS);
 				
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
