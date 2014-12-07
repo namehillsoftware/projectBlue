@@ -343,10 +343,17 @@ public class StreamingMusicService extends Service implements
 		});
 	}
 
-	private void startPlaylist(String playlistString, int filePos, int fileProgress) {
+	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress) {
 		// If the playlist has changed, change that
 		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
-			initializePlaylist(playlistString);
+			initializePlaylist(playlistString, new OnPlaylistControllerInitialized() {
+
+				@Override
+				public void onPlaylistControllerInitialized(PlaylistController playlist) {				
+					startPlaylist(playlistString, filePos, fileProgress);
+				}
+			});
+			return;
 		}
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -360,21 +367,25 @@ public class StreamingMusicService extends Service implements
         mPlaylistController.startAt(filePos, fileProgress);
 	}
 	
-	private void initializePlaylist(String playlistString, int filePos, int fileProgress) {
-		initializePlaylist(playlistString);
-		
-		if (!playlistString.isEmpty())
-			mPlaylistController.seekTo(filePos, fileProgress);
+	private void initializePlaylist(final String playlistString, final int filePos, final int fileProgress) {
+		initializePlaylist(playlistString, new OnPlaylistControllerInitialized() {
+			
+			@Override
+			public void onPlaylistControllerInitialized(PlaylistController playlist) {
+				if (!playlistString.isEmpty())
+					mPlaylistController.seekTo(filePos, fileProgress);
+			}
+		});
 	}
 	
-	private void initializePlaylist(String playlistString) {
-		mLogger.info("Initializing playlist.");
-		mPlaylistString = playlistString;
-		
+	private void initializePlaylist(final String playlistString, final OnPlaylistControllerInitialized onPlaylistControllerInitialized) {		
 		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				mLogger.info("Initializing playlist.");
+				mPlaylistString = playlistString;
+				
 				// First try to get the playlist string from the database
 				if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = result.getSavedTracksString();
 				
@@ -395,9 +406,15 @@ public class StreamingMusicService extends Service implements
 				mPlaylistController.addOnNowPlayingPauseListener(mStreamingMusicService);
 				mPlaylistController.addOnPlaylistStateControlErrorListener(mStreamingMusicService);
 				mPlaylistController.addOnNowPlayingStartListener(mStreamingMusicService);
+				
+				onPlaylistControllerInitialized.onPlaylistControllerInitialized(mPlaylistController);
 			}
 		});
 	}
+	
+	private static interface OnPlaylistControllerInitialized {
+    	void onPlaylistControllerInitialized(final PlaylistController playlist);
+    }
 	
 	private void pausePlayback(boolean isUserInterrupted) {
 		stopNotification();
