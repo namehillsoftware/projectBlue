@@ -46,7 +46,7 @@ public class BuildSessionConnection {
 				doStateChange(BuildingSessionConnectionStatus.BUILDING_CONNECTION);
 				final Library library = result;
 				
-				ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), new OnCompleteListener<Integer, Void, Boolean>() {
+				ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Integer, Void, Boolean>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
@@ -80,7 +80,7 @@ public class BuildSessionConnection {
 										final int selectedView = result.get(0).getKey();
 										library.setSelectedView(selectedView);
 										
-										LibrarySession.SaveSession(context, new OnCompleteListener<Void, Void, Library>() {
+										LibrarySession.SaveLibrary(context, library, new OnCompleteListener<Void, Void, Library>() {
 											
 											@Override
 											public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

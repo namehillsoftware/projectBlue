@@ -104,7 +104,7 @@ public class FileListAdapter extends AbstractFileListAdapter {
 					newFileString += mFile.getKey() + ";";
 					result.setSavedTracksString(newFileString);
 					
-					LibrarySession.SaveSession(_context, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveLibrary(_context, result, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

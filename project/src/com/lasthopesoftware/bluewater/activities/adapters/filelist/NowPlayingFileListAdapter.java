@@ -103,7 +103,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 					String newFileString = Files.serializeFileStringList(StreamingMusicService.getPlaylistController().getPlaylist());					
 					result.setSavedTracksString(newFileString);
 					
-					LibrarySession.SaveSession(_context, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveLibrary(_context, result, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

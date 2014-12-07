@@ -44,7 +44,7 @@ public class SetConnection extends FragmentActivity {
         	mConnectionButton.setText(R.string.btn_connecting);
         	mConnectionButton.setEnabled(false);
         	
-        	LibrarySession.SaveSession(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
+        	LibrarySession.SaveLibrary(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {

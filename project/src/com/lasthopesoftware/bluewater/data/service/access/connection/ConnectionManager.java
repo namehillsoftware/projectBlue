@@ -37,6 +37,7 @@ public class ConnectionManager {
 	private static AccessConfiguration mAccessConfiguration;
 	private static String mAccessString = null;
 	private static String mAuthCode = null;
+	private static boolean mIsLocalOnly = false;
 	
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionManager.class);
@@ -45,23 +46,24 @@ public class ConnectionManager {
 	
 	private static Object syncObj = new Object();
 	
-	public static void buildConfiguration(Context context, String accessString, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, stdTimeoutTime, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, boolean isLocalOnly, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, isLocalOnly, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessString, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, null, timeout, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, boolean isLocalOnly, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, null, isLocalOnly, timeout, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessString, String authCode, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, authCode, stdTimeoutTime, onBuildComplete);
+	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+		buildConfiguration(context, accessString, authCode, isLocalOnly, stdTimeoutTime, onBuildComplete);
 	}
 	
-	public static void buildConfiguration(Context context, String accessString, String authCode, int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
+	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly,int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null.");
 		
 		mAccessString = accessString;
+		mIsLocalOnly = isLocalOnly;
 		synchronized(syncObj) {
 			mAuthCode = authCode;
 			if (timeout <= 0) timeout = stdTimeoutTime;
@@ -75,7 +77,7 @@ public class ConnectionManager {
 					return;
 				}
 				
-				buildAccessConfiguration(mAccessString, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
+				buildAccessConfiguration(mAccessString, mIsLocalOnly, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
 					
 					@Override
 					public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
@@ -120,7 +122,7 @@ public class ConnectionManager {
 			if (mAccessString == null || mAccessString.isEmpty())
 				throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
 			
-			buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
+			buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
 			return;
 		}
 		
@@ -133,7 +135,7 @@ public class ConnectionManager {
 					return;
 				}
 				
-				buildConfiguration(context, mAccessString, mAuthCode, timeout, onRefreshComplete);
+				buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
 			}
 		
 		};
@@ -159,14 +161,12 @@ public class ConnectionManager {
 		}
 	}
 	
-	private static void buildAccessConfiguration(String accessString, int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(String accessString, boolean isLocalOnly, final int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null");
 		
 		for (OnAccessStateChange onAccessStateChange : mOnAccessStateChangeListeners)
 			onAccessStateChange.gettingUri(accessString);
-		
-		final int _timeout = timeout;
 		
 		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<String, Void, AccessConfiguration>(new OnExecuteListener<String, Void, AccessConfiguration>() {
 			
@@ -188,7 +188,7 @@ public class ConnectionManager {
 					} else {
 						final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
 						
-						conn.setConnectTimeout(_timeout);
+						conn.setConnectTimeout(timeout);
 						try {
 							final InputStream is = conn.getInputStream();
 							try {

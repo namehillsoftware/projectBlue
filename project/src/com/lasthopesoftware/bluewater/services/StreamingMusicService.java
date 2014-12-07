@@ -229,7 +229,7 @@ public class StreamingMusicService extends Service implements
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 				result.setRepeating(isRepeating);
-				LibrarySession.SaveSession(context);
+				LibrarySession.SaveLibrary(context, result);
 				if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
 			}
 		});
@@ -390,7 +390,7 @@ public class StreamingMusicService extends Service implements
 				if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = result.getSavedTracksString();
 				
 				result.setSavedTracksString(mPlaylistString);
-				LibrarySession.SaveSession(mStreamingMusicService);
+				LibrarySession.SaveLibrary(mStreamingMusicService, result);
 				
 				if (mPlaylistController != null) {
 					mPlaylistController.pause();
@@ -771,7 +771,7 @@ public class StreamingMusicService extends Service implements
 				result.setNowPlayingId(controller.getCurrentPosition());
 				result.setNowPlayingProgress(filePlayer.getCurrentPosition());
 
-				LibrarySession.SaveSession(mStreamingMusicService);
+				LibrarySession.SaveLibrary(mStreamingMusicService, result);
 			}
 		});
 	}
@@ -881,9 +881,7 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	@Override
-	public void onDestroy() {
-		LibrarySession.SaveSession(this);
-		
+	public void onDestroy() {		
 		stopNotification();
 		
 		if (mPlaylistController != null) {

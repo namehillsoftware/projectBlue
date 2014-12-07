@@ -17,6 +17,7 @@ public class AccessConfiguration {
 	private List<String> localIps = new ArrayList<String>();
 	private List<String> macAddresses = new ArrayList<String>();
 	private int urlIndex = -1;
+	private boolean isLocalOnly;
 	
 	public AccessConfiguration() {
 	}
@@ -63,6 +64,14 @@ public class AccessConfiguration {
 		return localIps;
 	}
 	
+	public boolean isLocalOnly() {
+		return isLocalOnly;
+	}
+
+	public void setLocalOnly(boolean isLocalOnly) {
+		this.isLocalOnly = isLocalOnly;
+	}
+
 	/**
 	 * @return the macAddresses
 	 */
@@ -92,7 +101,7 @@ public class AccessConfiguration {
 		}
 		
 		try {
-			if (!LibrarySession.GetLibrary().isLocalOnly()) {
+			if (!isLocalOnly) {
 				try {
 					mActiveUrl = getRemoteUrl();
 			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;

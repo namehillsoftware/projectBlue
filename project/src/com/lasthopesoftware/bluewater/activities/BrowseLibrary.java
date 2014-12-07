@@ -168,7 +168,7 @@ public class BrowseLibrary extends FragmentActivity {
 						if (library.getSelectedView() == selectedViewKey) return;
 						
 						library.setSelectedView(selectedViewKey);
-						LibrarySession.SaveSession(mBrowseLibrary);
+						LibrarySession.SaveLibrary(mBrowseLibrary, library);
 						
 						FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 							

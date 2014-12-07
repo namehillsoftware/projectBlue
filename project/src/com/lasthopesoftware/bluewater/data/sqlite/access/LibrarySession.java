@@ -22,19 +22,12 @@ public class LibrarySession {
 	
 	private static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
-	private static int ChosenLibrary = -1;
 	
-	private static Library mLibrary = null;
-	
-	public static void SaveSession(final Context context) {
-		SaveSession(context, null);
-	}
-
-	public static void SaveSession(final Context context, final OnCompleteListener<Void, Void, Library> onSaveComplete) {
-		SaveSession(context, mLibrary, onSaveComplete);
+	public static void SaveLibrary(final Context context, final Library library) {
+		SaveLibrary(context, library, null);
 	}
 	
-	public static void SaveSession(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
+	public static void SaveLibrary(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
 	
 		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<Void, Void, Library>(new OnExecuteListener<Void, Void, Library>() {
 			
@@ -45,7 +38,6 @@ public class LibrarySession {
 					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					
 					libraryAccess.createOrUpdate(library);
-					ChosenLibrary = library.getId();
 					context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					
 					mLogger.debug("Session saved.");
@@ -68,13 +60,6 @@ public class LibrarySession {
 		writeToDatabaseTask.execute(DatabaseHandler.databaseExecutor);
 	}
 	
-	public static synchronized Library GetLibrary() throws NullPointerException {
-		if (mLibrary == null)
-			throw new NullPointerException("The mLibrary has not been initialized correctly. Please call GetLibrary(Context context)) first.");
-		
-		return mLibrary;
-	}
-
 	public static void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		
 		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<Integer, Void, Library>(new OnExecuteListener<Integer, Void, Library>() {
@@ -89,7 +74,6 @@ public class LibrarySession {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				mLibrary = result;
 				if (onGetLibraryComplete != null)
 					onGetLibraryComplete.onComplete(owner, result);
 			}
@@ -99,19 +83,17 @@ public class LibrarySession {
 	}
 	
 	public static synchronized Library GetLibrary(final Context context) {
-		if ("UI thread".equals(Thread.currentThread().getName()))
+		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 		
-		if (mLibrary != null) return mLibrary;
+		int chosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 		
-		ChosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
-		
-		if (ChosenLibrary < 0) return null;
+		if (chosenLibrary < 0) return null;
 		
 		final DatabaseHandler handler = new DatabaseHandler(context);
 		try {
 			final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-			return libraryAccess.queryForId(ChosenLibrary);
+			return libraryAccess.queryForId(chosenLibrary);
 		} catch (SQLException e) {
 			mLogger.error(e.toString(), e);
 		} catch (Exception e) {
@@ -158,7 +140,6 @@ public class LibrarySession {
 		
 		if (libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
 			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
-			mLibrary = null;
 		}
 		
 		GetLibrary(context, onLibraryChangeComplete);
