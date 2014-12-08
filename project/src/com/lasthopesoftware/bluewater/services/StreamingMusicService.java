@@ -881,10 +881,13 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	@Override
-	public void onDestroy() {		
+	public void onDestroy() {
 		stopNotification();
 		
 		if (mPlaylistController != null) {
+			if (mPlaylistController.getCurrentFilePlayer() != null)
+				saveStateToLibrary(mPlaylistController, mPlaylistController.getCurrentFilePlayer());
+
 			mPlaylistController.release();
 			mPlaylistController = null;
 		}
