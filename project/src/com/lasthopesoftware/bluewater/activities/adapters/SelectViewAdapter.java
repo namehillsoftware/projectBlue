@@ -24,7 +24,7 @@ public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 		mSelectedViewKey = selectedViewKey;
 		
 		if (mSelectedColor == -1)
-			mSelectedColor = context.getResources().getColor(android.R.color.holo_blue_light);
+			mSelectedColor = context.getResources().getColor(R.color.clearstream_blue);
 	}
 	
 	@Override

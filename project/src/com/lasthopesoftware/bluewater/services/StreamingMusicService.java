@@ -357,7 +357,7 @@ public class StreamingMusicService extends Service implements
 		}
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
         
@@ -636,7 +636,7 @@ public class StreamingMusicService extends Service implements
 		saveStateToLibrary(controller, filePlayer);
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(mStreamingMusicService, StreamingMusicService.class);
@@ -801,7 +801,7 @@ public class StreamingMusicService extends Service implements
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
 				NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
-		        builder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
