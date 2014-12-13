@@ -24,13 +24,14 @@ public class ViewUtils {
 
 	public final static boolean buildStandardMenu(final Activity activity, final Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
+		
 		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
 		nowPlayingItem.setVisible(false);
-		ViewUtils.displayNowPlayingInMenu(activity, new OnGetNowPlayingSetListener() {
+		LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
-			public void onGetNowPlayingSetComplete(Boolean isSet) {
-				nowPlayingItem.setVisible(isSet);
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				nowPlayingItem.setVisible(result != null && result.getNowPlayingId() >= 0);
 			}
 		});
 		
@@ -80,26 +81,10 @@ public class ViewUtils {
 		return ViewUtils.handleMenuClicks(activity, item);
 		
 	}
-	
-	public final static void displayNowPlayingInMenu(final Context context, final OnGetNowPlayingSetListener listener) {
 		
-		LibrarySession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				if (result != null)
-					listener.onGetNowPlayingSetComplete(result.getNowPlayingId() >= 0);
-			}
-		});
-	}
-	
 	public final static void CreateNowPlayingView(final Context context) {
     	final Intent viewIntent = new Intent(context, ViewNowPlaying.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		context.startActivity(viewIntent);
     }
-	
-	public interface OnGetNowPlayingSetListener {
-		void onGetNowPlayingSetComplete(Boolean isSet);
-	}
 }
