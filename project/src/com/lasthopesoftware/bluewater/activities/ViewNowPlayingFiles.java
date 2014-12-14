@@ -102,20 +102,19 @@ public class ViewNowPlayingFiles extends FragmentActivity {
 	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, ArrayList<File> result) {
-					final ArrayList<File> _result = result;
-					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mContext, R.id.tvStandard, _result);
+				public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, final ArrayList<File> result) {
+					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mContext, R.id.tvStandard, result);
 			        mFileListView.setAdapter(fileListAdapter);
 			        mFileListView.setOnItemClickListener(new OnItemClickListener() {
 
 						@Override
 						public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-							StreamingMusicService.streamMusic(view.getContext(), position);
+							StreamingMusicService.seekTo(view.getContext(), position);
 						}
 					});
 			        mFileListView.setOnItemLongClickListener(new LongClickFlipListener());
 			        
-			        if (library.getNowPlayingId() < _result.size())
+			        if (library.getNowPlayingId() < result.size())
 			        	mFileListView.setSelection(library.getNowPlayingId());
 			        
 			        mFileListView.setVisibility(View.VISIBLE);

@@ -153,7 +153,7 @@ public class BrowseItemMenu {
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
-			StreamingMusicService.streamMusic(mContext, result);
+			StreamingMusicService.launchMusicService(mContext, result);
 		}
 		
 	}

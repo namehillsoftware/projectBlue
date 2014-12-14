@@ -20,6 +20,6 @@ public class PlayClickListener implements OnClickListener {
 	
 	@Override
 	public void onClick(View v) {
-		StreamingMusicService.streamMusic(v.getContext(), mPosition, Files.serializeFileStringList(mFiles));
+		StreamingMusicService.launchMusicService(v.getContext(), mPosition, Files.serializeFileStringList(mFiles));
 	}
 }

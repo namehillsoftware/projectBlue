@@ -32,7 +32,7 @@ public class ClickFileListener implements OnItemClickListener {
 			public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				StreamingMusicService.streamMusic(view.getContext(), position, result);
+				StreamingMusicService.launchMusicService(view.getContext(), position, result);
 			}
 		}, new OnErrorListener<String>() {
 
