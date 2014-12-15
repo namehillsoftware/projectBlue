@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.activities;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -13,6 +14,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
+import android.provider.MediaStore.Files;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +52,7 @@ import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
@@ -179,9 +182,6 @@ public class ViewNowPlaying extends Activity implements
 		
 		mHandler = new HandleViewNowPlayingMessages(this);
 		
-		if (StreamingMusicService.getPlaylistController() == null)
-			StreamingMusicService.resumeSavedPlaylist(this);
-		
 		// Get initial view state from playlist controller if it is active
 		if (StreamingMusicService.getPlaylistController() != null) {
 			final FilePlayer filePlayer = StreamingMusicService.getPlaylistController().getCurrentFilePlayer();
@@ -189,7 +189,34 @@ public class ViewNowPlaying extends Activity implements
 			setView(filePlayer.getFile());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
 			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+			
+			return;
 		}
+		
+		// Otherwise set the view using the library persisted in the database
+		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+				final String savedTracksString = library.getSavedTracksString();
+				if (savedTracksString == null || savedTracksString.isEmpty()) return;
+				
+				final AsyncTask<Void, Void, List<File>> getNowPlayingListTask = new AsyncTask<Void, Void, List<File>>() {
+
+					@Override
+					protected List<File> doInBackground(Void... params) {
+						return com.lasthopesoftware.bluewater.data.service.objects.Files.deserializeFileStringList(savedTracksString);
+					}
+					
+					@Override
+					protected void onPostExecute(List<File> result) {
+						setView(result.get(library.getNowPlayingId()));
+					}
+				};
+				
+				getNowPlayingListTask.execute();
+			}
+		});
 	}
 	
 	@Override
