@@ -100,8 +100,8 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
 		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
-        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
+        if (playlistController != null && playlistController.getCurrentFilePlayer() != null)
+        	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController, playlistController.getCurrentFilePlayer()) ? Typeface.BOLD : Typeface.NORMAL);
         
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
         viewHolder.getFileValueTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
