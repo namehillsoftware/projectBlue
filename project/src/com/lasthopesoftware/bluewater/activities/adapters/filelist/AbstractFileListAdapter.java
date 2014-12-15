@@ -98,9 +98,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         final File file = getItem(position);
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
-        if (StreamingMusicService.getPlaylistController() == null)
-			StreamingMusicService.resumeSavedPlaylist(convertView.getContext());
-		
+        		
 		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
         if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
         	viewHolder.textView.setTypeface(null, Typeface.BOLD);

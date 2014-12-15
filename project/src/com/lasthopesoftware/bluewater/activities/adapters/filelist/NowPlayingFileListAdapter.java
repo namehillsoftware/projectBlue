@@ -89,12 +89,8 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 		}
 		
 		@Override
-		public void onClick(View v) {
-			final Context _context = v.getContext();
-			if (StreamingMusicService.getPlaylistController() == null) 
-				StreamingMusicService.resumeSavedPlaylist(_context);
-			
-			LibrarySession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
+		public void onClick(final View view) {
+			LibrarySession.GetLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -103,11 +99,13 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 					String newFileString = Files.serializeFileStringList(StreamingMusicService.getPlaylistController().getPlaylist());					
 					result.setSavedTracksString(newFileString);
 					
-					LibrarySession.SaveLibrary(_context, result, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							StreamingMusicService.getPlaylistController().removeFileAt(mPosition);
+							if (StreamingMusicService.getPlaylistController() != null) 
+								StreamingMusicService.getPlaylistController().removeFileAt(mPosition);
+							
 							mAdapter.remove(mAdapter.getItem(mPosition));
 						}
 					});

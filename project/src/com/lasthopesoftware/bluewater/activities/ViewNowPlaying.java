@@ -14,7 +14,6 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
-import android.provider.MediaStore.Files;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,13 +45,13 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.On
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.SimpleTask;
 
 public class ViewNowPlaying extends Activity implements 
 	OnNowPlayingChangeListener, 
@@ -205,7 +204,7 @@ public class ViewNowPlaying extends Activity implements
 
 					@Override
 					protected List<File> doInBackground(Void... params) {
-						return com.lasthopesoftware.bluewater.data.service.objects.Files.deserializeFileStringList(savedTracksString);
+						return Files.deserializeFileStringList(savedTracksString);
 					}
 					
 					@Override

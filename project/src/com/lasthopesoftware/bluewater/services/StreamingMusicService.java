@@ -134,17 +134,6 @@ public class StreamingMusicService extends Service implements
 	}
 	
 	/* Begin streamer intent helpers */
-	public static void resumeSavedPlaylist(final Context context) {
-		LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				if (result == null || result.getSavedTracksString() == null) return;
-				initializePlaylist(context, result.getNowPlayingId(), result.getNowPlayingProgress(), result.getSavedTracksString());
-			}
-		});
-	}
-	
 	public static void initializePlaylist(final Context context, String serializedFileList) {
 		final Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);		
 		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);

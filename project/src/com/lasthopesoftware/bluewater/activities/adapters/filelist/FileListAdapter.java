@@ -87,14 +87,11 @@ public class FileListAdapter extends AbstractFileListAdapter {
 		}
 		
 		@Override
-		public void onClick(View v) {
-			final Context _context = v.getContext();
-			if (StreamingMusicService.getPlaylistController() == null) 
-				StreamingMusicService.resumeSavedPlaylist(_context);
+		public void onClick(final View view) {
+			if (StreamingMusicService.getPlaylistController() != null) 
+				StreamingMusicService.getPlaylistController().addFile(mFile);
 			
-			StreamingMusicService.getPlaylistController().addFile(mFile);
-			
-			LibrarySession.GetLibrary(_context, new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -104,11 +101,11 @@ public class FileListAdapter extends AbstractFileListAdapter {
 					newFileString += mFile.getKey() + ";";
 					result.setSavedTracksString(newFileString);
 					
-					LibrarySession.SaveLibrary(_context, result, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							Toast.makeText(_context, _context.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();;
+							Toast.makeText(view.getContext(), view.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();;
 						}
 					});
 				}

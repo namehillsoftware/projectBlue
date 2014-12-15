@@ -7,8 +7,6 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
-
 public class AccessConfiguration {
 	private boolean status;
 	private volatile String mActiveUrl = "";
