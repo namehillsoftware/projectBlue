@@ -28,7 +28,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 
-	private List<File> mFiles;
+	private final List<File> mFiles;
 	
 	private static class ViewHolder {
 		public ViewHolder(final CharSequence loadingText, final ViewFlipper viewFlipper, final RelativeLayout textLayout, final TextView textView, final View menuView) {
@@ -49,6 +49,10 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		public OnNowPlayingStartListener checkIfIsPlayingFileListener;
 		public OnAttachStateChangeListener onAttachStateChangeListener;
 	}
+//	
+//	public AbstractFileListAdapter(Context context, int resource, List<File> files) {
+//		this(context, resource, files, null);
+//	}
 	
 	public AbstractFileListAdapter(Context context, int resource, List<File> files) {
 		super(context, resource, files);
@@ -99,9 +103,8 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
-		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
-        if (playlistController != null && playlistController.getCurrentFilePlayer() != null && playlistController.getCurrentFilePlayer().getFile().getKey() == file.getKey())
-        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
+//        if (mNowPlayingFile != null && mNowPlayingFile.getKey() == file.getKey())
+//        	viewHolder.textView.setTypeface(null, Typeface.BOLD);
         
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
         viewHolder.getFileValueTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {

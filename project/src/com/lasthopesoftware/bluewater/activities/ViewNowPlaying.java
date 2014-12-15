@@ -192,6 +192,9 @@ public class ViewNowPlaying extends Activity implements
 			return;
 		}
 		
+		mPlay.setVisibility(View.VISIBLE);
+		mPause.setVisibility(View.INVISIBLE);
+		
 		// Otherwise set the view using the library persisted in the database
 		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 			
@@ -210,6 +213,7 @@ public class ViewNowPlaying extends Activity implements
 					@Override
 					protected void onPostExecute(List<File> result) {
 						setView(result.get(library.getNowPlayingId()));
+						mSongProgressBar.setProgress(library.getNowPlayingProgress());
 					}
 				};
 				
@@ -439,8 +443,7 @@ public class ViewNowPlaying extends Activity implements
 			};
 			getRatingsTask.execute();
 			
-			mSongProgressBar.setMax(file.getDuration());
-			
+			mSongProgressBar.setMax(file.getDuration());			
 		} catch (IOException ioE) {
 			resetViewOnReconnect(file);
 		}
@@ -463,13 +466,12 @@ public class ViewNowPlaying extends Activity implements
 	
 	private void showNowPlayingControls() {
 		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
-		if (playlistController != null)
-			showNowPlayingControls(playlistController.getCurrentFilePlayer());
+		showNowPlayingControls(playlistController != null ? playlistController.getCurrentFilePlayer() : null);
 	}
 	
 	private void showNowPlayingControls(final FilePlayer filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
+		if (filePlayer != null) mTrackerTask = ProgressTrackerTask.trackProgress(filePlayer, mHandler);
 		
 		mControlNowPlaying.setVisibility(View.VISIBLE);
 		mContentView.invalidate();
