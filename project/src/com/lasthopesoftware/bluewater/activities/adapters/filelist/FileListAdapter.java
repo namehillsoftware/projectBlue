@@ -15,8 +15,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.activities.adapters.filelist.listeners.PlayClickListener;
 import com.lasthopesoftware.bluewater.activities.adapters.filelist.listeners.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.activities.adapters.filelist.viewholders.BaseMenuViewHolder;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -43,8 +41,8 @@ public class FileListAdapter extends AbstractFileListAdapter {
 	}
 		
 	@Override
-	protected final boolean getIsFilePlaying(int position, File file, PlaylistController playlistController, FilePlayer filePlayer) {
-		return filePlayer.getFile().getKey() == file.getKey();
+	protected final boolean getIsFilePlaying(int position, File file, List<File> nowPlayingFiles, File nowPlayingFile) {
+		return nowPlayingFile.getKey() == file.getKey();
 	}
 
 	@Override

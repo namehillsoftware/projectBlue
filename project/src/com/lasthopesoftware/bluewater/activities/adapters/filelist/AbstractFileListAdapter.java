@@ -4,6 +4,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
@@ -21,14 +22,18 @@ import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.services.StreamingMusicService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 
-	private List<File> mFiles;
+	private final List<File> mFiles;
 	
 	private static class ViewHolder {
 		public ViewHolder(final CharSequence loadingText, final ViewFlipper viewFlipper, final RelativeLayout textLayout, final TextView textView, final View menuView) {
@@ -101,7 +106,9 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         		
 		final PlaylistController playlistController = StreamingMusicService.getPlaylistController();
         if (playlistController != null && playlistController.getCurrentFilePlayer() != null)
-        	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController, playlistController.getCurrentFilePlayer()) ? Typeface.BOLD : Typeface.NORMAL);
+        	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentFilePlayer().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
+//        else
+//        	getLibraryNowPlayingFiles(position, file, viewHolder.textView);
         
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
         viewHolder.getFileValueTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
@@ -126,7 +133,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 			
 			@Override
 			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
-				viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, controller, filePlayer) ? Typeface.BOLD : Typeface.NORMAL);
+				viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, controller.getPlaylist(), filePlayer.getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};
 		
@@ -155,8 +162,35 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		
 		return convertView;
 	}
+//	
+//	// A really expensive way to get the now playing files without the playlist controller
+//	private void getLibraryNowPlayingFiles(final int filePosition, final File file, final TextView textView) {
+//		LibrarySession.GetLibrary(getContext(), new OnCompleteListener<Integer, Void, Library>() {
+//			
+//			@Override
+//			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+//				final String savedTracksString = library.getSavedTracksString();
+//				if (savedTracksString == null || savedTracksString.isEmpty()) return;
+//				
+//				final AsyncTask<Void, Void, List<File>> getFileListTask = new AsyncTask<Void, Void, List<File>>() {
+//
+//					@Override
+//					protected List<File> doInBackground(Void... params) {
+//						return Files.deserializeFileStringList(savedTracksString);
+//					}
+//					
+//					@Override
+//					protected void onPostExecute(List<File> result) {
+//						textView.setTypeface(null, getIsFilePlaying(filePosition, file, result, result.get(library.getNowPlayingId())) ? Typeface.BOLD : Typeface.NORMAL);
+//					}
+//				};
+//				
+//				getFileListTask.execute();
+//			}
+//		});
+//	}
 	
-	protected abstract boolean getIsFilePlaying(int position, File file, PlaylistController playlistController, FilePlayer filePlayer);
+	protected abstract boolean getIsFilePlaying(int position, File file, List<File> nowPlayingfiles, File nowPlayingFile);
 	
 	protected abstract View getMenuView(final int position, View convertView, final ViewGroup parent);
 	
