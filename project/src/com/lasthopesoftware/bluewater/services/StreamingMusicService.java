@@ -674,7 +674,8 @@ public class StreamingMusicService extends Service implements
 		builder.setContentTitle(waitingText);
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyForeground(builder.build());
-		PollConnection checkConnection = PollConnection.Instance.get(mStreamingMusicService);
+		
+		final PollConnection checkConnection = PollConnection.Instance.get(mStreamingMusicService);
 		
 		if (mConnectionRegainedListener == null) {
 			mConnectionRegainedListener = new OnConnectionRegainedListener() {
