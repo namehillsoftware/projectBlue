@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
@@ -337,6 +338,11 @@ public class PlaylistController implements
 	@Override
 	public void onFileError(FilePlayer mediaPlayer, int what, int extra) {
 		mLogger.error("JR File error - " + what + " - " + extra);
+		
+		// release the next file player too, since sometimes all instances need to
+		// be released when the media player enters an error state
+		if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
+			mNextFilePlayer.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
 			listener.onPlaylistStateControlError(this, mediaPlayer);
