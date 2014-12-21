@@ -35,6 +35,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class FilePlayer implements
+	IFilePlayer,
 	OnPreparedListener,
 	OnErrorListener, 
 	OnCompletionListener,
