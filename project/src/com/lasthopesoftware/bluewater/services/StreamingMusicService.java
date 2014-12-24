@@ -390,23 +390,27 @@ public class StreamingMusicService extends Service implements
 					if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = result.getSavedTracksString();
 					
 					result.setSavedTracksString(mPlaylistString);
-					LibrarySession.SaveLibrary(mStreamingMusicService, result);
-					
-					if (mPlaylistController != null) {
-						mPlaylistController.pause();
-						mPlaylistController.release();
-					}
-				
-					mPlaylistController = new PlaylistController(mStreamingMusicService, mPlaylistString);
-				
-					mPlaylistController.setIsRepeating(result.isRepeating());
-					mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);
-					mPlaylistController.addOnNowPlayingStopListener(mStreamingMusicService);
-					mPlaylistController.addOnNowPlayingPauseListener(mStreamingMusicService);
-					mPlaylistController.addOnPlaylistStateControlErrorListener(mStreamingMusicService);
-					mPlaylistController.addOnNowPlayingStartListener(mStreamingMusicService);
-					
-					onPlaylistControllerInitialized.run();
+					LibrarySession.SaveLibrary(mStreamingMusicService, result, new OnCompleteListener<Void, Void, Library>() {
+						
+						@Override
+						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+							if (mPlaylistController != null) {
+								mPlaylistController.pause();
+								mPlaylistController.release();
+							}
+						
+							mPlaylistController = new PlaylistController(mStreamingMusicService, mPlaylistString);
+						
+							mPlaylistController.setIsRepeating(result.isRepeating());
+							mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);
+							mPlaylistController.addOnNowPlayingStopListener(mStreamingMusicService);
+							mPlaylistController.addOnNowPlayingPauseListener(mStreamingMusicService);
+							mPlaylistController.addOnPlaylistStateControlErrorListener(mStreamingMusicService);
+							mPlaylistController.addOnNowPlayingStartListener(mStreamingMusicService);
+							
+							onPlaylistControllerInitialized.run();
+						}
+					});
 				}
 			}
 		});
@@ -796,6 +800,7 @@ public class StreamingMusicService extends Service implements
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				
+				result.setSavedTracksString(controller.getPlaylistString());
 				result.setNowPlayingId(controller.getCurrentPosition());
 				result.setNowPlayingProgress(filePlayer.getCurrentPosition());
 

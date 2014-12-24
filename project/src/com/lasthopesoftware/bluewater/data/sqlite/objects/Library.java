@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.data.sqlite.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
@@ -120,7 +121,7 @@ public class Library {
 		this.savedTracksString = savedTracksString;
 	}
 		
-	public void setSavedTracks(ArrayList<File> files) {
+	public void setSavedTracks(List<File> files) {
 		savedTracksString = Files.serializeFileStringList(files);
 	}
 	/**

@@ -34,6 +34,7 @@ public class PlaylistController implements
 	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
+	private String mPlaylistString;
 	private final ArrayList<File> mPlaylist;
 	private int mFileKey = -1;
 	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
@@ -46,6 +47,8 @@ public class PlaylistController implements
 	
 	public PlaylistController(final Context context, final String playlistString) {
 		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
+		
+		mPlaylistString = playlistString;
 	}
 	
 	public PlaylistController(final Context context, final ArrayList<File> playlist) {
@@ -176,10 +179,16 @@ public class PlaylistController implements
         	listener.onNowPlayingStart(this, mCurrentFilePlayer);
 	}
 	
-	private void prepareNextFile(File nextFile) {
-		mNextFilePlayer = new FilePlayer(mContext, nextFile);
-		
+	private void prepareNextFile(final File nextFile) {		
 		if (mCurrentFilePlayer == null) return;
+		
+		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != nextFile) {
+			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+			
+			mNextFilePlayer = new FilePlayer(mContext, nextFile);
+		}
+				
+		if (mNextFilePlayer.isPrepared()) return;
 		
 		if (mCurrentFilePlayer.isBuffered())
 			onFileBuffered(mCurrentFilePlayer);
@@ -288,6 +297,13 @@ public class PlaylistController implements
 	
 	public List<File> getPlaylist() {
 		return Collections.unmodifiableList(mPlaylist);
+	}
+	
+	public String getPlaylistString() {
+		if (mPlaylistString == null)
+			mPlaylistString = Files.serializeFileStringList(mPlaylist);
+		
+		return mPlaylistString;
 	}
 	
 	public int getCurrentPosition() {
