@@ -183,7 +183,8 @@ public class PlaylistController implements
 		if (mCurrentFilePlayer == null) return;
 		
 		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != nextFile) {
-			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+			if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer)
+				mNextFilePlayer.releaseMediaPlayer();
 			
 			mNextFilePlayer = new FilePlayer(mContext, nextFile);
 		}
