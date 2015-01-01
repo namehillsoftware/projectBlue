@@ -356,9 +356,8 @@ public class PlaylistController implements
 	public void onFileError(FilePlayer mediaPlayer, int what, int extra) {
 		mLogger.error("JR File error - " + what + " - " + extra);
 		
-		// release the next file player too, since sometimes all instances need to
-		// be released when the media player enters an error state
-		if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
+		// We don't know what happened, release the next file player too
+		if (!FilePlayer.MEDIA_ERROR_EXTRAS.contains(extra) && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
 			mNextFilePlayer.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)

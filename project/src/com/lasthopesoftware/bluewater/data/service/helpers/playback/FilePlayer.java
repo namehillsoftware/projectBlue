@@ -2,9 +2,12 @@ package com.lasthopesoftware.bluewater.data.service.helpers.playback;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +44,15 @@ public class FilePlayer implements
 	OnCompletionListener,
 	OnBufferingUpdateListener
 {
+	@SuppressLint("InlinedApi")
+	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<Integer>(Arrays.asList(new Integer[] {
+		MediaPlayer.MEDIA_ERROR_IO,
+		MediaPlayer.MEDIA_ERROR_MALFORMED,
+		MediaPlayer.MEDIA_ERROR_UNSUPPORTED, 
+		MediaPlayer.MEDIA_ERROR_TIMED_OUT, 
+		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
+	}))); 
+	
 	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
 	
 	private volatile MediaPlayer mMediaPlayer;
@@ -51,6 +63,7 @@ public class FilePlayer implements
 	private volatile boolean mIsInErrorState = false;
 	private volatile int mPosition = 0;
 	private volatile int mBufferPercentage = 0;
+	private volatile int mLastBufferPercentage = 0;
 	private volatile float mVolume = 1.0f;
 	
 	private final Context mMpContext;
@@ -364,7 +377,10 @@ public class FilePlayer implements
 	}
 	
 	public boolean isBuffered() {
-		mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
+		if (mLastBufferPercentage != mBufferPercentage) {
+			mLastBufferPercentage = mBufferPercentage;
+			mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
+		}
 		return mBufferPercentage >= mBufferMax;
 	}
 	
