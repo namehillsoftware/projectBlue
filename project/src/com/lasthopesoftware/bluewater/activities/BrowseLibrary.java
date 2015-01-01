@@ -121,22 +121,19 @@ public class BrowseLibrary extends FragmentActivity {
 		if ((mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
 		
 		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
-
+			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
-				if (result == null) return;
-				
 				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 					
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
 						displayLibrary(result, fileSystem);
 					}
-				});
-				
+				});	
 			}
-			
 		});
+				
 	}
 
 	@SuppressWarnings("unchecked")
@@ -144,17 +141,17 @@ public class BrowseLibrary extends FragmentActivity {
 		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> result) {
-				if (mIsStopped || result == null) return;
-				
-				for (IItem<?> item : result) {
+			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> items) {
+				if (mIsStopped || items == null) return;
+					
+				for (IItem<?> item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
 					break;
 				}
-								
-				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, result, library.getSelectedView()));
+				
+				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, items, library.getSelectedView()));
 				
 				mLvSelectViews.setOnItemClickListener(new OnItemClickListener() {
 					
@@ -163,18 +160,24 @@ public class BrowseLibrary extends FragmentActivity {
 						mDrawerLayout.closeDrawer(Gravity.START);
 						mDrawerToggle.syncState();
 						
-						final int selectedViewKey = result.get(position).getKey();
-						
-						if (library.getSelectedView() == selectedViewKey) return;
-						
-						library.setSelectedView(selectedViewKey);
-						LibrarySession.SaveLibrary(mBrowseLibrary, library);
-						
-						FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+						final int selectedViewKey = items.get(position).getKey();
+												
+						LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 							
 							@Override
-							public void onGetFileSystemComplete(FileSystem fileSystem) {
-								displayLibrary(library, fileSystem);
+							public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+								if (library.getSelectedView() == selectedViewKey) return;
+								
+								library.setSelectedView(selectedViewKey);
+								LibrarySession.SaveLibrary(mBrowseLibrary, library);
+								
+								FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+									
+									@Override
+									public void onGetFileSystemComplete(FileSystem fileSystem) {
+										displayLibrary(library, fileSystem);
+									}
+								});
 							}
 						});
 					}
