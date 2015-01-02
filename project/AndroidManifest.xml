@@ -77,8 +77,7 @@
         
         <activity
             android:name="com.lasthopesoftware.bluewater.activities.ViewFileDetails"
-            android:label="@string/title_activity_file_view"
-            android:launchMode="singleInstance" >
+            android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.ViewFiles" />
