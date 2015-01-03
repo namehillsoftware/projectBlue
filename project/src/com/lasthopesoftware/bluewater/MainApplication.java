@@ -19,7 +19,7 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
 
-import com.lasthopesoftware.bluewater.exceptions.LoggerUncaughtExceptionHandler;
+import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 
 public class MainApplication extends Application {
 	
