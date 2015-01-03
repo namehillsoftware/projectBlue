@@ -322,8 +322,10 @@ public class ViewNowPlaying extends Activity implements
 			
 			if (mViewStructure == null)
 				mViewStructure = new ViewStructure(file);
+			
+			final ViewStructure viewStructure = mViewStructure;
 
-			if (mViewStructure.nowPlayingImage == null) {
+			if (viewStructure.nowPlayingImage == null) {
 				try {				
 					// Cancel the getFileImageTask if it is already in progress
 					if (getFileImageTask != null)
@@ -336,9 +338,9 @@ public class ViewNowPlaying extends Activity implements
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-							if (mViewStructure.nowPlayingImage != null)
-								mViewStructure.nowPlayingImage.recycle();
-							mViewStructure.nowPlayingImage = result;
+							if (viewStructure.nowPlayingImage != null)
+								viewStructure.nowPlayingImage.recycle();
+							viewStructure.nowPlayingImage = result;
 							
 							mNowPlayingImageView.setImageBitmap(result);
 							
@@ -350,7 +352,7 @@ public class ViewNowPlaying extends Activity implements
 					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
 				}
 			} else {
-				mNowPlayingImageView.setImageBitmap(mViewStructure.nowPlayingImage);
+				mNowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
 				displayImageBitmap();
 			}
 			
@@ -358,8 +360,8 @@ public class ViewNowPlaying extends Activity implements
 
 				@Override
 				protected String doInBackground(Void... params) {
-					if (mViewStructure.nowPlayingArtist != null)
-						return mViewStructure.nowPlayingArtist;
+					if (viewStructure.nowPlayingArtist != null)
+						return viewStructure.nowPlayingArtist;
 					
 					try {
 						return file.getProperty(FileProperties.ARTIST);
@@ -374,7 +376,7 @@ public class ViewNowPlaying extends Activity implements
 					if (handleIoException(file, exception)) return;
 					
 					mNowPlayingArtist.setText(result);
-					mViewStructure.nowPlayingArtist = result;
+					viewStructure.nowPlayingArtist = result;
 				}
 			};
 			getArtistTask.execute();
@@ -383,8 +385,8 @@ public class ViewNowPlaying extends Activity implements
 
 				@Override
 				protected String doInBackground(Void... params) {
-					if (mViewStructure.nowPlayingTitle != null)
-						return mViewStructure.nowPlayingTitle;
+					if (viewStructure.nowPlayingTitle != null)
+						return viewStructure.nowPlayingTitle;
 					
 					return file.getValue();
 				}
@@ -394,7 +396,7 @@ public class ViewNowPlaying extends Activity implements
 					if (handleIoException(file, exception)) return;
 					
 					mNowPlayingTitle.setText(result);
-					mViewStructure.nowPlayingTitle = result;
+					viewStructure.nowPlayingTitle = result;
 				}
 			};
 			getTitleTask.execute();
@@ -403,8 +405,8 @@ public class ViewNowPlaying extends Activity implements
 
 				@Override
 				protected Float doInBackground(Void... params) {
-					if (mViewStructure.nowPlayingRating != null)
-						return mViewStructure.nowPlayingRating;
+					if (viewStructure.nowPlayingRating != null)
+						return viewStructure.nowPlayingRating;
 					
 					try {
 						if (file.getProperty(FileProperties.RATING) != null && !file.getProperty(FileProperties.RATING).isEmpty())
@@ -427,7 +429,7 @@ public class ViewNowPlaying extends Activity implements
 						return;
 					}
 					
-					mViewStructure.nowPlayingRating = result;
+					viewStructure.nowPlayingRating = result;
 					
 					mSongRating.setRating(result.floatValue());
 					
@@ -437,6 +439,9 @@ public class ViewNowPlaying extends Activity implements
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
 							file.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
+							
+							if (viewStructure.fileKey == file.getKey())
+								viewStructure.nowPlayingRating = Float.valueOf(rating);
 						}
 					});
 				}
