@@ -440,8 +440,7 @@ public class ViewNowPlaying extends Activity implements
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
 							file.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
 							
-							if (viewStructure.fileKey == file.getKey())
-								viewStructure.nowPlayingRating = Float.valueOf(rating);
+							viewStructure.nowPlayingRating = Float.valueOf(rating);
 						}
 					});
 				}
