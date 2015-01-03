@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionH
 
 public class MainApplication extends Application {
 	
-	public static final boolean DEBUG_MODE = true;
+	public static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
 	
 	@SuppressLint("DefaultLocale")
 	@Override
