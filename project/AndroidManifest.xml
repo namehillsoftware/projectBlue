@@ -80,7 +80,7 @@
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.activities.ViewFiles" />
+                android:value="com.lasthopesoftware.bluewater.servers.libraries.items.files.list.FileListActivity" />
         </activity>
         
         <activity
@@ -119,7 +119,7 @@
             android:launchMode="singleTask" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.activities.ViewNowPlaying" />
+                android:value="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.NowPlayingActivity" />
         </activity>
         
         <receiver android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.receivers.MusicIntentReceiver" >
