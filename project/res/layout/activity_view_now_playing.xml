@@ -114,7 +114,7 @@
 	        android:layout_alignParentLeft="true"
 	        android:layout_alignParentTop="true"
 	        android:contentDescription="@string/img_now_playing"
-	        tools:context=".ViewNowPlaying" />
+	        tools:context=".NowPlayingActivity" />
 	         
 	     <ProgressBar
 	         android:id="@+id/pbLoadingImg"

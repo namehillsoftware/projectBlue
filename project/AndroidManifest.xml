@@ -38,7 +38,7 @@
         
         <activity
             android:name="com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionActivity"
-            android:label="@string/title_activity_wait_for_connection"
+	        android:label="@string/title_activity_wait_for_connection"
             android:noHistory="true"
             android:launchMode="singleTop" >
         </activity>
@@ -121,12 +121,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.activities.ViewNowPlaying" />
         </activity>
-
+        
         <receiver android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.receivers.MusicIntentReceiver" >
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
+
         <receiver android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.receivers.RemoteControlReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
