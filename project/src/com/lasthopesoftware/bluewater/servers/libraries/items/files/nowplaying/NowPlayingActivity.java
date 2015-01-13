@@ -238,21 +238,21 @@ public class NowPlayingActivity extends Activity implements
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
+	public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
 				startActivity(new Intent(this, ServerListActivity.class));
 				return true;
 			case R.id.menu_repeat_playlist:
 				final Context _context = this;
-				final MenuItem _item = item;
 				LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 						if (result == null) return;
-						NowPlayingService.setIsRepeating(_context, !result.isRepeating());
-						setRepeatingIcon(_item);
+						final boolean isRepeating = !result.isRepeating();
+						NowPlayingService.setIsRepeating(_context, isRepeating);
+						setRepeatingIcon(item, isRepeating);
 					}
 				});
 				return true;
@@ -271,10 +271,14 @@ public class NowPlayingActivity extends Activity implements
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
-					item.setIcon(result.isRepeating() ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+					setRepeatingIcon(item, result.isRepeating());
 			}
 			
 		});
+	}
+	
+	private static void setRepeatingIcon(final MenuItem item, boolean isRepeating) {
+		item.setIcon(isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
 	}
 	
 	@Override
