@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.services;
+package com.lasthopesoftware.bluewater.servers.libraries.items.files;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
-public class StoreMusicService extends Service {
+public class StoreFilesService extends Service {
 
-	public StoreMusicService() {
+	public StoreFilesService() {
 		
 	}
 	
@@ -17,8 +17,8 @@ public class StoreMusicService extends Service {
 	}
 
 	public class StoreMusicServiceBinder extends Binder {
-		StoreMusicService getService() {
-            return StoreMusicService.this;
+		StoreFilesService getService() {
+            return StoreFilesService.this;
         }
     }
 	
