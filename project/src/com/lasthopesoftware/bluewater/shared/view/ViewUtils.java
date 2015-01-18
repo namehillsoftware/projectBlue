@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
-import com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 

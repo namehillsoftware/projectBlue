@@ -61,14 +61,14 @@
         <!-- End Connection intents -->
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.libraries.BrowseLibraryActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask" >
             
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.list.FileListActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.files.list.FileListActivity"
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -76,7 +76,7 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.details.FileDetailsActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.files.details.FileDetailsActivity"
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -84,7 +84,7 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.libraries.items.playlists.PlaylistListActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListActivity"
             android:label="@string/title_activity_file_view" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -92,7 +92,7 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.SearchFilesActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.files.SearchFilesActivity"
             android:label="@string/title_activity_search_files"
             android:launchMode="singleTop">
             
@@ -108,13 +108,13 @@
 		</activity>
         
         <activity
-        	android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.NowPlayingActivity"
+        	android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity"
         	android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask" >
         </activity>
         
         <activity
-        	android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.list.NowPlayingFilesListActivity"
+        	android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.list.NowPlayingFilesListActivity"
         	android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask" >
             <meta-data
@@ -122,21 +122,21 @@
                 android:value="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.NowPlayingActivity" />
         </activity>
         
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.receivers.MusicIntentReceiver" >
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.MusicIntentReceiver">
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.receivers.RemoteControlReceiver" >
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.RemoteControlReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
         
         <service
-     		android:name="com.lasthopesoftware.bluewater.servers.libraries.items.files.nowplaying.service.NowPlayingService"
-        	android:enabled="true"
+     		android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService"
+     		android:enabled="true"
             android:exported="false" >
         </service>
 
