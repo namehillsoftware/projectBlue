@@ -21,23 +21,17 @@ public class WaitForConnectionDialog {
 		final Context _context = context;
 		final String message = String.format(_context.getString(R.string.lbl_attempting_to_reconnect), _context.getString(R.string.app_name));
 		final AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+		builder.setCancelable(false);
 		builder.setTitle(context.getText(R.string.lbl_connection_lost_title)).setMessage(message).setCancelable(true);
 		builder.setNegativeButton(_context.getText(R.string.btn_cancel), new OnClickListener() {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				dialog.cancel();
-			}
-		});
-		
-		builder.setOnCancelListener(new OnCancelListener() {
-			
-			@Override
-			public void onCancel(DialogInterface dialog) {
 				PollConnection.Instance.get(_context).stopPolling();
+				dialog.dismiss();
 			}
 		});
-		
+				
 		_instance = builder.show();
 					
 		PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
