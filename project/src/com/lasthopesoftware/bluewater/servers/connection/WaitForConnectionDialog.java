@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.servers.connection;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 
 import com.lasthopesoftware.bluewater.R;

@@ -107,6 +107,7 @@ public class NowPlayingService extends Service implements
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
+	private static Bitmap mRemoteClientBitmap = null;
 	
 	// State dependent static variables
 	private static volatile String mPlaylistString;
@@ -920,6 +921,11 @@ public class NowPlayingService extends Service implements
 					@TargetApi(Build.VERSION_CODES.KITKAT)
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						// Track the remote client bitmap and recycle it in case the remote control client
+						// does not properly recycle the bitmap
+						if (mRemoteClientBitmap != null) mRemoteClientBitmap.recycle();
+						mRemoteClientBitmap = result;
+						
 						final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
 						metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
 					}
