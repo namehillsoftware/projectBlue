@@ -14,6 +14,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -96,6 +97,7 @@ public class NowPlayingService extends Service implements
 	/* Miscellaneous programming related string constants */
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
+	private static final String SCROBBLE_DROID_INTENT = "net.jjc1138.android.scrobbler.action.MUSIC_STATUS";
 		
 	private static int mId = 42;
 	private static int mStartId;
@@ -105,7 +107,6 @@ public class NowPlayingService extends Service implements
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
-	private Bitmap mMetadataBitmap;
 	
 	// State dependent static variables
 	private static volatile String mPlaylistString;
@@ -777,6 +778,8 @@ public class NowPlayingService extends Service implements
 		if (mAreListenersRegistered) unregisterListeners();
 		
 		controller.seekTo(0);
+		
+		sendBroadcast(getScrobbleIntent(false));
 	}
 	
 	@Override
@@ -786,6 +789,16 @@ public class NowPlayingService extends Service implements
 		stopNotification();
 		
 		throwPauseEvent(controller, filePlayer);
+		
+		sendBroadcast(getScrobbleIntent(false));
+	}
+	
+
+	private static Intent getScrobbleIntent(final boolean isPlaying) {
+		final Intent scrobbleDroidIntent = new Intent(SCROBBLE_DROID_INTENT);
+		scrobbleDroidIntent.putExtra("playing", isPlaying);
+		
+		return scrobbleDroidIntent;
 	}
 
 	@Override
@@ -833,7 +846,7 @@ public class NowPlayingService extends Service implements
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
+				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
 		        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -845,20 +858,23 @@ public class NowPlayingService extends Service implements
 		
 		getNotificationPropertiesTask.execute();
 		
-		final SimpleTask<Void, Void, SparseArray<Object>> getBtPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
+		final SimpleTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
 			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
-				SparseArray<Object> result = new SparseArray<Object>(4);
+				final SparseArray<Object> result = new SparseArray<Object>(4);
 				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FileProperties.ARTIST));
 				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FileProperties.ALBUM));
 				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
 				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
+				final String trackNumber = playingFile.getProperty(FileProperties.TRACK);
+				if (trackNumber != null && !trackNumber.isEmpty())
+					result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
 				return result;
 			}
 		});
 		
-		getBtPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {
+		getTrackPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
@@ -867,20 +883,35 @@ public class NowPlayingService extends Service implements
 				final String artist = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
 				final String album = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
 				final String title = (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
-								
+				final Long duration = (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
+				final Integer trackNumber = (Integer)result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
+				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);
 				pebbleIntent.putExtra("album", album);
 				pebbleIntent.putExtra("track", title);
 			    
 			    sendBroadcast(pebbleIntent);
+
+				final Intent scrobbleDroidIntent = getScrobbleIntent(true);
+				scrobbleDroidIntent.putExtra("artist", artist);
+				scrobbleDroidIntent.putExtra("album", album);
+				scrobbleDroidIntent.putExtra("track", title);
+				scrobbleDroidIntent.putExtra("secs", (int)(duration.longValue() / 1000));
+				if (trackNumber != null)
+					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
+			    
+				sendBroadcast(scrobbleDroidIntent);
 				
 				if (mRemoteControlClient == null) return;
-				
-				final Long duration = (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
-				
+								
 				final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
-				putFileDetailsInMetadata(metaData, artist, album, title, duration);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);
+				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration.longValue());
+				if (trackNumber != null)
+					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
 				
 				if (android.os.Build.VERSION.SDK_INT < 19) return;		
@@ -890,29 +921,18 @@ public class NowPlayingService extends Service implements
 					@TargetApi(Build.VERSION_CODES.KITKAT)
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						if (mMetadataBitmap != null) mMetadataBitmap.recycle();
-						mMetadataBitmap = result;
-						
-						final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
-						putFileDetailsInMetadata(metaData, artist, album, title, duration);
+						final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
 						metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
 					}
 				});
 				
 			}
 		});
-		getBtPropertiesTask.execute();
+		getTrackPropertiesTask.execute();
 		
 		throwStartEvent(controller, filePlayer);
 	}
-	
-	private void putFileDetailsInMetadata(final MetadataEditor metaData, final String artist, final String album, final String title, final Long duration) {
-		metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
-		metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-		metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);				
-		metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
-	}
-	
+		
 	@Override
 	public void onDestroy() {
 		stopNotification();
