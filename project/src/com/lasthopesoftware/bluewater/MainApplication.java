@@ -30,7 +30,7 @@ public class MainApplication extends Application {
 	public void onCreate() {
 		super.onCreate();
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
-		
+        
 		final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 		lc.reset();
 		
@@ -116,4 +116,6 @@ public class MainApplication extends Application {
 		//	                 .penaltyDeath()
 		.build());
 	}
+	
+	
 }
