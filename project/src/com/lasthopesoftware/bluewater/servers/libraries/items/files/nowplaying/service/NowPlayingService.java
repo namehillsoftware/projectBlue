@@ -107,7 +107,7 @@ public class NowPlayingService extends Service implements
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
-	private static Bitmap mRemoteClientBitmap = null;
+	private Bitmap mRemoteClientBitmap = null;
 	
 	// State dependent static variables
 	private static volatile String mPlaylistString;
@@ -954,6 +954,8 @@ public class NowPlayingService extends Service implements
 		
 		if (mAudioManager != null && mRemoteControlReceiver != null)
 			mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
+		
+		if (mRemoteClientBitmap != null) mRemoteClientBitmap.recycle();
 		
 		mPlaylistString = null;
 	}
