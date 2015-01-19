@@ -449,7 +449,33 @@ public class NowPlayingService extends Service implements
 		mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
         mWifiLock.acquire();
 		
+        registerRemoteClientControl();
+        
 		mAreListenersRegistered = true;
+	}
+	
+	private void registerRemoteClientControl() {
+		if (mAudioManager == null) return;
+		
+		if (mRemoteControlReceiver == null)
+			mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		
+		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+        
+        // build the PendingIntent for the remote control client
+		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+		mediaButtonIntent.setComponent(mRemoteControlReceiver);
+		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mStreamingMusicService, 0, mediaButtonIntent, 0);
+		// create and register the remote control client
+		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
+		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+		mRemoteControlClient.setTransportControlFlags(
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+		
+		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 	}
 	
 	private void unregisterListeners() {
@@ -634,23 +660,7 @@ public class NowPlayingService extends Service implements
 		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 		
-		mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
-        
-        // build the PendingIntent for the remote control client
-		final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-		mediaButtonIntent.setComponent(mRemoteControlReceiver);
-		final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mStreamingMusicService, 0, mediaButtonIntent, 0);
-		// create and register the remote control client
-		mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
-		mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-		mRemoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-		
-		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
+		registerRemoteClientControl();
 	}
 	
 	/* (non-Javadoc)
@@ -827,6 +837,7 @@ public class NowPlayingService extends Service implements
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mAreListenersRegistered) registerListeners();
+		registerRemoteClientControl();
 		
 		// Set the notification area
 		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
