@@ -75,12 +75,14 @@ public class PlaylistController implements
 	public void seekTo(int filePos, int fileProgress) throws IndexOutOfBoundsException {
 		boolean wasPlaying = false;
 		
-		if (mCurrentFilePlayer != null) {			
-			// If the track is already playing, keep on playing
-			if (mPlaylist.indexOf(mCurrentFilePlayer.getFile()) == filePos && mCurrentFilePlayer.isMediaPlayerCreated()) return;
+		if (mCurrentFilePlayer != null) {
 			
-			// stop any playback that is in action
 			if (mCurrentFilePlayer.isPlaying()) {
+				
+				// If the seek-to index is the same as that of the file playing, keep on playing
+				if (mPlaylist.get(filePos) == mCurrentFilePlayer.getFile()) return;
+			
+				// stop any playback that is in action
 				wasPlaying = true;
 				mCurrentFilePlayer.stop();
 			}
