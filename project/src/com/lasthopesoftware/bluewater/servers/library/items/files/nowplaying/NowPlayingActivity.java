@@ -80,7 +80,7 @@ public class NowPlayingActivity extends Activity implements
 	private TextView mNowPlayingTitle;
 	private static ImageAccess getFileImageTask;
 	
-	private ViewStructure mViewStructure;
+	private static ViewStructure mViewStructure;
 		
 	private static class ViewStructure {
 		public final int fileKey;
@@ -419,10 +419,10 @@ public class NowPlayingActivity extends Activity implements
 					} catch (NumberFormatException | IOException e) {
 						setException(e);
 						
-						return Float.valueOf(0f);
+						return null;
 					}
 					
-					return Float.valueOf(0f);
+					return null;
 				}
 				
 				@Override
@@ -436,7 +436,7 @@ public class NowPlayingActivity extends Activity implements
 					
 					viewStructure.nowPlayingRating = result;
 					
-					mSongRating.setRating(result.floatValue());
+					mSongRating.setRating(result != null ? result.floatValue() : 0f);
 					
 					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
 						

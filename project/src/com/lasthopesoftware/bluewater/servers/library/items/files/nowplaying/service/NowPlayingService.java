@@ -107,7 +107,7 @@ public class NowPlayingService extends Service implements
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
-	private Bitmap mRemoteClientBitmap = null;
+	private static Bitmap mRemoteClientBitmap = null;
 	
 	// State dependent static variables
 	private static volatile String mPlaylistString;
