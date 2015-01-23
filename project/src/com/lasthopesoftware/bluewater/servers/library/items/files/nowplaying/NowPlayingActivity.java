@@ -285,8 +285,6 @@ public class NowPlayingActivity extends Activity implements
 	public void onDestroy() {
 		super.onDestroy();
 		
-		if (mViewStructure != null) mViewStructure.release();
-		
 		if (mHideTimer != null) {
 			mHideTimer.cancel();
 			mHideTimer.purge();

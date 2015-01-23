@@ -966,7 +966,10 @@ public class NowPlayingService extends Service implements
 		if (mAudioManager != null && mRemoteControlReceiver != null)
 			mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
 		
-		if (mRemoteClientBitmap != null) mRemoteClientBitmap.recycle();
+		if (mRemoteClientBitmap != null) {
+			mRemoteClientBitmap.recycle();
+			mRemoteClientBitmap = null;
+		}
 		
 		mPlaylistString = null;
 	}
