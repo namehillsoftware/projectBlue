@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.cache;
+package com.lasthopesoftware.bluewater.disk.cache;
 
 import java.io.File;
 import java.io.IOException;
