@@ -12,7 +12,6 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
@@ -21,6 +20,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.ClickFileListener;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;

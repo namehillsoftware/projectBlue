@@ -15,11 +15,11 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -99,7 +99,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
-		final PlaylistController playlistController = NowPlayingService.getPlaylistController();
+		final PlaybackListController playlistController = NowPlayingService.getPlaylistController();
         if (playlistController != null && playlistController.getCurrentFilePlayer() != null)
         	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentFilePlayer().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 //        else
@@ -127,7 +127,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		viewHolder.checkIfIsPlayingFileListener = viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
-			public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {
+			public void onNowPlayingStart(PlaybackListController controller, FilePlayer filePlayer) {
 				viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, controller.getPlaylist(), filePlayer.getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};

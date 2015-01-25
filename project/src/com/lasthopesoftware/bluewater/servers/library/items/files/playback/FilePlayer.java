@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.playback;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,12 +27,12 @@ import android.os.PowerManager;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

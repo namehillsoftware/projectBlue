@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.connection;
+package com.lasthopesoftware.bluewater.servers.connection.helpers;
 
 import java.util.EnumSet;
 import java.util.List;

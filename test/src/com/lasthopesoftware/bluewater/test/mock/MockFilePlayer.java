@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.test.mock;
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.IFilePlayer;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.IFilePlayer;
 
 public class MockFilePlayer implements IFilePlayer {
 

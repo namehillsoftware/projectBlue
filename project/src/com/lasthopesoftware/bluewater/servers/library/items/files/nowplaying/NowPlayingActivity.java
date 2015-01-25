@@ -32,15 +32,6 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionLostListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.PlaylistController;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
@@ -48,8 +39,17 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionLostListener;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -472,7 +472,7 @@ public class NowPlayingActivity extends Activity implements
 	}
 	
 	private void showNowPlayingControls() {
-		final PlaylistController playlistController = NowPlayingService.getPlaylistController();
+		final PlaybackListController playlistController = NowPlayingService.getPlaylistController();
 		showNowPlayingControls(playlistController != null ? playlistController.getCurrentFilePlayer() : null);
 	}
 	
@@ -509,13 +509,13 @@ public class NowPlayingActivity extends Activity implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaylistController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingChange(PlaybackListController controller, FilePlayer filePlayer) {		
 		setView(filePlayer.getFile());
 		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 	}
 	
 	@Override
-	public void onNowPlayingStart(PlaylistController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingStart(PlaybackListController controller, FilePlayer filePlayer) {		
 		showNowPlayingControls(filePlayer);
 		
 		mPlay.setVisibility(View.INVISIBLE);
@@ -523,16 +523,16 @@ public class NowPlayingActivity extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaylistController controller, FilePlayer filePlayer) {
+	public void onNowPlayingPause(PlaybackListController controller, FilePlayer filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 
 	@Override
-	public void onNowPlayingStop(PlaylistController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaybackListController controller, FilePlayer filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 	
-	private void handleNowPlayingStopping(PlaylistController controller, FilePlayer filePlayer) {
+	private void handleNowPlayingStopping(PlaybackListController controller, FilePlayer filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		int duration = 100;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 @SuppressWarnings("rawtypes")

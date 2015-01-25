@@ -7,7 +7,7 @@ import java.util.concurrent.Executors;
 import android.os.AsyncTask;
 import android.os.Message;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
 
 
 public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void, Void> {

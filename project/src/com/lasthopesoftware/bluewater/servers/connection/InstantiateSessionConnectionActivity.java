@@ -9,10 +9,10 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.BuildSessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 
 public class InstantiateSessionConnectionActivity extends Activity {

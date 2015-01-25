@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.connection;
+package com.lasthopesoftware.bluewater.servers.connection.helpers;
 
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;

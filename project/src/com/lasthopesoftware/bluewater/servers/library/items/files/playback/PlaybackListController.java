@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.helpers.playback;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,19 +10,19 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.playback.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnPlaylistStateControlErrorListener;
 
-public class PlaylistController implements
+public class PlaybackListController implements
 	OnFilePreparedListener,
 	OnFileErrorListener, 
 	OnFileCompleteListener,
@@ -42,15 +42,15 @@ public class PlaylistController implements
 	private boolean mIsRepeating = false;
 	private boolean mIsPlaying = false;
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(PlaylistController.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackListController.class);
 	
-	public PlaylistController(final Context context, final String playlistString) {
+	public PlaybackListController(final Context context, final String playlistString) {
 		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
 		
 		mPlaylistString = playlistString;
 	}
 	
-	public PlaylistController(final Context context, final ArrayList<File> playlist) {
+	public PlaybackListController(final Context context, final ArrayList<File> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}

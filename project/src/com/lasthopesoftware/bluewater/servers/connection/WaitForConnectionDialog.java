@@ -6,9 +6,9 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnectionDialog {
 

@@ -8,10 +8,10 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection;
-import com.lasthopesoftware.bluewater.data.service.helpers.connection.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
