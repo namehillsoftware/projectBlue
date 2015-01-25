@@ -22,11 +22,11 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class FileCache {
+public class DiskFileCache {
 	
 	private final static long MS_IN_DAY = 86400000L;
 	
-	private final static Logger mLogger = LoggerFactory.getLogger(FileCache.class); 
+	private final static Logger mLogger = LoggerFactory.getLogger(DiskFileCache.class); 
 	
 	private final Context mContext;
 	private final Library mLibrary;
@@ -34,7 +34,7 @@ public class FileCache {
 	private final long mMaxSize;
 	private final long mExpirationTime;
 	
-	public FileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
+	public DiskFileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
 		mContext = context;
 		mCacheName = cacheName;
 		mMaxSize = maxSize;

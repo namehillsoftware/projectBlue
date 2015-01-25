@@ -56,7 +56,7 @@ public class CacheFlusher implements Runnable {
 			}
 			
 			// Remove any files in the cache dir but not in the database
-			final File cacheDir = FileCache.getDiskCacheDir(mContext, mCacheName);
+			final File cacheDir = DiskFileCache.getDiskCacheDir(mContext, mCacheName);
 			
 			if (cacheDir == null || !cacheDir.exists()) return;
 			

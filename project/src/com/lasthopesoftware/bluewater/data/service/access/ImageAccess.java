@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionM
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.disk.cache.FileCache;
+import com.lasthopesoftware.bluewater.disk.cache.DiskFileCache;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -84,7 +84,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			final Library library = LibrarySession.GetLibrary(mContext);
-			final FileCache imageDiskCache = new FileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
+			final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 			
 			if (owner.isCancelled()) return getFillerBitmap();
 			
@@ -144,7 +144,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 					conn.disconnect();
 				}
 				
-				final java.io.File cacheDir = FileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
+				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
 				if (!cacheDir.exists())
 					cacheDir.mkdirs();
 				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
