@@ -122,7 +122,7 @@
                 android:value="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity" />
         </activity>
         
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.MusicIntentReceiver">
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.AudioBecomingNoisyReceiver">
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
