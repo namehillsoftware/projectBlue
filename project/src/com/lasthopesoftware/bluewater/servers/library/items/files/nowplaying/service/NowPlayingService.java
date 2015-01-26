@@ -14,7 +14,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -42,9 +41,9 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity;
@@ -79,15 +78,15 @@ public class NowPlayingService extends Service implements
 	private static final Logger mLogger = LoggerFactory.getLogger(NowPlayingService.class);
 	
 	/* String constant actions */
-	private static final String ACTION_LAUNCH_MUSIC_SERVICE = "com.lasthopesoftware.bluewater.ACTION_LAUNCH_MUSIC_SERVICE";
-	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.ACTION_PLAY";
-	private static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.ACTION_PAUSE";
-	private static final String ACTION_PREVIOUS = "com.lasthopesoftware.bluewater.ACTION_PREVIOUS";
-	private static final String ACTION_NEXT = "com.lasthopesoftware.bluewater.ACTION_NEXT";
-	private static final String ACTION_SEEK_TO = "com.lasthopesoftware.bluewater.ACTION_SEEK_TO";
-	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.ACTION_SYSTEM_PAUSE";
-	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.ACTION_STOP_WAITING_FOR_CONNECTION";
-	private static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.ACTION_INITIALIZE_PLAYLIST";
+	private static final String ACTION_LAUNCH_MUSIC_SERVICE = "com.lasthopesoftware.bluewater.action.LAUNCH_MUSIC_SERVICE";
+	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.action.PLAY";
+	private static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.action.PAUSE";
+	private static final String ACTION_PREVIOUS = "com.lasthopesoftware.bluewater.action.PREVIOUS";
+	private static final String ACTION_NEXT = "com.lasthopesoftware.bluewater.action.NEXT";
+	private static final String ACTION_SEEK_TO = "com.lasthopesoftware.bluewater.action.SEEK_TO";
+	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.action.SYSTEM_PAUSE";
+	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.action.STOP_WAITING_FOR_CONNECTION";
+	private static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.action.INITIALIZE_PLAYLIST";
 	
 	/* Bag constants */
 	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
