@@ -318,10 +318,14 @@ public class PlaybackController implements
 	public void onFileComplete(IPlaybackFile mediaPlayer) {
 		mediaPlayer.releaseMediaPlayer();
 		
+		final boolean isLastFile = mCurrentFilePos == mPlaybackFileProvider.size() - 1;
+		// store the next file position in a local variable in case it is decided to not set
+		// the current file position (such as in the not repeat scenario below)
+		final int nextFilePos = !isLastFile ? mCurrentFilePos + 1 : 0;
+		
 		if (mNextFilePlayer == null) {
-			final int nextFilePos = mCurrentFilePos + 1;
 			// Playlist is complete, throw stop event and get out
-			if (!mIsRepeating && nextFilePos >= mPlaybackFileProvider.size()) {
+			if (!mIsRepeating && isLastFile) {
 				mIsPlaying = false;
 				throwStopEvent(mediaPlayer);
 				return;
@@ -332,7 +336,7 @@ public class PlaybackController implements
 		
 		// Move the pointer early so that getting the currently playing file is correctly
 		// returned
-		mCurrentFilePos++;
+		mCurrentFilePos = nextFilePos;
 		mCurrentFilePlayer = mNextFilePlayer;
 		mCurrentFilePlayer.addOnFileCompleteListener(this);
 		mCurrentFilePlayer.addOnFileErrorListener(this);
