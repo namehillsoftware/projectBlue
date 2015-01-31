@@ -5,17 +5,14 @@ import java.util.List;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 
 
-public interface IPlaybackFileProvider {
-	IPlaybackFile first();
-	IPlaybackFile last();
-	void add(File file);
-	IPlaybackFile get(int filePos);
-	void remove(int filePos);
-	int indexOf(File file);
+public interface IPlaybackFileProvider{
+	IPlaybackFile firstPlaybackFile();
+	IPlaybackFile lastPlaybackFile();
+	boolean add(File file);
+	File get(int filePos);
+	File remove(int filePos);
+	IPlaybackFile getPlaybackFile(int filePos);
 	int indexOf(int startingIndex, File file);
-	int indexOf(IPlaybackFile file);
-	int indexOf(int startingIndex, IPlaybackFile file);
-	List<IPlaybackFile> getPlaybackFiles();
 	List<File> getFiles();
 	int size();
 }

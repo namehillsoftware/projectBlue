@@ -103,7 +103,7 @@ public class PlaybackController implements
 		
         mCurrentFilePos = filePos;
         
-		final IPlaybackFile filePlayer = mPlaybackFileProvider.get(mCurrentFilePos);
+		final IPlaybackFile filePlayer = mPlaybackFileProvider.getPlaybackFile(mCurrentFilePos);
 		filePlayer.addOnFileCompleteListener(this);
 		filePlayer.addOnFilePreparedListener(this);
 		filePlayer.addOnFileErrorListener(this);
@@ -190,11 +190,11 @@ public class PlaybackController implements
 	private void prepareNextFile(final int filePos) {		
 		if (mCurrentFilePlayer == null) return;
 		
-		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != mPlaybackFileProvider.get(filePos).getFile()) {
+		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != mPlaybackFileProvider.getPlaybackFile(filePos).getFile()) {
 			if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer)
 				mNextFilePlayer.releaseMediaPlayer();
 			
-			mNextFilePlayer = mPlaybackFileProvider.get(filePos);
+			mNextFilePlayer = mPlaybackFileProvider.getPlaybackFile(filePos);
 		}
 				
 		if (mNextFilePlayer.isPrepared()) return;
@@ -239,9 +239,9 @@ public class PlaybackController implements
 		
 		if (mCurrentFilePlayer == null) return;
 		
-		final File lastFile = mPlaybackFileProvider.last().getFile();
+		final File lastFile = mPlaybackFileProvider.lastPlaybackFile().getFile();
 		if (mIsRepeating) {
-			lastFile.setNextFile(mPlaybackFileProvider.get(0).getFile());
+			lastFile.setNextFile(mPlaybackFileProvider.getPlaybackFile(0).getFile());
 			if (lastFile == mCurrentFilePlayer.getFile()) {
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
 				prepareNextFile(0);
@@ -268,12 +268,12 @@ public class PlaybackController implements
 	}
 	
 	public void addFile(final File file) {
-		file.setPreviousFile(mPlaybackFileProvider.get(mPlaybackFileProvider.getPlaybackFiles().size() - 1).getFile());
+		file.setPreviousFile(mPlaybackFileProvider.getPlaybackFile(mPlaybackFileProvider.size() - 1).getFile());
 		mPlaybackFileProvider.add(file);
 	}
 	
 	public void removeFile(final int position) {
-		final File file = mPlaybackFileProvider.get(position).getFile();
+		final File file = mPlaybackFileProvider.getPlaybackFile(position).getFile();
 		mPlaybackFileProvider.remove(position);
 		
 		final File nextFile = file.getNextFile();
@@ -337,7 +337,7 @@ public class PlaybackController implements
 				return;
 			}
 			
-			mNextFilePlayer = mPlaybackFileProvider.get(nextFilePos);
+			mNextFilePlayer = mPlaybackFileProvider.getPlaybackFile(nextFilePos);
 		}
 		
 		// Move the pointer early so that getting the currently playing file is correctly
