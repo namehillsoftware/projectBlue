@@ -43,13 +43,13 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionLostListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.list.NowPlayingFilesListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -184,7 +184,7 @@ public class NowPlayingActivity extends Activity implements
 		
 		// Get initial view state from playlist controller if it is active
 		if (PlaybackService.getPlaylistController() != null) {
-			final FilePlayer filePlayer = PlaybackService.getPlaylistController().getCurrentFilePlayer();
+			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentFilePlayer();
 			
 			setView(filePlayer.getFile());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
@@ -476,7 +476,7 @@ public class NowPlayingActivity extends Activity implements
 		showNowPlayingControls(playlistController != null ? playlistController.getCurrentFilePlayer() : null);
 	}
 	
-	private void showNowPlayingControls(final FilePlayer filePlayer) {
+	private void showNowPlayingControls(final IPlaybackFile filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		if (filePlayer != null) mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(filePlayer, mHandler);
 		
@@ -509,13 +509,13 @@ public class NowPlayingActivity extends Activity implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {		
 		setView(filePlayer.getFile());
 		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 	}
 	
 	@Override
-	public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {		
 		showNowPlayingControls(filePlayer);
 		
 		mPlay.setVisibility(View.INVISIBLE);
@@ -523,16 +523,16 @@ public class NowPlayingActivity extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingPause(PlaybackController controller, IPlaybackFile filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 
 	@Override
-	public void onNowPlayingStop(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 	
-	private void handleNowPlayingStopping(PlaybackController controller, FilePlayer filePlayer) {
+	private void handleNowPlayingStopping(PlaybackController controller, IPlaybackFile filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		int duration = 100;

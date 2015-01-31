@@ -16,7 +16,7 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
@@ -127,7 +127,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		viewHolder.checkIfIsPlayingFileListener = viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
-			public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {
+			public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
 				viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, controller.getPlaylist(), filePlayer.getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};

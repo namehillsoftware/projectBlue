@@ -103,7 +103,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
 							if (PlaybackService.getPlaylistController() != null) 
-								PlaybackService.getPlaylistController().removeFileAt(mPosition);
+								PlaybackService.getPlaylistController().removeFile(mPosition);
 							
 							mAdapter.remove(mAdapter.getItem(mPosition));
 						}

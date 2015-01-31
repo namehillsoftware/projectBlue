@@ -7,22 +7,22 @@ import java.util.concurrent.Executors;
 import android.os.AsyncTask;
 import android.os.Message;
 
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 
 
 public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void, Void> {
-	private final FilePlayer mFilePlayer;
+	private final IPlaybackFile mFilePlayer;
 	private final NowPlayingActivityMessageHandler mHandler;
 	
 	private static final ExecutorService mTrackerExecutor = Executors.newSingleThreadExecutor();
 	
-	public static NowPlayingActivityProgressTrackerTask trackProgress(FilePlayer filePlayer, NowPlayingActivityMessageHandler handler) {
+	public static NowPlayingActivityProgressTrackerTask trackProgress(IPlaybackFile filePlayer, NowPlayingActivityMessageHandler handler) {
 		NowPlayingActivityProgressTrackerTask newProgressTrackerThread = new NowPlayingActivityProgressTrackerTask(filePlayer, handler);
 		newProgressTrackerThread.executeOnExecutor(mTrackerExecutor);
 		return newProgressTrackerThread;
 	}
 	
-	private NowPlayingActivityProgressTrackerTask(FilePlayer filePlayer, NowPlayingActivityMessageHandler handler) {
+	private NowPlayingActivityProgressTrackerTask(IPlaybackFile filePlayer, NowPlayingActivityMessageHandler handler) {
 		mFilePlayer = filePlayer;
 		mHandler = handler;
 	}

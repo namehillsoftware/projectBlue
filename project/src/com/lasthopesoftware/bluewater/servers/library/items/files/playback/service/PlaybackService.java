@@ -47,7 +47,7 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
@@ -265,28 +265,28 @@ public class PlaybackService extends Service implements
 		}
 	}
 	
-	private void throwChangeEvent(PlaybackController controller, FilePlayer filePlayer) {
+	private void throwChangeEvent(PlaybackController controller, IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
 				onChangeListener.onNowPlayingChange(controller, filePlayer);
 		}
 	}
 
-	private void throwStartEvent(PlaybackController controller, FilePlayer filePlayer) {
+	private void throwStartEvent(PlaybackController controller, IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
 				onStartListener.onNowPlayingStart(controller, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(PlaybackController controller, FilePlayer filePlayer) {
+	private void throwStopEvent(PlaybackController controller, IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onNowPlayingStop(controller, filePlayer);
 		}
 	}
 	
-	private void throwPauseEvent(PlaybackController controller, FilePlayer filePlayer) {
+	private void throwPauseEvent(PlaybackController controller, IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingPauseListener onPauseListener : mOnStreamingPauseListeners)
 				onPauseListener.onNowPlayingPause(controller, filePlayer);
@@ -673,7 +673,7 @@ public class PlaybackService extends Service implements
 
 
 	@Override
-	public void onPlaylistStateControlError(PlaybackController controller, FilePlayer filePlayer) {
+	public void onPlaylistStateControlError(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -779,7 +779,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		throwStopEvent(controller, filePlayer);
@@ -793,7 +793,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingPause(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		stopNotification();
@@ -812,12 +812,12 @@ public class PlaybackService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);		
 		throwChangeEvent(controller, filePlayer);
 	}
 	
-	private void saveStateToLibrary(final PlaybackController controller, final FilePlayer filePlayer) {
+	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
@@ -833,7 +833,7 @@ public class PlaybackService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mAreListenersRegistered) registerListeners();

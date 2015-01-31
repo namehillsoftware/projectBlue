@@ -3,9 +3,13 @@ package com.lasthopesoftware.bluewater.test.mock;
 import java.io.IOException;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.IFilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
 
-public class MockFilePlayer implements IFilePlayer {
+public class MockFilePlayer implements IPlaybackFile {
 
 	@Override
 	public File getFile() {
@@ -113,6 +117,54 @@ public class MockFilePlayer implements IFilePlayer {
 	public void setVolume(float volume) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addOnFileErrorListener(OnFileErrorListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeOnFileErrorListener(OnFileErrorListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addOnFileBufferedListener(OnFileBufferedListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeOnFileErrorListener(OnFileBufferedListener listener) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

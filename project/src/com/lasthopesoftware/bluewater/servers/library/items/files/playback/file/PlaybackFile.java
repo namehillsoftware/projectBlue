@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.files.playback;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback.file;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class FilePlayer implements
-	IFilePlayer,
+public class PlaybackFile implements
+	IPlaybackFile,
 	OnPreparedListener,
 	OnErrorListener, 
 	OnCompletionListener,
@@ -53,7 +53,7 @@ public class FilePlayer implements
 		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
 	}))); 
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(FilePlayer.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackFile.class);
 	
 	private volatile MediaPlayer mMediaPlayer;
 	
@@ -81,7 +81,7 @@ public class FilePlayer implements
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<OnFileBufferedListener>();
 	
-	public FilePlayer(Context context, File file) {
+	public PlaybackFile(Context context, File file) {
 		mMpContext = context;
 		mFile = file;
 	}

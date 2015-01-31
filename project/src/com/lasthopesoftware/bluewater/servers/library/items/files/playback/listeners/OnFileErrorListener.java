@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners;
 
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 
 public interface OnFileErrorListener {
-	void onFileError(FilePlayer mediaPlayer, int what, int extra);
+	void onFileError(IPlaybackFile mediaPlayer, int what, int extra);
 }

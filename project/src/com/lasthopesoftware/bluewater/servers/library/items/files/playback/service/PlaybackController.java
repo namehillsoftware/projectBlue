@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.files.playback.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -12,7 +11,10 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.PlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.PlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
@@ -35,9 +37,10 @@ public class PlaybackController implements
 	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
 	private String mPlaylistString;
-	private final ArrayList<File> mPlaylist;
+	private final IPlaybackFileProvider mPlaybackFileProvider;
 	private int mFileKey = -1;
-	private FilePlayer mCurrentFilePlayer, mNextFilePlayer;
+	private int mCurrentFilePos;
+	private IPlaybackFile mCurrentFilePlayer, mNextFilePlayer;
 	private final Context mContext;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
@@ -53,7 +56,7 @@ public class PlaybackController implements
 	
 	public PlaybackController(final Context context, final ArrayList<File> playlist) {
 		mContext = context;
-		mPlaylist = playlist;
+		mPlaybackFileProvider = new PlaybackFileProvider(playlist);
 	}
 	
 	/* Begin playlist control */
@@ -81,7 +84,7 @@ public class PlaybackController implements
 			if (mCurrentFilePlayer.isPlaying()) {
 				
 				// If the seek-to index is the same as that of the file playing, keep on playing
-				if (mPlaylist.get(filePos) == mCurrentFilePlayer.getFile()) return;
+				if (filePos == mCurrentFilePos) return;
 			
 				// stop any playback that is in action
 				wasPlaying = true;
@@ -93,11 +96,12 @@ public class PlaybackController implements
 		}
 		
 		if (filePos < 0) filePos = 0;
-        if (filePos >= mPlaylist.size())
+        if (filePos >= mPlaybackFileProvider.size())
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 		
-		final File file = mPlaylist.get(filePos);
-		final FilePlayer filePlayer = new FilePlayer(mContext, file);
+        mCurrentFilePos = filePos;
+        
+		final IPlaybackFile filePlayer = mPlaybackFileProvider.get(mCurrentFilePos);
 		filePlayer.addOnFileCompleteListener(this);
 		filePlayer.addOnFilePreparedListener(this);
 		filePlayer.addOnFileErrorListener(this);
@@ -153,27 +157,28 @@ public class PlaybackController implements
 		return true;
 	}
 
-	private void startFilePlayback(FilePlayer mediaPlayer) {
+	private void startFilePlayback(IPlaybackFile playbackFile) {
 		mIsPlaying = true;
-		mCurrentFilePlayer = mediaPlayer;
+		mCurrentFilePlayer = playbackFile;
+		mCurrentFilePos = mPlaybackFileProvider.indexOf(playbackFile);
+		playbackFile.setVolume(mVolume);
+		playbackFile.start();
 		
-		mediaPlayer.setVolume(mVolume);
-		mediaPlayer.start();
+		mFileKey = playbackFile.getFile().getKey();
 		
-		mFileKey = mediaPlayer.getFile().getKey();
-		
-		File nextFile = mediaPlayer.getFile().getNextFile();
-		if (nextFile == null) {
+		int nextFileIndex = mCurrentFilePos + 1;
+		if (nextFileIndex >= mPlaybackFileProvider.size()) {
 			if (!mIsRepeating) {
 				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
 				mNextFilePlayer = null;
+				nextFileIndex = -1;
 			} else {
-				nextFile = mPlaylist.get(0);
+				nextFileIndex = 0;
 			}
 		}
 		
-        if (nextFile != null)
-        	prepareNextFile(nextFile);
+        if (nextFileIndex > -1)
+        	prepareNextFile(nextFileIndex);
         
         // Throw events after asynchronous calls have started
         throwChangeEvent(mCurrentFilePlayer);
@@ -181,14 +186,14 @@ public class PlaybackController implements
         	listener.onNowPlayingStart(this, mCurrentFilePlayer);
 	}
 	
-	private void prepareNextFile(final File nextFile) {		
+	private void prepareNextFile(final int filePos) {		
 		if (mCurrentFilePlayer == null) return;
 		
-		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != nextFile) {
+		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != mPlaybackFileProvider.get(filePos).getFile()) {
 			if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer)
 				mNextFilePlayer.releaseMediaPlayer();
 			
-			mNextFilePlayer = new FilePlayer(mContext, nextFile);
+			mNextFilePlayer = mPlaybackFileProvider.get(filePos);
 		}
 				
 		if (mNextFilePlayer.isPrepared()) return;
@@ -200,7 +205,7 @@ public class PlaybackController implements
 	}
 
 	@Override
-	public void onFileBuffered(FilePlayer filePlayer) {
+	public void onFileBuffered(IPlaybackFile filePlayer) {
 		mNextFilePlayer.initMediaPlayer();
 		mNextFilePlayer.prepareMediaPlayer();
 	}
@@ -233,12 +238,12 @@ public class PlaybackController implements
 		
 		if (mCurrentFilePlayer == null) return;
 		
-		final File lastFile = mPlaylist.get(mPlaylist.size() - 1);
+		final File lastFile = mPlaybackFileProvider.last().getFile();
 		if (mIsRepeating) {
-			lastFile.setNextFile(mPlaylist.get(0));
+			lastFile.setNextFile(mPlaybackFileProvider.get(0).getFile());
 			if (lastFile == mCurrentFilePlayer.getFile()) {
 				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-				prepareNextFile(mPlaylist.get(0));
+				prepareNextFile(0);
 			}
 			return;
 		}
@@ -262,16 +267,13 @@ public class PlaybackController implements
 	}
 	
 	public void addFile(final File file) {
-		file.setPreviousFile(mPlaylist.get(mPlaylist.size() - 1));
-		mPlaylist.add(file);
+		file.setPreviousFile(mPlaybackFileProvider.get(mPlaybackFileProvider.getPlaybackFiles().size() - 1).getFile());
+		mPlaybackFileProvider.add(file);
 	}
 	
-	public void removeFileAt(final int position) {
-		removeFile(mPlaylist.get(position));
-	}
-	
-	public void removeFile(final File file) {
-		if (!mPlaylist.remove(file)) return;
+	public void removeFile(final int position) {
+		final File file = mPlaybackFileProvider.get(position).getFile();
+		mPlaybackFileProvider.remove(position);
 		
 		final File nextFile = file.getNextFile();
 		final File previousFile = file.getPreviousFile();
@@ -282,47 +284,47 @@ public class PlaybackController implements
 		if (nextFile != null)
 			nextFile.setPreviousFile(previousFile);
 		
-		if (file != mCurrentFilePlayer.getFile()) return;
+		if (position != mCurrentFilePos) return;
 		
 		if (nextFile != null) {
-			seekTo(mPlaylist.indexOf(nextFile));
+			seekTo(mCurrentFilePos + 1);
 			return;
 		}
 		
 		mCurrentFilePlayer.stop();
 		if (previousFile != null)
-			seekTo(mPlaylist.indexOf(previousFile));
+			seekTo(mCurrentFilePos - 1);
 	}
 	
-	public FilePlayer getCurrentFilePlayer() {
+	public IPlaybackFile getCurrentFilePlayer() {
 		return mCurrentFilePlayer;
 	}
 	
 	public List<File> getPlaylist() {
-		return Collections.unmodifiableList(mPlaylist);
+		return mPlaybackFileProvider.getFiles();
 	}
 	
 	public String getPlaylistString() {
 		if (mPlaylistString == null)
-			mPlaylistString = Files.serializeFileStringList(mPlaylist);
+			mPlaylistString = Files.serializeFileStringList(getPlaylist());
 		
 		return mPlaylistString;
 	}
 	
 	public int getCurrentPosition() {
-		return mCurrentFilePlayer != null ? mPlaylist.indexOf(mCurrentFilePlayer.getFile()) : 0;
+		return mCurrentFilePos;
 	}
 
 	/* Event handlers */
 	@Override
-	public void onFilePrepared(FilePlayer mediaPlayer) {
+	public void onFilePrepared(IPlaybackFile mediaPlayer) {
 		if (mediaPlayer.isPlaying()) return;
 		
 		startFilePlayback(mediaPlayer);
 	}
 	
 	@Override
-	public void onFileComplete(FilePlayer mediaPlayer) {
+	public void onFileComplete(IPlaybackFile mediaPlayer) {
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
@@ -333,7 +335,7 @@ public class PlaybackController implements
 				return;
 			}
 			
-			mNextFilePlayer = new FilePlayer(mContext, mediaPlayer.getFile().getNextFile());
+			mNextFilePlayer = new PlaybackFile(mContext, mediaPlayer.getFile().getNextFile());
 		}
 		
 		// Move the pointer early so that getting the currently playing file is correctly
@@ -355,11 +357,11 @@ public class PlaybackController implements
 	}
 	
 	@Override
-	public void onFileError(FilePlayer mediaPlayer, int what, int extra) {
+	public void onFileError(IPlaybackFile mediaPlayer, int what, int extra) {
 		mLogger.error("JR File error - " + what + " - " + extra);
 		
 		// We don't know what happened, release the next file player too
-		if (!FilePlayer.MEDIA_ERROR_EXTRAS.contains(extra) && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
+		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(extra) && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
 			mNextFilePlayer.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
@@ -368,12 +370,12 @@ public class PlaybackController implements
 	/* End event handlers */
 	
 	/* Listener callers */
-	private void throwChangeEvent(FilePlayer filePlayer) {
+	private void throwChangeEvent(IPlaybackFile filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, filePlayer);
 	}
 	
-	private void throwStopEvent(FilePlayer filePlayer) {
+	private void throwStopEvent(IPlaybackFile filePlayer) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
 			listener.onNowPlayingStop(this, filePlayer);
 	}
