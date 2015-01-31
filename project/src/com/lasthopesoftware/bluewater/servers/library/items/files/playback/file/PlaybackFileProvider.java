@@ -17,10 +17,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	public PlaybackFileProvider(Context context, List<File> files) {
 		mContext = context;
 		
-		if (files instanceof ArrayList<?>)
-			mFiles = (ArrayList<File>)files;
-		else
-			mFiles = new ArrayList<File>(files);
+		mFiles = files instanceof ArrayList<?> ? (ArrayList<File>)files : new ArrayList<File>(files);
 	}
 	
 	@Override
@@ -38,6 +35,11 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 		return getPlaybackFile(mFiles.size() - 1);
 	}
 
+	@Override
+	public int indexOf(File file) {
+		return indexOf(0, file);
+	}
+	
 	@Override
 	public int indexOf(int startingIndex, File file) {
 		for (int i = startingIndex; i < mFiles.size(); i++) {
@@ -64,18 +66,11 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	@Override
 	public boolean add(File file) {
-		// TODO Auto-generated method stub
-		return false;
+		return mFiles.add(file);
 	}
 
 	@Override
 	public File remove(int filePos) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public int indexOf(File file) {
-		return indexOf(0, file);
+		return mFiles.remove(filePos);
 	}
 }

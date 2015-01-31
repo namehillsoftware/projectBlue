@@ -36,11 +36,13 @@ public class PlaybackController implements
 	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<OnNowPlayingStopListener>();
 	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<OnPlaylistStateControlErrorListener>();
+	
 	private String mPlaylistString;
 	private final IPlaybackFileProvider mPlaybackFileProvider;
 	private int mFileKey = -1;
 	private int mCurrentFilePos;
 	private IPlaybackFile mCurrentFilePlayer, mNextFilePlayer;
+	
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	private boolean mIsPlaying = false;
