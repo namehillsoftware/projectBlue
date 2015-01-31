@@ -299,7 +299,7 @@ public class PlaybackController implements
 	}
 	
 	public String getPlaylistString() {
-		return mPlaybackFileProvider.toString();
+		return mPlaybackFileProvider.toPlaylistString();
 	}
 	
 	public int getCurrentPosition() {

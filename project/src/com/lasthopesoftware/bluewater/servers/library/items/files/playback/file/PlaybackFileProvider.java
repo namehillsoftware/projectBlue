@@ -93,7 +93,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 	
 	@Override
-	public String toString() {
+	public String toPlaylistString() {
 		if (mPlaylistString == null)
 			mPlaylistString = Files.serializeFileStringList(mFiles);
 		

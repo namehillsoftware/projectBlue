@@ -15,5 +15,6 @@ public interface IPlaybackFileProvider{
 	int indexOf(File file);
 	int indexOf(int startingIndex, File file);
 	List<File> getFiles();
+	String toPlaylistString();
 	int size();
 }
