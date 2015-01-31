@@ -2,12 +2,14 @@ package com.lasthopesoftware.bluewater.servers.library.items.files.playback.file
 
 import java.util.List;
 
+import android.content.Context;
+
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {
 
-	public PlaybackFileProvider(List<File> files) {
+	public PlaybackFileProvider(Context context, List<File> files) {
 		
 	}
 	

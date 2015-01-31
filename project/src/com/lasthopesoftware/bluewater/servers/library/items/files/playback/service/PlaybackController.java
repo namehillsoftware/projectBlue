@@ -41,7 +41,6 @@ public class PlaybackController implements
 	private int mFileKey = -1;
 	private int mCurrentFilePos;
 	private IPlaybackFile mCurrentFilePlayer, mNextFilePlayer;
-	private final Context mContext;
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
 	private boolean mIsPlaying = false;
@@ -55,8 +54,11 @@ public class PlaybackController implements
 	}
 	
 	public PlaybackController(final Context context, final ArrayList<File> playlist) {
-		mContext = context;
-		mPlaybackFileProvider = new PlaybackFileProvider(playlist);
+		mPlaybackFileProvider = new PlaybackFileProvider(context, playlist);
+	}
+	
+	public PlaybackController(IPlaybackFileProvider playbackFileProvider) {
+		mPlaybackFileProvider = playbackFileProvider;
 	}
 	
 	/* Begin playlist control */
@@ -160,7 +162,6 @@ public class PlaybackController implements
 	private void startFilePlayback(IPlaybackFile playbackFile) {
 		mIsPlaying = true;
 		mCurrentFilePlayer = playbackFile;
-		mCurrentFilePos = mPlaybackFileProvider.indexOf(playbackFile);
 		playbackFile.setVolume(mVolume);
 		playbackFile.start();
 		
@@ -328,18 +329,20 @@ public class PlaybackController implements
 		mediaPlayer.releaseMediaPlayer();
 		
 		if (mNextFilePlayer == null) {
+			final int nextFilePos = mCurrentFilePos + 1;
 			// Playlist is complete, throw stop event and get out
-			if (mediaPlayer.getFile().getNextFile() == null) {
+			if (!mIsRepeating && nextFilePos >= mPlaybackFileProvider.size()) {
 				mIsPlaying = false;
 				throwStopEvent(mediaPlayer);
 				return;
 			}
 			
-			mNextFilePlayer = new PlaybackFile(mContext, mediaPlayer.getFile().getNextFile());
+			mNextFilePlayer = mPlaybackFileProvider.get(nextFilePos);
 		}
 		
 		// Move the pointer early so that getting the currently playing file is correctly
 		// returned
+		mCurrentFilePos++;
 		mCurrentFilePlayer = mNextFilePlayer;
 		mCurrentFilePlayer.addOnFileCompleteListener(this);
 		mCurrentFilePlayer.addOnFileErrorListener(this);
