@@ -7,12 +7,15 @@ import java.util.List;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
 
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	private final ArrayList<File> mFiles;
 	private final Context mContext;
+	
+	private String mPlaylistString = null; 
 	
 	public PlaybackFileProvider(Context context, List<File> files) {
 		mContext = context;
@@ -66,11 +69,34 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	@Override
 	public boolean add(File file) {
-		return mFiles.add(file);
+		file.setPreviousFile(mFiles.get(mFiles.size() - 1));
+		final boolean isAdded = mFiles.add(file);
+		mPlaylistString = null;
+		return isAdded;
 	}
 
 	@Override
 	public File remove(int filePos) {
-		return mFiles.remove(filePos);
+		final File removedFile = mFiles.remove(filePos);
+		mPlaylistString = null;
+		
+		final File nextFile = removedFile.getNextFile();
+		final File previousFile = removedFile.getPreviousFile();
+		
+		if (previousFile != null)
+			previousFile.setNextFile(nextFile);
+		
+		if (nextFile != null)
+			nextFile.setPreviousFile(previousFile);
+		
+		return removedFile;
+	}
+	
+	@Override
+	public String toString() {
+		if (mPlaylistString == null)
+			mPlaylistString = Files.serializeFileStringList(mFiles);
+		
+		return mPlaylistString;
 	}
 }

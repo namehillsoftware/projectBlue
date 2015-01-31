@@ -270,33 +270,24 @@ public class PlaybackController implements
 	}
 	
 	public void addFile(final File file) {
-		file.setPreviousFile(mPlaybackFileProvider.getPlaybackFile(mPlaybackFileProvider.size() - 1).getFile());
 		mPlaybackFileProvider.add(file);
 	}
 	
 	public void removeFile(final int position) {
-		final File file = mPlaybackFileProvider.getPlaybackFile(position).getFile();
 		mPlaybackFileProvider.remove(position);
-		
-		final File nextFile = file.getNextFile();
-		final File previousFile = file.getPreviousFile();
-		
-		if (previousFile != null)
-			previousFile.setNextFile(nextFile);
-		
-		if (nextFile != null)
-			nextFile.setPreviousFile(previousFile);
 		
 		if (position != mCurrentFilePos) return;
 		
-		if (nextFile != null) {
-			seekTo(mCurrentFilePos + 1);
+		mCurrentFilePlayer.stop();
+		
+		// First try seeking to the next file
+		if (position + 1 < mPlaybackFileProvider.size()) {
+			seekTo(position + 1);
 			return;
 		}
-		
-		mCurrentFilePlayer.stop();
-		if (previousFile != null)
-			seekTo(mCurrentFilePos - 1);
+		// If the next file is greater than the size, seek to the previous file if that's possible
+		if (position > 0)
+			seekTo(position - 1);
 	}
 	
 	public IPlaybackFile getCurrentFilePlayer() {
@@ -308,10 +299,7 @@ public class PlaybackController implements
 	}
 	
 	public String getPlaylistString() {
-		if (mPlaylistString == null)
-			mPlaylistString = Files.serializeFileStringList(getPlaylist());
-		
-		return mPlaylistString;
+		return mPlaybackFileProvider.toString();
 	}
 	
 	public int getCurrentPosition() {
