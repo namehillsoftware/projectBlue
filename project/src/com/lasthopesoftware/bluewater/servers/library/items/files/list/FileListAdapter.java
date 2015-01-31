@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.ViewFileDetailsClickListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -86,8 +86,8 @@ public class FileListAdapter extends AbstractFileListAdapter {
 		
 		@Override
 		public void onClick(final View view) {
-			if (NowPlayingService.getPlaylistController() != null) 
-				NowPlayingService.getPlaylistController().addFile(mFile);
+			if (PlaybackService.getPlaylistController() != null) 
+				PlaybackService.getPlaylistController().addFile(mFile);
 			
 			LibrarySession.GetLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 

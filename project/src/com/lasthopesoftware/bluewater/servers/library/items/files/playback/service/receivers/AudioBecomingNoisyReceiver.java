@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers;
 
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,6 +10,6 @@ public class AudioBecomingNoisyReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		NowPlayingService.pause(context);
+		PlaybackService.pause(context);
 	}
 }

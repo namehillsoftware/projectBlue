@@ -122,20 +122,20 @@
                 android:value="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity" />
         </activity>
         
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.AudioBecomingNoisyReceiver">
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers.AudioBecomingNoisyReceiver">
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.RemoteControlReceiver">
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers.RemoteControlReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
         
         <service
-     		android:name="com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService"
+     		android:name="com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService"
      		android:enabled="true"
             android:exported="false" >
         </service>

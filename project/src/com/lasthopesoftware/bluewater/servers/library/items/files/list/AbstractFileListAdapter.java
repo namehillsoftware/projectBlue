@@ -16,10 +16,10 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -99,7 +99,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
-		final PlaybackListController playlistController = NowPlayingService.getPlaylistController();
+		final PlaybackController playlistController = PlaybackService.getPlaylistController();
         if (playlistController != null && playlistController.getCurrentFilePlayer() != null)
         	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentFilePlayer().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 //        else
@@ -123,16 +123,16 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		});
         viewHolder.getFileValueTask.execute();
 
-		if (viewHolder.checkIfIsPlayingFileListener != null) NowPlayingService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
+		if (viewHolder.checkIfIsPlayingFileListener != null) PlaybackService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
 		viewHolder.checkIfIsPlayingFileListener = viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
-			public void onNowPlayingStart(PlaybackListController controller, FilePlayer filePlayer) {
+			public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {
 				viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, controller.getPlaylist(), filePlayer.getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 			}
 		};
 		
-		NowPlayingService.addOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
+		PlaybackService.addOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
 		
 		if (viewHolder.onAttachStateChangeListener != null) viewHolder.textLayout.removeOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
 		viewHolder.onAttachStateChangeListener = new OnAttachStateChangeListener() {
@@ -140,7 +140,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 			@Override
 			public void onViewDetachedFromWindow(View v) {
 				if (viewHolder.checkIfIsPlayingFileListener != null)
-					NowPlayingService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
+					PlaybackService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
 			}
 			
 			@Override

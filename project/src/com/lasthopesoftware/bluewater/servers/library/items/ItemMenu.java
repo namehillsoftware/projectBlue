@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.list.FileListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -153,7 +153,7 @@ public class ItemMenu {
 		
 		@Override
 		public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
-			NowPlayingService.launchMusicService(mContext, result);
+			PlaybackService.launchMusicService(mContext, result);
 		}
 		
 	}

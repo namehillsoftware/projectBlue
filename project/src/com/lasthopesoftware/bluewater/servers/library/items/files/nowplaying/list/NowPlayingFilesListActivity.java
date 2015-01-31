@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -109,7 +109,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 
 						@Override
 						public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-							NowPlayingService.seekTo(view.getContext(), position);
+							PlaybackService.seekTo(view.getContext(), position);
 						}
 					});
 			        mFileListView.setOnItemLongClickListener(new LongClickFlipListener());

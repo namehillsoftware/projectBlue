@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -32,7 +32,7 @@ public class ClickFileListener implements OnItemClickListener {
 			public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				NowPlayingService.launchMusicService(view.getContext(), position, result);
+				PlaybackService.launchMusicService(view.getContext(), position, result);
 			}
 		}, new OnErrorListener<String>() {
 

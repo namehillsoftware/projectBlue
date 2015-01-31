@@ -43,13 +43,13 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionLostListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.list.NowPlayingFilesListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -134,10 +134,10 @@ public class NowPlayingActivity extends Activity implements
 		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
 		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
 		
-		NowPlayingService.addOnStreamingChangeListener(this);
-		NowPlayingService.addOnStreamingPauseListener(this);
-		NowPlayingService.addOnStreamingStopListener(this);
-		NowPlayingService.addOnStreamingStartListener(this);
+		PlaybackService.addOnStreamingChangeListener(this);
+		PlaybackService.addOnStreamingPauseListener(this);
+		PlaybackService.addOnStreamingStopListener(this);
+		PlaybackService.addOnStreamingStartListener(this);
 		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
@@ -145,7 +145,7 @@ public class NowPlayingActivity extends Activity implements
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				NowPlayingService.play(v.getContext());
+				PlaybackService.play(v.getContext());
 				mPlay.setVisibility(View.INVISIBLE);
 				mPause.setVisibility(View.VISIBLE);
 			}
@@ -156,7 +156,7 @@ public class NowPlayingActivity extends Activity implements
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				NowPlayingService.pause(v.getContext());
+				PlaybackService.pause(v.getContext());
 				mPlay.setVisibility(View.VISIBLE);
 				mPause.setVisibility(View.INVISIBLE);
 			}
@@ -167,7 +167,7 @@ public class NowPlayingActivity extends Activity implements
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				NowPlayingService.next(v.getContext());
+				PlaybackService.next(v.getContext());
 			}
 		});
 		
@@ -176,15 +176,15 @@ public class NowPlayingActivity extends Activity implements
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
-				NowPlayingService.previous(v.getContext());
+				PlaybackService.previous(v.getContext());
 			}
 		});
 		
 		mHandler = new NowPlayingActivityMessageHandler(this);
 		
 		// Get initial view state from playlist controller if it is active
-		if (NowPlayingService.getPlaylistController() != null) {
-			final FilePlayer filePlayer = NowPlayingService.getPlaylistController().getCurrentFilePlayer();
+		if (PlaybackService.getPlaylistController() != null) {
+			final FilePlayer filePlayer = PlaybackService.getPlaylistController().getCurrentFilePlayer();
 			
 			setView(filePlayer.getFile());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
@@ -251,7 +251,7 @@ public class NowPlayingActivity extends Activity implements
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 						if (result == null) return;
 						final boolean isRepeating = !result.isRepeating();
-						NowPlayingService.setIsRepeating(_context, isRepeating);
+						PlaybackService.setIsRepeating(_context, isRepeating);
 						setRepeatingIcon(item, isRepeating);
 					}
 				});
@@ -292,9 +292,9 @@ public class NowPlayingActivity extends Activity implements
 		
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
-		NowPlayingService.removeOnStreamingStartListener(this);
-		NowPlayingService.removeOnStreamingChangeListener(this);
-		NowPlayingService.removeOnStreamingPauseListener(this);
+		PlaybackService.removeOnStreamingStartListener(this);
+		PlaybackService.removeOnStreamingChangeListener(this);
+		PlaybackService.removeOnStreamingPauseListener(this);
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
 	}
 	
@@ -472,7 +472,7 @@ public class NowPlayingActivity extends Activity implements
 	}
 	
 	private void showNowPlayingControls() {
-		final PlaybackListController playlistController = NowPlayingService.getPlaylistController();
+		final PlaybackController playlistController = PlaybackService.getPlaylistController();
 		showNowPlayingControls(playlistController != null ? playlistController.getCurrentFilePlayer() : null);
 	}
 	
@@ -509,13 +509,13 @@ public class NowPlayingActivity extends Activity implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackListController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingChange(PlaybackController controller, FilePlayer filePlayer) {		
 		setView(filePlayer.getFile());
 		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
 	}
 	
 	@Override
-	public void onNowPlayingStart(PlaybackListController controller, FilePlayer filePlayer) {		
+	public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {		
 		showNowPlayingControls(filePlayer);
 		
 		mPlay.setVisibility(View.INVISIBLE);
@@ -523,16 +523,16 @@ public class NowPlayingActivity extends Activity implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingPause(PlaybackController controller, FilePlayer filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 
 	@Override
-	public void onNowPlayingStop(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaybackController controller, FilePlayer filePlayer) {
 		handleNowPlayingStopping(controller, filePlayer);
 	}
 	
-	private void handleNowPlayingStopping(PlaybackListController controller, FilePlayer filePlayer) {
+	private void handleNowPlayingStopping(PlaybackController controller, FilePlayer filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		int duration = 100;

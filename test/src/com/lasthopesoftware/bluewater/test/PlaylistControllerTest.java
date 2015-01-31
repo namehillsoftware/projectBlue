@@ -7,11 +7,11 @@ import junit.framework.TestCase;
 import android.test.mock.MockContext;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 
 public class PlaylistControllerTest extends TestCase {
 
-	private PlaybackListController mPlaylistController;
+	private PlaybackController mPlaylistController;
 	
 	public PlaylistControllerTest(String name) {
 		super(name);
@@ -21,7 +21,7 @@ public class PlaylistControllerTest extends TestCase {
 		super.setUp();
 		
 		MockContext mockContext = new MockContext();
-		mPlaylistController = new PlaybackListController(mockContext, new ArrayList<File>());
+		mPlaylistController = new PlaybackController(mockContext, new ArrayList<File>());
 	}
 
 	protected void tearDown() throws Exception {

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.files.playback;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +12,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
@@ -22,7 +23,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.files.playback.liste
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnPlaylistStateControlErrorListener;
 
-public class PlaybackListController implements
+public class PlaybackController implements
 	OnFilePreparedListener,
 	OnFileErrorListener, 
 	OnFileCompleteListener,
@@ -42,15 +43,15 @@ public class PlaybackListController implements
 	private boolean mIsRepeating = false;
 	private boolean mIsPlaying = false;
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackListController.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
-	public PlaybackListController(final Context context, final String playlistString) {
+	public PlaybackController(final Context context, final String playlistString) {
 		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
 		
 		mPlaylistString = playlistString;
 	}
 	
-	public PlaybackListController(final Context context, final ArrayList<File> playlist) {
+	public PlaybackController(final Context context, final ArrayList<File> playlist) {
 		mContext = context;
 		mPlaylist = playlist;
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback.service;
 
 
 import java.util.HashSet;
@@ -47,14 +47,13 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.FilePlayer;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.PlaybackListController;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -67,7 +66,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
  * @author david
  *
  */
-public class NowPlayingService extends Service implements
+public class PlaybackService extends Service implements
 	OnAudioFocusChangeListener, 
 	OnNowPlayingChangeListener, 
 	OnNowPlayingStartListener,
@@ -75,7 +74,7 @@ public class NowPlayingService extends Service implements
 	OnNowPlayingPauseListener, 
 	OnPlaylistStateControlErrorListener
 {
-	private static final Logger mLogger = LoggerFactory.getLogger(NowPlayingService.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackService.class);
 	
 	/* String constant actions */
 	private static final String ACTION_LAUNCH_MUSIC_SERVICE = "com.lasthopesoftware.bluewater.action.LAUNCH_MUSIC_SERVICE";
@@ -102,7 +101,7 @@ public class NowPlayingService extends Service implements
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
 	private NotificationManager mNotificationMgr;
-	private NowPlayingService mStreamingMusicService;
+	private PlaybackService mStreamingMusicService;
 	private AudioManager mAudioManager;
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
@@ -111,7 +110,7 @@ public class NowPlayingService extends Service implements
 	// State dependent static variables
 	private static volatile String mPlaylistString;
 	// Declare as volatile so that every thread has the same version of the playlist controllers
-	private static volatile PlaybackListController mPlaylistController;
+	private static volatile PlaybackController mPlaylistController;
 	
 	private static boolean mAreListenersRegistered = false;
 	private static boolean mIsNotificationForeground = false;
@@ -129,7 +128,7 @@ public class NowPlayingService extends Service implements
 	private OnPollingCancelledListener mOnPollingCancelledListener;
 	
 	private static Intent getNewSelfIntent(final Context context, String action) {
-		final Intent newIntent = new Intent(context, NowPlayingService.class);
+		final Intent newIntent = new Intent(context, PlaybackService.class);
 		newIntent.setAction(action);
 		return newIntent;
 	}
@@ -266,28 +265,28 @@ public class NowPlayingService extends Service implements
 		}
 	}
 	
-	private void throwChangeEvent(PlaybackListController controller, FilePlayer filePlayer) {
+	private void throwChangeEvent(PlaybackController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
 				onChangeListener.onNowPlayingChange(controller, filePlayer);
 		}
 	}
 
-	private void throwStartEvent(PlaybackListController controller, FilePlayer filePlayer) {
+	private void throwStartEvent(PlaybackController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
 				onStartListener.onNowPlayingStart(controller, filePlayer);
 		}
 	}
 	
-	private void throwStopEvent(PlaybackListController controller, FilePlayer filePlayer) {
+	private void throwStopEvent(PlaybackController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
 				onStopListener.onNowPlayingStop(controller, filePlayer);
 		}
 	}
 	
-	private void throwPauseEvent(PlaybackListController controller, FilePlayer filePlayer) {
+	private void throwPauseEvent(PlaybackController controller, FilePlayer filePlayer) {
 		synchronized(syncHandlersObject) {
 			for (OnNowPlayingPauseListener onPauseListener : mOnStreamingPauseListeners)
 				onPauseListener.onNowPlayingPause(controller, filePlayer);
@@ -295,13 +294,13 @@ public class NowPlayingService extends Service implements
 	}
 	/* End Events */
 		
-	public static PlaybackListController getPlaylistController() {
+	public static PlaybackController getPlaylistController() {
 		synchronized(syncPlaylistControllerObject) {
 			return mPlaylistController;
 		}
 	}
 	
-	public NowPlayingService() {
+	public PlaybackService() {
 		super();
 		mStreamingMusicService = this;
 	}
@@ -400,7 +399,7 @@ public class NowPlayingService extends Service implements
 								mPlaylistController.release();
 							}
 						
-							mPlaylistController = new PlaybackListController(mStreamingMusicService, mPlaylistString);
+							mPlaylistController = new PlaybackController(mStreamingMusicService, mPlaylistString);
 						
 							mPlaylistController.setIsRepeating(result.isRepeating());
 							mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);
@@ -674,14 +673,14 @@ public class NowPlayingService extends Service implements
 
 
 	@Override
-	public void onPlaylistStateControlError(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onPlaylistStateControlError(PlaybackController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(mStreamingMusicService, NowPlayingService.class);
+		final Intent intent = new Intent(mStreamingMusicService, PlaybackService.class);
 		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
@@ -780,7 +779,7 @@ public class NowPlayingService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStop(PlaybackController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		throwStopEvent(controller, filePlayer);
@@ -794,7 +793,7 @@ public class NowPlayingService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingPause(PlaybackController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
 		stopNotification();
@@ -813,12 +812,12 @@ public class NowPlayingService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingChange(PlaybackController controller, FilePlayer filePlayer) {
 		saveStateToLibrary(controller, filePlayer);		
 		throwChangeEvent(controller, filePlayer);
 	}
 	
-	private void saveStateToLibrary(final PlaybackListController controller, final FilePlayer filePlayer) {
+	private void saveStateToLibrary(final PlaybackController controller, final FilePlayer filePlayer) {
 		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
@@ -834,7 +833,7 @@ public class NowPlayingService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingStart(PlaybackListController controller, FilePlayer filePlayer) {
+	public void onNowPlayingStart(PlaybackController controller, FilePlayer filePlayer) {
 		final File playingFile = filePlayer.getFile();
 		
 		if (!mAreListenersRegistered) registerListeners();
@@ -984,8 +983,8 @@ public class NowPlayingService extends Service implements
 	/* Begin Binder Code */
 	
 	public class StreamingMusicServiceBinder extends Binder {
-        NowPlayingService getService() {
-            return NowPlayingService.this;
+        PlaybackService getService() {
+            return PlaybackService.this;
         }
     }
 

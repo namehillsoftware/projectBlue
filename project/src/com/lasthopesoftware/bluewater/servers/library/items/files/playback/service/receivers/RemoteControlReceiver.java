@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.receivers;
+package com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers;
 
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,26 +16,26 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	    
 	    switch (event.getKeyCode()) {
 	        case KeyEvent.KEYCODE_MEDIA_STOP:
-	            NowPlayingService.pause(context);
+	            PlaybackService.pause(context);
 	            break;
 	        case KeyEvent.KEYCODE_MEDIA_PLAY:
-	        	NowPlayingService.play(context);
+	        	PlaybackService.play(context);
 	        	break;
 	        case KeyEvent.KEYCODE_MEDIA_PAUSE:
-	        	NowPlayingService.pause(context);
+	        	PlaybackService.pause(context);
 	        	break;
 	        case KeyEvent.KEYCODE_HEADSETHOOK:
 	        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-	            if (NowPlayingService.getPlaylistController() != null && NowPlayingService.getPlaylistController().isPlaying())
-	            	NowPlayingService.pause(context);
+	            if (PlaybackService.getPlaylistController() != null && PlaybackService.getPlaylistController().isPlaying())
+	            	PlaybackService.pause(context);
 	            else
-	            	NowPlayingService.play(context);
+	            	PlaybackService.play(context);
 	            break;
 	        case KeyEvent.KEYCODE_MEDIA_NEXT:
-	            NowPlayingService.next(context);
+	            PlaybackService.next(context);
 	            break;
 	        case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-	            NowPlayingService.previous(context);
+	            PlaybackService.previous(context);
 	            break;
 	    }
 	}

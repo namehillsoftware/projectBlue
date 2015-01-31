@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.files.BaseMenuViewHo
 import com.lasthopesoftware.bluewater.servers.library.items.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.list.AbstractFileListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -95,15 +95,15 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 					if (result == null) return;
 					
-					String newFileString = Files.serializeFileStringList(NowPlayingService.getPlaylistController().getPlaylist());					
+					String newFileString = Files.serializeFileStringList(PlaybackService.getPlaylistController().getPlaylist());					
 					result.setSavedTracksString(newFileString);
 					
 					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							if (NowPlayingService.getPlaylistController() != null) 
-								NowPlayingService.getPlaylistController().removeFileAt(mPosition);
+							if (PlaybackService.getPlaylistController() != null) 
+								PlaybackService.getPlaylistController().removeFileAt(mPosition);
 							
 							mAdapter.remove(mAdapter.getItem(mPosition));
 						}

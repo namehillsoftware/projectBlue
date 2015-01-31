@@ -7,7 +7,7 @@ import android.view.View.OnClickListener;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.service.NowPlayingService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 
 public class FilePlayClickListener implements OnClickListener {
 	private List<File> mFiles;
@@ -20,6 +20,6 @@ public class FilePlayClickListener implements OnClickListener {
 	
 	@Override
 	public void onClick(View v) {
-		NowPlayingService.launchMusicService(v.getContext(), mPosition, Files.serializeFileStringList(mFiles));
+		PlaybackService.launchMusicService(v.getContext(), mPosition, Files.serializeFileStringList(mFiles));
 	}
 }
