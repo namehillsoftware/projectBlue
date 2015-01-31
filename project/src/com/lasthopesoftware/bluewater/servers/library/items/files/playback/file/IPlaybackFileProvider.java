@@ -12,6 +12,7 @@ public interface IPlaybackFileProvider{
 	File get(int filePos);
 	File remove(int filePos);
 	IPlaybackFile getPlaybackFile(int filePos);
+	int indexOf(File file);
 	int indexOf(int startingIndex, File file);
 	List<File> getFiles();
 	int size();

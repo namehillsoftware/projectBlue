@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.files.playback.file;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,12 +11,16 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {
 
-	private final List<File> mFiles;
+	private final ArrayList<File> mFiles;
 	private final Context mContext;
 	
 	public PlaybackFileProvider(Context context, List<File> files) {
 		mContext = context;
-		mFiles = files;
+		
+		if (files instanceof ArrayList<?>)
+			mFiles = (ArrayList<File>)files;
+		else
+			mFiles = new ArrayList<File>(files);
 	}
 	
 	@Override
@@ -35,8 +40,11 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	@Override
 	public int indexOf(int startingIndex, File file) {
-		// TODO Auto-generated method stub
-		return 0;
+		for (int i = startingIndex; i < mFiles.size(); i++) {
+			if (mFiles.get(i).equals(file)) return i;
+		}
+		
+		return -1;
 	}
 
 	@Override
@@ -64,5 +72,10 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	public File remove(int filePos) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public int indexOf(File file) {
+		return indexOf(0, file);
 	}
 }
