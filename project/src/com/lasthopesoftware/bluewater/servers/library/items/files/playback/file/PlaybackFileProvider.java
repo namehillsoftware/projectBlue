@@ -59,7 +59,6 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	@Override
 	public boolean add(IFile file) {
-		file.setPreviousFile(mFiles.get(mFiles.size() - 1));
 		final boolean isAdded = mFiles.add(file);
 		mPlaylistString = null;
 		return isAdded;
@@ -69,15 +68,6 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	public IFile remove(int filePos) {
 		final IFile removedFile = mFiles.remove(filePos);
 		mPlaylistString = null;
-		
-		final IFile nextFile = removedFile.getNextFile();
-		final IFile previousFile = removedFile.getPreviousFile();
-		
-		if (previousFile != null)
-			previousFile.setNextFile(nextFile);
-		
-		if (nextFile != null)
-			nextFile.setPreviousFile(previousFile);
 		
 		return removedFile;
 	}

@@ -5,12 +5,13 @@ import java.util.TreeMap;
 
 
 
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.lasthopesoftware.bluewater.data.service.objects.FileUtils;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
+import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
 
 public class PlaylistXmlHandler extends DefaultHandler {
 	
@@ -32,7 +33,7 @@ public class PlaylistXmlHandler extends DefaultHandler {
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		FileUtils.HandleBadXml(valueSb, ch, start, length);
+		XmlParsingHelpers.HandleBadXml(valueSb, ch, start, length);
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {

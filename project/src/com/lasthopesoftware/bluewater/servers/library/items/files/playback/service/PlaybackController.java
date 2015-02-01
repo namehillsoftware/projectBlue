@@ -240,20 +240,12 @@ public class PlaybackController implements
 		if (mCurrentFilePlayer == null) return;
 		
 		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
-		if (mIsRepeating) {
-			lastFile.setNextFile(mPlaybackFileProvider.getPlaybackFile(0).getFile());
-			if (lastFile == mCurrentFilePlayer.getFile()) {
-				if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-				prepareNextFile(0);
-			}
-			return;
-		}
-		
-		if (lastFile.getNextFile() != null) lastFile.setNextFile(null);
-		
+				
 		if (lastFile == mCurrentFilePlayer.getFile()) {
 			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
-			mNextFilePlayer = null;
+			
+			if (mIsRepeating) prepareNextFile(0);
+			else mNextFilePlayer = null;
 		}
 	}
 	

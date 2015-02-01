@@ -7,7 +7,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.FileUtils;
+import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
 
 public class FileXmlHandler extends DefaultHandler {
 	
@@ -30,7 +30,7 @@ public class FileXmlHandler extends DefaultHandler {
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		FileUtils.HandleBadXml(currentSb, ch, start, length);
+		XmlParsingHelpers.HandleBadXml(currentSb, ch, start, length);
 	}
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {

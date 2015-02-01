@@ -157,17 +157,11 @@ public class Files implements IItemFiles {
 		final int offset = Integer.parseInt(keys[0]) + 1;
 		final ArrayList<IFile> files = new ArrayList<IFile>(Integer.parseInt(keys[1]));
 		
-		File prevFile = null;
 		for (int i = offset; i < keyLength; i++) {
 			if (keys[i].equals("-1")) continue;
 			
 			final int intKey = Integer.parseInt(keys[i]);
-			final File newFile = new File(intKey);
-			if (prevFile != null)
-				prevFile.setNextFile(newFile);
-
-			files.add(newFile);
-			prevFile = newFile;
+			files.add(new File(intKey));
 		}
 		
 		return files;
