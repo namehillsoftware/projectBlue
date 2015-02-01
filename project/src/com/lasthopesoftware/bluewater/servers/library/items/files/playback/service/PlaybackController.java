@@ -167,14 +167,19 @@ public class PlaybackController implements
 		
 		mFileKey = playbackFile.getFile().getKey();
 		
-		if (mCurrentFilePos + 1 >= mPlaybackFileProvider.size()) {
+		int nextFileIndex = mCurrentFilePos + 1;
+		if (nextFileIndex >= mPlaybackFileProvider.size()) {
 			if (!mIsRepeating) {
 				if (mNextPlaybackFile != null && mNextPlaybackFile != mCurrentPlaybackFile) mNextPlaybackFile.releaseMediaPlayer();
 				mNextPlaybackFile = null;
+				nextFileIndex = -1;
 			} else {
-				prepareNextFile(0);
+				nextFileIndex = 0;
 			}
 		}
+		
+        if (nextFileIndex > -1)
+        	prepareNextFile(nextFileIndex);
         
         // Throw events after asynchronous calls have started
         throwChangeEvent(mCurrentPlaybackFile);
