@@ -19,12 +19,12 @@ import com.lasthopesoftware.bluewater.servers.library.items.files.playback.liste
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
-public class PlaylistControllerTest extends TestCase {
+public class PlaybackControllerTest extends TestCase {
 
 	private PlaybackController mPlaybackController;
 	private IPlaybackFileProvider mPlaybackFileProvider;
 	
-	public PlaylistControllerTest(String name) {
+	public PlaybackControllerTest(String name) {
 		super(name);
 	}
 
