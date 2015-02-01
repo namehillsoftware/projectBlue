@@ -159,8 +159,7 @@ public class Files implements IItemFiles {
 		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;
 			
-			final int intKey = Integer.parseInt(keys[i]);
-			files.add(new File(intKey));
+			files.add(new File(Integer.parseInt(keys[i])));
 		}
 		
 		return files;
