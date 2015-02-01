@@ -77,7 +77,6 @@ public class FileDetailsActivity extends Activity {
 	@SuppressWarnings("unchecked")
 	private void setView(final int fileKey) {
 		if (fileKey < 0) {
-        	startActivity(new Intent(this, BrowseLibraryActivity.class));
         	finish();
         	return;
         };
@@ -183,6 +182,7 @@ public class FileDetailsActivity extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+				if (mFileImage != null) mFileImage.recycle();
 				mFileImage = result;
 				
 				imgFileThumbnail.setImageBitmap(mFileImage);
