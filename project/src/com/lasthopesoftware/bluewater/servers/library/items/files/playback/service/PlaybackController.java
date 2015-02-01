@@ -278,8 +278,8 @@ public class PlaybackController implements
 		mCurrentFilePlayer.stop();
 		
 		// First try seeking to the next file
-		if (position + 1 < mPlaybackFileProvider.size()) {
-			seekTo(position + 1);
+		if (position < mPlaybackFileProvider.size()) {
+			seekTo(position);
 			return;
 		}
 		// If the next file is greater than the size, seek to the previous file if that's possible

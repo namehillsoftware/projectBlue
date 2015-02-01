@@ -1,17 +1,28 @@
 package com.lasthopesoftware.bluewater.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import android.test.mock.MockContext;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
 public class PlaylistControllerTest extends TestCase {
 
-	private PlaybackController mPlaylistController;
+	private PlaybackController mPlaybackController;
+	private IPlaybackFileProvider mPlaybackFileProvider;
 	
 	public PlaylistControllerTest(String name) {
 		super(name);
@@ -20,8 +31,72 @@ public class PlaylistControllerTest extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		
-		MockContext mockContext = new MockContext();
-		mPlaylistController = new PlaybackController(mockContext, new ArrayList<File>());
+		mPlaybackFileProvider = new IPlaybackFileProvider() {
+			
+			private ArrayList<File> mockFiles = new ArrayList<File>(Arrays.asList(new File[] { new File(1), new File(2), new File(3) })); 
+			
+			@Override
+			public String toPlaylistString() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public int size() {
+				return mockFiles.size();
+			}
+			
+			@Override
+			public File remove(int filePos) {
+				return mockFiles.remove(filePos);
+			}
+			
+			@Override
+			public IPlaybackFile lastPlaybackFile() {
+				return null;
+			}
+			
+			@Override
+			public int indexOf(int startingIndex, File file) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+			
+			@Override
+			public int indexOf(File file) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+			
+			@Override
+			public IPlaybackFile getPlaybackFile(int filePos) {
+				// TODO Auto-generated method stub
+				return new MockFilePlayer();
+			}
+			
+			@Override
+			public List<File> getFiles() {
+				return mockFiles;
+			}
+			
+			@Override
+			public File get(int filePos) {
+				return mockFiles.get(filePos);
+			}
+			
+			@Override
+			public IPlaybackFile firstPlaybackFile() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			@Override
+			public boolean add(File file) {
+				return mockFiles.add(file);
+			}
+		};
+		
+		mPlaybackController = new PlaybackController(mPlaybackFileProvider);
 	}
 
 	protected void tearDown() throws Exception {
@@ -68,20 +143,26 @@ public class PlaylistControllerTest extends TestCase {
 		fail("Not yet implemented"); // TODO
 	}
 
-	public final void testAddFileFile() {
+	public final void testAddFile() {
 		fail("Not yet implemented"); // TODO
 	}
 
-	public final void testRemoveFileAt() {
-		fail("Not yet implemented"); // TODO
+	public final void testRemoveMiddleFile() {
+		final int fileIndex = 1;
+		mPlaybackController.seekTo(fileIndex);
+		mPlaybackController.removeFile(fileIndex);
+		Assert.assertEquals(fileIndex, mPlaybackController.getCurrentPosition());
 	}
-
-	public final void testRemoveFile() {
-		fail("Not yet implemented"); // TODO
+	
+	public final void testRemoveLastFile() {
+		final int lastFileIndex = mPlaybackFileProvider.size() - 1;
+		mPlaybackController.seekTo(lastFileIndex);
+		mPlaybackController.removeFile(lastFileIndex);
+		Assert.assertEquals(lastFileIndex - 1, mPlaybackController.getCurrentPosition());
 	}
 
 	public final void testGetPlaylist() {
-		Class<?> parentClass = null, nextParentClass = mPlaylistController.getPlaylist().getClass();
+		Class<?> parentClass = null, nextParentClass = mPlaybackController.getPlaylist().getClass();
 		
 		while (nextParentClass != null && !nextParentClass.getSimpleName().equals("Object")) {
 			parentClass = nextParentClass;
