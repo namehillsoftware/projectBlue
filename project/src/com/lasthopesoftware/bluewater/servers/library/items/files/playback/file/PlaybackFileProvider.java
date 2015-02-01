@@ -6,7 +6,6 @@ import java.util.List;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 
