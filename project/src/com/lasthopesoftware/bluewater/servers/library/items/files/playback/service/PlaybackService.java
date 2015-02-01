@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
@@ -834,7 +834,7 @@ public class PlaybackService extends Service implements
 
 	@Override
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-		final File playingFile = filePlayer.getFile();
+		final IFile playingFile = filePlayer.getFile();
 		
 		if (!mAreListenersRegistered) registerListeners();
 		registerRemoteClientControl();

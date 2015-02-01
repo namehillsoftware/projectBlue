@@ -21,6 +21,7 @@ import android.support.v4.util.LruCache;
 
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.disk.cache.DiskFileCache;
@@ -38,7 +39,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		return getImage(context, new File(fileKey), onGetBitmapComplete);
 	}
 	
-	public static ImageAccess getImage(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+	public static ImageAccess getImage(final Context context, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		final ImageAccess imageAccessTask = new ImageAccess(context, file, onGetBitmapComplete);
 		imageAccessTask.execute();
 		return imageAccessTask;
@@ -46,7 +47,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 
 	private SimpleTask<Void, Void, Bitmap> mImageAccessTask;
 	
-	private ImageAccess(final Context context, final File file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+	private ImageAccess(final Context context, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		super();
 		
 		mImageAccessTask = new SimpleTask<Void, Void, Bitmap>(new GetFileImageOnExecute(context, file));
@@ -74,9 +75,9 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<String, Byte[]>(MAX_MEMORY_CACHE_SIZE);
 		
 		private final Context mContext;
-		private final File mFile;
+		private final IFile mFile;
 		
-		public GetFileImageOnExecute(final Context context, final File file) {
+		public GetFileImageOnExecute(final Context context, final IFile file) {
 			mContext = context;
 			mFile = file;
 		}

@@ -2,14 +2,14 @@ package com.lasthopesoftware.bluewater.servers.library.items.files.playback.file
 
 import java.io.IOException;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
 
 public interface IPlaybackFile {
-	File getFile();
+	IFile getFile();
 	void initMediaPlayer();
 	boolean isMediaPlayerCreated();
 	boolean isPrepared();

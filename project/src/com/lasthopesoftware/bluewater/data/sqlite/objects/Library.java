@@ -7,8 +7,8 @@ import java.util.List;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
@@ -121,7 +121,7 @@ public class Library {
 		this.savedTracksString = savedTracksString;
 	}
 		
-	public void setSavedTracks(List<File> files) {
+	public void setSavedTracks(List<IFile> files) {
 		savedTracksString = Files.serializeFileStringList(files);
 	}
 	/**

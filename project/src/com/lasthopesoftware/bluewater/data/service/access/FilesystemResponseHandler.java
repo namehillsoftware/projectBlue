@@ -8,9 +8,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.lasthopesoftware.bluewater.data.service.objects.BaseObject;
+import com.lasthopesoftware.bluewater.data.service.objects.AbstractIntKeyStringValue;
 
-public class FilesystemResponseHandler<T extends BaseObject> extends DefaultHandler {
+public class FilesystemResponseHandler<T extends AbstractIntKeyStringValue> extends DefaultHandler {
 	
 	private String currentValue;
 	private String currentKey;

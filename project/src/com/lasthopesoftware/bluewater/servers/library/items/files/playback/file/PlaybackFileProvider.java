@@ -8,19 +8,20 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {
 
-	private final ArrayList<File> mFiles;
+	private final ArrayList<IFile> mFiles;
 	private final Context mContext;
 	
 	private String mPlaylistString = null; 
 	
-	public PlaybackFileProvider(Context context, List<File> files) {
+	public PlaybackFileProvider(Context context, List<IFile> files) {
 		mContext = context;
 		
-		mFiles = files instanceof ArrayList<?> ? (ArrayList<File>)files : new ArrayList<File>(files);
+		mFiles = files instanceof ArrayList<?> ? (ArrayList<IFile>)files : new ArrayList<IFile>(files);
 	}
 	
 	@Override
@@ -29,12 +30,12 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 
 	@Override
-	public int indexOf(File file) {
+	public int indexOf(IFile file) {
 		return indexOf(0, file);
 	}
 	
 	@Override
-	public int indexOf(int startingIndex, File file) {
+	public int indexOf(int startingIndex, IFile file) {
 		for (int i = startingIndex; i < mFiles.size(); i++) {
 			if (mFiles.get(i).equals(file)) return i;
 		}
@@ -43,7 +44,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 
 	@Override
-	public List<File> getFiles() {
+	public List<IFile> getFiles() {
 		return Collections.unmodifiableList(mFiles);
 	}
 
@@ -53,12 +54,12 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 
 	@Override
-	public File get(int filePos) {
+	public IFile get(int filePos) {
 		return mFiles.get(filePos);
 	}
 
 	@Override
-	public boolean add(File file) {
+	public boolean add(IFile file) {
 		file.setPreviousFile(mFiles.get(mFiles.size() - 1));
 		final boolean isAdded = mFiles.add(file);
 		mPlaylistString = null;
@@ -66,12 +67,12 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 
 	@Override
-	public File remove(int filePos) {
-		final File removedFile = mFiles.remove(filePos);
+	public IFile remove(int filePos) {
+		final IFile removedFile = mFiles.remove(filePos);
 		mPlaylistString = null;
 		
-		final File nextFile = removedFile.getNextFile();
-		final File previousFile = removedFile.getPreviousFile();
+		final IFile nextFile = removedFile.getNextFile();
+		final IFile previousFile = removedFile.getPreviousFile();
 		
 		if (previousFile != null)
 			previousFile.setNextFile(nextFile);

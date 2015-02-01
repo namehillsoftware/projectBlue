@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteLi
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class Playlist extends BaseObject implements IItem<Playlist>, IFilesContainer {
+public class Playlist extends AbstractIntKeyStringValue implements IItem<Playlist>, IFilesContainer {
 	private SparseArray<Playlist> mSubItems;
 	private Playlist mParent = null;
 	private String mPath;

@@ -20,7 +20,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 
-public abstract class ItemAsyncBase<T extends IItem<?>> extends BaseObject implements IItem<T>, IItemAsync<T>, Comparable<T> {
+public abstract class ItemAsyncBase<T extends IItem<?>> extends AbstractIntKeyStringValue implements IItem<T>, IItemAsync<T>, Comparable<T> {
 	private final static Logger mLogger = LoggerFactory.getLogger(ItemAsyncBase.class);
 	
 	protected ArrayList<T> mSubItems;

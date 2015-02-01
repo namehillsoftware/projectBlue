@@ -28,6 +28,7 @@ import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
@@ -67,7 +68,7 @@ public class PlaybackFile implements
 	private volatile float mVolume = 1.0f;
 	
 	private final Context mMpContext;
-	private final File mFile;
+	private final IFile mFile;
 	
 	private static final int mBufferMin = 0, mBufferMax = 100;
 	
@@ -81,12 +82,12 @@ public class PlaybackFile implements
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<OnFileBufferedListener>();
 	
-	public PlaybackFile(Context context, File file) {
+	public PlaybackFile(Context context, IFile file) {
 		mMpContext = context;
 		mFile = file;
 	}
 	
-	public File getFile() {
+	public IFile getFile() {
 		return mFile;
 	}
 	
@@ -164,9 +165,11 @@ public class PlaybackFile implements
 	    }
 	    
 	    mLogger.info("Returning file URL from server.");
-	    final String itemUrl = mFile.getSubItemUrl();
-	    if (itemUrl != null && !itemUrl.isEmpty())
-	    	return Uri.parse(itemUrl);
+	    if (mFile instanceof File) {
+		    final String itemUrl = ((File)mFile).getSubItemUrl();
+		    if (itemUrl != null && !itemUrl.isEmpty())
+		    	return Uri.parse(itemUrl);
+	    }
 	    
 	    return null;
 	}
@@ -464,9 +467,9 @@ public class PlaybackFile implements
 	}
 	
 	private static class UpdatePlayStatsOnExecute implements OnExecuteListener<Void, Void, Void> {
-		private final File mFile;
+		private final IFile mFile;
 		
-		public UpdatePlayStatsOnExecute(File file) {
+		public UpdatePlayStatsOnExecute(IFile file) {
 			mFile = file;
 		}
 		

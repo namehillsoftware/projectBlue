@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 
-public class File extends BaseObject {
-	private File mNextFile, mPreviousFile;
+public class File extends AbstractIntKeyStringValue implements IFile {
+	private IFile mNextFile, mPreviousFile;
 	private FileProperties mFileProperties;
 	
 	public File(int key) {
@@ -56,21 +56,21 @@ public class File extends BaseObject {
 		return ConnectionManager.getFormattedUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
 	}
 		
-	public File getNextFile() {
+	public IFile getNextFile() {
 		return mNextFile;
 	}
 	
-	public void setNextFile(final File file) {
+	public void setNextFile(final IFile file) {
 		if (mNextFile == file) return;
 		mNextFile = file;
 		if (file != null) file.setPreviousFile(this);
 	}
 	
-	public File getPreviousFile() {
+	public IFile getPreviousFile() {
 		return mPreviousFile;
 	}
 	
-	public void setPreviousFile(final File file) {
+	public void setPreviousFile(final IFile file) {
 		if (mPreviousFile == file) return;
 		mPreviousFile = file;
 		if (file != null) file.setNextFile(this);

@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
@@ -89,7 +90,7 @@ public class NowPlayingActivity extends Activity implements
 		public String nowPlayingTitle;
 		public Float nowPlayingRating;
 		
-		public ViewStructure(final File file) {
+		public ViewStructure(final IFile file) {
 			this.fileKey = file.getKey();
 		}
 		
@@ -204,15 +205,15 @@ public class NowPlayingActivity extends Activity implements
 				final String savedTracksString = library.getSavedTracksString();
 				if (savedTracksString == null || savedTracksString.isEmpty()) return;
 				
-				final AsyncTask<Void, Void, List<File>> getNowPlayingListTask = new AsyncTask<Void, Void, List<File>>() {
+				final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
 
 					@Override
-					protected List<File> doInBackground(Void... params) {
+					protected List<IFile> doInBackground(Void... params) {
 						return Files.deserializeFileStringList(savedTracksString);
 					}
 					
 					@Override
-					protected void onPostExecute(List<File> result) {
+					protected void onPostExecute(List<IFile> result) {
 						setView(result.get(library.getNowPlayingId()));
 						mSongProgressBar.setProgress(library.getNowPlayingProgress());
 					}
@@ -314,7 +315,7 @@ public class NowPlayingActivity extends Activity implements
 		return mSongProgressBar;
 	}
 	
-	private void setView(final File file) {
+	private void setView(final IFile file) {
 		
 		try {
 			
@@ -456,7 +457,7 @@ public class NowPlayingActivity extends Activity implements
 		}
 	}
 	
-	private boolean handleIoException(File file, Exception exception) {
+	private boolean handleIoException(IFile file, Exception exception) {
 		if (exception != null && exception instanceof IOException) {
 			resetViewOnReconnect(file);
 			return true;
@@ -497,7 +498,7 @@ public class NowPlayingActivity extends Activity implements
 		mHideTimer.schedule(mTimerTask, 5000);
 	}
 	
-	private void resetViewOnReconnect(final File file) {
+	private void resetViewOnReconnect(final IFile file) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 			
 			@Override

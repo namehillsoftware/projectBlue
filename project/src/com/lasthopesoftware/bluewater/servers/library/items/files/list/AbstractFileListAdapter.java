@@ -16,19 +16,20 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
+public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 
-	private final List<File> mFiles;
+	private final List<IFile> mFiles;
 	
 	private static class ViewHolder {
 		public ViewHolder(final CharSequence loadingText, final ViewFlipper viewFlipper, final RelativeLayout textLayout, final TextView textView, final View menuView) {
@@ -50,7 +51,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 		public OnAttachStateChangeListener onAttachStateChangeListener;
 	}
 	
-	public AbstractFileListAdapter(Context context, int resource, List<File> files) {
+	public AbstractFileListAdapter(Context context, int resource, List<IFile> files) {
 		super(context, resource, files);
 		
 		mFiles = files;
@@ -95,7 +96,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
         
 		viewHolder.textView.setText(viewHolder.loadingText);
         
-        final File file = getItem(position);
+        final IFile file = getItem(position);
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
@@ -185,11 +186,11 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
 //		});
 //	}
 	
-	protected abstract boolean getIsFilePlaying(int position, File file, List<File> nowPlayingfiles, File nowPlayingFile);
+	protected abstract boolean getIsFilePlaying(int position, IFile file, List<IFile> nowPlayingfiles, IFile nowPlayingFile);
 	
 	protected abstract View getMenuView(final int position, View convertView, final ViewGroup parent);
 	
-	public final List<File> getFiles() {
+	public final List<IFile> getFiles() {
 		return mFiles;
 	}
 }

@@ -13,8 +13,8 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
@@ -65,10 +65,10 @@ public class SearchFilesActivity extends FragmentActivity {
         
 		final Files filesContainer = new Files("Files/Search", "Query=" + query);
         final SearchFilesActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<File>>() {
+        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
+			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 				
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);

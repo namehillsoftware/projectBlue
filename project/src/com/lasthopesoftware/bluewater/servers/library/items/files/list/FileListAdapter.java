@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.files.BaseMenuViewHolder;
@@ -35,13 +36,13 @@ public class FileListAdapter extends AbstractFileListAdapter {
 		public final ImageButton addButton;
 	}
 	
-	public FileListAdapter(Context context, int resource, List<File> files) {
+	public FileListAdapter(Context context, int resource, List<IFile> files) {
 		super(context, resource, files);
 		
 	}
 		
 	@Override
-	protected final boolean getIsFilePlaying(int position, File file, List<File> nowPlayingFiles, File nowPlayingFile) {
+	protected final boolean getIsFilePlaying(int position, IFile file, List<IFile> nowPlayingFiles, IFile nowPlayingFile) {
 		return nowPlayingFile.getKey() == file.getKey();
 	}
 
@@ -69,7 +70,7 @@ public class FileListAdapter extends AbstractFileListAdapter {
 		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		
-		final File file = getItem(position);
+		final IFile file = getItem(position);
 		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(file));
 		viewHolder.addButton.setOnClickListener(new AddClickListener(file));
 		viewHolder.playButton.setOnClickListener(new FilePlayClickListener(position, getFiles()));
@@ -78,9 +79,9 @@ public class FileListAdapter extends AbstractFileListAdapter {
 	}
 	
 	private static class AddClickListener implements OnClickListener {
-		private File mFile;
+		private IFile mFile;
 		
-		public AddClickListener(File file) {
+		public AddClickListener(IFile file) {
 			mFile = file;
 		}
 		

@@ -11,8 +11,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.files.BaseMenuViewHolder;
@@ -36,13 +35,13 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 		public final ImageButton removeButton;
 	}
 	
-	public NowPlayingFileListAdapter(Context context, int resource, List<File> files) {
+	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files) {
 		super(context, resource, files);
 		
 	}
 
 	@Override
-	protected boolean getIsFilePlaying(int position, File file, List<File> nowPlayingFiles, File nowPlayingFile) {
+	protected boolean getIsFilePlaying(int position, IFile file, List<IFile> nowPlayingFiles, IFile nowPlayingFile) {
 		return position == nowPlayingFiles.indexOf(nowPlayingFile);
 	}
 
@@ -70,7 +69,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		
-		final File file = getItem(position);
+		final IFile file = getItem(position);
 		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(file));
 		viewHolder.removeButton.setOnClickListener(new RemoveClickListener(position, this));
 		viewHolder.playButton.setOnClickListener(new FilePlayClickListener(position, getFiles()));
@@ -95,7 +94,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 					if (result == null) return;
 					
-					String newFileString = Files.serializeFileStringList(PlaybackService.getPlaylistController().getPlaylist());					
+					String newFileString = PlaybackService.getPlaylistController().getPlaylistString();					
 					result.setSavedTracksString(newFileString);
 					
 					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {

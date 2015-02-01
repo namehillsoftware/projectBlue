@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
@@ -91,18 +92,18 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 			if (result == null) return;
 			final Library library = result;
-	        final SimpleTask<Void, Void, ArrayList<File>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<File>>(new OnExecuteListener<Void, Void, ArrayList<File>>() {
+	        final SimpleTask<Void, Void, ArrayList<IFile>> getFileStringTask = new SimpleTask<Void, Void, ArrayList<IFile>>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
 				
 				@Override
-				public ArrayList<File> onExecute(ISimpleTask<Void, Void, ArrayList<File>> owner, Void... params) throws Exception {
+				public ArrayList<IFile> onExecute(ISimpleTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
 					return Files.deserializeFileStringList(library.getSavedTracksString());
 				}
 			});
 	        
-	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<File>>() {
+	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<IFile>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, ArrayList<File>> owner, final ArrayList<File> result) {
+				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
 					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mContext, R.id.tvStandard, result);
 			        mFileListView.setAdapter(fileListAdapter);
 			        mFileListView.setOnItemClickListener(new OnItemClickListener() {

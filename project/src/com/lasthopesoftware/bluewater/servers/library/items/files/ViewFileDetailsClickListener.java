@@ -1,17 +1,17 @@
 package com.lasthopesoftware.bluewater.servers.library.items.files;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.details.FileDetailsActivity;
-
 import android.content.Intent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.files.details.FileDetailsActivity;
+
 public class ViewFileDetailsClickListener implements OnClickListener {
 
-	private File mFile;
+	private IFile mFile;
 	
-	public ViewFileDetailsClickListener(File file) {
+	public ViewFileDetailsClickListener(IFile file) {
 		mFile = file;
 	}
 	

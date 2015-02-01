@@ -11,6 +11,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.PlaybackFile;
@@ -49,10 +50,10 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
 	public PlaybackController(final Context context, final String playlistString) {
-		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<File>());
+		this(context, playlistString != null ? Files.deserializeFileStringList(playlistString) : new ArrayList<IFile>());
 	}
 	
-	public PlaybackController(final Context context, final ArrayList<File> playlist) {
+	public PlaybackController(final Context context, final ArrayList<IFile> playlist) {
 		this(new PlaybackFileProvider(context, playlist));
 	}
 	
@@ -238,7 +239,7 @@ public class PlaybackController implements
 		
 		if (mCurrentFilePlayer == null) return;
 		
-		final File lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
+		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
 		if (mIsRepeating) {
 			lastFile.setNextFile(mPlaybackFileProvider.getPlaybackFile(0).getFile());
 			if (lastFile == mCurrentFilePlayer.getFile()) {
@@ -266,7 +267,7 @@ public class PlaybackController implements
 		addFile(new File(fileKey));
 	}
 	
-	public void addFile(final File file) {
+	public void addFile(final IFile file) {
 		mPlaybackFileProvider.add(file);
 	}
 	
@@ -291,7 +292,7 @@ public class PlaybackController implements
 		return mCurrentFilePlayer;
 	}
 	
-	public List<File> getPlaylist() {
+	public List<IFile> getPlaylist() {
 		return mPlaybackFileProvider.getFiles();
 	}
 	

@@ -1,20 +1,20 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-public abstract class BaseObject {
+public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	private int mKey;
 	private String mValue;
 	
-	public BaseObject(int key, String value) {
+	public AbstractIntKeyStringValue(int key, String value) {
 		this.setKey(key);
 		this.setValue(value);
 	}
 	
-	public BaseObject(String value) {
+	public AbstractIntKeyStringValue(String value) {
 		this.setKey(-1);
 		this.setValue(value);
 	}
 	
-	public BaseObject() {
+	public AbstractIntKeyStringValue() {
 	}
 	
 	/**

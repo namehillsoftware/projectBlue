@@ -12,8 +12,8 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
@@ -58,10 +58,10 @@ public class FileListActivity extends FragmentActivity {
         this.setTitle(this.getIntent().getStringExtra(VALUE));
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final FileListActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<File>>() {
+        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
+			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 				
 				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);

@@ -8,6 +8,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
@@ -27,7 +28,7 @@ public class PlaybackControllerTest extends TestCase {
 		
 		mPlaybackFileProvider = new IPlaybackFileProvider() {
 			
-			private ArrayList<File> mockFiles = new ArrayList<File>(Arrays.asList(new File[] { new File(1), new File(2), new File(3) })); 
+			private ArrayList<IFile> mockFiles = new ArrayList<IFile>(Arrays.asList(new IFile[] { new File(1), new File(2), new File(3) })); 
 			
 			@Override
 			public String toPlaylistString() {
@@ -41,18 +42,18 @@ public class PlaybackControllerTest extends TestCase {
 			}
 			
 			@Override
-			public File remove(int filePos) {
+			public IFile remove(int filePos) {
 				return mockFiles.remove(filePos);
 			}
 						
 			@Override
-			public int indexOf(int startingIndex, File file) {
+			public int indexOf(int startingIndex, IFile file) {
 				// TODO Auto-generated method stub
 				return 0;
 			}
 			
 			@Override
-			public int indexOf(File file) {
+			public int indexOf(IFile file) {
 				// TODO Auto-generated method stub
 				return mockFiles.indexOf(file);
 			}
@@ -64,17 +65,17 @@ public class PlaybackControllerTest extends TestCase {
 			}
 			
 			@Override
-			public List<File> getFiles() {
+			public List<IFile> getFiles() {
 				return mockFiles;
 			}
 			
 			@Override
-			public File get(int filePos) {
+			public IFile get(int filePos) {
 				return mockFiles.get(filePos);
 			}
 						
 			@Override
-			public boolean add(File file) {
+			public boolean add(IFile file) {
 				return mockFiles.add(file);
 			}
 		};

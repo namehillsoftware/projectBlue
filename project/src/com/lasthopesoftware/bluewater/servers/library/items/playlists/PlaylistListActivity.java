@@ -14,10 +14,10 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
@@ -107,10 +107,10 @@ public class PlaylistListActivity extends FragmentActivity {
         	playlistView.setVisibility(View.INVISIBLE);
         	pbLoading.setVisibility(View.VISIBLE);
         	Files filesContainer = (Files)mPlaylist.getFiles();
-        	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<File>>() {
+        	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<IFile>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, List<File>> owner, List<File> result) {
+				public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 					playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
 		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getFiles()));
 		        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
