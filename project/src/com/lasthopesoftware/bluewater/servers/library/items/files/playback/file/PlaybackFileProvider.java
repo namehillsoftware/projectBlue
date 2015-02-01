@@ -24,7 +24,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 	
 	@Override
-	public IPlaybackFile getPlaybackFile(int filePos) {
+	public IPlaybackFile getNewPlaybackFile(int filePos) {
 		return new PlaybackFile(mContext, get(filePos));
 	}
 

@@ -59,7 +59,7 @@ public class PlaybackControllerTest extends TestCase {
 			}
 			
 			@Override
-			public IPlaybackFile getPlaybackFile(int filePos) {
+			public IPlaybackFile getNewPlaybackFile(int filePos) {
 				// TODO Auto-generated method stub
 				return new MockFilePlayer();
 			}
