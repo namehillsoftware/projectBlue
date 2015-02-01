@@ -122,10 +122,6 @@ public class PlaybackControllerTest extends TestCase {
 		fail("Not yet implemented"); // TODO
 	}
 
-	public final void testAddFileInt() {
-		fail("Not yet implemented"); // TODO
-	}
-
 	public final void testAddFile() {
 		final File testFile = new File(5);
 		final int originalSize = mPlaybackFileProvider.size();
