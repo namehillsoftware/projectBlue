@@ -127,7 +127,12 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testAddFile() {
-		fail("Not yet implemented"); // TODO
+		final File testFile = new File(5);
+		final int originalSize = mPlaybackFileProvider.size();
+		mPlaybackController.addFile(testFile);
+		
+		Assert.assertEquals(originalSize + 1, mPlaybackFileProvider.size());
+		Assert.assertEquals(testFile, mPlaybackFileProvider.get(originalSize));
 	}
 
 	public final void testRemoveMiddleFile() {
