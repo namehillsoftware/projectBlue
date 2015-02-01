@@ -95,7 +95,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 				
 				@Override
 				public ArrayList<IFile> onExecute(ISimpleTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
-					return Files.deserializeFileStringList(library.getSavedTracksString());
+					return Files.parseFileStringList(library.getSavedTracksString());
 				}
 			});
 	        

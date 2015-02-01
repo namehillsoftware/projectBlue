@@ -34,7 +34,7 @@ public class Files implements IItemFiles {
 		public List<IFile> onConnect(InputStream is) {
 			ArrayList<IFile> files = new ArrayList<IFile>();
 			try {
-				files = deserializeFileStringList(IOUtils.toString(is));				
+				files = parseFileStringList(IOUtils.toString(is));				
 			} catch (IOException e) {
 				mLogger.error(e.toString(), e);
 			}
@@ -150,14 +150,13 @@ public class Files implements IItemFiles {
 		return fileTask;
 	}
 
-	public static final ArrayList<IFile> deserializeFileStringList(String fileList) {
+	public static final ArrayList<IFile> parseFileStringList(String fileList) {
 		final String[] keys = fileList.split(";");
-		final int keyLength = keys.length;
 		
 		final int offset = Integer.parseInt(keys[0]) + 1;
 		final ArrayList<IFile> files = new ArrayList<IFile>(Integer.parseInt(keys[1]));
 		
-		for (int i = offset; i < keyLength; i++) {
+		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;
 			
 			final int intKey = Integer.parseInt(keys[i]);

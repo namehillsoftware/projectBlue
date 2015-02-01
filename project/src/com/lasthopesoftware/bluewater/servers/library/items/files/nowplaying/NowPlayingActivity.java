@@ -208,7 +208,7 @@ public class NowPlayingActivity extends Activity implements
 
 					@Override
 					protected List<IFile> doInBackground(Void... params) {
-						return Files.deserializeFileStringList(savedTracksString);
+						return Files.parseFileStringList(savedTracksString);
 					}
 					
 					@Override
