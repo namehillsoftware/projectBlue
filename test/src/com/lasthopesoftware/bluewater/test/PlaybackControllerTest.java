@@ -54,7 +54,7 @@ public class PlaybackControllerTest extends TestCase {
 			@Override
 			public int indexOf(File file) {
 				// TODO Auto-generated method stub
-				return 0;
+				return mockFiles.indexOf(file);
 			}
 			
 			@Override
