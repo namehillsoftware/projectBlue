@@ -41,7 +41,7 @@ public class PlaybackController implements
 	private final IPlaybackFileProvider mPlaybackFileProvider;
 	private int mFileKey = -1;
 	private int mCurrentFilePos;
-	private IPlaybackFile mCurrentFilePlayer, mNextFilePlayer;
+	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
 	
 	private float mVolume = 1.0f;
 	private boolean mIsRepeating = false;
@@ -81,20 +81,20 @@ public class PlaybackController implements
 	public void seekTo(int filePos, int fileProgress) throws IndexOutOfBoundsException {
 		boolean wasPlaying = false;
 		
-		if (mCurrentFilePlayer != null) {
+		if (mCurrentPlaybackFile != null) {
 			
-			if (mCurrentFilePlayer.isPlaying()) {
+			if (mCurrentPlaybackFile.isPlaying()) {
 				
 				// If the seek-to index is the same as that of the file playing, keep on playing
 				if (filePos == mCurrentFilePos) return;
 			
 				// stop any playback that is in action
 				wasPlaying = true;
-				mCurrentFilePlayer.stop();
+				mCurrentPlaybackFile.stop();
 			}
 			
-			mCurrentFilePlayer.releaseMediaPlayer();
-			mCurrentFilePlayer = null;
+			mCurrentPlaybackFile.releaseMediaPlayer();
+			mCurrentPlaybackFile = null;
 		}
 		
 		if (filePos < 0) filePos = 0;
@@ -109,9 +109,9 @@ public class PlaybackController implements
 		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
 		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
-		mCurrentFilePlayer = filePlayer;
-		if (wasPlaying) mCurrentFilePlayer.prepareMediaPlayer();
-		throwChangeEvent(mCurrentFilePlayer);
+		mCurrentPlaybackFile = filePlayer;
+		if (wasPlaying) mCurrentPlaybackFile.prepareMediaPlayer();
+		throwChangeEvent(mCurrentPlaybackFile);
 	}
 	
 	/**
@@ -129,100 +129,95 @@ public class PlaybackController implements
 	 */
 	public void startAt(int filePos, int fileProgress) {
 		seekTo(filePos, fileProgress);
-		if (mCurrentFilePlayer == null || mCurrentFilePlayer.isPlaying()) return;
-		if (!mCurrentFilePlayer.isPrepared()) mCurrentFilePlayer.prepareMediaPlayer(); // prepare async to not block main thread
-		else startFilePlayback(mCurrentFilePlayer);
+		if (mCurrentPlaybackFile == null || mCurrentPlaybackFile.isPlaying()) return;
+		if (!mCurrentPlaybackFile.isPrepared()) mCurrentPlaybackFile.prepareMediaPlayer(); // prepare async to not block main thread
+		else startFilePlayback(mCurrentPlaybackFile);
 	}
 	
 	public boolean resume() {
-		if (mCurrentFilePlayer == null) {
+		if (mCurrentPlaybackFile == null) {
 			if (mFileKey == -1) return false;
 			
 			startAt(mFileKey);
 			return true;
 		}
 		
-		if (!mCurrentFilePlayer.isMediaPlayerCreated()) {
-			mCurrentFilePlayer.addOnFileCompleteListener(this);
-			mCurrentFilePlayer.addOnFilePreparedListener(this);
-			mCurrentFilePlayer.addOnFileErrorListener(this);
+		if (!mCurrentPlaybackFile.isMediaPlayerCreated()) {
+			mCurrentPlaybackFile.addOnFileCompleteListener(this);
+			mCurrentPlaybackFile.addOnFilePreparedListener(this);
+			mCurrentPlaybackFile.addOnFileErrorListener(this);
 			
-			mCurrentFilePlayer.initMediaPlayer();
+			mCurrentPlaybackFile.initMediaPlayer();
 		}
 		
-		if (!mCurrentFilePlayer.isPrepared()) {
-			mCurrentFilePlayer.prepareMediaPlayer();
+		if (!mCurrentPlaybackFile.isPrepared()) {
+			mCurrentPlaybackFile.prepareMediaPlayer();
 			return true;
 		}
 		
-		startFilePlayback(mCurrentFilePlayer);
+		startFilePlayback(mCurrentPlaybackFile);
 		return true;
 	}
 
 	private void startFilePlayback(IPlaybackFile playbackFile) {
 		mIsPlaying = true;
-		mCurrentFilePlayer = playbackFile;
+		mCurrentPlaybackFile = playbackFile;
 		playbackFile.setVolume(mVolume);
 		playbackFile.start();
 		
 		mFileKey = playbackFile.getFile().getKey();
 		
-		int nextFileIndex = mCurrentFilePos + 1;
-		if (nextFileIndex >= mPlaybackFileProvider.size()) {
+		if (mCurrentFilePos + 1 >= mPlaybackFileProvider.size()) {
 			if (!mIsRepeating) {
-				if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer) mNextFilePlayer.releaseMediaPlayer();
-				mNextFilePlayer = null;
-				nextFileIndex = -1;
+				if (mNextPlaybackFile != null && mNextPlaybackFile != mCurrentPlaybackFile) mNextPlaybackFile.releaseMediaPlayer();
+				mNextPlaybackFile = null;
 			} else {
-				nextFileIndex = 0;
+				prepareNextFile(0);
 			}
 		}
-		
-        if (nextFileIndex > -1)
-        	prepareNextFile(nextFileIndex);
         
         // Throw events after asynchronous calls have started
-        throwChangeEvent(mCurrentFilePlayer);
+        throwChangeEvent(mCurrentPlaybackFile);
         for (OnNowPlayingStartListener listener : mOnNowPlayingStartListeners)
-        	listener.onNowPlayingStart(this, mCurrentFilePlayer);
+        	listener.onNowPlayingStart(this, mCurrentPlaybackFile);
 	}
 	
 	private void prepareNextFile(final int filePos) {		
-		if (mCurrentFilePlayer == null) return;
+		if (mCurrentPlaybackFile == null) return;
 		
-		if (mNextFilePlayer == null || mNextFilePlayer.getFile() != mPlaybackFileProvider.getNewPlaybackFile(filePos).getFile()) {
-			if (mNextFilePlayer != null && mNextFilePlayer != mCurrentFilePlayer)
-				mNextFilePlayer.releaseMediaPlayer();
+		if (mNextPlaybackFile == null || mNextPlaybackFile.getFile() != mPlaybackFileProvider.getNewPlaybackFile(filePos).getFile()) {
+			if (mNextPlaybackFile != null && mNextPlaybackFile != mCurrentPlaybackFile)
+				mNextPlaybackFile.releaseMediaPlayer();
 			
-			mNextFilePlayer = mPlaybackFileProvider.getNewPlaybackFile(filePos);
+			mNextPlaybackFile = mPlaybackFileProvider.getNewPlaybackFile(filePos);
 		}
 				
-		if (mNextFilePlayer.isPrepared()) return;
+		if (mNextPlaybackFile.isPrepared()) return;
 		
-		if (mCurrentFilePlayer.isBuffered())
-			onFileBuffered(mCurrentFilePlayer);
+		if (mCurrentPlaybackFile.isBuffered())
+			onFileBuffered(mCurrentPlaybackFile);
 		else
-			mCurrentFilePlayer.addOnFileBufferedListener(this);
+			mCurrentPlaybackFile.addOnFileBufferedListener(this);
 	}
 
 	@Override
 	public void onFileBuffered(IPlaybackFile filePlayer) {
-		mNextFilePlayer.initMediaPlayer();
-		mNextFilePlayer.prepareMediaPlayer();
+		mNextPlaybackFile.initMediaPlayer();
+		mNextPlaybackFile.prepareMediaPlayer();
 	}
 	
 	public void pause() {
 		mIsPlaying = false;
 
-		if (mCurrentFilePlayer == null) return;
+		if (mCurrentPlaybackFile == null) return;
 		
-		if (mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.pause();
+		if (mCurrentPlaybackFile.isPlaying()) mCurrentPlaybackFile.pause();
 		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
-			onPauseListener.onNowPlayingPause(this, mCurrentFilePlayer);
+			onPauseListener.onNowPlayingPause(this, mCurrentPlaybackFile);
 	}
 	
 	public boolean isPrepared() {
-		return mCurrentFilePlayer != null && mCurrentFilePlayer.isPrepared();
+		return mCurrentPlaybackFile != null && mCurrentPlaybackFile.isPrepared();
 	}
 	
 	public boolean isPlaying() {
@@ -231,21 +226,21 @@ public class PlaybackController implements
 	
 	public void setVolume(float volume) {
 		mVolume = volume;
-		if (mCurrentFilePlayer != null && mCurrentFilePlayer.isPlaying()) mCurrentFilePlayer.setVolume(mVolume);
+		if (mCurrentPlaybackFile != null && mCurrentPlaybackFile.isPlaying()) mCurrentPlaybackFile.setVolume(mVolume);
 	}
 	
 	public void setIsRepeating(boolean isRepeating) {
 		mIsRepeating = isRepeating;
 		
-		if (mCurrentFilePlayer == null) return;
+		if (mCurrentPlaybackFile == null) return;
 		
 		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
 				
-		if (lastFile == mCurrentFilePlayer.getFile()) {
-			if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+		if (lastFile == mCurrentPlaybackFile.getFile()) {
+			if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
 			
 			if (mIsRepeating) prepareNextFile(0);
-			else mNextFilePlayer = null;
+			else mNextPlaybackFile = null;
 		}
 	}
 	
@@ -268,7 +263,7 @@ public class PlaybackController implements
 		
 		if (position != mCurrentFilePos) return;
 		
-		mCurrentFilePlayer.stop();
+		mCurrentPlaybackFile.stop();
 		
 		// First try seeking to the next file
 		if (position < mPlaybackFileProvider.size()) {
@@ -280,8 +275,8 @@ public class PlaybackController implements
 			seekTo(position - 1);
 	}
 	
-	public IPlaybackFile getCurrentFilePlayer() {
-		return mCurrentFilePlayer;
+	public IPlaybackFile getCurrentPlaybackFile() {
+		return mCurrentPlaybackFile;
 	}
 	
 	public List<IFile> getPlaylist() {
@@ -313,7 +308,7 @@ public class PlaybackController implements
 		// the current file position (such as in the not repeat scenario below)
 		final int nextFilePos = !isLastFile ? mCurrentFilePos + 1 : 0;
 		
-		if (mNextFilePlayer == null) {
+		if (mNextPlaybackFile == null) {
 			// Playlist is complete, throw stop event and get out
 			if (!mIsRepeating && isLastFile) {
 				mIsPlaying = false;
@@ -321,26 +316,26 @@ public class PlaybackController implements
 				return;
 			}
 			
-			mNextFilePlayer = mPlaybackFileProvider.getNewPlaybackFile(nextFilePos);
+			mNextPlaybackFile = mPlaybackFileProvider.getNewPlaybackFile(nextFilePos);
 		}
 		
 		// Move the pointer early so that getting the currently playing file is correctly
 		// returned
 		mCurrentFilePos = nextFilePos;
-		mCurrentFilePlayer = mNextFilePlayer;
-		mCurrentFilePlayer.addOnFileCompleteListener(this);
-		mCurrentFilePlayer.addOnFileErrorListener(this);
-		if (!mCurrentFilePlayer.isPrepared()) {
-			mLogger.warn("File " + mCurrentFilePlayer.getFile().getValue() + " was not prepared. Preparing now.");
-			if (!mCurrentFilePlayer.isMediaPlayerCreated())
-				mCurrentFilePlayer.initMediaPlayer();
+		mCurrentPlaybackFile = mNextPlaybackFile;
+		mCurrentPlaybackFile.addOnFileCompleteListener(this);
+		mCurrentPlaybackFile.addOnFileErrorListener(this);
+		if (!mCurrentPlaybackFile.isPrepared()) {
+			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getValue() + " was not prepared. Preparing now.");
+			if (!mCurrentPlaybackFile.isMediaPlayerCreated())
+				mCurrentPlaybackFile.initMediaPlayer();
 			
-			mCurrentFilePlayer.addOnFilePreparedListener(this);
-			mCurrentFilePlayer.prepareMediaPlayer();
+			mCurrentPlaybackFile.addOnFilePreparedListener(this);
+			mCurrentPlaybackFile.prepareMediaPlayer();
 			return;
 		}
 		
-		startFilePlayback(mCurrentFilePlayer);
+		startFilePlayback(mCurrentPlaybackFile);
 	}
 	
 	@Override
@@ -348,8 +343,8 @@ public class PlaybackController implements
 		mLogger.error("JR File error - " + what + " - " + extra);
 		
 		// We don't know what happened, release the next file player too
-		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(extra) && mNextFilePlayer != null && mediaPlayer != mNextFilePlayer)
-			mNextFilePlayer.releaseMediaPlayer();
+		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(extra) && mNextPlaybackFile != null && mediaPlayer != mNextPlaybackFile)
+			mNextPlaybackFile.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
 			listener.onPlaylistStateControlError(this, mediaPlayer);
@@ -416,7 +411,7 @@ public class PlaybackController implements
 	// Release all heavy resources
 	public void release() {
 		mIsPlaying = false;
-		if (mCurrentFilePlayer != null) mCurrentFilePlayer.releaseMediaPlayer();
-		if (mNextFilePlayer != null) mNextFilePlayer.releaseMediaPlayer();
+		if (mCurrentPlaybackFile != null) mCurrentPlaybackFile.releaseMediaPlayer();
+		if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
 	}
 }

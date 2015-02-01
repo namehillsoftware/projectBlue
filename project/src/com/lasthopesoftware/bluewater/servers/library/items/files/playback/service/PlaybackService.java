@@ -954,8 +954,8 @@ public class PlaybackService extends Service implements
 		stopNotification();
 		
 		if (mPlaylistController != null) {
-			if (mPlaylistController.getCurrentFilePlayer() != null)
-				saveStateToLibrary(mPlaylistController, mPlaylistController.getCurrentFilePlayer());
+			if (mPlaylistController.getCurrentPlaybackFile() != null)
+				saveStateToLibrary(mPlaylistController, mPlaylistController.getCurrentPlaybackFile());
 
 			mPlaylistController.release();
 			mPlaylistController = null;

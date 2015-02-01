@@ -184,7 +184,7 @@ public class NowPlayingActivity extends Activity implements
 		
 		// Get initial view state from playlist controller if it is active
 		if (PlaybackService.getPlaylistController() != null) {
-			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentFilePlayer();
+			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
 			
 			setView(filePlayer.getFile());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
@@ -473,7 +473,7 @@ public class NowPlayingActivity extends Activity implements
 	
 	private void showNowPlayingControls() {
 		final PlaybackController playlistController = PlaybackService.getPlaylistController();
-		showNowPlayingControls(playlistController != null ? playlistController.getCurrentFilePlayer() : null);
+		showNowPlayingControls(playlistController != null ? playlistController.getCurrentPlaybackFile() : null);
 	}
 	
 	private void showNowPlayingControls(final IPlaybackFile filePlayer) {

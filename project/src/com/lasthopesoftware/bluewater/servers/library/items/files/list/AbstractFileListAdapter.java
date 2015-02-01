@@ -100,8 +100,8 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
         		
 		final PlaybackController playlistController = PlaybackService.getPlaylistController();
-        if (playlistController != null && playlistController.getCurrentFilePlayer() != null)
-        	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentFilePlayer().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
+        if (playlistController != null && playlistController.getCurrentPlaybackFile() != null)
+        	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentPlaybackFile().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
 //        else
 //        	getLibraryNowPlayingFiles(position, file, viewHolder.textView);
         
