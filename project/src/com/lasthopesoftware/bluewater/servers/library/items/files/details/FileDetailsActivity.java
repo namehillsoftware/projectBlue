@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -30,7 +29,6 @@ import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
