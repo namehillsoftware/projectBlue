@@ -168,8 +168,10 @@ public class Files implements IItemFiles {
 	}
 	
 	public static final String serializeFileStringList(List<IFile> files) {
-		final StringBuilder sb = new StringBuilder("2;");
-		sb.append(files.size()).append(";-1;");
+		final int fileSize = files.size();
+		// Take a guess that most keys will not be greater than 5 characters
+		final StringBuilder sb = new StringBuilder(fileSize * 6 + 8);
+		sb.append("2;").append(fileSize).append(";-1;");
 		
 		for (IFile file : files)
 			sb.append(file.getKey()).append(";");
