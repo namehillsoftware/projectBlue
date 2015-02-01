@@ -44,12 +44,12 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingPauseListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;

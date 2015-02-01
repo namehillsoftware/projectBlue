@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.files.playback.file
 import java.io.IOException;
 
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFilePreparedListener;
 
 public interface IPlaybackFile {
 	IFile getFile();

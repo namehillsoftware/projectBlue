@@ -48,11 +48,11 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingChangeListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingPauseListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
