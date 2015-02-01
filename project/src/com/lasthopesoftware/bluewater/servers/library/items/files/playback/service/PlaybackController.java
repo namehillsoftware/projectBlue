@@ -238,7 +238,7 @@ public class PlaybackController implements
 		
 		if (mCurrentFilePlayer == null) return;
 		
-		final File lastFile = mPlaybackFileProvider.lastPlaybackFile().getFile();
+		final File lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
 		if (mIsRepeating) {
 			lastFile.setNextFile(mPlaybackFileProvider.getPlaybackFile(0).getFile());
 			if (lastFile == mCurrentFilePlayer.getFile()) {

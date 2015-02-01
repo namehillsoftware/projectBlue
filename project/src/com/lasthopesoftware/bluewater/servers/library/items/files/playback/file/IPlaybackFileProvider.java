@@ -6,8 +6,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.File;
 
 
 public interface IPlaybackFileProvider{
-	IPlaybackFile firstPlaybackFile();
-	IPlaybackFile lastPlaybackFile();
 	boolean add(File file);
 	File get(int filePos);
 	File remove(int filePos);

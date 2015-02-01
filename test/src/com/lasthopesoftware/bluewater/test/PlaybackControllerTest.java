@@ -1,21 +1,15 @@
 package com.lasthopesoftware.bluewater.test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import android.test.mock.MockContext;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
@@ -50,12 +44,7 @@ public class PlaybackControllerTest extends TestCase {
 			public File remove(int filePos) {
 				return mockFiles.remove(filePos);
 			}
-			
-			@Override
-			public IPlaybackFile lastPlaybackFile() {
-				return null;
-			}
-			
+						
 			@Override
 			public int indexOf(int startingIndex, File file) {
 				// TODO Auto-generated method stub
@@ -83,13 +72,7 @@ public class PlaybackControllerTest extends TestCase {
 			public File get(int filePos) {
 				return mockFiles.get(filePos);
 			}
-			
-			@Override
-			public IPlaybackFile firstPlaybackFile() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-			
+						
 			@Override
 			public boolean add(File file) {
 				return mockFiles.add(file);

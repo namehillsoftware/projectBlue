@@ -29,16 +29,6 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	}
 
 	@Override
-	public IPlaybackFile firstPlaybackFile() {
-		return getPlaybackFile(0);
-	}
-
-	@Override
-	public IPlaybackFile lastPlaybackFile() {
-		return getPlaybackFile(mFiles.size() - 1);
-	}
-
-	@Override
 	public int indexOf(File file) {
 		return indexOf(0, file);
 	}
