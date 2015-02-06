@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -285,7 +286,7 @@ public class PlaybackController implements
 	}
 	
 	public List<IFile> getPlaylist() {
-		return mPlaybackFileProvider.getFiles();
+		return Collections.unmodifiableList(mPlaybackFileProvider.getFiles());
 	}
 	
 	public String getPlaylistString() {

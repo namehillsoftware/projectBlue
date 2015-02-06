@@ -92,7 +92,7 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	protected void tearDown() throws Exception {
-		super.tearDown();
+		mPlaybackController.release();
 	}
 
 	public final void testSeekToInt() {
