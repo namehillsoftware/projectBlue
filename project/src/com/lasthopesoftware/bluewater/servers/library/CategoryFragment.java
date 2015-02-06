@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemMenu;
-import com.lasthopesoftware.bluewater.servers.library.items.files.list.FileListActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;

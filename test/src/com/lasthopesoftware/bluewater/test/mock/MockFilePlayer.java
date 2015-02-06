@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.test.mock;
 import java.io.IOException;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
 public class MockFilePlayer implements IPlaybackFile {
 

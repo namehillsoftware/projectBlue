@@ -9,9 +9,9 @@ import junit.framework.TestCase;
 
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.file.IPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
 public class PlaybackControllerTest extends TestCase {
