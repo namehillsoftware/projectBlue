@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ public class PlaybackControllerTest extends TestCase {
 
 	private PlaybackController mPlaybackController;
 	private IPlaybackFileProvider mPlaybackFileProvider;
+	private ArrayList<IFile> mMockFiles; 
 	
 	public PlaybackControllerTest(String name) {
 		super(name);
@@ -26,9 +28,15 @@ public class PlaybackControllerTest extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		
+		mMockFiles = new ArrayList<IFile>(
+							Arrays.asList(
+								new IFile[] { 
+										new MockFile(1), 
+										new MockFile(2), 
+										new MockFile(3) 
+							})); 
+		
 		mPlaybackFileProvider = new IPlaybackFileProvider() {
-			
-			private ArrayList<IFile> mockFiles = new ArrayList<IFile>(Arrays.asList(new IFile[] { new File(1), new File(2), new File(3) })); 
 			
 			@Override
 			public String toPlaylistString() {
@@ -38,45 +46,45 @@ public class PlaybackControllerTest extends TestCase {
 			
 			@Override
 			public int size() {
-				return mockFiles.size();
+				return mMockFiles.size();
 			}
 			
 			@Override
 			public IFile remove(int filePos) {
-				return mockFiles.remove(filePos);
+				return mMockFiles.remove(filePos);
 			}
 						
 			@Override
 			public int indexOf(int startingIndex, IFile file) {
-				// TODO Auto-generated method stub
-				return 0;
+				for (int i = startingIndex; i < mMockFiles.size(); i++)
+					if (mMockFiles.get(i).equals(file)) return i;
+				
+				return -1;
 			}
 			
 			@Override
 			public int indexOf(IFile file) {
-				// TODO Auto-generated method stub
-				return mockFiles.indexOf(file);
+				return mMockFiles.indexOf(file);
 			}
 			
 			@Override
 			public IPlaybackFile getNewPlaybackFile(int filePos) {
-				// TODO Auto-generated method stub
-				return new MockFilePlayer();
+				return new MockFilePlayer(mMockFiles.get(filePos));
 			}
 			
 			@Override
 			public List<IFile> getFiles() {
-				return mockFiles;
+				return mMockFiles;
 			}
 			
 			@Override
 			public IFile get(int filePos) {
-				return mockFiles.get(filePos);
+				return mMockFiles.get(filePos);
 			}
 						
 			@Override
 			public boolean add(IFile file) {
-				return mockFiles.add(file);
+				return mMockFiles.add(file);
 			}
 		};
 		
@@ -92,15 +100,20 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testSeekToInt() {
-		fail("Not yet implemented"); // TODO
+		mPlaybackController.seekTo(2);
+		Assert.assertEquals(2, mPlaybackController.getCurrentPosition());
+		Assert.assertEquals(mMockFiles.get(2), mPlaybackController.getCurrentPlaybackFile());
 	}
 
 	public final void testSeekToIntInt() {
-		fail("Not yet implemented"); // TODO
+		final int filePosition = 10;
+		mPlaybackController.seekTo(1, filePosition);
+		Assert.assertEquals(filePosition, mPlaybackController.getCurrentPlaybackFile().getCurrentPosition());
 	}
 
 	public final void testStartAtInt() {
-		fail("Not yet implemented"); // TODO
+		testSeekToInt();
+		Assert.assertEquals(true, mPlaybackController.isPlaying());
 	}
 
 	public final void testStartAtIntInt() {
@@ -161,4 +174,58 @@ public class PlaybackControllerTest extends TestCase {
 		fail("Not yet implemented"); // TODO
 	}
 
+	private static final class MockFile implements IFile {
+		private int mKey;
+		
+		public MockFile(int key) {
+			mKey = key;
+		}
+		
+		@Override
+		public int getKey() {
+			return mKey;
+		}
+
+		@Override
+		public void setKey(int key) {
+			mKey = key;
+		}
+
+		@Override
+		public String getValue() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void setValue(String mValue) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void setProperty(String name, String value) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public String getProperty(String name) throws IOException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public String getRefreshedProperty(String name) throws IOException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public int getDuration() throws IOException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+	}
 }

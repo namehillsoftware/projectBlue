@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.test.mock;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
+import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
@@ -10,59 +12,66 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
 public class MockFilePlayer implements IPlaybackFile {
-
+	private final IFile mFile;
+	private boolean mIsMediaPlayerCreated = false;
+	private boolean mIsPlaying = false;
+	private boolean mIsPrepared = false;
+	private int mPosition = 0;
+	private float mVolume = 0f;
+	
+	private List<OnFilePreparedListener> mOnFilePreparedListeners = new ArrayList<OnFilePreparedListener>();
+	
+	public MockFilePlayer(IFile file) {
+		mFile = file;
+	}
+	
 	@Override
-	public File getFile() {
-		// TODO Auto-generated method stub
-		return null;
+	public IFile getFile() {
+		return mFile;
 	}
 
 	@Override
 	public void initMediaPlayer() {
-		// TODO Auto-generated method stub
-
+		mIsMediaPlayerCreated = true;
 	}
 
 	@Override
 	public boolean isMediaPlayerCreated() {
-		// TODO Auto-generated method stub
-		return false;
+		return mIsMediaPlayerCreated;
 	}
 
 	@Override
 	public boolean isPrepared() {
-		// TODO Auto-generated method stub
-		return false;
+		return mIsPrepared;
 	}
 
 	@Override
 	public void prepareMediaPlayer() {
-		// TODO Auto-generated method stub
-
+		mIsPrepared = true;
+		for (OnFilePreparedListener onFilePreparedListener : mOnFilePreparedListeners)
+			onFilePreparedListener.onFilePrepared(this);
 	}
 
 	@Override
 	public void prepareMpSynchronously() {
-		// TODO Auto-generated method stub
-
+		mIsPrepared = true; 
 	}
 
 	@Override
 	public void releaseMediaPlayer() {
-		// TODO Auto-generated method stub
-
+		mIsPlaying = false;
+		mIsPrepared = false;
+		mIsMediaPlayerCreated = false;
 	}
 
 	@Override
 	public int getCurrentPosition() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mPosition;
 	}
 
 	@Override
 	public boolean isBuffered() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
@@ -73,50 +82,43 @@ public class MockFilePlayer implements IPlaybackFile {
 
 	@Override
 	public int getDuration() throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
+		return mFile.getDuration();
 	}
 
 	@Override
 	public boolean isPlaying() {
-		// TODO Auto-generated method stub
-		return false;
+		return mIsPlaying;
 	}
 
 	@Override
 	public void pause() {
-		// TODO Auto-generated method stub
-
+		mIsPlaying = false;
 	}
 
 	@Override
 	public void seekTo(int pos) {
-		// TODO Auto-generated method stub
-
+		mPosition = pos;
 	}
 
 	@Override
 	public void start() {
-		// TODO Auto-generated method stub
-
+		mIsPlaying = true;
 	}
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
-
+		mIsPlaying = false;
+		mPosition = 0;
 	}
 
 	@Override
 	public float getVolume() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mVolume;
 	}
 
 	@Override
 	public void setVolume(float volume) {
-		// TODO Auto-generated method stub
-
+		mVolume = volume;
 	}
 
 	@Override
@@ -133,14 +135,12 @@ public class MockFilePlayer implements IPlaybackFile {
 
 	@Override
 	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
-		// TODO Auto-generated method stub
-		
+		mOnFilePreparedListeners.add(listener);
 	}
 
 	@Override
 	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
-		// TODO Auto-generated method stub
-		
+		mOnFilePreparedListeners.remove(listener);
 	}
 
 	@Override
