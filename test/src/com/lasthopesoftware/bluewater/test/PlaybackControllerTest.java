@@ -102,7 +102,7 @@ public class PlaybackControllerTest extends TestCase {
 	public final void testSeekToInt() {
 		mPlaybackController.seekTo(2);
 		Assert.assertEquals(2, mPlaybackController.getCurrentPosition());
-		Assert.assertEquals(mMockFiles.get(2), mPlaybackController.getCurrentPlaybackFile());
+		Assert.assertEquals(mMockFiles.get(2), mPlaybackController.getCurrentPlaybackFile().getFile());
 	}
 
 	public final void testSeekToIntInt() {
@@ -112,12 +112,8 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testStartAtInt() {
-		testSeekToInt();
+		mPlaybackController.startAt(0);
 		Assert.assertEquals(true, mPlaybackController.isPlaying());
-	}
-
-	public final void testStartAtIntInt() {
-		fail("Not yet implemented"); // TODO
 	}
 
 	public final void testResume() {
@@ -223,8 +219,7 @@ public class PlaybackControllerTest extends TestCase {
 
 		@Override
 		public int getDuration() throws IOException {
-			// TODO Auto-generated method stub
-			return 0;
+			return 100;
 		}
 		
 	}
