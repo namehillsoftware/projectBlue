@@ -95,10 +95,6 @@ public class PlaybackControllerTest extends TestCase {
 		super.tearDown();
 	}
 
-	public final void testPlaylistControllerContextArrayListOfFile() {
-		fail("Not yet implemented"); // TODO
-	}
-
 	public final void testSeekToInt() {
 		mPlaybackController.seekTo(2);
 		Assert.assertEquals(2, mPlaybackController.getCurrentPosition());
@@ -113,15 +109,28 @@ public class PlaybackControllerTest extends TestCase {
 
 	public final void testStartAtInt() {
 		mPlaybackController.startAt(0);
-		Assert.assertEquals(true, mPlaybackController.isPlaying());
+		Assert.assertTrue(mPlaybackController.isPlaying());
+	}
+	
+
+	public final void testSeekWhilePlaying() {
+		mPlaybackController.startAt(0);
+		mPlaybackController.seekTo(2);
+		Assert.assertEquals(mMockFiles.get(2), mPlaybackController.getCurrentPlaybackFile().getFile());
+		Assert.assertTrue(mPlaybackController.isPlaying());
 	}
 
 	public final void testResume() {
-		fail("Not yet implemented"); // TODO
+		mPlaybackController.startAt(0);
+		mPlaybackController.pause();
+		mPlaybackController.resume();
+		Assert.assertTrue(mPlaybackController.isPlaying());
 	}
 
 	public final void testPause() {
-		fail("Not yet implemented"); // TODO
+		mPlaybackController.startAt(0);
+		mPlaybackController.pause();
+		Assert.assertFalse(mPlaybackController.isPlaying());
 	}
 
 	public final void testSetVolume() {
@@ -164,10 +173,6 @@ public class PlaybackControllerTest extends TestCase {
 		}
 		
 		Assert.assertEquals("getPlaylist should return an unmodifiable collection", "UnmodifiableCollection", parentClass.getSimpleName());
-	}
-
-	public final void testRelease() {
-		fail("Not yet implemented"); // TODO
 	}
 
 	private static final class MockFile implements IFile {
