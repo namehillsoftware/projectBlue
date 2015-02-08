@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlayl
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTask;
 
 public class CategoryFragment extends Fragment {
 	
@@ -54,7 +55,7 @@ public class CategoryFragment extends Fragment {
     	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
-    	    	
+    	
     	FileSystem.Instance.get(context, new OnGetFileSystemCompleteListener() {
 			
 			@SuppressWarnings("unchecked")

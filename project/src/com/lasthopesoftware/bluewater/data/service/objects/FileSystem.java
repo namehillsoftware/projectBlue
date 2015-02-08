@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -30,21 +32,17 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private ArrayList<OnCompleteListener<List<IItem<?>>>> mOnCompleteClientListeners;
 	private OnStartListener<List<IItem<?>>> mOnStartListener;
-	private static final OnConnectListener<List<IItem<?>>> mOnConnectListener = new OnConnectListener<List<IItem<?>>>() {
+	private static final OnConnectListener<List<IItem<?>>> mOnGetSubItemsConnectListener = new OnConnectListener<List<IItem<?>>>() {
 		
 		@Override
 		public List<IItem<?>> onConnect(InputStream is) {
-			ArrayList<IItem<?>> returnList = new ArrayList<IItem<?>>();
-			for (Item item : FilesystemResponse.GetItems(is))
-				returnList.add(item);
-			
-			return returnList;
+			return new ArrayList<IItem<?>>(FilesystemResponse.GetItems(is));
 		}
 	};
 	
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
-	private static final Object syncObject = new Object();
+	private final static ExecutorService mFileServiceExecutor = Executors.newCachedThreadPool();
 	
 	private FileSystem(int... visibleViewKeys) {
 		super();
@@ -57,16 +55,14 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 	
 	public void setVisibleViews(int... visibleViewKeys) {
-		synchronized(syncObject) {
-			if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
-			mVisibleViewKeys = visibleViewKeys;
-			mVisibleViews = null;
-		}
+		if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
+		mVisibleViewKeys = visibleViewKeys;
+		mVisibleViews = null;
 	}
 	
 	public ArrayList<IItem<?>> getVisibleViews() {
 		try {
-			return getVisibleViewsTask().execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
+			return getVisibleViewsTask().execute(mFileServiceExecutor).get();
 		} catch (Exception e) {
 			return new ArrayList<IItem<?>>();
 		}
@@ -87,7 +83,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
 		
-		getViewsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getViewsTask.execute(mFileServiceExecutor);
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem<?>>> getVisibleViewsTask() {
@@ -95,30 +91,29 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 			
 			@Override
 			public ArrayList<IItem<?>> onExecute(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, String... params) throws Exception {
-				synchronized(syncObject) {
-					if (mVisibleViews == null || mVisibleViews.size() == 0) {
-						List<IItem<?>> libraries = getSubItems();
-						mVisibleViews = new TreeSet<IItem<?>>(new Comparator<IItem<?>>() {
-	
-							@Override
-							public int compare(IItem<?> lhs, IItem<?> rhs) {
-								return lhs.getKey() - rhs.getKey();
+
+				if (mVisibleViews == null || mVisibleViews.size() == 0) {
+					List<IItem<?>> libraries = getSubItems();
+					mVisibleViews = new TreeSet<IItem<?>>(new Comparator<IItem<?>>() {
+
+						@Override
+						public int compare(IItem<?> lhs, IItem<?> rhs) {
+							return lhs.getKey() - rhs.getKey();
+						}
+					});
+					
+					for (int viewKey : mVisibleViewKeys) {
+						for (IItem<?> library : libraries) {
+							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
+							
+							if (library.getValue().equalsIgnoreCase("Playlists")) {
+								if (mPlaylistsView == null) mPlaylistsView = new Playlists(Integer.MAX_VALUE);
+								mVisibleViews.add(new Playlists(Integer.MAX_VALUE));
+								continue;
 							}
-						});
-						
-						for (int viewKey : mVisibleViewKeys) {
-							for (IItem<?> library : libraries) {
-								if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
-								
-								if (library.getValue().equalsIgnoreCase("Playlists")) {
-									if (mPlaylistsView == null) mPlaylistsView = new Playlists(Integer.MAX_VALUE);
-									mVisibleViews.add(new Playlists(Integer.MAX_VALUE));
-									continue;
-								}
-								
-								for (IItem<?> view : library.getSubItems())
-									mVisibleViews.add(view);
-							}
+							
+							for (IItem<?> view : library.getSubItems())
+								mVisibleViews.add(view);
 						}
 					}
 				}
@@ -140,7 +135,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 
 	@Override
 	protected OnConnectListener<List<IItem<?>>> getOnItemConnectListener() {
-		return mOnConnectListener;
+		return mOnGetSubItemsConnectListener;
 	}
 
 	@Override
@@ -191,16 +186,12 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	public static class Instance implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
 
-		private static int mInstanceVisibleViewKey = -1;
-		private static FileSystem mInstance = null;
-		
-		private final static Object syncObject = new Object();
+//		private static int mInstanceVisibleViewKey = -1;
+//		private static FileSystem mInstance = null;
+//		
+//		private final static Object syncObject = new Object();
 		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
-		
-		public final static void get(final Context context) {
-			get(context, null);
-		}
-		
+				
 		public final static void get(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
 			LibrarySession.GetLibrary(context, new Instance(onGetFileSystemCompleteListener));
 		}
@@ -211,16 +202,19 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		
 		@Override
 		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-			synchronized(syncObject) {
-				final int storedSelectedViewKey = result.getSelectedView();
-				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
-					mInstance = new FileSystem(storedSelectedViewKey);
-					mInstanceVisibleViewKey = storedSelectedViewKey;
-				}
-				
-				if (mOnGetFileSystemCompleteListener != null)
-					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
-			}
+//			synchronized(syncObject) {
+//				final int storedSelectedViewKey = result.getSelectedView();
+//				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
+//					mInstance = new FileSystem(storedSelectedViewKey);
+//					mInstanceVisibleViewKey = storedSelectedViewKey;
+//				}
+//				
+//				if (mOnGetFileSystemCompleteListener != null)
+//					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
+//			}
+			
+			if (mOnGetFileSystemCompleteListener != null)
+				mOnGetFileSystemCompleteListener.onGetFileSystemComplete(new FileSystem(result.getSelectedView()));
 		}
 		
 	}
