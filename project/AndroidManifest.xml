@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lasthopesoftware.bluewater"
     android:versionCode="2"
-    android:versionName="1.5" >
+    android:versionName="1.0.0.2" >
 
     <uses-sdk
         android:minSdkVersion="14"
@@ -124,7 +124,7 @@
         </activity>
         
         <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.AudioBecomingNoisyReceiver">
-            <intent-filter>
+            <intent-filter android:priority="1000">
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
