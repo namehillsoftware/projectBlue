@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.data.service.access.DataTask;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
@@ -24,6 +24,11 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends AbstractIntKeySt
 	private final static Logger mLogger = LoggerFactory.getLogger(ItemAsyncBase.class);
 	
 	protected ArrayList<T> mSubItems;
+	
+	private final Object syncObj = new Object();
+	
+	// Ensure that getting sub items only happens one at a time
+	private final static ExecutorService mSubItemExecutor = Executors.newSingleThreadExecutor();
 	
 	public ItemAsyncBase(int key, String value) {
 		super(key, value);
@@ -46,22 +51,20 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends AbstractIntKeySt
 	protected abstract List<OnErrorListener<List<T>>> getOnItemsErrorListeners();
 			
 	public ArrayList<T> getSubItems() throws IOException {
-		if (mSubItems == null || mSubItems.size() == 0) {
-			try {
-				// This will call the onCompletes if they are attached.
-				DataTask<List<T>> getNewSubItemsTask = getNewSubItemsTask();
-				List<T> result = getNewSubItemsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams()).get();
-				
-				if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR && getNewSubItemsTask.getException() instanceof IOException)
-					throw new IOException(getNewSubItemsTask.getException());
-				
-				if (result != null)
-					mSubItems = new ArrayList<T>(result);
-				else
-					mSubItems = new ArrayList<T>();
-				
-			} catch(Exception e) {
-				mLogger.error(e.toString(), e);
+		synchronized(syncObj) {
+			if (mSubItems == null || mSubItems.size() == 0) {
+				try {
+					// This will call the onCompletes if they are attached.
+					DataTask<List<T>> getNewSubItemsTask = getNewSubItemsTask();
+					List<T> result = getNewSubItemsTask.execute(mSubItemExecutor, getSubItemParams()).get();
+					
+					if (getNewSubItemsTask.getState() == SimpleTaskState.ERROR && getNewSubItemsTask.getException() instanceof IOException)
+						throw new IOException(getNewSubItemsTask.getException());
+					
+					mSubItems = result != null ? new ArrayList<T>(result) : new ArrayList<T>();
+				} catch(Exception e) {
+					mLogger.error(e.toString(), e);
+				}
 			}
 		}
 		
@@ -69,24 +72,27 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends AbstractIntKeySt
 	}
 	
 	public void getSubItemsAsync() {
-		
-		if (mSubItems == null || mSubItems.size() == 0) {
-			final DataTask<List<T>>  itemTask = getNewSubItemsTask();
-			itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
-
-				@Override
-				public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
-					if (owner.getState() == SimpleTaskState.ERROR || result == null) {
-						mSubItems = new ArrayList<T>();
-						return;
+		synchronized(syncObj) {
+			if (mSubItems == null || mSubItems.size() == 0) {
+				final DataTask<List<T>>  itemTask = getNewSubItemsTask();
+				itemTask.addOnCompleteListener(new OnCompleteListener<List<T>>() {
+	
+					@Override
+					public void onComplete(ISimpleTask<String, Void, List<T>> owner, List<T> result) {
+						synchronized(syncObj)  {
+							if (owner.getState() == SimpleTaskState.ERROR || result == null) {
+								mSubItems = new ArrayList<T>();
+								return;
+							}
+							mSubItems = new ArrayList<T>(result);
+						}
 					}
-					mSubItems = new ArrayList<T>(result);
-				}
+					
+				});
 				
-			});
-			
-			itemTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getSubItemParams());
-			return;
+				itemTask.execute(mSubItemExecutor, getSubItemParams());
+				return;
+			}
 		}
 		
 		// Simple task that just returns sub items if they are in memory
@@ -102,7 +108,7 @@ public abstract class ItemAsyncBase<T extends IItem<?>> extends AbstractIntKeySt
 			for (OnCompleteListener<List<T>> listener : getOnItemsCompleteListeners())
 				task.addOnCompleteListener(listener);
 		}
-		task.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		task.execute(mSubItemExecutor);
 	}
 	
 	protected DataTask<List<T>> getNewSubItemsTask() {

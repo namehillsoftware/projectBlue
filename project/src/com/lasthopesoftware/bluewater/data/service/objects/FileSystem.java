@@ -42,8 +42,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
-	private final static ExecutorService mFileServiceExecutor = Executors.newCachedThreadPool();
-	
 	private FileSystem(int... visibleViewKeys) {
 		super();
 		
@@ -62,7 +60,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	public ArrayList<IItem<?>> getVisibleViews() {
 		try {
-			return getVisibleViewsTask().execute(mFileServiceExecutor).get();
+			return getVisibleViewsTask().execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
 		} catch (Exception e) {
 			return new ArrayList<IItem<?>>();
 		}
@@ -83,7 +81,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
 		
-		getViewsTask.execute(mFileServiceExecutor);
+		getViewsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem<?>>> getVisibleViewsTask() {
@@ -93,7 +91,6 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 			public ArrayList<IItem<?>> onExecute(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, String... params) throws Exception {
 
 				if (mVisibleViews == null || mVisibleViews.size() == 0) {
-					List<IItem<?>> libraries = getSubItems();
 					mVisibleViews = new TreeSet<IItem<?>>(new Comparator<IItem<?>>() {
 
 						@Override
@@ -102,6 +99,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 						}
 					});
 					
+					List<IItem<?>> libraries = getSubItems();					
 					for (int viewKey : mVisibleViewKeys) {
 						for (IItem<?> library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
@@ -186,10 +184,11 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	public static class Instance implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
 
-//		private static int mInstanceVisibleViewKey = -1;
-//		private static FileSystem mInstance = null;
-//		
-//		private final static Object syncObject = new Object();
+		private static int mInstanceVisibleViewKey = -1;
+		private static FileSystem mInstance = null;
+		
+		private final static Object syncObject = new Object();
+		
 		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
 				
 		public final static void get(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
@@ -202,19 +201,19 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		
 		@Override
 		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-//			synchronized(syncObject) {
-//				final int storedSelectedViewKey = result.getSelectedView();
-//				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
-//					mInstance = new FileSystem(storedSelectedViewKey);
-//					mInstanceVisibleViewKey = storedSelectedViewKey;
-//				}
-//				
-//				if (mOnGetFileSystemCompleteListener != null)
-//					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
-//			}
+			synchronized(syncObject) {
+				final int storedSelectedViewKey = result.getSelectedView();
+				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
+					mInstance = new FileSystem(storedSelectedViewKey);
+					mInstanceVisibleViewKey = storedSelectedViewKey;
+				}
+				
+				if (mOnGetFileSystemCompleteListener != null)
+					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
+			}
 			
-			if (mOnGetFileSystemCompleteListener != null)
-				mOnGetFileSystemCompleteListener.onGetFileSystemComplete(new FileSystem(result.getSelectedView()));
+//			if (mOnGetFileSystemCompleteListener != null)
+//				mOnGetFileSystemCompleteListener.onGetFileSystemComplete(new FileSystem(result.getSelectedView()));
 		}
 		
 	}
