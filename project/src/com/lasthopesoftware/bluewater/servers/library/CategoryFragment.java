@@ -43,18 +43,19 @@ public class CategoryFragment extends Fragment {
     public static final String IS_PLAYLIST = "Playlist";
 	    
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    	
-    	final RelativeLayout layout = new RelativeLayout(getActivity());
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+    	final Context context = getActivity();
+   	
+    	final RelativeLayout layout = new RelativeLayout(context);
     	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	
-    	final ProgressBar pbLoading = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleLarge);
+    	final ProgressBar pbLoading = new ProgressBar(context, null, android.R.attr.progressBarStyleLarge);
     	final RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
     	    	
-    	FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
+    	FileSystem.Instance.get(context, new OnGetFileSystemCompleteListener() {
 			
 			@SuppressWarnings("unchecked")
 			@Override
@@ -69,24 +70,24 @@ public class CategoryFragment extends Fragment {
 						final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 										
 						if (category instanceof Playlists)
-							layout.addView(BuildPlaylistView((Playlists)category, pbLoading));
+							layout.addView(BuildPlaylistView(context, (Playlists)category, pbLoading));
 						else if (category instanceof Item)
-							layout.addView(BuildStandardItemView((Item)category, pbLoading));
+							layout.addView(BuildStandardItemView(context, (Item)category, pbLoading));
 						
 						category.getSubItemsAsync();
 					}
 				};
 				
-				final HandleViewIoException handleViewIoException = new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+				final HandleViewIoException handleViewIoException = new HandleViewIoException(context, new OnConnectionRegainedListener() {
 								
 					@Override
 					public void onConnectionRegained() {
 						final OnConnectionRegainedListener _this = this;
-						FileSystem.Instance.get(getActivity(), new OnGetFileSystemCompleteListener() {
+						FileSystem.Instance.get(context, new OnGetFileSystemCompleteListener() {
 							
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {
-								fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(getActivity(), _this));
+								fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(context, _this));
 							}
 						});
 					}
@@ -100,18 +101,15 @@ public class CategoryFragment extends Fragment {
     }
 
 	@SuppressWarnings("unchecked")
-	private ListView BuildPlaylistView(final Playlists category, final View loadingView) {
+	private ListView BuildPlaylistView(final Context context, final Playlists category, final View loadingView) {
     	
-		final ListView listView = new ListView(getActivity());
+		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
 		final OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (result == null) return;
-				
-				final Context context = getActivity();
-				if (context == null) return;
 				
 				listView.setOnItemClickListener(new ClickPlaylistListener(context, (ArrayList<Playlist>) result));
 				listView.setOnItemLongClickListener(new LongClickFlipListener());
@@ -121,7 +119,7 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onPlaylistCompleteListener);
-		category.setOnItemsErrorListener(new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+		category.setOnItemsErrorListener(new HandleViewIoException(context, new OnConnectionRegainedListener() {
 					
 					@Override
 					public void onConnectionRegained() {
@@ -133,8 +131,8 @@ public class CategoryFragment extends Fragment {
     }
 
 	@SuppressWarnings("unchecked")
-	private ExpandableListView BuildStandardItemView(final Item category, final View loadingView) {
-		final ExpandableListView listView = new ExpandableListView(getActivity());
+	private ExpandableListView BuildStandardItemView(final Context context, final Item category, final View loadingView) {
+		final ExpandableListView listView = new ExpandableListView(context);
     	listView.setVisibility(View.INVISIBLE);
     	
     	final OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
@@ -142,9 +140,6 @@ public class CategoryFragment extends Fragment {
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
 				if (result == null) return;
-				
-				final Context context = getActivity();
-				if (context == null) return;
 				
 				listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
 					
@@ -185,7 +180,7 @@ public class CategoryFragment extends Fragment {
 			}
 		};
 		category.addOnItemsCompleteListener(onItemCompleteListener);
-		category.setOnItemsErrorListener(new HandleViewIoException(getActivity(), new OnConnectionRegainedListener() {
+		category.setOnItemsErrorListener(new HandleViewIoException(context, new OnConnectionRegainedListener() {
 												
 												@Override
 												public void onConnectionRegained() {
