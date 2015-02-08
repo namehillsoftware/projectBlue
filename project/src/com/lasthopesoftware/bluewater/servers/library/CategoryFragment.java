@@ -36,7 +36,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlayl
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
 
 public class CategoryFragment extends Fragment {
 	
