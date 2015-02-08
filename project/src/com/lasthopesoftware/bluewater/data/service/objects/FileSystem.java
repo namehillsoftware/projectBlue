@@ -11,11 +11,11 @@ import java.util.TreeSet;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
-import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
@@ -44,7 +44,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
 	
-	private final static Object syncObject = new Object();
+	private static final Object syncObject = new Object();
 	
 	private FileSystem(int... visibleViewKeys) {
 		super();
@@ -57,9 +57,9 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 	
 	public void setVisibleViews(int... visibleViewKeys) {
-		if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
-		mVisibleViewKeys = visibleViewKeys;
 		synchronized(syncObject) {
+			if (Arrays.equals(mVisibleViewKeys, visibleViewKeys)) return;
+			mVisibleViewKeys = visibleViewKeys;
 			mVisibleViews = null;
 		}
 	}
@@ -82,7 +82,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	
 	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onCompleteListener,
 									 ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem<?>>> onErrorListener) {
-		SimpleTask<String, Void, ArrayList<IItem<?>>> getViewsTask = getVisibleViewsTask();
+		final SimpleTask<String, Void, ArrayList<IItem<?>>> getViewsTask = getVisibleViewsTask();
 		
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
@@ -192,7 +192,7 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	public static class Instance implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
 
 		private static int mInstanceVisibleViewKey = -1;
-		private static FileSystem mInstance;
+		private static FileSystem mInstance = null;
 		
 		private final static Object syncObject = new Object();
 		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
@@ -213,8 +213,10 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 			synchronized(syncObject) {
 				final int storedSelectedViewKey = result.getSelectedView();
-				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey)
+				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
 					mInstance = new FileSystem(storedSelectedViewKey);
+					mInstanceVisibleViewKey = storedSelectedViewKey;
+				}
 				
 				if (mOnGetFileSystemCompleteListener != null)
 					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
