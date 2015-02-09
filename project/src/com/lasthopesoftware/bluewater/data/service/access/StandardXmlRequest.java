@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 
 public class StandardXmlRequest extends AsyncTask<String, Void, StandardRequest> {
 

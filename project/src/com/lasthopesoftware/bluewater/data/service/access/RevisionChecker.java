@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

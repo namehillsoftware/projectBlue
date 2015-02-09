@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.PlaylistRequest;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.servers.library.items.AbstractCollectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;

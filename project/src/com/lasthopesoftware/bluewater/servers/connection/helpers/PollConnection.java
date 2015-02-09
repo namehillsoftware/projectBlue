@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 

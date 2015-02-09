@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.access.connection;
+package com.lasthopesoftware.bluewater.servers.connection;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

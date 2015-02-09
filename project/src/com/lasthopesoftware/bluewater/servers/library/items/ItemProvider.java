@@ -5,8 +5,8 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.slf4j.LoggerFactory;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
 	private FileProperties mFileProperties;
