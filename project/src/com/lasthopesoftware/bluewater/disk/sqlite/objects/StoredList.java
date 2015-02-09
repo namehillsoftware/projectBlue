@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.sqlite.objects;
+package com.lasthopesoftware.bluewater.disk.sqlite.objects;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;

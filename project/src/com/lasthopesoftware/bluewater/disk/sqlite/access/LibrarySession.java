@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.sqlite.access;
+package com.lasthopesoftware.bluewater.disk.sqlite.access;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;

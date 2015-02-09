@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.sqlite.access;
+package com.lasthopesoftware.bluewater.disk.sqlite.access;
 
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
@@ -16,10 +16,10 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredFile;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.StoredList;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.CachedFile;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredList;
 
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();

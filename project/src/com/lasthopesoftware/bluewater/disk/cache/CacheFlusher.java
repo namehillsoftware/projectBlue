@@ -12,8 +12,8 @@ import android.content.Context;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
-import com.lasthopesoftware.bluewater.data.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.CachedFile;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.CachedFile;
 
 /**
  * Flush a given cache until it reaches the given target size

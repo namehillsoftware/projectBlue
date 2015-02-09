@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.sqlite.objects;
+package com.lasthopesoftware.bluewater.disk.sqlite.objects;
 
 import java.util.ArrayList;
 import java.util.Collection;

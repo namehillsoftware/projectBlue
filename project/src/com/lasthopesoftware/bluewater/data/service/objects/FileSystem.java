@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectLis
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
