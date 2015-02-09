@@ -30,18 +30,6 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 //	private Playlists mPlaylistsView;
 	private int[] mVisibleViewKeys;
 	
-	private ArrayList<OnCompleteListener<List<IItem>>> mOnCompleteClientListeners;
-	private OnStartListener<List<IItem>> mOnStartListener;
-	private static final OnConnectListener<List<IItem>> mOnGetSubItemsConnectListener = new OnConnectListener<List<IItem>>() {
-		
-		@Override
-		public List<IItem> onConnect(InputStream is) {
-			return new ArrayList<IItem>(FilesystemResponse.GetItems(is));
-		}
-	};
-	
-	private OnErrorListener<List<IItem>> mOnErrorListener;
-	
 	private FileSystem(int... visibleViewKeys) {
 		super();
 		
