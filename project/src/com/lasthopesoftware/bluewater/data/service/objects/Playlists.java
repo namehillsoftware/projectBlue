@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListe
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 
 
-public class Playlists extends ItemAsyncBase<Playlist> implements IItem<Playlist> {
+public class Playlists extends ItemAsyncBase implements IItem {
 
 	private SparseArray<Playlist> mMappedPlaylists;
 	private final ArrayList<OnStartListener<List<Playlist>>> mItemStartListeners = new ArrayList<OnStartListener<List<Playlist>>>(1);
@@ -59,7 +59,7 @@ public class Playlists extends ItemAsyncBase<Playlist> implements IItem<Playlist
 	private void denormalizeAndMap(ArrayList<Playlist> items) {
 		for (Playlist playlist : items) {
 			mMappedPlaylists.append(playlist.getKey(), playlist);
-			if (playlist.getSubItems().size() > 0) denormalizeAndMap(playlist.getSubItems());
+//			if (playlist.getSubItems().size() > 0) denormalizeAndMap(playlist.getSubItems());
 		}
 	}
 	
@@ -79,18 +79,6 @@ public class Playlists extends ItemAsyncBase<Playlist> implements IItem<Playlist
 	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
 		if (mOnCompleteListeners != null)
 			mOnCompleteListeners.remove(listener);
-	}
-
-	@Override
-	public void setOnItemsStartListener(OnStartListener<List<Playlist>> listener) {
-		if (mItemStartListeners.size() < 1) mItemStartListeners.add(listener); 
-		mItemStartListeners.set(0, listener);
-	}
-	
-	@Override
-	public void setOnItemsErrorListener(OnErrorListener<List<Playlist>> listener) {
-		if (mItemErrorListeners.size() < 1) mItemErrorListeners.add(listener);
-		mItemErrorListeners.set(0, listener);
 	}
 
 	@Override

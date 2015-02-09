@@ -1,16 +1,12 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-
-public interface IItem<T extends IItem<?>> extends Comparable<T> {
-	void addOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
-	void removeOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
-	void getSubItemsAsync();
-	ArrayList<T> getSubItems() throws IOException;
+public interface IItem extends Comparable<IItem> {
+//	void addOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
+//	void removeOnItemsCompleteListener(OnCompleteListener<List<T>> listener);
+//	void getSubItemsAsync();
+//	ArrayList<T> getSubItems() throws IOException;
+	String[] getSubItemParams();
 	int getKey();
 	void setKey(int mKey);
 	String getValue();

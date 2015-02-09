@@ -21,26 +21,27 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListe
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?>> {
-	private TreeSet<IItem<?>> mVisibleViews;
+public class FileSystem extends ItemAsyncBase<IItem> implements IItem {
+	private TreeSet<IItem> mVisibleViews;
 	private Playlists mPlaylistsView;
 	private int[] mVisibleViewKeys;
 	
-	private ArrayList<OnCompleteListener<List<IItem<?>>>> mOnCompleteClientListeners;
-	private OnStartListener<List<IItem<?>>> mOnStartListener;
-	private static final OnConnectListener<List<IItem<?>>> mOnGetSubItemsConnectListener = new OnConnectListener<List<IItem<?>>>() {
+	private ArrayList<OnCompleteListener<List<IItem>>> mOnCompleteClientListeners;
+	private OnStartListener<List<IItem>> mOnStartListener;
+	private static final OnConnectListener<List<IItem>> mOnGetSubItemsConnectListener = new OnConnectListener<List<IItem>>() {
 		
 		@Override
-		public List<IItem<?>> onConnect(InputStream is) {
-			return new ArrayList<IItem<?>>(FilesystemResponse.GetItems(is));
+		public List<IItem> onConnect(InputStream is) {
+			return new ArrayList<IItem>(FilesystemResponse.GetItems(is));
 		}
 	};
 	
-	private OnErrorListener<List<IItem<?>>> mOnErrorListener;
+	private OnErrorListener<List<IItem>> mOnErrorListener;
 	
 	private FileSystem(int... visibleViewKeys) {
 		super();
@@ -58,11 +59,11 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		mVisibleViews = null;
 	}
 	
-	public ArrayList<IItem<?>> getVisibleViews() {
+	public ArrayList<IItem> getVisibleViews() {
 		try {
 			return getVisibleViewsTask().execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
 		} catch (Exception e) {
-			return new ArrayList<IItem<?>>();
+			return new ArrayList<IItem>();
 		}
 	}
 	
@@ -70,13 +71,13 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		getVisibleViewsAsync(null);
 	}
 	
-	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onCompleteListener) {
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener) {
 		getVisibleViewsAsync(onCompleteListener, null);
 	}
 	
-	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onCompleteListener,
-									 ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem<?>>> onErrorListener) {
-		final SimpleTask<String, Void, ArrayList<IItem<?>>> getViewsTask = getVisibleViewsTask();
+	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener,
+									 ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
+		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = getVisibleViewsTask();
 		
 		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
 		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
@@ -84,24 +85,24 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 		getViewsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
-	private SimpleTask<String, Void, ArrayList<IItem<?>>> getVisibleViewsTask() {
-		return new SimpleTask<String, Void, ArrayList<IItem<?>>>(new OnExecuteListener<String, Void, ArrayList<IItem<?>>>() {
+	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask() {
+		return new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
-			public ArrayList<IItem<?>> onExecute(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, String... params) throws Exception {
+			public ArrayList<IItem> onExecute(ISimpleTask<String, Void, ArrayList<IItem>> owner, String... params) throws Exception {
 
 				if (mVisibleViews == null || mVisibleViews.size() == 0) {
-					mVisibleViews = new TreeSet<IItem<?>>(new Comparator<IItem<?>>() {
+					mVisibleViews = new TreeSet<IItem>(new Comparator<IItem>() {
 
 						@Override
-						public int compare(IItem<?> lhs, IItem<?> rhs) {
+						public int compare(IItem lhs, IItem rhs) {
 							return lhs.getKey() - rhs.getKey();
 						}
 					});
 					
-					List<IItem<?>> libraries = getSubItems();					
+					final List<IItem> libraries = (new ItemProvider(getSubItemParams())).get(); 			
 					for (int viewKey : mVisibleViewKeys) {
-						for (IItem<?> library : libraries) {
+						for (IItem library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
@@ -110,50 +111,51 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 								continue;
 							}
 							
-							for (IItem<?> view : library.getSubItems())
+							final List<IItem> views = (new ItemProvider(library.getSubItemParams())).get();
+							for (IItem view : views)
 								mVisibleViews.add(view);
 						}
 					}
 				}
 				
-				return new ArrayList<IItem<?>>(mVisibleViews);
+				return new ArrayList<IItem>(mVisibleViews);
 			}
 		});
 	}
-
-	@Override
-	public void setOnItemsStartListener(OnStartListener<List<IItem<?>>> listener) {
-		mOnStartListener = listener;
-	}
-
-	@Override
-	public void setOnItemsErrorListener(OnErrorListener<List<IItem<?>>> listener) {
-		mOnErrorListener = listener;
-	}
-
-	@Override
-	protected OnConnectListener<List<IItem<?>>> getOnItemConnectListener() {
-		return mOnGetSubItemsConnectListener;
-	}
-
-	@Override
-	protected List<OnCompleteListener<List<IItem<?>>>> getOnItemsCompleteListeners() {
-		return mOnCompleteClientListeners;
-	}
-
-	@Override
-	protected List<OnStartListener<List<IItem<?>>>> getOnItemsStartListeners() {
-		LinkedList<OnStartListener<List<IItem<?>>>> listeners = new LinkedList<OnStartListener<List<IItem<?>>>>();
-		if (mOnStartListener != null) listeners.add(mOnStartListener);
-		return listeners;
-	}
-
-	@Override
-	protected List<OnErrorListener<List<IItem<?>>>> getOnItemsErrorListeners() {
-		LinkedList<OnErrorListener<List<IItem<?>>>> listeners = new LinkedList<OnErrorListener<List<IItem<?>>>>();
-		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
-		return listeners;
-	}
+//
+//	@Override
+//	public void setOnItemsStartListener(OnStartListener<List<IItem>> listener) {
+//		mOnStartListener = listener;
+//	}
+//
+//	@Override
+//	public void setOnItemsErrorListener(OnErrorListener<List<IItem>> listener) {
+//		mOnErrorListener = listener;
+//	}
+//
+//	@Override
+//	protected OnConnectListener<List<IItem>> getOnItemConnectListener() {
+//		return mOnGetSubItemsConnectListener;
+//	}
+//
+//	@Override
+//	protected List<OnCompleteListener<List<IItem>>> getOnItemsCompleteListeners() {
+//		return mOnCompleteClientListeners;
+//	}
+//
+//	@Override
+//	protected List<OnStartListener<List<IItem>>> getOnItemsStartListeners() {
+//		LinkedList<OnStartListener<List<IItem>>> listeners = new LinkedList<OnStartListener<List<IItem>>>();
+//		if (mOnStartListener != null) listeners.add(mOnStartListener);
+//		return listeners;
+//	}
+//
+//	@Override
+//	protected List<OnErrorListener<List<IItem>>> getOnItemsErrorListeners() {
+//		LinkedList<OnErrorListener<List<IItem>>> listeners = new LinkedList<OnErrorListener<List<IItem>>>();
+//		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
+//		return listeners;
+//	}
 
 	@Override
 	public String[] getSubItemParams() {
@@ -161,22 +163,22 @@ public class FileSystem extends ItemAsyncBase<IItem<?>> implements IItem<IItem<?
 	}
 
 	@Override
-	public int compareTo(IItem<?> another) {
+	public int compareTo(IItem another) {
 		return 0;
 	}
 
-	@Override
-	public void addOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
-		if (mOnCompleteClientListeners == null) mOnCompleteClientListeners = new ArrayList<OnCompleteListener<List<IItem<?>>>>();
-		
-		mOnCompleteClientListeners.add(listener);
-	}
-
-	@Override
-	public void removeOnItemsCompleteListener(OnCompleteListener<List<IItem<?>>> listener) {
-		if (mOnCompleteClientListeners != null)
-			mOnCompleteClientListeners.remove(listener);
-	}
+//	@Override
+//	public void addOnItemsCompleteListener(OnCompleteListener<List<IItem>> listener) {
+//		if (mOnCompleteClientListeners == null) mOnCompleteClientListeners = new ArrayList<OnCompleteListener<List<IItem>>>();
+//		
+//		mOnCompleteClientListeners.add(listener);
+//	}
+//
+//	@Override
+//	public void removeOnItemsCompleteListener(OnCompleteListener<List<IItem>> listener) {
+//		if (mOnCompleteClientListeners != null)
+//			mOnCompleteClientListeners.remove(listener);
+//	}
 	
 	public interface OnGetFileSystemCompleteListener {
 		void onGetFileSystemComplete(FileSystem fileSystem);
