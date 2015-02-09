@@ -21,8 +21,8 @@ import android.widget.ListView;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -136,11 +137,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void displayLibrary(final Library library, FileSystem fileSystem) {
-		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem>>() {
+	public void displayLibrary(final Library library, final FileSystem fileSystem) {
+		final ItemProvider itemProvider = new ItemProvider(fileSystem.getSubItemParams());
+		
+		itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IItem>> owner, final List<IItem> items) {
+			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
 				if (mIsStopped || items == null) return;
 					
 				for (IItem item : items) {
@@ -151,6 +154,22 @@ public class BrowseLibraryActivity extends FragmentActivity {
 				}
 				
 				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, items, library.getSelectedView()));
+				
+				fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
+					new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
+
+						@Override
+						public void onConnectionRegained() {
+							FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+								
+								@Override
+								public void onGetFileSystemComplete(FileSystem fileSystem) {
+									fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
+								}
+							});
+						}
+					
+				}));
 				
 				mLvSelectViews.setOnItemClickListener(new OnItemClickListener() {
 					
@@ -182,9 +201,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 					}
 				});
 			}
-		});
-		
-		fileSystem.setOnItemsErrorListener(new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
 			
 			@Override
 			public void onConnectionRegained() {
@@ -192,29 +209,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
 					
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
-						fileSystem.getSubItemsAsync();
+						itemProvider.execute();
 					}
 				});
 			}
 		}));
 		
-		fileSystem.getSubItemsAsync();
-		
-		fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
-			new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
-
-				@Override
-				public void onConnectionRegained() {
-					FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
-						
-						@Override
-						public void onGetFileSystemComplete(FileSystem fileSystem) {
-							fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
-						}
-					});
-				}
-			
-		}));
+		itemProvider.execute();
 	}
 	
 	private OnCompleteListener<String, Void, ArrayList<IItem>> getOnVisibleViewsCompleteListener() {

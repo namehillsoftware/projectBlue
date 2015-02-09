@@ -2,12 +2,16 @@ package com.lasthopesoftware.bluewater.servers.library;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,9 +23,9 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
@@ -29,13 +33,16 @@ import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemMenu;
+import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class CategoryFragment extends Fragment {
 	
@@ -61,20 +68,18 @@ public class CategoryFragment extends Fragment {
 			@Override
 			public void onGetFileSystemComplete(FileSystem fileSystem) {
 
-		    	final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+		    	final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
 					
 					@Override
-					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
 						if (result == null) return;
 						
-						final IItem<?> category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+						final IItem category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
 										
 						if (category instanceof Playlists)
 							layout.addView(BuildPlaylistView(context, (Playlists)category, pbLoading));
 						else if (category instanceof Item)
 							layout.addView(BuildStandardItemView(context, (Item)category, pbLoading));
-						
-						category.getSubItemsAsync();
 					}
 				};
 				
@@ -105,28 +110,31 @@ public class CategoryFragment extends Fragment {
     	
 		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
-		final OnCompleteListener<List<Playlist>> onPlaylistCompleteListener = new OnCompleteListener<List<Playlist>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-				if (result == null) return;
+		final PlaylistsProvider playlistsProvider = new PlaylistsProvider("Playlists/List");
+		playlistsProvider
+			.onComplete(new OnCompleteListener<Void, Void, List<Playlist>>() {
 				
-				listView.setOnItemClickListener(new ClickPlaylistListener(context, (ArrayList<Playlist>) result));
-				listView.setOnItemLongClickListener(new LongClickFlipListener());
-	    		listView.setAdapter(new PlaylistListAdapter(context, R.id.tvStandard, result));
-	    		loadingView.setVisibility(View.INVISIBLE);
-	    		listView.setVisibility(View.VISIBLE);					
-			}
-		};
-		category.addOnItemsCompleteListener(onPlaylistCompleteListener);
-		category.setOnItemsErrorListener(new HandleViewIoException(context, new OnConnectionRegainedListener() {
+				@Override
+				public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
+					if (result == null) return;
+					
+					listView.setOnItemClickListener(new ClickPlaylistListener(context, (ArrayList<Playlist>) result));
+					listView.setOnItemLongClickListener(new LongClickFlipListener());
+		    		listView.setAdapter(new PlaylistListAdapter(context, R.id.tvStandard, result));
+		    		loadingView.setVisibility(View.INVISIBLE);
+		    		listView.setVisibility(View.VISIBLE);					
+				}
+			})
+			.onError(new HandleViewIoException(context, new OnConnectionRegainedListener() {
 					
 					@Override
 					public void onConnectionRegained() {
-						category.getSubItemsAsync();
+						playlistsProvider.execute();
 					}
 				}));
-	
+		
+		playlistsProvider.execute();
+		
 		return listView;
     }
 
@@ -135,10 +143,12 @@ public class CategoryFragment extends Fragment {
 		final ExpandableListView listView = new ExpandableListView(context);
     	listView.setVisibility(View.INVISIBLE);
     	
-    	final OnCompleteListener<List<Item>> onItemCompleteListener = new OnCompleteListener<List<Item>>() {
+    	final ItemProvider itemProvider = new ItemProvider(category.getSubItemParams());
+    	
+    	itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<Item>> owner, List<Item> result) {
+			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 				if (result == null) return;
 				
 				listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
@@ -146,12 +156,14 @@ public class CategoryFragment extends Fragment {
 					@Override
 					public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
 						final Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
+						
 						try {
-							if (selection.getSubItems().size() > 0) return false;
-						} catch (IOException e) {
+							if ((new ItemProvider(selection.getSubItemParams())).get().size() > 0) return false;
+						} catch (ExecutionException | InterruptedException e) {
 							LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
 							return true;
 						}
+					
 						final Intent intent = new Intent(parent.getContext(), FileListActivity.class);
 			    		intent.setAction(FileListActivity.VIEW_ITEM_FILES);
 			    		intent.putExtra(FileListActivity.KEY, selection.getKey());
@@ -178,62 +190,64 @@ public class CategoryFragment extends Fragment {
 		    	loadingView.setVisibility(View.INVISIBLE);
 	    		listView.setVisibility(View.VISIBLE);
 			}
-		};
-		category.addOnItemsCompleteListener(onItemCompleteListener);
-		category.setOnItemsErrorListener(new HandleViewIoException(context, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(context, new OnConnectionRegainedListener() {
 												
 												@Override
 												public void onConnectionRegained() {
-													category.getSubItemsAsync();
+													itemProvider.execute();
 												}
 											}));
 		
+    	itemProvider.execute();
+    	
 		return listView;
 	}
 
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	private final ArrayList<Item> mCategoryItems;
+    	private final SparseArray<List<Item>> mChildren = new SparseArray<List<Item>>();
+    	
+    	private final static Logger mLogger = LoggerFactory.getLogger(ExpandableItemListAdapter.class);
     	
     	public ExpandableItemListAdapter(List<Item> categoryItems) {
     		mCategoryItems = new ArrayList<Item>(categoryItems);
     	}
     	
+    	private List<Item> getChildren(int position) throws ExecutionException, InterruptedException {
+    		List<Item> children = mChildren.get(position);
+    		if (children == null) {
+	    		children = (new ItemProvider(mCategoryItems.get(position).getSubItemParams())).get();
+	    		mChildren.put(position, children);
+    		}
+    		return children;
+    	}
+    	
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
 			try {
-				return mCategoryItems.get(groupPosition).getSubItems().get(childPosition);
-			} catch (IOException e) {
-				 LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
-				 return null;
-			}
-		}
-
-		@Override
-		public long getChildId(int groupPosition, int childPosition) {
-			try {
-				return ((Item)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)).getKey();
-			} catch (IOException e) {
-				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
-				return 0;
-			}
-		}
-		
-		@Override
-		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-			try {
-				return ItemMenu.getView(((Item)mCategoryItems.get(groupPosition).getSubItems().get(childPosition)), convertView, parent);
-			} catch (IOException e) {
-				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				return getChildren(groupPosition).get(childPosition);
+			} catch (ExecutionException | InterruptedException /*| IOException*/ e) {
+				mLogger.warn(e.getMessage(), e);
 				return null;
 			}
 		}
 
 		@Override
+		public long getChildId(int groupPosition, int childPosition) {
+			return ((Item)getChild(groupPosition, childPosition)).getKey();
+		}
+		
+		@Override
+		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+			return ItemMenu.getView((Item)getChild(groupPosition, childPosition), convertView, parent);
+		}
+
+		@Override
 		public int getChildrenCount(int groupPosition) {
 			try {
-				return mCategoryItems.get(groupPosition).getSubItems().size();
-			} catch (IOException e) {
-				LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+				return getChildren(groupPosition).size();
+			} catch (ExecutionException | InterruptedException e) {
+				mLogger.warn(e.getMessage(), e);
 				return 0;
 			}
 		}

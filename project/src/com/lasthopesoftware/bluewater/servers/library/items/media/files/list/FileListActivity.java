@@ -34,7 +34,7 @@ public class FileListActivity extends FragmentActivity {
 	public static final String VIEW_PLAYLIST_FILES = "view_playlist_files";
 	
 	private int mItemId;
-	private IItem<?> mItem;
+	private IItem mItem;
 	
 	private ProgressBar pbLoading;
 	private ListView fileListView;

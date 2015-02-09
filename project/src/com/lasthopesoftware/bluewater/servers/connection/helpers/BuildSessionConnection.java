@@ -12,10 +12,12 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
+import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -66,10 +68,11 @@ public class BuildSessionConnection {
 							
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {
-								fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+								final ItemProvider itemProvider = new ItemProvider(fileSystem.getSubItemParams());
+								itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 									
 									@Override
-									public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, List<IItem<?>> result) {
+									public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 										
 										if (result == null || result.size() == 0) {
 											doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
@@ -90,7 +93,7 @@ public class BuildSessionConnection {
 									}
 								});
 								
-								fileSystem.getSubItemsAsync();
+								itemProvider.execute();
 							}
 						});
 					}
