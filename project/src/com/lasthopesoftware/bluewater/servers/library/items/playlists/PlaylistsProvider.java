@@ -14,12 +14,14 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
-	public PlaylistsProvider(String... params) {
-		super(null, params);
+	private static final String mPlaylistParams = "Playlists/List";
+	
+	public PlaylistsProvider() {
+		this(null);
 	}
 	
-	public PlaylistsProvider(HttpURLConnection connection, String... params) {
-		super(connection, params);
+	public PlaylistsProvider(HttpURLConnection connection) {
+		super(connection, mPlaylistParams);
 	}
 	
 	@Override

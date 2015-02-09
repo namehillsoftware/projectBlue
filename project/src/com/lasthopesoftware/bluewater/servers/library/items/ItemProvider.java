@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
@@ -32,7 +31,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 				try {
 					final InputStream is = conn.getInputStream();
 					try {
-						return new ArrayList<Item>(FilesystemResponse.GetItems(is));
+						return FilesystemResponse.GetItems(is);
 					} finally {
 						is.close();
 					}

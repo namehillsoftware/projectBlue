@@ -110,7 +110,7 @@ public class CategoryFragment extends Fragment {
     	
 		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider("Playlists/List");
+		final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
 		playlistsProvider
 			.onComplete(new OnCompleteListener<Void, Void, List<Playlist>>() {
 				
