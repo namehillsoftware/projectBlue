@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListe
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
@@ -49,7 +49,7 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 	}
 	
 	public String getSubItemUrl() {
-		return ConnectionManager.getFormattedUrl("Browse/Children");
+		return ConnectionProvider.getFormattedUrl("Browse/Children");
 	}
 	
 	public void setVisibleViews(int... visibleViewKeys) {

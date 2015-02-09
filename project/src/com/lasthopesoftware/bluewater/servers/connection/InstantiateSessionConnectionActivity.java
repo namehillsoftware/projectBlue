@@ -32,7 +32,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	 */
 	public static boolean restoreSessionConnection(final Activity activity) {
 		// Check to see that a URL can still be built
-		if (ConnectionManager.getFormattedUrl() != null) return false;
+		if (ConnectionProvider.getFormattedUrl() != null) return false;
 		
 		final Intent intent = new Intent(activity, InstantiateSessionConnectionActivity.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);

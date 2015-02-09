@@ -21,7 +21,7 @@ import xmlwise.Xmlwise;
 import android.util.Log;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -55,7 +55,7 @@ public class FileProperties {
 			@Override
 			public void run() {
 				try {
-					final HttpURLConnection conn = ConnectionManager.getConnection("File/SetInfo", "File=" + mFileKeyString, "Field=" + name, "Value=" + value);;
+					final HttpURLConnection conn = ConnectionProvider.getConnection("File/SetInfo", "File=" + mFileKeyString, "Field=" + name, "Value=" + value);;
 					try {
 						conn.setReadTimeout(5000);
 						conn.getInputStream().close();
@@ -106,7 +106,7 @@ public class FileProperties {
 					returnProperties.putAll(mProperties);
 					
 					try {
-						final HttpURLConnection conn = ConnectionManager.getConnection("File/GetInfo", "File=" + mFileKeyString);
+						final HttpURLConnection conn = ConnectionProvider.getConnection("File/GetInfo", "File=" + mFileKeyString);
 						conn.setReadTimeout(45000);
 						try {
 							final InputStream is = conn.getInputStream();

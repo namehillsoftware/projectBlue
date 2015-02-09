@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.cache.DiskFileCache;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -114,7 +114,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			}
 			
 			try {
-				final HttpURLConnection conn = ConnectionManager.getConnection(
+				final HttpURLConnection conn = ConnectionProvider.getConnection(
 											"File/GetImage", 
 											"File=" + String.valueOf(mFile.getKey()), 
 											"Type=Full", 

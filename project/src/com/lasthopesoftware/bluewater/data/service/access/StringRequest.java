@@ -11,14 +11,14 @@ import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 
 public class StringRequest extends AsyncTask<String, Void, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
 		try {
-			final HttpURLConnection conn = ConnectionManager.getConnection(params);
+			final HttpURLConnection conn = ConnectionProvider.getConnection(params);
 			try {
 				final InputStream is = conn.getInputStream();
 				try {

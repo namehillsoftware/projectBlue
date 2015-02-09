@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -18,7 +18,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 
 	@Override
 	public Integer onExecute(ISimpleTask<Void, Void, Integer> owner, Void... params) throws Exception {
-		final HttpURLConnection conn = ConnectionManager.getConnection("Library/GetRevision");
+		final HttpURLConnection conn = ConnectionProvider.getConnection("Library/GetRevision");
 		try {
 			final InputStream is = conn.getInputStream();
 			try {

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 
 public class StandardXmlRequest extends AsyncTask<String, Void, StandardRequest> {
 
@@ -18,7 +18,7 @@ public class StandardXmlRequest extends AsyncTask<String, Void, StandardRequest>
 		StandardRequest responseDao = null;
 		
 		try {
-			HttpURLConnection conn = ConnectionManager.getConnection(params);
+			HttpURLConnection conn = ConnectionProvider.getConnection(params);
 	    	
 			try {
 				final InputStream is = conn.getInputStream();

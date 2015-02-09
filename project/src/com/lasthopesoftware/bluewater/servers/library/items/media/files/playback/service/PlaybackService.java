@@ -39,7 +39,7 @@ import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
@@ -312,7 +312,7 @@ public class PlaybackService extends Service implements
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
 				
-				ConnectionManager.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
+				ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
 					@Override
 					public void onComplete(final ISimpleTask<Integer, Void, Boolean> owner, final Boolean result) {
@@ -507,7 +507,7 @@ public class PlaybackService extends Service implements
 		
 		mStreamingMusicService = this;
 		
-		if (ConnectionManager.getFormattedUrl() == null) {
+		if (ConnectionProvider.getFormattedUrl() == null) {
 			// TODO this should probably be its own service soon
 			handleBuildStatusChange(BuildSessionConnection.build(mStreamingMusicService, new OnBuildSessionStateChangeListener() {
 				
@@ -742,7 +742,7 @@ public class PlaybackService extends Service implements
 	    		if (mPlaylistController.resume()) return;
 			}
     		
-        	ConnectionManager.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
+        	ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {

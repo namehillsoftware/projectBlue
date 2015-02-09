@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -59,7 +59,7 @@ public class PollConnection {
 					
 					if (!mIsRefreshing.get()) {
 						mIsRefreshing.set(true);
-						ConnectionManager.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
+						ConnectionProvider.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
 			
 							@Override
 							public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {

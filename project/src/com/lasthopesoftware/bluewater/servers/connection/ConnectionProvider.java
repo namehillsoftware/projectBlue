@@ -33,14 +33,14 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class ConnectionManager {
+public class ConnectionProvider {
 	private static AccessConfiguration mAccessConfiguration;
 	private static String mAccessString = null;
 	private static String mAuthCode = null;
 	private static boolean mIsLocalOnly = false;
 	
 	private static final int stdTimeoutTime = 30000;
-	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionManager.class);
+	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionProvider.class);
 	
 	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<OnAccessStateChange>();
 	
