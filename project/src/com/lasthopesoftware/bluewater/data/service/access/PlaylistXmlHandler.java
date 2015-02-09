@@ -6,11 +6,12 @@ import java.util.TreeMap;
 
 
 
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
 
 public class PlaylistXmlHandler extends DefaultHandler {

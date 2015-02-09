@@ -8,8 +8,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
-
 public class ClickPlaylistListener implements OnItemClickListener {
 
 	private ArrayList<Playlist> mPlaylists;

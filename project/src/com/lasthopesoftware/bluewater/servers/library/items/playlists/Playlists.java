@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.objects;
+package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +13,8 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteLi
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.ItemAsyncBase;
 
 
 public class Playlists extends ItemAsyncBase implements IItem {
@@ -21,6 +23,7 @@ public class Playlists extends ItemAsyncBase implements IItem {
 	private final ArrayList<OnStartListener<List<Playlist>>> mItemStartListeners = new ArrayList<OnStartListener<List<Playlist>>>(1);
 	private final ArrayList<OnErrorListener<List<Playlist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Playlist>>>(1);
 	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
+	private final List<Playlist> mChildren;
 	
 	private final OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
 		
@@ -37,67 +40,64 @@ public class Playlists extends ItemAsyncBase implements IItem {
 		}
 	};
 	
-	public Playlists(int key) {
+	public Playlists(int key, List<Playlist> children) {
 		setKey(key);
 		setValue("Playlist");
+		mChildren = children;
 	}
-	
+		
 	public SparseArray<Playlist> getMappedPlaylists() {
 		if (mMappedPlaylists == null) denormalizeAndMap();
 		return mMappedPlaylists;
 	}
 	
 	private void denormalizeAndMap() {
-		try {
-			mMappedPlaylists = new SparseArray<Playlist>(getSubItems().size());
-			denormalizeAndMap(getSubItems());
-		} catch (IOException io) {
-			LoggerFactory.getLogger(Playlists.class).error(io.getMessage(), io);
-		}
+		mMappedPlaylists = new SparseArray<Playlist>(mChildren.size());
+		denormalizeAndMap(mChildren);
 	}
 	
-	private void denormalizeAndMap(ArrayList<Playlist> items) {
+	private void denormalizeAndMap(List<Playlist> items) {
 		for (Playlist playlist : items) {
 			mMappedPlaylists.append(playlist.getKey(), playlist);
-//			if (playlist.getSubItems().size() > 0) denormalizeAndMap(playlist.getSubItems());
+			if (playlist.getChildren().size() > 0) denormalizeAndMap(playlist.getChildren());
 		}
 	}
 	
 	@Override
-	protected String[] getSubItemParams() {
+	public String[] getSubItemParams() {
 		return new String[] { "Playlists/List" };
 	}
 
-	@Override
-	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
-		
-		mOnCompleteListeners.add(listener);
-	}
-
-	@Override
-	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-		if (mOnCompleteListeners != null)
-			mOnCompleteListeners.remove(listener);
-	}
-
-	@Override
-	protected OnConnectListener<List<Playlist>> getOnItemConnectListener() {
-		return mOnConnectListener;
-	}
-
-	@Override
-	protected List<OnCompleteListener<List<Playlist>>> getOnItemsCompleteListeners() {
-		return mOnCompleteListeners;
-	}
-
-	@Override
-	protected List<OnStartListener<List<Playlist>>> getOnItemsStartListeners() {
-		return mItemStartListeners;
-	}
-
-	@Override
-	protected List<OnErrorListener<List<Playlist>>> getOnItemsErrorListeners() {
-		return mItemErrorListeners;
-	}
+//	@Override
+//	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+//		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
+//		
+//		mOnCompleteListeners.add(listener);
+//	}
+//
+//	@Override
+//	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
+//		if (mOnCompleteListeners != null)
+//			mOnCompleteListeners.remove(listener);
+//	}
+//
+//	@Override
+//	protected OnConnectListener<List<Playlist>> getOnItemConnectListener() {
+//		return mOnConnectListener;
+//	}
+//
+//	@Override
+//	protected List<OnCompleteListener<List<Playlist>>> getOnItemsCompleteListeners() {
+//		return mOnCompleteListeners;
+//	}
+//
+//	@Override
+//	protected List<OnStartListener<List<Playlist>>> getOnItemsStartListeners() {
+//		return mItemStartListeners;
+//	}
+//
+//	@Override
+//	protected List<OnErrorListener<List<Playlist>>> getOnItemsErrorListeners() {
+//		return mItemErrorListeners;
+//	}
 }

@@ -12,7 +12,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 
 public class PlaylistRequest {
 

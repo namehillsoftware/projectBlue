@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListe
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 
 
-public class Item extends ItemAsyncBase<Item> implements IItem, IFilesContainer {
+public class Item extends ItemAsyncBase implements IItem, IFilesContainer {
 	private ArrayList<OnStartListener<List<Item>>> mItemStartListeners = new ArrayList<OnStartListener<List<Item>>>(1);
 	private ArrayList<OnErrorListener<List<Item>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Item>>>(1);
 	private ArrayList<OnCompleteListener<List<Item>>> mOnCompleteListeners;
@@ -90,7 +90,7 @@ public class Item extends ItemAsyncBase<Item> implements IItem, IFilesContainer 
 //	}
 
 	@Override
-	protected String[] getSubItemParams() {
+	public String[] getSubItemParams() {
 		return new String[] { "Browse/Children", "ID=" + String.valueOf(this.getKey())};
 	}
 }

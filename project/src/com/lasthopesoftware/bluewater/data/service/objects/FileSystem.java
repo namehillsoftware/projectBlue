@@ -4,11 +4,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -22,13 +19,15 @@ import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionM
 import com.lasthopesoftware.bluewater.data.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.data.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class FileSystem extends ItemAsyncBase<IItem> implements IItem {
+public class FileSystem extends ItemAsyncBase implements IItem {
 	private TreeSet<IItem> mVisibleViews;
-	private Playlists mPlaylistsView;
+//	private Playlists mPlaylistsView;
 	private int[] mVisibleViewKeys;
 	
 	private ArrayList<OnCompleteListener<List<IItem>>> mOnCompleteClientListeners;
@@ -100,19 +99,20 @@ public class FileSystem extends ItemAsyncBase<IItem> implements IItem {
 						}
 					});
 					
-					final List<IItem> libraries = (new ItemProvider(getSubItemParams())).get(); 			
+					final List<Item> libraries = (new ItemProvider(getSubItemParams())).get(); 			
 					for (int viewKey : mVisibleViewKeys) {
-						for (IItem library : libraries) {
+						for (Item library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								if (mPlaylistsView == null) mPlaylistsView = new Playlists(Integer.MAX_VALUE);
-								mVisibleViews.add(new Playlists(Integer.MAX_VALUE));
+//								if (mPlaylistsView == null) mPlaylistsView = new Playlists(Integer.MAX_VALUE);
+								
+								mVisibleViews.add(new Playlists(Integer.MAX_VALUE, (new PlaylistsProvider("Playlists/List")).get()));
 								continue;
 							}
 							
-							final List<IItem> views = (new ItemProvider(library.getSubItemParams())).get();
-							for (IItem view : views)
+							final List<Item> views = (new ItemProvider(library.getSubItemParams())).get();
+							for (Item view : views)
 								mVisibleViews.add(view);
 						}
 					}

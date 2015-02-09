@@ -16,16 +16,16 @@ import com.lasthopesoftware.bluewater.data.service.objects.IItem;
  * one of the primary sections of the app.
  */
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
-	private ArrayList<IItem<?>> mLibraryViews;
+	private ArrayList<IItem> mLibraryViews;
 	private CategoryFragment[] mFragments;
 	
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
-		mLibraryViews = new ArrayList<IItem<?>>();
+		mLibraryViews = new ArrayList<IItem>();
 		mFragments = new CategoryFragment[0];
 	}
 		
-	public void setLibraryViews(ArrayList<IItem<?>> libraryViews) {
+	public void setLibraryViews(ArrayList<IItem> libraryViews) {
 		mLibraryViews = libraryViews;
 		mFragments = new CategoryFragment[libraryViews.size()];
 	}
@@ -55,7 +55,7 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 		return !mLibraryViews.get(position).getValue().isEmpty() ? mLibraryViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
 	}
 
-	public ArrayList<IItem<?>> getPages() {
+	public ArrayList<IItem> getPages() {
 		return mLibraryViews;
 	}
 }

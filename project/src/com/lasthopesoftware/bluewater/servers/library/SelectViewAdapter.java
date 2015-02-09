@@ -13,12 +13,12 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 
-public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
+public class SelectViewAdapter extends ArrayAdapter<IItem> {
 
 	private final int mSelectedViewKey;
 	private static int mSelectedColor = -1;
 	
-	public SelectViewAdapter(Context context, int resource, List<IItem<?>> views, final int selectedViewKey) {
+	public SelectViewAdapter(Context context, int resource, List<IItem> views, final int selectedViewKey) {
 		super(context, resource, views);
 		
 		mSelectedViewKey = selectedViewKey;
@@ -34,7 +34,7 @@ public class SelectViewAdapter extends ArrayAdapter<IItem<?>> {
 			convertView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, parent, false);
 		}
 		
-		final IItem<?> item = getItem(position);
+		final IItem item = getItem(position);
 		
 		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);
 		tvViewName.setText(item.getValue());

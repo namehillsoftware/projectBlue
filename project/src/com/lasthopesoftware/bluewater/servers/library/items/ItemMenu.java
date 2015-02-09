@@ -21,12 +21,12 @@ import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListe
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
 import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -46,7 +46,7 @@ public class ItemMenu {
 		final ImageButton viewButton;
 	}
 	
-	public static View getView(IItem<?> item, View convertView, ViewGroup parent) {
+	public static View getView(IItem item, View convertView, ViewGroup parent) {
 		if (convertView == null) {
 		
 			final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
@@ -129,9 +129,9 @@ public class ItemMenu {
 	}
 	
 	private static class ViewFilesClickHandler implements OnClickListener {
-		private IItem<?> mItem;
+		private IItem mItem;
 		
-		public ViewFilesClickHandler(IItem<?> item) {
+		public ViewFilesClickHandler(IItem item) {
 			mItem = item;
 		}
 		

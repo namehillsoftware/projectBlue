@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.objects;
+package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,11 @@ import android.os.AsyncTask;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.data.service.objects.AbstractIntKeyStringValue;
+import com.lasthopesoftware.bluewater.data.service.objects.Files;
+import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
+import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -40,16 +45,15 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 		return mParent;
 	}
 	
-//	@Override
-//	public ArrayList<Playlist> getSubItems() {
-//		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
-//		
-//		final int subItemSize = mSubItems.size();
-//		final ArrayList<Playlist> returnList = new ArrayList<Playlist>(subItemSize);
-//		for (int i = 0; i < subItemSize; i++)
-//			returnList.add(mSubItems.valueAt(i));
-//		return returnList;
-//	}
+	public ArrayList<Playlist> getChildren() {
+		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
+		
+		final int subItemSize = mSubItems.size();
+		final ArrayList<Playlist> returnList = new ArrayList<Playlist>(subItemSize);
+		for (int i = 0; i < subItemSize; i++)
+			returnList.add(mSubItems.valueAt(i));
+		return returnList;
+	}
 //	
 //	@Override
 //	public void getSubItemsAsync() {
@@ -109,7 +113,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 		this.mGroup = mGroup;
 	}
 
-	protected String[] getSubItemParams() {
+	public String[] getSubItemParams() {
 		return new String[] { "Playlist/Files", "Playlist=" + String.valueOf(this.getKey()) };
 	}
 

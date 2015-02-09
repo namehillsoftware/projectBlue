@@ -54,7 +54,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 	
 	private boolean mIsStopped = false;
 	
-	private OnCompleteListener<String, Void, ArrayList<IItem<?>>> mOnGetVisibleViewsCompleteListener;
+	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
 		
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -137,13 +137,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 	@SuppressWarnings("unchecked")
 	public void displayLibrary(final Library library, FileSystem fileSystem) {
-		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem<?>>>() {
+		fileSystem.addOnItemsCompleteListener(new IDataTask.OnCompleteListener<List<IItem>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IItem<?>>> owner, final List<IItem<?>> items) {
+			public void onComplete(ISimpleTask<String, Void, List<IItem>> owner, final List<IItem> items) {
 				if (mIsStopped || items == null) return;
 					
-				for (IItem<?> item : items) {
+				for (IItem item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
 					getActionBar().setTitle(mOldTitle);
@@ -217,12 +217,12 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		}));
 	}
 	
-	private OnCompleteListener<String, Void, ArrayList<IItem<?>>> getOnVisibleViewsCompleteListener() {
+	private OnCompleteListener<String, Void, ArrayList<IItem>> getOnVisibleViewsCompleteListener() {
 		if (mOnGetVisibleViewsCompleteListener == null) {
-			mOnGetVisibleViewsCompleteListener = new OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+			mOnGetVisibleViewsCompleteListener = new OnCompleteListener<String, Void, ArrayList<IItem>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+				public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
 					if (mIsStopped || result == null) return;
 					
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());

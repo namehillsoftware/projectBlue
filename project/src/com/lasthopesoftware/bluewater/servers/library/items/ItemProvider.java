@@ -7,12 +7,12 @@ import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
-import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class ItemProvider extends AbstractIItemProvider { 
+public class ItemProvider extends AbstractCollectionProvider<Item> { 
 
 	public ItemProvider(String... params) {
 		super(null, params);
@@ -22,17 +22,17 @@ public class ItemProvider extends AbstractIItemProvider {
 		super(connection, params);
 	}
 			
-	protected SimpleTask<Void, Void, List<IItem>> getNewTask() {
+	protected SimpleTask<Void, Void, List<Item>> getNewTask() {
 
-		final SimpleTask<Void, Void, List<IItem>> getItemsTask = new SimpleTask<Void, Void, List<IItem>>(new OnExecuteListener<Void, Void, List<IItem>>() {
+		final SimpleTask<Void, Void, List<Item>> getItemsTask = new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
 			
 			@Override
-			public List<IItem> onExecute(ISimpleTask<Void, Void, List<IItem>> owner, Void... voidParams) throws Exception {
+			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
 				final HttpURLConnection conn = mConnection == null ? ConnectionManager.getConnection(mParams) : mConnection;
 				try {
 					final InputStream is = conn.getInputStream();
 					try {
-						return new ArrayList<IItem>(FilesystemResponse.GetItems(is));
+						return new ArrayList<Item>(FilesystemResponse.GetItems(is));
 					} finally {
 						is.close();
 					}

@@ -19,8 +19,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileS
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
-import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
@@ -42,7 +40,7 @@ public class PlaylistListActivity extends FragmentActivity {
 
 	private Context thisContext = this;
 	
-	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>> visibleViewsAsyncComplete;
+	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> visibleViewsAsyncComplete;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,13 +55,13 @@ public class PlaylistListActivity extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem<?>>>() {
+        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem<?>>> owner, ArrayList<IItem<?>> result) {
+			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
-				for (IItem<?> item : result) {
+				for (IItem item : result) {
 					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
 					
 					mPlaylist = ((Playlists)item).getMappedPlaylists().get(mPlaylistId);
@@ -99,9 +97,9 @@ public class PlaylistListActivity extends FragmentActivity {
 	
 	private void BuildPlaylistView() {
                 
-        if (mPlaylist.getSubItems().size() > 0) {
-        	playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, mPlaylist.getSubItems()));
-        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getSubItems()));
+        if (mPlaylist.getChildren().size() > 0) {
+        	playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, mPlaylist.getChildren()));
+        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getChildren()));
         	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
         } else {
         	playlistView.setVisibility(View.INVISIBLE);

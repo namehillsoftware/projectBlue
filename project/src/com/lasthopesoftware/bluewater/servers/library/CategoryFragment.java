@@ -26,14 +26,14 @@ import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
-import com.lasthopesoftware.bluewater.data.service.objects.Playlist;
-import com.lasthopesoftware.bluewater.data.service.objects.Playlists;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemMenu;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 
