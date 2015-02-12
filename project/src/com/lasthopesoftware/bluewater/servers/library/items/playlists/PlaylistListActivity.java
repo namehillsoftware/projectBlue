@@ -29,7 +29,6 @@ public class PlaylistListActivity extends FragmentActivity {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewPlaylist.key";
 	private int mPlaylistId;
-	private Playlist mPlaylist;
 
 	private ProgressBar pbLoading;
 	private ListView playlistView;
@@ -50,7 +49,7 @@ public class PlaylistListActivity extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(); 
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
         
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
@@ -58,9 +57,7 @@ public class PlaylistListActivity extends FragmentActivity {
 			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
-				mPlaylist = (new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId);
-				
-				BuildPlaylistView();
+				BuildPlaylistView((new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId));
 			}
 		}).onError(new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
 					
@@ -68,7 +65,7 @@ public class PlaylistListActivity extends FragmentActivity {
 			public void onConnectionRegained() {
 				playlistsProvider.execute();
 			}
-		}));
+		})).execute();
 	}
 	
 	@Override
@@ -78,30 +75,31 @@ public class PlaylistListActivity extends FragmentActivity {
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 	
-	private void BuildPlaylistView() {
+	private void BuildPlaylistView(final Playlist playlist) {
                 
-        if (mPlaylist.getChildren().size() > 0) {
-        	playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, mPlaylist.getChildren()));
-        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, mPlaylist.getChildren()));
+        if (playlist.getChildren().size() > 0) {
+        	playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist.getChildren()));
+        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getChildren()));
         	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
-        } else {
-        	playlistView.setVisibility(View.INVISIBLE);
-        	pbLoading.setVisibility(View.VISIBLE);
-        	Files filesContainer = (Files)mPlaylist.getFiles();
-        	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<IFile>>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
-					playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
-		        	playlistView.setOnItemClickListener(new ClickFileListener(mPlaylist.getFiles()));
-		        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
-		        	
-		        	playlistView.setVisibility(View.VISIBLE);
-		        	pbLoading.setVisibility(View.INVISIBLE);
-				}
-			});
-        	filesContainer.getFilesAsync();
+        	return;
         }
+        
+    	playlistView.setVisibility(View.INVISIBLE);
+    	pbLoading.setVisibility(View.VISIBLE);
+    	Files filesContainer = (Files)playlist.getFiles();
+    	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<IFile>>() {
+			
+			@Override
+			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
+				playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
+	        	playlistView.setOnItemClickListener(new ClickFileListener(playlist.getFiles()));
+	        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
+	        	
+	        	playlistView.setVisibility(View.VISIBLE);
+	        	pbLoading.setVisibility(View.INVISIBLE);
+			}
+		});
+    	filesContainer.getFilesAsync();
 	}
 	
 	@Override
