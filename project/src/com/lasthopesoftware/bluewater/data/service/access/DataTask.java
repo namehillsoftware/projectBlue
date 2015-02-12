@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.data.service.access;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -15,7 +15,7 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> impleme
 			@Override
 			public TResult onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
 
-				final HttpURLConnection conn = ConnectionManager.getConnection(params);
+				final HttpURLConnection conn = ConnectionProvider.getConnection(params);
 				try {
 					final InputStream is = conn.getInputStream();
 					try {

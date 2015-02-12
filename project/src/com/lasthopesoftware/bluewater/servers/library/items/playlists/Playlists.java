@@ -20,25 +20,22 @@ import com.lasthopesoftware.bluewater.data.service.objects.ItemAsyncBase;
 public class Playlists extends ItemAsyncBase implements IItem {
 
 	private SparseArray<Playlist> mMappedPlaylists;
-	private final ArrayList<OnStartListener<List<Playlist>>> mItemStartListeners = new ArrayList<OnStartListener<List<Playlist>>>(1);
-	private final ArrayList<OnErrorListener<List<Playlist>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Playlist>>>(1);
-	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
 	private final List<Playlist> mChildren;
-	
-	private final OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
-		
-		@Override
-		public List<Playlist> onConnect(InputStream is) {
-			ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
-			
-			int i = 0;
-			while (i < streamResult.size()) {
-				if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-				else i++;
-			}
-			return streamResult;
-		}
-	};
+//	
+//	private final OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
+//		
+//		@Override
+//		public List<Playlist> onConnect(InputStream is) {
+//			ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+//			
+//			int i = 0;
+//			while (i < streamResult.size()) {
+//				if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+//				else i++;
+//			}
+//			return streamResult;
+//		}
+//	};
 	
 	public Playlists(int key, List<Playlist> children) {
 		setKey(key);

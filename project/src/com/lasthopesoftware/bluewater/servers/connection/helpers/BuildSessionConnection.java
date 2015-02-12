@@ -9,12 +9,12 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.ItemProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -45,7 +45,7 @@ public class BuildSessionConnection {
 				
 				doStateChange(BuildingSessionConnectionStatus.BUILDING_CONNECTION);
 				
-				ConnectionManager.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Integer, Void, Boolean>() {
+				ConnectionProvider.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Integer, Void, Boolean>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {

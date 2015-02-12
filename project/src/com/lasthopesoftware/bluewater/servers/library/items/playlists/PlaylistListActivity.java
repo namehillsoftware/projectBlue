@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
@@ -14,11 +13,8 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
-import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
-import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
@@ -39,9 +35,8 @@ public class PlaylistListActivity extends FragmentActivity {
 	private ListView playlistView;
 
 	private Context thisContext = this;
-	
-	private ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> visibleViewsAsyncComplete;
 
+	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,37 +50,25 @@ public class PlaylistListActivity extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        visibleViewsAsyncComplete = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(); 
+        
+        playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override
-			public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
+			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
-				for (IItem item : result) {
-					if (!item.getValue().equalsIgnoreCase("Playlist")) continue;
-					
-					mPlaylist = ((Playlists)item).getMappedPlaylists().get(mPlaylistId);
-					break;
-				}
+				mPlaylist = (new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId);
 				
 				BuildPlaylistView();
 			}
-		};
-		
-		FileSystem.Instance.get(thisContext, new OnGetFileSystemCompleteListener() {
-			
-			@SuppressWarnings("unchecked")
-			@Override
-			public void onGetFileSystemComplete(final FileSystem fileSystem) {
-				fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete, new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
 					
-					@Override
-					public void onConnectionRegained() {
-						fileSystem.getVisibleViewsAsync(visibleViewsAsyncComplete, new HandleViewIoException(thisContext, this));
-					}
-				}));
+			@Override
+			public void onConnectionRegained() {
+				playlistsProvider.execute();
 			}
-		});
+		}));
 	}
 	
 	@Override

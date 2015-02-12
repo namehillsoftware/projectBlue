@@ -2,12 +2,11 @@ package com.lasthopesoftware.bluewater.servers.library.items;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -28,11 +27,11 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 			
 			@Override
 			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
-				final HttpURLConnection conn = mConnection == null ? ConnectionManager.getConnection(mParams) : mConnection;
+				final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mParams) : mConnection;
 				try {
 					final InputStream is = conn.getInputStream();
 					try {
-						return new ArrayList<Item>(FilesystemResponse.GetItems(is));
+						return FilesystemResponse.GetItems(is);
 					} finally {
 						is.close();
 					}

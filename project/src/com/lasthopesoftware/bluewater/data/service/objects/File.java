@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.slf4j.LoggerFactory;
 
 import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
 	private FileProperties mFileProperties;
@@ -52,7 +52,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.; 
 		 * 2: Real-time playback, no playback statistics handling (default: )
 		 */
-		return ConnectionManager.getFormattedUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
+		return ConnectionProvider.getFormattedUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
 	}
 	
 	public void setProperty(String name, String value) {

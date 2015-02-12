@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.lasthopesoftware.bluewater.data.service.access.PlaylistRequest;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.AbstractCollectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -14,12 +14,14 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
-	public PlaylistsProvider(String... params) {
-		super(null, params);
+	private static final String mPlaylistParams = "Playlists/List";
+	
+	public PlaylistsProvider() {
+		this(null);
 	}
 	
-	public PlaylistsProvider(HttpURLConnection connection, String... params) {
-		super(connection, params);
+	public PlaylistsProvider(HttpURLConnection connection) {
+		super(connection, mPlaylistParams);
 	}
 	
 	@Override
@@ -28,7 +30,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 			
 			@Override
 			public List<Playlist> onExecute(ISimpleTask<Void, Void, List<Playlist>> owner, Void... voidParams) throws Exception {
-				final HttpURLConnection conn = mConnection == null ? ConnectionManager.getConnection(mParams) : mConnection;
+				final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mParams) : mConnection;
 
 				try {
 					final InputStream is = conn.getInputStream();

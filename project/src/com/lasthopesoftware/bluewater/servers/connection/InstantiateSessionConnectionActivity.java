@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
@@ -33,7 +32,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	 */
 	public static boolean restoreSessionConnection(final Activity activity) {
 		// Check to see that a URL can still be built
-		if (ConnectionManager.getFormattedUrl() != null) return false;
+		if (ConnectionProvider.getFormattedUrl() != null) return false;
 		
 		final Intent intent = new Intent(activity, InstantiateSessionConnectionActivity.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);
