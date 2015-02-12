@@ -62,7 +62,7 @@ public class BuildSessionConnection {
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 
 					
-						(new ItemProvider(FileSystem.Instance.get(library).getSubItemParams()))
+						ItemProvider.provide(FileSystem.Instance.get(library).getSubItemParams())
 							.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 								
 								@Override

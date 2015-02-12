@@ -158,7 +158,7 @@ public class CategoryFragment extends Fragment {
 						final Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
 						
 						try {
-							if ((new ItemProvider(selection.getSubItemParams())).get().size() > 0) return false;
+							if (ItemProvider.provide(selection.getSubItemParams()).get().size() > 0) return false;
 						} catch (ExecutionException | InterruptedException e) {
 							LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
 							return true;
@@ -216,7 +216,7 @@ public class CategoryFragment extends Fragment {
     	private List<Item> getChildren(int position) throws ExecutionException, InterruptedException {
     		List<Item> children = mChildren.get(position);
     		if (children == null) {
-	    		children = (new ItemProvider(mCategoryItems.get(position).getSubItemParams())).get();
+	    		children = ItemProvider.provide(mCategoryItems.get(position).getSubItemParams()).get();
 	    		mChildren.put(position, children);
     		}
     		return children;

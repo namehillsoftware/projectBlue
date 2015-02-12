@@ -80,7 +80,7 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 						}
 					});
 					
-					final List<Item> libraries = (new ItemProvider(getSubItemParams())).get(); 			
+					final List<Item> libraries = ItemProvider.provide(getSubItemParams()).get(); 			
 					for (int viewKey : mVisibleViewKeys) {
 						for (Item library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
@@ -90,7 +90,7 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 								continue;
 							}
 							
-							final List<Item> views = (new ItemProvider(library.getSubItemParams())).get();
+							final List<Item> views = ItemProvider.provide(library.getSubItemParams()).get();
 							for (Item view : views)
 								mVisibleViews.add(view);
 						}

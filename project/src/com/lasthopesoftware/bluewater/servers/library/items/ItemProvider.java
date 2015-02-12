@@ -13,6 +13,10 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class ItemProvider extends AbstractCollectionProvider<Item> { 
 	
+	public static ItemProvider provide(String... params) {
+		return new ItemProvider(params);
+	}
+	
 	public ItemProvider(String... params) {
 		super(null, params);
 	}
