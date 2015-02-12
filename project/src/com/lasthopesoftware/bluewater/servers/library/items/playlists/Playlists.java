@@ -12,21 +12,6 @@ public class Playlists extends ItemAsyncBase implements IItem {
 
 	private SparseArray<Playlist> mMappedPlaylists;
 	private final List<Playlist> mChildren;
-//	
-//	private final OnConnectListener<List<Playlist>> mOnConnectListener = new OnConnectListener<List<Playlist>>() {
-//		
-//		@Override
-//		public List<Playlist> onConnect(InputStream is) {
-//			ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
-//			
-//			int i = 0;
-//			while (i < streamResult.size()) {
-//				if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-//				else i++;
-//			}
-//			return streamResult;
-//		}
-//	};
 	
 	public Playlists(int key, List<Playlist> children) {
 		setKey(key);
@@ -55,37 +40,4 @@ public class Playlists extends ItemAsyncBase implements IItem {
 	public String[] getSubItemParams() {
 		return new String[] { "Playlists/List" };
 	}
-
-//	@Override
-//	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-//		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
-//		
-//		mOnCompleteListeners.add(listener);
-//	}
-//
-//	@Override
-//	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-//		if (mOnCompleteListeners != null)
-//			mOnCompleteListeners.remove(listener);
-//	}
-//
-//	@Override
-//	protected OnConnectListener<List<Playlist>> getOnItemConnectListener() {
-//		return mOnConnectListener;
-//	}
-//
-//	@Override
-//	protected List<OnCompleteListener<List<Playlist>>> getOnItemsCompleteListeners() {
-//		return mOnCompleteListeners;
-//	}
-//
-//	@Override
-//	protected List<OnStartListener<List<Playlist>>> getOnItemsStartListeners() {
-//		return mItemStartListeners;
-//	}
-//
-//	@Override
-//	protected List<OnErrorListener<List<Playlist>>> getOnItemsErrorListeners() {
-//		return mItemErrorListeners;
-//	}
 }

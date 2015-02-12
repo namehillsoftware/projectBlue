@@ -49,8 +49,10 @@ public class PlaylistListActivity extends FragmentActivity {
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
+        playlistView.setVisibility(View.INVISIBLE);
+    	pbLoading.setVisibility(View.VISIBLE);
+    	
         final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
-        
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override
@@ -58,6 +60,9 @@ public class PlaylistListActivity extends FragmentActivity {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
 				BuildPlaylistView((new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId));
+				
+				playlistView.setVisibility(View.VISIBLE);
+	        	pbLoading.setVisibility(View.INVISIBLE);
 			}
 		}).onError(new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
 					
