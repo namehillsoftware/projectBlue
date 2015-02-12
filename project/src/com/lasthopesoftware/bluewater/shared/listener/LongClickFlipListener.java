@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.shared.listener;
 
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ViewFlipper;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ViewFlipper;
 
 /***
  * Will flip a menu item if it is a ViewFlipper class and will set all sibling views to previous view

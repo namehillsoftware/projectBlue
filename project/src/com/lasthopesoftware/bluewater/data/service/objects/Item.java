@@ -1,30 +1,10 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 
 
 public class Item extends ItemAsyncBase implements IItem, IFilesContainer {
-	private ArrayList<OnStartListener<List<Item>>> mItemStartListeners = new ArrayList<OnStartListener<List<Item>>>(1);
-	private ArrayList<OnErrorListener<List<Item>>> mItemErrorListeners = new ArrayList<OnErrorListener<List<Item>>>(1);
-	private ArrayList<OnCompleteListener<List<Item>>> mOnCompleteListeners;
-	private Files mJrFiles;
-	
-	private OnConnectListener<List<Item>> mItemConnectListener = new OnConnectListener<List<Item>>() {
-		
-		@Override
-		public List<Item> onConnect(InputStream is) {
-			return FilesystemResponse.GetItems(is);
-		}
-	};
-	
+	private Files mFiles;
+
 	public Item(int key, String value) {
 		super(key, value);
 	}
@@ -40,8 +20,8 @@ public class Item extends ItemAsyncBase implements IItem, IFilesContainer {
 		
 	@Override
 	public IItemFiles getFiles() {
-		if (mJrFiles == null) mJrFiles = new Files("Browse/Files", "ID=" + String.valueOf(this.getKey()));
-		return mJrFiles;
+		if (mFiles == null) mFiles = new Files("Browse/Files", "ID=" + String.valueOf(this.getKey()));
+		return mFiles;
 	}
 //
 //	@Override

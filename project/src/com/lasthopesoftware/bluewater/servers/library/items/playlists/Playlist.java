@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.os.AsyncTask;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
@@ -12,8 +11,6 @@ import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.IItemFiles;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
 
 public class Playlist extends AbstractIntKeyStringValue implements IItem, IFilesContainer {
 	private SparseArray<Playlist> mSubItems;

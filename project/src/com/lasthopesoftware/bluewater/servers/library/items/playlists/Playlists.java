@@ -1,18 +1,9 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import android.util.SparseArray;
 
-import com.j256.ormlite.logger.LoggerFactory;
-import com.lasthopesoftware.bluewater.data.service.access.PlaylistRequest;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.bluewater.data.service.objects.ItemAsyncBase;
 

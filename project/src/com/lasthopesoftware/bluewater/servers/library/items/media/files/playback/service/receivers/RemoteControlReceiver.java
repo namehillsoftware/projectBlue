@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.view.KeyEvent;
+
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 
 public class RemoteControlReceiver extends BroadcastReceiver {
 	

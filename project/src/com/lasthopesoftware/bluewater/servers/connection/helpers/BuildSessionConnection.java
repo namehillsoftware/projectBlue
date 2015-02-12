@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.data.service.objects.FileSystem;
-import com.lasthopesoftware.bluewater.data.service.objects.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
