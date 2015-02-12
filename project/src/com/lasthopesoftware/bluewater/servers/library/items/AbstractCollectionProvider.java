@@ -4,8 +4,8 @@ import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-
-import android.os.AsyncTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -17,7 +17,8 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	protected OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
 	protected OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
 	protected final String[] mParams;
-	
+	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor(); 
+
 	public AbstractCollectionProvider(String... params) {
 		this(null, params);
 	}
@@ -39,7 +40,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public void execute() {
-		execute(AsyncTask.SERIAL_EXECUTOR);
+		execute(mCollectionAccessExecutor);
 	}
 	
 	public void execute(Executor executor) {
@@ -47,7 +48,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public List<T> get() throws ExecutionException, InterruptedException {
-		return get(AsyncTask.SERIAL_EXECUTOR);
+		return get(mCollectionAccessExecutor);
 	}
 	
 	public List<T> get(Executor executor) throws ExecutionException, InterruptedException {

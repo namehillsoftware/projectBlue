@@ -13,7 +13,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 public class ItemProvider extends AbstractCollectionProvider<Item> { 
-
+	
 	public ItemProvider(String... params) {
 		super(null, params);
 	}

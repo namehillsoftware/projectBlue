@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -10,11 +9,6 @@ import java.util.TreeSet;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.FilesystemResponse;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnConnectListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnErrorListener;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask.OnStartListener;
 import com.lasthopesoftware.bluewater.data.service.access.connection.ConnectionManager;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
@@ -27,20 +21,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 public class FileSystem extends ItemAsyncBase implements IItem {
 	private TreeSet<IItem> mVisibleViews;
-//	private Playlists mPlaylistsView;
 	private int[] mVisibleViewKeys;
-	
-	private ArrayList<OnCompleteListener<List<IItem>>> mOnCompleteClientListeners;
-	private OnStartListener<List<IItem>> mOnStartListener;
-	private static final OnConnectListener<List<IItem>> mOnGetSubItemsConnectListener = new OnConnectListener<List<IItem>>() {
-		
-		@Override
-		public List<IItem> onConnect(InputStream is) {
-			return new ArrayList<IItem>(FilesystemResponse.GetItems(is));
-		}
-	};
-	
-	private OnErrorListener<List<IItem>> mOnErrorListener;
 	
 	private FileSystem(int... visibleViewKeys) {
 		super();
@@ -122,40 +103,6 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 			}
 		});
 	}
-//
-//	@Override
-//	public void setOnItemsStartListener(OnStartListener<List<IItem>> listener) {
-//		mOnStartListener = listener;
-//	}
-//
-//	@Override
-//	public void setOnItemsErrorListener(OnErrorListener<List<IItem>> listener) {
-//		mOnErrorListener = listener;
-//	}
-//
-//	@Override
-//	protected OnConnectListener<List<IItem>> getOnItemConnectListener() {
-//		return mOnGetSubItemsConnectListener;
-//	}
-//
-//	@Override
-//	protected List<OnCompleteListener<List<IItem>>> getOnItemsCompleteListeners() {
-//		return mOnCompleteClientListeners;
-//	}
-//
-//	@Override
-//	protected List<OnStartListener<List<IItem>>> getOnItemsStartListeners() {
-//		LinkedList<OnStartListener<List<IItem>>> listeners = new LinkedList<OnStartListener<List<IItem>>>();
-//		if (mOnStartListener != null) listeners.add(mOnStartListener);
-//		return listeners;
-//	}
-//
-//	@Override
-//	protected List<OnErrorListener<List<IItem>>> getOnItemsErrorListeners() {
-//		LinkedList<OnErrorListener<List<IItem>>> listeners = new LinkedList<OnErrorListener<List<IItem>>>();
-//		if (mOnErrorListener != null) listeners.add(mOnErrorListener);
-//		return listeners;
-//	}
 
 	@Override
 	public String[] getSubItemParams() {
@@ -166,58 +113,38 @@ public class FileSystem extends ItemAsyncBase implements IItem {
 	public int compareTo(IItem another) {
 		return 0;
 	}
-
-//	@Override
-//	public void addOnItemsCompleteListener(OnCompleteListener<List<IItem>> listener) {
-//		if (mOnCompleteClientListeners == null) mOnCompleteClientListeners = new ArrayList<OnCompleteListener<List<IItem>>>();
-//		
-//		mOnCompleteClientListeners.add(listener);
-//	}
-//
-//	@Override
-//	public void removeOnItemsCompleteListener(OnCompleteListener<List<IItem>> listener) {
-//		if (mOnCompleteClientListeners != null)
-//			mOnCompleteClientListeners.remove(listener);
-//	}
 	
 	public interface OnGetFileSystemCompleteListener {
 		void onGetFileSystemComplete(FileSystem fileSystem);
 	}
 	
-	public static class Instance implements ISimpleTask.OnCompleteListener<Integer, Void, Library> {
+	public static class Instance {
 
 		private static int mInstanceVisibleViewKey = -1;
 		private static FileSystem mInstance = null;
 		
-		private final static Object syncObject = new Object();
-		
-		private final OnGetFileSystemCompleteListener mOnGetFileSystemCompleteListener;
-				
 		public final static void get(final Context context, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
-			LibrarySession.GetLibrary(context, new Instance(onGetFileSystemCompleteListener));
-		}
-		
-		private Instance(OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
-			mOnGetFileSystemCompleteListener = onGetFileSystemCompleteListener;
-		}
-		
-		@Override
-		public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-			synchronized(syncObject) {
-				final int storedSelectedViewKey = result.getSelectedView();
-				if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
-					mInstance = new FileSystem(storedSelectedViewKey);
-					mInstanceVisibleViewKey = storedSelectedViewKey;
-				}
+			if (onGetFileSystemCompleteListener == null)
+				throw new IllegalArgumentException("onGetFileSystemCompleteListener cannot be null.");
+			
+			LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 				
-				if (mOnGetFileSystemCompleteListener != null)
-					mOnGetFileSystemCompleteListener.onGetFileSystemComplete(mInstance);
+				@Override
+				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					onGetFileSystemCompleteListener.onGetFileSystemComplete(get(result));
+				}
+			});
+		}
+		
+		public final static synchronized FileSystem get(final Library library) {
+			final int storedSelectedViewKey = library.getSelectedView();
+			if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
+				mInstance = new FileSystem(storedSelectedViewKey);
+				mInstanceVisibleViewKey = storedSelectedViewKey;
 			}
 			
-//			if (mOnGetFileSystemCompleteListener != null)
-//				mOnGetFileSystemCompleteListener.onGetFileSystemComplete(new FileSystem(result.getSelectedView()));
+			return mInstance;
 		}
-		
 	}
 }
 
