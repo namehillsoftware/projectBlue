@@ -23,12 +23,12 @@ import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
-import com.lasthopesoftware.bluewater.data.service.access.FormattedFileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFileProperties;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;

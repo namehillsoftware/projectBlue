@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.disk.cache.DiskFileCache;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.data.service.access;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
 import java.util.TreeMap;
 

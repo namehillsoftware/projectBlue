@@ -34,7 +34,6 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -54,6 +53,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;

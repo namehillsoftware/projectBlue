@@ -30,7 +30,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
 import com.lasthopesoftware.bluewater.data.service.objects.Files;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
@@ -50,6 +49,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;

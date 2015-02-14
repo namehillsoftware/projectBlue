@@ -26,7 +26,6 @@ import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.data.service.objects.File;
 import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -34,6 +33,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

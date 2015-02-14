@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.slf4j.LoggerFactory;
 
-import com.lasthopesoftware.bluewater.data.service.access.FileProperties;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
 	private FileProperties mFileProperties;
