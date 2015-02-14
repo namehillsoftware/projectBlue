@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.data.service.objects;
 
 
 
-public class Item extends ItemAsyncBase implements IItem, IFilesContainer {
+public class Item extends AbstractIntKeyStringValue implements IItem, IFilesContainer {
 	private Files mFiles;
 
 	public Item(int key, String value) {

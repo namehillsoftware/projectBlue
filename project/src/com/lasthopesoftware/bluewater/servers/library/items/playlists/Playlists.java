@@ -4,11 +4,11 @@ import java.util.List;
 
 import android.util.SparseArray;
 
+import com.lasthopesoftware.bluewater.data.service.objects.AbstractIntKeyStringValue;
 import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.service.objects.ItemAsyncBase;
 
 
-public class Playlists extends ItemAsyncBase implements IItem {
+public class Playlists extends AbstractIntKeyStringValue implements IItem {
 
 	private SparseArray<Playlist> mMappedPlaylists;
 	private final List<Playlist> mChildren;

@@ -19,7 +19,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-public class FileSystem extends ItemAsyncBase implements IItem {
+public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	private TreeSet<IItem> mVisibleViews;
 	private int[] mVisibleViewKeys;
 	

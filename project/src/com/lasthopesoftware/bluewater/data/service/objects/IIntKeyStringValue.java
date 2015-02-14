@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.data.service.objects;
 
-public interface IIntKeyStringValue {
+public interface IIntKeyStringValue extends Comparable<IItem> {
 	/**
 	 * @return the mKey
 	 */
