@@ -100,24 +100,24 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 	
-	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
-						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg())
-						.and()
-						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
-						.prepare();
-			
-			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName, String.valueOf(startTime), String.valueOf(endTime));
-		} catch (SQLException e) {
-			mLogger.error("Error getting file size", e);
-			return -1;
-		}
-	}
+//	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
+//		try {
+//			
+//			final PreparedQuery<CachedFile> preparedQuery =
+//					cachedFileAccess.queryBuilder()
+//						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
+//						.where()
+//						.eq(CachedFile.CACHE_NAME, new SelectArg())
+//						.and()
+//						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
+//						.prepare();
+//			
+//			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName, String.valueOf(startTime), String.valueOf(endTime));
+//		} catch (SQLException e) {
+//			mLogger.error("Error getting file size", e);
+//			return -1;
+//		}
+//	}
 	
 	private final CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
@@ -169,7 +169,7 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 	
-	private final boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
+	private final static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
 		final File fileToDelete = new File(cachedFile.getFileName());
 		if (fileToDelete.exists()) 
 			fileToDelete.delete();

@@ -34,8 +34,6 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.ImageAccess;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
@@ -45,6 +43,8 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionCon
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;

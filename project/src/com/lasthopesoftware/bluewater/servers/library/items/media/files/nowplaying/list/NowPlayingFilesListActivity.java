@@ -15,11 +15,11 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;

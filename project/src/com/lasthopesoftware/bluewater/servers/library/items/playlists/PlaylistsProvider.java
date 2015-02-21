@@ -5,9 +5,9 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.access.PlaylistRequest;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.AbstractCollectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistRequest;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

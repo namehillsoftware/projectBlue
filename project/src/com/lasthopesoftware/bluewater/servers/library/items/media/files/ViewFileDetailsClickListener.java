@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.details.FileDetailsActivity;
 
 public class ViewFileDetailsClickListener implements OnClickListener {

@@ -4,8 +4,8 @@ import java.util.List;
 
 import android.util.SparseArray;
 
-import com.lasthopesoftware.bluewater.data.service.objects.AbstractIntKeyStringValue;
-import com.lasthopesoftware.bluewater.data.service.objects.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 
 public class Playlists extends AbstractIntKeyStringValue implements IItem {

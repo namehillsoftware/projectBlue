@@ -26,8 +26,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.data.service.access.StandardRequest;
-import com.lasthopesoftware.bluewater.data.service.objects.AccessConfiguration;
+import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;

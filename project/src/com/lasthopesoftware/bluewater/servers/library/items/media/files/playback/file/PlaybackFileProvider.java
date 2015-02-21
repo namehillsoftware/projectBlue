@@ -6,8 +6,8 @@ import java.util.List;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {

@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.PlaybackFile;

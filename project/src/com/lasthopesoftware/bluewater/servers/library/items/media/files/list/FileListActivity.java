@@ -11,19 +11,19 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.data.service.access.IDataTask;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
-import com.lasthopesoftware.bluewater.data.service.objects.IFilesContainer;
-import com.lasthopesoftware.bluewater.data.service.objects.IItem;
-import com.lasthopesoftware.bluewater.data.service.objects.Item;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.ClickFileListener;
+import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class FileListActivity extends FragmentActivity {

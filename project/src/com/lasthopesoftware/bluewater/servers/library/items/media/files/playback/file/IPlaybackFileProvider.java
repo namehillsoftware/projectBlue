@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
 
 public interface IPlaybackFileProvider{
