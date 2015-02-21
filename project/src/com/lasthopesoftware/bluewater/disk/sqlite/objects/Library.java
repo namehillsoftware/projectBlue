@@ -7,8 +7,8 @@ import java.util.List;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {

@@ -5,8 +5,6 @@ import java.util.List;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.lasthopesoftware.bluewater.data.service.objects.Files;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 
 public class FilePlayClickListener implements OnClickListener {
