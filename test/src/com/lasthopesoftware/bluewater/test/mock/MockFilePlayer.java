@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;

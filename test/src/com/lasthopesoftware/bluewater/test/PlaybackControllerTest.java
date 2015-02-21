@@ -8,8 +8,9 @@ import java.util.List;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import com.lasthopesoftware.bluewater.data.service.objects.File;
-import com.lasthopesoftware.bluewater.data.service.objects.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
@@ -225,6 +226,12 @@ public class PlaybackControllerTest extends TestCase {
 		@Override
 		public int getDuration() throws IOException {
 			return 100;
+		}
+
+		@Override
+		public int compareTo(IItem another) {
+			// TODO Auto-generated method stub
+			return 0;
 		}
 		
 	}
