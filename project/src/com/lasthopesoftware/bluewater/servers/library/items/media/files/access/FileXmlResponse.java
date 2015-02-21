@@ -18,15 +18,12 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 public class FileXmlResponse {
 
 	public static List<File> GetFiles(InputStream is) {
-		List<File> returnFiles = new ArrayList<File>();
-		
 		try {
-			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-			SAXParser sp = parserFactory.newSAXParser();
+			final SAXParser sp =  SAXParserFactory.newInstance().newSAXParser();
 	    	FileXmlHandler jrFileXml = new FileXmlHandler();
 	    	sp.parse(is, jrFileXml);
 	    	
-	    	returnFiles = jrFileXml.getFiles();
+	    	return jrFileXml.getFiles();
 		} catch (MalformedURLException e) {
 			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
 		} catch (IOException e) {
@@ -37,6 +34,6 @@ public class FileXmlResponse {
 			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
 		}
 		
-		return returnFiles;
+		return new ArrayList<File>();
 	}
 }
