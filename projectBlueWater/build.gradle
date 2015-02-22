@@ -33,7 +33,7 @@ android {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:support-v4:19.1.0'
+    compile 'com.android.support:support-v4:21.0.0'
     compile 'joda-time:joda-time:2.4'
     compile files('libs/commons-io-2.4.jar')
     compile files('libs/commons-validator-1.4.0.jar')
