@@ -1,0 +1,39 @@
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.access;
+
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
+
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+public class FileXmlResponse {
+
+	public static List<File> GetFiles(InputStream is) {
+		try {
+			final SAXParser sp =  SAXParserFactory.newInstance().newSAXParser();
+	    	FileXmlHandler jrFileXml = new FileXmlHandler();
+	    	sp.parse(is, jrFileXml);
+	    	
+	    	return jrFileXml.getFiles();
+		} catch (MalformedURLException e) {
+			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
+		} catch (IOException e) {
+			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
+		} catch (SAXException e) {
+			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
+		} catch (ParserConfigurationException e) {
+			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
+		}
+		
+		return new ArrayList<File>();
+	}
+}

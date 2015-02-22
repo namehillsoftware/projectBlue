@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rlViewFileDetails"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+	<RelativeLayout
+	    android:id="@+id/rlMainFileInformation"
+	    android:layout_width="wrap_content"
+	    android:layout_height="150dp"
+	    android:paddingBottom="10dp" >
+	    
+	    <ProgressBar
+		    android:id="@+id/pbLoadingFileThumbnail"
+		    style="?android:attr/progressBarStyleLarge"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:visibility="invisible" />
+	    
+	    <ImageView
+	        android:id="@+id/imgFileThumbnail"
+	        android:layout_width="150dp"
+	        android:layout_height="150dp"
+	        android:contentDescription="@string/lbl_track_img"
+	        android:paddingRight="10dp" />
+	    
+	    <TextView
+	        android:id="@+id/tvFileName"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_toRightOf="@id/imgFileThumbnail"
+	        android:ellipsize="end"
+	        android:lines="2"
+	        android:maxLines="2"
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+	    <RatingBar
+	        android:id="@+id/rbFileRating"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@id/tvFileName"
+	        android:layout_toRightOf="@id/imgFileThumbnail"
+	        android:indeterminate="false"
+	        android:isIndicator="false"
+	        android:minHeight="57dp"
+	        android:visibility="gone" />
+	        
+	</RelativeLayout>
+
+	<RelativeLayout
+	    android:id="@+id/rlFileDetails"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/rlMainFileInformation" >
+
+		<ProgressBar
+		    android:id="@+id/pbLoadingFileDetails"
+		    style="?android:attr/progressBarStyleLarge"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_centerInParent="true"
+		    android:visibility="invisible" />
+
+		<ListView
+		    android:id="@+id/lvFileDetails"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent" >
+		</ListView>
+
+	</RelativeLayout>
+
+</RelativeLayout>
