@@ -51,7 +51,7 @@
             
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.activities.SelectServer" />
+                android:value="com.lasthopesoftware.bluewater.servers.ServerListActivity" />
         </activity>
         <!-- End Connection intents -->
         
@@ -93,7 +93,7 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.SearchFilesActivity"
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.list.SearchFilesActivity"
             android:label="@string/title_activity_search_files"
             android:launchMode="singleTop">
             
