@@ -25,7 +25,11 @@ import java.util.TreeSet;
 public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	private TreeSet<IItem> mVisibleViews;
 	private int[] mVisibleViewKeys;
-	
+
+    public FileSystem(Library library) {
+        this(library.getSelectedView());
+    }
+
 	private FileSystem(int... visibleViewKeys) {
 		super();
 		
@@ -41,15 +45,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 		mVisibleViewKeys = visibleViewKeys;
 		mVisibleViews = null;
 	}
-	
-	public ArrayList<IItem> getVisibleViews() {
-		try {
-			return getVisibleViewsTask().execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
-		} catch (Exception e) {
-			return new ArrayList<IItem>();
-		}
-	}
-	
+
 	public void getVisibleViewsAsync() {
 		getVisibleViewsAsync(null);
 	}
@@ -60,19 +56,14 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	
 	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener,
 									 ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
-		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = getVisibleViewsTask();
-		
-		if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
-		if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
-		
-		getViewsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+        getVisibleViewsTask(onCompleteListener, onErrorListener).execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 	
-	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask() {
-		return new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
+	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener, final ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
+		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
-			public ArrayList<IItem> onExecute(ISimpleTask<String, Void, ArrayList<IItem>> owner, String... params) throws Exception {
+			public ArrayList<IItem> onExecute(final ISimpleTask<String, Void, ArrayList<IItem>> thisTask, String... params) throws Exception {
 
 				if (mVisibleViews == null || mVisibleViews.size() == 0) {
 					mVisibleViews = new TreeSet<IItem>(new Comparator<IItem>() {
@@ -82,8 +73,13 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 							return lhs.getKey() - rhs.getKey();
 						}
 					});
-					
-					final List<Item> libraries = ItemProvider.provide(getSubItemParams()).get(); 			
+
+                    final ItemProvider itemProvider = new ItemProvider(getSubItemParams());
+					final List<Item> libraries = itemProvider.get();
+
+                    if (itemProvider.getException() != null)
+                        throw itemProvider.getException();
+
 					for (int viewKey : mVisibleViewKeys) {
 						for (Item library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
@@ -103,6 +99,11 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 				return new ArrayList<IItem>(mVisibleViews);
 			}
 		});
+
+        if (onCompleteListener != null) getViewsTask.addOnCompleteListener(onCompleteListener);
+        if (onErrorListener != null) getViewsTask.addOnErrorListener(onErrorListener);
+
+        return getViewsTask;
 	}
 
 	@Override

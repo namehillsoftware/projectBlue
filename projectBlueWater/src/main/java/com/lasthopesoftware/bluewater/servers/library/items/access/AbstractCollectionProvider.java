@@ -17,7 +17,8 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	protected OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
 	protected OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
 	protected final String[] mParams;
-	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor(); 
+	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
+    private Exception mException = null;
 
 	public AbstractCollectionProvider(String... params) {
 		this(null, params);
@@ -56,4 +57,12 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	protected abstract SimpleTask<Void, Void, List<T>> getNewTask();
+
+    public Exception getException() {
+        return mException;
+    }
+
+    protected void setException(Exception exception) {
+        mException = exception;
+    }
 }

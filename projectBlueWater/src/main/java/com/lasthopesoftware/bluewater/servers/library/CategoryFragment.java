@@ -68,9 +68,10 @@ public class CategoryFragment extends Fragment {
 					
 					@Override
 					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
-						if (result == null) return;
-						
-						final IItem category = result.get(getArguments().getInt(ARG_CATEGORY_POSITION));
+						if (result == null || result.size() == 0) return;
+
+						final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
+						final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 										
 						if (category instanceof Playlists)
 							layout.addView(BuildPlaylistView(context, (Playlists)category, pbLoading));

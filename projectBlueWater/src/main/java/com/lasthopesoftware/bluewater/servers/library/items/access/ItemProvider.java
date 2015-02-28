@@ -45,7 +45,15 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 				}
 			}
 		});
-		
+
+        getItemsTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<Item>>() {
+            @Override
+            public boolean onError(ISimpleTask<Void, Void, List<Item>> owner, boolean isHandled, Exception innerException) {
+                setException(innerException);
+                return false;
+            }
+        });
+
 		if (mOnGetItemsComplete != null)
 			getItemsTask.addOnCompleteListener(mOnGetItemsComplete);
 		
