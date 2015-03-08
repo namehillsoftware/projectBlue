@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -265,33 +266,50 @@ public class PlaybackService extends Service implements
 		}
 	}
 	
-	private void throwChangeEvent(PlaybackController controller, IPlaybackFile filePlayer) {
+	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-			for (OnNowPlayingChangeListener onChangeListener : mOnStreamingChangeListeners)
-				onChangeListener.onNowPlayingChange(controller, filePlayer);
+            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new ListenerThrower.CallbackAction<OnNowPlayingChangeListener>() {
+                @Override
+                public void call(OnNowPlayingChangeListener parameter) {
+                    parameter.onNowPlayingChange(controller, filePlayer);
+                }
+            });
 		}
 	}
 
-	private void throwStartEvent(PlaybackController controller, IPlaybackFile filePlayer) {
+	private void throwStartEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-			for (OnNowPlayingStartListener onStartListener : mOnStreamingStartListeners)
-				onStartListener.onNowPlayingStart(controller, filePlayer);
+            ListenerThrower.throwListeners(mOnStreamingStartListeners, new ListenerThrower.CallbackAction<OnNowPlayingStartListener>() {
+                @Override
+                public void call(OnNowPlayingStartListener parameter) {
+                    parameter.onNowPlayingStart(controller, filePlayer);
+                }
+            });
 		}
 	}
 	
-	private void throwStopEvent(PlaybackController controller, IPlaybackFile filePlayer) {
+	private void throwStopEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-			for (OnNowPlayingStopListener onStopListener : mOnStreamingStopListeners)
-				onStopListener.onNowPlayingStop(controller, filePlayer);
+            ListenerThrower.throwListeners(mOnStreamingStopListeners, new ListenerThrower.CallbackAction<OnNowPlayingStopListener>() {
+                @Override
+                public void call(OnNowPlayingStopListener parameter) {
+                    parameter.onNowPlayingStop(controller, filePlayer);
+                }
+            });
 		}
 	}
 	
-	private void throwPauseEvent(PlaybackController controller, IPlaybackFile filePlayer) {
+	private void throwPauseEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-			for (OnNowPlayingPauseListener onPauseListener : mOnStreamingPauseListeners)
-				onPauseListener.onNowPlayingPause(controller, filePlayer);
+            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new ListenerThrower.CallbackAction<OnNowPlayingPauseListener>() {
+                @Override
+                public void call(OnNowPlayingPauseListener parameter) {
+                    parameter.onNowPlayingPause(controller, filePlayer);
+                }
+            });
 		}
 	}
+
 	/* End Events */
 		
 	public static PlaybackController getPlaylistController() {
