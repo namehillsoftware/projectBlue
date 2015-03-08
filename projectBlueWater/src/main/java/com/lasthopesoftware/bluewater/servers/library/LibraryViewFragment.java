@@ -53,10 +53,6 @@ public class LibraryViewFragment extends Fragment {
         return returnFragment;
     }
 
-    private LibraryViewFragment() {
-        super();
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
     	final Context context = getActivity();
