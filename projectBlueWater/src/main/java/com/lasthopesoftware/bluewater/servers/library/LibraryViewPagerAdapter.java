@@ -12,50 +12,33 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 /**
- * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+ * A {@link LibraryViewPagerAdapter} that returns a fragment corresponding to
  * one of the primary sections of the app.
  */
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
-	private ArrayList<IItem> mLibraryViews;
-	private CategoryFragment[] mFragments;
+	private ArrayList<IItem> mLibraryViews = new ArrayList<IItem>();
 	
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
-		mLibraryViews = new ArrayList<IItem>();
-		mFragments = new CategoryFragment[0];
 	}
 		
 	public void setLibraryViews(ArrayList<IItem> libraryViews) {
 		mLibraryViews = libraryViews;
-		mFragments = new CategoryFragment[libraryViews.size()];
 	}
 
 	@Override
 	public Fragment getItem(int i) {
-		CategoryFragment returnFragment = mFragments[i];
-		
-		if (returnFragment == null) {
-			returnFragment = new CategoryFragment();
-			final Bundle args = new Bundle();
-			args.putInt(CategoryFragment.ARG_CATEGORY_POSITION, i);
-			returnFragment.setArguments(args);
-			mFragments[i] = returnFragment;
-		}
-		
-		return returnFragment;
+        // The position correlates to the ID returned by the server at the high-level Library views
+		return LibraryViewFragment.getPreparedFragment(i);
 	}
 
 	@Override
 	public int getCount() {
-		return mFragments.length;
+		return mLibraryViews.size();
 	}
 
 	@Override
 	public CharSequence getPageTitle(int position) {
 		return !mLibraryViews.get(position).getValue().isEmpty() ? mLibraryViews.get(position).getValue().toUpperCase(Locale.ENGLISH) : "";
-	}
-
-	public ArrayList<IItem> getPages() {
-		return mLibraryViews;
 	}
 }

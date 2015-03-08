@@ -40,11 +40,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class CategoryFragment extends Fragment {
+public class LibraryViewFragment extends Fragment {
 	
-    public static final String ARG_CATEGORY_POSITION = "category_position";
-    public static final String IS_PLAYLIST = "Playlist";
-	    
+    private static final String ARG_CATEGORY_POSITION = "category_position";
+    private static final String IS_PLAYLIST = "Playlist";
+
+    public final static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
+        final LibraryViewFragment returnFragment = new LibraryViewFragment();
+        final Bundle args = new Bundle();
+        args.putInt(LibraryViewFragment.ARG_CATEGORY_POSITION, libraryViewId);
+        returnFragment.setArguments(args);
+        return returnFragment;
+    }
+
+    private LibraryViewFragment() {
+        super();
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
     	final Context context = getActivity();
@@ -97,7 +109,7 @@ public class CategoryFragment extends Fragment {
 				
 				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-    	});
+            	});
     	
         return layout;
     }
@@ -157,7 +169,7 @@ public class CategoryFragment extends Fragment {
 						try {
 							if (ItemProvider.provide(selection.getSubItemParams()).get().size() > 0) return false;
 						} catch (ExecutionException | InterruptedException e) {
-							LoggerFactory.getLogger(CategoryFragment.class).warn(e.getMessage(), e);
+							LoggerFactory.getLogger(LibraryViewFragment.class).warn(e.getMessage(), e);
 							return true;
 						}
 					
