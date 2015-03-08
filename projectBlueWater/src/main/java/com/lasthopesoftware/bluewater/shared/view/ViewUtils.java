@@ -17,23 +17,46 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 public class ViewUtils {
 
+    private static boolean mIsNowPlayingVisible = false;
+
 	public final static boolean buildStandardMenu(final Activity activity, final Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		
 		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
-		nowPlayingItem.setVisible(false);
-		LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				nowPlayingItem.setVisible(result != null && result.getNowPlayingId() >= 0);
-			}
-		});
+        nowPlayingItem.setVisible(mIsNowPlayingVisible);
+        // Once now playing list has been populated, now playing cannot logically be empty,
+        // so now playing will always be visible
+        if (!mIsNowPlayingVisible) {
+            LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+
+                @Override
+                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+                    mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
+                    nowPlayingItem.setVisible(mIsNowPlayingVisible);
+
+                    if (mIsNowPlayingVisible) return;
+
+                    // If now playing shouldn't be visible, detect when it should be
+                    PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
+                        @Override
+                        public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+                            mIsNowPlayingVisible = true;
+                            nowPlayingItem.setVisible(mIsNowPlayingVisible);
+                            PlaybackService.removeOnStreamingStartListener(this);
+                        }
+                    });
+                }
+            });
+        }
 		
 		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
 	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
