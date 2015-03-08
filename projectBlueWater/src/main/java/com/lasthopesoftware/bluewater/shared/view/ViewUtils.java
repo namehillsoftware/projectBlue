@@ -33,30 +33,29 @@ public class ViewUtils {
 		
 		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
         nowPlayingItem.setVisible(mIsNowPlayingVisible);
-        // Once now playing list has been populated, now playing cannot logically be empty,
-        // so now playing will always be visible
-        if (!mIsNowPlayingVisible) {
-            LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
 
-                @Override
-                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                    mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                    nowPlayingItem.setVisible(mIsNowPlayingVisible);
+        // The user can change the library, so let's check if the state of visibility on the
+        // now playing menu item should change
+        LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
 
-                    if (mIsNowPlayingVisible) return;
+            @Override
+            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+                mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
+                nowPlayingItem.setVisible(mIsNowPlayingVisible);
 
-                    // If now playing shouldn't be visible, detect when it should be
-                    PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
-                        @Override
-                        public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                            mIsNowPlayingVisible = true;
-                            nowPlayingItem.setVisible(mIsNowPlayingVisible);
-                            PlaybackService.removeOnStreamingStartListener(this);
-                        }
-                    });
-                }
-            });
-        }
+                if (mIsNowPlayingVisible) return;
+
+                // If now playing shouldn't be visible, detect when it should be
+                PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
+                    @Override
+                    public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+                        mIsNowPlayingVisible = true;
+                        nowPlayingItem.setVisible(mIsNowPlayingVisible);
+                        PlaybackService.removeOnStreamingStartListener(this);
+                    }
+                });
+            }
+        });
 		
 		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
 	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
