@@ -226,25 +226,29 @@ public class LibraryViewFragment extends Fragment {
     		}
     		return children;
     	}
-    	
+
+        public IItem getItemChild(int groupPosition, int childPosition) {
+            try {
+                return getChildren(groupPosition).get(childPosition);
+            } catch (ExecutionException | InterruptedException /*| IOException*/ e) {
+                mLogger.warn(e.getMessage(), e);
+                return null;
+            }
+        }
+
 		@Override
 		public Object getChild(int groupPosition, int childPosition) {
-			try {
-				return getChildren(groupPosition).get(childPosition);
-			} catch (ExecutionException | InterruptedException /*| IOException*/ e) {
-				mLogger.warn(e.getMessage(), e);
-				return null;
-			}
+			return getItemChild(groupPosition, childPosition);
 		}
 
 		@Override
 		public long getChildId(int groupPosition, int childPosition) {
-			return ((Item)getChild(groupPosition, childPosition)).getKey();
+			return getItemChild(groupPosition, childPosition).getKey();
 		}
 		
 		@Override
 		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-			return ItemMenu.getView((Item)getChild(groupPosition, childPosition), convertView, parent);
+			return ItemMenu.getView(getItemChild(groupPosition, childPosition), convertView, parent);
 		}
 
 		@Override
@@ -275,8 +279,8 @@ public class LibraryViewFragment extends Fragment {
 		@Override
 		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
 			if (convertView == null) {
-				final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				convertView = (RelativeLayout) inflator.inflate(R.layout.layout_standard_text, parent, false);
+				final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				convertView = inflater.inflate(R.layout.layout_standard_text, parent, false);
 				
 				final TextView heldTextView = (TextView) convertView.findViewById(R.id.tvStandard);			
 	
