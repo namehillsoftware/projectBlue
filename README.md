@@ -8,7 +8,7 @@ encourage sock drawer app structuring): http://cliffmeyers.com/blog/2013/4/21/co
 This means everything is logically grouped in nested folders based on context. Thus, after the boilerplate folders from
 Android studio, the highest level is effectively _server_:
 
-_Under `projectBlueWater/src/main/java/com/lasthopesoftware/bluewater`:_
+_Under_ `projectBlueWater/src/main/java/com/lasthopesoftware/bluewater`_:_
 
     server
     +-- library
