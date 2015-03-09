@@ -22,4 +22,4 @@ _Under `projectBlueWater/src/main/java/com/lasthopesoftware/bluewater`:_
 The above will get you to code related to files, including getting files from the server, and in more nested contexts,
 file playback.
 
-Unfortuantely, other areas, such as the `res` folders, do not allow me to use such a structuring. The test project will eventually reflect this folder structuring as well, especially if it grows to the same complexity as projectBlueWater.
+Unfortuantely, other areas, such as the `res` folders, do not allow such structuring. The test project will eventually reflect this folder structuring as well, especially if it grows to the same complexity as projectBlueWater.
