@@ -43,9 +43,8 @@ import java.util.concurrent.ExecutionException;
 public class LibraryViewFragment extends Fragment {
 	
     private static final String ARG_CATEGORY_POSITION = "category_position";
-    private static final String IS_PLAYLIST = "Playlist";
 
-    public final static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
+    public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
         final LibraryViewFragment returnFragment = new LibraryViewFragment();
         final Bundle args = new Bundle();
         args.putInt(LibraryViewFragment.ARG_CATEGORY_POSITION, libraryViewId);
@@ -82,7 +81,7 @@ public class LibraryViewFragment extends Fragment {
 						final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 										
 						if (category instanceof Playlists)
-							layout.addView(BuildPlaylistView(context, (Playlists)category, pbLoading));
+							layout.addView(BuildPlaylistView(context, pbLoading));
 						else if (category instanceof Item)
 							layout.addView(BuildStandardItemView(context, (Item)category, pbLoading));
 					}
@@ -111,7 +110,7 @@ public class LibraryViewFragment extends Fragment {
     }
 
 	@SuppressWarnings("unchecked")
-	private ListView BuildPlaylistView(final Context context, final Playlists category, final View loadingView) {
+	private ListView BuildPlaylistView(final Context context, final View loadingView) {
     	
 		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
@@ -168,7 +167,7 @@ public class LibraryViewFragment extends Fragment {
 							LoggerFactory.getLogger(LibraryViewFragment.class).warn(e.getMessage(), e);
 							return true;
 						}
-					
+
 						final Intent intent = new Intent(parent.getContext(), FileListActivity.class);
 			    		intent.setAction(FileListActivity.VIEW_ITEM_FILES);
 			    		intent.putExtra(FileListActivity.KEY, selection.getKey());
@@ -210,12 +209,12 @@ public class LibraryViewFragment extends Fragment {
 
     public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
     	private final ArrayList<Item> mCategoryItems;
-    	private final SparseArray<List<Item>> mChildren = new SparseArray<List<Item>>();
+    	private final SparseArray<List<Item>> mChildren = new SparseArray<>();
     	
     	private final static Logger mLogger = LoggerFactory.getLogger(ExpandableItemListAdapter.class);
     	
     	public ExpandableItemListAdapter(List<Item> categoryItems) {
-    		mCategoryItems = new ArrayList<Item>(categoryItems);
+    		mCategoryItems = new ArrayList<>(categoryItems);
     	}
     	
     	private List<Item> getChildren(int position) throws ExecutionException, InterruptedException {
@@ -227,7 +226,7 @@ public class LibraryViewFragment extends Fragment {
     		return children;
     	}
 
-        public IItem getItemChild(int groupPosition, int childPosition) {
+        private IItem getItemChild(int groupPosition, int childPosition) {
             try {
                 return getChildren(groupPosition).get(childPosition);
             } catch (ExecutionException | InterruptedException /*| IOException*/ e) {
