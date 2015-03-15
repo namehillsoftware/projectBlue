@@ -25,7 +25,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 	
 	@Override
-	protected SimpleTask<Void, Void, List<Playlist>> getNewTask() {
+	protected SimpleTask<Void, Void, List<Playlist>> buildTask() {
 		final SimpleTask<Void, Void, List<Playlist>> getPlaylistsTask = new SimpleTask<Void, Void, List<Playlist>>(new OnExecuteListener<Void, Void, List<Playlist>>() {
 			
 			@Override

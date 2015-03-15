@@ -19,6 +19,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	protected final String[] mParams;
 	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
     private Exception mException = null;
+    private SimpleTask<Void, Void, List<T>> mTask;
 
 	public AbstractCollectionProvider(String... params) {
 		this(null, params);
@@ -45,7 +46,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public void execute(Executor executor) {
-		getNewTask().execute(executor);
+        getTask().execute(executor);
 	}
 	
 	public List<T> get() throws ExecutionException, InterruptedException {
@@ -53,10 +54,19 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public List<T> get(Executor executor) throws ExecutionException, InterruptedException {
-		return getNewTask().execute(executor).get();
+		return getTask().execute(executor).get();
 	}
-	
-	protected abstract SimpleTask<Void, Void, List<T>> getNewTask();
+
+    public void cancel(boolean mayInterrupt) {
+        getTask().cancel(mayInterrupt);
+    }
+
+    private SimpleTask<Void, Void, List<T>> getTask() {
+        if (mTask == null) mTask = buildTask();
+        return mTask;
+    }
+
+	protected abstract SimpleTask<Void, Void, List<T>> buildTask();
 
     public Exception getException() {
         return mException;
