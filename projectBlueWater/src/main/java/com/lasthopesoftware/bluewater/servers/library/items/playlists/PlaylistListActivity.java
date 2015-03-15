@@ -13,13 +13,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -27,7 +22,8 @@ import java.util.List;
 
 public class PlaylistListActivity extends FragmentActivity {
 
-	public static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewPlaylist.key";
+    public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
+    public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
 	private int mPlaylistId;
 
 	private ProgressBar pbLoading;
@@ -51,7 +47,9 @@ public class PlaylistListActivity extends FragmentActivity {
         
         playlistView.setVisibility(View.INVISIBLE);
     	pbLoading.setVisibility(View.VISIBLE);
-    	
+
+        setTitle(getIntent().getStringExtra(VALUE));
+
         final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
@@ -81,30 +79,9 @@ public class PlaylistListActivity extends FragmentActivity {
 	}
 	
 	private void BuildPlaylistView(final Playlist playlist) {
-                
-        if (playlist.getChildren().size() > 0) {
-        	playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist.getChildren()));
-        	playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getChildren()));
-        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
-        	return;
-        }
-        
-    	playlistView.setVisibility(View.INVISIBLE);
-    	pbLoading.setVisibility(View.VISIBLE);
-    	Files filesContainer = (Files)playlist.getFiles();
-    	filesContainer.setOnFilesCompleteListener(new OnCompleteListener<List<IFile>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
-				playlistView.setAdapter(new FileListAdapter(thisContext, R.id.tvStandard, result));
-	        	playlistView.setOnItemClickListener(new ClickFileListener(playlist.getFiles()));
-	        	playlistView.setOnItemLongClickListener(new LongClickFlipListener());
-	        	
-	        	playlistView.setVisibility(View.VISIBLE);
-	        	pbLoading.setVisibility(View.INVISIBLE);
-			}
-		});
-    	filesContainer.getFilesAsync();
+        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist.getChildren()));
+        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getChildren()));
+        playlistView.setOnItemLongClickListener(new LongClickFlipListener());
 	}
 	
 	@Override

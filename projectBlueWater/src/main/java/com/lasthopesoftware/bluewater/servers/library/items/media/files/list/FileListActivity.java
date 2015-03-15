@@ -28,10 +28,10 @@ import java.util.List;
 
 public class FileListActivity extends FragmentActivity {
 
-	public static final String KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.key";
-	public static final String VALUE = "value";
-	public static final String VIEW_ITEM_FILES = "view_item_files";
-	public static final String VIEW_PLAYLIST_FILES = "view_playlist_files";
+	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
+	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
+	public static final String VIEW_ITEM_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_item_files";
+	public static final String VIEW_PLAYLIST_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_playlist_files";
 	
 	private int mItemId;
 	private IItem mItem;
@@ -53,9 +53,9 @@ public class FileListActivity extends FragmentActivity {
         pbLoading.setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
-        mItem = this.getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
+        mItem = getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
         
-        this.setTitle(this.getIntent().getStringExtra(VALUE));
+        setTitle(getIntent().getStringExtra(VALUE));
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final FileListActivity _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
@@ -64,11 +64,9 @@ public class FileListActivity extends FragmentActivity {
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 				
-				FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
-		    			    	
 		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getFiles()));
 		    	fileListView.setOnItemLongClickListener(new LongClickFlipListener());
-		    	fileListView.setAdapter(fileListAdapter);
+		    	fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
 		    	
 		    	fileListView.setVisibility(View.VISIBLE);
 		        pbLoading.setVisibility(View.INVISIBLE);
