@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -30,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRig
 import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,7 +54,24 @@ public class ItemMenu {
         public final ImageButton viewButton;
         public ItemProvider itemProvider;
 	}
-	
+
+    private static Bitmap chevronBitmap;
+    private static Bitmap listBitmap;
+
+    private static Bitmap getChevronBitmap(Context context) {
+        if (chevronBitmap == null)
+            chevronBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.chevron_right);
+
+        return chevronBitmap;
+    }
+
+    private static Bitmap getListBitmap(Context context) {
+        if (listBitmap == null)
+            listBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_list);
+
+        return listBitmap;
+    }
+
 	public static View getView(IItem item, View convertView, ViewGroup parent) {
 		if (convertView == null) {
 		
@@ -105,11 +125,11 @@ public class ItemMenu {
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
 
-        viewHolder.hasListItemsImageView.setVisibility(View.GONE);
-        viewHolder.hasListItemsImageView.setImageResource(R.drawable.ic_list);
+        viewHolder.hasListItemsImageView.setVisibility(View.INVISIBLE);
+        viewHolder.hasListItemsImageView.setImageBitmap(getListBitmap(viewHolder.hasListItemsImageView.getContext()));
         if (item instanceof Playlist) {
             if (((Playlist)item).getChildren().size() > 0)
-                viewHolder.hasListItemsImageView.setImageResource(R.drawable.chevron_right);
+                viewHolder.hasListItemsImageView.setImageBitmap(getChevronBitmap(viewHolder.hasListItemsImageView.getContext()));
 
             viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
         }
@@ -122,10 +142,11 @@ public class ItemMenu {
 
                 @Override
                 public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
-                    if (owner.isCancelled()) return;
+                    if (owner.isCancelled() || owner.getState() == SimpleTaskState.ERROR || items == null)
+                        return;
 
                     if (items.size() > 0)
-                        viewHolder.hasListItemsImageView.setImageResource(R.drawable.chevron_right);
+                        viewHolder.hasListItemsImageView.setImageBitmap(getChevronBitmap(viewHolder.hasListItemsImageView.getContext()));
 
                     viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
                 }
