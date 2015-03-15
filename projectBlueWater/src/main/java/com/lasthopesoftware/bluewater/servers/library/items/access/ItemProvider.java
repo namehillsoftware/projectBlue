@@ -37,7 +37,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
             int hash=7;
             for (String param : params) {
                 for (int i = 0; i < param.length(); i++) hash *= 31 + param.charAt(i);
-                hash *= 31 + param.length();
+                hash *= 57 + param.length();
             }
             return hash;
         }

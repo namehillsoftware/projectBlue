@@ -35,11 +35,11 @@ public class PlaylistListActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_view_playlists);
+        setContentView(R.layout.activity_view_items);
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        playlistView = (ListView)findViewById(R.id.lvPlaylist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
+        playlistView = (ListView)findViewById(R.id.lvItems);
+        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         mPlaylistId = 0;
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);

@@ -67,6 +67,14 @@
             </intent-filter>
             
         </activity>
+
+        <activity
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.list.ItemListActivity"
+            android:label="@string/title_activity_file_view" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity" />
+        </activity>
         
         <activity
             android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity"

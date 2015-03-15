@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystem
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.ItemMenu;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
@@ -152,40 +153,8 @@ public class LibraryViewFragment extends Fragment {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 				if (result == null) return;
-//
-//				listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-//
-//					@Override
-//					public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-//						final Item selection = (Item)parent.getExpandableListAdapter().getGroup(groupPosition);
-//
-//						try {
-//							if (ItemProvider.provide(selection.getSubItemParams()).get().size() > 0) return false;
-//						} catch (ExecutionException | InterruptedException e) {
-//							LoggerFactory.getLogger(LibraryViewFragment.class).warn(e.getMessage(), e);
-//							return true;
-//						}
-//
-//						final Intent intent = new Intent(parent.getContext(), FileListActivity.class);
-//			    		intent.setAction(FileListActivity.VIEW_ITEM_FILES);
-//			    		intent.putExtra(FileListActivity.KEY, selection.getKey());
-//			    		intent.putExtra(FileListActivity.VALUE, selection.getValue());
-//			    		startActivity(intent);
-//			    		return true;
-//					}
-//				});
-//		    	listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-//		    	    @Override
-//		    	    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-//		    	    	final Item selection = (Item)parent.getExpandableListAdapter().getChild(groupPosition, childPosition);
-//			    		final Intent intent = new Intent(parent.getContext(), FileListActivity.class);
-//			    		intent.setAction(FileListActivity.VIEW_ITEM_FILES);
-//			    		intent.putExtra(FileListActivity.KEY, selection.getKey());
-//			    		intent.putExtra(FileListActivity.VALUE, selection.getValue());
-//			    		startActivity(intent);
-//		    	        return true;
-//		    	    }
-//			    });
+
+                listView.setOnItemClickListener(new ClickItemListener(context, result instanceof ArrayList ? (ArrayList<Item>)result : new ArrayList<>(result)));
 		    	listView.setOnItemLongClickListener(new LongClickFlipListener());
 		    	
 		    	listView.setAdapter(new ItemListAdapter(context, R.layout.layout_list_item, result));

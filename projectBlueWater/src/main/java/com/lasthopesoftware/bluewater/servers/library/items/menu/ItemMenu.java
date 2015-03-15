@@ -104,10 +104,15 @@ public class ItemMenu {
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
-        viewHolder.hasListItemsImageView.setVisibility(View.GONE);
 
-        if (item instanceof Playlist && ((Playlist)item).getChildren().size() > 0)
+        viewHolder.hasListItemsImageView.setVisibility(View.GONE);
+        viewHolder.hasListItemsImageView.setImageResource(R.drawable.ic_list);
+        if (item instanceof Playlist) {
+            if (((Playlist)item).getChildren().size() > 0)
+                viewHolder.hasListItemsImageView.setImageResource(R.drawable.chevron_right);
+
             viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
+        }
 
         if (item instanceof Item) {
             if (viewHolder.itemProvider != null) viewHolder.itemProvider.cancel(false);
@@ -117,8 +122,12 @@ public class ItemMenu {
 
                 @Override
                 public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
-                    if (!owner.isCancelled() && items.size() > 0)
-                        viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
+                    if (owner.isCancelled()) return;
+
+                    if (items.size() > 0)
+                        viewHolder.hasListItemsImageView.setImageResource(R.drawable.chevron_right);
+
+                    viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
                 }
             });
             viewHolder.itemProvider.execute();
