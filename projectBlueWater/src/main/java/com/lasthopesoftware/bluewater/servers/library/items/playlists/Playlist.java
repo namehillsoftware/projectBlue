@@ -17,10 +17,10 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 	private Playlist mParent = null;
 	private String mPath;
 	private String mGroup;
-	private Files mJrFiles;
+	private Files mFiles;
 	
 	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
-	
+
 	public Playlist() {
 		super();
 	}
@@ -51,31 +51,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 			returnList.add(mSubItems.valueAt(i));
 		return returnList;
 	}
-//	
-//	@Override
-//	public void getSubItemsAsync() {
-//		final SimpleTask<String, Void, List<Playlist>> getPlaylistsTask = new SimpleTask<String, Void, List<Playlist>>(new ISimpleTask.OnExecuteListener<String, Void, List<Playlist>>() {
-//
-//			@Override
-//			public List<Playlist> onExecute(ISimpleTask<String, Void, List<Playlist>> owner, String... params) throws Exception {
-//				return getSubItems();
-//			}
-//		});
-//		
-//		getPlaylistsTask.addOnCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<Playlist>>() {
-//			
-//			@Override
-//			public void onComplete(ISimpleTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-//				if (mOnCompleteListeners == null) return;
-//				
-//				for (OnCompleteListener<List<Playlist>> onCompleteListener : mOnCompleteListeners)
-//					onCompleteListener.onComplete(owner, result);
-//			}
-//		});
-//		
-//		getPlaylistsTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-//	}
-	
+
 	public void addPlaylist(Playlist playlist) {
 		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
 		playlist.setParent(this);
@@ -116,8 +92,8 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 
 	@Override
 	public IItemFiles getFiles() {
-		if (mJrFiles == null) mJrFiles = new Files("Playlist/Files", "Playlist=" + String.valueOf(this.getKey()));
-		return mJrFiles;
+		if (mFiles == null) mFiles = new Files(getSubItemParams());
+		return mFiles;
 	}
 
 	@Override
@@ -126,17 +102,4 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 		if (result == 0) result = this.getKey() - another.getKey();
 		return 0;
 	}
-
-//	@Override
-//	public void addOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-//		if (mOnCompleteListeners == null) mOnCompleteListeners = new ArrayList<OnCompleteListener<List<Playlist>>>();
-//		
-//		mOnCompleteListeners.add(listener);
-//	}
-//
-//	@Override
-//	public void removeOnItemsCompleteListener(OnCompleteListener<List<Playlist>> listener) {
-//		if (mOnCompleteListeners != null)
-//			mOnCompleteListeners.remove(listener);
-//	}
 }
