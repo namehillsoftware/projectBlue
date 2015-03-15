@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="?android:attr/buttonBarStyle"
+    android:id="@+id/linearListItem"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="0dip"
+    android:paddingLeft="2dip"
+    android:paddingRight="2dip"
+    android:measureWithLargestChild="true">
+
+    <TextView
+        android:id="@+id/tvListItem"
+        android:layout_width="0dip"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:padding="@dimen/standard_textview_padding"
+        android:text=""
+        android:gravity="left|center_vertical"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ImageView
+        android:id="@+id/imgListItemHasItems"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_list"/>
+	
+</LinearLayout>
