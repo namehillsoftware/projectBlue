@@ -104,7 +104,7 @@ public class LibraryViewFragment extends Fragment {
 				
 				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-            	});
+        });
     	
         return layout;
     }
@@ -131,11 +131,11 @@ public class LibraryViewFragment extends Fragment {
 			})
 			.onError(new HandleViewIoException(context, new OnConnectionRegainedListener() {
 					
-					@Override
-					public void onConnectionRegained() {
-						playlistsProvider.execute();
-					}
-				}));
+                @Override
+                public void onConnectionRegained() {
+                    playlistsProvider.execute();
+                }
+            }));
 		
 		playlistsProvider.execute();
 		
