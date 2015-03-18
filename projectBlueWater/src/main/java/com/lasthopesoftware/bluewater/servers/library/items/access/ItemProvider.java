@@ -45,50 +45,51 @@ public class ItemProvider extends AbstractCollectionProvider<Item, Item> {
 		super(connection, item);
 	}
 
+//    @Override
+//	protected SimpleTask<Void, Void, List<Item>> buildTask(final Item item) {
+//
+//        return new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
+//
+//			@Override
+//			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
+//                final Integer serverRevision = RevisionChecker.getRevision();
+//                final ItemHolder itemHolder = mItemsCache.get(item);
+//                if (itemHolder != null && itemHolder.revision.equals(serverRevision))
+//                    return itemHolder.items;
+//
+//                if (owner.isCancelled()) return new ArrayList<>();
+//                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(item.getSubItemParams()) : mConnection;
+//				try {
+//					final InputStream is = conn.getInputStream();
+//					try {
+//                        final List<Item> items = FilesystemResponse.GetItems(is);
+//                        mItemsCache.put(item, new ItemHolder(serverRevision, items));
+//						return items;
+//					} finally {
+//						is.close();
+//					}
+//
+//				} finally {
+//					if (mConnection == null) conn.disconnect();
+//				}
+//			}
+//		});
+//	}
+
     @Override
-	protected SimpleTask<Void, Void, List<Item>> buildTask(final Item item) {
+    protected List<Item> getItems(final HttpURLConnection connection, final Item item) throws Exception {
+        final Integer serverRevision = RevisionChecker.getRevision();
+        final ItemHolder itemHolder = mItemsCache.get(item);
+        if (itemHolder != null && itemHolder.revision.equals(serverRevision))
+            return itemHolder.items;
 
-		final SimpleTask<Void, Void, List<Item>> getItemsTask = new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
-			
-			@Override
-			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
-                final Integer serverRevision = RevisionChecker.getRevision();
-                final ItemHolder itemHolder = mItemsCache.get(item);
-                if (itemHolder != null && itemHolder.revision.equals(serverRevision))
-                    return itemHolder.items;
-
-                if (owner.isCancelled()) return new ArrayList<>();
-                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(item.getSubItemParams()) : mConnection;
-				try {
-					final InputStream is = conn.getInputStream();
-					try {
-                        final List<Item> items = FilesystemResponse.GetItems(is);
-                        mItemsCache.put(item, new ItemHolder(serverRevision, items));
-						return items;
-					} finally {
-						is.close();
-					}
-
-				} finally {
-					if (mConnection == null) conn.disconnect();
-				}
-			}
-		});
-
-        getItemsTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<Item>>() {
-            @Override
-            public boolean onError(ISimpleTask<Void, Void, List<Item>> owner, boolean isHandled, Exception innerException) {
-                setException(innerException);
-                return false;
-            }
-        });
-
-		if (mOnGetItemsComplete != null)
-			getItemsTask.addOnCompleteListener(mOnGetItemsComplete);
-		
-		if (mOnGetItemsError != null)
-			getItemsTask.addOnErrorListener(mOnGetItemsError);
-		
-		return getItemsTask;
-	}
+        final InputStream is = connection.getInputStream();
+        try {
+            final List<Item> items = FilesystemResponse.GetItems(is);
+            mItemsCache.put(item, new ItemHolder(serverRevision, items));
+            return items;
+        } finally {
+            is.close();
+        }
+    }
 }

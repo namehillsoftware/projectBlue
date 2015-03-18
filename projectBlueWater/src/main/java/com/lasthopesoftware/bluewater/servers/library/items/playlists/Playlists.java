@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 import java.util.List;

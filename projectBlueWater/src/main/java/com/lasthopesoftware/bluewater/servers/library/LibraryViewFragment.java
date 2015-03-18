@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlayl
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -113,8 +113,8 @@ public class LibraryViewFragment extends Fragment {
     	
 		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
-		playlistsProvider
+		final PlaylistProvider playlistProvider = new PlaylistProvider();
+		playlistProvider
 			.onComplete(new OnCompleteListener<Void, Void, List<Playlist>>() {
 				
 				@Override
@@ -132,11 +132,11 @@ public class LibraryViewFragment extends Fragment {
 					
 					@Override
 					public void onConnectionRegained() {
-						playlistsProvider.execute();
+						playlistProvider.execute();
 					}
 				}));
 		
-		playlistsProvider.execute();
+		playlistProvider.execute();
 		
 		return listView;
     }

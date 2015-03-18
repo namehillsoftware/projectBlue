@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -87,7 +87,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new Playlists(Integer.MAX_VALUE, (new PlaylistsProvider()).get()));
+								mVisibleViews.add(new Playlists(Integer.MAX_VALUE, (new PlaylistProvider()).get()));
 								continue;
 							}
 							

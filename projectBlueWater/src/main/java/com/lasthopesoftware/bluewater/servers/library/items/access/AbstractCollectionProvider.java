@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -61,11 +63,39 @@ public abstract class AbstractCollectionProvider<TParam extends IItem, TResult e
     }
 
     private SimpleTask<Void, Void, List<TResult>> getTask() {
-        if (mTask == null) mTask = buildTask(mItem);
+        if (mTask != null) return mTask;
+
+        mTask = new SimpleTask<Void, Void, List<TResult>>(new ISimpleTask.OnExecuteListener<Void, Void, List<TResult>>() {
+
+            @Override
+            public List<TResult> onExecute(ISimpleTask<Void, Void, List<TResult>> owner, Void... voidParams) throws Exception {
+                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mItem.getSubItemParams()) : mConnection;
+                try {
+                    return getItems(mConnection, mItem);
+                } finally {
+                    if (mConnection == null) conn.disconnect();
+                }
+            }
+        });
+
+        mTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<TResult>>() {
+            @Override
+            public boolean onError(ISimpleTask<Void, Void, List<TResult>> owner, boolean isHandled, Exception innerException) {
+                setException(innerException);
+                return false;
+            }
+        });
+
+        if (mOnGetItemsComplete != null)
+            mTask.addOnCompleteListener(mOnGetItemsComplete);
+
+        if (mOnGetItemsError != null)
+            mTask.addOnErrorListener(mOnGetItemsError);
+
         return mTask;
     }
 
-	protected abstract SimpleTask<Void, Void, List<TResult>> buildTask(final TParam intKeyStringValue);
+    protected abstract List<TResult> getItems(final HttpURLConnection connection, final TParam intKeyStringValue) throws Exception;
 
     public Exception getException() {
         return mException;
