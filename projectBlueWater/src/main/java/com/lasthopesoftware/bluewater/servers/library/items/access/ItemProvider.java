@@ -15,33 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ItemProvider extends AbstractCollectionProvider<Item> {
-
-    private static class ParamsHolder {
-        public final String[] params;
-
-        public ParamsHolder(String... params) {
-            this.params = params;
-        }
-
-        @Override
-        public boolean equals(Object otherParams) {
-            if (otherParams instanceof ParamsHolder)
-                return Arrays.equals(((ParamsHolder) otherParams).params, params);
-
-            return otherParams == this;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash=7;
-            for (String param : params) {
-                for (int i = 0; i < param.length(); i++) hash *= 31 + param.charAt(i);
-                hash *= 57 + param.length();
-            }
-            return hash;
-        }
-    }
+public class ItemProvider extends AbstractCollectionProvider<Item, Item> {
 
     private static class ItemHolder {
         public ItemHolder(Integer revision, List<Item> items) {
@@ -54,42 +28,42 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     }
 
     private static final int maxSize = 2000;
-    private static final ConcurrentLinkedHashMap<ParamsHolder, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
-                                                                                            .Builder<ParamsHolder, ItemHolder>()
+    private static final ConcurrentLinkedHashMap<Item, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
+                                                                                            .Builder<Item, ItemHolder>()
                                                                                             .maximumWeightedCapacity(maxSize)
                                                                                             .build();
 
-	public static ItemProvider provide(String... params) {
-		return new ItemProvider(params);
+	public static ItemProvider provide(Item item) {
+		return new ItemProvider(item);
 	}
 	
-	public ItemProvider(String... params) {
-		super(null, params);
+	public ItemProvider(Item item) {
+		super(item);
 	}
 	
-	public ItemProvider(HttpURLConnection connection, String... params) {
-		super(connection, params);
+	public ItemProvider(HttpURLConnection connection, Item item) {
+		super(connection, item);
 	}
-			
-	protected SimpleTask<Void, Void, List<Item>> buildTask() {
+
+    @Override
+	protected SimpleTask<Void, Void, List<Item>> buildTask(final Item item) {
 
 		final SimpleTask<Void, Void, List<Item>> getItemsTask = new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
 			
 			@Override
 			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
                 final Integer serverRevision = RevisionChecker.getRevision();
-                final ParamsHolder paramsHolder = new ParamsHolder(mParams);
-                final ItemHolder itemHolder = mItemsCache.get(paramsHolder);
+                final ItemHolder itemHolder = mItemsCache.get(item);
                 if (itemHolder != null && itemHolder.revision.equals(serverRevision))
                     return itemHolder.items;
 
                 if (owner.isCancelled()) return new ArrayList<>();
-                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mParams) : mConnection;
+                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(item.getSubItemParams()) : mConnection;
 				try {
 					final InputStream is = conn.getInputStream();
 					try {
                         final List<Item> items = FilesystemResponse.GetItems(is);
-                        mItemsCache.put(paramsHolder, new ItemHolder(serverRevision, items));
+                        mItemsCache.put(item, new ItemHolder(serverRevision, items));
 						return items;
 					} finally {
 						is.close();

@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.access.FileSystemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -60,6 +61,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener, final ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
+        final FileSystem fileSystem = this;
 		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
@@ -74,11 +76,11 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 						}
 					});
 
-                    final ItemProvider itemProvider = new ItemProvider(getSubItemParams());
-					final List<Item> libraries = itemProvider.get();
+                    final FileSystemProvider fileSystemProvider = new FileSystemProvider(fileSystem);
+					final List<Item> libraries = fileSystemProvider.get();
 
-                    if (itemProvider.getException() != null)
-                        throw itemProvider.getException();
+                    if (fileSystemProvider.getException() != null)
+                        throw fileSystemProvider.getException();
 
 					for (int viewKey : mVisibleViewKeys) {
 						for (Item library : libraries) {
@@ -89,7 +91,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 								continue;
 							}
 							
-							final List<Item> views = ItemProvider.provide(library.getSubItemParams()).get();
+							final List<Item> views = ItemProvider.provide(library).get();
 							for (Item view : views)
 								mVisibleViews.add(view);
 						}

@@ -12,31 +12,30 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class AbstractCollectionProvider<T extends IItem> {
+public abstract class AbstractCollectionProvider<TParam extends IItem, TResult extends IItem> {
 	protected final HttpURLConnection mConnection;
-	protected OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
-	protected OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
-	protected final String[] mParams;
+	protected OnCompleteListener<Void, Void, List<TResult>> mOnGetItemsComplete;
+	protected OnErrorListener<Void, Void, List<TResult>> mOnGetItemsError;
 	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
     private Exception mException = null;
-    private SimpleTask<Void, Void, List<T>> mTask;
+    private SimpleTask<Void, Void, List<TResult>> mTask;
+    private final TParam mItem;
 
-	public AbstractCollectionProvider(String... params) {
-		this(null, params);
-	}
-	
-	public AbstractCollectionProvider(HttpURLConnection connection, String... params) {
+    public AbstractCollectionProvider(TParam item) {
+        this(null, item);
+    }
+
+	public AbstractCollectionProvider(HttpURLConnection connection, TParam item) {
 		mConnection = connection;
-		mParams = params;
-		
+        mItem = item;
 	}
 	
-	public AbstractCollectionProvider<T> onComplete(OnCompleteListener<Void, Void, List<T>> onGetItemsComplete) {
+	public AbstractCollectionProvider<TParam, TResult> onComplete(OnCompleteListener<Void, Void, List<TResult>> onGetItemsComplete) {
 		mOnGetItemsComplete = onGetItemsComplete;
 		return this;
 	}
 	
-	public AbstractCollectionProvider<T> onError(OnErrorListener<Void, Void, List<T>> onGetItemsError) {
+	public AbstractCollectionProvider<TParam, TResult> onError(OnErrorListener<Void, Void, List<TResult>> onGetItemsError) {
 		mOnGetItemsError = onGetItemsError;
 		return this;
 	}
@@ -49,11 +48,11 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
         getTask().execute(executor);
 	}
 	
-	public List<T> get() throws ExecutionException, InterruptedException {
+	public List<TResult> get() throws ExecutionException, InterruptedException {
 		return get(mCollectionAccessExecutor);
 	}
 	
-	public List<T> get(Executor executor) throws ExecutionException, InterruptedException {
+	public List<TResult> get(Executor executor) throws ExecutionException, InterruptedException {
 		return getTask().execute(executor).get();
 	}
 
@@ -61,12 +60,12 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
         getTask().cancel(mayInterrupt);
     }
 
-    private SimpleTask<Void, Void, List<T>> getTask() {
-        if (mTask == null) mTask = buildTask();
+    private SimpleTask<Void, Void, List<TResult>> getTask() {
+        if (mTask == null) mTask = buildTask(mItem);
         return mTask;
     }
 
-	protected abstract SimpleTask<Void, Void, List<T>> buildTask();
+	protected abstract SimpleTask<Void, Void, List<TResult>> buildTask(final TParam intKeyStringValue);
 
     public Exception getException() {
         return mException;
