@@ -9,7 +9,9 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
@@ -52,7 +54,7 @@ public class ItemListActivity extends FragmentActivity {
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final ItemProvider itemProvider = new ItemProvider((new Item(mItemId)).getSubItemParams());
+        final ItemProvider itemProvider = new ItemProvider(mItemId);
         itemProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
             @Override
             public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {
@@ -64,6 +66,12 @@ public class ItemListActivity extends FragmentActivity {
                 pbLoading.setVisibility(View.INVISIBLE);
             }
         });
+        itemProvider.onError(new HandleViewIoException(this, new PollConnection.OnConnectionRegainedListener() {
+            @Override
+            public void onConnectionRegained() {
+                itemProvider.execute();
+            }
+        }));
         itemProvider.execute();
     }
 

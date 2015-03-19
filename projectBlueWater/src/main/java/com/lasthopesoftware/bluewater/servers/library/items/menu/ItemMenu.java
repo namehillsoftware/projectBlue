@@ -137,7 +137,7 @@ public class ItemMenu {
         if (item instanceof Item) {
             if (viewHolder.itemProvider != null) viewHolder.itemProvider.cancel(false);
 
-            viewHolder.itemProvider = new ItemProvider(item.getSubItemParams());
+            viewHolder.itemProvider = new ItemProvider(item.getKey());
             viewHolder.itemProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
 
                 @Override
