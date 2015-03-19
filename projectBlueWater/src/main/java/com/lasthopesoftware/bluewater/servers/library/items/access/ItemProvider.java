@@ -1,13 +1,17 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ItemProvider extends AbstractCollectionProvider<Item> {
@@ -44,23 +48,30 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
         mItemKey = itemKey;
 	}
 
-    protected List<Item> getItems(HttpURLConnection connection, String... params) throws Exception {
+    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision();
         final Integer boxedItemKey = mItemKey;
         ItemHolder itemHolder = mItemsCache.get(boxedItemKey);
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        final InputStream is = connection.getInputStream();
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
         try {
-            final List<Item> items = FilesystemResponse.GetItems(is);
+            if (task.isCancelled()) return new ArrayList<>();
 
-            itemHolder = new ItemHolder(serverRevision, items);
-            mItemsCache.put(boxedItemKey, itemHolder);
+            final InputStream is = conn.getInputStream();
+            try {
+                final List<Item> items = FilesystemResponse.GetItems(is);
 
-            return items;
+                itemHolder = new ItemHolder(serverRevision, items);
+                mItemsCache.put(boxedItemKey, itemHolder);
+
+                return items;
+            } finally {
+                is.close();
+            }
         } finally {
-            is.close();
+            if (connection == null) conn.disconnect();
         }
 	}
 }

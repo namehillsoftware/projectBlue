@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists.access;
 
 import android.util.SparseArray;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -34,28 +36,35 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 
     @Override
-    protected List<Playlist> getItems(final HttpURLConnection connection, final String... params) throws Exception {
+    protected List<Playlist> getItems(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection, final String... params) throws Exception {
 
         final Integer revision = RevisionChecker.getRevision();
         if (mCachedPlaylists != null && revision.equals(mRevision))
             return getPlaylists(mPlaylistId);
 
-        final InputStream is = connection.getInputStream();
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
         try {
-            final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+            if (task.isCancelled()) return new ArrayList<>();
 
-            int i = 0;
-            while (i < streamResult.size()) {
-                if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-                else i++;
+            final InputStream is = conn.getInputStream();
+            try {
+                final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+
+                int i = 0;
+                while (i < streamResult.size()) {
+                    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+                    else i++;
+                }
+
+                mRevision = revision;
+                mCachedPlaylists = streamResult;
+                mMappedPlaylists = null;
+                return getPlaylists(mPlaylistId);
+            } finally {
+                is.close();
             }
-
-            mRevision = revision;
-            mCachedPlaylists = streamResult;
-            mMappedPlaylists = null;
-            return getPlaylists(mPlaylistId);
         } finally {
-            is.close();
+            if (connection == null) conn.disconnect();
         }
     }
 
@@ -63,7 +72,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
         if (playlistId == -1) return mCachedPlaylists;
 
         if (mMappedPlaylists == null) {
-            mMappedPlaylists = new SparseArray<Playlist>(mCachedPlaylists.size());
+            mMappedPlaylists = new SparseArray<>(mCachedPlaylists.size());
             denormalizeAndMap(mCachedPlaylists);
         }
 

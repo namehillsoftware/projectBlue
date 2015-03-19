@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.access;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,22 +33,29 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     }
 
     @Override
-    protected List<Item> getItems(HttpURLConnection connection, String... params) throws Exception {
+    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision();
 
         if (mCachedFileSystemItems != null && mRevision.equals(serverRevision))
             return mCachedFileSystemItems;
 
-        final InputStream is = connection.getInputStream();
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
         try {
-            final List<Item> items = FilesystemResponse.GetItems(is);
+            if (task.isCancelled()) return new ArrayList<>();
 
-            mRevision = serverRevision;
-            mCachedFileSystemItems = items;
+            final InputStream is = conn.getInputStream();
+            try {
+                final List<Item> items = FilesystemResponse.GetItems(is);
 
-            return items;
+                mRevision = serverRevision;
+                mCachedFileSystemItems = items;
+
+                return items;
+            } finally {
+                is.close();
+            }
         } finally {
-            is.close();
+            if (connection == null) conn.disconnect();
         }
     }
 }

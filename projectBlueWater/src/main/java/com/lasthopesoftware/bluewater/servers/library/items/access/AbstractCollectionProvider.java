@@ -72,18 +72,13 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
     private SimpleTask<Void, Void, List<T>> getTask() {
         if (mTask != null) return mTask;
 
-        mTask = new SimpleTask<Void, Void, List<T>>(new ISimpleTask.OnExecuteListener<Void, Void, List<T>>() {
+        mTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<T>>() {
 
             @Override
             public List<T> onExecute(ISimpleTask<Void, Void, List<T>> owner, Void... voidParams) throws Exception {
                 if (owner.isCancelled()) return new ArrayList<>();
-                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mParams) : mConnection;
-                try {
-                    if (owner.isCancelled()) return new ArrayList<>();
-                    return getItems(conn, mParams);
-                } finally {
-                    if (mConnection == null) conn.disconnect();
-                }
+
+                return getItems(owner, mConnection, mParams);
             }
         });
 
@@ -104,7 +99,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
         return mTask;
     }
 
-	protected abstract List<T> getItems(HttpURLConnection connection, String... params) throws Exception;
+	protected abstract List<T> getItems(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection, String... params) throws Exception;
 
     public Exception getException() {
         return mException;
