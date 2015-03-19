@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.access.FileSystemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -76,7 +75,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 						}
 					});
 
-                    final FileSystemProvider fileSystemProvider = new FileSystemProvider(fileSystem);
+                    final ItemProvider fileSystemProvider = new ItemProvider();
 					final List<Item> libraries = fileSystemProvider.get();
 
                     if (fileSystemProvider.getException() != null)
@@ -91,7 +90,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 								continue;
 							}
 							
-							final List<Item> views = ItemProvider.provide(library).get();
+							final List<Item> views = ItemProvider.provide(library.getKey()).get();
 							for (Item view : views)
 								mVisibleViews.add(view);
 						}

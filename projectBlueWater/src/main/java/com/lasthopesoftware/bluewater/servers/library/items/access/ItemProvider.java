@@ -9,13 +9,16 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ItemProvider extends AbstractCollectionProvider<Item, Item> {
+public class ItemProvider extends AbstractCollectionProvider<Item> {
+
+    private static final String mBrowseChildren = "Browse/Children";
 
     private static class ItemHolder {
         public ItemHolder(Integer revision, List<Item> items) {
@@ -28,68 +31,52 @@ public class ItemProvider extends AbstractCollectionProvider<Item, Item> {
     }
 
     private static final int maxSize = 2000;
-    private static final ConcurrentLinkedHashMap<Item, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
-                                                                                            .Builder<Item, ItemHolder>()
+    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
+                                                                                            .Builder<Integer, ItemHolder>()
                                                                                             .maximumWeightedCapacity(maxSize)
                                                                                             .build();
 
-	public static ItemProvider provide(Item item) {
-		return new ItemProvider(item);
-	}
-	
-	public ItemProvider(Item item) {
-		super(item);
-	}
-	
-	public ItemProvider(HttpURLConnection connection, Item item) {
-		super(connection, item);
+    private static ItemHolder mParentItemHolder;
+
+    private final Integer mItemKey;
+
+	public static ItemProvider provide(int itemKey) {
+		return new ItemProvider(itemKey);
 	}
 
-//    @Override
-//	protected SimpleTask<Void, Void, List<Item>> buildTask(final Item item) {
-//
-//        return new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
-//
-//			@Override
-//			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
-//                final Integer serverRevision = RevisionChecker.getRevision();
-//                final ItemHolder itemHolder = mItemsCache.get(item);
-//                if (itemHolder != null && itemHolder.revision.equals(serverRevision))
-//                    return itemHolder.items;
-//
-//                if (owner.isCancelled()) return new ArrayList<>();
-//                final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(item.getSubItemParams()) : mConnection;
-//				try {
-//					final InputStream is = conn.getInputStream();
-//					try {
-//                        final List<Item> items = FilesystemResponse.GetItems(is);
-//                        mItemsCache.put(item, new ItemHolder(serverRevision, items));
-//						return items;
-//					} finally {
-//						is.close();
-//					}
-//
-//				} finally {
-//					if (mConnection == null) conn.disconnect();
-//				}
-//			}
-//		});
-//	}
+    public ItemProvider() {
+        super(mBrowseChildren);
 
-    @Override
-    protected List<Item> getItems(final HttpURLConnection connection, final Item item) throws Exception {
+        mItemKey = null;
+    }
+	
+	public ItemProvider(int itemKey) {
+		this(null, itemKey);
+	}
+	
+	public ItemProvider(HttpURLConnection connection, int itemKey) {
+		super(connection, mBrowseChildren, "ID=" + String.valueOf(itemKey));
+
+        mItemKey = Integer.valueOf(itemKey);
+	}
+
+    protected List<Item> getItems(HttpURLConnection connection, String... params) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision();
-        final ItemHolder itemHolder = mItemsCache.get(item);
+
+        final ItemHolder itemHolder = mItemKey != null ? mItemsCache.get(mItemKey) : mParentItemHolder;
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
         final InputStream is = connection.getInputStream();
         try {
             final List<Item> items = FilesystemResponse.GetItems(is);
-            mItemsCache.put(item, new ItemHolder(serverRevision, items));
+
+            if (mItemKey != null) mItemsCache.put(mItemKey, new ItemHolder(serverRevision, items));
+            else mParentItemHolder = new ItemHolder(serverRevision, items);
+
             return items;
         } finally {
             is.close();
         }
-    }
+	}
 }
