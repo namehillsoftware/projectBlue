@@ -17,6 +17,10 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     private static List<Item> mCachedFileSystemItems;
     private static Integer mRevision;
 
+    public static LibraryViewsProvider provide() {
+        return new LibraryViewsProvider();
+    }
+
     public LibraryViewsProvider() {
         this(null);
     }

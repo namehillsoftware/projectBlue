@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
+import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -137,9 +138,9 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 	@SuppressWarnings("unchecked")
 	public void displayLibrary(final Library library, final FileSystem fileSystem) {
-		final ItemProvider itemProvider = new ItemProvider(fileSystem.getSubItemParams());
-		
-		itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
+		final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider();
+
+        libraryViewsProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
@@ -208,13 +209,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
 					
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
-						itemProvider.execute();
+                        libraryViewsProvider.execute();
 					}
 				});
 			}
 		}));
-		
-		itemProvider.execute();
+
+        libraryViewsProvider.execute();
 	}
 	
 	private OnCompleteListener<String, Void, ArrayList<IItem>> getOnVisibleViewsCompleteListener() {

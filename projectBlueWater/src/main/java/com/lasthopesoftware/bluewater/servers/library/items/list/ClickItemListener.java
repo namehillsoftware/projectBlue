@@ -29,7 +29,7 @@ public class ClickItemListener implements OnItemClickListener {
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         final Item item = mItems.get(position);
 
-        ItemProvider.provide(item.getSubItemParams())
+        ItemProvider.provide(item.getKey())
             .onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
                 @Override
                 public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {

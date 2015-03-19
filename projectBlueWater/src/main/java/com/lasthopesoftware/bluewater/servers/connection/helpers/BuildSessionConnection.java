@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem;
+import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -61,7 +62,7 @@ public class BuildSessionConnection {
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 
 					
-						ItemProvider.provide(FileSystem.Instance.get(library).getSubItemParams())
+						LibraryViewsProvider.provide()
 							.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 								
 								@Override
