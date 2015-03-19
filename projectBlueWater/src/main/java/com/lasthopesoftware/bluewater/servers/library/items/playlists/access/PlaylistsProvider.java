@@ -1,28 +1,34 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists.access;
 
+import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaylistProvider extends AbstractCollectionProvider<Playlists, Playlist> {
+public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
-    private static Playlists mPlaylists = new Playlists();
+    private static List<Playlist> mCachedPlaylists;
+    private static Integer mRevision;
 
-	public PlaylistProvider() {
+	public PlaylistsProvider() {
 		this(null);
 	}
 	
-	public PlaylistProvider(HttpURLConnection connection) {
-		super(connection, mPlaylists);
+	public PlaylistsProvider(HttpURLConnection connection) {
+		super(connection, "Playlists/List");
 	}
 
     @Override
-    protected List<Playlist> getItems(final HttpURLConnection connection, final Playlists playlists) throws Exception {
+    protected List<Playlist> getItems(final HttpURLConnection connection, final String... params) throws Exception {
+
+        final Integer revision = RevisionChecker.getRevision();
+        if (mCachedPlaylists != null && revision.equals(mRevision))
+            return mCachedPlaylists;
+
         final InputStream is = connection.getInputStream();
         try {
             final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
@@ -33,6 +39,8 @@ public class PlaylistProvider extends AbstractCollectionProvider<Playlists, Play
                 else i++;
             }
 
+            mRevision = revision;
+            mCachedPlaylists = streamResult;
             return streamResult;
         } finally {
             is.close();

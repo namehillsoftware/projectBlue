@@ -21,11 +21,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class AbstractCollectionProvider<T extends IItem> {
-	protected final HttpURLConnection mConnection;
-	protected OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
-	protected OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
-	private final String[] mParams;
-	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
+	private final HttpURLConnection mConnection;
+	private OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
+    private OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
+    private final String[] mParams;
+    private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
     private Exception mException = null;
     private SimpleTask<Void, Void, List<T>> mTask;
 

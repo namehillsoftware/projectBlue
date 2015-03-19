@@ -3,19 +3,14 @@ package com.lasthopesoftware.bluewater.servers.library;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.BaseExpandableListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
-import com.j256.ormlite.logger.Logger;
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
@@ -25,19 +20,17 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.ItemMenu;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class LibraryViewFragment extends Fragment {
 	
@@ -113,8 +106,8 @@ public class LibraryViewFragment extends Fragment {
     	
 		final ListView listView = new ListView(context);
 		listView.setVisibility(View.INVISIBLE);
-		final PlaylistProvider playlistProvider = new PlaylistProvider();
-		playlistProvider
+		final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+		playlistsProvider
 			.onComplete(new OnCompleteListener<Void, Void, List<Playlist>>() {
 				
 				@Override
@@ -132,11 +125,11 @@ public class LibraryViewFragment extends Fragment {
 					
 					@Override
 					public void onConnectionRegained() {
-						playlistProvider.execute();
+						playlistsProvider.execute();
 					}
 				}));
 		
-		playlistProvider.execute();
+		playlistsProvider.execute();
 		
 		return listView;
     }
@@ -146,7 +139,7 @@ public class LibraryViewFragment extends Fragment {
 		final ListView listView = new ListView(context);
     	listView.setVisibility(View.INVISIBLE);
     	
-    	final ItemProvider itemProvider = new ItemProvider(category.getSubItemParams());
+    	final ItemProvider itemProvider = new ItemProvider(category.getKey());
     	
     	itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
@@ -173,102 +166,4 @@ public class LibraryViewFragment extends Fragment {
     	
 		return listView;
 	}
-
-    public static class ExpandableItemListAdapter extends BaseExpandableListAdapter {
-    	private final ArrayList<Item> mCategoryItems;
-    	private final SparseArray<List<Item>> mChildren = new SparseArray<>();
-    	
-    	private final static Logger mLogger = LoggerFactory.getLogger(ExpandableItemListAdapter.class);
-    	
-    	public ExpandableItemListAdapter(List<Item> categoryItems) {
-    		mCategoryItems = new ArrayList<>(categoryItems);
-    	}
-    	
-    	private List<Item> getChildren(int position) throws ExecutionException, InterruptedException {
-    		List<Item> children = mChildren.get(position);
-    		if (children == null) {
-	    		children = ItemProvider.provide(mCategoryItems.get(position).getSubItemParams()).get();
-	    		mChildren.put(position, children);
-    		}
-    		return children;
-    	}
-
-        private IItem getItemChild(int groupPosition, int childPosition) {
-            try {
-                return getChildren(groupPosition).get(childPosition);
-            } catch (ExecutionException | InterruptedException /*| IOException*/ e) {
-                mLogger.warn(e.getMessage(), e);
-                return null;
-            }
-        }
-
-		@Override
-		public Object getChild(int groupPosition, int childPosition) {
-			return getItemChild(groupPosition, childPosition);
-		}
-
-		@Override
-		public long getChildId(int groupPosition, int childPosition) {
-			return getItemChild(groupPosition, childPosition).getKey();
-		}
-		
-		@Override
-		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-			return ItemMenu.getView(getItemChild(groupPosition, childPosition), convertView, parent);
-		}
-
-		@Override
-		public int getChildrenCount(int groupPosition) {
-			try {
-				return getChildren(groupPosition).size();
-			} catch (ExecutionException | InterruptedException e) {
-				mLogger.warn(e.getMessage(), e);
-				return 0;
-			}
-		}
-
-		@Override
-		public Object getGroup(int groupPosition) {
-			return mCategoryItems.get(groupPosition);
-		}
-
-		@Override
-		public int getGroupCount() {
-			return mCategoryItems.size();
-		}
-
-		@Override
-		public long getGroupId(int groupPosition) {
-			return mCategoryItems.get(groupPosition).getKey();
-		}
-
-		@Override
-		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-			if (convertView == null) {
-				final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				convertView = inflater.inflate(R.layout.layout_standard_text, parent, false);
-				
-				final TextView heldTextView = (TextView) convertView.findViewById(R.id.tvStandard);			
-	
-				heldTextView.setPadding(64, 20, 20, 20);
-		        
-		        convertView.setTag(heldTextView);
-			}
-			
-			((TextView)convertView.getTag()).setText(mCategoryItems.get(groupPosition).getValue());
-
-		    return convertView;
-		}
-
-		@Override
-		public boolean hasStableIds() {
-			return true;
-		}
-
-		@Override
-		public boolean isChildSelectable(int groupPosition, int childPosition) {
-			return true;
-		}
-    	
-    }
 }

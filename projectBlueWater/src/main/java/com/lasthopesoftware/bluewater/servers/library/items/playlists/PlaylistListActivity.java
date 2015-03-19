@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -51,8 +51,8 @@ public class PlaylistListActivity extends FragmentActivity {
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final PlaylistProvider playlistProvider = new PlaylistProvider();
-        playlistProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+        playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
@@ -67,7 +67,7 @@ public class PlaylistListActivity extends FragmentActivity {
 					
 			@Override
 			public void onConnectionRegained() {
-				playlistProvider.execute();
+				playlistsProvider.execute();
 			}
 		})).execute();
 	}
