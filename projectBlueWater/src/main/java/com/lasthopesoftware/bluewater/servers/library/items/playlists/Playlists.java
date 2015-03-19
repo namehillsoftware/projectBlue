@@ -11,32 +11,11 @@ import java.util.List;
 
 public class Playlists extends AbstractIntKeyStringValue implements IItem {
 
-	private SparseArray<Playlist> mMappedPlaylists;
-	private final List<Playlist> mChildren;
-	
-	public Playlists(int key, List<Playlist> children) {
-		setKey(key);
+	public Playlists() {
+		setKey(Integer.MAX_VALUE);
 		setValue("Playlist");
-		mChildren = children;
 	}
-		
-	public SparseArray<Playlist> getMappedPlaylists() {
-		if (mMappedPlaylists == null) denormalizeAndMap();
-		return mMappedPlaylists;
-	}
-	
-	private void denormalizeAndMap() {
-		mMappedPlaylists = new SparseArray<Playlist>(mChildren.size());
-		denormalizeAndMap(mChildren);
-	}
-	
-	private void denormalizeAndMap(List<Playlist> items) {
-		for (Playlist playlist : items) {
-			mMappedPlaylists.append(playlist.getKey(), playlist);
-			if (playlist.getChildren().size() > 0) denormalizeAndMap(playlist.getChildren());
-		}
-	}
-	
+
 	@Override
 	public String[] getSubItemParams() {
 		return new String[] { "Playlists/List" };

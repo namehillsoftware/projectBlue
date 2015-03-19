@@ -87,7 +87,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new Playlists(Integer.MAX_VALUE, (new PlaylistsProvider()).get()));
+								mVisibleViews.add(new Playlists());
 								continue;
 							}
 							

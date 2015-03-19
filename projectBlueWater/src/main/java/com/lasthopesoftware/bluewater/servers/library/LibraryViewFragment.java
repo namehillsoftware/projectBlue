@@ -114,7 +114,7 @@ public class LibraryViewFragment extends Fragment {
 				public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 					if (result == null) return;
 					
-					listView.setOnItemClickListener(new ClickPlaylistListener(context, (ArrayList<Playlist>) result));
+					listView.setOnItemClickListener(new ClickPlaylistListener(context, result));
 					listView.setOnItemLongClickListener(new LongClickFlipListener());
 		    		listView.setAdapter(new PlaylistListAdapter(context, R.id.tvStandard, result));
 		    		loadingView.setVisibility(View.INVISIBLE);

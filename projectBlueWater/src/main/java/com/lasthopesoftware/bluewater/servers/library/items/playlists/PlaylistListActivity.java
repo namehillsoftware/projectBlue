@@ -51,14 +51,14 @@ public class PlaylistListActivity extends FragmentActivity {
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(mPlaylistId);
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
-				BuildPlaylistView((new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId));
+				BuildPlaylistView(result);
 				
 				playlistView.setVisibility(View.VISIBLE);
 	        	pbLoading.setVisibility(View.INVISIBLE);
@@ -79,9 +79,9 @@ public class PlaylistListActivity extends FragmentActivity {
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 	
-	private void BuildPlaylistView(final Playlist playlist) {
-        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist.getChildren()));
-        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getChildren()));
+	private void BuildPlaylistView(List<Playlist> playlist) {
+        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist));
+        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
         playlistView.setOnItemLongClickListener(new LongClickFlipListener());
 	}
 	
