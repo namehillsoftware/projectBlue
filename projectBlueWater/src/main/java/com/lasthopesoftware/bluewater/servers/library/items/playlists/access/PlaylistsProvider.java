@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists.access;
 
+import android.util.SparseArray;
+
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -12,6 +14,7 @@ import java.util.List;
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
     private static List<Playlist> mCachedPlaylists;
+    private SparseArray<Playlist> mMappedPlaylists;
     private static Integer mRevision;
 
 	public PlaylistsProvider() {
@@ -44,6 +47,23 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
             return streamResult;
         } finally {
             is.close();
+        }
+    }
+
+    public SparseArray<Playlist> getMappedPlaylists() {
+        if (mMappedPlaylists == null) denormalizeAndMap();
+        return mMappedPlaylists;
+    }
+
+    private void denormalizeAndMap() {
+        mMappedPlaylists = new SparseArray<Playlist>(mCachedPlaylists.size());
+        denormalizeAndMap(mCachedPlaylists);
+    }
+
+    private void denormalizeAndMap(List<Playlist> items) {
+        for (Playlist playlist : items) {
+            mMappedPlaylists.append(playlist.getKey(), playlist);
+            if (playlist.getChildren().size() > 0) denormalizeAndMap(playlist.getChildren());
         }
     }
 }
