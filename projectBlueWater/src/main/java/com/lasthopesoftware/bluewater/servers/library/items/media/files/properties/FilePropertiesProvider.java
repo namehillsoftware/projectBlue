@@ -27,7 +27,7 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-public class FileProperties {
+public class FilePropertiesProvider {
 	private static final int maxSize = 1000;
 	private final String mFileKeyString;
 	private ConcurrentSkipListMap<String, String> mProperties = null;
@@ -35,7 +35,7 @@ public class FileProperties {
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
 	
-	public FileProperties(int fileKey) {
+	public FilePropertiesProvider(int fileKey) {
 		
 		mFileKeyString = String.valueOf(fileKey);
 		
@@ -125,9 +125,9 @@ public class FileProperties {
 							conn.disconnect();
 						}
 					} catch (MalformedURLException e) {
-						LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					} catch (XmlParseException e) {
-						LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					}
 					
 					return returnProperties;
@@ -145,7 +145,7 @@ public class FileProperties {
 		} catch (InterruptedException e) {
 			Log.d(getClass().toString(), e.getMessage());
 		} catch (Exception e) {
-			LoggerFactory.getLogger(FileProperties.class).error(e.toString(), e);
+			LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 		}
 		
 		return Collections.unmodifiableSortedMap(mProperties);

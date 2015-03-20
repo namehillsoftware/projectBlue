@@ -42,7 +42,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -367,7 +367,7 @@ public class NowPlayingActivity extends Activity implements
 						return viewStructure.nowPlayingArtist;
 					
 					try {
-						return file.getProperty(FileProperties.ARTIST);
+						return file.getProperty(FilePropertiesProvider.ARTIST);
 					} catch (IOException e) {
 						setException(e);
 						return null;
@@ -412,8 +412,8 @@ public class NowPlayingActivity extends Activity implements
 						return viewStructure.nowPlayingRating;
 					
 					try {
-						if (file.getProperty(FileProperties.RATING) != null && !file.getProperty(FileProperties.RATING).isEmpty())
-							return Float.valueOf(file.getProperty(FileProperties.RATING));
+						if (file.getProperty(FilePropertiesProvider.RATING) != null && !file.getProperty(FilePropertiesProvider.RATING).isEmpty())
+							return Float.valueOf(file.getProperty(FilePropertiesProvider.RATING));
 					} catch (NumberFormatException | IOException e) {
 						setException(e);
 						
@@ -441,7 +441,7 @@ public class NowPlayingActivity extends Activity implements
 						@Override
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
-							file.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
+							file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 							
 							viewStructure.nowPlayingRating = Float.valueOf(rating);
 						}

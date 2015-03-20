@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class FormattedFileProperties extends FileProperties {
+public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static final DateTimeFormatter mYearFormatter = new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
 	
 	private static final DateTimeFormatterBuilder mDateFormatterBuilder = new DateTimeFormatterBuilder()
@@ -47,7 +47,7 @@ public class FormattedFileProperties extends FileProperties {
 	
 	private static final DateTime mExcelEpoch = new DateTime(1899, 12, 30, 0, 0);
 	
-	public FormattedFileProperties(int fileKey) {
+	public FormattedFilePropertiesProvider(int fileKey) {
 		super(fileKey);
 	}
 

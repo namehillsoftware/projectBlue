@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -121,7 +121,7 @@ public class PlaybackFile implements
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 				
-		final String originalFilename = mFile.getProperty(FileProperties.FILENAME);
+		final String originalFilename = mFile.getProperty(FilePropertiesProvider.FILENAME);
 		if (originalFilename == null)
 			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
 		
@@ -133,16 +133,16 @@ public class PlaybackFile implements
 		final ArrayList<String> params = new ArrayList<String>(5);
 		params.add(filename);
 		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FileProperties.ARTIST));
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FilePropertiesProvider.ARTIST));
 		appendAnd(querySb);
 		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FileProperties.ALBUM));
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FilePropertiesProvider.ALBUM));
 		appendAnd(querySb);
 		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FileProperties.NAME));
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FilePropertiesProvider.NAME));
 		appendAnd(querySb);
 		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FileProperties.TRACK));
+		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FilePropertiesProvider.TRACK));
 		
 		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, querySb.toString(), params.toArray(new String[params.size()]), null);
 	    try {
@@ -301,7 +301,7 @@ public class PlaybackFile implements
 			@Override
 			public void run() {
 				try {
-					final String lastPlayedString = mFile.getProperty(FileProperties.LAST_PLAYED);
+					final String lastPlayedString = mFile.getProperty(FilePropertiesProvider.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
 					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
 						SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(mFile));
@@ -476,15 +476,15 @@ public class PlaybackFile implements
 		@Override
 		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
-				final String numberPlaysString = mFile.getRefreshedProperty(FileProperties.NUMBER_PLAYS);
+				final String numberPlaysString = mFile.getRefreshedProperty(FilePropertiesProvider.NUMBER_PLAYS);
 				
 				int numberPlays = 0;
 				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
 				
-				mFile.setProperty(FileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays));	
+				mFile.setProperty(FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays));
 				
 				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
-				mFile.setProperty(FileProperties.LAST_PLAYED, lastPlayed);
+				mFile.setProperty(FilePropertiesProvider.LAST_PLAYED, lastPlayed);
 			} catch (IOException e) {
 				mLogger.warn(e.toString(), e);
 			} catch (NumberFormatException ne) {
