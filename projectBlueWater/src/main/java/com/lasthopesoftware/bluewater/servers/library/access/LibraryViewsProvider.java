@@ -36,8 +36,10 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision();
 
-        if (mCachedFileSystemItems != null && mRevision.equals(serverRevision))
-            return mCachedFileSystemItems;
+        synchronized(browseLibraryParameter) {
+            if (mCachedFileSystemItems != null && mRevision.equals(serverRevision))
+                return mCachedFileSystemItems;
+        }
 
         final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
         try {
@@ -47,8 +49,10 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
             try {
                 final List<Item> items = FilesystemResponse.GetItems(is);
 
-                mRevision = serverRevision;
-                mCachedFileSystemItems = items;
+                synchronized(browseLibraryParameter) {
+                    mRevision = serverRevision;
+                    mCachedFileSystemItems = items;
+                }
 
                 return items;
             } finally {
