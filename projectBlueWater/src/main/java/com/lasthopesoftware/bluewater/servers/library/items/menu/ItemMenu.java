@@ -2,15 +2,12 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -20,8 +17,6 @@ import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
@@ -32,45 +27,23 @@ import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRig
 import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.io.IOException;
-import java.util.List;
 
 public class ItemMenu {
 	private static class ViewHolder {
-		public ViewHolder(TextView textView, ImageView hasListItemsImageView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
+		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
 			this.textView = textView;
-            this.hasListItemsImageView = hasListItemsImageView;
 			this.shuffleButton = shuffleButton;
 			this.playButton = playButton;
 			this.viewButton = viewButton;
 		}
 
         public final TextView textView;
-        public final ImageView hasListItemsImageView;
         public final ImageButton shuffleButton;
         public final ImageButton playButton;
         public final ImageButton viewButton;
-        public ItemProvider itemProvider;
 	}
-
-    private static Bitmap chevronBitmap;
-    private static Bitmap listBitmap;
-
-    private static Bitmap getChevronBitmap(Context context) {
-        if (chevronBitmap == null)
-            chevronBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.chevron_right);
-
-        return chevronBitmap;
-    }
-
-    private static Bitmap getListBitmap(Context context) {
-        if (listBitmap == null)
-            listBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_list);
-
-        return listBitmap;
-    }
 
 	public static View getView(IItem item, View convertView, ViewGroup parent) {
 		if (convertView == null) {
@@ -97,7 +70,6 @@ public class ItemMenu {
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	        final LinearLayout rl = (LinearLayout)inflater.inflate(R.layout.layout_list_item, parentView, false);
 	        final TextView textView = (TextView)rl.findViewById(R.id.tvListItem);
-	        final ImageView hasListItemsImageView = (ImageView) rl.findViewById(R.id.imgListItemHasItems);
 	        parentView.addView(rl);
 	        
 	        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
@@ -114,7 +86,7 @@ public class ItemMenu {
 			
 			parentView.addView(fileMenu);
 			
-			convertView.setTag(new ViewHolder(textView, hasListItemsImageView, shuffleButton, playButton, viewButton));
+			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
 		}
 		
 		if (((ViewFlipper)convertView).getDisplayedChild() != 0) ((ViewFlipper)convertView).showPrevious();
@@ -124,35 +96,6 @@ public class ItemMenu {
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
-
-        viewHolder.hasListItemsImageView.setVisibility(View.INVISIBLE);
-        viewHolder.hasListItemsImageView.setImageBitmap(getListBitmap(viewHolder.hasListItemsImageView.getContext()));
-        if (item instanceof Playlist) {
-            if (((Playlist)item).getChildren().size() > 0)
-                viewHolder.hasListItemsImageView.setImageBitmap(getChevronBitmap(viewHolder.hasListItemsImageView.getContext()));
-
-            viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
-        }
-
-        if (item instanceof Item) {
-            if (viewHolder.itemProvider != null) viewHolder.itemProvider.cancel(false);
-
-            viewHolder.itemProvider = new ItemProvider(item.getKey());
-            viewHolder.itemProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
-
-                @Override
-                public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
-                    if (owner.isCancelled() || owner.getState() == SimpleTaskState.ERROR || items == null)
-                        return;
-
-                    if (items.size() > 0)
-                        viewHolder.hasListItemsImageView.setImageBitmap(getChevronBitmap(viewHolder.hasListItemsImageView.getContext()));
-
-                    viewHolder.hasListItemsImageView.setVisibility(View.VISIBLE);
-                }
-            });
-            viewHolder.itemProvider.execute();
-        }
 
 		return convertView;
 	}
