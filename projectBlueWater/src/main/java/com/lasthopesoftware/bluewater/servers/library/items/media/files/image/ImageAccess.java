@@ -85,9 +85,6 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-			final Library library = LibrarySession.GetLibrary(mContext);
-			final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
-			
 			if (owner.isCancelled()) return getFillerBitmap();
 			
 			String uniqueKey = null;
@@ -106,7 +103,9 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			
 			byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
-			
+
+            final Library library = LibrarySession.GetLibrary(mContext);
+            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
 				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
