@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -42,13 +42,13 @@ public class FileDetailsActivity extends Activity {
 	
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
 															new String[] {
-																FileProperties.AUDIO_ANALYSIS_INFO,
-																FileProperties.GET_COVER_ART_INFO,
-																FileProperties.IMAGE_FILE,
-																FileProperties.KEY,
-																FileProperties.STACK_FILES,
-																FileProperties.STACK_TOP,
-																FileProperties.STACK_VIEW })));
+																FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
+																FilePropertiesProvider.GET_COVER_ART_INFO,
+																FilePropertiesProvider.IMAGE_FILE,
+																FilePropertiesProvider.KEY,
+																FilePropertiesProvider.STACK_FILES,
+																FilePropertiesProvider.STACK_TOP,
+																FilePropertiesProvider.STACK_VIEW })));
 	
 	private int mFileKey = -1;
 	
@@ -93,14 +93,14 @@ public class FileDetailsActivity extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FileProperties filePropertiesHelper = new FileProperties(fileKey);
+        final FilePropertiesProvider filePropertiesProviderHelper = new FilePropertiesProvider(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesHelper.getProperty("Name");
+				return filePropertiesProviderHelper.getProperty("Name");
 			}
 		});
         getFileNameTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -119,8 +119,8 @@ public class FileDetailsActivity extends Activity {
 			@Override
 			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 				
-				if (filePropertiesHelper.getProperty(FileProperties.RATING) != null && !filePropertiesHelper.getProperty(FileProperties.RATING).isEmpty())
-					return Float.valueOf(filePropertiesHelper.getProperty(FileProperties.RATING));
+				if (filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING) != null && !filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING).isEmpty())
+					return Float.valueOf(filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING));
 				
 				return (float) 0;
 			}
@@ -138,7 +138,7 @@ public class FileDetailsActivity extends Activity {
 					@Override
 					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 						if (!fromUser) return;
-						filePropertiesHelper.setProperty(FileProperties.RATING, String.valueOf(Math.round(rating)));
+						filePropertiesProviderHelper.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 					}
 				});
 			}
@@ -150,7 +150,7 @@ public class FileDetailsActivity extends Activity {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final FormattedFileProperties formattedFileProperties = new FormattedFileProperties(mFileKey);
+				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(mFileKey);
 				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
 				

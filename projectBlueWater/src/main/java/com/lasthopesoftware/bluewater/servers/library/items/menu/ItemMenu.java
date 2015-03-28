@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
@@ -39,13 +38,13 @@ public class ItemMenu {
 			this.playButton = playButton;
 			this.viewButton = viewButton;
 		}
-		
-		final TextView textView;
-		final ImageButton shuffleButton;
-		final ImageButton playButton;
-		final ImageButton viewButton;
+
+        public final TextView textView;
+        public final ImageButton shuffleButton;
+        public final ImageButton playButton;
+        public final ImageButton viewButton;
 	}
-	
+
 	public static View getView(IItem item, View convertView, ViewGroup parent) {
 		if (convertView == null) {
 		
@@ -69,9 +68,8 @@ public class ItemMenu {
 			parentView.setOnTouchListener(onSwipeListener);
 			        
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	        final RelativeLayout rl = (RelativeLayout)inflater.inflate(R.layout.layout_standard_text, parentView, false);
-	        final TextView textView = (TextView)rl.findViewById(R.id.tvStandard);
-	        
+	        final LinearLayout rl = (LinearLayout)inflater.inflate(R.layout.layout_list_item, parentView, false);
+	        final TextView textView = (TextView)rl.findViewById(R.id.tvListItem);
 	        parentView.addView(rl);
 	        
 	        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
@@ -98,7 +96,7 @@ public class ItemMenu {
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
-		
+
 		return convertView;
 	}
 	

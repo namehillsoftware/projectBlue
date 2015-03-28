@@ -33,4 +33,9 @@ public class Item extends AbstractIntKeyStringValue implements IItem, IFilesCont
 	public String[] getSubItemParams() {
 		return new String[] { "Browse/Children", "ID=" + String.valueOf(this.getKey())};
 	}
+
+    @Override
+    public int hashCode() {
+        return getKey();
+    }
 }

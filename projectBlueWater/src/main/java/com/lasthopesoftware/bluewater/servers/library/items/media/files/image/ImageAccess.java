@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -85,20 +85,17 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		
 		@Override
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
-			final Library library = LibrarySession.GetLibrary(mContext);
-			final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
-			
 			if (owner.isCancelled()) return getFillerBitmap();
 			
 			String uniqueKey = null;
 			try {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 				// artists), and then by artist if that field is empty
-				String artist = mFile.getProperty(FileProperties.ALBUM_ARTIST);
+				String artist = mFile.getProperty(FilePropertiesProvider.ALBUM_ARTIST);
 				if (artist == null || artist.isEmpty())
-					artist = mFile.getProperty(FileProperties.ARTIST);
+					artist = mFile.getProperty(FilePropertiesProvider.ARTIST);
 				
-				uniqueKey = artist + ":" + mFile.getProperty(FileProperties.ALBUM);
+				uniqueKey = artist + ":" + mFile.getProperty(FilePropertiesProvider.ALBUM);
 			} catch (IOException ioE) {
 				mLogger.error("Error getting file properties.");
 				return getFillerBitmap();
@@ -106,7 +103,9 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			
 			byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
-			
+
+            final Library library = LibrarySession.GetLibrary(mContext);
+            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
 				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);

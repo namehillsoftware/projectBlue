@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -35,11 +36,11 @@ public class PlaylistListActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_view_playlists);
+        setContentView(R.layout.activity_view_items);
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        playlistView = (ListView)findViewById(R.id.lvPlaylist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingPlaylist);
+        playlistView = (ListView)findViewById(R.id.lvItems);
+        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         mPlaylistId = 0;
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
@@ -50,14 +51,14 @@ public class PlaylistListActivity extends FragmentActivity {
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(mPlaylistId);
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 				
-				BuildPlaylistView((new Playlists(0, result)).getMappedPlaylists().get(mPlaylistId));
+				BuildPlaylistView(result);
 				
 				playlistView.setVisibility(View.VISIBLE);
 	        	pbLoading.setVisibility(View.INVISIBLE);
@@ -78,9 +79,9 @@ public class PlaylistListActivity extends FragmentActivity {
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 	
-	private void BuildPlaylistView(final Playlist playlist) {
-        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist.getChildren()));
-        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist.getChildren()));
+	private void BuildPlaylistView(List<Playlist> playlist) {
+        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist));
+        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
         playlistView.setOnItemLongClickListener(new LongClickFlipListener());
 	}
 	

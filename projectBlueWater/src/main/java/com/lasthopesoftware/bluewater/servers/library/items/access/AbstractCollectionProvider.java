@@ -1,11 +1,19 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
+import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -13,12 +21,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class AbstractCollectionProvider<T extends IItem> {
-	protected final HttpURLConnection mConnection;
-	protected OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
-	protected OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
-	protected final String[] mParams;
-	private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
+	private final HttpURLConnection mConnection;
+	private OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
+    private OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
+    private final String[] mParams;
+    private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
     private Exception mException = null;
+    private SimpleTask<Void, Void, List<T>> mTask;
 
 	public AbstractCollectionProvider(String... params) {
 		this(null, params);
@@ -45,7 +54,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public void execute(Executor executor) {
-		getNewTask().execute(executor);
+        getTask().execute(executor);
 	}
 	
 	public List<T> get() throws ExecutionException, InterruptedException {
@@ -53,10 +62,44 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public List<T> get(Executor executor) throws ExecutionException, InterruptedException {
-		return getNewTask().execute(executor).get();
+		return getTask().execute(executor).get();
 	}
-	
-	protected abstract SimpleTask<Void, Void, List<T>> getNewTask();
+
+    public void cancel(boolean mayInterrupt) {
+        getTask().cancel(mayInterrupt);
+    }
+
+    private SimpleTask<Void, Void, List<T>> getTask() {
+        if (mTask != null) return mTask;
+
+        mTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<T>>() {
+
+            @Override
+            public List<T> onExecute(ISimpleTask<Void, Void, List<T>> owner, Void... voidParams) throws Exception {
+                if (owner.isCancelled()) return new ArrayList<>();
+
+                return getItems(owner, mConnection, mParams);
+            }
+        });
+
+        mTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<T>>() {
+            @Override
+            public boolean onError(ISimpleTask<Void, Void, List<T>> owner, boolean isHandled, Exception innerException) {
+                setException(innerException);
+                return false;
+            }
+        });
+
+        if (mOnGetItemsComplete != null)
+            mTask.addOnCompleteListener(mOnGetItemsComplete);
+
+        if (mOnGetItemsError != null)
+            mTask.addOnErrorListener(mOnGetItemsError);
+
+        return mTask;
+    }
+
+	protected abstract List<T> getItems(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection, String... params) throws Exception;
 
     public Exception getException() {
         return mException;

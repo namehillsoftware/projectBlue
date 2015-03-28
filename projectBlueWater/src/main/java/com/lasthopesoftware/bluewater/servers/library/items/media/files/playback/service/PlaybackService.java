@@ -48,7 +48,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -866,7 +866,7 @@ public class PlaybackService extends Service implements
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return playingFile.getProperty(FileProperties.ARTIST) + " - " + playingFile.getValue();
+				return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
 			}
 		});
 		getNotificationPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -892,11 +892,11 @@ public class PlaybackService extends Service implements
 			@Override
 			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
 				final SparseArray<Object> result = new SparseArray<Object>(4);
-				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FileProperties.ARTIST));
-				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FileProperties.ALBUM));
+				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
+				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FilePropertiesProvider.ALBUM));
 				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
 				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
-				final String trackNumber = playingFile.getProperty(FileProperties.TRACK);
+				final String trackNumber = playingFile.getProperty(FilePropertiesProvider.TRACK);
 				if (trackNumber != null && !trackNumber.isEmpty())
 					result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
 				return result;

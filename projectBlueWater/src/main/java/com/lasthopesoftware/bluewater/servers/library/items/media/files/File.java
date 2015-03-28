@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FileProperties;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
-	private FileProperties mFileProperties;
+	private FilePropertiesProvider mFilePropertiesProvider;
 	
 	public File(int key) {
 		this();
@@ -29,7 +29,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	@Override
 	public void setKey(int key) {
 		super.setKey(key);
-		mFileProperties = new FileProperties(key);
+		mFilePropertiesProvider = new FilePropertiesProvider(key);
 	}
 
 	/**
@@ -39,7 +39,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	public String getValue() {
 		if (super.getValue() == null) {
 			try {
-				super.setValue(mFileProperties.getProperty(FileProperties.NAME));
+				super.setValue(mFilePropertiesProvider.getProperty(FilePropertiesProvider.NAME));
 			} catch (IOException e) {
 				LoggerFactory.getLogger(File.class).error(e.toString(), e);
 			}
@@ -57,22 +57,22 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	}
 	
 	public void setProperty(String name, String value) {
-		mFileProperties.setProperty(name, value);
+		mFilePropertiesProvider.setProperty(name, value);
 	}
 	
 	public String getProperty(String name) throws IOException {
-		return mFileProperties.getProperty(name);
+		return mFilePropertiesProvider.getProperty(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
-		return mFileProperties.getRefreshedProperty(name);
+		return mFilePropertiesProvider.getRefreshedProperty(name);
 	}
 	
 	/*
 	 * Get the duration of the file in milliseconds
 	 */
 	public int getDuration() throws IOException {
-		String durationToParse = mFileProperties.getProperty(FileProperties.DURATION);
+		String durationToParse = mFilePropertiesProvider.getProperty(FilePropertiesProvider.DURATION);
 		if (durationToParse != null && !durationToParse.isEmpty())
 			return (int) (Double.parseDouble(durationToParse) * 1000);
 		throw new IOException("Duration was not present in the song properties.");

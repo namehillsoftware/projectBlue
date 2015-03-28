@@ -1,65 +1,77 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
+import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
-public class ItemProvider extends AbstractCollectionProvider<Item> { 
-	
-	public static ItemProvider provide(String... params) {
-		return new ItemProvider(params);
+public class ItemProvider extends AbstractCollectionProvider<Item> {
+
+    private static class ItemHolder {
+        public ItemHolder(Integer revision, List<Item> items) {
+            this.revision = revision;
+            this.items = items;
+        }
+
+        public final Integer revision;
+        public final List<Item> items;
+    }
+
+    private static final int maxSize = 2000;
+    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
+                                                                                            .Builder<Integer, ItemHolder>()
+                                                                                            .maximumWeightedCapacity(maxSize)
+                                                                                            .build();
+
+    private final int mItemKey;
+
+	public static ItemProvider provide(int itemKey) {
+		return new ItemProvider(itemKey);
+	}
+
+	public ItemProvider(int itemKey) {
+		this(null, itemKey);
 	}
 	
-	public ItemProvider(String... params) {
-		super(null, params);
+	public ItemProvider(HttpURLConnection connection, int itemKey) {
+		super(connection, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey));
+
+        mItemKey = itemKey;
 	}
-	
-	public ItemProvider(HttpURLConnection connection, String... params) {
-		super(connection, params);
-	}
-			
-	protected SimpleTask<Void, Void, List<Item>> getNewTask() {
 
-		final SimpleTask<Void, Void, List<Item>> getItemsTask = new SimpleTask<Void, Void, List<Item>>(new OnExecuteListener<Void, Void, List<Item>>() {
-			
-			@Override
-			public List<Item> onExecute(ISimpleTask<Void, Void, List<Item>> owner, Void... voidParams) throws Exception {
-				final HttpURLConnection conn = mConnection == null ? ConnectionProvider.getConnection(mParams) : mConnection;
-				try {
-					final InputStream is = conn.getInputStream();
-					try {
-						return FilesystemResponse.GetItems(is);
-					} finally {
-						is.close();
-					}
+    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
+        final Integer serverRevision = RevisionChecker.getRevision();
+        final Integer boxedItemKey = mItemKey;
+        ItemHolder itemHolder = mItemsCache.get(boxedItemKey);
+        if (itemHolder != null && itemHolder.revision.equals(serverRevision))
+            return itemHolder.items;
 
-				} finally {
-					if (mConnection == null) conn.disconnect();
-				}
-			}
-		});
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
+        try {
+            if (task.isCancelled()) return new ArrayList<>();
 
-        getItemsTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<Item>>() {
-            @Override
-            public boolean onError(ISimpleTask<Void, Void, List<Item>> owner, boolean isHandled, Exception innerException) {
-                setException(innerException);
-                return false;
+            final InputStream is = conn.getInputStream();
+            try {
+                final List<Item> items = FilesystemResponse.GetItems(is);
+
+                itemHolder = new ItemHolder(serverRevision, items);
+                mItemsCache.put(boxedItemKey, itemHolder);
+
+                return items;
+            } finally {
+                is.close();
             }
-        });
-
-		if (mOnGetItemsComplete != null)
-			getItemsTask.addOnCompleteListener(mOnGetItemsComplete);
-		
-		if (mOnGetItemsError != null)
-			getItemsTask.addOnErrorListener(mOnGetItemsError);
-		
-		return getItemsTask;
+        } finally {
+            if (connection == null) conn.disconnect();
+        }
 	}
 }

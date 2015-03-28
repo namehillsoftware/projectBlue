@@ -6,11 +6,12 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -60,6 +61,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener, final ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
+        final FileSystem fileSystem = this;
 		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
@@ -74,22 +76,22 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 						}
 					});
 
-                    final ItemProvider itemProvider = new ItemProvider(getSubItemParams());
-					final List<Item> libraries = itemProvider.get();
+                    final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider();
+					final List<Item> libraries = libraryViewsProvider.get();
 
-                    if (itemProvider.getException() != null)
-                        throw itemProvider.getException();
+                    if (libraryViewsProvider.getException() != null)
+                        throw libraryViewsProvider.getException();
 
 					for (int viewKey : mVisibleViewKeys) {
 						for (Item library : libraries) {
 							if (mVisibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
 							
 							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								mVisibleViews.add(new Playlists(Integer.MAX_VALUE, (new PlaylistsProvider()).get()));
+								mVisibleViews.add(new Playlists());
 								continue;
 							}
 							
-							final List<Item> views = ItemProvider.provide(library.getSubItemParams()).get();
+							final List<Item> views = ItemProvider.provide(library.getKey()).get();
 							for (Item view : views)
 								mVisibleViews.add(view);
 						}
