@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -28,28 +29,46 @@ import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
 public class FilePropertiesProvider {
+    private static class FilePropertiesContainer {
+        private Integer mRevision = Integer.valueOf(-1);
+        private ConcurrentSkipListMap<String, String> mProperties = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        public void updateProperties(Integer revision, SortedMap<String, String> properties) {
+            mRevision = revision;
+            mProperties.putAll(properties);
+        }
+
+        public Integer getRevision() {
+            return mRevision;
+        }
+
+        public ConcurrentSkipListMap<String, String> getProperties() {
+            return mProperties;
+        }
+    }
+
 	private static final int maxSize = 1000;
 	private final String mFileKeyString;
-	private ConcurrentSkipListMap<String, String> mProperties = null;
+	private FilePropertiesContainer mFilePropertiesContainer = null;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static final ConcurrentLinkedHashMap<Integer, ConcurrentSkipListMap<String, String>> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, ConcurrentSkipListMap<String,String>>().maximumWeightedCapacity(maxSize).build();
-	
+	private static final ConcurrentLinkedHashMap<Integer, FilePropertiesContainer> mPropertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, FilePropertiesContainer>().maximumWeightedCapacity(maxSize).build();
+
 	public FilePropertiesProvider(int fileKey) {
 		
 		mFileKeyString = String.valueOf(fileKey);
 		
 		if (mPropertiesCache.containsKey(fileKey))
-			mProperties = mPropertiesCache.get(fileKey);
-		
-		if (mProperties == null) {
-			mProperties = new ConcurrentSkipListMap<String, String>(String.CASE_INSENSITIVE_ORDER); 
-			mPropertiesCache.put(fileKey, mProperties);
+            mFilePropertiesContainer = mPropertiesCache.get(fileKey);
+
+		if (mFilePropertiesContainer == null) {
+            mFilePropertiesContainer = new FilePropertiesContainer();
+			mPropertiesCache.put(fileKey, mFilePropertiesContainer);
 		}
 	}
-	
+
 	public void setProperty(final String name, final String value) {
-		if (mProperties.containsKey(name) && mProperties.get(name).equals(value)) return;
+		if (mFilePropertiesContainer.getProperties().containsKey(name) && mFilePropertiesContainer.getProperties().get(name).equals(value)) return;
 
 		filePropertiesExecutor.execute(new Runnable() {
 			
@@ -68,17 +87,16 @@ public class FilePropertiesProvider {
 				} 
 			}
 		});
-		
-		mProperties.put(name, value);
+
+        mFilePropertiesContainer.getProperties().put(name, value);
 	}
-	
 
 	public String getProperty(String name) throws IOException {
 		
-		if (mProperties.size() == 0 || !mProperties.containsKey(name))
+		if (!mFilePropertiesContainer.getProperties().containsKey(name))
 			return getRefreshedProperty(name);
 		
-		return mProperties.get(name);
+		return mFilePropertiesContainer.getProperties().get(name);
 	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
@@ -87,12 +105,12 @@ public class FilePropertiesProvider {
 	}
 	
 	public SortedMap<String, String> getProperties() throws IOException {
-		if (mProperties.size() == 0)
+		if (mFilePropertiesContainer.getProperties().size() == 0)
 			return getRefreshedProperties();
 		
-		return Collections.unmodifiableSortedMap(mProperties);
+		return Collections.unmodifiableSortedMap(mFilePropertiesContainer.getProperties());
 	}
-	
+
 	public SortedMap<String, String> getRefreshedProperties() throws IOException {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
@@ -101,10 +119,14 @@ public class FilePropertiesProvider {
 				
 				@Override
 				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
-					final TreeMap<String, String> returnProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-					
-					// Seed with old properties first
-					returnProperties.putAll(mProperties);
+                    final Integer revision = RevisionChecker.getRevision();
+                    if (mFilePropertiesContainer.getProperties().size() > 0 && revision.equals(mFilePropertiesContainer.getRevision()))
+                        return Collections.unmodifiableSortedMap(mFilePropertiesContainer.getProperties());
+
+                    final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+                    // Seed with old properties first
+				    returnProperties.putAll(mFilePropertiesContainer.getProperties());
 					
 					try {
 						final HttpURLConnection conn = ConnectionProvider.getConnection("File/GetInfo", "File=" + mFileKeyString);
@@ -116,8 +138,6 @@ public class FilePropertiesProvider {
 														    	
 						    	for (XmlElement el : xml.get(0))
 						    		returnProperties.put(el.getAttribute("Name"), el.getValue());
-						    	
-						    	return returnProperties;
 							} finally {
 								is.close();
 							}
@@ -129,15 +149,14 @@ public class FilePropertiesProvider {
 					} catch (XmlParseException e) {
 						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					}
-					
-					return returnProperties;
+
+                    if (returnProperties != null)
+                        mFilePropertiesContainer.updateProperties(revision, returnProperties);
+
+                    return mFilePropertiesContainer.getProperties();
 				}
 			}).get();
-			
-			if (filePropertiesResult == null) return Collections.unmodifiableSortedMap(mProperties);
-			
-			mProperties.putAll(filePropertiesResult);
-			
+
 			return Collections.unmodifiableSortedMap(filePropertiesResult);
 		} catch (ExecutionException ee) {
 			if (ee.getCause() instanceof IOException)
@@ -148,7 +167,7 @@ public class FilePropertiesProvider {
 			LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 		}
 		
-		return Collections.unmodifiableSortedMap(mProperties);
+		return Collections.unmodifiableSortedMap(mFilePropertiesContainer.getProperties());
 	}
 	
 	/* Utility string constants */
