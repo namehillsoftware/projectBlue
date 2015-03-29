@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystem
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -343,10 +344,8 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        if (mFlippedView != null && mFlippedView.getDisplayedChild() != 0) {
-            mFlippedView.showPrevious();
-            return;
-        }
+        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+
         super.onBackPressed();
     }
 

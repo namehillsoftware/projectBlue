@@ -115,10 +115,7 @@ public class PlaylistListActivity extends FragmentActivity implements OnViewFlip
 
     @Override
     public void onBackPressed() {
-        if (mFlippedView != null && mFlippedView.getDisplayedChild() > 0) {
-            mFlippedView.showPrevious();
-            return;
-        }
+        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
 
         super.onBackPressed();
     }

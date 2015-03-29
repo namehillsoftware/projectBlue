@@ -19,8 +19,7 @@ public class LongClickViewFlipListener implements OnItemLongClickListener {
 
 	@Override
 	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mFlippedView != null && mFlippedView.getDisplayedChild() > 0)
-            mFlippedView.showPrevious();
+        tryFlipToPreviousView(mFlippedView);
 
 		if (view instanceof ViewFlipper) {
 			final ViewFlipper parentView = (ViewFlipper)view;
@@ -35,5 +34,12 @@ public class LongClickViewFlipListener implements OnItemLongClickListener {
 
     public void setOnViewFlipped(OnViewFlippedListener onViewFlippedListener) {
         mOnViewFlippedListener = onViewFlippedListener;
+    }
+
+    public final static boolean tryFlipToPreviousView(final ViewFlipper flippedView) {
+        if (flippedView == null || flippedView.getDisplayedChild() == 0) return false;
+
+        flippedView.showPrevious();
+        return true;
     }
 }
