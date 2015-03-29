@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.ListViewBackButtonPressHandler;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -109,5 +110,11 @@ public class ItemListActivity extends FragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (ViewUtils.handleNavMenuClicks(this, item)) return true;
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!ListViewBackButtonPressHandler.HandleListViewBackButtonPress(itemListView))
+            super.onBackPressed();
     }
 }

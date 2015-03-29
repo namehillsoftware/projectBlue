@@ -96,7 +96,7 @@ public class LibraryViewFragment extends Fragment {
 				
 				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-        });
+             });
     	
         return layout;
     }

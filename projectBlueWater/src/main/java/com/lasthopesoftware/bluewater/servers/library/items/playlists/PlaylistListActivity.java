@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.ListViewBackButtonPressHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -107,4 +108,10 @@ public class PlaylistListActivity extends FragmentActivity {
 		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
 		return super.onOptionsItemSelected(item);
 	}
+
+    @Override
+    public void onBackPressed() {
+        if (!ListViewBackButtonPressHandler.HandleListViewBackButtonPress(playlistView))
+            super.onBackPressed();
+    }
 }
