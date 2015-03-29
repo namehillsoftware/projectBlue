@@ -8,21 +8,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.ListViewBackButtonPressHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
-import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
-public class PlaylistListActivity extends FragmentActivity {
+public class PlaylistListActivity extends FragmentActivity implements OnViewFlippedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
@@ -30,6 +31,7 @@ public class PlaylistListActivity extends FragmentActivity {
 
 	private ProgressBar pbLoading;
 	private ListView playlistView;
+    private ViewFlipper mFlippedView;
 
 	private Context thisContext = this;
 
@@ -83,7 +85,9 @@ public class PlaylistListActivity extends FragmentActivity {
 	private void BuildPlaylistView(List<Playlist> playlist) {
         playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist));
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
-        playlistView.setOnItemLongClickListener(new LongClickFlipListener());
+        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+        longClickViewFlipListener.setOnViewFlipped(this);
+        playlistView.setOnItemLongClickListener(longClickViewFlipListener);
 	}
 	
 	@Override
@@ -111,7 +115,16 @@ public class PlaylistListActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        if (!ListViewBackButtonPressHandler.HandleListViewBackButtonPress(playlistView))
-            super.onBackPressed();
+        if (mFlippedView != null && mFlippedView.getDisplayedChild() > 0) {
+            mFlippedView.showPrevious();
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onViewFlipped(ViewFlipper viewFlipper) {
+        mFlippedView = viewFlipper;
     }
 }

@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -14,8 +15,8 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.ListViewBackButtonPressHandler;
-import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -26,13 +27,15 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends FragmentActivity {
+public class ItemListActivity extends FragmentActivity implements OnViewFlippedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
 
     private ListView itemListView;
     private ProgressBar pbLoading;
+
+    private ViewFlipper mFlippedView;
 
     private int mItemId;
 
@@ -79,7 +82,9 @@ public class ItemListActivity extends FragmentActivity {
     private void BuildItemListView(final List<Item> items) {
         itemListView.setAdapter(new ItemListAdapter(this, R.id.tvStandard, items));
         itemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>)items : new ArrayList<>(items)));
-        itemListView.setOnItemLongClickListener(new LongClickFlipListener());
+        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+        longClickViewFlipListener.setOnViewFlipped(this);
+        itemListView.setOnItemLongClickListener(longClickViewFlipListener);
     }
 
     @Override
@@ -114,7 +119,16 @@ public class ItemListActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        if (!ListViewBackButtonPressHandler.HandleListViewBackButtonPress(itemListView))
-            super.onBackPressed();
+        if (mFlippedView != null && mFlippedView.getDisplayedChild() > 0) {
+            mFlippedView.showPrevious();
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onViewFlipped(ViewFlipper viewFlipper) {
+        mFlippedView = viewFlipper;
     }
 }

@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -112,7 +112,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 							PlaybackService.seekTo(view.getContext(), position);
 						}
 					});
-			        mFileListView.setOnItemLongClickListener(new LongClickFlipListener());
+			        mFileListView.setOnItemLongClickListener(new LongClickViewFlipListener());
 			        
 			        if (library.getNowPlayingId() < result.size())
 			        	mFileListView.setSelection(library.getNowPlayingId());

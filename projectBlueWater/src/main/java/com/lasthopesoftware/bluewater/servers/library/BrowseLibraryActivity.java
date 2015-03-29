@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ViewFlipper;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
@@ -29,6 +30,7 @@ import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystem
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -50,6 +52,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 	private DrawerLayout mDrawerLayout;
     private PagerSlidingTabStrip mLibraryViewsTabs;
     private ProgressBar mPbLoadingViews;
+    private ViewFlipper mFlippedView;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
 
@@ -60,6 +63,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
 	private boolean mIsStopped = false;
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
+
+    private final OnViewFlippedListener mOnViewFlippedListener = new OnViewFlippedListener() {
+        @Override
+        public void onViewFlipped(ViewFlipper viewFlipper) {
+            mFlippedView = viewFlipper;
+        }
+    };
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -237,11 +247,11 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
                 viewChildPagerAdapter.setLibraryViews(result);
+                viewChildPagerAdapter.setOnViewFlippedListener(mOnViewFlippedListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
                 mLibraryViewsTabs.setViewPager(mViewPager);
-
                 toggleViewsVisibility(true);
             }
         };
@@ -331,7 +341,16 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		super.onStop();
 	}
 
-	public ViewPager getViewPager() {
+    @Override
+    public void onBackPressed() {
+        if (mFlippedView != null && mFlippedView.getDisplayedChild() != 0) {
+            mFlippedView.showPrevious();
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    public ViewPager getViewPager() {
 		return mViewPager;
 	}
 }

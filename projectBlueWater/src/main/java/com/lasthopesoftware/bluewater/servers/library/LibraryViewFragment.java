@@ -20,12 +20,13 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
-import com.lasthopesoftware.bluewater.shared.listener.LongClickFlipListener;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -35,6 +36,8 @@ import java.util.List;
 public class LibraryViewFragment extends Fragment {
 	
     private static final String ARG_CATEGORY_POSITION = "category_position";
+
+    private OnViewFlippedListener mOnViewFlippedListener;
 
     public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
         final LibraryViewFragment returnFragment = new LibraryViewFragment();
@@ -73,9 +76,9 @@ public class LibraryViewFragment extends Fragment {
 						final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 										
 						if (category instanceof Playlists)
-							layout.addView(BuildPlaylistView(context, pbLoading));
+                            layout.addView(BuildPlaylistView(context, pbLoading));
 						else if (category instanceof Item)
-							layout.addView(BuildStandardItemView(context, (Item)category, pbLoading));
+                            layout.addView(BuildStandardItemView(context, (Item)category, pbLoading));
 					}
 				};
 				
@@ -96,7 +99,7 @@ public class LibraryViewFragment extends Fragment {
 				
 				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-             });
+        });
     	
         return layout;
     }
@@ -115,7 +118,7 @@ public class LibraryViewFragment extends Fragment {
 					if (result == null) return;
 					
 					listView.setOnItemClickListener(new ClickPlaylistListener(context, result));
-					listView.setOnItemLongClickListener(new LongClickFlipListener());
+                    listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
 		    		listView.setAdapter(new PlaylistListAdapter(context, R.id.tvStandard, result));
 		    		loadingView.setVisibility(View.INVISIBLE);
 		    		listView.setVisibility(View.VISIBLE);					
@@ -148,8 +151,7 @@ public class LibraryViewFragment extends Fragment {
 				if (result == null) return;
 
                 listView.setOnItemClickListener(new ClickItemListener(context, result instanceof ArrayList ? (ArrayList<Item>)result : new ArrayList<>(result)));
-		    	listView.setOnItemLongClickListener(new LongClickFlipListener());
-		    	
+                listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
 		    	listView.setAdapter(new ItemListAdapter(context, R.layout.layout_list_item, result));
 		    	loadingView.setVisibility(View.INVISIBLE);
 	    		listView.setVisibility(View.VISIBLE);
@@ -166,4 +168,16 @@ public class LibraryViewFragment extends Fragment {
     	
 		return listView;
 	}
+
+    private LongClickViewFlipListener getNewLongClickViewFlipListener() {
+        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+        if (mOnViewFlippedListener != null)
+            longClickViewFlipListener.setOnViewFlipped(mOnViewFlippedListener);
+
+        return longClickViewFlipListener;
+    }
+
+    public void setOnViewFlippedListener(OnViewFlippedListener onViewFlippedListener) {
+        mOnViewFlippedListener = onViewFlippedListener;
+    }
 }

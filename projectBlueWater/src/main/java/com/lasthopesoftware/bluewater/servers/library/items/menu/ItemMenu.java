@@ -22,8 +22,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesCo
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener;
-import com.lasthopesoftware.bluewater.shared.listener.OnSwipeListener.OnSwipeRightListener;
 import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
 import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -54,36 +52,17 @@ public class ItemMenu {
 			convertView = new ViewFlipper(parent.getContext());
 			final ViewFlipper parentView = (ViewFlipper) convertView;
             parentView.setLayoutParams(lp);
-
-			final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
-			onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
-				
-				@Override
-				public boolean onSwipeRight(View view) {
-					parentView.showPrevious();
-					return true;
-				}
-			});
 			
-			parentView.setOnTouchListener(onSwipeListener);
-			        
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	        final LinearLayout rl = (LinearLayout)inflater.inflate(R.layout.layout_list_item, parentView, false);
 	        final TextView textView = (TextView)rl.findViewById(R.id.tvListItem);
 	        parentView.addView(rl);
 	        
 	        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
-	        fileMenu.setOnTouchListener(onSwipeListener);
-	        
-	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);	        
-	        shuffleButton.setOnTouchListener(onSwipeListener);
-	        
-	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);	        
-	        playButton.setOnTouchListener(onSwipeListener);
-	        
+	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
+	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
 	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
-	        viewButton.setOnTouchListener(onSwipeListener);
-			
+
 			parentView.addView(fileMenu);
 			
 			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
