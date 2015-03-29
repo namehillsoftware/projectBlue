@@ -253,6 +253,24 @@ public class BrowseLibraryActivity extends FragmentActivity {
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
                 mLibraryViewsTabs.setViewPager(mViewPager);
+
+                mLibraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                    @Override
+                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                    }
+
+                    @Override
+                    public void onPageSelected(int position) {
+                        LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView);
+                    }
+
+                    @Override
+                    public void onPageScrollStateChanged(int state) {
+
+                    }
+                });
+
                 toggleViewsVisibility(true);
             }
         };

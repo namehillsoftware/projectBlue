@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -17,6 +18,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -27,7 +29,9 @@ public class SearchFilesActivity extends FragmentActivity {
 
 	private ProgressBar pbLoading;
 	private ListView fileListView;
-	
+
+    private ViewFlipper mFlippedView;
+
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +77,14 @@ public class SearchFilesActivity extends FragmentActivity {
 				
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
 		    	fileListView.setOnItemClickListener(new ClickFileListener(filesContainer));
-		    	fileListView.setOnItemLongClickListener(new LongClickViewFlipListener());
+                final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+                longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
+                    @Override
+                    public void onViewFlipped(ViewFlipper viewFlipper) {
+                        mFlippedView = viewFlipper;
+                    }
+                });
+                fileListView.setOnItemLongClickListener(longClickViewFlipListener);
 		    	fileListView.setAdapter(fileListAdapter);
 		    	
 		    	
@@ -102,4 +113,10 @@ public class SearchFilesActivity extends FragmentActivity {
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 
+    @Override
+    public void onBackPressed() {
+        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+
+        super.onBackPressed();
+    }
 }

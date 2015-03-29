@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -11,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -32,7 +33,9 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	
 	private ListView mFileListView;
 	private ProgressBar mLoadingProgressBar;
-	
+
+    private ViewFlipper mFlippedView;
+
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,12 +80,12 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	
 	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
 		
-		private final Context mContext;
+		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
 		private final ProgressBar mLoadingProgressBar;
 		
-		public OnGetLibraryNowComplete(Context context, ListView fileListView, ProgressBar loadingProgressBar) {
-			mContext = context;
+		public OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar) {
+            mNowPlayingFilesListActivity = nowPlayingFilesListActivity;
 			mFileListView = fileListView;
 			mLoadingProgressBar = loadingProgressBar;
 		}
@@ -103,7 +106,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mContext, R.id.tvStandard, result);
+					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result);
 			        mFileListView.setAdapter(fileListAdapter);
 			        mFileListView.setOnItemClickListener(new OnItemClickListener() {
 
@@ -112,7 +115,14 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 							PlaybackService.seekTo(view.getContext(), position);
 						}
 					});
-			        mFileListView.setOnItemLongClickListener(new LongClickViewFlipListener());
+                    final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+                    longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
+                        @Override
+                        public void onViewFlipped(ViewFlipper viewFlipper) {
+                            mNowPlayingFilesListActivity.setFlippedView(viewFlipper);
+                        }
+                    });
+                    mFileListView.setOnItemLongClickListener(longClickViewFlipListener);
 			        
 			        if (library.getNowPlayingId() < result.size())
 			        	mFileListView.setSelection(library.getNowPlayingId());
@@ -125,4 +135,15 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	        getFileStringTask.execute();
 		}
 	}
+
+    public void setFlippedView(ViewFlipper flippedView) {
+        mFlippedView = flippedView;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+
+        super.onBackPressed();
+    }
 }
