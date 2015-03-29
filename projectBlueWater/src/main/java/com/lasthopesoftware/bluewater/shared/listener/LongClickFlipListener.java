@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.listener;
 
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -28,18 +27,6 @@ public class LongClickFlipListener implements OnItemLongClickListener {
 		if (view instanceof ViewFlipper) {
 			final ViewFlipper parentView = (ViewFlipper)view;
 			parentView.showNext();
-            parentView.setOnKeyListener(new View.OnKeyListener() {
-                @Override
-                public boolean onKey(View v, int keyCode, KeyEvent event) {
-                    if (keyCode != KeyEvent.KEYCODE_BACK) return false;
-
-                    parentView.setOnKeyListener(null);
-                    if (parentView.getDisplayedChild() == 0) return false;
-
-                    parentView.showPrevious();
-                    return true;
-                }
-            });
 			return true;
 		}
 		return false;

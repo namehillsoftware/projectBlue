@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
 import android.content.Intent;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -54,7 +55,17 @@ public class ItemMenu {
 			convertView = new ViewFlipper(parent.getContext());
 			final ViewFlipper parentView = (ViewFlipper) convertView;
 			parentView.setLayoutParams(lp);
-			
+            parentView.setOnKeyListener(new View.OnKeyListener() {
+                @Override
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    if (keyCode != KeyEvent.KEYCODE_BACK || parentView.getDisplayedChild() == 0)
+                        return false;
+
+                    parentView.showPrevious();
+                    return true;
+                }
+            });
+
 			final  OnSwipeListener onSwipeListener = new OnSwipeListener(parentView.getContext());
 			onSwipeListener.setOnSwipeRightListener(new OnSwipeRightListener() {
 				
