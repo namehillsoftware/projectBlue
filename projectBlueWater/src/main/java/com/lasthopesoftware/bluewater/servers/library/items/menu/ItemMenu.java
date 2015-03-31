@@ -44,13 +44,14 @@ public class ItemMenu {
 	}
 
 	public static View getView(IItem item, View convertView, ViewGroup parent) {
-		if (convertView == null) {
+        ViewFlipper parentView = (ViewFlipper)convertView;
+		if (parentView == null) {
 		
 			final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
 		            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-			
-			convertView = new ViewFlipper(parent.getContext());
-			final ViewFlipper parentView = (ViewFlipper) convertView;
+
+            parentView = new ViewFlipper(parent.getContext());
+            convertView = parentView;
             parentView.setLayoutParams(lp);
 			
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -68,47 +69,52 @@ public class ItemMenu {
 			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
 		}
 		
-		if (((ViewFlipper)convertView).getDisplayedChild() != 0) ((ViewFlipper)convertView).showPrevious();
+		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
 		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		viewHolder.textView.setText(item.getValue());
-		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler((IFilesContainer)item));
-		viewHolder.playButton.setOnClickListener(new PlayClickHandler((IFilesContainer)item));
-		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(item));
+		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer)item));
+		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
+		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		return convertView;
 	}
 	
-	private static class PlayClickHandler implements OnClickListener {
+	private static class PlayClickHandler extends MenuClickHandler {
 		private IFilesContainer mItem;
 		
-		public PlayClickHandler(IFilesContainer item) {
-			mItem = item;
+		public PlayClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
+			super(menuContainer);
+            mItem = item;
 		}
 		
 		@Override
 		public void onClick(final View v) {
 			mItem.getFiles().getFileStringList(new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
+            super.onClick(v);
 		}
 	}
 	
-	private static class ShuffleClickHandler implements OnClickListener {
+	private static class ShuffleClickHandler extends MenuClickHandler {
 		private IFilesContainer mItem;
 		
-		public ShuffleClickHandler(IFilesContainer item) {
-			mItem = item;
+		public ShuffleClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
+            super(menuContainer);
+            mItem = item;
 		}
 		
 		@Override
 		public void onClick(View v) {
 			mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
+            super.onClick(v);
 		}
 	}
 	
-	private static class ViewFilesClickHandler implements OnClickListener {
+	private static class ViewFilesClickHandler extends MenuClickHandler {
 		private IItem mItem;
 		
-		public ViewFilesClickHandler(IItem item) {
+		public ViewFilesClickHandler(ViewFlipper menuContainer, IItem item) {
+            super(menuContainer);
 			mItem = item;
 		}
 		
@@ -118,8 +124,23 @@ public class ItemMenu {
     		intent.setAction(mItem instanceof Playlist ? FileListActivity.VIEW_PLAYLIST_FILES : FileListActivity.VIEW_ITEM_FILES);
     		intent.putExtra(FileListActivity.KEY, mItem.getKey());
     		v.getContext().startActivity(intent);
+            super.onClick(v);
 		}
 	}
+
+    private static abstract class MenuClickHandler implements OnClickListener {
+
+        private final ViewFlipper mMenuContainer;
+
+        public MenuClickHandler(ViewFlipper menuContainer) {
+            mMenuContainer = menuContainer;
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mMenuContainer.getDisplayedChild() > 0) mMenuContainer.showPrevious();
+        }
+    }
 	
 	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String> {
 		private final Context mContext;
