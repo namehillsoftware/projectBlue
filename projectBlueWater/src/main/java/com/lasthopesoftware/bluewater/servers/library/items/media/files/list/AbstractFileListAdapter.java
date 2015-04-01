@@ -94,7 +94,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
         
 		viewHolder.textView.setText(viewHolder.loadingText);
-        
+
         final IFile file = getItem(position);
         
         viewHolder.textView.setTypeface(null, Typeface.NORMAL);
@@ -115,8 +115,10 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				if (result != null)
-					viewHolder.textView.setText(result);
+				if (result == null) return;
+
+                viewHolder.textView.setText(result);
+                onTextViewPopulated(position, file, viewHolder.textView);
 			}
 		});
         viewHolder.getFileValueTask.execute();
@@ -159,6 +161,8 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 	protected abstract boolean getIsFilePlaying(int position, IFile file, List<IFile> nowPlayingfiles, IFile nowPlayingFile);
 	
 	protected abstract View getMenuView(final int position, View convertView, final ViewFlipper parent);
+
+    protected void onTextViewPopulated(int position, IFile file, TextView textView) {}
 	
 	public final List<IFile> getFiles() {
 		return mFiles;

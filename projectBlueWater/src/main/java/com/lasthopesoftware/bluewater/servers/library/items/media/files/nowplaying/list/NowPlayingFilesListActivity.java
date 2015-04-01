@@ -106,7 +106,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result);
+					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId());
 			        mFileListView.setAdapter(fileListAdapter);
 			        mFileListView.setOnItemClickListener(new OnItemClickListener() {
 

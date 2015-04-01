@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -34,10 +36,13 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 
 		public final ImageButton removeButton;
 	}
+
+    private final int mNowPlayingFilePos;
 	
-	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files) {
+	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files, int nowPlayingFilePos) {
 		super(context, resource, files);
-		
+
+        mNowPlayingFilePos = nowPlayingFilePos;
 	}
 
 	@Override
@@ -45,7 +50,13 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 		return position == nowPlayingFiles.indexOf(nowPlayingFile);
 	}
 
-	@Override
+    @Override
+    protected void onTextViewPopulated(int position, IFile file, TextView textView) {
+        if (position == mNowPlayingFilePos)
+            textView.setTypeface(null, Typeface.BOLD);
+    }
+
+    @Override
 	protected View getMenuView(int position, View convertView, ViewFlipper parent) {
 		if (convertView == null) {
 			final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
