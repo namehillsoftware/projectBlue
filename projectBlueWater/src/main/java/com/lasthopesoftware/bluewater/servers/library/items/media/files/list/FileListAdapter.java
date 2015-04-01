@@ -3,11 +3,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -17,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlay
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -46,22 +46,15 @@ public class FileListAdapter extends AbstractFileListAdapter {
 	}
 
 	@Override
-	protected final View getMenuView(int position, View convertView, ViewGroup parent) {
+	protected final View getMenuView(int position, View convertView, ViewFlipper parent) {
 		if (convertView == null) {
 			final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			
 			final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, parent, false);
-//	        fileMenu.setOnTouchListener(onSwipeListener);
-	        
 	        final ImageButton addButton = (ImageButton)fileMenu.findViewById(R.id.btnAddToPlaylist);
-//	        addButton.setOnTouchListener(onSwipeListener);
-	        
 	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlaySong);
-//	        playButton.setOnTouchListener(onSwipeListener);
-	        
 	        final ImageButton viewFileDetailsButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFileDetails);
-//	        viewFileDetailsButton.setOnTouchListener(onSwipeListener);
-	        
+
 	        fileMenu.setTag(new ViewHolder(viewFileDetailsButton, playButton, addButton));
 	        
 	        convertView = fileMenu;
@@ -70,17 +63,18 @@ public class FileListAdapter extends AbstractFileListAdapter {
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		
 		final IFile file = getItem(position);
-		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(file));
-		viewHolder.addButton.setOnClickListener(new AddClickListener(file));
-		viewHolder.playButton.setOnClickListener(new FilePlayClickListener(position, getFiles()));
+		viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(parent, file));
+		viewHolder.addButton.setOnClickListener(new AddClickListener(parent, file));
+		viewHolder.playButton.setOnClickListener(new FilePlayClickListener(parent, position, getFiles()));
 		
 		return convertView;
 	}
 	
-	private static class AddClickListener implements OnClickListener {
+	private static class AddClickListener extends AbstractMenuClickHandler {
 		private IFile mFile;
 		
-		public AddClickListener(IFile file) {
+		public AddClickListener(ViewFlipper viewFlipper, IFile file) {
+            super(viewFlipper);
 			mFile = file;
 		}
 		
@@ -109,6 +103,8 @@ public class FileListAdapter extends AbstractFileListAdapter {
 				}
 
 			});
+
+            super.onClick(view);
 		}
 	}
 

@@ -2,15 +2,17 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import android.content.Intent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.details.FileDetailsActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
 
-public class ViewFileDetailsClickListener implements OnClickListener {
+public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 
 	private IFile mFile;
 	
-	public ViewFileDetailsClickListener(IFile file) {
+	public ViewFileDetailsClickListener(ViewFlipper viewFlipper, IFile file) {
+        super(viewFlipper);
 		mFile = file;
 	}
 	
@@ -19,5 +21,7 @@ public class ViewFileDetailsClickListener implements OnClickListener {
 		Intent intent = new Intent(v.getContext(), FileDetailsActivity.class);
 		intent.putExtra(FileDetailsActivity.FILE_KEY, mFile.getKey());
 		v.getContext().startActivity(intent);
+
+        super.onClick(v);
 	}
 }

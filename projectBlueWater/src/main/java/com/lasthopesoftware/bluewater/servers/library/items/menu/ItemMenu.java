@@ -80,7 +80,7 @@ public class ItemMenu {
 		return convertView;
 	}
 	
-	private static class PlayClickHandler extends MenuClickHandler {
+	private static class PlayClickHandler extends AbstractMenuClickHandler {
 		private IFilesContainer mItem;
 		
 		public PlayClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
@@ -95,7 +95,7 @@ public class ItemMenu {
 		}
 	}
 	
-	private static class ShuffleClickHandler extends MenuClickHandler {
+	private static class ShuffleClickHandler extends AbstractMenuClickHandler {
 		private IFilesContainer mItem;
 		
 		public ShuffleClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
@@ -110,7 +110,7 @@ public class ItemMenu {
 		}
 	}
 	
-	private static class ViewFilesClickHandler extends MenuClickHandler {
+	private static class ViewFilesClickHandler extends AbstractMenuClickHandler {
 		private IItem mItem;
 		
 		public ViewFilesClickHandler(ViewFlipper menuContainer, IItem item) {
@@ -127,20 +127,6 @@ public class ItemMenu {
             super.onClick(v);
 		}
 	}
-
-    private static abstract class MenuClickHandler implements OnClickListener {
-
-        private final ViewFlipper mMenuContainer;
-
-        public MenuClickHandler(ViewFlipper menuContainer) {
-            mMenuContainer = menuContainer;
-        }
-
-        @Override
-        public void onClick(View v) {
-            if (mMenuContainer.getDisplayedChild() > 0) mMenuContainer.showPrevious();
-        }
-    }
 	
 	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String> {
 		private final Context mContext;

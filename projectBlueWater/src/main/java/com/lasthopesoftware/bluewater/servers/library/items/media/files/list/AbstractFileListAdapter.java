@@ -102,11 +102,9 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 		final PlaybackController playlistController = PlaybackService.getPlaylistController();
         if (playlistController != null && playlistController.getCurrentPlaybackFile() != null)
         	viewHolder.textView.setTypeface(null, getIsFilePlaying(position, file, playlistController.getPlaylist(), playlistController.getCurrentPlaybackFile().getFile()) ? Typeface.BOLD : Typeface.NORMAL);
-//        else
-//        	getLibraryNowPlayingFiles(position, file, viewHolder.textView);
-        
+
         if (viewHolder.getFileValueTask != null) viewHolder.getFileValueTask.cancel(false);
-        viewHolder.getFileValueTask = new SimpleTask<Void, Void, String>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
+        viewHolder.getFileValueTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, String>() {
 
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -124,7 +122,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
         viewHolder.getFileValueTask.execute();
 
 		if (viewHolder.checkIfIsPlayingFileListener != null) PlaybackService.removeOnStreamingStartListener(viewHolder.checkIfIsPlayingFileListener);
-		viewHolder.checkIfIsPlayingFileListener = viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
+		viewHolder.checkIfIsPlayingFileListener = new OnNowPlayingStartListener() {
 			
 			@Override
 			public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
@@ -157,37 +155,10 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<IFile> {
 		
 		return convertView;
 	}
-//	
-//	// A really expensive way to get the now playing files without the playlist controller
-//	private void getLibraryNowPlayingFiles(final int filePosition, final File file, final TextView textView) {
-//		LibrarySession.GetLibrary(getContext(), new OnCompleteListener<Integer, Void, Library>() {
-//			
-//			@Override
-//			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
-//				final String savedTracksString = library.getSavedTracksString();
-//				if (savedTracksString == null || savedTracksString.isEmpty()) return;
-//				
-//				final AsyncTask<Void, Void, List<File>> getFileListTask = new AsyncTask<Void, Void, List<File>>() {
-//
-//					@Override
-//					protected List<File> doInBackground(Void... params) {
-//						return Files.deserializeFileStringList(savedTracksString);
-//					}
-//					
-//					@Override
-//					protected void onPostExecute(List<File> result) {
-//						textView.setTypeface(null, getIsFilePlaying(filePosition, file, result, result.get(library.getNowPlayingId())) ? Typeface.BOLD : Typeface.NORMAL);
-//					}
-//				};
-//				
-//				getFileListTask.execute();
-//			}
-//		});
-//	}
-	
+
 	protected abstract boolean getIsFilePlaying(int position, IFile file, List<IFile> nowPlayingfiles, IFile nowPlayingFile);
 	
-	protected abstract View getMenuView(final int position, View convertView, final ViewGroup parent);
+	protected abstract View getMenuView(final int position, View convertView, final ViewFlipper parent);
 	
 	public final List<IFile> getFiles() {
 		return mFiles;
