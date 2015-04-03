@@ -21,7 +21,7 @@
         android:logo="@drawable/clearstream_logo_dark"
         android:theme="@style/AppTheme">
         
-        <meta-data android:name="android.app.default_searchable" android:value="com.lasthopesoftware.bluewater.activities.SearchFiles" /> 
+        <meta-data android:name="android.app.default_searchable" android:value="com.lasthopesoftware.bluewater.servers.library.items.media.files.list.SearchFilesActivity" />
         
         <!-- Begin Connection intents -->
         <activity
