@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -68,7 +67,6 @@ public class FileListActivity extends FragmentActivity {
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 				
-		    	fileListView.setOnItemClickListener(new ClickFileListener(((IFilesContainer)mItem).getFiles()));
                 final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
                 longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
                     @Override

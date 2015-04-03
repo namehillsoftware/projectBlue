@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.listeners.ClickFileListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -76,7 +75,6 @@ public class SearchFilesActivity extends FragmentActivity {
 				if (result == null) return;
 				
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
-		    	fileListView.setOnItemClickListener(new ClickFileListener(filesContainer));
                 final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
                 longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
                     @Override
