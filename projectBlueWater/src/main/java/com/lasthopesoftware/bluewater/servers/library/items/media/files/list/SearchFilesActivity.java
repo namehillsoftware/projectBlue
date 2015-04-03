@@ -67,7 +67,7 @@ public class SearchFilesActivity extends FragmentActivity {
 
         setTitle(String.format(getString(R.string.title_activity_search_results), query));
         
-		final Files filesContainer = new Files("Files/Search", "Query=" + query);
+		final Files filesContainer = new Files("Files/Search", "Query=[Media Type]=[Audio] " + query);
         final SearchFilesActivity _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
 			
