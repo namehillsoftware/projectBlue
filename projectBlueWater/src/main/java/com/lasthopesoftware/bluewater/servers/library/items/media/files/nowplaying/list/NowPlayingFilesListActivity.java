@@ -6,8 +6,6 @@ import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewFlipper;
@@ -18,7 +16,6 @@ import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -106,15 +103,8 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter fileListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId());
-			        mFileListView.setAdapter(fileListAdapter);
-			        mFileListView.setOnItemClickListener(new OnItemClickListener() {
+			        mFileListView.setAdapter(new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId()));
 
-						@Override
-						public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-							PlaybackService.seekTo(view.getContext(), position);
-						}
-					});
                     final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
                     longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
                         @Override
