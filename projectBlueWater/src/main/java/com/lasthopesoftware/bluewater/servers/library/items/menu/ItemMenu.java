@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ImageButton;
@@ -13,20 +11,11 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
-import com.lasthopesoftware.threading.ISimpleTask;
-
-import java.io.IOException;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 
 public class ItemMenu {
 	private static class ViewHolder {
@@ -78,95 +67,5 @@ public class ItemMenu {
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		return convertView;
-	}
-	
-	private static class PlayClickHandler extends AbstractMenuClickHandler {
-		private IFilesContainer mItem;
-		
-		public PlayClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
-			super(menuContainer);
-            mItem = item;
-		}
-		
-		@Override
-		public void onClick(final View v) {
-			mItem.getFiles().getFileStringList(new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
-            super.onClick(v);
-		}
-	}
-	
-	private static class ShuffleClickHandler extends AbstractMenuClickHandler {
-		private IFilesContainer mItem;
-		
-		public ShuffleClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
-            super(menuContainer);
-            mItem = item;
-		}
-		
-		@Override
-		public void onClick(View v) {
-			mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListCompleteListener(v.getContext()), new OnGetFileStringListErrorListener(v, this));
-            super.onClick(v);
-		}
-	}
-	
-	private static class ViewFilesClickHandler extends AbstractMenuClickHandler {
-		private IItem mItem;
-		
-		public ViewFilesClickHandler(ViewFlipper menuContainer, IItem item) {
-            super(menuContainer);
-			mItem = item;
-		}
-		
-		@Override
-		public void onClick(View v) {
-    		Intent intent = new Intent(v.getContext(), FileListActivity.class);
-    		intent.setAction(mItem instanceof Playlist ? FileListActivity.VIEW_PLAYLIST_FILES : FileListActivity.VIEW_ITEM_FILES);
-    		intent.putExtra(FileListActivity.KEY, mItem.getKey());
-    		v.getContext().startActivity(intent);
-            super.onClick(v);
-		}
-	}
-	
-	private static class OnGetFileStringListCompleteListener implements OnCompleteListener<String> {
-		private final Context mContext;
-		
-		public OnGetFileStringListCompleteListener(final Context context) {
-			mContext = context;
-		}
-		
-		@Override
-		public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
-			PlaybackService.launchMusicService(mContext, result);
-		}
-		
-	}
-	
-	private static class OnGetFileStringListErrorListener implements OnErrorListener<String> {
-		private final View mView;
-		private final OnClickListener mOnClickListener;
-		
-		public OnGetFileStringListErrorListener(final View view, final OnClickListener onClickListener) {
-			mView = view;
-			mOnClickListener = onClickListener;
-		}		
-		
-		@Override
-		public boolean onError(ISimpleTask<String, Void, String> owner, boolean isHandled, Exception innerException) {
-			if (innerException instanceof IOException) {
-				PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-					
-					@Override
-					public void onConnectionRegained() {
-						mOnClickListener.onClick(mView);
-					}
-				});
-				
-				WaitForConnectionDialog.show(mView.getContext());
-				return true;
-			}
-			return false;
-		}
-		
 	}
 }
