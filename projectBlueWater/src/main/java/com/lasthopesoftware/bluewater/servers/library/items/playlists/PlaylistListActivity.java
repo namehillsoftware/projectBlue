@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
@@ -33,7 +34,7 @@ public class PlaylistListActivity extends FragmentActivity implements OnViewFlip
 	private ListView playlistView;
     private ViewFlipper mFlippedView;
 
-	private Context thisContext = this;
+	private Activity thisContext = this;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -83,7 +84,7 @@ public class PlaylistListActivity extends FragmentActivity implements OnViewFlip
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-        playlistView.setAdapter(new PlaylistListAdapter(thisContext, R.id.tvStandard, playlist));
+        playlistView.setAdapter(new ItemListAdapter(thisContext, R.id.tvStandard, playlist));
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
         final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
         longClickViewFlipListener.setOnViewFlipped(this);
