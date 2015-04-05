@@ -4,7 +4,7 @@ import android.view.View;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 
 import java.util.List;
 

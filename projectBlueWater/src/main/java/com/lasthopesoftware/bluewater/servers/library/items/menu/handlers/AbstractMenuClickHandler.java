@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.menu;
+package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.view.View;
 import android.widget.ViewFlipper;

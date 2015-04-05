@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayCl
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 
-public class ItemMenu {
+public final class ItemMenu {
 	private static class ViewHolder {
 		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
 			this.textView = textView;

@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 

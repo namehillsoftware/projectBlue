@@ -4,15 +4,14 @@ import android.view.View;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 
 /**
  * Created by david on 4/3/15.
  */
-public class PlayClickHandler extends AbstractMenuClickHandler {
-    private IFilesContainer mItem;
+public final class PlayClickHandler extends AbstractMenuClickHandler {
+    private final IFilesContainer mItem;
 
     public PlayClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
         super(menuContainer);

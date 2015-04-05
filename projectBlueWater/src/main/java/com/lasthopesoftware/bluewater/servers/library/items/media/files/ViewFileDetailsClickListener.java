@@ -5,7 +5,7 @@ import android.view.View;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.details.FileDetailsActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 
 public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 

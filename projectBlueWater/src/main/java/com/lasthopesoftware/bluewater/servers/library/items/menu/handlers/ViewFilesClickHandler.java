@@ -6,14 +6,13 @@ import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 
 /**
  * Created by david on 4/3/15.
  */
-public class ViewFilesClickHandler extends AbstractMenuClickHandler {
-    private IItem mItem;
+public final class ViewFilesClickHandler extends AbstractMenuClickHandler {
+    private final IItem mItem;
 
     public ViewFilesClickHandler(ViewFlipper menuContainer, IItem item) {
         super(menuContainer);
