@@ -315,7 +315,8 @@ public class BrowseLibraryActivity extends FragmentActivity {
         LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-                savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+                if (library != null)
+                    savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
             }
         });
 	}
