@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.disk.sqlite.access;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.j256.ormlite.dao.Dao;
+import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -20,7 +22,6 @@ public class LibrarySession {
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(LibrarySession.class);
 	
-	private static final String PREFS_FILE = "com.lasthopesoftware.jrmediastreamer.PREFS";
 	private static final String CHOSEN_LIBRARY = "chosen_library";
 	
 	public static void SaveLibrary(final Context context, final Library library) {
@@ -38,7 +39,7 @@ public class LibrarySession {
 					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					
 					libraryAccess.createOrUpdate(library);
-					context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
+					context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
 					
 					mLogger.debug("Session saved.");
 					return library;
@@ -86,7 +87,7 @@ public class LibrarySession {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 		
-		int chosenLibrary = context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+		int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
 		
 		if (chosenLibrary < 0) return null;
 		
@@ -122,7 +123,7 @@ public class LibrarySession {
 					handler.close();
 				}
 				
-				return new ArrayList<Library>();
+				return new ArrayList<>();
 			}
 		});
 		
@@ -133,13 +134,14 @@ public class LibrarySession {
 		}
 		
 		// Exceptions occurred, return an empty mLibrary
-		return new ArrayList<Library>();
+		return new ArrayList<>();
 	}
 		
 	public synchronized static void ChooseLibrary(Context context, int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
-		
-		if (libraryKey != context.getSharedPreferences(PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1)) {
-			context.getSharedPreferences(PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+
+        final SharedPreferences sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
+		if (libraryKey != sharedPreferences.getInt(CHOSEN_LIBRARY, -1)) {
+            sharedPreferences.edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
 		}
 		
 		GetLibrary(context, onLibraryChangeComplete);

@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
 import com.j256.ormlite.logger.LoggerFactory;
+import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
@@ -39,7 +40,6 @@ import java.util.List;
 public class LibraryViewFragment extends Fragment {
 
     private static final String ARG_CATEGORY_POSITION = "category_position";
-    private static final String PREFS_LOCATION = "com.lasthopesoftware.bluewater.servers.library.LibraryViewFragment";
     private static final String PREFS_KEY = "com.lasthopesoftware.bluewater.servers.library.LibraryViewFragment.TUTORIAL_SHOWN";
 
     private static boolean wasTutorialShown;
@@ -205,7 +205,7 @@ public class LibraryViewFragment extends Fragment {
         if (wasTutorialShown) return;
         wasTutorialShown = true;
 
-        final SharedPreferences sharedPreferences = activity.getSharedPreferences(PREFS_LOCATION, 0);
+        final SharedPreferences sharedPreferences = activity.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
         if (!DEBUGGING_TUTORIAL && sharedPreferences.getBoolean(PREFS_KEY, false)) return;
 
         int[] position = new int[2];
