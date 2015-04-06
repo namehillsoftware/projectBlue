@@ -17,7 +17,7 @@ import java.util.Locale;
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IItem> mLibraryViews = new ArrayList<>();
     private OnViewFlippedListener mOnViewFlippedListener;
-	
+
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
 	}
@@ -48,4 +48,5 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
     public void setOnViewFlippedListener(OnViewFlippedListener onViewFlippedListener) {
         mOnViewFlippedListener = onViewFlippedListener;
     }
+
 }

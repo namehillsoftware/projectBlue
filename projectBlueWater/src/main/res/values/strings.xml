@@ -65,4 +65,6 @@
     <string name="btn_remove_file">Remove file from playlist</string>
     <string name="lbl_error_getting_file_properties">Error getting file properties.</string>
     <string name="title_svc_connecting_to_server">Connecting to server</string>
+    <string name="title_long_click_menu">Long Click</string>
+    <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
 </resources>
