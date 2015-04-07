@@ -1,5 +1,5 @@
 # Clearstream _aka_ projectBlueWater
-Alternative streaming music player for JRiver Media Center
+Alternative streaming music player for [JRiver Media Center] (http://jriver.com/)
 
 Folder structure is organized by _context_, or rather, it moves away from the "sock drawer" folder structure
 that Android follows. It is inspired by this post on AngularJS project structure (another Google framework that
