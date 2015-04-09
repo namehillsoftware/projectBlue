@@ -14,7 +14,6 @@ import android.widget.RelativeLayout;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -57,11 +56,6 @@ public class LibraryViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
     	final Activity activity = getActivity();
-
-        int[] position = new int[2];
-        container.getLocationOnScreen(position);
-
-        LoggerFactory.getLogger(getClass()).info("container y-axis: " + position[1]);
 
     	final RelativeLayout layout = new RelativeLayout(activity);
     	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

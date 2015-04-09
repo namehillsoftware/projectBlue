@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -32,7 +31,7 @@ public class SelectViewAdapter extends ArrayAdapter<Item> {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		if (convertView == null) {
 			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			convertView = (RelativeLayout) inflator.inflate(R.layout.layout_select_views, parent, false);
+			convertView = inflator.inflate(R.layout.layout_select_views, parent, false);
 		}
 		
 		final IItem item = getItem(position);

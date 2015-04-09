@@ -9,8 +9,6 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RatingBar;
-import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -40,7 +38,7 @@ public class FileDetailsActivity extends Activity {
 	
 	private Bitmap mFileImage;
 	
-	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 															new String[] {
 																FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
 																FilePropertiesProvider.GET_COVER_ART_INFO,
@@ -84,7 +82,7 @@ public class FileDetailsActivity extends Activity {
         final ProgressBar pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
         final ImageView imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
         final ProgressBar pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
-        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
+//        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
         final TextView tvFileName = (TextView) findViewById(R.id.tvFileName);
         
         lvFileDetails.setVisibility(View.INVISIBLE);
@@ -93,14 +91,14 @@ public class FileDetailsActivity extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FilePropertiesProvider filePropertiesProviderHelper = new FilePropertiesProvider(fileKey);
+        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesProviderHelper.getProperty("Name");
+				return filePropertiesProvider.getProperty("Name");
 			}
 		});
         getFileNameTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -114,37 +112,37 @@ public class FileDetailsActivity extends Activity {
         getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFileNameTask.execute();
         
-        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
-			
-			@Override
-			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
-				
-				if (filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING) != null && !filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING).isEmpty())
-					return Float.valueOf(filePropertiesProviderHelper.getProperty(FilePropertiesProvider.RATING));
-				
-				return (float) 0;
-			}
-		});
-
-		getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
-				rbFileRating.setRating(result);
-				rbFileRating.invalidate();
-				
-				rbFileRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
-					
-					@Override
-					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-						if (!fromUser) return;
-						filePropertiesProviderHelper.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
-					}
-				});
-			}
-		});
-		getRatingsTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
-		getRatingsTask.execute();
+//        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
+//
+//			@Override
+//			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
+//
+//				if (filePropertiesProvider.getProperty(FilePropertiesProvider.RATING) != null && !filePropertiesProvider.getProperty(FilePropertiesProvider.RATING).isEmpty())
+//					return Float.valueOf(filePropertiesProvider.getProperty(FilePropertiesProvider.RATING));
+//
+//				return (float) 0;
+//			}
+//		});
+//
+//		getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
+//
+//			@Override
+//			public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
+//				rbFileRating.setRating(result);
+//				rbFileRating.invalidate();
+//
+//				rbFileRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+//
+//					@Override
+//					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+//						if (!fromUser) return;
+//						filePropertiesProvider.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
+//					}
+//				});
+//			}
+//		});
+//		getRatingsTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+//		getRatingsTask.execute();
         
         final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
 			

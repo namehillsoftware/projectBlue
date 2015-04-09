@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rlViewFileDetails"
+    android:id="@+id/llViewFileDetails"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-	<LinearLayout
+	<RelativeLayout
 	    android:id="@+id/rlMainFileInformation"
 	    android:layout_width="match_parent"
 	    android:layout_height="0dp"
@@ -14,10 +14,11 @@
         android:orientation="horizontal">
 	    
         <RelativeLayout
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_weight="1"
             android:paddingRight="10dp"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:id="@+id/rlFileThumbnailContainer">
             <ProgressBar
                 android:id="@+id/pbLoadingFileThumbnail"
                 style="?android:attr/progressBarStyleLarge"
@@ -28,7 +29,7 @@
 
             <ImageView
                 android:id="@+id/imgFileThumbnail"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/lbl_track_img"/>
 
@@ -37,11 +38,10 @@
 	    
 	    <TextView
 	        android:id="@+id/tvFileName"
-	        android:layout_width="0dp"
-            android:layout_weight="2"
+	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_alignParentTop="true"
-	        android:layout_toRightOf="@id/imgFileThumbnail"
+	        android:layout_toRightOf="@id/rlFileThumbnailContainer"
 	        android:ellipsize="end"
 	        android:lines="2"
 	        android:maxLines="2"
@@ -58,7 +58,7 @@
 	        <!--android:minHeight="57dp"-->
 	        <!--android:visibility="gone" />-->
 	        
-	</LinearLayout>
+	</RelativeLayout>
 
 	<RelativeLayout
 	    android:id="@+id/rlFileDetails"

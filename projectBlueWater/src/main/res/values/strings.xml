@@ -67,4 +67,7 @@
     <string name="title_svc_connecting_to_server">Connecting to server</string>
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
