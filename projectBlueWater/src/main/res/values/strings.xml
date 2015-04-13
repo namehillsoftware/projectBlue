@@ -38,7 +38,6 @@
     <string name="drawer_close">Close Drawer</string>
     <string name="title_activity_select_server">Select Server</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
     <string name="title_view_now_playing_files">Now Playing Files</string>
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
@@ -67,7 +66,5 @@
     <string name="title_svc_connecting_to_server">Connecting to server</string>
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
-
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lbl_loading">Loading...</string>
 </resources>

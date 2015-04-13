@@ -41,7 +41,7 @@ public class PlaybackController implements
 	
 	private final IPlaybackFileProvider mPlaybackFileProvider;
 	private int mFileKey = -1;
-	private int mCurrentFilePos;
+	private int mCurrentFilePos = -1;
 	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
 	
 	private float mVolume = 1.0f;
