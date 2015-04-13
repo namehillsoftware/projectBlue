@@ -6,9 +6,9 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -49,7 +49,15 @@ public class FileDetailsActivity extends Activity {
 																FilePropertiesProvider.STACK_VIEW })));
 	
 	private int mFileKey = -1;
-	
+
+    private FileDetailsActivity _this = this;
+    private ListView lvFileDetails;
+    private ProgressBar pbLoadingFileDetails;
+    private ImageView imgFileThumbnail;
+    private ProgressBar pbLoadingFileThumbnail;
+    //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
+    private TextView tvFileName;
+
 	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
 		
 		@Override
@@ -64,27 +72,51 @@ public class FileDetailsActivity extends Activity {
         
         getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_file_details);
-        
-        mFileKey = this.getIntent().getIntExtra(FILE_KEY, -1);
-        
+
+        mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
+
+        lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
+        pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
+        imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
+        pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
+        tvFileName = (TextView) findViewById(R.id.tvFileName);
+
         setView(mFileKey);
+
+        if (getResources().getBoolean(R.bool.is_landscape)) return;
+
+        // make the image view square when its layout is first updated
+        final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
+
+        rlFileThumbnailContainer.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (rlFileThumbnailContainer.getHeight() == 0) return;
+
+                rlFileThumbnailContainer.removeOnLayoutChangeListener(this);
+
+                final int height = rlFileThumbnailContainer.getHeight();
+                rlFileThumbnailContainer.setLayoutParams(new RelativeLayout.LayoutParams(height, height));
+
+                if (mFileImage == null) return;
+
+                imgFileThumbnail.setImageBitmap(mFileImage);
+            }
+        });
 	}
-	
-	@SuppressWarnings("unchecked")
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+    }
+
+    @SuppressWarnings("unchecked")
 	private void setView(final int fileKey) {
 		if (fileKey < 0) {
         	finish();
         	return;
         };
-        
-		final FileDetailsActivity _this = this;
-        final ListView lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
-        final ProgressBar pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
-        final ImageView imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
-        final ProgressBar pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
-//        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
-        final TextView tvFileName = (TextView) findViewById(R.id.tvFileName);
-        
+
         lvFileDetails.setVisibility(View.INVISIBLE);
         pbLoadingFileDetails.setVisibility(View.VISIBLE);
         
@@ -182,8 +214,7 @@ public class FileDetailsActivity extends Activity {
 				mFileImage = result;
 				
 				imgFileThumbnail.setImageBitmap(mFileImage);
-				imgFileThumbnail.setScaleType(ScaleType.CENTER_INSIDE);
-				
+
 				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
 				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}

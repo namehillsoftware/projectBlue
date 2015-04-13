@@ -9,13 +9,13 @@
 	    android:id="@+id/rlMainFileInformation"
 	    android:layout_width="match_parent"
 	    android:layout_height="0dp"
-        android:layout_weight="1"
-	    android:paddingBottom="10dp"
-        android:orientation="horizontal">
+        android:layout_weight="2"
+	    android:layout_marginBottom="10dp"
+        android:orientation="horizontal"
+        android:background="@color/faint_gray">
 	    
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_weight="1"
             android:paddingRight="10dp"
             android:layout_height="match_parent"
             android:id="@+id/rlFileThumbnailContainer">
@@ -29,10 +29,10 @@
 
             <ImageView
                 android:id="@+id/imgFileThumbnail"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:scaleType="fitCenter"
                 android:contentDescription="@string/lbl_track_img"/>
-
         </RelativeLayout>
 
 	    
@@ -57,7 +57,12 @@
 	        <!--android:isIndicator="false"-->
 	        <!--android:minHeight="57dp"-->
 	        <!--android:visibility="gone" />-->
-	        
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="10sp"
+            android:background="@drawable/black_white_gradient"
+            android:layout_alignParentBottom="true"/>
 	</RelativeLayout>
 
 	<RelativeLayout
