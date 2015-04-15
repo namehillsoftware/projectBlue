@@ -57,6 +57,7 @@ public class FileDetailsActivity extends Activity {
     private ProgressBar pbLoadingFileThumbnail;
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
     private TextView tvFileName;
+    private TextView tvArtist;
 
 	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
 		
@@ -80,6 +81,7 @@ public class FileDetailsActivity extends Activity {
         imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
         pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
         tvFileName = (TextView) findViewById(R.id.tvFileName);
+        tvArtist = (TextView) findViewById(R.id.tvArtist);
 
         setView(mFileKey);
 
@@ -130,7 +132,7 @@ public class FileDetailsActivity extends Activity {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesProvider.getProperty("Name");
+				return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
 			}
 		});
         getFileNameTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
@@ -197,7 +199,7 @@ public class FileDetailsActivity extends Activity {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
-				
+
 				lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
 				pbLoadingFileDetails.setVisibility(View.INVISIBLE);
 				lvFileDetails.setVisibility(View.VISIBLE);
@@ -219,6 +221,27 @@ public class FileDetailsActivity extends Activity {
 				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}
 		});
+
+        if (tvArtist == null) return;
+
+        tvArtist.setText(getText(R.string.lbl_loading));
+        final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
+
+            @Override
+            public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
+                return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
+            }
+        });
+        getFileArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+
+            @Override
+            public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
+                if (result == null || tvArtist == null) return;
+                tvArtist.setText(result);
+            }
+        });
+        getFileArtistTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+        getFileArtistTask.execute();
 	}
 		
 	@Override
