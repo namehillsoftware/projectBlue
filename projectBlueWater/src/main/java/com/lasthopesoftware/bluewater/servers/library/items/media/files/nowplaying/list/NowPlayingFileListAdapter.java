@@ -15,12 +15,15 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileItemMenu;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileListItemContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -31,22 +34,26 @@ public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
 
 	private static class ViewHolder extends BaseMenuViewHolder {
 
-		public ViewHolder(final FileItemMenu fileItemMenu, final ImageButton viewFileDetailsButton, final ImageButton playButton, final ImageButton removeButton) {
+		public ViewHolder(final FileListItemContainer fileListItemContainer, final ImageButton viewFileDetailsButton, final ImageButton playButton, final ImageButton removeButton) {
 			super(viewFileDetailsButton, playButton);
 			
 			this.removeButton = removeButton;
-            this.fileItemMenu = fileItemMenu;
+            this.fileListItemContainer = fileListItemContainer;
 		}
 
 		public final ImageButton removeButton;
-        public final FileItemMenu fileItemMenu;
+        public final FileListItemContainer fileListItemContainer;
+        public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
+        public GetFileListItemTextTask getFileListItemTextTask;
 	}
 
     private final int mNowPlayingFilePos;
+    private final List<IFile> mFiles;
 	
 	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files, int nowPlayingFilePos) {
 		super(context, resource, files);
 
+        mFiles = files;
         mNowPlayingFilePos = nowPlayingFilePos;
 	}
 
@@ -54,8 +61,9 @@ public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
         final IFile file = getItem(position);
 
         if (convertView == null) {
-            final FileItemMenu fileItemMenu = new FileItemMenu(parent.getContext());
-            final ViewFlipper viewFlipper = fileItemMenu.getViewMenu(file);
+            final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
+            final ViewFlipper viewFlipper = fileItemMenu.getViewFlipper();
+            convertView = viewFlipper;
 
             final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -69,21 +77,35 @@ public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
             viewFlipper.setTag(new ViewHolder(fileItemMenu, viewFileDetailsButton, playButton, removeButton));
         }
 
-        final FileItemMenu fileItemMenu = ((ViewHolder)convertView.getTag()).fileItemMenu;
-        final ViewFlipper viewFlipper = fileItemMenu.getViewMenu(file, new OnNowPlayingStartListener() {
-            @Override
-            public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                fileItemMenu.getTextView().setTypeface(null, position == controller.getCurrentPosition() ? Typeface.BOLD : Typeface.NORMAL);
-            }
-        });
+        final ViewHolder viewHolder = (ViewHolder)convertView.getTag();
 
-        final TextView textView = fileItemMenu.getTextView();
+        final FileListItemContainer fileListItem = viewHolder.fileListItemContainer;
+
+        final TextView textView = fileListItem.getTextView();
+
+        if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
+        viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
+
+        textView.setTypeface(null, Typeface.NORMAL);
 
         if (position == mNowPlayingFilePos)
             textView.setTypeface(null, Typeface.BOLD);
 
         if (PlaybackService.getPlaylistController() != null)
             textView.setTypeface(null, position == PlaybackService.getPlaylistController().getCurrentPosition() ? Typeface.BOLD : Typeface.NORMAL);
+
+        if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
+        viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
+            @Override
+            public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+                textView.setTypeface(null, position == controller.getCurrentPosition() ? Typeface.BOLD : Typeface.NORMAL);
+            }
+        };
+
+        final ViewFlipper viewFlipper = fileListItem.getViewFlipper();
+        viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, mFiles));
+        viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
+        viewHolder.removeButton.setOnClickListener(new RemoveClickListener(viewFlipper, position, this));
 
         return viewFlipper;
     }
