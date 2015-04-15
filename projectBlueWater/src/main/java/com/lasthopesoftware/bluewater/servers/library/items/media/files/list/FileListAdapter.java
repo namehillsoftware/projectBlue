@@ -80,6 +80,7 @@ public class FileListAdapter extends AbstractFileListAdapter {
 
         if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
         viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
+        viewHolder.getFileListItemTextTask.execute();
 
         textView.setTypeface(null, Typeface.NORMAL);
 
