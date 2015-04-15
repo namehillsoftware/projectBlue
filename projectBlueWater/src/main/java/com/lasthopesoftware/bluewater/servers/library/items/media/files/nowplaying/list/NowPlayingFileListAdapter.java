@@ -5,7 +5,6 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,6 +17,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenu
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileListItemContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
@@ -30,7 +30,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 
 	private static class ViewHolder extends BaseMenuViewHolder {
 
@@ -48,12 +48,10 @@ public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
 	}
 
     private final int mNowPlayingFilePos;
-    private final List<IFile> mFiles;
 	
 	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files, int nowPlayingFilePos) {
 		super(context, resource, files);
 
-        mFiles = files;
         mNowPlayingFilePos = nowPlayingFilePos;
 	}
 
@@ -103,7 +101,7 @@ public class NowPlayingFileListAdapter extends ArrayAdapter<IFile> {
         };
 
         final ViewFlipper viewFlipper = fileListItem.getViewFlipper();
-        viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, mFiles));
+        viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, getFiles()));
         viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
         viewHolder.removeButton.setOnClickListener(new RemoveClickListener(viewFlipper, position, this));
 
