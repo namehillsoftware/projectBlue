@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -69,6 +68,9 @@ public class FileDetailsActivity extends Activity {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+        if (!getResources().getBoolean(R.bool.is_landscape))
+            setTheme(R.style.AppThemeNoActionBarShadowTheme);
+
 		super.onCreate(savedInstanceState);
         
         getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -84,27 +86,6 @@ public class FileDetailsActivity extends Activity {
         tvArtist = (TextView) findViewById(R.id.tvArtist);
 
         setView(mFileKey);
-
-        if (getResources().getBoolean(R.bool.is_landscape)) return;
-
-        // make the image view square when its layout is first updated
-        final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
-
-        rlFileThumbnailContainer.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                if (rlFileThumbnailContainer.getHeight() == 0) return;
-
-                rlFileThumbnailContainer.removeOnLayoutChangeListener(this);
-
-                final int height = rlFileThumbnailContainer.getHeight();
-                rlFileThumbnailContainer.setLayoutParams(new RelativeLayout.LayoutParams(height, height));
-
-                if (mFileImage == null) return;
-
-                imgFileThumbnail.setImageBitmap(mFileImage);
-            }
-        });
 	}
 
     @Override
@@ -141,6 +122,8 @@ public class FileDetailsActivity extends Activity {
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 				if (result == null) return;
 				tvFileName.setText(result);
+
+                setTitle(String.format(getString(R.string.lbl_details), result));
 			}
 		});
         getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
@@ -221,8 +204,6 @@ public class FileDetailsActivity extends Activity {
 				imgFileThumbnail.setVisibility(View.VISIBLE);
 			}
 		});
-
-        if (tvArtist == null) return;
 
         tvArtist.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {

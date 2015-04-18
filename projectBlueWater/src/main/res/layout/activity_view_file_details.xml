@@ -10,15 +10,37 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="0dp"
         android:layout_weight="2"
-	    android:layout_marginBottom="10dp"
         android:orientation="horizontal"
-        android:background="@color/faint_gray">
-	    
+        android:background="@color/clearstream_blue">
+
+        <TextView
+            android:id="@+id/tvArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/tvFileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/tvArtist"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:paddingRight="10dp"
             android:layout_height="match_parent"
-            android:id="@+id/rlFileThumbnailContainer">
+            android:id="@+id/rlFileThumbnailContainer"
+            android:layout_above="@id/tvFileName">
             <ProgressBar
                 android:id="@+id/pbLoadingFileThumbnail"
                 style="?android:attr/progressBarStyleLarge"
@@ -35,42 +57,21 @@
                 android:contentDescription="@string/lbl_track_img"/>
         </RelativeLayout>
 
-	    
-	    <TextView
-	        android:id="@+id/tvFileName"
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:layout_alignParentTop="true"
-	        android:layout_toRightOf="@id/rlFileThumbnailContainer"
-	        android:ellipsize="end"
-	        android:lines="2"
-	        android:maxLines="2"
-	        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-	    <!--<RatingBar-->
-	        <!--android:id="@+id/rbFileRating"-->
-	        <!--android:layout_width="wrap_content"-->
-	        <!--android:layout_height="wrap_content"-->
-	        <!--android:layout_below="@id/tvFileName"-->
-	        <!--android:layout_toRightOf="@id/imgFileThumbnail"-->
-	        <!--android:indeterminate="false"-->
-	        <!--android:isIndicator="false"-->
-	        <!--android:minHeight="57dp"-->
-	        <!--android:visibility="gone" />-->
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="10sp"
-            android:background="@drawable/black_white_gradient"
-            android:layout_alignParentBottom="true"/>
-	</RelativeLayout>
+    </RelativeLayout>
 
 	<RelativeLayout
 	    android:id="@+id/rlFileDetails"
 	    android:layout_width="wrap_content"
 	    android:layout_height="0dp"
         android:layout_weight="3"
-	    android:layout_below="@id/rlMainFileInformation" >
+	    android:layout_below="@id/rlMainFileInformation"
+        android:background="@color/nearly_white">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="10sp"
+            android:background="@drawable/black_white_gradient"
+            android:layout_alignParentTop="true"/>
 
 		<ProgressBar
 		    android:id="@+id/pbLoadingFileDetails"

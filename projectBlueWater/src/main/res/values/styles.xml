@@ -47,4 +47,8 @@
         <item name="android:textColor">@color/white</item>
     </style>
 
+    <style name="AppThemeNoActionBarShadowTheme" parent="AppTheme">
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
 </resources>
