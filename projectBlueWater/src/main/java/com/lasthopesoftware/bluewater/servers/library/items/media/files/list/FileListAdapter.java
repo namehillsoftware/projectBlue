@@ -62,7 +62,7 @@ public class FileListAdapter extends AbstractFileListAdapter {
 
             final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-            final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false);
+            final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_file_item_menu, parent, false);
             final ImageButton addButton = (ImageButton)fileMenu.findViewById(R.id.btnAddToPlaylist);
             final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlaySong);
             final ImageButton viewFileDetailsButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFileDetails);
