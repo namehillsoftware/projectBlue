@@ -2,7 +2,11 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.details
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -123,7 +127,10 @@ public class FileDetailsActivity extends Activity {
 				if (result == null) return;
 				tvFileName.setText(result);
 
-                setTitle(String.format(getString(R.string.lbl_details), result));
+                final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), result));
+                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                setTitle(spannableString);
 			}
 		});
         getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
