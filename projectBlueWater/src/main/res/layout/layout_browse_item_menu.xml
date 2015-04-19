@@ -21,15 +21,6 @@
         android:src="@drawable/av_play" />
 
 	<ImageButton
-	    android:id="@+id/btnShuffle"
-	    style="?android:attr/buttonBarButtonStyle"
-	    android:layout_width="0dip"
-	    android:layout_height="match_parent"
-	    android:layout_weight="1"
-	    android:contentDescription="@string/btn_shuffle_files"
-	    android:src="@drawable/av_shuffle" />
-
-	<ImageButton
 	    android:id="@+id/btnViewFiles"
 	    style="?android:attr/buttonBarButtonStyle"
 	    android:layout_width="0dip"
@@ -37,5 +28,15 @@
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_view_files"
 	    android:src="@drawable/ic_list" />
+
+
+    <ImageButton
+        android:id="@+id/btnShuffle"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:contentDescription="@string/btn_shuffle_files"
+        android:src="@drawable/av_shuffle" />
 
 </LinearLayout>
