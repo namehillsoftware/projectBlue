@@ -130,8 +130,13 @@ public class FileDetailsActivity extends Activity {
 			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
 				if (result == null) return;
 				tvFileName.setText(result);
-                // Set selected to kick off marquee once on a long file name
-                tvFileName.setSelected(true);
+
+                tvFileName.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvFileName.setSelected(true);
+                    }
+                }, 500);
 
                 final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), result));
                 spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
