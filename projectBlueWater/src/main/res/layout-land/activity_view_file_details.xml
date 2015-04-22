@@ -46,52 +46,53 @@
             android:layout_alignParentLeft="true"
             android:id="@+id/fileDetailsGradient"/>
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_toRightOf="@id/fileDetailsGradient">
-            <TextView
-                android:id="@+id/tvFileName"
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@id/fileDetailsGradient">
+        <TextView
+            android:id="@+id/tvFileName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxLines="1"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/tvArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvFileName"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:lines="1"
+            android:maxLines="1"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/tvArtist">
+            <ProgressBar
+                android:id="@+id/pbLoadingFileDetails"
+                style="?android:attr/progressBarStyleLarge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:ellipsize="end"
-                android:lines="1"
-                android:maxLines="1"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentLeft="true"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:layout_centerInParent="true"
+                android:visibility="invisible" />
 
-            <TextView
-                android:id="@+id/tvArtist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/tvFileName"
-                android:ellipsize="end"
-                android:lines="1"
-                android:maxLines="1"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentLeft="true"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
-
-            <RelativeLayout
+            <ListView
+                android:id="@+id/lvFileDetails"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_below="@id/tvArtist">
-                <ProgressBar
-                    android:id="@+id/pbLoadingFileDetails"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:visibility="invisible" />
-
-                <ListView
-                    android:id="@+id/lvFileDetails"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </RelativeLayout>
+                android:layout_height="match_parent" />
         </RelativeLayout>
     </RelativeLayout>
+</RelativeLayout>
 
 </LinearLayout>
