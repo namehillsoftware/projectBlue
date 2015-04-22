@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.details;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
@@ -76,8 +77,11 @@ public class FileDetailsActivity extends Activity {
             setTheme(R.style.AppThemeNoActionBarShadowTheme);
 
 		super.onCreate(savedInstanceState);
-        
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        final ActionBar actionBar = getActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
         setContentView(R.layout.activity_view_file_details);
 
         mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
@@ -102,7 +106,7 @@ public class FileDetailsActivity extends Activity {
 		if (fileKey < 0) {
         	finish();
         	return;
-        };
+        }
 
         lvFileDetails.setVisibility(View.INVISIBLE);
         pbLoadingFileDetails.setVisibility(View.VISIBLE);
@@ -113,7 +117,7 @@ public class FileDetailsActivity extends Activity {
         final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
-        final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
+        final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -170,13 +174,13 @@ public class FileDetailsActivity extends Activity {
 //		getRatingsTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
 //		getRatingsTask.execute();
         
-        final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<Void, Void, List<Entry<String, String>>>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
+        final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
 				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(mFileKey);
 				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
-				final ArrayList<Entry<String, String>> results = new ArrayList<Map.Entry<String,String>>(fileProperties.size());
+				final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
 				
 				for (Entry<String, String> entry : fileProperties.entrySet()) {
 					if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
@@ -215,7 +219,7 @@ public class FileDetailsActivity extends Activity {
 		});
 
         tvArtist.setText(getText(R.string.lbl_loading));
-        final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
+        final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
 
             @Override
             public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
