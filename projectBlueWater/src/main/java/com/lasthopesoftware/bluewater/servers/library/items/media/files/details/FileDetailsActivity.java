@@ -39,6 +39,7 @@ import java.util.Set;
 public class FileDetailsActivity extends Activity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
+    private static final int trackNameMarqueeDelay = 1500;
 	
 	private Bitmap mFileImage;
 	
@@ -136,7 +137,7 @@ public class FileDetailsActivity extends Activity {
                     public void run() {
                         tvFileName.setSelected(true);
                     }
-                }, 500);
+                }, trackNameMarqueeDelay);
 
                 final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), result));
                 spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
