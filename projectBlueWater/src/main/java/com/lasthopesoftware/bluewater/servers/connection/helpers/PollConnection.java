@@ -24,9 +24,9 @@ public class PollConnection {
 	private final AtomicBoolean mIsConnectionRestored = new AtomicBoolean();
 	private final AtomicBoolean mIsRefreshing = new AtomicBoolean();
 	
-	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<OnConnectionLostListener>();
-	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<OnConnectionRegainedListener>();
-	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<OnPollingCancelledListener>();
+	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<>();
+	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<>();
+	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<>();
 	
 	private PollConnection(Context context) {
 		mContext = context;
