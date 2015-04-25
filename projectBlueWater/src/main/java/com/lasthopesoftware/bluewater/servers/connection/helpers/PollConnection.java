@@ -98,7 +98,7 @@ public class PollConnection {
 	}
 	
 	public synchronized void startPolling() {
-		if (mTask.getStatus() != AsyncTask.Status.RUNNING) mTask.executeOnExecutor(pollService);
+		if (mTask.getStatus() == AsyncTask.Status.PENDING) mTask.executeOnExecutor(pollService);
 	}
 	
 	public synchronized void stopPolling() {
