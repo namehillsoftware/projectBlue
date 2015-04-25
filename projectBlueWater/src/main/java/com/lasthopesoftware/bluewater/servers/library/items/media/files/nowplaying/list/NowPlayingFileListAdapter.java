@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.Get
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -102,6 +103,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
         };
 
         final ViewFlipper viewFlipper = fileListItem.getViewFlipper();
+        LongClickViewFlipListener.tryFlipToPreviousView(viewFlipper);
         viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, getFiles()));
         viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
         viewHolder.removeButton.setOnClickListener(new RemoveClickListener(viewFlipper, position, this));

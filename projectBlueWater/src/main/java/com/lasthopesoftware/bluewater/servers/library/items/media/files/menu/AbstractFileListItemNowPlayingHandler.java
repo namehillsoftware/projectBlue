@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.menu;
 
 import android.view.View;
+import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -10,12 +11,14 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
  */
 public abstract class AbstractFileListItemNowPlayingHandler implements OnNowPlayingStartListener {
 
-    private final FileListItemContainer mFileListItem;
+    private final RelativeLayout mFileTextViewContainer;
 
     private View.OnAttachStateChangeListener onAttachStateChangeListener;
 
     public AbstractFileListItemNowPlayingHandler(FileListItemContainer fileListItem) {
-        mFileListItem = fileListItem;
+        mFileTextViewContainer = fileListItem.getTextViewContainer();
+        if (mFileTextViewContainer == null)
+            throw new IllegalArgumentException("fileListItem.getTextView() cannot be null");
 
         final OnNowPlayingStartListener onNowPlayingStartListener = this;
 
@@ -32,10 +35,11 @@ public abstract class AbstractFileListItemNowPlayingHandler implements OnNowPlay
             public void onViewAttachedToWindow(View v) { }
         };
 
-        mFileListItem.getTextViewContainer().addOnAttachStateChangeListener(onAttachStateChangeListener);
+        mFileTextViewContainer.addOnAttachStateChangeListener(onAttachStateChangeListener);
     }
 
     public void release() {
-        mFileListItem.getTextViewContainer().removeOnAttachStateChangeListener(onAttachStateChangeListener);
+        PlaybackService.removeOnStreamingStartListener(this);
+        mFileTextViewContainer.removeOnAttachStateChangeListener(onAttachStateChangeListener);
     }
 }
