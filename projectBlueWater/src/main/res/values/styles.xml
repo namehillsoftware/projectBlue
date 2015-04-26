@@ -2,10 +2,8 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="AppTheme" parent="@android:style/Theme.Holo.Light">
-        <item name="attr/action_about">@drawable/action_about</item>
         <item name="attr/action_search">@drawable/action_search</item>
         <item name="attr/action_settings">@drawable/action_settings</item>
-        <item name="attr/action_stream">@drawable/action_stream</item>
         <item name="attr/av_download">@drawable/av_download</item>
         <item name="attr/av_fast_forward">@drawable/av_fast_forward</item>
         <item name="attr/av_pause">@drawable/av_pause</item>
@@ -13,26 +11,13 @@
         <item name="attr/av_rewind">@drawable/av_rewind</item>
         <item name="attr/content_discard">@drawable/content_discard</item>
         <item name="attr/content_new">@drawable/content_new</item>
-        <item name="attr/default_cover">@drawable/default_cover</item>
-        <item name="attr/device_access_time">@drawable/device_access_time</item>
-        <item name="attr/location_web_site">@drawable/location_web_site</item>
-        <item name="attr/navigation_accept">@drawable/navigation_accept</item>
-        <item name="attr/navigation_cancel">@drawable/navigation_cancel</item>
         <item name="attr/navigation_expand">@drawable/navigation_expand</item>
         <item name="attr/navigation_collapse">@drawable/navigation_collapse</item>
         <item name="attr/navigation_refresh">@drawable/navigation_refresh</item>
-        <item name="attr/navigation_up">@drawable/navigation_up</item>
         <item name="attr/navigation_shownotes">@drawable/navigation_shownotes</item>
-        <item name="attr/navigation_chapters">@drawable/navigation_chapters</item>
-        <item name="attr/social_share">@drawable/social_share</item>
-        <item name="attr/stat_playlist">@drawable/stat_playlist</item>
-        <item name="attr/type_audio">@drawable/type_audio</item>
-        <item name="attr/type_video">@drawable/type_video</item>
         <item name="attr/non_transparent_background">@color/white</item>
         <item name="attr/borderless_button">@drawable/borderless_button</item>
         <item name="attr/overlay_background">@color/overlay_light</item>
-        <item name="attr/spinner_button">@drawable/spinner_button</item>
-        <item name="attr/overlay_drawable">@drawable/overlay_drawable</item>
         <item name="attr/dragview_background">@drawable/dragview_background</item>
         <item name="attr/dragview_float_background">@color/white</item>
         <item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>

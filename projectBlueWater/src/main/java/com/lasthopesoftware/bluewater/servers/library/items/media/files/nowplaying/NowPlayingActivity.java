@@ -399,6 +399,7 @@ public class NowPlayingActivity extends Activity implements
 					if (handleIoException(file, exception)) return;
 					
 					mNowPlayingTitle.setText(result);
+                    mNowPlayingTitle.setSelected(true);
 					viewStructure.nowPlayingTitle = result;
 				}
 			};

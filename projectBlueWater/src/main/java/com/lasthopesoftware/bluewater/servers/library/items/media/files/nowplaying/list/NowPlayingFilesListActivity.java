@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -36,8 +37,10 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        final ActionBar actionBar = getActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         mFileListView = (ListView)findViewById(R.id.lvFilelist);
         mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingFileList);
@@ -71,9 +74,8 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
-		return super.onOptionsItemSelected(item);
-	}
+        return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item);
+    }
 	
 	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
 		
