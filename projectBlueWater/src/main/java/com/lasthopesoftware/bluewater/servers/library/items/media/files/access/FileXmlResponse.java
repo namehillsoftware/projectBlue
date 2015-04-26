@@ -34,6 +34,6 @@ public class FileXmlResponse {
 			LoggerFactory.getLogger(FileXmlResponse.class).error(e.toString(), e);
 		}
 		
-		return new ArrayList<File>();
+		return new ArrayList<>();
 	}
 }

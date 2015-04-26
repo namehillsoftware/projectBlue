@@ -20,7 +20,7 @@ public class FilesystemResponseHandler<T extends AbstractIntKeyStringValue> exte
 	private Class<T> newClass;
 	
 	public FilesystemResponseHandler(Class<T> c) {
-		items = new ArrayList<T>();
+		items = new ArrayList<>();
 		newClass = c;
 	}
 	

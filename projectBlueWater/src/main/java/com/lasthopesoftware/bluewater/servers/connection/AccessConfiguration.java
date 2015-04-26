@@ -12,8 +12,8 @@ public class AccessConfiguration {
 	private volatile String mActiveUrl = "";
 	private String remoteIp;
 	private int port;
-	private List<String> localIps = new ArrayList<String>();
-	private List<String> macAddresses = new ArrayList<String>();
+	private List<String> localIps = new ArrayList<>();
+	private List<String> macAddresses = new ArrayList<>();
 	private int urlIndex = -1;
 	private boolean isLocalOnly;
 	
@@ -84,11 +84,7 @@ public class AccessConfiguration {
 	private String getLocalIpUrl(int index) {
 		return "http://" + localIps.get(index) + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
-	
-	public void resetUrl() {
-		mActiveUrl = "";
-	}
-	
+
 	public String getActiveUrl() {
 		if (!mActiveUrl.isEmpty()) {
 			try {

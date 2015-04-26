@@ -5,10 +5,8 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -23,7 +21,7 @@ public class BuildSessionConnection {
 
 	private static final AtomicBoolean isRunning = new AtomicBoolean();
 	private static volatile BuildingSessionConnectionStatus mBuildingStatus = BuildingSessionConnectionStatus.GETTING_LIBRARY;
-	private static final CopyOnWriteArraySet<OnBuildSessionStateChangeListener> mBuildSessionListeners = new CopyOnWriteArraySet<OnBuildSessionStateChangeListener>();
+	private static final CopyOnWriteArraySet<OnBuildSessionStateChangeListener> mBuildSessionListeners = new CopyOnWriteArraySet<>();
 	private static final EnumSet<BuildingSessionConnectionStatus> mRunningConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY, BuildingSessionConnectionStatus.BUILDING_CONNECTION, BuildingSessionConnectionStatus.GETTING_VIEW);
 	private static final EnumSet<BuildingSessionConnectionStatus> mCompleteConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY_FAILED, BuildingSessionConnectionStatus.BUILDING_CONNECTION_FAILED, BuildingSessionConnectionStatus.GETTING_VIEW_FAILED, BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 	

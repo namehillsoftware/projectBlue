@@ -434,7 +434,7 @@ public class NowPlayingActivity extends Activity implements
 					
 					viewStructure.nowPlayingRating = result;
 					
-					mSongRating.setRating(result != null ? result.floatValue() : 0f);
+					mSongRating.setRating(result != null ? result : 0f);
 					
 					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
 						
@@ -443,7 +443,7 @@ public class NowPlayingActivity extends Activity implements
 							if (!fromUser || !mControlNowPlaying.isShown()) return;
 							file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 							
-							viewStructure.nowPlayingRating = Float.valueOf(rating);
+							viewStructure.nowPlayingRating = rating;
 						}
 					});
 				}

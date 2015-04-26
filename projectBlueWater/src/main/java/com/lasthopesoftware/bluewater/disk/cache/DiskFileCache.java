@@ -112,7 +112,7 @@ public class DiskFileCache {
 	}
 	
 	public File get(final String uniqueKey) {
-		final SimpleTask<Void, Void, File> getTask = new SimpleTask<Void, Void, File>(new OnExecuteListener<Void, Void, File>() {
+		final SimpleTask<Void, Void, File> getTask = new SimpleTask<>(new OnExecuteListener<Void, Void, File>() {
 
 			@Override
 			public File onExecute(ISimpleTask<Void, Void, File> owner, Void... params) throws Exception {

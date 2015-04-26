@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class PlaylistXmlHandler extends DefaultHandler {
 	
-	private TreeMap<String, Playlist> playlists = new TreeMap<String, Playlist>();
+	private TreeMap<String, Playlist> playlists = new TreeMap<>();
 	private Playlist currentPlaylist;
 	private String currentValue;
 	private String currentKey;
@@ -74,7 +74,7 @@ public class PlaylistXmlHandler extends DefaultHandler {
 	 * @return the response
 	 */
 	public ArrayList<Playlist> getPlaylists() {
-		ArrayList<Playlist> returnList = new ArrayList<Playlist>(playlists.values());
+		ArrayList<Playlist> returnList = new ArrayList<>(playlists.values());
 		
 		return returnList;
 	}

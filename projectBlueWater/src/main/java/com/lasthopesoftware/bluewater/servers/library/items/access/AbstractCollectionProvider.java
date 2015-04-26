@@ -1,17 +1,11 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
-import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +27,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 		this(null, params);
 	}
 	
-	public AbstractCollectionProvider(HttpURLConnection connection, String... params) {
+	protected AbstractCollectionProvider(HttpURLConnection connection, String... params) {
 		mConnection = connection;
 		mParams = params;
 		

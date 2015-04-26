@@ -119,10 +119,10 @@ public class PlaybackService extends Service implements
 	private static final Object syncHandlersObject = new Object();
 	private static final Object syncPlaylistControllerObject = new Object();
 	
-	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<OnNowPlayingChangeListener>();
-	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<OnNowPlayingStartListener>();
-	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<OnNowPlayingStopListener>();
-	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<OnNowPlayingPauseListener>();
+	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<>();
+	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<>();
+	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<>();
+	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<>();
 		
 	private OnConnectionRegainedListener mConnectionRegainedListener;
 	
@@ -862,7 +862,7 @@ public class PlaybackService extends Service implements
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 		
-		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<Void, Void, String>(new OnExecuteListener<Void, Void, String>() {
+		final SimpleTask<Void, Void, String> getNotificationPropertiesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
 			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
@@ -887,15 +887,15 @@ public class PlaybackService extends Service implements
 		
 		getNotificationPropertiesTask.execute();
 		
-		final SimpleTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new SimpleTask<Void, Void, SparseArray<Object>>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
+		final SimpleTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
 			
 			@Override
 			public SparseArray<Object> onExecute(ISimpleTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
-				final SparseArray<Object> result = new SparseArray<Object>(4);
+				final SparseArray<Object> result = new SparseArray<>(4);
 				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
 				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FilePropertiesProvider.ALBUM));
 				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
-				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, Long.valueOf(playingFile.getDuration()));
+				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, (long) playingFile.getDuration());
 				final String trackNumber = playingFile.getProperty(FilePropertiesProvider.TRACK);
 				if (trackNumber != null && !trackNumber.isEmpty())
 					result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
@@ -926,7 +926,7 @@ public class PlaybackService extends Service implements
 				scrobbleDroidIntent.putExtra("artist", artist);
 				scrobbleDroidIntent.putExtra("album", album);
 				scrobbleDroidIntent.putExtra("track", title);
-				scrobbleDroidIntent.putExtra("secs", (int)(duration.longValue() / 1000));
+				scrobbleDroidIntent.putExtra("secs", (int)(duration / 1000));
 				if (trackNumber != null)
 					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
 			    

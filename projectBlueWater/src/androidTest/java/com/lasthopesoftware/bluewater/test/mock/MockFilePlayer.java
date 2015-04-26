@@ -19,7 +19,7 @@ public class MockFilePlayer implements IPlaybackFile {
 	private int mPosition = 0;
 	private float mVolume = 0f;
 	
-	private List<OnFilePreparedListener> mOnFilePreparedListeners = new ArrayList<OnFilePreparedListener>();
+	private List<OnFilePreparedListener> mOnFilePreparedListeners = new ArrayList<>();
 	
 	public MockFilePlayer(IFile file) {
 		mFile = file;

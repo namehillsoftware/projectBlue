@@ -29,7 +29,7 @@ public class PlaybackControllerTest extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		
-		mMockFiles = new ArrayList<IFile>(
+		mMockFiles = new ArrayList<>(
 							Arrays.asList(
 								new IFile[] { 
 										new MockFile(1), 

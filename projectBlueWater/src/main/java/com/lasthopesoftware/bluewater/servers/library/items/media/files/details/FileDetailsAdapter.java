@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.R;
 import java.util.List;
 import java.util.Map.Entry;
 
-public class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
+class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
 	
 	private static class ViewHolder {
 		TextView fileDetailName;

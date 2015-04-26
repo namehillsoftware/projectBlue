@@ -51,7 +51,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	private ImageAccess(final Context context, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		super();
 		
-		mImageAccessTask = new SimpleTask<Void, Void, Bitmap>(new GetFileImageOnExecute(context, file));
+		mImageAccessTask = new SimpleTask<>(new GetFileImageOnExecute(context, file));
 		mImageAccessTask.addOnCompleteListener(onGetBitmapComplete);
 	}
 	
@@ -73,7 +73,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		private static final String IMAGES_CACHE_NAME = "images";
 		
 		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<String, Byte[]>(MAX_MEMORY_CACHE_SIZE);
+		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 		
 		private final Context mContext;
 		private final IFile mFile;
@@ -87,7 +87,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) throws Exception {
 			if (owner.isCancelled()) return getFillerBitmap();
 			
-			String uniqueKey = null;
+			String uniqueKey;
 			try {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 				// artists), and then by artist if that field is empty
@@ -168,7 +168,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			
 			final byte[] imageBytes = new byte[memoryImageBytes.length];
 			for (int i = 0; i < memoryImageBytes.length; i++)
-				imageBytes[i] = memoryImageBytes[i].byteValue();
+				imageBytes[i] = memoryImageBytes[i];
 			
 			return imageBytes;
 		}
@@ -202,7 +202,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			final Byte[] memoryImageBytes = new Byte[imageBytes.length];
 			
 			for (int i = 0; i < imageBytes.length; i++)
-				memoryImageBytes[i] = Byte.valueOf(imageBytes[i]);
+				memoryImageBytes[i] = imageBytes[i];
 			
 			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
 		}

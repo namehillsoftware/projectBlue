@@ -34,7 +34,7 @@ public class PlaylistRequest {
 			LoggerFactory.getLogger(PlaylistRequest.class).error(e.toString(), e);
 		}
 		
-		return new ArrayList<Playlist>();
+		return new ArrayList<>();
 	}
 
 }

@@ -11,7 +11,7 @@ import javax.xml.parsers.SAXParserFactory;
 public class StandardRequest {
 
 	private final boolean status;
-	public final HashMap<String, String> items = new HashMap<String, String>();
+	public final HashMap<String, String> items = new HashMap<>();
 	
 	public StandardRequest(String status) {
 		this.status = status != null && status.equalsIgnoreCase("OK");

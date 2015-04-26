@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -61,14 +60,13 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	}
 	
 	private SimpleTask<String, Void, ArrayList<IItem>> getVisibleViewsTask(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener, final ISimpleTask.OnErrorListener<String, Void, ArrayList<IItem>> onErrorListener) {
-        final FileSystem fileSystem = this;
-		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = new SimpleTask<String, Void, ArrayList<IItem>>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
+		final SimpleTask<String, Void, ArrayList<IItem>> getViewsTask = new SimpleTask<>(new OnExecuteListener<String, Void, ArrayList<IItem>>() {
 			
 			@Override
 			public ArrayList<IItem> onExecute(final ISimpleTask<String, Void, ArrayList<IItem>> thisTask, String... params) throws Exception {
 
 				if (mVisibleViews == null || mVisibleViews.size() == 0) {
-					mVisibleViews = new TreeSet<IItem>(new Comparator<IItem>() {
+					mVisibleViews = new TreeSet<>(new Comparator<IItem>() {
 
 						@Override
 						public int compare(IItem lhs, IItem rhs) {
@@ -98,7 +96,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 					}
 				}
 				
-				return new ArrayList<IItem>(mVisibleViews);
+				return new ArrayList<>(mVisibleViews);
 			}
 		});
 

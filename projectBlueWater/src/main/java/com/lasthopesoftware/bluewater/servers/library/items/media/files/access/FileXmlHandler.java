@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class FileXmlHandler extends DefaultHandler {
 	
-	private ArrayList<File> files = new ArrayList<File>();
+	private ArrayList<File> files = new ArrayList<>();
 	private File currentFile;
 	private String currentValue;
 	private StringBuilder currentSb = null;

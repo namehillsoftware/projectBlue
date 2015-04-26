@@ -43,17 +43,17 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 	}
 	
 	public ArrayList<Playlist> getChildren() {
-		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
+		if (mSubItems == null) mSubItems = new SparseArray<>();
 		
 		final int subItemSize = mSubItems.size();
-		final ArrayList<Playlist> returnList = new ArrayList<Playlist>(subItemSize);
+		final ArrayList<Playlist> returnList = new ArrayList<>(subItemSize);
 		for (int i = 0; i < subItemSize; i++)
 			returnList.add(mSubItems.valueAt(i));
 		return returnList;
 	}
 
 	public void addPlaylist(Playlist playlist) {
-		if (mSubItems == null) mSubItems = new SparseArray<Playlist>();
+		if (mSubItems == null) mSubItems = new SparseArray<>();
 		playlist.setParent(this);
 		mSubItems.put(playlist.getKey(), playlist);
 	}
@@ -100,6 +100,6 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 	public int compareTo(IItem another) {
 		int result = this.getValue().compareTo(another.getValue());
 		if (result == 0) result = this.getKey() - another.getKey();
-		return 0;
+		return result;
 	}
 }

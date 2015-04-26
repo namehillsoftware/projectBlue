@@ -20,7 +20,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	public PlaybackFileProvider(Context context, List<IFile> files) {
 		mContext = context;
 		
-		mFiles = files instanceof ArrayList<?> ? (ArrayList<IFile>)files : new ArrayList<IFile>(files);
+		mFiles = files instanceof ArrayList<?> ? (ArrayList<IFile>)files : new ArrayList<>(files);
 	}
 	
 	@Override

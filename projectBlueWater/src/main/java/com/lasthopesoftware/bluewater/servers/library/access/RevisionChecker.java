@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 
 public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 	
-	private final static Integer mBadRevision = Integer.valueOf(-1);
+	private final static Integer mBadRevision = -1;
 	private static Integer mCachedRevision = mBadRevision;
 
     private static long mLastCheckedTime = -1;
@@ -24,7 +24,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 
 	public static Integer getRevision() {
         try {
-            return (new SimpleTask<Void, Void, Integer>(new RevisionChecker())).execute(mRevisionExecutor).get();
+            return (new SimpleTask<>(new RevisionChecker())).execute(mRevisionExecutor).get();
         } catch (ExecutionException | InterruptedException e) {
             return mCachedRevision;
         }

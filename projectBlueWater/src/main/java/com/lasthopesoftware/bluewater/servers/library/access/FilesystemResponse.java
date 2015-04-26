@@ -22,7 +22,7 @@ public class FilesystemResponse {
 		try {
 			
 			final SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-	    	final FilesystemResponseHandler<Item> jrResponseHandler = new FilesystemResponseHandler<Item>(Item.class);
+	    	final FilesystemResponseHandler<Item> jrResponseHandler = new FilesystemResponseHandler<>(Item.class);
 	    	sp.parse(is, jrResponseHandler);
 	    	
 	    	return jrResponseHandler.items;
@@ -36,7 +36,7 @@ public class FilesystemResponse {
 			LoggerFactory.getLogger(FilesystemResponse.class).error(e.toString(), e);
 		}
 		
-		return new ArrayList<Item>();
+		return new ArrayList<>();
 	}
 
 }

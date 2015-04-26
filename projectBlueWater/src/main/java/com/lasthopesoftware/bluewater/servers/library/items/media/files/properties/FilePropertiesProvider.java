@@ -30,7 +30,7 @@ import xmlwise.Xmlwise;
 
 public class FilePropertiesProvider {
     private static class FilePropertiesContainer {
-        private Integer mRevision = Integer.valueOf(-1);
+        private Integer mRevision = -1;
         private ConcurrentSkipListMap<String, String> mProperties = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
         public void updateProperties(Integer revision, SortedMap<String, String> properties) {

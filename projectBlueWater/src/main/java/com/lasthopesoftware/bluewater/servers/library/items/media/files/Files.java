@@ -32,7 +32,7 @@ public class Files implements IItemFiles {
 		
 		@Override
 		public List<IFile> onConnect(InputStream is) {
-			ArrayList<IFile> files = new ArrayList<IFile>();
+			ArrayList<IFile> files = new ArrayList<>();
 			try {
 				files = parseFileStringList(IOUtils.toString(is));				
 			} catch (IOException e) {
@@ -115,7 +115,7 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete, final IDataTask.OnErrorListener<String> onGetStringListError) {
-		final DataTask<String> getStringListTask = new DataTask<String>(new OnConnectListener<String>() {
+		final DataTask<String> getStringListTask = new DataTask<>(new OnConnectListener<String>() {
 			
 			@Override
 			public String onConnect(InputStream is) {
@@ -136,7 +136,7 @@ public class Files implements IItemFiles {
 	}
 
 	protected DataTask<List<IFile>> getNewFilesTask() {
-		final DataTask<List<IFile>> fileTask = new DataTask<List<IFile>>(getOnFileConnectListener());
+		final DataTask<List<IFile>> fileTask = new DataTask<>(getOnFileConnectListener());
 		
 		if (mFileCompleteListener != null)
 			fileTask.addOnCompleteListener(mFileCompleteListener);
@@ -154,7 +154,7 @@ public class Files implements IItemFiles {
 		final String[] keys = fileList.split(";");
 		
 		final int offset = Integer.parseInt(keys[0]) + 1;
-		final ArrayList<IFile> files = new ArrayList<IFile>(Integer.parseInt(keys[1]));
+		final ArrayList<IFile> files = new ArrayList<>(Integer.parseInt(keys[1]));
 		
 		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;

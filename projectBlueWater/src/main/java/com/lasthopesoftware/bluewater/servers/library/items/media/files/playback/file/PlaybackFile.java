@@ -46,7 +46,7 @@ public class PlaybackFile implements
 	OnBufferingUpdateListener
 {
 	@SuppressLint("InlinedApi")
-	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<Integer>(Arrays.asList(new Integer[] {
+	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[] {
 		MediaPlayer.MEDIA_ERROR_IO,
 		MediaPlayer.MEDIA_ERROR_MALFORMED,
 		MediaPlayer.MEDIA_ERROR_UNSUPPORTED, 
@@ -77,10 +77,10 @@ public class PlaybackFile implements
 	
 	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
 	
-	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<OnFileCompleteListener>();
-	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<OnFilePreparedListener>();
-	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<OnFileErrorListener>();
-	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<OnFileBufferedListener>();
+	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
+	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
+	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
+	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
 	
 	public PlaybackFile(Context context, IFile file) {
 		mMpContext = context;
@@ -130,7 +130,7 @@ public class PlaybackFile implements
 		final StringBuilder querySb = new StringBuilder(MEDIA_DATA_QUERY);
 		appendAnd(querySb);
 		
-		final ArrayList<String> params = new ArrayList<String>(5);
+		final ArrayList<String> params = new ArrayList<>(5);
 		params.add(filename);
 		
 		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FilePropertiesProvider.ARTIST));
@@ -257,7 +257,7 @@ public class PlaybackFile implements
 	}
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
-		final Map<String, String> headers = new HashMap<String, String>();
+		final Map<String, String> headers = new HashMap<>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		

@@ -10,7 +10,7 @@ import java.util.TreeMap;
 
 public class FilePropertiesHandler extends DefaultHandler {
 	
-	private TreeMap<String, String> properties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+	private TreeMap<String, String> properties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private StringBuilder currentSb = null;
 	private String currentKey;
 	

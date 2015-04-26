@@ -42,9 +42,9 @@ public class ConnectionProvider {
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionProvider.class);
 	
-	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<OnAccessStateChange>();
+	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<>();
 	
-	private static Object syncObj = new Object();
+	private static final Object syncObj = new Object();
 	
 	public static void buildConfiguration(Context context, String accessString, boolean isLocalOnly, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
 		buildConfiguration(context, accessString, isLocalOnly, stdTimeoutTime, onBuildComplete);
@@ -100,7 +100,7 @@ public class ConnectionProvider {
 	}
 	
 	private static final void executeReturnFalseTask(OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
-		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
+		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
 			
 			@Override
 			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
@@ -161,14 +161,14 @@ public class ConnectionProvider {
 		}
 	}
 	
-	private static void buildAccessConfiguration(String accessString, boolean isLocalOnly, final int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(String accessString, final boolean isLocalOnly, final int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null");
 		
 		for (OnAccessStateChange onAccessStateChange : mOnAccessStateChangeListeners)
 			onAccessStateChange.gettingUri(accessString);
 		
-		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<String, Void, AccessConfiguration>(new OnExecuteListener<String, Void, AccessConfiguration>() {
+		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<>(new OnExecuteListener<String, Void, AccessConfiguration>() {
 			
 			@Override
 			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
@@ -197,6 +197,7 @@ public class ConnectionProvider {
 								accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
 								accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
 								accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+                                accessDao.setLocalOnly(isLocalOnly);
 								for (String localIp : xml.getUnique("localiplist").getValue().split(","))
 									accessDao.getLocalIps().add(localIp);
 								for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
@@ -374,11 +375,7 @@ public class ConnectionProvider {
 		
 		@Override
 		public InputStream getInputStream() throws IOException {
-			try {
-				return mHttpConnection.getInputStream();
-			} catch (IOException e) {
-				throw e;
-			}
+            return mHttpConnection.getInputStream();
 		}
 		
 		@Override
@@ -497,7 +494,7 @@ public class ConnectionProvider {
 		}
 		
 		public static void doTest(int timeout, OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<Integer, Void, Boolean>(new OnExecuteListener<Integer, Void, Boolean>() {
+			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
@@ -510,7 +507,7 @@ public class ConnectionProvider {
 				    	try {
 							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
 					    	
-					    	result = Boolean.valueOf(responseDao != null && responseDao.isStatus());
+					    	result = responseDao != null && responseDao.isStatus();
 				    	} finally {
 				    		is.close();
 				    	}

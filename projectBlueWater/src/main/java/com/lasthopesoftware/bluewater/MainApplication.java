@@ -62,13 +62,13 @@ public class MainApplication extends Application {
 	        filePle.setContext(lc);
 	        filePle.start();
 		    
-		    final RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<ILoggingEvent>();
+		    final RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
 		    rollingFileAppender.setLazy(true);
 		    rollingFileAppender.setAppend(true);
 		    rollingFileAppender.setContext(lc);
 		    rollingFileAppender.setEncoder(filePle);
 		    
-		    final TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<ILoggingEvent>();
+		    final TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
 		    rollingPolicy.setFileNamePattern(new File(logDir, "%d{yyyy-MM-dd}.log").getAbsolutePath());
 		    rollingPolicy.setMaxHistory(30);
 		    rollingPolicy.setParent(rollingFileAppender);  // parent and context required!

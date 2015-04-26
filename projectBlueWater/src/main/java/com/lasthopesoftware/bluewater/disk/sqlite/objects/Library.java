@@ -169,14 +169,14 @@ public class Library {
 	
 	public Collection<StoredFile> getStoredFiles() {
 		if (storedFiles == null)
-			storedFiles = new ArrayList<StoredFile>();
+			storedFiles = new ArrayList<>();
 		
 		return storedFiles;
 	}
 	
 	public Collection<StoredList> getStoredLists() {
 		if (storedLists == null)
-			storedLists = new ArrayList<StoredList>();
+			storedLists = new ArrayList<>();
 		
 		return storedLists;
 	}
@@ -185,7 +185,7 @@ public class Library {
 	 */
 	public final Collection<CachedFile> getCachedFiles() {
 		if (cachedFiles == null)
-			cachedFiles = new ArrayList<CachedFile>();
+			cachedFiles = new ArrayList<>();
 		
 		return cachedFiles;
 	}

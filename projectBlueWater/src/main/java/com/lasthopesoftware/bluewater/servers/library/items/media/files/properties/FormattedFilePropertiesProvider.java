@@ -74,7 +74,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	/* Formatted properties helpers */
 	
 	private static final SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
-		final SortedMap<String, String> formattedProperties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+		final SortedMap<String, String> formattedProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		
 		for (Entry<String, String> property : unformattedProperties.entrySet())
 			formattedProperties.put(property.getKey(), getFormattedValue(property.getKey(), property.getValue()));
@@ -113,7 +113,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		return value;
 	}
 	
-	private static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+	private static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
 	
 }
