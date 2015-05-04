@@ -124,21 +124,21 @@ public class LibraryViewFragment extends Fragment {
 					if (result == null) return;
 
 					listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
-                    listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
-		    		listView.setAdapter(new ItemListAdapter(activity, R.id.tvStandard, result));
-		    		loadingView.setVisibility(View.INVISIBLE);
-		    		listView.setVisibility(View.VISIBLE);
+					listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
+					listView.setAdapter(new ItemListAdapter(activity, R.id.tvStandard, result));
+					loadingView.setVisibility(View.INVISIBLE);
+					listView.setVisibility(View.VISIBLE);
 
-                    if (position == 0) buildTutorialView(activity, container, listView);
+					if (position == 0) buildTutorialView(activity, container, listView);
 				}
 			})
 			.onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
 
-                @Override
-                public void onConnectionRegained() {
-                    playlistsProvider.execute();
-                }
-            }));
+				@Override
+				public void onConnectionRegained() {
+					playlistsProvider.execute();
+				}
+			}));
 
 		playlistsProvider.execute();
 
@@ -194,7 +194,7 @@ public class LibraryViewFragment extends Fragment {
     }
 
     private final static boolean DEBUGGING_TUTORIAL = false;
-    private static void buildTutorialView(Activity activity, ViewGroup container, ListView listView) {
+    private static void buildTutorialView(final Activity activity, final ViewGroup container, final ListView listView) {
         // use this flag to ensure the least amount of possible work is done for this tutorial
         if (wasTutorialShown) return;
         wasTutorialShown = true;
@@ -211,12 +211,13 @@ public class LibraryViewFragment extends Fragment {
 
         // Put the view on the second item to make it clear we're talking about menu items
         final int topPosition = position[1] + measuredHeight + (measuredHeight / 2);
-        new ShowcaseView.Builder(activity)
+		new ShowcaseView.Builder(activity)
                 .setTarget(new PointTarget(position[0], topPosition))
                 .hideOnTouchOutside()
                 .setContentTitle(R.string.title_long_click_menu)
                 .setContentText(R.string.tutorial_long_click_menu)
-                .build();
+                .build()
+				.setBackgroundColor(activity.getResources().getColor(R.color.overlay_dark));
 
         sharedPreferences.edit().putBoolean(PREFS_KEY, true).apply();
     }

@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
-        targetSdkVersion 21
+        targetSdkVersion 22
 
         testApplicationId "com.lasthopesoftware.bluewater.test"
         testInstrumentationRunner "android.test.InstrumentationTestRunner"
@@ -37,7 +37,7 @@ repositories {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:support-v4:21.0.0'
+    compile 'com.android.support:support-v4:22.0.0'
     compile 'joda-time:joda-time:2.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-validator:commons-validator:1.4.0'
