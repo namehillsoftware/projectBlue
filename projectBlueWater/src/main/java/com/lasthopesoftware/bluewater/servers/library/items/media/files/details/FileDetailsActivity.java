@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -64,6 +65,8 @@ public class FileDetailsActivity extends Activity {
     private TextView tvFileName;
     private TextView tvArtist;
 
+	private boolean mIsLandscape;
+
 	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
 		
 		@Override
@@ -93,6 +96,8 @@ public class FileDetailsActivity extends Activity {
         pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
         tvFileName = (TextView) findViewById(R.id.tvFileName);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
+
+		mIsLandscape = getResources().getBoolean(R.bool.is_landscape);
 
         setView(mFileKey);
 	}
@@ -216,8 +221,22 @@ public class FileDetailsActivity extends Activity {
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 				if (mFileImage != null) mFileImage.recycle();
 				mFileImage = result;
-				
+
+				int height = mFileImage.getHeight();
+				int width = mFileImage.getWidth();
+				double ratio = (double)height / (double)width;
+				final int sideSize = !mIsLandscape ? imgFileThumbnail.getHeight() : imgFileThumbnail.getWidth();
+				height = width = sideSize;
+				if (mIsLandscape)
+					height = (int)Math.floor(sideSize * ratio);
+				else
+					width = (int)Math.floor(sideSize / ratio);
+				final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams(width, height);
+				newLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+				imgFileThumbnail.setLayoutParams(newLayoutParams);
+
 				imgFileThumbnail.setImageBitmap(mFileImage);
+
 
 				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
 				imgFileThumbnail.setVisibility(View.VISIBLE);

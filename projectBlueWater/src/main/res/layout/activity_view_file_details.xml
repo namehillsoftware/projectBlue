@@ -10,8 +10,7 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="0dp"
         android:layout_weight="2"
-        android:orientation="horizontal"
-        android:background="@color/clearstream_blue">
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/tvArtist"
@@ -21,7 +20,6 @@
             android:ellipsize="end"
             android:lines="1"
             android:maxLines="1"
-            android:textColor="@color/white"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
@@ -36,7 +34,6 @@
             android:singleLine="true"
             android:lines="1"
             android:maxLines="1"
-            android:textColor="@color/white"
             android:textAppearance="?android:attr/textAppearanceLarge"/>
 
 
@@ -44,7 +41,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:id="@+id/rlFileThumbnailContainer"
-            android:layout_above="@id/tvFileName">
+            android:layout_above="@id/tvFileName"
+            android:layout_centerHorizontal="true">
             <ProgressBar
                 android:id="@+id/pbLoadingFileThumbnail"
                 style="?android:attr/progressBarStyleLarge"
@@ -55,9 +53,11 @@
 
             <ImageView
                 android:id="@+id/imgFileThumbnail"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
+                android:background="@drawable/drop_shadow"
+                android:layout_centerHorizontal="true"
                 android:contentDescription="@string/lbl_track_img"/>
         </RelativeLayout>
 
@@ -68,14 +68,14 @@
 	    android:layout_width="wrap_content"
 	    android:layout_height="0dp"
         android:layout_weight="3"
-	    android:layout_below="@id/rlMainFileInformation"
-        android:background="@color/nearly_white">
+	    android:layout_below="@id/rlMainFileInformation">
+        <!--android:background="@color/nearly_white">-->
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="10sp"
-            android:background="@drawable/black_white_gradient"
-            android:layout_alignParentTop="true"/>
+        <!--<View-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="10sp"-->
+            <!--android:background="@drawable/black_white_gradient"-->
+            <!--android:layout_alignParentTop="true"/>-->
 
 		<ProgressBar
 		    android:id="@+id/pbLoadingFileDetails"

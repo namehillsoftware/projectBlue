@@ -10,8 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="2"
-        android:orientation="horizontal"
-        android:background="@color/faint_gray">
+        android:orientation="horizontal">
 
 
             <ProgressBar
@@ -27,7 +26,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
-                android:contentDescription="@string/lbl_track_img"/>
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/lbl_track_img"
+                android:background="@drawable/drop_shadow"/>
 
     </RelativeLayout>
 
@@ -36,20 +37,18 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="3"
-        android:layout_below="@id/rlMainFileInformation"
-        android:background="@color/nearly_white">
+        android:layout_below="@id/rlMainFileInformation">
 
-        <View
-            android:layout_width="10sp"
-            android:layout_height="match_parent"
-            android:background="@drawable/black_white_gradient"
-            android:layout_alignParentLeft="true"
-            android:id="@+id/fileDetailsGradient"/>
+        <!--<View-->
+            <!--android:layout_width="10sp"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:background="@drawable/black_white_gradient"-->
+            <!--android:layout_alignParentLeft="true"-->
+            <!--android:id="@+id/fileDetailsGradient"/>-->
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_toRightOf="@id/fileDetailsGradient">
+            android:layout_height="match_parent">
         <TextView
             android:id="@+id/tvFileName"
             android:layout_width="wrap_content"
