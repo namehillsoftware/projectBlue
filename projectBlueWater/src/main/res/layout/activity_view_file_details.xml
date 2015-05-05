@@ -53,12 +53,12 @@
 
             <ImageView
                 android:id="@+id/imgFileThumbnail"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
-                android:background="@drawable/drop_shadow"
                 android:layout_centerHorizontal="true"
                 android:contentDescription="@string/lbl_track_img"/>
+            <!--android:background="@drawable/drop_shadow"-->
         </RelativeLayout>
 
     </RelativeLayout>

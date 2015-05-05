@@ -27,8 +27,8 @@
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
                 android:layout_centerVertical="true"
-                android:contentDescription="@string/lbl_track_img"
-                android:background="@drawable/drop_shadow"/>
+                android:contentDescription="@string/lbl_track_img"/>
+                <!--android:background="@drawable/drop_shadow"/>-->
 
     </RelativeLayout>
 

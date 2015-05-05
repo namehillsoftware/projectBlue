@@ -3,6 +3,9 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.details
 import android.app.ActionBar;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -13,7 +16,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -220,23 +222,51 @@ public class FileDetailsActivity extends Activity {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 				if (mFileImage != null) mFileImage.recycle();
-				mFileImage = result;
 
-				int height = mFileImage.getHeight();
-				int width = mFileImage.getWidth();
-				double ratio = (double)height / (double)width;
-				final int sideSize = !mIsLandscape ? imgFileThumbnail.getHeight() : imgFileThumbnail.getWidth();
-				height = width = sideSize;
-				if (mIsLandscape)
-					height = (int)Math.floor(sideSize * ratio);
-				else
-					width = (int)Math.floor(sideSize / ratio);
-				final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams(width, height);
-				newLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-				imgFileThumbnail.setLayoutParams(newLayoutParams);
+//				imgFileThumbnail.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+//					@Override
+//					public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//						if (left - right == 0) return;
+//
+//						imgFileThumbnail.removeOnLayoutChangeListener(this);
+//
+//						double height = mFileImage.getHeight();
+//						double width = mFileImage.getWidth();
+//						double ratio = height / width;
+//						final int sideSize = !mIsLandscape ? imgFileThumbnail.getHeight() : imgFileThumbnail.getWidth();
+//						height = width = sideSize;
+//						if (mIsLandscape)
+//							height = sideSize * ratio;
+//						else
+//							width = sideSize / ratio;
+//
+//						final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams((int) Math.round(width), (int) Math.round(height));
+//						newLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+//						imgFileThumbnail.setLayoutParams(newLayoutParams);
+//					}
+//				});
+
+				final BlurMaskFilter blurFilter = new BlurMaskFilter(10, BlurMaskFilter.Blur.OUTER);
+				final Paint shadowPaint = new Paint();
+				shadowPaint.setMaskFilter(blurFilter);
+
+				final int[] offsetXY = new int[2];
+
+				final Bitmap shadowImage = result.extractAlpha(shadowPaint, offsetXY);
+				try {
+
+			    	/* Need to convert shadowImage from 8-bit to ARGB here. */
+					final Bitmap shadowImage32 = shadowImage.copy(Bitmap.Config.ARGB_8888, true);
+					final Canvas c = new Canvas(shadowImage32);
+					c.drawBitmap(result, -offsetXY[0], -offsetXY[1], null);
+					mFileImage = shadowImage32;
+
+					result.recycle();
+				} finally {
+					shadowImage.recycle();
+				}
 
 				imgFileThumbnail.setImageBitmap(mFileImage);
-
 
 				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
 				imgFileThumbnail.setVisibility(View.VISIBLE);
