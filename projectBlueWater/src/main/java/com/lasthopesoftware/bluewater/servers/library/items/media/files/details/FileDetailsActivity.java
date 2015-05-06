@@ -2,10 +2,13 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.details
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BlurMaskFilter;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.NinePatch;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -223,53 +226,26 @@ public class FileDetailsActivity extends Activity {
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 				if (mFileImage != null) mFileImage.recycle();
 
-//				imgFileThumbnail.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-//					@Override
-//					public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//						if (left - right == 0) return;
-//
-//						imgFileThumbnail.removeOnLayoutChangeListener(this);
-//
-//						double height = mFileImage.getHeight();
-//						double width = mFileImage.getWidth();
-//						double ratio = height / width;
-//						final int sideSize = !mIsLandscape ? imgFileThumbnail.getHeight() : imgFileThumbnail.getWidth();
-//						height = width = sideSize;
-//						if (mIsLandscape)
-//							height = sideSize * ratio;
-//						else
-//							width = sideSize / ratio;
-//
-//						final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams((int) Math.round(width), (int) Math.round(height));
-//						newLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-//						imgFileThumbnail.setLayoutParams(newLayoutParams);
-//					}
-//				});
+				mFileImage = null;
 
-				final BlurMaskFilter blurFilter = new BlurMaskFilter(10, BlurMaskFilter.Blur.OUTER);
-				final Paint shadowPaint = new Paint();
-				shadowPaint.setMaskFilter(blurFilter);
-
-				final int[] offsetXY = new int[2];
-
-				final Bitmap shadowImage = result.extractAlpha(shadowPaint, offsetXY);
-				try {
-
-			    	/* Need to convert shadowImage from 8-bit to ARGB here. */
-					final Bitmap shadowImage32 = shadowImage.copy(Bitmap.Config.ARGB_8888, true);
-					final Canvas c = new Canvas(shadowImage32);
-					c.drawBitmap(result, -offsetXY[0], -offsetXY[1], null);
-					mFileImage = shadowImage32;
-
-					result.recycle();
-				} finally {
-					shadowImage.recycle();
+				if (result == null) {
+					pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+					imgFileThumbnail.setVisibility(View.VISIBLE);
+					return;
 				}
 
-				imgFileThumbnail.setImageBitmap(mFileImage);
+				final SimpleTask<Void, Void, Bitmap> thumbnailDrawTask = new SimpleTask<>(new DrawThumbnailDropShadowTask(getResources(), result, mIsLandscape, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight()));
+				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap bitmap) {
+						mFileImage = bitmap;
+						imgFileThumbnail.setImageBitmap(mFileImage);
 
-				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-				imgFileThumbnail.setVisibility(View.VISIBLE);
+						pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+						imgFileThumbnail.setVisibility(View.VISIBLE);
+					}
+				});
+				thumbnailDrawTask.execute();
 			}
 		});
 
@@ -315,5 +291,65 @@ public class FileDetailsActivity extends Activity {
 		if (mFileImage != null) mFileImage.recycle();
 		
 		super.onDestroy();
+	}
+
+	private static class DrawThumbnailDropShadowTask implements OnExecuteListener<Void, Void, Bitmap> {
+
+		private static NinePatch mNinePatch;
+
+		private final Bitmap mSrcBitmap;
+		private final Resources mResources;
+
+		private final int mHeight, mWidth;
+
+		private final boolean mIsLandscape;
+
+		private static final int mPaddingWidth = 16, mPaddingHeight = 14;
+
+		public DrawThumbnailDropShadowTask(Resources resources, Bitmap srcBitmap, boolean isLandscape, int width, int height) {
+			mSrcBitmap = srcBitmap;
+			mResources = resources;
+			mIsLandscape = isLandscape;
+			mHeight = height;
+			mWidth = width;
+		}
+
+		@Override
+		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) {
+			int newWidth = mWidth - mPaddingWidth;
+			int newHeight = mHeight - mPaddingHeight;
+
+			if (mIsLandscape) {
+				final double scaleRatio = (double) newWidth / (double)mSrcBitmap.getWidth();
+				newHeight = (int) Math.floor((double) mSrcBitmap.getHeight() * scaleRatio) - mPaddingHeight;
+			} else {
+				final double scaleRatio = (double) newHeight / (double)mSrcBitmap.getHeight();
+				newWidth = (int) Math.floor((double) mSrcBitmap.getWidth() * scaleRatio) - mPaddingWidth;
+			}
+
+			final Rect thumbnailRect = new Rect(0, 0, newWidth + mPaddingWidth, newHeight + mPaddingHeight);
+			final Bitmap dropShadowBitmap = Bitmap.createBitmap(thumbnailRect.width(), thumbnailRect.height(), Bitmap.Config.ARGB_8888);
+
+			final Canvas c = new Canvas(dropShadowBitmap);
+			final Paint p = new Paint();
+			getNinePatch(mResources).draw(c, thumbnailRect, p);
+
+			final Bitmap scaledBitmap = Bitmap.createScaledBitmap(mSrcBitmap, newWidth, newHeight, false);
+			try {
+				c.drawBitmap(scaledBitmap, 4, 3, p);
+				return dropShadowBitmap;
+			} finally {
+				scaledBitmap.recycle();
+				mSrcBitmap.recycle();
+			}
+		}
+
+		private static NinePatch getNinePatch(Resources resources) {
+			if (mNinePatch != null) return mNinePatch;
+
+			final Bitmap ninePatchBmp = BitmapFactory.decodeResource(resources, R.drawable.drop_shadow);
+			mNinePatch = new NinePatch(ninePatchBmp, ninePatchBmp.getNinePatchChunk(), null); //NinePatchBitmapFactory.createNinePatch(getResources(), ninePatchBmp, 0, 0, result.getHeight(), result.getWidth(), null);
+			return mNinePatch;
+		}
 	}
 }
