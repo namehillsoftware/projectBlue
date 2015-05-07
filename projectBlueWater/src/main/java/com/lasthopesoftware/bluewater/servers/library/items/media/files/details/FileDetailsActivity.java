@@ -10,6 +10,7 @@ import android.graphics.NinePatch;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -245,7 +246,7 @@ public class FileDetailsActivity extends Activity {
 						imgFileThumbnail.setVisibility(View.VISIBLE);
 					}
 				});
-				thumbnailDrawTask.execute();
+				thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 			}
 		});
 
