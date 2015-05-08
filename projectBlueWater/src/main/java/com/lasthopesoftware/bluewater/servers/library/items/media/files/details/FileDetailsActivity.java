@@ -235,10 +235,10 @@ public class FileDetailsActivity extends Activity {
 					return;
 				}
 
-				final SimpleTask<Void, Void, Bitmap> thumbnailDrawTask = new SimpleTask<>(new DrawThumbnailDropShadowTask(getResources(), result, mIsLandscape, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight()));
-				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Bitmap>() {
+				final SimpleTask<Integer, Void, Bitmap> thumbnailDrawTask = new SimpleTask<>(new DrawThumbnailDropShadowTask(getResources(), result, mIsLandscape));
+				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Bitmap>() {
 					@Override
-					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap bitmap) {
+					public void onComplete(ISimpleTask<Integer, Void, Bitmap> owner, Bitmap bitmap) {
 						mFileImage = bitmap;
 						imgFileThumbnail.setImageBitmap(mFileImage);
 
@@ -246,7 +246,21 @@ public class FileDetailsActivity extends Activity {
 						imgFileThumbnail.setVisibility(View.VISIBLE);
 					}
 				});
-				thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+
+				if (imgFileThumbnail.getWidth() > 0) {
+					thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
+					return;
+				}
+
+				imgFileThumbnail.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+					@Override
+					public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+						if (imgFileThumbnail.getWidth() == 0) return;
+
+						imgFileThumbnail.removeOnLayoutChangeListener(this);
+						thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
+					}
+				});
 			}
 		});
 
@@ -294,31 +308,28 @@ public class FileDetailsActivity extends Activity {
 		super.onDestroy();
 	}
 
-	private static class DrawThumbnailDropShadowTask implements OnExecuteListener<Void, Void, Bitmap> {
+	private static class DrawThumbnailDropShadowTask implements OnExecuteListener<Integer, Void, Bitmap> {
 
 		private static NinePatch mNinePatch;
 
 		private final Bitmap mSrcBitmap;
 		private final Resources mResources;
 
-		private final int mHeight, mWidth;
 
 		private final boolean mIsLandscape;
 
-		private static final int mPaddingWidth = 16, mPaddingHeight = 14;
+		private static final int mPaddingWidth = 15, mPaddingHeight = 14;
 
-		public DrawThumbnailDropShadowTask(Resources resources, Bitmap srcBitmap, boolean isLandscape, int width, int height) {
+		public DrawThumbnailDropShadowTask(Resources resources, Bitmap srcBitmap, boolean isLandscape) {
 			mSrcBitmap = srcBitmap;
 			mResources = resources;
 			mIsLandscape = isLandscape;
-			mHeight = height;
-			mWidth = width;
 		}
 
 		@Override
-		public Bitmap onExecute(ISimpleTask<Void, Void, Bitmap> owner, Void... params) {
-			int newWidth = mWidth - mPaddingWidth;
-			int newHeight = mHeight - mPaddingHeight;
+		public Bitmap onExecute(ISimpleTask<Integer, Void, Bitmap> owner, Integer... params) {
+			int newWidth = params[0] - mPaddingWidth;
+			int newHeight = params[1] - mPaddingHeight;
 
 			if (mIsLandscape) {
 				final double scaleRatio = (double) newWidth / (double)mSrcBitmap.getWidth();
@@ -349,7 +360,7 @@ public class FileDetailsActivity extends Activity {
 			if (mNinePatch != null) return mNinePatch;
 
 			final Bitmap ninePatchBmp = BitmapFactory.decodeResource(resources, R.drawable.drop_shadow);
-			mNinePatch = new NinePatch(ninePatchBmp, ninePatchBmp.getNinePatchChunk(), null); //NinePatchBitmapFactory.createNinePatch(getResources(), ninePatchBmp, 0, 0, result.getHeight(), result.getWidth(), null);
+			mNinePatch = new NinePatch(ninePatchBmp, ninePatchBmp.getNinePatchChunk(), null);
 			return mNinePatch;
 		}
 	}

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.support.v4.util.LruCache;
 
 import com.lasthopesoftware.bluewater.disk.cache.DiskFileCache;
@@ -72,7 +73,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		private static final int MAX_DAYS_IN_CACHE = 30;
 		private static final String IMAGES_CACHE_NAME = "images";
 		
-		private static final Bitmap mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+		private static Bitmap mFillerBitmap;
 		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 		
 		private final Context mContext;
@@ -216,6 +217,14 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		}
 		
 		private static final Bitmap getFillerBitmap() {
+			if (mFillerBitmap != null) return getBitmapCopy(mFillerBitmap);
+
+			mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+			// Make a canvas with which we can draw to the bitmap
+			final Canvas canvas = new Canvas(mFillerBitmap);
+
+			// Fill with white
+			canvas.drawColor(0xffffffff);
 			return getBitmapCopy(mFillerBitmap);
 		}
 	}
