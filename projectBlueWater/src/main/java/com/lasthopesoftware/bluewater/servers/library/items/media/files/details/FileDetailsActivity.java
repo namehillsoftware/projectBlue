@@ -316,7 +316,6 @@ public class FileDetailsActivity extends Activity {
 		private final Bitmap mSrcBitmap;
 		private final Resources mResources;
 
-
 		private final boolean mIsLandscape;
 
 		private static final int mPaddingWidth = 15, mPaddingHeight = 13;

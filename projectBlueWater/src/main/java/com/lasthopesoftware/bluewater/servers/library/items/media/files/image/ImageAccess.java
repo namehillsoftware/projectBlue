@@ -13,11 +13,11 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.shared.IOCommon;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,7 +134,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 					
 					final InputStream is = conn.getInputStream();
 					try {
-						imageBytes = IOUtils.toByteArray(is);
+						imageBytes = IOCommon.getBytesFromInputStream(is);
 					} finally {
 						is.close();
 					}
