@@ -310,6 +310,7 @@ public class FileDetailsActivity extends Activity {
 
 	private static class DrawThumbnailDropShadowTask implements OnExecuteListener<Integer, Void, Bitmap> {
 
+		private static final Canvas mCanvas = new Canvas();
 		private static NinePatch mNinePatch;
 
 		private final Bitmap mSrcBitmap;
@@ -318,7 +319,7 @@ public class FileDetailsActivity extends Activity {
 
 		private final boolean mIsLandscape;
 
-		private static final int mPaddingWidth = 15, mPaddingHeight = 14;
+		private static final int mPaddingWidth = 15, mPaddingHeight = 13;
 
 		public DrawThumbnailDropShadowTask(Resources resources, Bitmap srcBitmap, boolean isLandscape) {
 			mSrcBitmap = srcBitmap;
@@ -342,17 +343,18 @@ public class FileDetailsActivity extends Activity {
 			final Rect thumbnailRect = new Rect(0, 0, newWidth + mPaddingWidth, newHeight + mPaddingHeight);
 			final Bitmap dropShadowBitmap = Bitmap.createBitmap(thumbnailRect.width(), thumbnailRect.height(), Bitmap.Config.ARGB_8888);
 
-			final Canvas c = new Canvas(dropShadowBitmap);
-			final Paint p = new Paint();
-			getNinePatch(mResources).draw(c, thumbnailRect, p);
+			synchronized (mCanvas) {
+				mCanvas.setBitmap(dropShadowBitmap);
+				getNinePatch(mResources).draw(mCanvas, thumbnailRect);
 
-			final Bitmap scaledBitmap = Bitmap.createScaledBitmap(mSrcBitmap, newWidth, newHeight, false);
-			try {
-				c.drawBitmap(scaledBitmap, 4, 3, p);
-				return dropShadowBitmap;
-			} finally {
-				scaledBitmap.recycle();
-				mSrcBitmap.recycle();
+				final Bitmap scaledBitmap = Bitmap.createScaledBitmap(mSrcBitmap, newWidth, newHeight, false);
+				try {
+					mCanvas.drawBitmap(scaledBitmap, 4, 3, null);
+					return dropShadowBitmap;
+				} finally {
+					scaledBitmap.recycle();
+					mSrcBitmap.recycle();
+				}
 			}
 		}
 
@@ -361,6 +363,7 @@ public class FileDetailsActivity extends Activity {
 
 			final Bitmap ninePatchBmp = BitmapFactory.decodeResource(resources, R.drawable.drop_shadow);
 			mNinePatch = new NinePatch(ninePatchBmp, ninePatchBmp.getNinePatchChunk(), null);
+			mNinePatch.setPaint(new Paint());
 			return mNinePatch;
 		}
 	}

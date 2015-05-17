@@ -106,6 +106,8 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
             final Library library = LibrarySession.GetLibrary(mContext);
+			if (library == null) return getFillerBitmap();
+
             final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
@@ -153,7 +155,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 
 				imageDiskCache.put(uniqueKey, file, imageBytes);
 				putBitmapIntoMemory(uniqueKey, imageBytes);
-					
+
 				return getBitmapFromBytes(imageBytes);
 			} catch (Exception e) {
 				mLogger.error(e.toString(), e);
@@ -162,7 +164,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			return null;
 		}
 		
-		private static final byte[] getBitmapBytesFromMemory(final String uniqueKey) {
+		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
 			final Byte[] memoryImageBytes = mImageMemoryCache.get(uniqueKey);
 			
 			if (memoryImageBytes == null) return new byte[0];
@@ -174,7 +176,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			return imageBytes;
 		}
 		
-		private static final byte[] putBitmapIntoMemory(final String uniqueKey, final java.io.File file) {
+		private static byte[] putBitmapIntoMemory(final String uniqueKey, final java.io.File file) {
 			final int size = (int) file.length();
 		    final byte[] bytes = new byte[size];
 		    
@@ -199,7 +201,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		    return bytes;
 		}
 		
-		private static final void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {
+		private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {
 			final Byte[] memoryImageBytes = new Byte[imageBytes.length];
 			
 			for (int i = 0; i < imageBytes.length; i++)
@@ -208,15 +210,15 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
 		}
 
-		private static final Bitmap getBitmapFromBytes(final byte[] imageBytes) {
+		private static Bitmap getBitmapFromBytes(final byte[] imageBytes) {
 			return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 		}
 		
-		private static final Bitmap getBitmapCopy(final Bitmap src) {
+		private static Bitmap getBitmapCopy(final Bitmap src) {
 			return src.copy(src.getConfig(), false);
 		}
 		
-		private static final Bitmap getFillerBitmap() {
+		private static Bitmap getFillerBitmap() {
 			if (mFillerBitmap != null) return getBitmapCopy(mFillerBitmap);
 
 			mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
