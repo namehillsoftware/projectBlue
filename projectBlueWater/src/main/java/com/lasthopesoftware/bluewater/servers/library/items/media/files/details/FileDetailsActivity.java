@@ -73,6 +73,8 @@ public class FileDetailsActivity extends Activity {
 
 	private boolean mIsLandscape;
 
+	private boolean mIsDestroyed;
+
 	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
 		
 		@Override
@@ -239,6 +241,11 @@ public class FileDetailsActivity extends Activity {
 				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Bitmap>() {
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Bitmap> owner, Bitmap bitmap) {
+						if (mIsDestroyed) {
+							bitmap.recycle();
+							return;
+						}
+
 						mFileImage = bitmap;
 						imgFileThumbnail.setImageBitmap(mFileImage);
 
@@ -303,6 +310,7 @@ public class FileDetailsActivity extends Activity {
 	
 	@Override
 	public void onDestroy() {
+		mIsDestroyed = true;
 		if (mFileImage != null) mFileImage.recycle();
 		
 		super.onDestroy();
@@ -318,7 +326,7 @@ public class FileDetailsActivity extends Activity {
 
 		private final boolean mIsLandscape;
 
-		private static final int mPaddingWidth = 15, mPaddingHeight = 13;
+		private static final int mPaddingWidth = 14, mPaddingHeight = 13;
 
 		public DrawThumbnailDropShadowTask(Resources resources, Bitmap srcBitmap, boolean isLandscape) {
 			mSrcBitmap = srcBitmap;
