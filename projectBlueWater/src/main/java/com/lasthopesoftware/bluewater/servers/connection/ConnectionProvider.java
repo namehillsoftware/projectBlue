@@ -6,13 +6,13 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.shared.IOCommon;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
@@ -192,8 +192,7 @@ public class ConnectionProvider {
 						try {
 							final InputStream is = conn.getInputStream();
 							try {
-								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-								
+								final XmlElement xml = Xmlwise.createXml(IOCommon.getStringFromInputStream(is));
 								accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
 								accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
 								accessDao.setRemoteIp(xml.getUnique("ip").getValue());
