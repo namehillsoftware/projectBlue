@@ -68,7 +68,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		
 		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
 		
-		private static final int MAX_DISK_CACHE_SIZE = 100 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
+		private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 		private static final int MAX_MEMORY_CACHE_SIZE = 5;
 		private static final int MAX_DAYS_IN_CACHE = 30;
 		private static final String IMAGES_CACHE_NAME = "images";
@@ -108,7 +108,10 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
             final Library library = LibrarySession.GetLibrary(mContext);
 			if (library == null) return getFillerBitmap();
 
-            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
+
+			final long freeDiskSpace = DiskFileCache.getFreeDiskSpace(mContext);
+            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, freeDiskSpace > MAX_DISK_CACHE_SIZE ? MAX_DISK_CACHE_SIZE : freeDiskSpace / 2);
+
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
 				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
@@ -147,7 +150,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 				} finally {
 					conn.disconnect();
 				}
-				
+
 				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
 				if (!cacheDir.exists())
 					cacheDir.mkdirs();

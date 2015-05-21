@@ -206,14 +206,21 @@ public class DiskFileCache {
 
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
 	// but if not mounted, falls back on internal storage.
-	public final static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
+	public static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
 	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
 	    // otherwise use internal cache dir
-	    final String cachePath =
+	    String cachePath =
 	            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
             		context.getExternalCacheDir().getPath() :
                     context.getCacheDir().getPath();
 
-	    return new java.io.File(cachePath + java.io.File.separator + uniqueName);
+		if (uniqueName != null && !uniqueName.isEmpty())
+			cachePath += java.io.File.separator + uniqueName;
+
+	    return new java.io.File(cachePath);
+	}
+
+	public static long getFreeDiskSpace(final Context context) {
+		return getDiskCacheDir(context, null).getUsableSpace();
 	}
 }
