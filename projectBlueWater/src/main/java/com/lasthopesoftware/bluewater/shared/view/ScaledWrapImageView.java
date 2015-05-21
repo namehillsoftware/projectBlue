@@ -73,13 +73,13 @@ public class ScaledWrapImageView extends ImageView {
 
         if (mIsLandscape) {
             final double scaleRatio = (double) width / (double)mBitmap.getWidth();
-            height = (int) Math.floor((double) mBitmap.getHeight() * scaleRatio);
+            height = (int) Math.round((double) mBitmap.getHeight() * scaleRatio);
         } else {
             final double scaleRatio = (double) height / (double)mBitmap.getHeight();
-            width = (int) Math.floor((double) mBitmap.getWidth() * scaleRatio);
+            width = (int) Math.round((double) mBitmap.getWidth() * scaleRatio);
         }
 
         setMeasuredDimension(width, height);
-        setScaleType(ScaleType.FIT_CENTER);
+        setScaleType(ScaleType.FIT_XY);
     }
 }
