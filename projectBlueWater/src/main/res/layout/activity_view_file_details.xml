@@ -51,13 +51,13 @@
                 android:layout_centerInParent="true"
                 android:visibility="invisible" />
 
-            <ImageView
-                android:id="@+id/imgFileThumbnail"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitCenter"
-                android:layout_centerHorizontal="true"
-                android:contentDescription="@string/lbl_track_img"/>
+            <!--<ImageView-->
+                <!--android:id="@+id/imgFileThumbnail"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:scaleType="fitCenter"-->
+                <!--android:layout_centerHorizontal="true"-->
+                <!--android:contentDescription="@string/lbl_track_img"/>-->
             <!--android:background="@drawable/drop_shadow"-->
         </RelativeLayout>
 

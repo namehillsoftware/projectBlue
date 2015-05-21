@@ -14,27 +14,30 @@ import android.widget.ImageView;
 public class ScaledWrapImageView extends ImageView {
 
     private boolean mIsLandscape;
-    private final Bitmap mBitmap;
+    private Bitmap mBitmap;
 
-    public ScaledWrapImageView(Context context, Bitmap bitmap) {
+    public ScaledWrapImageView(Context context) {
         super(context);
 
         updateIsLandscape();
-        mBitmap = bitmap;
     }
 
-    public ScaledWrapImageView(Context context, Bitmap bitmap, AttributeSet attrs) {
+    public ScaledWrapImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         updateIsLandscape();
-        mBitmap = bitmap;
     }
 
-    public ScaledWrapImageView(Context context, Bitmap bitmap, AttributeSet attrs, int defStyleAttr) {
+    public ScaledWrapImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         updateIsLandscape();
-        mBitmap = bitmap;
+    }
+
+    @Override
+    public void setImageBitmap(Bitmap bm) {
+        mBitmap = bm;
+        super.setImageBitmap(bm);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -42,7 +45,6 @@ public class ScaledWrapImageView extends ImageView {
         super(context, attrs, defStyleAttr, defStyleRes);
 
         updateIsLandscape();
-        mBitmap = bitmap;
     }
 
     @Override
@@ -61,17 +63,23 @@ public class ScaledWrapImageView extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mBitmap == null) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            return;
+        }
+
         int width = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
         int height = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
 
         if (mIsLandscape) {
             final double scaleRatio = (double) width / (double)mBitmap.getWidth();
-            height = (int) Math.floor((double) mBitmap.getHeight() * scaleRatio);
+            height = (int) Math.round((double) mBitmap.getHeight() * scaleRatio);
         } else {
             final double scaleRatio = (double) height / (double)mBitmap.getHeight();
-            width = (int) Math.floor((double) mBitmap.getWidth() * scaleRatio);
+            width = (int) Math.round((double) mBitmap.getWidth() * scaleRatio);
         }
 
         setMeasuredDimension(width, height);
+        setScaleType(ScaleType.FIT_XY);
     }
 }
