@@ -10,16 +10,16 @@ import android.graphics.NinePatch;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
+import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -65,7 +66,7 @@ public class FileDetailsActivity extends Activity {
     private FileDetailsActivity _this = this;
     private ListView lvFileDetails;
     private ProgressBar pbLoadingFileDetails;
-    private ImageView imgFileThumbnail;
+    private ScaledWrapImageView imgFileThumbnail;
     private ProgressBar pbLoadingFileThumbnail;
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
     private TextView tvFileName;
@@ -100,10 +101,15 @@ public class FileDetailsActivity extends Activity {
 
         lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
         pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
-        imgFileThumbnail = (ImageView) findViewById(R.id.imgFileThumbnail);
         pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
         tvFileName = (TextView) findViewById(R.id.tvFileName);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
+
+		imgFileThumbnail = new ScaledWrapImageView(this);
+		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow);
+		imgFileThumbnail.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+		final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
+		rlFileThumbnailContainer.addView(imgFileThumbnail);
 
 		mIsLandscape = getResources().getBoolean(R.bool.is_landscape);
 
@@ -229,45 +235,44 @@ public class FileDetailsActivity extends Activity {
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
 				if (mFileImage != null) mFileImage.recycle();
 
-				mFileImage = null;
+				mFileImage = result;
 
-				if (result == null) {
-					pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-					imgFileThumbnail.setVisibility(View.VISIBLE);
-					return;
-				}
+				imgFileThumbnail.setImageBitmap(result);
 
-				final SimpleTask<Integer, Void, Bitmap> thumbnailDrawTask = new SimpleTask<>(new DrawThumbnailDropShadowTask(getResources(), result, mIsLandscape));
-				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Bitmap>() {
-					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Bitmap> owner, Bitmap bitmap) {
-						if (mIsDestroyed) {
-							bitmap.recycle();
-							return;
-						}
+				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+				imgFileThumbnail.setVisibility(View.VISIBLE);
 
-						mFileImage = bitmap;
-						imgFileThumbnail.setImageBitmap(mFileImage);
-
-						pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-						imgFileThumbnail.setVisibility(View.VISIBLE);
-					}
-				});
-
-				if (imgFileThumbnail.getWidth() > 0) {
-					thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
-					return;
-				}
-
-				imgFileThumbnail.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-					@Override
-					public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-						if (imgFileThumbnail.getWidth() == 0) return;
-
-						imgFileThumbnail.removeOnLayoutChangeListener(this);
-						thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
-					}
-				});
+//				final SimpleTask<Integer, Void, Bitmap> thumbnailDrawTask = new SimpleTask<>(new DrawThumbnailDropShadowTask(getResources(), result, mIsLandscape));
+//				thumbnailDrawTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Bitmap>() {
+//					@Override
+//					public void onComplete(ISimpleTask<Integer, Void, Bitmap> owner, Bitmap bitmap) {
+//						if (mIsDestroyed) {
+//							bitmap.recycle();
+//							return;
+//						}
+//
+//						mFileImage = bitmap;
+//						imgFileThumbnail.setImageBitmap(mFileImage);
+//
+//						pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+//						imgFileThumbnail.setVisibility(View.VISIBLE);
+//					}
+//				});
+//
+//				if (imgFileThumbnail.getWidth() > 0) {
+//					thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
+//					return;
+//				}
+//
+//				imgFileThumbnail.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+//					@Override
+//					public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//						if (imgFileThumbnail.getWidth() == 0) return;
+//
+//						imgFileThumbnail.removeOnLayoutChangeListener(this);
+//						thumbnailDrawTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, imgFileThumbnail.getWidth(), imgFileThumbnail.getHeight());
+//					}
+//				});
 			}
 		});
 
