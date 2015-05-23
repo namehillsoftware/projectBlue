@@ -68,18 +68,33 @@ public class ScaledWrapImageView extends ImageView {
             return;
         }
 
+        setScaleType(ScaleType.FIT_XY);
+
         int width = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
         int height = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
 
         if (mIsLandscape) {
-            final double scaleRatio = (double) width / (double)mBitmap.getWidth();
-            height = (int) Math.round((double) mBitmap.getHeight() * scaleRatio);
+            final int newHeight = scaleInteger(mBitmap.getHeight(), (double) width / (double)mBitmap.getWidth());
+
+            if (newHeight > height) {
+                width = scaleInteger(width, (double) height / (double) newHeight);
+            } else {
+                height = newHeight;
+            }
         } else {
-            final double scaleRatio = (double) height / (double)mBitmap.getHeight();
-            width = (int) Math.round((double) mBitmap.getWidth() * scaleRatio);
+            final int newWidth = scaleInteger(mBitmap.getWidth(), (double) height / (double)mBitmap.getHeight());
+
+            if (newWidth > width) {
+                height = scaleInteger(height, (double) width / (double) newWidth );
+            } else {
+                width = newWidth;
+            }
         }
 
         setMeasuredDimension(width, height);
-        setScaleType(ScaleType.FIT_XY);
+    }
+
+    private static int scaleInteger(int srcInt, double scaleRatio) {
+        return (int) Math.round((double) srcInt * scaleRatio);
     }
 }
