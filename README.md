@@ -1,4 +1,4 @@
-# Constant Music _aka_ Clearstream _aka_ projectBlueWater
+# Audio Canoe _aka_ projectBlueWater
 Alternative streaming music player for [JRiver Media Center] (http://jriver.com/)
 
 Folder structure is organized by _context_, or rather, it moves away from the "sock drawer" folder structure
