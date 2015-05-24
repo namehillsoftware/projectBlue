@@ -878,7 +878,7 @@ public class PlaybackService extends Service implements
 				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
 		        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 				builder.setOngoing(true);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
+				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
 				builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
 				builder.setContentIntent(pi);
 				notifyForeground(builder.build());
