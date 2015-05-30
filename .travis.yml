@@ -3,5 +3,4 @@ android:
   components:
     # The BuildTools version used by your project
     - build-tools-21.1.2
-    - android-17
     - android-21
