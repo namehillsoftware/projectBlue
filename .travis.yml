@@ -7,3 +7,5 @@ android:
     - addon-google_apis-google-21
     - extra-android-m2repository
     - extra-android-support
+    - tools
+    - platform-tools
