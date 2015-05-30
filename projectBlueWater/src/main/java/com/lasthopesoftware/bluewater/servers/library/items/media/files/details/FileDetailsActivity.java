@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.details
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -260,12 +261,24 @@ public class FileDetailsActivity extends Activity {
         getFileArtistTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFileArtistTask.execute();
 	}
-		
+
 	@Override
 	public void onStart() {
 		super.onStart();
-		
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
+
+		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) setView(mFileKey);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) setView(mFileKey);
+	}
+
+	protected void onStop() {
+		if (mFileImage == null) return;
+
+		mFileImage.recycle();
+		mFileImage = null;
 	}
 
 	@Override
