@@ -5,3 +5,4 @@ android:
     - build-tools-21.1.2
     - android-21
     - addon-google_apis-google-21
+    - extra-android-support-v4:22.1.1
