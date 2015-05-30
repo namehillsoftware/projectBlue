@@ -275,6 +275,8 @@ public class FileDetailsActivity extends Activity {
 	}
 
 	protected void onStop() {
+		super.onStop();
+
 		if (mFileImage == null) return;
 
 		mFileImage.recycle();
