@@ -354,14 +354,8 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistStarted) {
+		notifyStartingService();
 
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
-		builder.setOngoing(true);
-		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
-        
-		notifyForeground(builder.build());
-		
 		// If the playlist has changed, change that
 		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
 			initializePlaylist(playlistString, new Runnable() {
@@ -380,15 +374,15 @@ public class PlaybackService extends Service implements
         
         if (onPlaylistStarted != null) onPlaylistStarted.run();
 	}
-	
+
 	private void initializePlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistControllerInitialized) {
 		initializePlaylist(playlistString, new Runnable() {
-			
+
 			@Override
 			public void run() {
 				if (!playlistString.isEmpty())
 					mPlaylistController.seekTo(filePos, fileProgress);
-				
+
 				if (onPlaylistControllerInitialized != null)
 					onPlaylistControllerInitialized.run();
 			}
@@ -397,35 +391,36 @@ public class PlaybackService extends Service implements
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
 		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				synchronized(syncPlaylistControllerObject) {
+				synchronized (syncPlaylistControllerObject) {
 					mLogger.info("Initializing playlist.");
 					mPlaylistString = playlistString;
-					
+
 					// First try to get the playlist string from the database
-					if (mPlaylistString == null || mPlaylistString.isEmpty()) mPlaylistString = result.getSavedTracksString();
-					
+					if (mPlaylistString == null || mPlaylistString.isEmpty())
+						mPlaylistString = result.getSavedTracksString();
+
 					result.setSavedTracksString(mPlaylistString);
 					LibrarySession.SaveLibrary(mStreamingMusicService, result, new OnCompleteListener<Void, Void, Library>() {
-						
+
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
 							if (mPlaylistController != null) {
 								mPlaylistController.pause();
 								mPlaylistController.release();
 							}
-						
+
 							mPlaylistController = new PlaybackController(mStreamingMusicService, mPlaylistString);
-						
+
 							mPlaylistController.setIsRepeating(result.isRepeating());
 							mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);
 							mPlaylistController.addOnNowPlayingStopListener(mStreamingMusicService);
 							mPlaylistController.addOnNowPlayingPauseListener(mStreamingMusicService);
 							mPlaylistController.addOnPlaylistStateControlErrorListener(mStreamingMusicService);
 							mPlaylistController.addOnNowPlayingStartListener(mStreamingMusicService);
-							
+
 							onPlaylistControllerInitialized.run();
 						}
 					});
@@ -457,6 +452,15 @@ public class PlaybackService extends Service implements
 		stopForeground(true);
 		mIsNotificationForeground = false;
 		mNotificationMgr.cancel(mId);
+	}
+
+	private void notifyStartingService() {
+		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		builder.setSmallIcon(R.drawable.clearstream_logo_dark);
+		builder.setOngoing(true);
+		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
+
+		notifyForeground(builder.build());
 	}
 	
 	private void registerListeners() {
@@ -664,6 +668,8 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void restorePlaylistForIntent(final Intent intent) {
+		notifyStartingService();
+
 		restorePlaylistControllerFromStorage(new OnCompleteListener<Integer, Void, Boolean>() {
 			
 			@Override
