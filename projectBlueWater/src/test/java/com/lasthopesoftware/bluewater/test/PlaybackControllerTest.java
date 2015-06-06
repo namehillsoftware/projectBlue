@@ -134,7 +134,7 @@ public class PlaybackControllerTest extends TestCase {
 		Assert.assertFalse(mPlaybackController.isPlaying());
 	}
 
-	public final void testSetVolume() {
+	public final void testVolumeMaintainsStateAfterPlaybackFileChange() {
 		final float testVolume = 0.5f;
 		mPlaybackController.setVolume(testVolume);
 		mPlaybackController.startAt(0);
