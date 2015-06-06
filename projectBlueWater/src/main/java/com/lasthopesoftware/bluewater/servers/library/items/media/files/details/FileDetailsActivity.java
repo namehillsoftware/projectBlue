@@ -266,7 +266,9 @@ public class FileDetailsActivity extends Activity {
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 
-		mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
+		// Update the intent
+		setIntent(intent);
+		mFileKey = intent.getIntExtra(FILE_KEY, -1);
 		setView(mFileKey);
 	}
 

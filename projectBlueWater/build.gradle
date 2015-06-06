@@ -8,9 +8,6 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
         targetSdkVersion 22
-
-        testApplicationId "com.lasthopesoftware.bluewater.test"
-        testInstrumentationRunner "android.test.InstrumentationTestRunner"
     }
 
     compileOptions {
@@ -55,4 +52,5 @@ dependencies {
     compile group: 'com.j256.ormlite', name: 'ormlite-android', version: '4.48'
     compile files('libs/xmlwise-debug-1_2.jar')
     compile 'com.github.amlcurran.showcaseview:library:5.0.0'
+    testCompile 'junit:junit:4.12'
 }
