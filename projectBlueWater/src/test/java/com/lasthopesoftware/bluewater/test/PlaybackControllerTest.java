@@ -135,11 +135,12 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testSetVolume() {
-		fail("Not yet implemented"); // TODO
-	}
-
-	public final void testSetIsRepeating() {
-		fail("Not yet implemented"); // TODO
+		final float testVolume = 0.5f;
+		mPlaybackController.setVolume(testVolume);
+		mPlaybackController.startAt(0);
+		Assert.assertEquals(testVolume, mPlaybackController.getCurrentPlaybackFile().getVolume());
+		mPlaybackController.seekTo(1);
+		Assert.assertEquals(testVolume, mPlaybackController.getCurrentPlaybackFile().getVolume());
 	}
 
 	public final void testAddFile() {
