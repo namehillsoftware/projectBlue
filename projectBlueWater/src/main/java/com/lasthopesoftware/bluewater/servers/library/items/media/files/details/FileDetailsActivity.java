@@ -263,24 +263,18 @@ public class FileDetailsActivity extends Activity {
 	}
 
 	@Override
-	public void onStart() {
-		super.onStart();
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) setView(mFileKey);
+		mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
+		setView(mFileKey);
 	}
 
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) setView(mFileKey);
-	}
+	public void onStart() {
+		super.onStart();
 
-	protected void onStop() {
-		super.onStop();
-
-		if (mFileImage == null) return;
-
-		mFileImage.recycle();
-		mFileImage = null;
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 
 	@Override

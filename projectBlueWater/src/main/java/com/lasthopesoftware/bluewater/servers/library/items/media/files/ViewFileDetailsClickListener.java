@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.Abstra
 
 public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 
-	private IFile mFile;
+	private final IFile mFile;
 	
 	public ViewFileDetailsClickListener(ViewFlipper viewFlipper, IFile file) {
         super(viewFlipper);

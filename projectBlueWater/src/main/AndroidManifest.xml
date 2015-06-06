@@ -82,7 +82,8 @@
         
         <activity
             android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.details.FileDetailsActivity"
-            android:label="@string/title_activity_file_view">
+            android:label="@string/title_activity_file_view"
+            android:launchMode="singleTask">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity" />
