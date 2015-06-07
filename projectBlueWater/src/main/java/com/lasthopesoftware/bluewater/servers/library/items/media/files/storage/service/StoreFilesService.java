@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service;
 
 import android.app.Service;
 import android.content.Intent;

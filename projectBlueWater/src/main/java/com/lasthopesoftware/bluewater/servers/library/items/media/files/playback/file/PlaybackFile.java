@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -12,9 +11,9 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,12 +69,7 @@ public class PlaybackFile implements
 	private final IFile mFile;
 	
 	private static final int mBufferMin = 0, mBufferMax = 100;
-	
-	private static final String FILE_URI_SCHEME = "file";
-	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
-	
-	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
-	
+
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
@@ -115,87 +108,12 @@ public class PlaybackFile implements
 	public boolean isPrepared() {
 		return mIsPrepared;
 	}
-	
-	@SuppressLint("InlinedApi")
-	private Uri getMpUri() throws IOException {
-		if (mMpContext == null)
-			throw new NullPointerException("The file player's context cannot be null");
-				
-		final String originalFilename = mFile.getProperty(FilePropertiesProvider.FILENAME);
-		if (originalFilename == null)
-			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
-		
-		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
-		
-		final StringBuilder querySb = new StringBuilder(MEDIA_DATA_QUERY);
-		appendAnd(querySb);
-		
-		final ArrayList<String> params = new ArrayList<>(5);
-		params.add(filename);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FilePropertiesProvider.ARTIST));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FilePropertiesProvider.ALBUM));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FilePropertiesProvider.NAME));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FilePropertiesProvider.TRACK));
-		
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, querySb.toString(), params.toArray(new String[params.size()]), null);
-	    try {
-		    if (cursor.moveToFirst()) {
-		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-		    	if (fileUriString != null && !fileUriString.isEmpty()) {
-		    		// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
-		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME + "://", ""));
-		    		
-		    		if (file != null && file.exists()) {
-		    			mLogger.info("Returning file URI from local disk.");
-		    			return Uri.fromFile(file);
-		    		}
-		    	}
-		    }
-	    } catch (IllegalArgumentException ie) {
-	    	mLogger.info("Illegal column name.", ie);
-	    } finally {
-	    	cursor.close();
-	    }
-	    
-	    mLogger.info("Returning file URL from server.");
-	    if (mFile instanceof File) {
-		    final String itemUrl = ((File)mFile).getSubItemUrl();
-		    if (itemUrl != null && !itemUrl.isEmpty())
-		    	return Uri.parse(itemUrl);
-	    }
-	    
-	    return null;
-	}
-	
-	private static StringBuilder appendPropertyFilter(final StringBuilder querySb, final ArrayList<String> params, final String key, final String value) {
-		querySb.append(' ').append(key).append(' ');
-		
-		if (value != null) {
-			querySb.append(" = ? ");
-			params.add(value);
-		} else {
-			querySb.append(" IS NULL ");
-		}
-		
-		return querySb;
-	}
-	
-	private final static StringBuilder appendAnd(final StringBuilder querySb) {
-		return querySb.append(" AND ");
-	}
-	
+
 	public void prepareMediaPlayer() {
 		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
-			final Uri uri = getMpUri();
+			final Uri uri = mFile.getFileUri(mMpContext);
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
@@ -219,7 +137,7 @@ public class PlaybackFile implements
 		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
-			final Uri uri = getMpUri();
+			final Uri uri = mFile.getFileUri(mMpContext);
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
@@ -244,7 +162,7 @@ public class PlaybackFile implements
 	
 	private void initializeBufferPercentage(Uri uri) {
 		final String scheme = uri.getScheme();
-		mBufferPercentage = FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
+		mBufferPercentage = File.FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
 		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
 	}
 	
@@ -261,10 +179,14 @@ public class PlaybackFile implements
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
 		
-		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) {
-			final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
-			
-			if (authKey != null && !authKey.isEmpty()) headers.put("Authorization", "basic " + authKey);
+		if (!uri.getScheme().equalsIgnoreCase(File.FILE_URI_SCHEME)) {
+			final Library library = LibrarySession.GetLibrary(mMpContext);
+			if (library != null) {
+				final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
+
+				if (authKey != null && !authKey.isEmpty())
+					headers.put("Authorization", "basic " + authKey);
+			}
 		}
 		
 		mMediaPlayer.setDataSource(mMpContext, uri, headers);
