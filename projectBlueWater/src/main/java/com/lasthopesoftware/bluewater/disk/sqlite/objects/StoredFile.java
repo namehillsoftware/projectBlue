@@ -6,6 +6,8 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "StoredFiles")
 public class StoredFile {
 
+	public static final String DOWNLOAD_ID = "downloadId";
+
 	@DatabaseField(generatedId = true)
 	private int id;
 	
@@ -20,6 +22,13 @@ public class StoredFile {
 
 	@DatabaseField
 	private long downloadId;
+
+	@DatabaseField
+	private boolean isDownloadComplete;
+
+	public int getId() {
+		return id;
+	}
 
 	public Library getLibrary() {
 		return library;
@@ -51,5 +60,13 @@ public class StoredFile {
 
 	public void setDownloadId(long downloadId) {
 		this.downloadId = downloadId;
+	}
+
+	public boolean isDownloadComplete() {
+		return isDownloadComplete;
+	}
+
+	public void setIsDownloadComplete(boolean isDownloadComplete) {
+		this.isDownloadComplete = isDownloadComplete;
 	}
 }
