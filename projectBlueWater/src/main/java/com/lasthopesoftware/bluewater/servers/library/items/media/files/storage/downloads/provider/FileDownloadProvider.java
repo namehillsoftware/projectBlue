@@ -20,6 +20,8 @@ public class FileDownloadProvider {
     private final Context mContext;
     private final DownloadManager mDownloadManager;
 
+
+
     public FileDownloadProvider(Context context) {
         mContext = context;
         mDownloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);

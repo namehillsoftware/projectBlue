@@ -18,6 +18,9 @@ public class StoredFile {
 	@DatabaseField
 	private int serviceId;
 
+	@DatabaseField
+	private long downloadId;
+
 	public Library getLibrary() {
 		return library;
 	}
@@ -40,5 +43,13 @@ public class StoredFile {
 
 	public void setServiceId(int serviceId) {
 		this.serviceId = serviceId;
+	}
+
+	public long getDownloadId() {
+		return downloadId;
+	}
+
+	public void setDownloadId(long downloadId) {
+		this.downloadId = downloadId;
 	}
 }
