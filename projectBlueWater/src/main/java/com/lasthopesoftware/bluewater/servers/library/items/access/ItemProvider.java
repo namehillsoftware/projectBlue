@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
@@ -43,7 +42,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 	}
 	
 	public ItemProvider(HttpURLConnection connection, int itemKey) {
-		super(connection, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey));
+		super(connection, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
 
         mItemKey = itemKey;
 	}
