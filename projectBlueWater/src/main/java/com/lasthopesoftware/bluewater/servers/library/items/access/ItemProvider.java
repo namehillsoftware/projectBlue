@@ -25,7 +25,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
         public final List<Item> items;
     }
 
-    private static final int maxSize = 2000;
+    private static final int maxSize = 500;
     private static final ConcurrentLinkedHashMap<Integer, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
                                                                                             .Builder<Integer, ItemHolder>()
                                                                                             .maximumWeightedCapacity(maxSize)
