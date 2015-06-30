@@ -79,7 +79,8 @@ public class NowPlayingActivity extends Activity implements
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 	private static ImageAccess getFileImageTask;
-	
+
+	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
 	private static ViewStructure mViewStructure;
 		
 	private static class ViewStructure {
@@ -172,7 +173,7 @@ public class NowPlayingActivity extends Activity implements
 		});
 		
 		mPrevious.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
@@ -181,55 +182,65 @@ public class NowPlayingActivity extends Activity implements
 		});
 		
 		mHandler = new NowPlayingActivityMessageHandler(this);
-		
-		// Get initial view state from playlist controller if it is active
-		if (PlaybackService.getPlaylistController() != null) {
-			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
-			
-			setView(filePlayer.getFile());
-			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
-			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
-			
-			return;
-		}
-		
-		mPlay.setVisibility(View.VISIBLE);
-		mPause.setVisibility(View.INVISIBLE);
-		
-		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
-				final String savedTracksString = library.getSavedTracksString();
-				if (savedTracksString == null || savedTracksString.isEmpty()) return;
-				
-				final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
-
-					@Override
-					protected List<IFile> doInBackground(Void... params) {
-						return Files.parseFileStringList(savedTracksString);
-					}
-					
-					@Override
-					protected void onPostExecute(List<IFile> result) {
-						setView(result.get(library.getNowPlayingId()));
-						mSongProgressBar.setProgress(library.getNowPlayingProgress());
-					}
-				};
-				
-				getNowPlayingListTask.execute();
-			}
-		});
 	}
 	
 	@Override
 	public void onStart() {
 		super.onStart();
 		
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
+		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 	}
-	
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) initializeView();
+
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void initializeView() {
+
+		// Get initial view state from playlist controller if it is active
+		if (PlaybackService.getPlaylistController() != null) {
+			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
+
+			setView(filePlayer.getFile());
+			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
+			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+
+			return;
+		}
+
+		mPlay.setVisibility(View.VISIBLE);
+		mPause.setVisibility(View.INVISIBLE);
+
+		// Otherwise set the view using the library persisted in the database
+		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+				final String savedTracksString = library.getSavedTracksString();
+				if (savedTracksString == null || savedTracksString.isEmpty()) return;
+
+				final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
+
+					@Override
+					protected List<IFile> doInBackground(Void... params) {
+						return Files.parseFileStringList(savedTracksString);
+					}
+
+					@Override
+					protected void onPostExecute(List<IFile> result) {
+						setView(result.get(library.getNowPlayingId()));
+						mSongProgressBar.setProgress(library.getNowPlayingProgress());
+					}
+				};
+
+				getNowPlayingListTask.execute();
+			}
+		});
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.menu_now_playing, menu);
@@ -305,11 +316,7 @@ public class NowPlayingActivity extends Activity implements
 	public RelativeLayout getControlNowPlaying() {
 		return mControlNowPlaying;
 	}
-	
-	public RelativeLayout getViewCoverArt() {
-		return mViewCoverArt;
-	}
-	
+
 	public ProgressBar getSongProgressBar() {
 		return mSongProgressBar;
 	}
@@ -352,7 +359,7 @@ public class NowPlayingActivity extends Activity implements
 					});
 					
 				} catch (Exception e) {
-					LoggerFactory.getLogger(getClass()).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				}
 			} else {
 				mNowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
@@ -525,22 +532,22 @@ public class NowPlayingActivity extends Activity implements
 	
 	@Override
 	public void onNowPlayingPause(PlaybackController controller, IPlaybackFile filePlayer) {
-		handleNowPlayingStopping(controller, filePlayer);
+		handleNowPlayingStopping(filePlayer);
 	}
 
 	@Override
 	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
-		handleNowPlayingStopping(controller, filePlayer);
+		handleNowPlayingStopping(filePlayer);
 	}
 	
-	private void handleNowPlayingStopping(PlaybackController controller, IPlaybackFile filePlayer) {
+	private void handleNowPlayingStopping(IPlaybackFile filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		
 		int duration = 100;
 		try {
 			duration = filePlayer.getDuration();
 		} catch (IOException e) {
-			LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
+			mLogger.error(e.getMessage(), e);
 		}
 		
 		mSongProgressBar.setMax(duration);
