@@ -52,7 +52,7 @@ public class DiskFileCache {
 				try {
 
 					final FileOutputStream fos = new FileOutputStream(file);
-					try {					
+					try {
 						fos.write(fileData);
 						fos.flush();
 					} finally {
@@ -62,6 +62,14 @@ public class DiskFileCache {
 					put(uniqueKey, file);
 				} catch (IOException e) {
 					mLogger.error("Unable to write to file!", e);
+
+					// Check if free space is too low and then attempt to free up enough space
+					// to store image
+					final long freeSpace = getFreeDiskSpace(mContext);
+					if (freeSpace > mMaxSize) return;
+
+					CacheFlusher.doFlushSynchronously(mContext, mCacheName, mMaxSize - file.length());
+					put(uniqueKey, file, fileData);
 				}
 			}
 		});
@@ -74,7 +82,7 @@ public class DiskFileCache {
 			public void run() {
 				final DatabaseHandler handler = new DatabaseHandler(mContext);
 				try {
-					Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+					final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
 										
 					CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile == null) {
@@ -105,8 +113,6 @@ public class DiskFileCache {
 					handler.close();
 					CacheFlusher.doFlush(mContext, mCacheName, mMaxSize);
 				}
-				
-				return;
 			}
 		});
 	}
