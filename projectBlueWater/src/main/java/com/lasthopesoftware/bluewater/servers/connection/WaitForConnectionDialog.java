@@ -37,7 +37,7 @@ public class WaitForConnectionDialog {
 			
 			@Override
 			public void onConnectionRegained() {
-				_instance.dismiss();
+				if (_instance.isShowing()) _instance.dismiss();
 			}
 		});
 		
@@ -45,7 +45,7 @@ public class WaitForConnectionDialog {
 			
 			@Override
 			public void onPollingCancelled() {
-				_instance.dismiss();
+				if (_instance.isShowing()) _instance.dismiss();
 			}
 		});
 		
