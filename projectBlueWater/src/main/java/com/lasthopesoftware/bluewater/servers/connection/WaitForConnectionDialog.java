@@ -31,6 +31,7 @@ public class WaitForConnectionDialog {
 			}
 		});
 
+		_instance = builder.create();
 		_instance.setOnShowListener(new DialogInterface.OnShowListener() {
 			@Override
 			public void onShow(DialogInterface dialog) {
@@ -55,7 +56,7 @@ public class WaitForConnectionDialog {
 			}
 		});
 
-		_instance = builder.show();
+		_instance.show();
 
 		return _instance;
 	}
