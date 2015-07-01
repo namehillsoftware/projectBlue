@@ -23,34 +23,42 @@ public class WaitForConnectionDialog {
 		builder.setCancelable(false);
 		builder.setTitle(context.getText(R.string.lbl_connection_lost_title)).setMessage(message).setCancelable(true);
 		builder.setNegativeButton(_context.getText(R.string.btn_cancel), new OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				PollConnection.Instance.get(_context).stopPolling();
 				dialog.dismiss();
 			}
 		});
-				
+
+		_instance.setOnShowListener(new DialogInterface.OnShowListener() {
+			@Override
+			public void onShow(DialogInterface dialog) {
+				PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+
+					@Override
+					public void onConnectionRegained() {
+						if (!_instance.isShowing()) return;
+
+						_instance.dismiss();
+					}
+				});
+
+				PollConnection.Instance.get(_context).addOnPollingCancelledListener(new OnPollingCancelledListener() {
+
+					@Override
+					public void onPollingCancelled() {
+						if (_instance.isShowing()) _instance.dismiss();
+					}
+				});
+
+				PollConnection.Instance.get(_context).startPolling();
+
+			}
+		});
+
 		_instance = builder.show();
-					
-		PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-			
-			@Override
-			public void onConnectionRegained() {
-				if (_instance.isShowing()) _instance.dismiss();
-			}
-		});
-		
-		PollConnection.Instance.get(_context).addOnPollingCancelledListener(new OnPollingCancelledListener() {
-			
-			@Override
-			public void onPollingCancelled() {
-				if (_instance.isShowing()) _instance.dismiss();
-			}
-		});
-		
-		PollConnection.Instance.get(_context).startPolling();
-		
+
 		return _instance;
 	}
 }
