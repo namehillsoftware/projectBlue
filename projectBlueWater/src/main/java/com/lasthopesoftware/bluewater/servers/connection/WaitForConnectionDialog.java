@@ -38,9 +38,7 @@ public class WaitForConnectionDialog {
 
 					@Override
 					public void onConnectionRegained() {
-						if (!_instance.isShowing()) return;
-
-						_instance.dismiss();
+						if (_instance.isShowing()) _instance.dismiss();
 					}
 				});
 
