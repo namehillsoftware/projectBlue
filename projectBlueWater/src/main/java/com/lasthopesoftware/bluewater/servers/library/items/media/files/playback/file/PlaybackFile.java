@@ -29,6 +29,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -205,6 +206,10 @@ public class PlaybackFile implements
 			
 			mLogger.info("Preparing " + mFile.getValue() + " asynchronously.");
 			mMediaPlayer.prepareAsync();
+		} catch (FileNotFoundException fe) {
+			mLogger.error(fe.toString(), fe);
+			resetMediaPlayer();
+			mIsPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();
 			mIsPreparing = false;
@@ -231,6 +236,10 @@ public class PlaybackFile implements
 			mMediaPlayer.prepare();
 			
 			mIsPrepared = true;
+			mIsPreparing = false;
+		} catch (FileNotFoundException fe) {
+			mLogger.error(fe.toString(), fe);
+			resetMediaPlayer();
 			mIsPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();

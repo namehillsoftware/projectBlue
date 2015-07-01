@@ -49,6 +49,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -82,7 +83,9 @@ public class NowPlayingActivity extends Activity implements
 
 	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
 	private static ViewStructure mViewStructure;
-		
+
+	private static final String mFileNotFoundError = "The file %1s was not found!";
+
 	private static class ViewStructure {
 		public final int fileKey;
 		public Bitmap nowPlayingImage;
@@ -284,7 +287,7 @@ public class NowPlayingActivity extends Activity implements
 				if (result != null)
 					setRepeatingIcon(item, result.isRepeating());
 			}
-			
+
 		});
 	}
 	
@@ -375,6 +378,9 @@ public class NowPlayingActivity extends Activity implements
 					
 					try {
 						return file.getProperty(FilePropertiesProvider.ARTIST);
+					} catch (FileNotFoundException e) {
+						handleFileNotFoundException(file, e);
+						return null;
 					} catch (IOException e) {
 						setException(e);
 						return null;
@@ -422,6 +428,8 @@ public class NowPlayingActivity extends Activity implements
 					try {
 						if (file.getProperty(FilePropertiesProvider.RATING) != null && !file.getProperty(FilePropertiesProvider.RATING).isEmpty())
 							return Float.valueOf(file.getProperty(FilePropertiesProvider.RATING));
+					} catch (FileNotFoundException e) {
+						handleFileNotFoundException(file, e);
 					} catch (NumberFormatException | IOException e) {
 						setException(e);
 						
@@ -463,9 +471,18 @@ public class NowPlayingActivity extends Activity implements
 			resetViewOnReconnect(file);
 		}
 	}
+
+	private void handleFileNotFoundException(IFile file, FileNotFoundException fe) {
+		mLogger.error(String.format(mFileNotFoundError, file), fe);
+	}
 	
 	private boolean handleIoException(IFile file, Exception exception) {
-		if (exception != null && exception instanceof IOException) {
+		if (exception instanceof FileNotFoundException) {
+			handleFileNotFoundException(file, (FileNotFoundException)exception);
+			return false;
+		}
+
+		if (exception instanceof IOException) {
 			resetViewOnReconnect(file);
 			return true;
 		}
