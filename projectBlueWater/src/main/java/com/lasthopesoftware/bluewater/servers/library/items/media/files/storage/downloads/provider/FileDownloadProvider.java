@@ -20,8 +20,6 @@ public class FileDownloadProvider {
     private final Context mContext;
     private final DownloadManager mDownloadManager;
 
-
-
     public FileDownloadProvider(Context context) {
         mContext = context;
         mDownloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -35,7 +33,7 @@ public class FileDownloadProvider {
         try {
             mDownloadManager.enqueue(new DownloadManager.Request(file.getFileUri(mContext)));
         } catch (IOException e) {
-            mLogger.error("Error downloading " + file.getValue(), e);
+            mLogger.error("Error getting URI for " + file.getValue(), e);
         }
     }
 }

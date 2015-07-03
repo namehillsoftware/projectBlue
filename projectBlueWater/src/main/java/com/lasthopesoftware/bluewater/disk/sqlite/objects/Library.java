@@ -69,7 +69,7 @@ public class Library {
 		return libraryName;
 	}
 	/**
-	 * @param mLibraryName the mLibraryName to set
+	 * @param libraryName the mLibraryName to set
 	 */
 	public void setLibraryName(String libraryName) {
 		this.libraryName = libraryName;
@@ -81,7 +81,7 @@ public class Library {
 		return accessCode;
 	}
 	/**
-	 * @param mAccessCode the mAccessCode to set
+	 * @param accessCode the mAccessCode to set
 	 */
 	public void setAccessCode(String accessCode) {
 		this.accessCode = accessCode;

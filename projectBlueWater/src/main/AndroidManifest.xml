@@ -139,6 +139,12 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.receivers.FileDownloadCompleteReceiver">
+            <intent-filter>
+                <action android:name="DownloadManager.ACTION_DOWNLOAD_COMPLETE" />
+            </intent-filter>
+        </receiver>
         
         <service
      		android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService"
