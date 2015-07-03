@@ -39,4 +39,13 @@
         android:contentDescription="@string/btn_shuffle_files"
         android:src="@drawable/av_shuffle" />
 
+    <ImageButton
+        android:id="@+id/btnSyncItem"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:contentDescription="@string/btn_sync_item"
+        android:src="@drawable/navigation_refresh" />
+
 </LinearLayout>
