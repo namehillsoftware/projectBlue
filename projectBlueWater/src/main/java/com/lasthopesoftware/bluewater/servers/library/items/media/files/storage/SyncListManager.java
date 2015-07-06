@@ -48,7 +48,7 @@ public class SyncListManager {
         mContext = context;
     }
 
-    public void queueSync() {
+    public void startSync() {
         mSyncExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -72,7 +72,16 @@ public class SyncListManager {
                         syncFiles(storedFileAccess, fileDownloadProvider, library, files);
                     }
 
-                    final List<StoredFile> allStoredFiles = getAllStoredFiles(storedFileAccess, library);
+                    // Since we could be pulling back a lot of data, only query for what we need
+                    final PreparedQuery<StoredFile> storedFilePreparedQuery =
+                            storedFileAccess
+                                    .queryBuilder()
+                                    .selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.libraryIdColumnName)
+                                    .where()
+                                    .eq(StoredFile.libraryIdColumnName, library.getId())
+                                    .prepare();
+
+                    final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);
                     for (StoredFile storedFile : allStoredFiles) {
                         if (!allSyncedFileKeys.contains(storedFile.getServiceId()))
                             deleteStoredFile(storedFileAccess, storedFile);
@@ -88,12 +97,10 @@ public class SyncListManager {
 
     public void syncItem(Item item) {
         markItemForSync(item, StoredList.ListType.ITEM);
-        queueSync();
     }
 
     public void syncPlaylist(Playlist playlist) {
         markItemForSync(playlist, StoredList.ListType.PLAYLIST);
-        queueSync();
     }
 
     public void isItemMarkedForSync(final IItem item, ISimpleTask.OnCompleteListener<Void, Void, Boolean> isItemSyncedResult) {
@@ -184,9 +191,10 @@ public class SyncListManager {
                     storedFile.setIsOwner(true);
 
                     try {
-                        storedFile.setPath(FilenameUtils.concat(FilenameUtils.concat(library.getSyncedFilesPath(), String.valueOf(library.getId())), file.getProperty(FilePropertiesProvider.FILENAME)));
+                        final File fullRemotePath = new File(file.getProperty(FilePropertiesProvider.FILENAME));
+                        storedFile.setPath(FilenameUtils.concat(FilenameUtils.concat(library.getSyncedFilesPath(), "library-" + String.valueOf(library.getId())), fullRemotePath.getName()));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        mLogger.error("Error getting filename for file " + file.getValue(), e);
                     }
                 }
 
@@ -197,15 +205,6 @@ public class SyncListManager {
             }
         } catch (SQLException e) {
             mLogger.error("There was an updating the stored file.", e);
-        }
-    }
-
-    private static List<StoredFile> getAllStoredFiles(Dao<StoredFile, Integer> storedFilesAccess, Library library) {
-        try {
-            return storedFilesAccess.queryForEq(StoredFile.libraryIdColumnName, library.getId());
-        } catch (SQLException e) {
-            mLogger.error("There was an error pulling all stored files", e);
-            return new ArrayList<>();
         }
     }
 

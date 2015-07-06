@@ -109,11 +109,18 @@ public class PlaybackFile implements
 		return mIsPrepared;
 	}
 
+	private Uri getFileUri() throws IOException {
+		final Uri localFileUri = mFile.getLocalFileUri(mMpContext);
+		if (localFileUri != null) return localFileUri;
+
+		return mFile.getRemoteFileUri(mMpContext);
+	}
+
 	public void prepareMediaPlayer() {
 		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
-			final Uri uri = mFile.getFileUri(mMpContext);
+			final Uri uri = getFileUri();
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
@@ -137,7 +144,7 @@ public class PlaybackFile implements
 		if (mIsPreparing || mIsPrepared) return;
 		
 		try {
-			final Uri uri = mFile.getFileUri(mMpContext);
+			final Uri uri = getFileUri();
 			if (uri == null) return;
 			
 			setMpDataSource(uri);

@@ -12,5 +12,6 @@ public interface IFile extends IIntKeyStringValue {
 	String getProperty(String name) throws IOException;
 	String getRefreshedProperty(String name) throws IOException;
 	int getDuration() throws IOException;
-	Uri getFileUri(Context context) throws IOException;
+	Uri getLocalFileUri(Context context) throws IOException;
+	Uri getRemoteFileUri(Context context) throws IOException;
 }

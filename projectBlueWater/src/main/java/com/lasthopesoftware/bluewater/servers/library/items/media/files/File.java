@@ -95,7 +95,8 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	}
 
 	@SuppressLint("InlinedApi")
-	public final Uri getFileUri(Context context) throws IOException {
+	@Override
+	public Uri getLocalFileUri(Context context) throws IOException {
 		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
 
@@ -142,6 +143,11 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 			cursor.close();
 		}
 
+		return null;
+	}
+
+	@Override
+	public Uri getRemoteFileUri(Context context) throws IOException {
 		mLogger.info("Returning file URL from server.");
 
 		final String itemUrl = getSubItemUrl();

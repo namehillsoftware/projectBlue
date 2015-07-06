@@ -33,7 +33,7 @@ public class FileDownloadProvider {
      */
     public long downloadFile(IFile file, String path) {
         try {
-            return mDownloadManager.enqueue(new DownloadManager.Request(file.getFileUri(mContext)).setDestinationUri(Uri.fromFile(new File(path))));
+            return mDownloadManager.enqueue(new DownloadManager.Request(file.getRemoteFileUri(mContext)).setDestinationUri(Uri.fromFile(new File(path))));
         } catch (IOException e) {
             mLogger.error("Error getting URI for " + file.getValue(), e);
             return -1;

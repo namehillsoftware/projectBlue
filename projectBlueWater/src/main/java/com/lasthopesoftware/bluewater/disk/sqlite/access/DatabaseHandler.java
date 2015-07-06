@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 	
-	private static int DATABASE_VERSION = 4;
+	private static int DATABASE_VERSION = 5;
 	private static final String DATABASE_NAME = "sessions_db";
 	
 	private final static Class<?>[] version2Tables = { Library.class };
@@ -41,7 +41,7 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
 	}
 	
-	private void createTables(ConnectionSource conn, Class<?>[] tableClasses) {
+	private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
 		for (Class<?> table : tableClasses) {
 			try {
 				TableUtils.createTable(conn, table);
@@ -51,24 +51,34 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 		}
 	}
 
+	private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
+		for (Class<?> table : tableClasses) {
+			try {
+				TableUtils.dropTable(conn, table, true);
+			} catch (SQLException e) {
+				LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
+			}
+		}
+		createTables(conn, tableClasses);
+	}
+
 	@Override
 	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
-		if (oldVersion < 2) {
-			for (Class<?> table : version2Tables) {
-				try {
-					TableUtils.dropTable(conn, table, true);
-				} catch (SQLException e) {
-					LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
-				}
-			}
-			createTables(conn, version2Tables);
-		}
-		
-		if (oldVersion < 3)
-			createTables(conn, version3Tables);
-		
+		if (oldVersion < 2)
+			recreateTables(conn, version2Tables);
+
 		if (oldVersion < 4)
 			createTables(conn, version4Tables);
+
+		if (oldVersion < 5) {
+			recreateTables(conn, version3Tables);
+			try {
+				final Dao<Library, Integer> libraryDao = getAccessObject(Library.class);
+				libraryDao.executeRaw("ALTER TABLE `library` add column `syncedFilesPath` VARCHAR");
+			} catch (SQLException e) {
+				LoggerFactory.getLogger(DatabaseHandler.class).error("Error adding column syncedFilesPath to library table", e);
+			}
+		}
 	}
 	
 	public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException  {
@@ -82,9 +92,9 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	             * TODO: we have to do this to get to see if they are using the deprecated annotations like
 	             * {@link DatabaseFieldSimple}.
 	             */
-                dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, c);
+                dao = DaoManager.createDao(connectionSource, c);
             } else {
-                dao = (Dao<T, ?>) DaoManager.createDao(connectionSource, tableConfig);
+                dao = DaoManager.createDao(connectionSource, tableConfig);
             }
         }
 
