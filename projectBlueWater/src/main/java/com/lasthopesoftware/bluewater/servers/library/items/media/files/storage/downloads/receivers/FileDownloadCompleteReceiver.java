@@ -9,6 +9,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
+import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.SimpleTask;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -24,27 +26,34 @@ public class FileDownloadCompleteReceiver extends BroadcastReceiver {
     public final static String FILE_COMPLETE_ID = fullClassName + "FILE_COMPLETE_ID";
 
     @Override
-    public void onReceive(Context context, Intent intent) {
-        long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+    public void onReceive(final Context context, Intent intent) {
+        final long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
         if (downloadId == -1) return;
 
-        final DatabaseHandler databaseHandler = new DatabaseHandler(context);
-        try {
-            final Dao<StoredFile, Integer> storedFileAccess = databaseHandler.getAccessObject(StoredFile.class);
-            final List<StoredFile> storedFileResults = storedFileAccess.queryForEq(StoredFile.DOWNLOAD_ID, downloadId);
-            if (storedFileResults.size() == 0) return;
+        SimpleTask.executeNew(new ISimpleTask.OnExecuteListener<Void, Void, Void>() {
+            @Override
+            public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+                final DatabaseHandler databaseHandler = new DatabaseHandler(context);
+                try {
+                    final Dao<StoredFile, Integer> storedFileAccess = databaseHandler.getAccessObject(StoredFile.class);
+                    final List<StoredFile> storedFileResults = storedFileAccess.queryForEq(StoredFile.downloadIdName, downloadId);
+                    if (storedFileResults.isEmpty()) return null;
 
-            final StoredFile storedFile = storedFileResults.get(0);
-            storedFile.setIsDownloadComplete(true);
-            storedFile.setDownloadId(-1);
-            storedFileAccess.update(storedFile);
+                    final StoredFile storedFile = storedFileResults.get(0);
+                    storedFile.setIsDownloadComplete(true);
+                    storedFile.setDownloadId(-1);
+                    storedFileAccess.update(storedFile);
 
-            final Intent fileCompleteIntent = new Intent(FILE_COMPLETE_BROADCAST);
-            fileCompleteIntent.putExtra(FILE_COMPLETE_ID, storedFile.getId());
-        } catch (SQLException e) {
-            LoggerFactory.getLogger(getClass()).error("Error getting access to StoredFile table", e);
-        } finally {
-            databaseHandler.close();
-        }
+                    final Intent fileCompleteIntent = new Intent(FILE_COMPLETE_BROADCAST);
+                    fileCompleteIntent.putExtra(FILE_COMPLETE_ID, storedFile.getId());
+                } catch (SQLException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error getting access to StoredFile table", e);
+                } finally {
+                    databaseHandler.close();
+                }
+
+                return null;
+            }
+        });
     }
 }

@@ -6,6 +6,8 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "StoredLists")
 public class StoredList {
 
+	public static final String serviceIdColumnName = "serviceId";
+
 	@DatabaseField(generatedId = true)
 	private int id;
 	
@@ -42,5 +44,5 @@ public class StoredList {
 		this.type = type;
 	}
 
-	private enum ListType { FILE, PLAYLIST }
+	public enum ListType { FILE, PLAYLIST, ITEM }
 }

@@ -6,7 +6,8 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "StoredFiles")
 public class StoredFile {
 
-	public static final String DOWNLOAD_ID = "downloadId";
+	public static final String downloadIdName = "downloadId";
+	public static final String serviceIdColumnName = "serviceId";
 
 	@DatabaseField(generatedId = true)
 	private int id;

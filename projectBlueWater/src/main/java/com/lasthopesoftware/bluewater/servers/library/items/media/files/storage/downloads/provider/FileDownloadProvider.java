@@ -29,11 +29,12 @@ public class FileDownloadProvider {
      * Enqueues a file to be downloaded
      * @param file
      */
-    public void downloadFile(IFile file) {
+    public long downloadFile(IFile file) {
         try {
-            mDownloadManager.enqueue(new DownloadManager.Request(file.getFileUri(mContext)));
+            return mDownloadManager.enqueue(new DownloadManager.Request(file.getFileUri(mContext)));
         } catch (IOException e) {
             mLogger.error("Error getting URI for " + file.getValue(), e);
+            return -1;
         }
     }
 }
