@@ -5,11 +5,11 @@ import android.util.Log;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
-import com.lasthopesoftware.bluewater.shared.IOCommon;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -134,7 +134,7 @@ public class FilePropertiesProvider {
 						try {
 							final InputStream is = conn.getInputStream();
 							try {
-								final XmlElement xml = Xmlwise.createXml(IOCommon.getStringFromInputStream(is));
+								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
 														    	
 						    	for (XmlElement el : xml.get(0))
 						    		returnProperties.put(el.getAttribute("Name"), el.getValue());

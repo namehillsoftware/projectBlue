@@ -8,24 +8,31 @@ public class StoredFile {
 
 	public static final String downloadIdName = "downloadId";
 	public static final String serviceIdColumnName = "serviceId";
+	public static final String libraryIdColumnName = "libraryId";
 
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = "libraryId")
+	@DatabaseField(foreign = true, columnName = "libraryId", uniqueCombo = true)
 	private Library library;
 	
 	@DatabaseField
 	private int storedMediaId;
-	
-	@DatabaseField
+
+	@DatabaseField(uniqueCombo = true)
 	private int serviceId;
 
-	@DatabaseField
-	private long downloadId;
+	@DatabaseField(unique = true)
+	private long downloadId = -1;
 
 	@DatabaseField
 	private boolean isDownloadComplete;
+
+	@DatabaseField(unique = true)
+	private String path;
+
+	@DatabaseField
+	private boolean isOwner;
 
 	public int getId() {
 		return id;
@@ -69,5 +76,21 @@ public class StoredFile {
 
 	public void setIsDownloadComplete(boolean isDownloadComplete) {
 		this.isDownloadComplete = isDownloadComplete;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public boolean isOwner() {
+		return isOwner;
+	}
+
+	public void setIsOwner(boolean isOwner) {
+		this.isOwner = isOwner;
 	}
 }

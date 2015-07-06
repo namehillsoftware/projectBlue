@@ -7,14 +7,16 @@ import com.j256.ormlite.table.DatabaseTable;
 public class StoredList {
 
 	public static final String serviceIdColumnName = "serviceId";
+	public static final String libraryIdColumnName = "libraryId";
 
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = "libraryId")
+	@DatabaseField(foreign = true, columnName = "libraryId", uniqueCombo = true)
 	private Library library;
-	
-	@DatabaseField
+
+	// unique with library id
+	@DatabaseField(uniqueCombo = true)
 	private int serviceId;
 	
 	@DatabaseField

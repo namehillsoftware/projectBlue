@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.shared.IOCommon;
 import com.lasthopesoftware.threading.DataTask;
 import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
@@ -10,9 +9,11 @@ import com.lasthopesoftware.threading.IDataTask.OnConnectListener;
 import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
 import com.lasthopesoftware.threading.IDataTask.OnStartListener;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,12 @@ public class Files implements IItemFiles {
 		
 		@Override
 		public List<IFile> onConnect(InputStream is) {
-			return parseFileStringList(IOCommon.getStringFromInputStream(is));
+			try {
+				return parseFileStringList(IOUtils.toString(is));
+			} catch (IOException e) {
+				mLogger.error("Error reading string from stream", e);
+				return null;
+			}
 		}
 	};
 	
@@ -112,7 +118,12 @@ public class Files implements IItemFiles {
 			
 			@Override
 			public String onConnect(InputStream is) {
-				return IOCommon.getStringFromInputStream(is);
+				try {
+					return IOUtils.toString(is);
+				} catch (IOException e) {
+					mLogger.error("Error reading string from stream", e);
+					return null;
+				}
 			}
 		});
 		

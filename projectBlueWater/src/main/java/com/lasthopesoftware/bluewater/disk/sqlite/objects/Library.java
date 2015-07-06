@@ -39,6 +39,9 @@ public class Library {
 	
 	@DatabaseField
 	private String savedTracksString;
+
+	@DatabaseField
+	private String syncedFilesPath;
 	
 	@ForeignCollectionField(eager = true)
 	private Collection<StoredFile> storedFiles = null;
@@ -188,5 +191,13 @@ public class Library {
 			cachedFiles = new ArrayList<>();
 		
 		return cachedFiles;
+	}
+
+	public String getSyncedFilesPath() {
+		return syncedFilesPath;
+	}
+
+	public void setSyncedFilesPath(String syncedFilesPath) {
+		this.syncedFilesPath = syncedFilesPath;
 	}
 }

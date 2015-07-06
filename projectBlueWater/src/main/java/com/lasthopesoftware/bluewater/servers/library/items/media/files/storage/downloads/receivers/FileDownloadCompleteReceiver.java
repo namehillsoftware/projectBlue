@@ -43,9 +43,6 @@ public class FileDownloadCompleteReceiver extends BroadcastReceiver {
                     storedFile.setIsDownloadComplete(true);
                     storedFile.setDownloadId(-1);
                     storedFileAccess.update(storedFile);
-
-                    final Intent fileCompleteIntent = new Intent(FILE_COMPLETE_BROADCAST);
-                    fileCompleteIntent.putExtra(FILE_COMPLETE_ID, storedFile.getId());
                 } catch (SQLException e) {
                     LoggerFactory.getLogger(getClass()).error("Error getting access to StoredFile table", e);
                 } finally {
