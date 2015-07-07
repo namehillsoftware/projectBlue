@@ -10,29 +10,33 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import com.lasthopesoftware.bluewater.MainApplication;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.SyncListManager;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 
 public final class ItemMenu {
 	private static class ViewHolder {
-		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
+		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton, ImageButton syncButton) {
 			this.textView = textView;
 			this.shuffleButton = shuffleButton;
 			this.playButton = playButton;
 			this.viewButton = viewButton;
+			this.syncButton = syncButton;
 		}
 
         public final TextView textView;
         public final ImageButton shuffleButton;
         public final ImageButton playButton;
         public final ImageButton viewButton;
+		public final ImageButton syncButton;
 	}
 
-	public static View getView(IItem item, View convertView, ViewGroup parent) {
+	public static View getView(final IItem item, View convertView, ViewGroup parent) {
         ViewFlipper parentView = (ViewFlipper)convertView;
 		if (parentView == null) {
 		
@@ -52,19 +56,31 @@ public final class ItemMenu {
 	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
 	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
 	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
+			final ImageButton syncButton = (ImageButton)fileMenu.findViewById(R.id.btnSyncItem);
 
 			parentView.addView(fileMenu);
 			
-			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
+			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton, syncButton));
 		}
 		
 		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
 		
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		viewHolder.textView.setText(item.getValue());
-		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer)item));
+		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer) item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
+		viewHolder.syncButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				final SyncListManager syncListManager = new SyncListManager(v.getContext());
+
+				syncListManager.markItemForSync(item);
+
+				if (MainApplication.DEBUG_MODE) // For development purposes only
+					syncListManager.startSync();
+			}
+		});
 
 		return convertView;
 	}
