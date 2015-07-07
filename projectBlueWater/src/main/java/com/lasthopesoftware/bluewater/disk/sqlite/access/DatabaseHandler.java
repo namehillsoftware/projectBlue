@@ -74,7 +74,7 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 			recreateTables(conn, version3Tables);
 			try {
 				final Dao<Library, Integer> libraryDao = getAccessObject(Library.class);
-				libraryDao.executeRaw("ALTER TABLE `library` add column `syncedFilesPath` VARCHAR(100)");
+				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFilesPath` VARCHAR(100)");
 			} catch (SQLException e) {
 				LoggerFactory.getLogger(DatabaseHandler.class).error("Error adding column syncedFilesPath to library table", e);
 			}
