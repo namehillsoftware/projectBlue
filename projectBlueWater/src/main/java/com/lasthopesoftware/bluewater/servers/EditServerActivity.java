@@ -62,7 +62,7 @@ public class EditServerActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
-        setContentView(R.layout.activity_set_connection);
+        setContentView(R.layout.activity_configure_library);
         getActionBar().setDisplayHomeAsUpEnabled(true);        
         
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
