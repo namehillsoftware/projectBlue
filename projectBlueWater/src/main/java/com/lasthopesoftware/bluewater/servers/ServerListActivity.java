@@ -27,7 +27,7 @@ public class ServerListActivity extends Activity {
 		
 		ListView serverList = (ListView) findViewById(R.id.lvServerList);
 		
-		serverList.setAdapter(new ServerListAdapter(this, LibrarySession.GetLibraries(this)));
+		serverList.setAdapter(new ServerListAdapter(LibrarySession.GetLibraries(this), LibrarySession.GetLibrary(this)));
 		
 		serverList.setOnItemClickListener(new OnItemClickListener() {
 
