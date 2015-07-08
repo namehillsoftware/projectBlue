@@ -5,13 +5,24 @@
     android:layout_height="match_parent" >
 
     <ImageButton
-        android:id="@+id/btnSelectServer"
+        android:id="@+id/btnConfigureServer"
         style="?android:attr/buttonBarButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:contentDescription="@string/btn_play_files"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
+        android:background="@color/blue"
+        android:src="@drawable/ic_action_settings" />
+
+    <ImageButton
+        android:id="@+id/btnSelectServer"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_toLeftOf="@id/btnConfigureServer"
+        android:layout_toStartOf="@id/btnConfigureServer"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/btn_play_files"
         android:src="@drawable/ic_checkbox_blank_circle_outline_grey600_24dp" />
 
     <TextView

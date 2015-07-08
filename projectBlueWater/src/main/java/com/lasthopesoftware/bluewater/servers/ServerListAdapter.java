@@ -20,8 +20,10 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import java.util.List;
 
 public class ServerListAdapter extends BaseAdapter {
+
 	private final List<Library> mLibraries;
 	private Library mChosenLibrary;
+	private OnServerSelected mOnServerSelected;
 
 	private static Drawable mSelectedServerDrawable;
 
@@ -39,6 +41,18 @@ public class ServerListAdapter extends BaseAdapter {
 		if (position == 0) {
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
 			textView.setText("Add Server");
+			returnView.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(final View v) {
+					LibrarySession.ChooseLibrary(v.getContext(), -1, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+						@Override
+						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+							v.getContext().startActivity(new Intent(v.getContext(), EditServerActivity.class));
+						}
+					});
+				}
+			});
 			return returnView;
 		}
 
@@ -53,13 +67,17 @@ public class ServerListAdapter extends BaseAdapter {
 
 		selectServerButton.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onClick(final View v) {
-				LibrarySession.ChooseLibrary(v.getContext(), (int) library.getId(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+			public void onClick(View v) {
+				final Context context = v.getContext();
+				LibrarySession.ChooseLibrary(context, library.getId(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-						selectServerButton.setImageDrawable(getSelectedServerDrawable(v.getContext()));
-						v.getContext().startActivity(new Intent(v.getContext(), InstantiateSessionConnectionActivity.class));
+						selectServerButton.setImageDrawable(getSelectedServerDrawable(context));
+						context.startActivity(new Intent(context, InstantiateSessionConnectionActivity.class));
+
+						if (mOnServerSelected != null)
+							mOnServerSelected.onServerSelected(context, result);
 					}
 				});
 			}
@@ -75,6 +93,10 @@ public class ServerListAdapter extends BaseAdapter {
 		return mSelectedServerDrawable;
 	}
 
+	public void setOnServerSelected(OnServerSelected onServerSelected) {
+		mOnServerSelected = onServerSelected;
+	}
+
 	@Override
 	public int getCount() {
 		return mLibraries.size() + 1;
@@ -88,5 +110,9 @@ public class ServerListAdapter extends BaseAdapter {
 	@Override
 	public long getItemId(int position) {
 		return position > 0 ? mLibraries.get(--position).getId() : -1;
+	}
+
+	public interface OnServerSelected {
+		void onServerSelected(Context context, Library library);
 	}
 }
