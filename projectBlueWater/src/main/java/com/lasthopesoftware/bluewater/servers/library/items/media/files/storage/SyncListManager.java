@@ -52,13 +52,16 @@ public class SyncListManager {
         mSyncExecutor.execute(new Runnable() {
             @Override
             public void run() {
+                final Library library = LibrarySession.GetLibrary(mContext);
+                if (library == null) return;
+
                 final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
                 try {
                     final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
                     final List<StoredList> listsToSync = storedListAccess.queryForAll();
 
                     final FileDownloadProvider fileDownloadProvider = new FileDownloadProvider(mContext);
-                    final Library library = LibrarySession.GetLibrary(mContext);
+
                     final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
 
                     final Set<Integer> allSyncedFileKeys = new HashSet<>();
@@ -76,7 +79,7 @@ public class SyncListManager {
                     final PreparedQuery<StoredFile> storedFilePreparedQuery =
                             storedFileAccess
                                     .queryBuilder()
-                                    .selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.libraryIdColumnName)
+                                    .selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
                                     .where()
                                     .eq(StoredFile.libraryIdColumnName, library.getId())
                                     .prepare();
@@ -95,12 +98,9 @@ public class SyncListManager {
         });
     }
 
-    public void syncItem(Item item) {
-        markItemForSync(item, StoredList.ListType.ITEM);
-    }
-
-    public void syncPlaylist(Playlist playlist) {
-        markItemForSync(playlist, StoredList.ListType.PLAYLIST);
+    public void markItemForSync(IItem item) {
+        final StoredList.ListType listType = item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
+        markItemForSync(item, listType);
     }
 
     public void isItemMarkedForSync(final IItem item, ISimpleTask.OnCompleteListener<Void, Void, Boolean> isItemSyncedResult) {
@@ -178,9 +178,9 @@ public class SyncListManager {
                         storedFilesAccess
                             .queryBuilder()
                             .where()
-                                .eq(StoredFile.serviceIdColumnName, file.getKey())
+                            .eq(StoredFile.serviceIdColumnName, file.getKey())
                             .and()
-                                .eq(StoredFile.libraryIdColumnName, library.getId())
+                            .eq(StoredFile.libraryIdColumnName, library.getId())
                             .prepare();
 
                 StoredFile storedFile = storedFilesAccess.queryForFirst(storedFilePreparedQuery);

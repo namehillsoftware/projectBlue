@@ -9,6 +9,7 @@ public class StoredFile {
 	public static final String downloadIdName = "downloadId";
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
+	public static final String pathColumnName = "path";
 
 	@DatabaseField(generatedId = true)
 	private int id;
