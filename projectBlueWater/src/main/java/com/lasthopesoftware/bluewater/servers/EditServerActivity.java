@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
@@ -16,7 +15,6 @@ import android.widget.EditText;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -49,13 +47,10 @@ public class EditServerActivity extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-					mConnectionButton.setText(R.string.lbl_connected);
-					
-					_context.startActivity(new Intent(_context, InstantiateSessionConnectionActivity.class));
+					mConnectionButton.setText("Saved!");
+					finish();
 				}
 			});
-
-        	
         }
     };
 	

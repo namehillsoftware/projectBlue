@@ -1,11 +1,15 @@
 package com.lasthopesoftware.bluewater.servers.library;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -64,6 +68,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 	private CharSequence mOldTitle;
 
 	private boolean mIsStopped = false;
+	private boolean mIsLibraryChanged = false;
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
 
@@ -73,6 +78,13 @@ public class BrowseLibraryActivity extends FragmentActivity {
             mFlippedView = viewFlipper;
         }
     };
+
+	private final BroadcastReceiver mOnLibraryChanged = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			mIsLibraryChanged = true;
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -134,11 +146,19 @@ public class BrowseLibraryActivity extends FragmentActivity {
         mPbLoadingViews = (ProgressBar) findViewById(R.id.pbLoadingViews);
 
         if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
+
+		LocalBroadcastManager.getInstance(this).registerReceiver(mOnLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
+
+		if (mIsLibraryChanged) {
+			startActivity(new Intent(this, InstantiateSessionConnectionActivity.class));
+			finish();
+			return;
+		}
 
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) getLibrary();
 	}
@@ -376,7 +396,14 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		super.onStop();
 	}
 
-    @Override
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(mOnLibraryChanged);
+	}
+
+	@Override
     public void onBackPressed() {
         if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
 
