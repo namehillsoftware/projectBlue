@@ -9,7 +9,8 @@
     <string name="lbl_access_code">Access Code</string>
     <string name="lbl_password">Password</string>
     <string name="lbl_local_only">Local Connections Only</string>
-    <string name="btn_connect">Connect!</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_saved">Saved</string>
     <string name="lbl_connected">Connected!</string>
     <string name="title_activity_file_view">File View</string>
     <string name="title_activity_view_now_playing">Now Playing</string>
@@ -63,4 +64,5 @@
     <string name="lbl_details">%1$s details</string>
     <string name="btn_sync_item">Synchronize item locally</string>
     <string name="btn_select_server">Select Server</string>
+    <string name="btn_add_server">Add Server</string>
 </resources>

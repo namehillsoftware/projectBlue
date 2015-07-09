@@ -34,8 +34,7 @@
         
         <activity
             android:name="com.lasthopesoftware.bluewater.servers.ServerListActivity"
-            android:label="@string/title_activity_select_server"
-            android:noHistory="true" >
+            android:label="@string/title_activity_select_server">
         </activity>
         
         <activity

@@ -34,7 +34,6 @@ public class EditServerActivity extends FragmentActivity {
         	
         	mLibrary.setAccessCode(txtAccessCode.getText().toString());
         	mLibrary.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        	
         	mLibrary.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
 		        	
         	mConnectionButton.setText(R.string.btn_connecting);
@@ -44,7 +43,7 @@ public class EditServerActivity extends FragmentActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-					mConnectionButton.setText("Saved!");
+					mConnectionButton.setText(getText(R.string.btn_saved));
 					finish();
 				}
 			});

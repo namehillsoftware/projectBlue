@@ -17,7 +17,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.servers.listeners.EditServerClickListener;
 
 import java.util.List;
 
@@ -55,21 +55,10 @@ public class ServerListAdapter extends BaseAdapter {
 		if (position == 0) {
 			final RelativeLayout returnView = (RelativeLayout) getInflater(parentContext).inflate(R.layout.layout_standard_text, null);
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
-			textView.setText("Add Server");
-			returnView.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(final View v) {
-					LibrarySession.ChooseLibrary(v.getContext(), -1, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+			textView.setText(parentContext.getText(R.string.btn_add_server));
+			returnView.setOnClickListener(new EditServerClickListener());
 
-						@Override
-						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-							v.getContext().startActivity(new Intent(v.getContext(), EditServerActivity.class));
-						}
-					});
-				}
-			});
-
-			if (convertView != null && convertView.getTag() != null)
+			if (convertView != null && convertView.getTag() != null && ((ViewHolder)convertView.getTag()).broadcastReceiver != null)
 				LocalBroadcastManager.getInstance(parentContext).unregisterReceiver(((ViewHolder)convertView.getTag()).broadcastReceiver);
 
 			return returnView;
@@ -91,7 +80,7 @@ public class ServerListAdapter extends BaseAdapter {
 		viewHolder.textView.setText(library.getAccessCode());
 
 		final ImageButton btnSelectServer = viewHolder.btnSelectServer;
-		if (library.getId() == mChosenLibrary.getId())
+		if (mChosenLibrary != null && library.getId() == mChosenLibrary.getId())
 			btnSelectServer.setImageDrawable(getSelectedServerDrawable(parentContext));
 
 		btnSelectServer.setOnClickListener(new View.OnClickListener() {
@@ -102,18 +91,7 @@ public class ServerListAdapter extends BaseAdapter {
 			}
 		});
 
-		viewHolder.btnConfigureServer.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(final View v) {
-				LibrarySession.ChooseLibrary(v.getContext(), library.getId(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-
-					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-						v.getContext().startActivity(new Intent(v.getContext(), EditServerActivity.class));
-					}
-				});
-			}
-		});
+		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener());
 
 		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(parentContext);
 		if (viewHolder.broadcastReceiver != null) localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);

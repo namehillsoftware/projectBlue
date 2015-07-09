@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
@@ -178,6 +179,12 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
+				// No library, must bail out
+				if (result == null) {
+					finish();
+					return;
+				}
+
 				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 
 					@Override
@@ -348,19 +355,19 @@ public class BrowseLibraryActivity extends FragmentActivity {
         savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
         savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
         LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-                if (library != null)
-                    savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-            }
+	        @Override
+	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+		        if (library != null)
+			        savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+	        }
         });
 	}
 
 	@Override
-	public void onRestoreInstanceState(final Bundle savedInstanceState) {
+	public void onRestoreInstanceState(@NonNull final Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 
-        if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
+		restoreScrollPosition(savedInstanceState);
 	}
 
     private void restoreScrollPosition(final Bundle savedInstanceState) {
@@ -368,19 +375,19 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-                final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-                if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+	        @Override
+	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+		        final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+		        if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 
-                final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-                if (savedTabKey > -1)
-                    mViewPager.setCurrentItem(savedTabKey);
+		        final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+		        if (savedTabKey > -1)
+			        mViewPager.setCurrentItem(savedTabKey);
 
-                final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-                if (savedScrollPosition > -1)
-                    mViewPager.setScrollY(savedScrollPosition);
-            }
+		        final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+		        if (savedScrollPosition > -1)
+			        mViewPager.setScrollY(savedScrollPosition);
+	        }
         });
     }
 
@@ -409,8 +416,4 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         super.onBackPressed();
     }
-
-    public ViewPager getViewPager() {
-		return mViewPager;
-	}
 }
