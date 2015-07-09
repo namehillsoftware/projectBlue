@@ -4,8 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -15,7 +13,6 @@ import android.widget.EditText;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 public class EditServerActivity extends FragmentActivity {
@@ -58,8 +55,7 @@ public class EditServerActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         setContentView(R.layout.activity_configure_library);
-        getActionBar().setDisplayHomeAsUpEnabled(true);        
-        
+
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
         
@@ -87,15 +83,5 @@ public class EditServerActivity extends FragmentActivity {
 			}
         });
         
-	}
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		return ViewUtils.buildStandardMenu(this, menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return ViewUtils.handleNavMenuClicks(this, item);
 	}
 }
