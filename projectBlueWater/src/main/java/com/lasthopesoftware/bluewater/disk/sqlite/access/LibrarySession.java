@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.disk.sqlite.access;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -22,7 +24,9 @@ public class LibrarySession {
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(LibrarySession.class);
 	
-	private static final String CHOSEN_LIBRARY = "chosen_library";
+	public static final String chosenLibraryInt = "chosen_library";
+
+	public static final String libraryChosenEvent = LibrarySession.class.getCanonicalName() + ".libraryChosenEvent";
 	
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);
@@ -39,7 +43,7 @@ public class LibrarySession {
 					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
 					
 					libraryAccess.createOrUpdate(library);
-					context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).edit().putInt(CHOSEN_LIBRARY, library.getId()).apply();
+					context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).edit().putInt(chosenLibraryInt, library.getId()).apply();
 					
 					mLogger.debug("Session saved.");
 					return library;
@@ -86,8 +90,9 @@ public class LibrarySession {
 	public static synchronized Library GetLibrary(final Context context) {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
-		
-		int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(CHOSEN_LIBRARY, -1);
+
+		final SharedPreferences sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
+		int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
 		
 		if (chosenLibrary < 0) return null;
 		
@@ -137,13 +142,23 @@ public class LibrarySession {
 		return new ArrayList<>();
 	}
 		
-	public synchronized static void ChooseLibrary(Context context, int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
+	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
-		if (libraryKey != sharedPreferences.getInt(CHOSEN_LIBRARY, -1)) {
-            sharedPreferences.edit().putInt(CHOSEN_LIBRARY, libraryKey).apply();
+		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1)) {
+            sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
 		}
 		
-		GetLibrary(context, onLibraryChangeComplete);
+		GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+				final Intent broadcastIntent = new Intent(libraryChosenEvent);
+				broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+
+				if (onLibraryChangeComplete != null)
+					onLibraryChangeComplete.onComplete(owner, library);
+			}
+		});
 	}
 }

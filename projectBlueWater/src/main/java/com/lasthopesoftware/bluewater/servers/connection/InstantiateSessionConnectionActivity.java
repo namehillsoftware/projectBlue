@@ -88,7 +88,6 @@ public class InstantiateSessionConnectionActivity extends Activity {
 				launchActivityDelayed(browseLibraryIntent);
 			else
 				finish();
-			return;
 		}
 	}
 	
