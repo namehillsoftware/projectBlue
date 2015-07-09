@@ -10,8 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -25,15 +25,20 @@ public class ServerListAdapter extends BaseAdapter {
 
 	private final List<Library> mLibraries;
 	private Library mChosenLibrary;
+	private static Drawable mSelectedServerDrawable;
+	private static Drawable mNotSelectedServerDrawable;
 
 	private static class ViewHolder {
 		public final TextView textView;
-		public final Switch selectServerSwitch;
+		public final ImageButton btnSelectServer;
+		public final ImageButton btnConfigureServer;
+
 		public BroadcastReceiver broadcastReceiver;
 
-		private ViewHolder(TextView textView, Switch selectServerSwitch) {
+		private ViewHolder(TextView textView, ImageButton btnSelectServer, ImageButton btnConfigureServer) {
 			this.textView = textView;
-			this.selectServerSwitch = selectServerSwitch;
+			this.btnSelectServer = btnSelectServer;
+			this.btnConfigureServer = btnConfigureServer;
 		}
 	}
 
@@ -74,9 +79,10 @@ public class ServerListAdapter extends BaseAdapter {
 			final RelativeLayout relativeLayout = (RelativeLayout) getInflater(parent.getContext()).inflate(R.layout.layout_server_item, null);
 
 			final TextView textView = (TextView) relativeLayout.findViewById(R.id.tvServerItem);
-			final Switch selectServerSwitch = (Switch) relativeLayout.findViewById(R.id.selectServerSwitch);
+			final ImageButton btnSelectServer = (ImageButton) relativeLayout.findViewById(R.id.btnSelectServer);
+			final ImageButton btnConfigureServer = (ImageButton) relativeLayout.findViewById(R.id.btnConfigureServer);
 
-			relativeLayout.setTag(new ViewHolder(textView, selectServerSwitch));
+			relativeLayout.setTag(new ViewHolder(textView, btnSelectServer, btnConfigureServer));
 			convertView = relativeLayout;
 		}
 
@@ -84,15 +90,28 @@ public class ServerListAdapter extends BaseAdapter {
 		final Library library = mLibraries.get(--position);
 		viewHolder.textView.setText(library.getAccessCode());
 
-		final Switch selectServerSwitch = viewHolder.selectServerSwitch;
+		final ImageButton btnSelectServer = viewHolder.btnSelectServer;
 		if (library.getId() == mChosenLibrary.getId())
-			selectServerSwitch.setChecked(true);
+			btnSelectServer.setImageDrawable(getSelectedServerDrawable(parentContext));
 
-		selectServerSwitch.setOnClickListener(new View.OnClickListener() {
+		btnSelectServer.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				final Context context = v.getContext();
 				LibrarySession.ChooseLibrary(context, library.getId(), null);
+			}
+		});
+
+		viewHolder.btnConfigureServer.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				LibrarySession.ChooseLibrary(v.getContext(), library.getId(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						v.getContext().startActivity(new Intent(v.getContext(), EditServerActivity.class));
+					}
+				});
 			}
 		});
 
@@ -102,14 +121,14 @@ public class ServerListAdapter extends BaseAdapter {
 		viewHolder.broadcastReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				final int libraryChosenInt = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1);
-				selectServerSwitch.setChecked(libraryChosenInt == library.getId());
+				final boolean isChosen = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1) == library.getId();
+				btnSelectServer.setImageDrawable(isChosen ? getSelectedServerDrawable(context) : getNotSelectedServerDrawable(context));
 			}
 		};
 
 		localBroadcastManager.registerReceiver(viewHolder.broadcastReceiver, new IntentFilter(LibrarySession.libraryChosenEvent));
 
-		selectServerSwitch.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+		btnSelectServer.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
 			@Override
 			public void onViewAttachedToWindow(View v) {
 
@@ -119,7 +138,7 @@ public class ServerListAdapter extends BaseAdapter {
 			public void onViewDetachedFromWindow(View v) {
 				if (viewHolder.broadcastReceiver != null)
 					localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
-				selectServerSwitch.removeOnAttachStateChangeListener(this);
+				btnSelectServer.removeOnAttachStateChangeListener(this);
 			}
 		});
 
@@ -130,7 +149,13 @@ public class ServerListAdapter extends BaseAdapter {
 		return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
-	private static Drawable mSelectedServerDrawable;
+	private static Drawable getNotSelectedServerDrawable(Context context) {
+		if (mNotSelectedServerDrawable == null)
+			mNotSelectedServerDrawable = context.getResources().getDrawable(R.drawable.ic_checkbox_blank_circle_outline_grey600_24dp);
+
+		return mNotSelectedServerDrawable;
+	}
+
 	private static Drawable getSelectedServerDrawable(Context context) {
 		if (mSelectedServerDrawable == null)
 			mSelectedServerDrawable = context.getResources().getDrawable(R.drawable.ic_checkbox_marked_circle_grey600_24dp);

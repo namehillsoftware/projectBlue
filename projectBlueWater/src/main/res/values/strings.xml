@@ -62,4 +62,5 @@
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
     <string name="lbl_details">%1$s details</string>
     <string name="btn_sync_item">Synchronize item locally</string>
+    <string name="btn_select_server">Select Server</string>
 </resources>
