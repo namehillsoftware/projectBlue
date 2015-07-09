@@ -65,4 +65,5 @@
     <string name="btn_sync_item">Synchronize item locally</string>
     <string name="btn_select_server">Select Server</string>
     <string name="btn_add_server">Add Server</string>
+    <string name="lbl_sync_path">Sync Path</string>
 </resources>

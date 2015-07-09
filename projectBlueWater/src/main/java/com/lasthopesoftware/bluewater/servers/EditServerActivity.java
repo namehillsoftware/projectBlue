@@ -19,24 +19,27 @@ public class EditServerActivity extends FragmentActivity {
 	private Button mConnectionButton;
 	private Library mLibrary;
 
+	private EditText mTxtAccessCode;
+	private EditText mTxtUserName;
+	private EditText mTxtPassword;
+	private EditText mTxtSyncPath;
+	private CheckBox mChkLocalOnly;
+
 	private OnClickListener mConnectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
-        	final EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-        	final EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-        	final EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
-        	
+
         	final Context _context = v.getContext();
         	
         	if (mLibrary == null) {
         		mLibrary = new Library();
         		mLibrary.setNowPlayingId(-1);
         	}
-        	
-        	mLibrary.setAccessCode(txtAccessCode.getText().toString());
-        	mLibrary.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        	mLibrary.setLocalOnly(((CheckBox)findViewById(R.id.chkLocalOnly)).isChecked());
+
+	        mLibrary.setSyncedFilesPath(mTxtSyncPath.getText().toString());
+        	mLibrary.setAccessCode(mTxtAccessCode.getText().toString());
+        	mLibrary.setAuthKey(Base64.encodeToString((mTxtUserName.getText().toString() + ":" + mTxtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
+        	mLibrary.setLocalOnly(mChkLocalOnly.isChecked());
 		        	
-        	mConnectionButton.setText(R.string.btn_connecting);
         	mConnectionButton.setEnabled(false);
         	
         	LibrarySession.SaveLibrary(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
@@ -53,10 +56,15 @@ public class EditServerActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
-        setContentView(R.layout.activity_configure_library);
+        setContentView(R.layout.activity_edit_server);
 
-        mConnectionButton = (Button)findViewById(R.id.btnConnect);
+		mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);
+		mTxtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
+		mTxtUserName = (EditText)findViewById(R.id.txtUserName);
+		mTxtPassword = (EditText)findViewById(R.id.txtPassword);
+		mTxtSyncPath = (EditText) findViewById(R.id.txtSyncPath);
+		mChkLocalOnly = (CheckBox) findViewById(R.id.chkLocalOnly);
         
         LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
@@ -65,20 +73,19 @@ public class EditServerActivity extends FragmentActivity {
 				if (result == null) return;
 				
 				mLibrary = result;
-		    	final EditText txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);    	
-		    	final EditText txtUserName = (EditText)findViewById(R.id.txtUserName);
-		    	final EditText txtPassword = (EditText)findViewById(R.id.txtPassword);
-		    	
-		    	((CheckBox)findViewById(R.id.chkLocalOnly)).setChecked(mLibrary.isLocalOnly());
-		    	
-		    	txtAccessCode.setText(mLibrary.getAccessCode());
+
+				mTxtSyncPath.setText(mLibrary.getSyncedFilesPath());
+				mChkLocalOnly.setChecked(mLibrary.isLocalOnly());
+
+				mTxtAccessCode.setText(mLibrary.getAccessCode());
 		    	if (mLibrary.getAuthKey() == null) return;
-		    	String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
-		    	if (!decryptedUserAuth.isEmpty()) {
-			    	String[] userDetails = decryptedUserAuth.split(":",2);
-			    	txtUserName.setText(userDetails[0]);
-			    	txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
-		    	}
+
+		    	final String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
+		    	if (decryptedUserAuth.isEmpty()) return;
+
+		        final String[] userDetails = decryptedUserAuth.split(":",2);
+			    mTxtUserName.setText(userDetails[0]);
+			    mTxtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
 			}
         });
         
