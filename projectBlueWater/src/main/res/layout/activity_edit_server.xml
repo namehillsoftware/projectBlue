@@ -84,23 +84,64 @@
         android:orientation="horizontal"
         android:gravity="center_horizontal"
         android:weightSum="1.0"
-        android:layout_marginTop="20dp"
-        android:id="@+id/llSyncPath"
-        android:layout_below="@id/llLocalOnly" >
-        <EditText
-            android:id="@+id/txtSyncPath"
+        android:id="@+id/llSyncFileOptions"
+        android:layout_below="@id/llLocalOnly"
+        android:layout_marginTop="20dp">
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:weightSum="1.0"
             android:layout_weight=".75"
-            android:ems="10"
-            android:hint="@string/lbl_sync_path"/>
+            android:id="@+id/llSyncPath">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/lblSyncMusicLocation"
+                android:layout_marginBottom="10dp"/>
+            <RadioGroup
+                android:id="@+id/rgSyncFileOptions"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+                <RadioButton
+                    android:id="@+id/rbPrivateToApp"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rbPrivateToApp"/>
+                <RadioButton
+                    android:id="@+id/rbPublicLocation"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rbPublicLocation"/>
+                <RadioButton
+                    android:id="@+id/rbCustomLocation"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rbCustomLocation"/>
+            </RadioGroup>
+            <EditText
+                android:id="@+id/txtSyncPath"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:enabled="false"
+                android:inputType="textUri"
+                android:hint="@string/lbl_sync_path"/>
+            <CheckBox
+                android:id="@+id/chkIsUsingExistingFiles"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/lbl_use_existing_music"/>
+        </LinearLayout>
     </LinearLayout>
 
     <Button
         android:id="@+id/btnConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/llSyncPath"
+        android:layout_below="@id/llSyncFileOptions"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         android:text="@string/btn_save" />

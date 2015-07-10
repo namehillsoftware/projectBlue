@@ -209,15 +209,12 @@ public class DiskFileCache {
 	public static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
 	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
 	    // otherwise use internal cache dir
-	    String cachePath =
+		final java.io.File cacheDir =
 	            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
-            		context.getExternalCacheDir().getPath() :
-                    context.getCacheDir().getPath();
+            		context.getExternalCacheDir() :
+                    context.getCacheDir();
 
-		if (uniqueName != null && !uniqueName.isEmpty())
-			cachePath += java.io.File.separator + uniqueName;
-
-	    return new java.io.File(cachePath);
+	    return new java.io.File(cacheDir, uniqueName);
 	}
 
 	public static long getFreeDiskSpace(final Context context) {

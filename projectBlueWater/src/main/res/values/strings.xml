@@ -66,4 +66,9 @@
     <string name="btn_select_server">Select Server</string>
     <string name="btn_add_server">Add Server</string>
     <string name="lbl_sync_path">Sync Path</string>
+    <string name="lblSyncMusicLocation">Sync Music Location:</string>
+    <string name="rbPrivateToApp">Private to App</string>
+    <string name="rbPublicLocation">Public Music Location</string>
+    <string name="rbCustomLocation">Custom:</string>
+    <string name="lbl_use_existing_music">Use existing music on device</string>
 </resources>

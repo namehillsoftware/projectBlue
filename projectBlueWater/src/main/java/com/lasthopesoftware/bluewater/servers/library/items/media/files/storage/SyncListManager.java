@@ -72,7 +72,7 @@ public class SyncListManager {
                         for (IFile file : files)
                             allSyncedFileKeys.add(file.getKey());
 
-                        syncFiles(storedFileAccess, fileDownloadProvider, library, files);
+                        syncFiles(storedFileAccess, mContext, fileDownloadProvider, library, files);
                     }
 
                     // Since we could be pulling back a lot of data, only query for what we need
@@ -171,7 +171,7 @@ public class SyncListManager {
         return false;
     }
 
-    private static void syncFiles(Dao<StoredFile, Integer> storedFilesAccess, FileDownloadProvider fileDownloadProvider, Library library, List<IFile> files) {
+    private static void syncFiles(Dao<StoredFile, Integer> storedFilesAccess, Context context, FileDownloadProvider fileDownloadProvider, Library library, List<IFile> files) {
         try {
             for (IFile file : files) {
                 final PreparedQuery<StoredFile> storedFilePreparedQuery =
@@ -192,7 +192,7 @@ public class SyncListManager {
 
                     try {
                         final File fullRemotePath = new File(file.getProperty(FilePropertiesProvider.FILENAME));
-                        storedFile.setPath(FilenameUtils.concat(FilenameUtils.concat(library.getSyncedFilesPath(), "library-" + String.valueOf(library.getId())), fullRemotePath.getName()));
+                        storedFile.setPath(FilenameUtils.concat(library.getSyncDir(context).getPath(), fullRemotePath.getName()));
                     } catch (IOException e) {
                         mLogger.error("Error getting filename for file " + file.getValue(), e);
                     }

@@ -1,11 +1,15 @@
 package com.lasthopesoftware.bluewater.disk.sqlite.objects;
 
+import android.content.Context;
+import android.os.Environment;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -41,7 +45,13 @@ public class Library {
 	private String savedTracksString;
 
 	@DatabaseField
-	private String syncedFilesPath;
+	private String customSyncedFilesPath;
+
+	@DatabaseField
+	private SyncedFileLocation syncedFileLocation;
+
+	@DatabaseField
+	private boolean isUsingExistingFiles;
 	
 	@ForeignCollectionField(eager = true)
 	private Collection<StoredFile> storedFiles = null;
@@ -193,11 +203,57 @@ public class Library {
 		return cachedFiles;
 	}
 
-	public String getSyncedFilesPath() {
-		return syncedFilesPath;
+	public String getCustomSyncedFilesPath() {
+		return customSyncedFilesPath;
 	}
 
-	public void setSyncedFilesPath(String syncedFilesPath) {
-		this.syncedFilesPath = syncedFilesPath;
+	public void setCustomSyncedFilesPath(String customSyncedFilesPath) {
+		this.customSyncedFilesPath = customSyncedFilesPath;
+	}
+
+	public File getSyncDir(Context context) {
+		return syncedFileLocation != SyncedFileLocation.CUSTOM ? buildSyncDir(context, syncedFileLocation, accessCode) : new File(customSyncedFilesPath, accessCode);
+	}
+
+	public static File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation, String accessCode) {
+		File parentSyncDir = null;
+		switch (syncedFileLocation) {
+			case EXTERNAL:
+				parentSyncDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+				break;
+			case INTERNAL:
+				parentSyncDir = getDefaultSyncDir(context);
+				break;
+		}
+
+		return new File(parentSyncDir, accessCode);
+	}
+
+	private static File getDefaultSyncDir(Context context) {
+		return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
+					new File(context.getFilesDir(), Environment.DIRECTORY_MUSIC) :
+					context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+	}
+
+	public SyncedFileLocation getSyncedFileLocation() {
+		return syncedFileLocation;
+	}
+
+	public void setSyncedFileLocation(SyncedFileLocation syncedFileLocation) {
+		this.syncedFileLocation = syncedFileLocation;
+	}
+
+	public boolean isUsingExistingFiles() {
+		return isUsingExistingFiles;
+	}
+
+	public void setIsUsingExistingFiles(boolean isUsingExistingFiles) {
+		this.isUsingExistingFiles = isUsingExistingFiles;
+	}
+
+	public enum SyncedFileLocation {
+		EXTERNAL,
+		INTERNAL,
+		CUSTOM
 	}
 }
