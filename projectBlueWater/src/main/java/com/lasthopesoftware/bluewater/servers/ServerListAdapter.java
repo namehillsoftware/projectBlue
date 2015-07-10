@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +28,7 @@ public class ServerListAdapter extends BaseAdapter {
 	private Library mChosenLibrary;
 	private static Drawable mSelectedServerDrawable;
 	private static Drawable mNotSelectedServerDrawable;
+	private final Activity mActivity;
 
 	private static class ViewHolder {
 		public final TextView textView;
@@ -42,9 +44,10 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 	}
 
-	public ServerListAdapter(List<Library> libraries, Library chosenLibrary) {
+	public ServerListAdapter(Activity activity, List<Library> libraries, Library chosenLibrary) {
 		super();
 
+		mActivity = activity;
 		mLibraries = libraries;
 		mChosenLibrary = chosenLibrary;
 	}
@@ -56,7 +59,7 @@ public class ServerListAdapter extends BaseAdapter {
 			final RelativeLayout returnView = (RelativeLayout) getInflater(parentContext).inflate(R.layout.layout_standard_text, null);
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
 			textView.setText(parentContext.getText(R.string.btn_add_server));
-			returnView.setOnClickListener(new EditServerClickListener());
+			returnView.setOnClickListener(new EditServerClickListener(mActivity, -1));
 
 			if (convertView != null && convertView.getTag() != null && ((ViewHolder)convertView.getTag()).broadcastReceiver != null)
 				LocalBroadcastManager.getInstance(parentContext).unregisterReceiver(((ViewHolder)convertView.getTag()).broadcastReceiver);
@@ -91,7 +94,7 @@ public class ServerListAdapter extends BaseAdapter {
 			}
 		});
 
-		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener());
+		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener(mActivity, library.getId()));
 
 		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(parentContext);
 		if (viewHolder.broadcastReceiver != null) localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);

@@ -31,98 +31,103 @@ public class LibrarySession {
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);
 	}
-	
-	public static void SaveLibrary(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) { 
-	
+
+	public static void SaveLibrary(final Context context, final Library library, final OnCompleteListener<Void, Void, Library> onSaveComplete) {
+
 		final SimpleTask<Void, Void, Library> writeToDatabaseTask = new SimpleTask<>(new OnExecuteListener<Void, Void, Library>() {
-			
+
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
 				final DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-					
+
 					libraryAccess.createOrUpdate(library);
-					context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).edit().putInt(chosenLibraryInt, library.getId()).apply();
-					
-					mLogger.debug("Session saved.");
+					mLogger.debug("Library saved.");
 					return library;
 				} catch (SQLException e) {
-					mLogger.error(e.toString(), e);
-				} catch (Exception e) {
 					mLogger.error(e.toString(), e);
 				} finally {
 					handler.close();
 				}
-				
+
 				return null;
 			}
 		});
-		
+
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
-		
+
 		writeToDatabaseTask.execute(DatabaseHandler.databaseExecutor);
 	}
-	
+
 	public static void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
-		
-		final SimpleTask<Integer, Void, Library> getLibraryTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Library>() {
-			
+		ExecuteGetLibrary(new SimpleTask<>(new OnExecuteListener<Integer, Void, Library>() {
+
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
 				return GetLibrary(context);
 			}
-		});
-		
+		}), onGetLibraryComplete);
+	}
+
+	public static void GetLibrary(final Context context, final int libraryId, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
+		ExecuteGetLibrary(new SimpleTask<>(new OnExecuteListener<Integer, Void, Library>() {
+
+			@Override
+			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+				return GetLibrary(context, libraryId);
+			}
+		}), onGetLibraryComplete);
+	}
+
+	private static void ExecuteGetLibrary(SimpleTask<Integer, Void, Library> getLibraryTask, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
+
 		getLibraryTask.addOnCompleteListener(new OnCompleteListener<Integer, Void, Library>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (onGetLibraryComplete != null)
 					onGetLibraryComplete.onComplete(owner, result);
 			}
 		});
-		
+
 		getLibraryTask.execute(DatabaseHandler.databaseExecutor);
 	}
-	
+
 	public static synchronized Library GetLibrary(final Context context) {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 
-		final SharedPreferences sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
-		int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
-		
-		if (chosenLibrary < 0) return null;
-		
+		final int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
+		return chosenLibrary >= 0 ? GetLibrary(context, chosenLibrary) : null;
+	}
+
+	private static synchronized Library GetLibrary(final Context context, int libraryId) {
+		if (libraryId < 0) return null;
+
 		final DatabaseHandler handler = new DatabaseHandler(context);
 		try {
 			final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
-			return libraryAccess.queryForId(chosenLibrary);
+			return libraryAccess.queryForId(libraryId);
 		} catch (SQLException e) {
-			mLogger.error(e.toString(), e);
-		} catch (Exception e) {
 			mLogger.error(e.toString(), e);
 		} finally {
 			handler.close();
 		}
-		
+
 		return null;
 	}
 	
-	public static List<Library> GetLibraries(Context context) {
-		final Context _context = context;
-		SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, List<Library>>() {
+	public static void GetLibraries(final Context context, OnCompleteListener<Void, Void, List<Library>> onGetLibrariesComplete) {
+		final SimpleTask<Void, Void, List<Library>> getLibrariesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, List<Library>>() {
 			
 			@Override
 			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
-				DatabaseHandler handler = new DatabaseHandler(_context);
+				final DatabaseHandler handler = new DatabaseHandler(context);
 				try {
 					return handler.getAccessObject(Library.class).queryForAll();
 				} catch (SQLException e) {
-					mLogger.error(e.toString(), e);
-				} catch (Exception e) {
 					mLogger.error(e.toString(), e);
 				} finally {
 					handler.close();
@@ -131,15 +136,11 @@ public class LibrarySession {
 				return new ArrayList<>();
 			}
 		});
-		
-		try {
-			return getLibrariesTask.execute(DatabaseHandler.databaseExecutor).get();
-		} catch (Exception e) {
-			mLogger.error(e.toString(), e);
-		}
-		
-		// Exceptions occurred, return an empty mLibrary
-		return new ArrayList<>();
+
+		if (onGetLibrariesComplete != null)
+			getLibrariesTask.addOnCompleteListener(onGetLibrariesComplete);
+
+		getLibrariesTask.execute(DatabaseHandler.databaseExecutor);
 	}
 		
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {

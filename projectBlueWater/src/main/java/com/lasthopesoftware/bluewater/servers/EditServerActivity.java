@@ -20,6 +20,9 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import java.io.File;
 
 public class EditServerActivity extends FragmentActivity {
+
+	public static final String serverIdExtra = EditServerActivity.class.getCanonicalName() + ".serverIdExtra";
+
 	private Button mConnectionButton;
 	private Library mLibrary;
 
@@ -99,7 +102,8 @@ public class EditServerActivity extends FragmentActivity {
 			}
 		});
 
-		LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		final int libraryId = getIntent().getIntExtra(serverIdExtra, -1);
+		LibrarySession.GetLibrary(this, libraryId, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -107,10 +111,12 @@ public class EditServerActivity extends FragmentActivity {
 
 				mLibrary = result;
 
-				mTxtSyncPath.setText(mLibrary.getCustomSyncedFilesPath());
 				mChkLocalOnly.setChecked(mLibrary.isLocalOnly());
 				mChkIsUsingExistingFiles.setChecked(mLibrary.isUsingExistingFiles());
-				mTxtSyncPath.setText(mLibrary.getCustomSyncedFilesPath());
+
+				final String customSyncPath = mLibrary.getCustomSyncedFilesPath();
+				if (customSyncPath != null && !customSyncPath.isEmpty())
+					mTxtSyncPath.setText(customSyncPath);
 
 				switch (mLibrary.getSyncedFileLocation()) {
 					case EXTERNAL:
@@ -125,16 +131,16 @@ public class EditServerActivity extends FragmentActivity {
 				}
 
 				mTxtAccessCode.setText(mLibrary.getAccessCode());
-		    	if (mLibrary.getAuthKey() == null) return;
+				if (mLibrary.getAuthKey() == null) return;
 
-		    	final String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
-		    	if (decryptedUserAuth.isEmpty()) return;
+				final String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
+				if (decryptedUserAuth.isEmpty()) return;
 
-		        final String[] userDetails = decryptedUserAuth.split(":",2);
-			    mTxtUserName.setText(userDetails[0]);
-			    mTxtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
+				final String[] userDetails = decryptedUserAuth.split(":", 2);
+				mTxtUserName.setText(userDetails[0]);
+				mTxtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
 			}
-        });
+		});
         
 	}
 }
