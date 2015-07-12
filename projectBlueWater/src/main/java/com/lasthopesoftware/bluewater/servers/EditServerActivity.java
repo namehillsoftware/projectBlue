@@ -5,12 +5,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -99,6 +101,14 @@ public class EditServerActivity extends FragmentActivity {
 			@Override
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
 				mTxtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation);
+			}
+		});
+
+		mTxtAccessCode.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				mConnectionButton.setEnabled(v.getText().length() > 0);
+				return false;
 			}
 		});
 
