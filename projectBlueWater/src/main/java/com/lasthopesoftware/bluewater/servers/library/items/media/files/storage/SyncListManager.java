@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.provider.FileDownloadProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service.StoreFilesService;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -184,7 +185,7 @@ public class SyncListManager {
                             .prepare();
 
                 StoredFile storedFile = storedFilesAccess.queryForFirst(storedFilePreparedQuery);
-                if (storedFile == null) {
+                if (storedFile != null) {
                     storedFile = new StoredFile();
                     storedFile.setServiceId(file.getKey());
                     storedFile.setLibrary(library);
@@ -199,9 +200,9 @@ public class SyncListManager {
                     }
                 }
 
-                if (storedFile.isDownloadComplete() || storedFile.getDownloadId() > -1) continue;
+                if (storedFile.isDownloadComplete())
+	                StoreFilesService.queueFileForDownload(context, file, storedFile);
 
-                storedFile.setDownloadId(fileDownloadProvider.downloadFile(file, storedFile.getPath()));
                 storedFilesAccess.createOrUpdate(storedFile);
             }
         } catch (SQLException e) {

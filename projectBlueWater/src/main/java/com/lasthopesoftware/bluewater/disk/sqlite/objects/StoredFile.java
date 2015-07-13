@@ -23,9 +23,6 @@ public class StoredFile {
 	@DatabaseField(uniqueCombo = true)
 	private int serviceId;
 
-	@DatabaseField(unique = true)
-	private long downloadId = -1;
-
 	@DatabaseField
 	private boolean isDownloadComplete;
 
@@ -61,14 +58,6 @@ public class StoredFile {
 
 	public void setServiceId(int serviceId) {
 		this.serviceId = serviceId;
-	}
-
-	public long getDownloadId() {
-		return downloadId;
-	}
-
-	public void setDownloadId(long downloadId) {
-		this.downloadId = downloadId;
 	}
 
 	public boolean isDownloadComplete() {
