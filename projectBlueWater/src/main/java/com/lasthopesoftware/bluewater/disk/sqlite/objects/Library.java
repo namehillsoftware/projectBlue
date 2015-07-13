@@ -212,27 +212,21 @@ public class Library {
 	}
 
 	public File getSyncDir(Context context) {
-		return syncedFileLocation != SyncedFileLocation.CUSTOM ? buildSyncDir(context, syncedFileLocation, accessCode) : new File(customSyncedFilesPath, accessCode);
+		return syncedFileLocation != SyncedFileLocation.CUSTOM ? buildSyncDir(context, syncedFileLocation) : new File(customSyncedFilesPath);
 	}
 
-	public static File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation, String accessCode) {
+	private static File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation) {
 		File parentSyncDir = null;
 		switch (syncedFileLocation) {
 			case EXTERNAL:
 				parentSyncDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
 				break;
 			case INTERNAL:
-				parentSyncDir = getDefaultSyncDir(context);
+				parentSyncDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
 				break;
 		}
 
-		return new File(parentSyncDir, accessCode);
-	}
-
-	private static File getDefaultSyncDir(Context context) {
-		return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
-					new File(context.getFilesDir(), Environment.DIRECTORY_MUSIC) :
-					context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+		return parentSyncDir;
 	}
 
 	public SyncedFileLocation getSyncedFileLocation() {
