@@ -131,7 +131,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 					// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
 					final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME + "://", ""));
 
-					if (file != null && file.exists()) {
+					if (file.exists()) {
 						mLogger.info("Returning file URI from local disk.");
 						return Uri.fromFile(file);
 					}
