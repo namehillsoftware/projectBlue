@@ -30,7 +30,7 @@ public class FileDownloadCompleteReceiver extends BroadcastReceiver {
         final long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
         if (downloadId == -1) return;
 
-        SimpleTask.executeNew(new ISimpleTask.OnExecuteListener<Void, Void, Void>() {
+        SimpleTask.executeNew(DatabaseHandler.databaseExecutor, new ISimpleTask.OnExecuteListener<Void, Void, Void>() {
             @Override
             public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
                 final DatabaseHandler databaseHandler = new DatabaseHandler(context);
