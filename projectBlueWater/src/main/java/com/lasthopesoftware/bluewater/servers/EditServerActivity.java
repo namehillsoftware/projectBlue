@@ -1,22 +1,22 @@
 package com.lasthopesoftware.bluewater.servers;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.FileDownloadsActivity;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.File;
@@ -25,9 +25,10 @@ public class EditServerActivity extends FragmentActivity {
 
 	public static final String serverIdExtra = EditServerActivity.class.getCanonicalName() + ".serverIdExtra";
 
-	private Button mConnectionButton;
 	private Library mLibrary;
 
+	private Button mSaveButton;
+	private Button mViewActiveDownloadsButton;
 	private EditText mTxtAccessCode;
 	private EditText mTxtUserName;
 	private EditText mTxtPassword;
@@ -40,7 +41,7 @@ public class EditServerActivity extends FragmentActivity {
         public void onClick(View v) {
 
         	final Context _context = v.getContext();
-        	
+
         	if (mLibrary == null) {
         		mLibrary = new Library();
         		mLibrary.setNowPlayingId(-1);
@@ -63,26 +64,34 @@ public class EditServerActivity extends FragmentActivity {
 	        }
 	        mLibrary.setIsUsingExistingFiles(mChkIsUsingExistingFiles.isChecked());
 
-        	mConnectionButton.setEnabled(false);
-        	
+        	mSaveButton.setEnabled(false);
+
         	LibrarySession.SaveLibrary(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 
 		        @Override
 		        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-			        mConnectionButton.setText(getText(R.string.btn_saved));
+			        mSaveButton.setText(getText(R.string.btn_saved));
 			        finish();
 		        }
 	        });
         }
     };
-	
+
 	@Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); 
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_server);
 
-		mConnectionButton = (Button)findViewById(R.id.btnConnect);
-        mConnectionButton.setOnClickListener(mConnectionButtonListener);
+		mSaveButton = (Button)findViewById(R.id.btnConnect);
+        mSaveButton.setOnClickListener(mConnectionButtonListener);
+		mViewActiveDownloadsButton = (Button)findViewById(R.id.btnViewActiveDownloads);
+		mViewActiveDownloadsButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				final Intent intent = new Intent(v.getContext(), FileDownloadsActivity.class);
+				startActivity(intent);
+			}
+		});
 		mTxtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
 		mTxtUserName = (EditText)findViewById(R.id.txtUserName);
 		mTxtPassword = (EditText)findViewById(R.id.txtPassword);
@@ -101,14 +110,6 @@ public class EditServerActivity extends FragmentActivity {
 			@Override
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
 				mTxtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation);
-			}
-		});
-
-		mTxtAccessCode.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-			@Override
-			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-				mConnectionButton.setEnabled(v.getText().length() > 0);
-				return false;
 			}
 		});
 

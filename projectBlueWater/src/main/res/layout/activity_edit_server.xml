@@ -134,6 +134,11 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/lbl_use_existing_music"/>
+            <Button
+                android:id="@+id/btnViewActiveDownloads"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View active downloads"/>
         </LinearLayout>
     </LinearLayout>
 
