@@ -145,7 +145,7 @@ public class SyncListManager {
                         mLogger.error("Error while creating new stored list", e);
                     }
                 } catch (SQLException e) {
-                    mLogger.error("Error getting acces to the stored list table", e);
+                    mLogger.error("Error getting access to the stored list table", e);
                 } finally {
                     dbHandler.close();
                 }
@@ -191,14 +191,15 @@ public class SyncListManager {
                     storedFile.setIsOwner(true);
 
                     try {
-                        final File fullRemotePath = new File(file.getProperty(FilePropertiesProvider.FILENAME));
-                        storedFile.setPath(FilenameUtils.concat(library.getSyncDir(context).getPath(), fullRemotePath.getName()));
+                        String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
+                        fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+                        storedFile.setPath(FilenameUtils.concat(library.getSyncDir(context).getPath(), fileName));
                     } catch (IOException e) {
                         mLogger.error("Error getting filename for file " + file.getValue(), e);
                     }
                 }
 
-                if (!storedFile.isDownloadComplete() || storedFile.getDownloadId() > -1) continue;
+                if (storedFile.isDownloadComplete() || storedFile.getDownloadId() > -1) continue;
 
                 storedFile.setDownloadId(fileDownloadProvider.downloadFile(file, storedFile.getPath()));
                 storedFilesAccess.createOrUpdate(storedFile);
