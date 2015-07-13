@@ -151,14 +151,18 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 					conn.disconnect();
 				}
 
-				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
-				if (!cacheDir.exists())
-					cacheDir.mkdirs();
-				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
+				try {
+					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
+					if (!cacheDir.exists())
+						cacheDir.mkdirs();
+					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 
-				imageDiskCache.put(uniqueKey, file, imageBytes);
+					imageDiskCache.put(uniqueKey, file, imageBytes);
+				} catch (IOException ioe) {
+					mLogger.error("Error writing file!", ioe);
+				}
+
 				putBitmapIntoMemory(uniqueKey, imageBytes);
-
 				return getBitmapFromBytes(imageBytes);
 			} catch (Exception e) {
 				mLogger.error(e.toString(), e);
