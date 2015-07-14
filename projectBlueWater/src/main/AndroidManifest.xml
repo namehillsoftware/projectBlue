@@ -150,6 +150,11 @@
             android:exported="false" >
         </service>
 
+        <service
+            android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service.StoreFilesService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
         
     </application>
 

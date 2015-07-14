@@ -62,14 +62,19 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 		}
 		return super.getValue();
 	}
-	
-	public String getSubItemUrl() {
+
+	public String[] getPlaybackParams() {
 		/* Playback:
 		 * 0: Downloading (not real-time playback);
-		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.; 
+		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.;
 		 * 2: Real-time playback, no playback statistics handling (default: )
 		 */
-		return ConnectionProvider.getFormattedUrl("File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0");
+
+		return new String[] { "File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0" };
+	}
+	
+	public String getPlaybackUrl() {
+		return ConnectionProvider.getFormattedUrl(getPlaybackParams());
 	}
 	
 	public void setProperty(String name, String value) {
@@ -150,7 +155,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	public Uri getRemoteFileUri(Context context) throws IOException {
 		mLogger.info("Returning file URL from server.");
 
-		final String itemUrl = getSubItemUrl();
+		final String itemUrl = getPlaybackUrl();
 		if (itemUrl != null && !itemUrl.isEmpty())
 			return Uri.parse(itemUrl);
 

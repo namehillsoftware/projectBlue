@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.storage;
 
 import android.content.Context;
+import android.net.Uri;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
@@ -14,7 +15,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.provider.FileDownloadProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service.StoreFilesService;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by david on 7/5/15.
@@ -43,59 +41,55 @@ public class SyncListManager {
 
     private final Context mContext;
 
-    private static final ExecutorService mSyncExecutor = Executors.newSingleThreadExecutor();
-
     public SyncListManager(Context context) {
         mContext = context;
     }
 
     public void startSync() {
-        mSyncExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                final Library library = LibrarySession.GetLibrary(mContext);
-                if (library == null) return;
+        DatabaseHandler.databaseExecutor.execute(new Runnable() {
+	        @Override
+	        public void run() {
+		        final Library library = LibrarySession.GetLibrary(mContext);
+		        if (library == null) return;
 
-                final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
-                try {
-                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
-                    final List<StoredList> listsToSync = storedListAccess.queryForAll();
+		        final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
+		        try {
+			        final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
+			        final List<StoredList> listsToSync = storedListAccess.queryForAll();
 
-                    final FileDownloadProvider fileDownloadProvider = new FileDownloadProvider(mContext);
+			        final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
 
-                    final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
+			        final Set<Integer> allSyncedFileKeys = new HashSet<>();
+			        for (StoredList listToSync : listsToSync) {
+				        final int serviceId = listToSync.getServiceId();
+				        final IFilesContainer filesContainer = listToSync.getType() == StoredList.ListType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+				        final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
+				        for (IFile file : files)
+					        allSyncedFileKeys.add(file.getKey());
 
-                    final Set<Integer> allSyncedFileKeys = new HashSet<>();
-                    for (StoredList listToSync : listsToSync) {
-                        final int serviceId = listToSync.getServiceId();
-                        final IFilesContainer filesContainer = listToSync.getType() == StoredList.ListType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-                        final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
-                        for (IFile file : files)
-                            allSyncedFileKeys.add(file.getKey());
+				        syncFiles(storedFileAccess, mContext, library, files);
+			        }
 
-                        syncFiles(storedFileAccess, mContext, fileDownloadProvider, library, files);
-                    }
+			        // Since we could be pulling back a lot of data, only query for what we need
+			        final PreparedQuery<StoredFile> storedFilePreparedQuery =
+					        storedFileAccess
+							        .queryBuilder()
+							        .selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
+							        .where()
+							        .eq(StoredFile.libraryIdColumnName, library.getId())
+							        .prepare();
 
-                    // Since we could be pulling back a lot of data, only query for what we need
-                    final PreparedQuery<StoredFile> storedFilePreparedQuery =
-                            storedFileAccess
-                                    .queryBuilder()
-                                    .selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
-                                    .where()
-                                    .eq(StoredFile.libraryIdColumnName, library.getId())
-                                    .prepare();
-
-                    final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);
-                    for (StoredFile storedFile : allStoredFiles) {
-                        if (!allSyncedFileKeys.contains(storedFile.getServiceId()))
-                            deleteStoredFile(storedFileAccess, storedFile);
-                    }
-                } catch (SQLException e) {
-                    mLogger.error("Error accessing the stored list access", e);
-                } finally {
-                    dbHandler.close();
-                }
-            }
+			        final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);
+			        for (StoredFile storedFile : allStoredFiles) {
+				        if (!allSyncedFileKeys.contains(storedFile.getServiceId()))
+					        deleteStoredFile(storedFileAccess, storedFile);
+			        }
+		        } catch (SQLException e) {
+			        mLogger.error("Error accessing the stored list access", e);
+		        } finally {
+			        dbHandler.close();
+		        }
+	        }
         });
     }
 
@@ -121,11 +115,11 @@ public class SyncListManager {
         if (isItemSyncedResult != null)
             isItemSyncedTask.addOnCompleteListener(isItemSyncedResult);
 
-        isItemSyncedTask.execute(mSyncExecutor);
+        isItemSyncedTask.execute(DatabaseHandler.databaseExecutor);
     }
 
     private void markItemForSync(final IItem item, final StoredList.ListType listType) {
-        mSyncExecutor.execute(new Runnable() {
+        DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
@@ -172,7 +166,7 @@ public class SyncListManager {
         return false;
     }
 
-    private static void syncFiles(Dao<StoredFile, Integer> storedFilesAccess, Context context, FileDownloadProvider fileDownloadProvider, Library library, List<IFile> files) {
+    private static void syncFiles(Dao<StoredFile, Integer> storedFilesAccess, Context context, Library library, List<IFile> files) {
         try {
             for (IFile file : files) {
                 final PreparedQuery<StoredFile> storedFilePreparedQuery =
@@ -185,11 +179,23 @@ public class SyncListManager {
                             .prepare();
 
                 StoredFile storedFile = storedFilesAccess.queryForFirst(storedFilePreparedQuery);
-                if (storedFile != null) {
+                if (storedFile == null) {
                     storedFile = new StoredFile();
                     storedFile.setServiceId(file.getKey());
                     storedFile.setLibrary(library);
                     storedFile.setIsOwner(true);
+
+                    try {
+                        final Uri localUri = file.getLocalFileUri(context);
+                        if (localUri != null) {
+                            storedFile.setPath(localUri.getPath());
+                            storedFile.setIsDownloadComplete(true);
+                        }
+                        storedFilesAccess.createOrUpdate(storedFile);
+	                    return;
+                    } catch (IOException e) {
+                        mLogger.error("Error retrieving local file URI", e);
+                    }
 
                     try {
                         String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
@@ -200,7 +206,7 @@ public class SyncListManager {
                     }
                 }
 
-                if (storedFile.isDownloadComplete())
+                if (!storedFile.isDownloadComplete())
 	                StoreFilesService.queueFileForDownload(context, file, storedFile);
 
                 storedFilesAccess.createOrUpdate(storedFile);

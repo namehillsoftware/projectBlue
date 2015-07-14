@@ -41,7 +41,6 @@ public class FileDownloadCompleteReceiver extends BroadcastReceiver {
 
                     final StoredFile storedFile = storedFileResults.get(0);
                     storedFile.setIsDownloadComplete(true);
-                    storedFile.setDownloadId(-1);
                     storedFileAccess.update(storedFile);
                 } catch (SQLException e) {
                     LoggerFactory.getLogger(getClass()).error("Error getting access to StoredFile table", e);
