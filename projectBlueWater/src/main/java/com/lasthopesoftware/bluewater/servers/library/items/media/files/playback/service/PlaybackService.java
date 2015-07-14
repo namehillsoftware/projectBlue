@@ -438,7 +438,10 @@ public class PlaybackService extends Service implements
 		mPlaylistController.pause();
 	}
 	
-	private void notifyForeground(Notification notification) {
+	private void notifyForeground(Builder notificationBuilder) {
+		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
+		final Notification notification = notificationBuilder.build();
+
 		if (!mIsNotificationForeground) {
 			startForeground(mId, notification);
 			mIsNotificationForeground = true;
@@ -456,11 +459,10 @@ public class PlaybackService extends Service implements
 
 	private void notifyStartingService() {
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-		builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
 
-		notifyForeground(builder.build());
+		notifyForeground(builder);
 	}
 	
 	private void registerListeners() {
@@ -580,7 +582,7 @@ public class PlaybackService extends Service implements
 			actOnIntent(intentToRun);
 			break;
 		}
-		notifyForeground(notifyBuilder.build());
+		notifyForeground(notifyBuilder);
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -701,18 +703,16 @@ public class PlaybackService extends Service implements
 		saveStateToLibrary(controller, filePlayer);
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(mStreamingMusicService, PlaybackService.class);
 		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
-		
-		final CharSequence waitingText = getText(R.string.lbl_waiting_for_connection);
-		builder.setContentTitle(waitingText);
+
+		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notifyForeground(builder.build());
+		notifyForeground(builder);
 		
 		final PollConnection checkConnection = PollConnection.Instance.get(mStreamingMusicService);
 		
@@ -882,12 +882,11 @@ public class PlaybackService extends Service implements
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
 				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
-		        builder.setSmallIcon(R.drawable.clearstream_logo_dark);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
 				builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
 				builder.setContentIntent(pi);
-				notifyForeground(builder.build());
+				notifyForeground(builder);
 			}
 		});
 		
