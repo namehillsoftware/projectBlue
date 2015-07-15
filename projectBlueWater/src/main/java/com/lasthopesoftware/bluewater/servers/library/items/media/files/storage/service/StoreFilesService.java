@@ -12,11 +12,13 @@ import android.support.v4.app.NotificationCompat;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.StoredFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.StoredFileAccess;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.apache.commons.io.IOUtils;
@@ -58,7 +60,7 @@ public class StoreFilesService extends Service {
 
 	private boolean mIsForeground;
 
-	private final StoredFileProvider mStoredFileProvider;
+	private StoredFileAccess mStoredFileAccess;
 
 	public static void queueFileForDownload(Context context, IFile file, StoredFile storedFile) {
 		if (storedFile.getId() == 0)
@@ -71,8 +73,17 @@ public class StoreFilesService extends Service {
 		context.startService(intent);
 	}
 
-	public StoreFilesService() {
-		mStoredFileProvider = new StoredFileProvider(this);
+	@Override
+	public void onCreate() {
+		super.onCreate();
+
+		final Context context = this;
+		LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+				mStoredFileAccess = new StoredFileAccess(context, library);
+			}
+		});
 	}
 
 	@Override
@@ -101,7 +112,7 @@ public class StoreFilesService extends Service {
 	private void queueAndStartDownloading(final int fileKey, final int storedFileId) {
 		if (!mQueuedFileKeys.add(fileKey)) return;
 
-		mStoredFileProvider.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
+		mStoredFileAccess.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, final StoredFile storedFile) {
 				mStoreFilesExecutor.execute(new Runnable() {
@@ -146,12 +157,11 @@ public class StoreFilesService extends Service {
 									mQueuedFileKeys.remove(fileKey);
 								}
 
-								mStoredFileProvider.markStoredFileAsDownloaded(storedFileId);
+								mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
 								sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(new java.io.File(storedFile.getPath()))));
 							} catch (IOException ioe) {
 								mLogger.error("Error writing file!", ioe);
-							}
-							finally {
+							} finally {
 								if (is != null) {
 									try {
 										is.close();

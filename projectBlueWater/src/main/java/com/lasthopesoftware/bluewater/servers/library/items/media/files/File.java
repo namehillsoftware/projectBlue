@@ -84,6 +84,16 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	public String getProperty(String name) throws IOException {
 		return mFilePropertiesProvider.getProperty(name);
 	}
+
+	@Override
+	public String tryGetProperty(String name) {
+		try {
+			return mFilePropertiesProvider.getProperty(name);
+		} catch (IOException io) {
+			mLogger.warn("There was an error returning " + name + " for file " + String.valueOf(getKey()) + ".", io);
+			return null;
+		}
+	}
 	
 	public String getRefreshedProperty(String name) throws IOException {
 		return mFilePropertiesProvider.getRefreshedProperty(name);

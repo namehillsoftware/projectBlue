@@ -222,6 +222,11 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
+		public String tryGetProperty(String name) {
+			return null;
+		}
+
+		@Override
 		public String getRefreshedProperty(String name) throws IOException {
 			// TODO Auto-generated method stub
 			return null;
