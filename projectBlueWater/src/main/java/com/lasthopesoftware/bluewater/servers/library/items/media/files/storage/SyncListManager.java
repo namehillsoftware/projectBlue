@@ -204,6 +204,10 @@ public class SyncListManager {
 			            String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
 			            fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
+			            final int extensionIndex = fileName.lastIndexOf('.');
+			            if (extensionIndex > -1)
+				            fileName = fileName.substring(0, extensionIndex + 1).concat("mp3");
+
 			            String fullPath = library.getSyncDir(context).getPath();
 			            try {
 				            final String artist = file.getProperty(FilePropertiesProvider.ARTIST);
