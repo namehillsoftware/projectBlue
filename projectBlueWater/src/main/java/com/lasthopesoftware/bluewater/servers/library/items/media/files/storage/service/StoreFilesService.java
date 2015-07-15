@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -15,6 +16,8 @@ import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.StoredFileProvider;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.apache.commons.io.IOUtils;
 
@@ -43,7 +46,7 @@ public class StoreFilesService extends Service {
 
 	private static final String queueFileForDownload = StoreFilesService.class.getCanonicalName() + ".queueFileForDownload";
 
-	private static final String destinationPathKey = StoreFilesService.class.getCanonicalName() + ".destinationPathKey";
+	private static final String storedFileId = StoreFilesService.class.getCanonicalName() + ".storedFileId";
 	private static final String fileIdKey = StoreFilesService.class.getCanonicalName() + ".fileIdKey";
 
 	private final Queue<QueuedFileHolder> mFileDownloadQueue = new ArrayDeque<>();
@@ -55,12 +58,21 @@ public class StoreFilesService extends Service {
 
 	private boolean mIsForeground;
 
+	private final StoredFileProvider mStoredFileProvider;
+
 	public static void queueFileForDownload(Context context, IFile file, StoredFile storedFile) {
+		if (storedFile.getId() == 0)
+			throw new IllegalArgumentException("The stored file must exist and have a key in the database");
+
 		final Intent intent = new Intent(context, StoreFilesService.class);
 		intent.setAction(queueFileForDownload);
-		intent.putExtra(destinationPathKey, storedFile.getPath());
+		intent.putExtra(storedFileId, storedFile.getId());
 		intent.putExtra(fileIdKey, file.getKey());
 		context.startService(intent);
+	}
+
+	public StoreFilesService() {
+		mStoredFileProvider = new StoredFileProvider(this);
 	}
 
 	@Override
@@ -72,10 +84,9 @@ public class StoreFilesService extends Service {
 		final int fileKey = intent.getIntExtra(fileIdKey, -1);
 		if (fileKey == -1) return returnValue;
 
-		final String remotePath = intent.getStringExtra(destinationPathKey);
-		if (remotePath == null) return returnValue;
-
-		queueAndStartDownloading(fileKey, remotePath);
+		final int storedFileId = intent.getIntExtra(StoreFilesService.storedFileId, -1);
+		if (storedFileId > -1)
+			queueAndStartDownloading(fileKey, storedFileId);
 
 		return returnValue;
 	}
@@ -87,65 +98,78 @@ public class StoreFilesService extends Service {
 		return notifyBuilder.build();
 	}
 
-	private void queueAndStartDownloading(final int fileKey, final String remotePath) {
+	private void queueAndStartDownloading(final int fileKey, final int storedFileId) {
 		if (!mQueuedFileKeys.add(fileKey)) return;
 
-		mStoreFilesExecutor.execute(new Runnable() {
+		mStoredFileProvider.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
 			@Override
-			public void run() {
-				if (!mIsForeground)
-					startForeground(23, buildSyncNotification());
+			public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, final StoredFile storedFile) {
+				mStoreFilesExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						if (!mIsForeground)
+							startForeground(23, buildSyncNotification());
 
-				final File file = new File(fileKey);
+						final File serviceFile = new File(fileKey);
 
-				HttpURLConnection connection;
-				try {
-					connection = ConnectionProvider.getConnection(file.getPlaybackParams());
-				} catch (IOException e) {
-					mLogger.error("Error opening connection", e);
-					return;
-				}
-
-				if (connection == null) return;
-
-				try {
-					InputStream is;
-					try {
-						is = connection.getInputStream();
-					} catch (IOException ioe) {
-						mLogger.error("Error reading data from connection", ioe);
-						return;
-					}
-
-					try {
-						final FileOutputStream fos = new FileOutputStream(remotePath);
+						HttpURLConnection connection;
 						try {
-							IOUtils.copy(is, fos);
-							fos.flush();
-						} finally {
-							fos.close();
+							connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
+						} catch (IOException e) {
+							mLogger.error("Error opening connection", e);
+							return;
 						}
-					} catch (IOException ioe) {
-						mLogger.error("Error writing file!", ioe);
-					}
-					finally {
-						if (is != null) {
+
+						if (connection == null) return;
+
+						try {
+							InputStream is;
 							try {
-								is.close();
-							} catch (IOException e) {
-								mLogger.error("Error closing input stream", e);
+								is = connection.getInputStream();
+							} catch (IOException ioe) {
+								mLogger.error("Error reading data from connection", ioe);
+								return;
+							}
+
+							final java.io.File file = new java.io.File(storedFile.getPath());
+
+							final java.io.File parent = file.getParentFile();
+							if (!parent.exists()) parent.mkdirs();
+
+							try {
+								final FileOutputStream fos = new FileOutputStream(storedFile.getPath());
+								try {
+									IOUtils.copy(is, fos);
+									fos.flush();
+								} finally {
+									fos.close();
+									mQueuedFileKeys.remove(fileKey);
+								}
+
+								mStoredFileProvider.markStoredFileAsDownloaded(storedFileId);
+								sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(new java.io.File(storedFile.getPath()))));
+							} catch (IOException ioe) {
+								mLogger.error("Error writing file!", ioe);
+							}
+							finally {
+								if (is != null) {
+									try {
+										is.close();
+									} catch (IOException e) {
+										mLogger.error("Error closing input stream", e);
+									}
+								}
+							}
+						} finally {
+							connection.disconnect();
+
+							if (mIsForeground && mQueuedFileKeys.size() == 0) {
+								stopForeground(true);
+								mIsForeground = false;
 							}
 						}
 					}
-				} finally {
-					connection.disconnect();
-					mQueuedFileKeys.remove(fileKey);
-
-					if (mIsForeground && mQueuedFileKeys.size() == 0) {
-						stopForeground(true);
-						mIsForeground = false;
-					}
-				}
+				});
 			}
 		});
 	}

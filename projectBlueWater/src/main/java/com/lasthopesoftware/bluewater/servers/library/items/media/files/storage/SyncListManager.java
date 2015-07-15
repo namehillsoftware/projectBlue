@@ -184,32 +184,54 @@ public class SyncListManager {
                     storedFile.setServiceId(file.getKey());
                     storedFile.setLibrary(library);
                     storedFile.setIsOwner(true);
-
-                    try {
-                        final Uri localUri = file.getLocalFileUri(context);
-                        if (localUri != null) {
-                            storedFile.setPath(localUri.getPath());
-                            storedFile.setIsDownloadComplete(true);
-                        }
-                        storedFilesAccess.createOrUpdate(storedFile);
-	                    return;
-                    } catch (IOException e) {
-                        mLogger.error("Error retrieving local file URI", e);
-                    }
-
-                    try {
-                        String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
-                        fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
-                        storedFile.setPath(FilenameUtils.concat(library.getSyncDir(context).getPath(), fileName));
-                    } catch (IOException e) {
-                        mLogger.error("Error getting filename for file " + file.getValue(), e);
-                    }
                 }
+
+	            if (storedFile.getPath() == null) {
+		            try {
+			            final Uri localUri = file.getLocalFileUri(context);
+			            if (localUri != null) {
+				            storedFile.setPath(localUri.getPath());
+				            storedFile.setIsDownloadComplete(true);
+				            storedFile.setIsOwner(false);
+			            }
+		            } catch (IOException e) {
+			            mLogger.error("Error retrieving local file URI", e);
+		            }
+	            }
+
+	            if (storedFile.getPath() == null) {
+		            try {
+			            String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
+			            fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+
+			            String fullPath = library.getSyncDir(context).getPath();
+			            try {
+				            final String artist = file.getProperty(FilePropertiesProvider.ARTIST);
+				            if (artist != null)
+								fullPath = FilenameUtils.concat(fullPath, artist);
+			            } catch (IOException ioe) {
+				            mLogger.error("Error getting artist for file " + file.getValue(), ioe);
+			            }
+
+			            try {
+				            final String album = file.getProperty(FilePropertiesProvider.ALBUM);
+				            if (album != null)
+					            fullPath = FilenameUtils.concat(fullPath, album);
+			            } catch (IOException ioe) {
+				            mLogger.error("Error getting artist for file " + file.getValue(), ioe);
+			            }
+
+			            fullPath = FilenameUtils.concat(fullPath, fileName);
+			            storedFile.setPath(fullPath);
+		            } catch (IOException e) {
+			            mLogger.error("Error getting filename for file " + file.getValue(), e);
+		            }
+	            }
+
+	            storedFilesAccess.createOrUpdate(storedFile);
 
                 if (!storedFile.isDownloadComplete())
 	                StoreFilesService.queueFileForDownload(context, file, storedFile);
-
-                storedFilesAccess.createOrUpdate(storedFile);
             }
         } catch (SQLException e) {
             mLogger.error("There was an updating the stored file.", e);
