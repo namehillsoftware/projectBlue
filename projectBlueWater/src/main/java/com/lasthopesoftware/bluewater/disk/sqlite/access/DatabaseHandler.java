@@ -96,5 +96,7 @@ public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
 	@Override
 	public void close() {
 		super.close();
+
+		DaoManager.clearCache();
 	}
 }
