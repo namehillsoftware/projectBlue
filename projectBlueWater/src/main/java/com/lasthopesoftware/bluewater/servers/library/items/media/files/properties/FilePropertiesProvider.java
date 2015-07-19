@@ -47,7 +47,7 @@ public class FilePropertiesProvider {
         }
     }
 
-	private static final int maxSize = 1000;
+	private static final int maxSize = 500;
 	private final String mFileKeyString;
 	private FilePropertiesContainer mFilePropertiesContainer = null;
 	
@@ -144,13 +144,11 @@ public class FilePropertiesProvider {
 						} finally {
 							conn.disconnect();
 						}
-					} catch (MalformedURLException e) {
-						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-					} catch (XmlParseException e) {
+					} catch (MalformedURLException | XmlParseException e) {
 						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					}
 
-                    if (returnProperties != null)
+					if (returnProperties != null)
                         mFilePropertiesContainer.updateProperties(revision, returnProperties);
 
                     return mFilePropertiesContainer.getProperties();

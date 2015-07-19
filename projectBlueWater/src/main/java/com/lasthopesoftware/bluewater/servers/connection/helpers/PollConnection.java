@@ -18,7 +18,7 @@ public class PollConnection {
 	
 	private final AsyncTask<String, Void, Void> mTask;
 	private final Context mContext;
-	private int mSleepTime = 1000;
+	private int mSleepTime = 2250;
 	private int mConnectionTime = 2000;
 	
 	private final AtomicBoolean mIsConnectionRestored = new AtomicBoolean();
@@ -44,7 +44,7 @@ public class PollConnection {
 			protected Void doInBackground(String... params) {
 				// Don't use timeout since if it can't resolve a host it will throw an exception immediately
 				// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
-								
+
 				while (!isCancelled() && !mIsConnectionRestored.get()) {
 					
 					try {

@@ -34,6 +34,10 @@ public class CacheFlusher implements Runnable {
 	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
 		DatabaseHandler.databaseExecutor.execute(new CacheFlusher(context, cacheName, targetSize));
 	}
+
+	public static void doFlushSynchronously(final Context context, final String cacheName, final long targetSize) {
+		(new CacheFlusher(context, cacheName, targetSize)).run();
+	}
 	
 	private CacheFlusher(final Context context, final String cacheName, final long targetSize) {
 		mContext = context;

@@ -109,8 +109,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			if (library == null) return getFillerBitmap();
 
 
-			final long freeDiskSpace = DiskFileCache.getFreeDiskSpace(mContext);
-            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, freeDiskSpace > MAX_DISK_CACHE_SIZE ? MAX_DISK_CACHE_SIZE : freeDiskSpace / 2);
+            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
