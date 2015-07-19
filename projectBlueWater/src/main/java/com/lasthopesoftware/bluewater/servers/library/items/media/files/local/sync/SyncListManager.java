@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.storage;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync;
 
 import android.content.Context;
 
@@ -6,14 +6,14 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredList;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -75,13 +75,12 @@ public class SyncListManager {
         });
     }
 
-    public void enableItemSync(IItem item) {
-        enableItemSync(item, getListType(item));
+    public void toggleSync(IItem item, boolean enable) {
+	    if (enable)
+            enableItemSync(item, getListType(item));
+	    else
+		    disableItemSync(item, getListType(item));
     }
-
-	public void disableItemSync(IItem item) {
-		disableItemSync(item, getListType(item));
-	}
 
     public void isItemMarkedForSync(final IItem item, ISimpleTask.OnCompleteListener<Void, Void, Boolean> isItemSyncedResult) {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
@@ -133,10 +132,6 @@ public class SyncListManager {
         });
     }
 
-	private static StoredList.ListType getListType(IItem item) {
-		return item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
-	}
-
     private void disableItemSync(final IItem item, final StoredList.ListType listType) {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
@@ -185,4 +180,8 @@ public class SyncListManager {
 
         return null;
     }
+
+	private static StoredList.ListType getListType(IItem item) {
+		return item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
+	}
 }

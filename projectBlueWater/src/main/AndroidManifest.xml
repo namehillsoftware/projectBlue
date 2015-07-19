@@ -138,7 +138,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.receivers.FileDownloadCompleteReceiver">
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.downloads.receivers.FileDownloadCompleteReceiver">
             <intent-filter>
                 <action android:name="DownloadManager.ACTION_DOWNLOAD_COMPLETE" />
             </intent-filter>
@@ -151,7 +151,7 @@
         </service>
 
         <service
-            android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service.StoreFilesService"
+            android:name=".servers.library.items.media.files.local.sync.service.StoreFilesService"
             android:enabled="true"
             android:exported="false" >
         </service>

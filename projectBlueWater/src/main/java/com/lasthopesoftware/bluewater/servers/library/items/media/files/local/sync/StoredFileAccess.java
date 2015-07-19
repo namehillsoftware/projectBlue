@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.storage;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync;
 
 import android.content.Context;
 import android.net.Uri;
@@ -8,11 +8,11 @@ import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.StoreFilesService;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.service.StoreFilesService;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 

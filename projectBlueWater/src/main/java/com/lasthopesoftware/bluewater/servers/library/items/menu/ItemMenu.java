@@ -11,13 +11,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.lasthopesoftware.bluewater.MainApplication;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.SyncListManager;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.SyncListManager;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -75,6 +75,7 @@ public final class ItemMenu {
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
+		final ViewFlipper viewFlipper = parentView;
 		final SyncListManager syncListManager = new SyncListManager(parentView.getContext());
 		syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
 			@Override
@@ -82,18 +83,7 @@ public final class ItemMenu {
 				if (isSynced)
 					viewHolder.syncButton.setImageDrawable(getSyncOnDrawable(viewHolder.syncButton.getContext()));
 
-				viewHolder.syncButton.setOnClickListener(new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						if (isSynced)
-							syncListManager.enableItemSync(item);
-						else
-							syncListManager.disableItemSync(item);
-
-						if (MainApplication.DEBUG_MODE) // For development purposes only
-							syncListManager.startSync();
-					}
-				});
+				viewHolder.syncButton.setOnClickListener(new SyncFilesClickHandler(viewFlipper, item, isSynced));
 			}
 		});
 

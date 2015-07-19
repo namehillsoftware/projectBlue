@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.disk.cache;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -8,8 +8,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.CachedFile;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;

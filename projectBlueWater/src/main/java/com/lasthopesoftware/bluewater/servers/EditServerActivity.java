@@ -15,8 +15,8 @@ import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.downloads.FileDownloadsActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.downloads.FileDownloadsActivity;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.File;

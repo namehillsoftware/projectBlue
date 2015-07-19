@@ -10,10 +10,10 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.CachedFile;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredFile;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.StoredList;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 
 import org.slf4j.LoggerFactory;
 

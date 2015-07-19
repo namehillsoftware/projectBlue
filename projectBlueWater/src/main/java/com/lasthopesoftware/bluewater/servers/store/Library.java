@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.disk.sqlite.objects;
+package com.lasthopesoftware.bluewater.servers.store;
 
 import android.content.Context;
 import android.os.Environment;
@@ -8,6 +8,9 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
 
 import java.io.File;
 import java.util.ArrayList;
