@@ -46,6 +46,6 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_sync_item"
-        android:src="@drawable/navigation_refresh" />
+        android:src="@drawable/ic_sync_off" />
 
 </LinearLayout>

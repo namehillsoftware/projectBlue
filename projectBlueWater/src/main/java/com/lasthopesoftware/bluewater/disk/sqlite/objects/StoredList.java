@@ -8,6 +8,7 @@ public class StoredList {
 
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
+	public static final String listTypeColumnName = "type";
 
 	@DatabaseField(generatedId = true)
 	private int id;
@@ -19,7 +20,7 @@ public class StoredList {
 	@DatabaseField(uniqueCombo = true)
 	private int serviceId;
 	
-	@DatabaseField
+	@DatabaseField(uniqueCombo = true)
 	private ListType type;
 	
 	public Library getLibrary() {

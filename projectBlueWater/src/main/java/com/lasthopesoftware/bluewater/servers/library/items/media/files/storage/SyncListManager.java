@@ -75,10 +75,13 @@ public class SyncListManager {
         });
     }
 
-    public void markItemForSync(IItem item) {
-        final StoredList.ListType listType = item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
-        markItemForSync(item, listType);
+    public void enableItemSync(IItem item) {
+        enableItemSync(item, getListType(item));
     }
+
+	public void disableItemSync(IItem item) {
+		disableItemSync(item, getListType(item));
+	}
 
     public void isItemMarkedForSync(final IItem item, ISimpleTask.OnCompleteListener<Void, Void, Boolean> isItemSyncedResult) {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
@@ -87,7 +90,7 @@ public class SyncListManager {
                 final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
                 try {
                     final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
-                    return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item);
+                    return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item, getListType(item));
                 } finally {
                     dbHandler.close();
                 }
@@ -100,7 +103,7 @@ public class SyncListManager {
         isItemSyncedTask.execute(DatabaseHandler.databaseExecutor);
     }
 
-    private void markItemForSync(final IItem item, final StoredList.ListType listType) {
+    private void enableItemSync(final IItem item, final StoredList.ListType listType) {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -109,7 +112,7 @@ public class SyncListManager {
                     final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
 
                     final Library library = LibrarySession.GetLibrary(mContext);
-                    if (isItemMarkedForSync(storedListAccess, library, item)) return;
+                    if (isItemMarkedForSync(storedListAccess, library, item, listType)) return;
 
                     final StoredList storedList = new StoredList();
                     storedList.setLibrary(library);
@@ -130,21 +133,56 @@ public class SyncListManager {
         });
     }
 
-    private static boolean isItemMarkedForSync(Dao<StoredList, Integer> storedListAccess, Library library, IItem item) {
+	private static StoredList.ListType getListType(IItem item) {
+		return item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
+	}
+
+    private void disableItemSync(final IItem item, final StoredList.ListType listType) {
+        DatabaseHandler.databaseExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
+                try {
+                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
+
+                    final StoredList storedList = getStoredList(storedListAccess, LibrarySession.GetLibrary(mContext), item, listType);
+	                if (storedList == null) return;
+
+	                try {
+		                storedListAccess.delete(storedList);
+                    } catch (SQLException e) {
+                        mLogger.error("Error removing stored list", e);
+                    }
+                } catch (SQLException e) {
+                    mLogger.error("Error getting access to the stored list table", e);
+                } finally {
+                    dbHandler.close();
+                }
+            }
+        });
+    }
+
+    private static boolean isItemMarkedForSync(Dao<StoredList, Integer> storedListAccess, Library library, IItem item, StoredList.ListType listType) {
+        return getStoredList(storedListAccess, library, item, listType) != null;
+    }
+
+    private  static StoredList getStoredList(Dao<StoredList, Integer> storedListAccess, Library library, IItem item, StoredList.ListType listType) {
         try {
             final PreparedQuery<StoredList> storedListPreparedQuery =
                     storedListAccess
                             .queryBuilder()
                             .where()
-                            .eq(StoredFile.serviceIdColumnName, item.getKey())
+                            .eq(StoredList.serviceIdColumnName, item.getKey())
                             .and()
-                            .eq(StoredFile.libraryIdColumnName, library.getId())
+                            .eq(StoredList.libraryIdColumnName, library.getId())
+                            .and()
+                            .eq(StoredList.listTypeColumnName, listType)
                             .prepare();
-            return storedListAccess.queryForFirst(storedListPreparedQuery) != null;
+            return storedListAccess.queryForFirst(storedListPreparedQuery);
         } catch (SQLException e) {
             mLogger.error("Error while checking whether stored list exists.", e);
         }
 
-        return false;
+        return null;
     }
 }

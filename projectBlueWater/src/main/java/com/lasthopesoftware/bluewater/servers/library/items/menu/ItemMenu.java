@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.storage.
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 public final class ItemMenu {
 	private static class ViewHolder {
@@ -35,6 +37,8 @@ public final class ItemMenu {
         public final ImageButton viewButton;
 		public final ImageButton syncButton;
 	}
+
+	private static Drawable mSyncOnDrawable;
 
 	public static View getView(final IItem item, View convertView, ViewGroup parent) {
         ViewFlipper parentView = (ViewFlipper)convertView;
@@ -70,18 +74,36 @@ public final class ItemMenu {
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer) item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
-		viewHolder.syncButton.setOnClickListener(new View.OnClickListener() {
+
+		final SyncListManager syncListManager = new SyncListManager(parentView.getContext());
+		syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
 			@Override
-			public void onClick(View v) {
-				final SyncListManager syncListManager = new SyncListManager(v.getContext());
+			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, final Boolean isSynced) {
+				if (isSynced)
+					viewHolder.syncButton.setImageDrawable(getSyncOnDrawable(viewHolder.syncButton.getContext()));
 
-				syncListManager.markItemForSync(item);
+				viewHolder.syncButton.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						if (isSynced)
+							syncListManager.enableItemSync(item);
+						else
+							syncListManager.disableItemSync(item);
 
-				if (MainApplication.DEBUG_MODE) // For development purposes only
-					syncListManager.startSync();
+						if (MainApplication.DEBUG_MODE) // For development purposes only
+							syncListManager.startSync();
+					}
+				});
 			}
 		});
 
 		return convertView;
+	}
+
+	private static Drawable getSyncOnDrawable(Context context) {
+		if (mSyncOnDrawable == null)
+			mSyncOnDrawable = context.getResources().getDrawable(R.drawable.ic_sync);
+
+		return mSyncOnDrawable;
 	}
 }
