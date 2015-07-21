@@ -3,12 +3,9 @@ package com.lasthopesoftware.bluewater.disk.sqlite.access;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.j256.ormlite.android.DatabaseTableConfigUtil;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
@@ -37,7 +34,7 @@ public class DatabaseHandler {
 	}
 	
 	public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException {
-		return mSessionsDbInstance.get().getAccessObject(c);
+		return mSessionsDbInstance.get().getDao(c);
 	}
 
 	private static class SessionsDbHelper extends OrmLiteSqliteOpenHelper {
@@ -93,7 +90,7 @@ public class DatabaseHandler {
 			if (oldVersion < 5) {
 				recreateTables(conn, version3Tables);
 				try {
-					final Dao<Library, Integer> libraryDao = getAccessObject(Library.class);
+					final Dao<Library, Integer> libraryDao = getDao(Library.class);
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
@@ -101,28 +98,6 @@ public class DatabaseHandler {
 					mLogger.error("Error adding column syncedFilesPath to library table", e);
 				}
 			}
-		}
-
-		public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException {
-			// lookup the dao, possibly invoking the cached database config
-			Dao<T, ?> dao = DaoManager.lookupDao(connectionSource, c);
-			if (dao == null) {
-				// try to use our new reflection magic
-				DatabaseTableConfig<T> tableConfig = DatabaseTableConfigUtil.fromClass(connectionSource, c);
-				if (tableConfig == null) {
-					/**
-					 * TODO: we have to do this to get to see if they are using the deprecated annotations like
-					 * {@link DatabaseFieldSimple}.
-					 */
-					dao = DaoManager.createDao(connectionSource, c);
-				} else {
-					dao = DaoManager.createDao(connectionSource, tableConfig);
-				}
-			}
-
-			@SuppressWarnings("unchecked")
-			D castDao = (D) dao;
-			return castDao;
 		}
 	}
 }
