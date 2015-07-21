@@ -46,9 +46,9 @@ public class SyncListManager {
 		        final Library library = LibrarySession.GetLibrary(mContext);
 		        if (library == null) return;
 
-		        final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
 		        try {
-			        final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
+                    final DatabaseHandler dbHandler = DatabaseHandler.getInstance(mContext);
+                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
 			        final List<StoredList> listsToSync = storedListAccess.queryForAll();
 
 			        final Dao<StoredFile, Integer> storedFileAccessor = dbHandler.getAccessObject(StoredFile.class);
@@ -68,8 +68,6 @@ public class SyncListManager {
 			        storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 		        } catch (SQLException e) {
 			        mLogger.error("Error accessing the stored list access", e);
-		        } finally {
-			        dbHandler.close();
 		        }
 	        }
         });
@@ -86,13 +84,8 @@ public class SyncListManager {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
             @Override
             public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
-                final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
-                try {
-                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
-                    return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item, getListType(item));
-                } finally {
-                    dbHandler.close();
-                }
+                final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
+                return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item, getListType(item));
             }
         });
 
@@ -106,9 +99,8 @@ public class SyncListManager {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
                 try {
-                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
+                    final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
 
                     final Library library = LibrarySession.GetLibrary(mContext);
                     if (isItemMarkedForSync(storedListAccess, library, item, listType)) return;
@@ -125,8 +117,6 @@ public class SyncListManager {
                     }
                 } catch (SQLException e) {
                     mLogger.error("Error getting access to the stored list table", e);
-                } finally {
-                    dbHandler.close();
                 }
             }
         });
@@ -136,9 +126,8 @@ public class SyncListManager {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
                 try {
-                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
+                    final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
 
                     final StoredList storedList = getStoredList(storedListAccess, LibrarySession.GetLibrary(mContext), item, listType);
 	                if (storedList == null) return;
@@ -150,8 +139,6 @@ public class SyncListManager {
                     }
                 } catch (SQLException e) {
                     mLogger.error("Error getting access to the stored list table", e);
-                } finally {
-                    dbHandler.close();
                 }
             }
         });

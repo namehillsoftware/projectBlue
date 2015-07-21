@@ -21,94 +21,105 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DatabaseHandler extends OrmLiteSqliteOpenHelper  {
+public class DatabaseHandler {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
-	
-	private static int DATABASE_VERSION = 5;
-	private static final String DATABASE_NAME = "sessions_db";
-	
-	private final static Class<?>[] version2Tables = { Library.class };
-	private final static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
-	private final static Class<?>[] version4Tables = { CachedFile.class };
-	private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
-	
+
+	private static final ThreadLocal<SessionsDbHelper> mSessionsDbInstance = new ThreadLocal<>();
+
 	public DatabaseHandler(Context context) {
-		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		if (mSessionsDbInstance.get() == null)
+			mSessionsDbInstance.set(new SessionsDbHelper(context));
 	}
 
-	@Override
-	public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
-		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
-	}
-	
-	private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
-		for (Class<?> table : tableClasses) {
-			try {
-				TableUtils.createTable(conn, table);
-			} catch (SQLException e) {
-				LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
-			}
-		}
-	}
-
-	private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
-		for (Class<?> table : tableClasses) {
-			try {
-				TableUtils.dropTable(conn, table, true);
-			} catch (SQLException e) {
-				LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
-			}
-		}
-		createTables(conn, tableClasses);
-	}
-
-	@Override
-	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
-		if (oldVersion < 2)
-			recreateTables(conn, version2Tables);
-
-		if (oldVersion < 4)
-			createTables(conn, version4Tables);
-
-		if (oldVersion < 5) {
-			recreateTables(conn, version3Tables);
-			try {
-				final Dao<Library, Integer> libraryDao = getAccessObject(Library.class);
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
-			} catch (SQLException e) {
-				LoggerFactory.getLogger(DatabaseHandler.class).error("Error adding column syncedFilesPath to library table", e);
-			}
-		}
+	public static DatabaseHandler getInstance(Context context) {
+		return new DatabaseHandler(context);
 	}
 	
 	public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException {
-		// lookup the dao, possibly invoking the cached database config
-		Dao<T, ?> dao = DaoManager.lookupDao(connectionSource, c);
-		if (dao == null) {
-			// try to use our new reflection magic
-			DatabaseTableConfig<T> tableConfig = DatabaseTableConfigUtil.fromClass(connectionSource, c);
-			if (tableConfig == null) {
-				/**
-				 * TODO: we have to do this to get to see if they are using the deprecated annotations like
-				 * {@link DatabaseFieldSimple}.
-				 */
-				dao = DaoManager.createDao(connectionSource, c);
-			} else {
-				dao = DaoManager.createDao(connectionSource, tableConfig);
+		return mSessionsDbInstance.get().getAccessObject(c);
+	}
+
+	private static class SessionsDbHelper extends OrmLiteSqliteOpenHelper {
+
+		private static int DATABASE_VERSION = 5;
+		private static final String DATABASE_NAME = "sessions_db";
+
+		private final static Class<?>[] version2Tables = { Library.class };
+		private final static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
+		private final static Class<?>[] version4Tables = { CachedFile.class };
+		private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
+
+		public SessionsDbHelper (Context context) {
+			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		}
+
+		@Override
+		public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
+			for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
+		}
+
+		private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
+			for (Class<?> table : tableClasses) {
+				try {
+					TableUtils.createTable(conn, table);
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
+				}
 			}
 		}
 
-		@SuppressWarnings("unchecked")
-		D castDao = (D) dao;
-		return castDao;
-	}
+		private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
+			for (Class<?> table : tableClasses) {
+				try {
+					TableUtils.dropTable(conn, table, true);
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
+				}
+			}
+			createTables(conn, tableClasses);
+		}
 
-	@Override
-	public void close() {
-		super.close();
+		@Override
+		public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
+			if (oldVersion < 2)
+				recreateTables(conn, version2Tables);
 
-		DaoManager.clearCache();
+			if (oldVersion < 4)
+				createTables(conn, version4Tables);
+
+			if (oldVersion < 5) {
+				recreateTables(conn, version3Tables);
+				try {
+					final Dao<Library, Integer> libraryDao = getAccessObject(Library.class);
+					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
+					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
+					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+				} catch (SQLException e) {
+					LoggerFactory.getLogger(DatabaseHandler.class).error("Error adding column syncedFilesPath to library table", e);
+				}
+			}
+		}
+
+		public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException {
+			// lookup the dao, possibly invoking the cached database config
+			Dao<T, ?> dao = DaoManager.lookupDao(connectionSource, c);
+			if (dao == null) {
+				// try to use our new reflection magic
+				DatabaseTableConfig<T> tableConfig = DatabaseTableConfigUtil.fromClass(connectionSource, c);
+				if (tableConfig == null) {
+					/**
+					 * TODO: we have to do this to get to see if they are using the deprecated annotations like
+					 * {@link DatabaseFieldSimple}.
+					 */
+					dao = DaoManager.createDao(connectionSource, c);
+				} else {
+					dao = DaoManager.createDao(connectionSource, tableConfig);
+				}
+			}
+
+			@SuppressWarnings("unchecked")
+			D castDao = (D) dao;
+			return castDao;
+		}
 	}
 }

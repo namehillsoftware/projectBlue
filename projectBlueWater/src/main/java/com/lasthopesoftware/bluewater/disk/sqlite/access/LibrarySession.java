@@ -38,17 +38,14 @@ public class LibrarySession {
 
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
-				final DatabaseHandler handler = new DatabaseHandler(context);
 				try {
-					final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+					final Dao<Library, Integer> libraryAccess = DatabaseHandler.getInstance(context).getAccessObject(Library.class);
 
 					libraryAccess.createOrUpdate(library);
 					mLogger.debug("Library saved.");
 					return library;
 				} catch (SQLException e) {
 					mLogger.error(e.toString(), e);
-				} finally {
-					handler.close();
 				}
 
 				return null;
@@ -106,14 +103,11 @@ public class LibrarySession {
 	private static synchronized Library GetLibrary(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
-		final DatabaseHandler handler = new DatabaseHandler(context);
 		try {
-			final Dao<Library, Integer> libraryAccess = handler.getAccessObject(Library.class);
+			final Dao<Library, Integer> libraryAccess = DatabaseHandler.getInstance(context).getAccessObject(Library.class);
 			return libraryAccess.queryForId(libraryId);
 		} catch (SQLException e) {
 			mLogger.error(e.toString(), e);
-		} finally {
-			handler.close();
 		}
 
 		return null;
@@ -124,13 +118,11 @@ public class LibrarySession {
 			
 			@Override
 			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
-				final DatabaseHandler handler = new DatabaseHandler(context);
+				final DatabaseHandler handler = DatabaseHandler.getInstance(context);
 				try {
 					return handler.getAccessObject(Library.class).queryForAll();
 				} catch (SQLException e) {
 					mLogger.error(e.toString(), e);
-				} finally {
-					handler.close();
 				}
 				
 				return new ArrayList<>();

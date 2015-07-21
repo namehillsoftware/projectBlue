@@ -42,15 +42,12 @@ public class StoredFileAccess {
 		final SimpleTask<Void, Void, StoredFile> getStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
-				final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 					return storedFileAccess.queryForId(storedFileId);
 				} catch (SQLException se) {
 					mLogger.error("There was an error retrieving the stored file", se);
 					return null;
-				} finally {
-					dbHandler.close();
 				}
 			}
 		});
@@ -65,9 +62,8 @@ public class StoredFileAccess {
 		DatabaseHandler.databaseExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 					final StoredFile storedFile = storedFileAccess.queryForId(storedFileId);
 
 					storedFile.setIsDownloadComplete(true);
@@ -78,8 +74,6 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException se) {
 					mLogger.error("There was an error retrieving the stored file", se);
-				} finally {
-					dbHandler.close();
 				}
 			}
 		});
@@ -89,9 +83,8 @@ public class StoredFileAccess {
 		DatabaseHandler.databaseExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 					try {
 						storedFileAccess.delete(storedFile);
 					} catch (SQLException se) {
@@ -99,8 +92,6 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException se) {
 					mLogger.error("There was an error retrieving the stored file", se);
-				} finally {
-					dbHandler.close();
 				}
 			}
 		});
@@ -182,9 +173,8 @@ public class StoredFileAccess {
 		DatabaseHandler.databaseExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = dbHandler.getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 					// Since we could be pulling back a lot of data, only query for what we need.
 					// This query is very custom to this scenario, so it's being kept here.
 					final PreparedQuery<StoredFile> storedFilePreparedQuery =
@@ -202,8 +192,6 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException e) {
 					mLogger.error("Error updating the ", e);
-				} finally {
-					dbHandler.close();
 				}
 			}
 		});

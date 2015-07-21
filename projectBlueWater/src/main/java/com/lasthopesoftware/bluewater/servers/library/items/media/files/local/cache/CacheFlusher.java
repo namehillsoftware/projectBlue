@@ -47,9 +47,8 @@ public class CacheFlusher implements Runnable {
 	
 	@Override
 	public final void run() {
-		final DatabaseHandler handler = new DatabaseHandler(mContext);
 		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = handler.getAccessObject(CachedFile.class);
+			final Dao<CachedFile, Integer> cachedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(CachedFile.class);
 			
 			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
 			
@@ -82,8 +81,6 @@ public class CacheFlusher implements Runnable {
 			}
 		} catch (SQLException accessException) {
 			mLogger.error("Error accessing cache", accessException);
-		} finally {
-			handler.close();
 		}
 	}
 
