@@ -118,9 +118,8 @@ public class LibrarySession {
 			
 			@Override
 			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
-				final DatabaseHandler handler = DatabaseHandler.getInstance(context);
 				try {
-					return handler.getAccessObject(Library.class).queryForAll();
+					return DatabaseHandler.getInstance(context).getAccessObject(Library.class).queryForAll();
 				} catch (SQLException e) {
 					mLogger.error(e.toString(), e);
 				}

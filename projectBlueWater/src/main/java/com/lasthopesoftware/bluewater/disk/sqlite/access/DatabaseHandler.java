@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
 import com.lasthopesoftware.bluewater.servers.store.Library;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
@@ -49,6 +50,8 @@ public class DatabaseHandler {
 		private final static Class<?>[] version4Tables = { CachedFile.class };
 		private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
 
+		private final static Logger mLogger = LoggerFactory.getLogger(SessionsDbHelper.class);
+
 		public SessionsDbHelper (Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		}
@@ -63,7 +66,7 @@ public class DatabaseHandler {
 				try {
 					TableUtils.createTable(conn, table);
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				}
 			}
 		}
@@ -73,7 +76,7 @@ public class DatabaseHandler {
 				try {
 					TableUtils.dropTable(conn, table, true);
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(DatabaseHandler.class).error(e.toString(), e);
+					mLogger.error(e.toString(), e);
 				}
 			}
 			createTables(conn, tableClasses);
@@ -95,7 +98,7 @@ public class DatabaseHandler {
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
 				} catch (SQLException e) {
-					LoggerFactory.getLogger(DatabaseHandler.class).error("Error adding column syncedFilesPath to library table", e);
+					mLogger.error("Error adding column syncedFilesPath to library table", e);
 				}
 			}
 		}

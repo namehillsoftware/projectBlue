@@ -47,7 +47,7 @@ public class SyncListManager {
 		        if (library == null) return;
 
 		        try {
-                    final DatabaseHandler dbHandler = DatabaseHandler.getInstance(mContext);
+                    final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
                     final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
 			        final List<StoredList> listsToSync = storedListAccess.queryForAll();
 
