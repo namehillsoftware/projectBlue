@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class Library {
 	private Collection<StoredFile> storedFiles = null;
 	
 	@ForeignCollectionField(eager = true)
-	private Collection<StoredList> storedLists = null;
+	private Collection<StoredItem> storedItems = null;
 	
 	@ForeignCollectionField()
 	private Collection<CachedFile> cachedFiles = null;
@@ -190,11 +190,11 @@ public class Library {
 		return storedFiles;
 	}
 	
-	public Collection<StoredList> getStoredLists() {
-		if (storedLists == null)
-			storedLists = new ArrayList<>();
+	public Collection<StoredItem> getStoredItems() {
+		if (storedItems == null)
+			storedItems = new ArrayList<>();
 		
-		return storedLists;
+		return storedItems;
 	}
 	/**
 	 * @return the cachedFiles

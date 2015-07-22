@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
 import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -48,16 +48,16 @@ public class SyncListManager {
 
 		        try {
                     final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
-                    final Dao<StoredList, Integer> storedListAccess = dbHandler.getAccessObject(StoredList.class);
-			        final List<StoredList> listsToSync = storedListAccess.queryForAll();
+                    final Dao<StoredItem, Integer> storedListAccess = dbHandler.getAccessObject(StoredItem.class);
+			        final List<StoredItem> listsToSync = storedListAccess.queryForAll();
 
 			        final Dao<StoredFile, Integer> storedFileAccessor = dbHandler.getAccessObject(StoredFile.class);
 			        final StoredFileAccess storedFileAccess = new StoredFileAccess(mContext, library);
 
 			        final Set<Integer> allSyncedFileKeys = new HashSet<>();
-			        for (StoredList listToSync : listsToSync) {
+			        for (StoredItem listToSync : listsToSync) {
 				        final int serviceId = listToSync.getServiceId();
-				        final IFilesContainer filesContainer = listToSync.getType() == StoredList.ListType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+				        final IFilesContainer filesContainer = listToSync.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 				        final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
 				        for (IFile file : files)
 					        allSyncedFileKeys.add(file.getKey());
@@ -84,7 +84,7 @@ public class SyncListManager {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
             @Override
             public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
-                final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
+                final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
                 return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item, getListType(item));
             }
         });
@@ -95,23 +95,23 @@ public class SyncListManager {
         isItemSyncedTask.execute(DatabaseHandler.databaseExecutor);
     }
 
-    private void enableItemSync(final IItem item, final StoredList.ListType listType) {
+    private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
+                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
 
                     final Library library = LibrarySession.GetLibrary(mContext);
-                    if (isItemMarkedForSync(storedListAccess, library, item, listType)) return;
+                    if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
 
-                    final StoredList storedList = new StoredList();
-                    storedList.setLibrary(library);
-                    storedList.setServiceId(item.getKey());
-                    storedList.setType(listType);
+                    final StoredItem storedItem = new StoredItem();
+                    storedItem.setLibrary(library);
+                    storedItem.setServiceId(item.getKey());
+                    storedItem.setItemType(itemType);
 
                     try {
-                        storedListAccess.create(storedList);
+                        storedListAccess.create(storedItem);
                     } catch (SQLException e) {
                         mLogger.error("Error while creating new stored list", e);
                     }
@@ -122,18 +122,18 @@ public class SyncListManager {
         });
     }
 
-    private void disableItemSync(final IItem item, final StoredList.ListType listType) {
+    private void disableItemSync(final IItem item, final StoredItem.ItemType itemType) {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    final Dao<StoredList, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredList.class);
+                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
 
-                    final StoredList storedList = getStoredList(storedListAccess, LibrarySession.GetLibrary(mContext), item, listType);
-	                if (storedList == null) return;
+                    final StoredItem storedItem = getStoredList(storedListAccess, LibrarySession.GetLibrary(mContext), item, itemType);
+	                if (storedItem == null) return;
 
 	                try {
-		                storedListAccess.delete(storedList);
+		                storedListAccess.delete(storedItem);
                     } catch (SQLException e) {
                         mLogger.error("Error removing stored list", e);
                     }
@@ -144,21 +144,21 @@ public class SyncListManager {
         });
     }
 
-    private static boolean isItemMarkedForSync(Dao<StoredList, Integer> storedListAccess, Library library, IItem item, StoredList.ListType listType) {
-        return getStoredList(storedListAccess, library, item, listType) != null;
+    private static boolean isItemMarkedForSync(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
+        return getStoredList(storedListAccess, library, item, itemType) != null;
     }
 
-    private  static StoredList getStoredList(Dao<StoredList, Integer> storedListAccess, Library library, IItem item, StoredList.ListType listType) {
+    private  static StoredItem getStoredList(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
         try {
-            final PreparedQuery<StoredList> storedListPreparedQuery =
+            final PreparedQuery<StoredItem> storedListPreparedQuery =
                     storedListAccess
                             .queryBuilder()
                             .where()
-                            .eq(StoredList.serviceIdColumnName, item.getKey())
+                            .eq(StoredItem.serviceIdColumnName, item.getKey())
                             .and()
-                            .eq(StoredList.libraryIdColumnName, library.getId())
+                            .eq(StoredItem.libraryIdColumnName, library.getId())
                             .and()
-                            .eq(StoredList.listTypeColumnName, listType)
+                            .eq(StoredItem.itemTypeColumnName, itemType)
                             .prepare();
             return storedListAccess.queryForFirst(storedListPreparedQuery);
         } catch (SQLException e) {
@@ -168,7 +168,7 @@ public class SyncListManager {
         return null;
     }
 
-	private static StoredList.ListType getListType(IItem item) {
-		return item instanceof Playlist ? StoredList.ListType.PLAYLIST : StoredList.ListType.ITEM;
+	private static StoredItem.ItemType getListType(IItem item) {
+		return item instanceof Playlist ? StoredItem.ItemType.PLAYLIST : StoredItem.ItemType.ITEM;
 	}
 }

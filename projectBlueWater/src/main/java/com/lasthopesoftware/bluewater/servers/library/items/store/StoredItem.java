@@ -4,12 +4,12 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.store.Library;
 
-@DatabaseTable(tableName = "StoredLists")
-public class StoredList {
+@DatabaseTable(tableName = "StoredItems")
+public class StoredItem {
 
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
-	public static final String listTypeColumnName = "type";
+	public static final String itemTypeColumnName = "type";
 
 	@DatabaseField(generatedId = true)
 	private int id;
@@ -22,7 +22,7 @@ public class StoredList {
 	private int serviceId;
 	
 	@DatabaseField(uniqueCombo = true)
-	private ListType type;
+	private ItemType itemType;
 	
 	public Library getLibrary() {
 		return library;
@@ -40,13 +40,13 @@ public class StoredList {
 		this.serviceId = serviceId;
 	}
 
-	public ListType getType() {
-		return type;
+	public ItemType getItemType() {
+		return itemType;
 	}
 
-	public void setType(ListType type) {
-		this.type = type;
+	public void setItemType(ItemType type) {
+		this.itemType = type;
 	}
 
-	public enum ListType { FILE, PLAYLIST, ITEM }
+	public enum ItemType { FILE, PLAYLIST, ITEM }
 }

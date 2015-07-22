@@ -9,7 +9,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredList;
+import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
 import com.lasthopesoftware.bluewater.servers.store.Library;
 
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class DatabaseHandler {
 		private static final String DATABASE_NAME = "sessions_db";
 
 		private final static Class<?>[] version2Tables = { Library.class };
-		private final static Class<?>[] version3Tables = { StoredFile.class, StoredList.class };
+		private final static Class<?>[] version3Tables = { StoredFile.class, StoredItem.class };
 		private final static Class<?>[] version4Tables = { CachedFile.class };
 		private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
 
@@ -94,6 +94,7 @@ public class DatabaseHandler {
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+					libraryDao.executeRaw("DROP TABLE `StoredLists`;");
 				} catch (SQLException e) {
 					mLogger.error("Error adding column syncedFilesPath to library table", e);
 				}
