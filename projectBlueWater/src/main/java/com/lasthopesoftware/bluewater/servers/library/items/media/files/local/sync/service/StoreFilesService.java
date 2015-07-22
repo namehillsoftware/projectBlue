@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
@@ -27,9 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,8 +51,7 @@ public class StoreFilesService extends Service {
 	private static final String storedFileId = StoreFilesService.class.getCanonicalName() + ".storedFileId";
 	private static final String fileIdKey = StoreFilesService.class.getCanonicalName() + ".fileIdKey";
 
-	private final Queue<QueuedFileHolder> mFileDownloadQueue = new ArrayDeque<>();
-	private final Set<Integer> mQueuedFileKeys = new HashSet<>();
+	private final static Set<Integer> mQueuedFileKeys = new HashSet<>();
 
 	private static final ExecutorService mStoreFilesExecutor = Executors.newSingleThreadExecutor();
 
@@ -61,6 +60,10 @@ public class StoreFilesService extends Service {
 	private boolean mIsForeground;
 
 	private StoredFileAccess mStoredFileAccess;
+
+	private final ConnectivityManager mConnectivityManager;
+
+	private boolean mIsHalted = false;
 
 	public static void queueFileForDownload(Context context, IFile file, StoredFile storedFile) {
 		if (storedFile.getId() == 0)
@@ -71,6 +74,12 @@ public class StoreFilesService extends Service {
 		intent.putExtra(storedFileId, storedFile.getId());
 		intent.putExtra(fileIdKey, file.getKey());
 		context.startService(intent);
+	}
+
+	public StoreFilesService() {
+		super();
+
+		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 	}
 
 	@Override
@@ -115,68 +124,83 @@ public class StoreFilesService extends Service {
 		mStoredFileAccess.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, final StoredFile storedFile) {
+
 				mStoreFilesExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						if (!mIsForeground)
-							startForeground(23, buildSyncNotification());
-
-						final File serviceFile = new File(fileKey);
-
-						HttpURLConnection connection;
 						try {
-							connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
-						} catch (IOException e) {
-							mLogger.error("Error opening connection", e);
-							return;
-						}
+							if (mIsHalted || storedFile.isDownloadComplete())
+								return;
 
-						if (connection == null) return;
-
-						try {
-							InputStream is;
-							try {
-								is = connection.getInputStream();
-							} catch (IOException ioe) {
-								mLogger.error("Error reading data from connection", ioe);
+							final NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+							if (activeNetworkInfo == null || activeNetworkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+								mIsHalted = true;
 								return;
 							}
 
-							final java.io.File file = new java.io.File(storedFile.getPath());
+							if (!mIsForeground)
+								startForeground(23, buildSyncNotification());
 
-							final java.io.File parent = file.getParentFile();
-							if (!parent.exists()) parent.mkdirs();
+							final File serviceFile = new File(fileKey);
+
+							HttpURLConnection connection;
+							try {
+								connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
+							} catch (IOException e) {
+								mLogger.error("Error opening connection", e);
+								return;
+							}
+
+							if (connection == null) return;
 
 							try {
-								final FileOutputStream fos = new FileOutputStream(storedFile.getPath());
+								InputStream is;
 								try {
-									IOUtils.copy(is, fos);
-									fos.flush();
-								} finally {
-									fos.close();
-									mQueuedFileKeys.remove(fileKey);
+									is = connection.getInputStream();
+								} catch (IOException ioe) {
+									mLogger.error("Error reading data from connection", ioe);
+									return;
 								}
 
-								mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
-								sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(new java.io.File(storedFile.getPath()))));
-							} catch (IOException ioe) {
-								mLogger.error("Error writing file!", ioe);
-							} finally {
-								if (is != null) {
+								final java.io.File file = new java.io.File(storedFile.getPath());
+
+								final java.io.File parent = file.getParentFile();
+								if (!parent.exists()) parent.mkdirs();
+
+								try {
+									final FileOutputStream fos = new FileOutputStream(file);
 									try {
-										is.close();
-									} catch (IOException e) {
-										mLogger.error("Error closing input stream", e);
+										IOUtils.copy(is, fos);
+										fos.flush();
+									} finally {
+										fos.close();
 									}
+
+									mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
+									sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(file)));
+								} catch (IOException ioe) {
+									mLogger.error("Error writing file!", ioe);
+								} finally {
+									if (is != null) {
+										try {
+											is.close();
+										} catch (IOException e) {
+											mLogger.error("Error closing input stream", e);
+										}
+									}
+								}
+							} finally {
+								connection.disconnect();
+
+								if (mIsForeground && mQueuedFileKeys.size() == 0) {
+									stopForeground(true);
+									mIsForeground = false;
 								}
 							}
 						} finally {
-							connection.disconnect();
-
-							if (mIsForeground && mQueuedFileKeys.size() == 0) {
-								stopForeground(true);
-								mIsForeground = false;
-							}
+							// This needs to be tied to the executor runnable in order to maintain
+							// a sync between the set and the executor queue
+							mQueuedFileKeys.remove(fileKey);
 						}
 					}
 				});
