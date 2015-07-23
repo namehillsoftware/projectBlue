@@ -183,6 +183,8 @@ public class StoredFileAccess {
 									.selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
 									.where()
 									.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
+									.and()
+									.eq(StoredFile.isOwnerColumnName, true)
 									.prepare();
 
 					final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);

@@ -11,6 +11,7 @@ public class StoredFile {
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
 	public static final String pathColumnName = "path";
+	public static final String isOwnerColumnName = "isOwner";
 
 	@DatabaseField(generatedId = true)
 	private int id;

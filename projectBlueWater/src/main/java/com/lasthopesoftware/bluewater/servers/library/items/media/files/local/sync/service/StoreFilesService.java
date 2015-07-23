@@ -61,7 +61,7 @@ public class StoreFilesService extends Service {
 
 	private StoredFileAccess mStoredFileAccess;
 
-	private final ConnectivityManager mConnectivityManager;
+	private ConnectivityManager mConnectivityManager;
 
 	private boolean mIsHalted = false;
 
@@ -76,39 +76,42 @@ public class StoreFilesService extends Service {
 		context.startService(intent);
 	}
 
-	public StoreFilesService() {
-		super();
+	@Override
+	public void onCreate() {
+		super.onCreate();
 
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 	}
 
 	@Override
-	public void onCreate() {
-		super.onCreate();
+	public int onStartCommand(final Intent intent, final int flags, final int startId) {
+		if (mStoredFileAccess != null) {
+			startIntent(intent, flags, startId);
+			return START_NOT_STICKY;
+		}
 
 		final Context context = this;
 		LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 				mStoredFileAccess = new StoredFileAccess(context, library);
+				startIntent(intent, flags, startId);
 			}
 		});
+
+		return START_NOT_STICKY;
 	}
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		final int returnValue = START_NOT_STICKY;
-
-		if (!intent.getAction().equals(queueFileForDownload)) return returnValue;
+	private void startIntent(Intent intent, int flags, int startId) {
+		if (!intent.getAction().equals(queueFileForDownload)) return;
 
 		final int fileKey = intent.getIntExtra(fileIdKey, -1);
-		if (fileKey == -1) return returnValue;
+		if (fileKey == -1) return;
 
 		final int storedFileId = intent.getIntExtra(StoreFilesService.storedFileId, -1);
-		if (storedFileId > -1)
-			queueAndStartDownloading(fileKey, storedFileId);
+		if (storedFileId == -1) return;
 
-		return returnValue;
+		queueAndStartDownloading(fileKey, storedFileId);
 	}
 
 	private Notification buildSyncNotification() {
@@ -177,7 +180,7 @@ public class StoreFilesService extends Service {
 									}
 
 									mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
-									sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(file)));
+									sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
 								} catch (IOException ioe) {
 									mLogger.error("Error writing file!", ioe);
 								} finally {
@@ -195,6 +198,7 @@ public class StoreFilesService extends Service {
 								if (mIsForeground && mQueuedFileKeys.size() == 0) {
 									stopForeground(true);
 									mIsForeground = false;
+									stopSelf();
 								}
 							}
 						} finally {

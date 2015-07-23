@@ -9,7 +9,7 @@ public class StoredItem {
 
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
-	public static final String itemTypeColumnName = "type";
+	public static final String itemTypeColumnName = "itemType";
 
 	@DatabaseField(generatedId = true)
 	private int id;
