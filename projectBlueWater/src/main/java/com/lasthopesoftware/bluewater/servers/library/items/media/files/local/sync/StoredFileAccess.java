@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.StoreFilesService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by david on 7/14/15.
@@ -56,6 +58,34 @@ public class StoredFileAccess {
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
 
 		getStoredFileTask.execute(DatabaseHandler.databaseExecutor);
+	}
+
+	public void getStoredFile(final IFile serviceFile, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
+		final SimpleTask<Void, Void, StoredFile> getStoredFileTask = new SimpleTask<>(getFileExecutor(serviceFile));
+
+		if (onStoredFileRetrieved != null)
+			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
+
+		getStoredFileTask.execute(DatabaseHandler.databaseExecutor);
+	}
+
+	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
+		return SimpleTask.executeNew(DatabaseHandler.databaseExecutor, getFileExecutor(serviceFile)).get();
+	}
+
+	private ISimpleTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
+		return new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+			@Override
+			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+				try {
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					return getStoredFile(storedFileAccess, serviceFile);
+				} catch (SQLException se) {
+					mLogger.error("There was an error retrieving the stored file", se);
+					return null;
+				}
+			}
+		};
 	}
 
 	public void markStoredFileAsDownloaded(final int storedFileId) {
@@ -97,19 +127,54 @@ public class StoredFileAccess {
 		});
 	}
 
+	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
+		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					StoredFile storedFile = getStoredFile(storedFileAccess, file);
+					if (storedFile == null) {
+						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.storedMediaIdColumnName, mediaFileId);
+						if (storedFiles.size() > 0)
+							storedFile = storedFiles.get(0);
+
+						if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
+							return;
+					}
+
+					if (storedFile == null) {
+						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.pathColumnName, filePath);
+						if (storedFiles.size() > 0)
+							storedFile = storedFiles.get(0);
+					}
+
+					if (storedFile == null) {
+						storedFile = new StoredFile();
+						storedFile.setServiceId(file.getKey());
+						storedFile.setLibrary(mLibrary);
+						storedFile.setIsOwner(true);
+					}
+
+					storedFile.setStoredMediaId(mediaFileId);
+					storedFile.setPath(filePath);
+
+					try {
+						storedFileAccess.createOrUpdate(storedFile);
+					} catch (SQLException se) {
+						mLogger.error("There was an updating/creating the stored file", se);
+					}
+				} catch (SQLException se) {
+					mLogger.error("There was an error retrieving the stored file", se);
+				}
+			}
+		});
+	}
+
 	public void syncFilesSynchronously(Dao<StoredFile, Integer> storedFilesAccess, List<IFile> files) {
 		try {
 			for (IFile file : files) {
-				final PreparedQuery<StoredFile> storedFilePreparedQuery =
-						storedFilesAccess
-								.queryBuilder()
-								.where()
-								.eq(StoredFile.serviceIdColumnName, file.getKey())
-								.and()
-								.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
-								.prepare();
-
-				StoredFile storedFile = storedFilesAccess.queryForFirst(storedFilePreparedQuery);
+				StoredFile storedFile = getStoredFile(storedFilesAccess, file);
 				if (storedFile == null) {
 					storedFile = new StoredFile();
 					storedFile.setServiceId(file.getKey());
@@ -119,38 +184,47 @@ public class StoredFileAccess {
 
 				if (storedFile.getPath() == null) {
 					try {
-						final Uri localUri = file.getLocalFileUri(mContext);
+						final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(mContext, file, true);
+						final Uri localUri = mediaFileUriProvider.getFileUri();
 						if (localUri != null) {
 							storedFile.setPath(localUri.getPath());
 							storedFile.setIsDownloadComplete(true);
 							storedFile.setIsOwner(false);
+							try {
+								storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
+							} catch (IOException e) {
+								mLogger.error("Error retrieving media file ID", e);
+							}
 						}
 					} catch (IOException e) {
-						mLogger.error("Error retrieving local file URI", e);
+						mLogger.error("Error retrieving media file URI", e);
 					}
 				}
 
 				if (storedFile.getPath() == null) {
 					try {
+						String fullPath = mLibrary.getSyncDir(mContext).getPath();
+
+						String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
+						if (artist == null) {
+							artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
+						}
+
+						if (artist != null) {
+							fullPath = FilenameUtils.concat(fullPath, artist);
+						}
+
+						final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
+						if (album != null) {
+							fullPath = FilenameUtils.concat(fullPath, album);
+						}
+
 						String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
 						fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
 						final int extensionIndex = fileName.lastIndexOf('.');
 						if (extensionIndex > -1)
 							fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
-
-						String fullPath = mLibrary.getSyncDir(mContext).getPath();
-
-						String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
-						if (artist == null)
-							artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
-
-						if (artist != null)
-							fullPath = FilenameUtils.concat(fullPath, artist);
-
-						final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
-						if (album != null)
-							fullPath = FilenameUtils.concat(fullPath, album);
 
 						fullPath = FilenameUtils.concat(fullPath, fileName);
 						storedFile.setPath(fullPath);
@@ -197,5 +271,24 @@ public class StoredFileAccess {
 				}
 			}
 		});
+	}
+
+	private StoredFile getStoredFile(Dao<StoredFile, Integer> storedFileAccess, IFile file) {
+
+		final PreparedQuery<StoredFile> storedFilePreparedQuery;
+		try {
+			storedFilePreparedQuery = storedFileAccess
+					.queryBuilder()
+					.where()
+					.eq(StoredFile.serviceIdColumnName, file.getKey())
+					.and()
+					.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
+					.prepare();
+			return storedFileAccess.queryForFirst(storedFilePreparedQuery);
+		} catch (SQLException e) {
+			mLogger.error("Error getting file!", e);
+		}
+
+		return null;
 	}
 }

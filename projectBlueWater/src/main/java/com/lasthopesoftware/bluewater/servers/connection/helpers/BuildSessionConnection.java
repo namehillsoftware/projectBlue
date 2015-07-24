@@ -31,10 +31,10 @@ public class BuildSessionConnection {
 		if (isRunning.get()) return mBuildingStatus;
 		
 		doStateChange(BuildingSessionConnectionStatus.GETTING_LIBRARY);
-		LibrarySession.GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {				
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(BuildingSessionConnectionStatus.GETTING_LIBRARY_FAILED);
 					isRunning.set(false);
@@ -56,35 +56,35 @@ public class BuildSessionConnection {
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
 							return;
 						}
-			        	
+
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
 
-					
+
 						LibraryViewsProvider.provide()
-							.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
-								
-								@Override
-								public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
-									
-									if (result == null || result.size() == 0) {
-										doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
-										return;
-									}
-									
-									doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
-									final int selectedView = result.get(0).getKey();
-									library.setSelectedView(selectedView);
-									
-									LibrarySession.SaveLibrary(context, library, new OnCompleteListener<Void, Void, Library>() {
-										
-										@Override
-										public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-											doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+								.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
+
+									@Override
+									public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
+
+										if (result == null || result.size() == 0) {
+											doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW_FAILED);
+											return;
 										}
-									});
-								}
-							})
-							.execute();
+
+										doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
+										final int selectedView = result.get(0).getKey();
+										library.setSelectedView(selectedView);
+
+										LibrarySession.SaveLibrary(context, library, new OnCompleteListener<Void, Void, Library>() {
+
+											@Override
+											public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+												doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+											}
+										});
+									}
+								})
+								.execute();
 					}
 				});
 			}

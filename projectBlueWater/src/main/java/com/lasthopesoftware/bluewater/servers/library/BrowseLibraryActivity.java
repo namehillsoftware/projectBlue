@@ -175,7 +175,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         toggleViewsVisibility(false);
 
-		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
@@ -241,7 +241,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 						final int selectedViewKey = items.get(position).getKey();
 
-						LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+						LibrarySession.GetActiveLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
 
 							@Override
 							public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
@@ -354,7 +354,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
         savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
-        LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 	        @Override
 	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 		        if (library != null)
@@ -373,7 +373,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
     private void restoreScrollPosition(final Bundle savedInstanceState) {
         if (mViewPager == null) return;
 
-        LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 	        @Override
 	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {

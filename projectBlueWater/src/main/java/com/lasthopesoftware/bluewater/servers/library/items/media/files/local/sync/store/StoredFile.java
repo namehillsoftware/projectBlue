@@ -7,11 +7,11 @@ import com.lasthopesoftware.bluewater.servers.store.Library;
 @DatabaseTable(tableName = "StoredFiles")
 public class StoredFile {
 
-	public static final String downloadIdName = "downloadId";
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
 	public static final String pathColumnName = "path";
 	public static final String isOwnerColumnName = "isOwner";
+	public static final String storedMediaIdColumnName = "storedMediaId";
 
 	@DatabaseField(generatedId = true)
 	private int id;

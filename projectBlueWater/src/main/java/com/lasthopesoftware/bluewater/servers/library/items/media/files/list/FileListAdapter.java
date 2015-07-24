@@ -118,26 +118,26 @@ public class FileListAdapter extends AbstractFileListAdapter {
 			if (PlaybackService.getPlaylistController() != null) 
 				PlaybackService.getPlaylistController().addFile(mFile);
 			
-			LibrarySession.GetLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetActiveLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					if (result == null) return;
-					String newFileString = result.getSavedTracksString();
-					if (!newFileString.endsWith(";")) newFileString += ";";
-					newFileString += mFile.getKey() + ";";
-					result.setSavedTracksString(newFileString);
-					
-					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							Toast.makeText(view.getContext(), view.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
-						}
-					});
-				}
+                @Override
+                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+                    if (result == null) return;
+                    String newFileString = result.getSavedTracksString();
+                    if (!newFileString.endsWith(";")) newFileString += ";";
+                    newFileString += mFile.getKey() + ";";
+                    result.setSavedTracksString(newFileString);
 
-			});
+                    LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
+
+                        @Override
+                        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+                            Toast.makeText(view.getContext(), view.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+            });
 
             super.onClick(view);
 		}

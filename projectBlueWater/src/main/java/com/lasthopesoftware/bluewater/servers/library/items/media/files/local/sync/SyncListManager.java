@@ -43,7 +43,7 @@ public class SyncListManager {
         DatabaseHandler.databaseExecutor.execute(new Runnable() {
 	        @Override
 	        public void run() {
-		        final Library library = LibrarySession.GetLibrary(mContext);
+		        final Library library = LibrarySession.GetActiveLibrary(mContext);
 		        if (library == null) return;
 
 		        try {
@@ -85,7 +85,7 @@ public class SyncListManager {
             @Override
             public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
                 final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
-                return isItemMarkedForSync(storedListAccess, LibrarySession.GetLibrary(mContext), item, getListType(item));
+                return isItemMarkedForSync(storedListAccess, LibrarySession.GetActiveLibrary(mContext), item, getListType(item));
             }
         });
 
@@ -102,7 +102,7 @@ public class SyncListManager {
                 try {
                     final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
 
-                    final Library library = LibrarySession.GetLibrary(mContext);
+                    final Library library = LibrarySession.GetActiveLibrary(mContext);
                     if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
 
                     final StoredItem storedItem = new StoredItem();
@@ -129,7 +129,7 @@ public class SyncListManager {
                 try {
                     final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
 
-                    final StoredItem storedItem = getStoredList(storedListAccess, LibrarySession.GetLibrary(mContext), item, itemType);
+                    final StoredItem storedItem = getStoredList(storedListAccess, LibrarySession.GetActiveLibrary(mContext), item, itemType);
 	                if (storedItem == null) return;
 
 	                try {

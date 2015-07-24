@@ -46,7 +46,7 @@ public class ServerListActivity extends Activity {
 		LibrarySession.GetLibraries(activity, new ISimpleTask.OnCompleteListener<Void, Void, List<Library>>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
-				LibrarySession.GetLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 						((ListView) findViewById(R.id.lvServerList)).setAdapter(new ServerListAdapter(activity, libraries, library));

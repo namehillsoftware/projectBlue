@@ -123,28 +123,28 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
 		
 		@Override
 		public void onClick(final View view) {
-			LibrarySession.GetLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetActiveLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					if (result == null) return;
-					
-					String newFileString = PlaybackService.getPlaylistController().getPlaylistString();					
-					result.setSavedTracksString(newFileString);
-					
-					LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-							if (PlaybackService.getPlaylistController() != null) 
-								PlaybackService.getPlaylistController().removeFile(mPosition);
-							
-							mAdapter.remove(mAdapter.getItem(mPosition));
-						}
-					});
-				}
+                @Override
+                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+                    if (result == null) return;
 
-			});
+                    String newFileString = PlaybackService.getPlaylistController().getPlaylistString();
+                    result.setSavedTracksString(newFileString);
+
+                    LibrarySession.SaveLibrary(view.getContext(), result, new OnCompleteListener<Void, Void, Library>() {
+
+                        @Override
+                        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+                            if (PlaybackService.getPlaylistController() != null)
+                                PlaybackService.getPlaylistController().removeFile(mPosition);
+
+                            mAdapter.remove(mAdapter.getItem(mPosition));
+                        }
+                    });
+                }
+
+            });
 
             super.onClick(view);
 		}

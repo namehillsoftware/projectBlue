@@ -218,7 +218,7 @@ public class NowPlayingActivity extends Activity implements
 		mPause.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
@@ -259,7 +259,7 @@ public class NowPlayingActivity extends Activity implements
 				return true;
 			case R.id.menu_repeat_playlist:
 				final Context _context = this;
-				LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -280,7 +280,7 @@ public class NowPlayingActivity extends Activity implements
 	
 	private void setRepeatingIcon(final MenuItem item) {
 		item.setIcon(R.drawable.av_no_repeat_dark);
-		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

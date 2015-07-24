@@ -23,11 +23,9 @@ import java.util.List;
 public class LibrarySession {
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(LibrarySession.class);
-	
+	public static final String libraryChosenEvent = LibrarySession.class.getCanonicalName() + ".libraryChosenEvent";
 	public static final String chosenLibraryInt = "chosen_library";
 
-	public static final String libraryChosenEvent = LibrarySession.class.getCanonicalName() + ".libraryChosenEvent";
-	
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);
 	}
@@ -58,12 +56,12 @@ public class LibrarySession {
 		writeToDatabaseTask.execute(DatabaseHandler.databaseExecutor);
 	}
 
-	public static void GetLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
+	public static void GetActiveLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new SimpleTask<>(new OnExecuteListener<Integer, Void, Library>() {
 
 			@Override
 			public Library onExecute(ISimpleTask<Integer, Void, Library> owner, Integer... params) throws Exception {
-				return GetLibrary(context);
+				return GetActiveLibrary(context);
 			}
 		}), onGetLibraryComplete);
 	}
@@ -92,12 +90,12 @@ public class LibrarySession {
 		getLibraryTask.execute(DatabaseHandler.databaseExecutor);
 	}
 
-	public static synchronized Library GetLibrary(final Context context) {
+	public static synchronized Library GetActiveLibrary(final Context context) {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 
-		final int chosenLibrary = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
-		return chosenLibrary >= 0 ? GetLibrary(context, chosenLibrary) : null;
+		final int chosenLibraryId = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
+		return chosenLibraryId >= 0 ? GetLibrary(context, chosenLibraryId) : null;
 	}
 
 	private static synchronized Library GetLibrary(final Context context, int libraryId) {
@@ -141,7 +139,7 @@ public class LibrarySession {
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
 		}
 		
-		GetLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
+		GetActiveLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 				final Intent broadcastIntent = new Intent(libraryChosenEvent);

@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.test;
 
-import android.content.Context;
-import android.net.Uri;
-
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -238,12 +235,7 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public Uri getLocalFileUri(Context context) throws IOException {
-			return null;
-		}
-
-		@Override
-		public Uri getRemoteFileUri(Context context) throws IOException {
+		public String getPlaybackUrl() {
 			return null;
 		}
 

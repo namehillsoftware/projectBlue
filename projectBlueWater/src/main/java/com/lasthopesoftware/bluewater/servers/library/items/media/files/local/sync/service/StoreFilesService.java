@@ -94,7 +94,7 @@ public class StoreFilesService extends Service {
 		}
 
 		final Context context = this;
-		LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 				mStoredFileAccess = new StoredFileAccess(context, library);
@@ -184,7 +184,9 @@ public class StoreFilesService extends Service {
 								final java.io.File file = new java.io.File(storedFile.getPath());
 
 								final java.io.File parent = file.getParentFile();
-								if (!parent.exists()) parent.mkdirs();
+								if (!parent.exists()) {
+									if (!parent.mkdirs()) return;
+								}
 
 								try {
 									final FileOutputStream fos = new FileOutputStream(file);

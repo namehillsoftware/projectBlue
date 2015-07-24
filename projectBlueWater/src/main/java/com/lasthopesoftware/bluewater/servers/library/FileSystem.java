@@ -129,7 +129,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 			if (onGetFileSystemCompleteListener == null)
 				throw new IllegalArgumentException("onGetFileSystemCompleteListener cannot be null.");
 			
-			LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+			LibrarySession.GetActiveLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 				
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

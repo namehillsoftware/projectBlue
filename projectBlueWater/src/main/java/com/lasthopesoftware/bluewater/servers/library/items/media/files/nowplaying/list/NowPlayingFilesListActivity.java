@@ -47,7 +47,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
         
         this.setTitle(R.string.title_view_now_playing_files);     
         
-        LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+        LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override
@@ -69,7 +69,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
 		
-		LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override

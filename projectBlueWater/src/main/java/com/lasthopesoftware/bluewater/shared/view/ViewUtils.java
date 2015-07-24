@@ -36,25 +36,25 @@ public class ViewUtils {
 
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
 
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                nowPlayingItem.setVisible(mIsNowPlayingVisible);
+	        @Override
+	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+		        mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
+		        nowPlayingItem.setVisible(mIsNowPlayingVisible);
 
-                if (mIsNowPlayingVisible) return;
+		        if (mIsNowPlayingVisible) return;
 
-                // If now playing shouldn't be visible, detect when it should be
-                PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
-                    @Override
-                    public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        mIsNowPlayingVisible = true;
-                        nowPlayingItem.setVisible(mIsNowPlayingVisible);
-                        PlaybackService.removeOnStreamingStartListener(this);
-                    }
-                });
-            }
+		        // If now playing shouldn't be visible, detect when it should be
+		        PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
+			        @Override
+			        public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+				        mIsNowPlayingVisible = true;
+				        nowPlayingItem.setVisible(mIsNowPlayingVisible);
+				        PlaybackService.removeOnStreamingStartListener(this);
+			        }
+		        });
+	        }
         });
 		
 		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
