@@ -149,6 +149,11 @@ public class StoreFilesService extends Service {
 
 							final IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 							final Intent batteryStatusReceiver = context.registerReceiver(null, intentFilter);
+							if (batteryStatusReceiver == null) {
+								mIsHalted = true;
+								return;
+							}
+
 							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 							if (batteryStatus != BatteryManager.BATTERY_STATUS_CHARGING) {
 								mIsHalted = true;
