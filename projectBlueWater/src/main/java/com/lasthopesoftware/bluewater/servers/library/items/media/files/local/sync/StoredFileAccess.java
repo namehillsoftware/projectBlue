@@ -229,7 +229,8 @@ public class StoredFileAccess {
 						if (extensionIndex > -1)
 							fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
-						fullPath = FilenameUtils.concat(fullPath, fileName);
+						// The media player API apparently bombs on colons, so let's cleanse it of colons (tee-hee)
+						fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
 						storedFile.setPath(fullPath);
 					} catch (IOException e) {
 						mLogger.error("Error getting filename for file " + file.getValue(), e);
@@ -237,6 +238,10 @@ public class StoredFileAccess {
 				}
 
 				storedFilesAccess.createOrUpdate(storedFile);
+
+				final File systemFile = new File(storedFile.getPath());
+				if (!systemFile.exists())
+					storedFile.setIsDownloadComplete(false);
 
 				if (!storedFile.isDownloadComplete())
 					StoreFilesService.queueFileForDownload(mContext, file, storedFile);

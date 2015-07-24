@@ -62,9 +62,6 @@ public class StoreFilesService extends Service {
 
 	private StoredFileAccess mStoredFileAccess;
 
-	private ConnectivityManager mConnectivityManager;
-	private BatteryManager mBatteryManager;
-
 	private boolean mIsHalted = false;
 
 	public static void queueFileForDownload(Context context, IFile file, StoredFile storedFile) {
@@ -76,14 +73,6 @@ public class StoreFilesService extends Service {
 		intent.putExtra(storedFileId, storedFile.getId());
 		intent.putExtra(fileIdKey, file.getKey());
 		context.startService(intent);
-	}
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-
-		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		mBatteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
 	}
 
 	@Override
@@ -137,7 +126,8 @@ public class StoreFilesService extends Service {
 					@Override
 					public void run() {
 						try {
-							if (mIsHalted || storedFile.isDownloadComplete())
+							final java.io.File file = new java.io.File(storedFile.getPath());
+							if (mIsHalted || (storedFile.isDownloadComplete() && file.exists()))
 								return;
 
 							if (ConnectionProvider.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) {
@@ -180,8 +170,6 @@ public class StoreFilesService extends Service {
 									mLogger.error("Error reading data from connection", ioe);
 									return;
 								}
-
-								final java.io.File file = new java.io.File(storedFile.getPath());
 
 								final java.io.File parent = file.getParentFile();
 								if (!parent.exists()) {

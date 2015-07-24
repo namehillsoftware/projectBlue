@@ -17,21 +17,19 @@ import java.util.concurrent.ExecutionException;
  * Created by david on 7/24/15.
  */
 public class StoredFileUriProvider extends AbstractFileUriProvider {
-	private final Context mContext;
 	private final StoredFileAccess mStoredFileAccess;
 
 	public StoredFileUriProvider(Context context, Library library, IFile file) {
 		super(file);
 
-		mContext = context;
-		mStoredFileAccess = new StoredFileAccess(mContext, library);
+		mStoredFileAccess = new StoredFileAccess(context, library);
 	}
 
 	@Override
 	public Uri getFileUri() throws IOException {
 		try {
 			final StoredFile storedFile = mStoredFileAccess.getStoredFile(getFile());
-			if (storedFile == null) return null;
+			if (storedFile == null || !storedFile.isDownloadComplete()) return null;
 
 			final File file = new File(storedFile.getPath());
 			if (file.exists())
