@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Binder;
@@ -141,14 +140,17 @@ public class StoreFilesService extends Service {
 							if (mIsHalted || storedFile.isDownloadComplete())
 								return;
 
-							final NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-							if (activeNetworkInfo == null || activeNetworkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+							if (ConnectionProvider.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) {
 								mIsHalted = true;
 								return;
 							}
 
-							final IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-							final Intent batteryStatusReceiver = context.registerReceiver(null, intentFilter);
+							final Intent batteryStatusReceiver = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+							if (batteryStatusReceiver == null) {
+								mIsHalted = true;
+								return;
+							}
+
 							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 							if (batteryStatus != BatteryManager.BATTERY_STATUS_CHARGING) {
 								mIsHalted = true;
@@ -164,7 +166,7 @@ public class StoreFilesService extends Service {
 							try {
 								connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
 							} catch (IOException e) {
-								mLogger.error("Error opening connection", e);
+								mLogger.error("Error getting connection", e);
 								return;
 							}
 
@@ -208,17 +210,19 @@ public class StoreFilesService extends Service {
 								}
 							} finally {
 								connection.disconnect();
-
-								if (mIsForeground && mQueuedFileKeys.size() == 0) {
-									stopForeground(true);
-									mIsForeground = false;
-									stopSelf();
-								}
 							}
 						} finally {
 							// This needs to be tied to the executor runnable in order to maintain
 							// a sync between the set and the executor queue
 							mQueuedFileKeys.remove(fileKey);
+
+							if (mQueuedFileKeys.size() == 0) {
+								if (mIsForeground) {
+									stopForeground(true);
+									mIsForeground = false;
+								}
+								stopSelf();
+							}
 						}
 					}
 				});
