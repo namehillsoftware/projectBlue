@@ -77,10 +77,11 @@ public class PollConnection {
 			
 			@Override
 			protected void onPostExecute(Void result) {
-				
 				for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
-				
-				clearCompleteListeners();
+
+				// Let on cancelled clear the completed listeners
+				if (!isCancelled())
+					clearCompleteListeners();
 			}
 			
 			@Override
