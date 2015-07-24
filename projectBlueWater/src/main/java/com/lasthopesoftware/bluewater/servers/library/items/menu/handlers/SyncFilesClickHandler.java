@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
  */
 public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 	private final SyncListManager mSyncListManager;
-	private final boolean mIsSynced;
+	private boolean mIsSynced;
 	private final IItem mItem;
 
 	public SyncFilesClickHandler(ViewFlipper menuContainer, IItem item, boolean isSynced) {
@@ -25,7 +25,8 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 
 	@Override
 	public void onClick(View v) {
-		mSyncListManager.toggleSync(mItem, !mIsSynced);
+		mIsSynced = !mIsSynced;
+		mSyncListManager.toggleSync(mItem, mIsSynced);
 
 		if (MainApplication.DEBUG_MODE) // For development purposes only
 			mSyncListManager.startSync();

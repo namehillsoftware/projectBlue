@@ -152,7 +152,7 @@ public class StoreFilesService extends Service {
 							}
 
 							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-							if (batteryStatus != BatteryManager.BATTERY_STATUS_CHARGING) {
+							if (batteryStatus == 0) {
 								mIsHalted = true;
 								return;
 							}

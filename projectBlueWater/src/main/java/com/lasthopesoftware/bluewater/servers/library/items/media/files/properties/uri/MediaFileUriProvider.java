@@ -39,6 +39,12 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 		this (context, file, false);
 	}
 
+	/**
+	 *
+	 * @param context the application context under which to operate
+	 * @param file the file to provide a URI for
+	 * @param isSilent if true, will not emit broadcast events when media files are found
+	 */
 	public MediaFileUriProvider(Context context, IFile file, boolean isSilent) {
 		super(file);
 

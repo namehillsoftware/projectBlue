@@ -112,8 +112,8 @@ public class PlaybackFile implements
 	}
 
 	private Uri getFileUri() throws IOException {
-		final BestMatchUriProvider remoteFileUriProvider = new BestMatchUriProvider(mMpContext, LibrarySession.GetActiveLibrary(mMpContext), mFile);
-		return remoteFileUriProvider.getFileUri();
+		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mMpContext, LibrarySession.GetActiveLibrary(mMpContext), mFile);
+		return bestMatchUriProvider.getFileUri();
 	}
 
 	public void prepareMediaPlayer() {
@@ -197,7 +197,7 @@ public class PlaybackFile implements
 		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
 			final Library library = LibrarySession.GetActiveLibrary(mMpContext);
 			if (library != null) {
-				final String authKey = LibrarySession.GetActiveLibrary(mMpContext).getAuthKey();
+				final String authKey = library.getAuthKey();
 
 				if (authKey != null && !authKey.isEmpty())
 					headers.put("Authorization", "basic " + authKey);

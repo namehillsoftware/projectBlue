@@ -19,6 +19,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 import org.apache.commons.io.FilenameUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -117,6 +118,11 @@ public class StoredFileAccess {
 					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 					try {
 						storedFileAccess.delete(storedFile);
+
+						if (!storedFile.isOwner()) return;
+
+						final File file = new File(storedFile.getPath());
+						if (file.exists()) file.delete();
 					} catch (SQLException se) {
 						mLogger.error("There was an error updating the stored file", se);
 					}
@@ -206,18 +212,15 @@ public class StoredFileAccess {
 						String fullPath = mLibrary.getSyncDir(mContext).getPath();
 
 						String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
-						if (artist == null) {
+						if (artist == null)
 							artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
-						}
 
-						if (artist != null) {
+						if (artist != null)
 							fullPath = FilenameUtils.concat(fullPath, artist);
-						}
 
 						final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
-						if (album != null) {
+						if (album != null)
 							fullPath = FilenameUtils.concat(fullPath, album);
-						}
 
 						String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
 						fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
@@ -257,8 +260,6 @@ public class StoredFileAccess {
 									.selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
 									.where()
 									.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
-									.and()
-									.eq(StoredFile.isOwnerColumnName, true)
 									.prepare();
 
 					final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);
