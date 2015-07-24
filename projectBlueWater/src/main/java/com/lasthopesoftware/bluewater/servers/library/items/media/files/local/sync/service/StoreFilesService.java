@@ -4,9 +4,11 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -62,6 +64,7 @@ public class StoreFilesService extends Service {
 	private StoredFileAccess mStoredFileAccess;
 
 	private ConnectivityManager mConnectivityManager;
+	private BatteryManager mBatteryManager;
 
 	private boolean mIsHalted = false;
 
@@ -81,6 +84,7 @@ public class StoreFilesService extends Service {
 		super.onCreate();
 
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		mBatteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
 	}
 
 	@Override
@@ -124,6 +128,8 @@ public class StoreFilesService extends Service {
 	private void queueAndStartDownloading(final int fileKey, final int storedFileId) {
 		if (!mQueuedFileKeys.add(fileKey)) return;
 
+		final Context context = this;
+
 		mStoredFileAccess.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, final StoredFile storedFile) {
@@ -137,6 +143,14 @@ public class StoreFilesService extends Service {
 
 							final NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
 							if (activeNetworkInfo == null || activeNetworkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+								mIsHalted = true;
+								return;
+							}
+
+							final IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+							final Intent batteryStatusReceiver = context.registerReceiver(null, intentFilter);
+							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+							if (batteryStatus != BatteryManager.BATTERY_STATUS_CHARGING) {
 								mIsHalted = true;
 								return;
 							}
