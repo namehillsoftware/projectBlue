@@ -105,7 +105,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
-            final Library library = LibrarySession.GetLibrary(mContext);
+            final Library library = LibrarySession.GetActiveLibrary(mContext);
 			if (library == null) return getFillerBitmap();
 
 

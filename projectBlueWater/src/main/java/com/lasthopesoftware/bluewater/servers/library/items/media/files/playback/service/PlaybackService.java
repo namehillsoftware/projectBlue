@@ -207,7 +207,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -324,7 +324,7 @@ public class PlaybackService extends Service implements
 	}
 		
 	private void restorePlaylistControllerFromStorage(final OnCompleteListener<Integer, Void, Boolean> onPlaylistRestored) {
-		LibrarySession.GetLibrary(mStreamingMusicService, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
@@ -390,7 +390,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -617,13 +617,13 @@ public class PlaybackService extends Service implements
         	
         	if (mPlaylistController.resume()) return;
         	
-        	LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
-				}
-			});
+        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+
+		        @Override
+		        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+			        startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
+		        }
+	        });
         	
         	return;
         }
@@ -726,7 +726,7 @@ public class PlaybackService extends Service implements
 						return;
 					}
 					
-					LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+					LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -770,7 +770,7 @@ public class PlaybackService extends Service implements
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-					LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+					LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
@@ -842,7 +842,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

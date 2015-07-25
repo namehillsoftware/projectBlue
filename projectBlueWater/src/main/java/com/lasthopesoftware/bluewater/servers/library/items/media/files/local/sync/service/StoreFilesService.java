@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Binder;
@@ -63,9 +62,6 @@ public class StoreFilesService extends Service {
 
 	private StoredFileAccess mStoredFileAccess;
 
-	private ConnectivityManager mConnectivityManager;
-	private BatteryManager mBatteryManager;
-
 	private boolean mIsHalted = false;
 
 	public static void queueFileForDownload(Context context, IFile file, StoredFile storedFile) {
@@ -80,14 +76,6 @@ public class StoreFilesService extends Service {
 	}
 
 	@Override
-	public void onCreate() {
-		super.onCreate();
-
-		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		mBatteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
-	}
-
-	@Override
 	public int onStartCommand(final Intent intent, final int flags, final int startId) {
 		if (mStoredFileAccess != null) {
 			startIntent(intent, flags, startId);
@@ -95,7 +83,7 @@ public class StoreFilesService extends Service {
 		}
 
 		final Context context = this;
-		LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 				mStoredFileAccess = new StoredFileAccess(context, library);
@@ -138,24 +126,23 @@ public class StoreFilesService extends Service {
 					@Override
 					public void run() {
 						try {
-							if (mIsHalted || storedFile.isDownloadComplete())
+							final java.io.File file = new java.io.File(storedFile.getPath());
+							if (mIsHalted || (storedFile.isDownloadComplete() && file.exists()))
 								return;
 
-							final NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-							if (activeNetworkInfo == null || activeNetworkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+							if (ConnectionProvider.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) {
 								mIsHalted = true;
 								return;
 							}
 
-							final IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-							final Intent batteryStatusReceiver = context.registerReceiver(null, intentFilter);
+							final Intent batteryStatusReceiver = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 							if (batteryStatusReceiver == null) {
 								mIsHalted = true;
 								return;
 							}
 
 							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-							if (batteryStatus != BatteryManager.BATTERY_STATUS_CHARGING) {
+							if (batteryStatus == 0) {
 								mIsHalted = true;
 								return;
 							}
@@ -169,7 +156,7 @@ public class StoreFilesService extends Service {
 							try {
 								connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
 							} catch (IOException e) {
-								mLogger.error("Error opening connection", e);
+								mLogger.error("Error getting connection", e);
 								return;
 							}
 
@@ -184,10 +171,10 @@ public class StoreFilesService extends Service {
 									return;
 								}
 
-								final java.io.File file = new java.io.File(storedFile.getPath());
-
 								final java.io.File parent = file.getParentFile();
-								if (!parent.exists()) parent.mkdirs();
+								if (!parent.exists()) {
+									if (!parent.mkdirs()) return;
+								}
 
 								try {
 									final FileOutputStream fos = new FileOutputStream(file);
@@ -213,17 +200,19 @@ public class StoreFilesService extends Service {
 								}
 							} finally {
 								connection.disconnect();
-
-								if (mIsForeground && mQueuedFileKeys.size() == 0) {
-									stopForeground(true);
-									mIsForeground = false;
-									stopSelf();
-								}
 							}
 						} finally {
 							// This needs to be tied to the executor runnable in order to maintain
 							// a sync between the set and the executor queue
 							mQueuedFileKeys.remove(fileKey);
+
+							if (mQueuedFileKeys.size() == 0) {
+								if (mIsForeground) {
+									stopForeground(true);
+									mIsForeground = false;
+								}
+								stopSelf();
+							}
 						}
 					}
 				});

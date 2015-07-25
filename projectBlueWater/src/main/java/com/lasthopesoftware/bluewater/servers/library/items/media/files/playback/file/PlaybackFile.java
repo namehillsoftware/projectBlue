@@ -13,14 +13,15 @@ import android.os.AsyncTask;
 import android.os.PowerManager;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
@@ -111,10 +112,8 @@ public class PlaybackFile implements
 	}
 
 	private Uri getFileUri() throws IOException {
-		final Uri localFileUri = mFile.getLocalFileUri(mMpContext);
-		if (localFileUri != null) return localFileUri;
-
-		return mFile.getRemoteFileUri(mMpContext);
+		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mMpContext, LibrarySession.GetActiveLibrary(mMpContext), mFile);
+		return bestMatchUriProvider.getFileUri();
 	}
 
 	public void prepareMediaPlayer() {
@@ -178,7 +177,7 @@ public class PlaybackFile implements
 	
 	private void initializeBufferPercentage(Uri uri) {
 		final String scheme = uri.getScheme();
-		mBufferPercentage = File.FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
+		mBufferPercentage = IoCommon.FileUriScheme.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
 		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
 	}
 	
@@ -194,11 +193,11 @@ public class PlaybackFile implements
 		final Map<String, String> headers = new HashMap<>();
 		if (mMpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
-		
-		if (!uri.getScheme().equalsIgnoreCase(File.FILE_URI_SCHEME)) {
-			final Library library = LibrarySession.GetLibrary(mMpContext);
+
+		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
+			final Library library = LibrarySession.GetActiveLibrary(mMpContext);
 			if (library != null) {
-				final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
+				final String authKey = library.getAuthKey();
 
 				if (authKey != null && !authKey.isEmpty())
 					headers.put("Authorization", "basic " + authKey);

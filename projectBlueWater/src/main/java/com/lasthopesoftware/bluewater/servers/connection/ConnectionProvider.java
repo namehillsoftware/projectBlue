@@ -69,9 +69,7 @@ public class ConnectionProvider {
 			if (timeout <= 0) timeout = stdTimeoutTime;
 			try {
 
-				final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-				final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-				
+				final NetworkInfo networkInfo = getActiveNetworkInfo(context);
 				if (networkInfo == null || !networkInfo.isConnected()) {
 					executeReturnFalseTask(onBuildComplete);
 					return;
@@ -99,7 +97,7 @@ public class ConnectionProvider {
 		}
 	}
 	
-	private static final void executeReturnFalseTask(OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
+	private static void executeReturnFalseTask(OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
 		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
 			
 			@Override
@@ -144,12 +142,12 @@ public class ConnectionProvider {
 			ConnectionTester.doTest(timeout, mTestConnectionCompleteListener);
 		else
 			ConnectionTester.doTest(mTestConnectionCompleteListener);
-	}	
+	}
 	
 	public static MediaCenterConnection getConnection(String... params) throws IOException {
 		synchronized(syncObj) {
 			if (mAccessConfiguration == null) return null;
-			URL url = new URL(mAccessConfiguration.buildMediaCenterUrl(params));
+			final URL url = new URL(mAccessConfiguration.buildMediaCenterUrl(params));
 			return mAuthCode == null || mAuthCode.isEmpty() ? new MediaCenterConnection(url) : new MediaCenterConnection(url, mAuthCode);
 		}
 	}
@@ -159,6 +157,16 @@ public class ConnectionProvider {
 			if (mAccessConfiguration == null) return null;
 			return mAccessConfiguration.buildMediaCenterUrl(params);
 		}
+	}
+
+	public static int getConnectionType(Context context) {
+		final NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
+		return activeNetworkInfo == null ? -1 : activeNetworkInfo.getType();
+	}
+
+	private static NetworkInfo getActiveNetworkInfo(Context context) {
+		final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		return connectivityManager.getActiveNetworkInfo();
 	}
 	
 	private static void buildAccessConfiguration(String accessString, final boolean isLocalOnly, final int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
@@ -227,7 +235,7 @@ public class ConnectionProvider {
 		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
 	}
 		
-	public static class MediaCenterConnection extends HttpURLConnection {
+	private static class MediaCenterConnection extends HttpURLConnection {
 	
 		private HttpURLConnection mHttpConnection;
 		
