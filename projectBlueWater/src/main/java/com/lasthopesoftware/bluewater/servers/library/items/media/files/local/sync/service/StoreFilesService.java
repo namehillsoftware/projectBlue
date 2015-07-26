@@ -37,22 +37,11 @@ import java.util.concurrent.Executors;
 
 public class StoreFilesService extends Service {
 
-	private static class QueuedFileHolder {
-		public final IFile file;
-		public final String remotePath;
-
-		private QueuedFileHolder(IFile file, String remotePath) {
-			this.file = file;
-			this.remotePath = remotePath;
-		}
-	}
-
 	private static final String queueFileForDownload = StoreFilesService.class.getCanonicalName() + ".queueFileForDownload";
-
 	private static final String storedFileId = StoreFilesService.class.getCanonicalName() + ".storedFileId";
 	private static final String fileIdKey = StoreFilesService.class.getCanonicalName() + ".fileIdKey";
 
-	private final static Set<Integer> mQueuedFileKeys = new HashSet<>();
+	private static final Set<Integer> mQueuedFileKeys = new HashSet<>();
 
 	private static final ExecutorService mStoreFilesExecutor = Executors.newSingleThreadExecutor();
 
@@ -131,19 +120,19 @@ public class StoreFilesService extends Service {
 								return;
 
 							if (ConnectionProvider.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) {
-								mIsHalted = true;
+								halt();
 								return;
 							}
 
 							final Intent batteryStatusReceiver = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 							if (batteryStatusReceiver == null) {
-								mIsHalted = true;
+								halt();
 								return;
 							}
 
 							final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 							if (batteryStatus == 0) {
-								mIsHalted = true;
+								halt();
 								return;
 							}
 
@@ -167,14 +156,12 @@ public class StoreFilesService extends Service {
 								try {
 									is = connection.getInputStream();
 								} catch (IOException ioe) {
-									mLogger.error("Error reading data from connection", ioe);
+									mLogger.error("Error opening data connection", ioe);
 									return;
 								}
 
 								final java.io.File parent = file.getParentFile();
-								if (!parent.exists()) {
-									if (!parent.mkdirs()) return;
-								}
+								if (!parent.exists() && !parent.mkdirs()) return;
 
 								try {
 									final FileOutputStream fos = new FileOutputStream(file);
@@ -218,6 +205,10 @@ public class StoreFilesService extends Service {
 				});
 			}
 		});
+	}
+
+	private void halt() {
+		mIsHalted = true;
 	}
 
 	@Override
