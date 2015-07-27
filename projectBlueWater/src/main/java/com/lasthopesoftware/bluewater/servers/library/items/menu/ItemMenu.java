@@ -14,7 +14,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.SyncListManager;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesClickHandler;
@@ -76,7 +76,7 @@ public final class ItemMenu {
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		final ViewFlipper viewFlipper = parentView;
-		final SyncListManager syncListManager = new SyncListManager(parentView.getContext());
+		final StoredItemAccess syncListManager = new StoredItemAccess(parentView.getContext());
 		syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, final Boolean isSynced) {

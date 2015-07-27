@@ -9,7 +9,6 @@ import com.j256.ormlite.logger.LoggerFactory;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.StoreFilesService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
@@ -177,9 +176,11 @@ public class StoredFileAccess {
 		});
 	}
 
-	public void syncFilesSynchronously(Dao<StoredFile, Integer> storedFilesAccess, List<IFile> files) {
-		try {
-			for (IFile file : files) {
+	public void createOrUpdateFile(final IFile file, final ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onCreateOrUpdateComplete) {
+		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+			@Override
+			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+				final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
 				StoredFile storedFile = getStoredFile(storedFilesAccess, file);
 				if (storedFile == null) {
 					storedFile = new StoredFile();
@@ -237,18 +238,24 @@ public class StoredFileAccess {
 					}
 				}
 
-				storedFilesAccess.createOrUpdate(storedFile);
-
 				final File systemFile = new File(storedFile.getPath());
 				if (!systemFile.exists())
 					storedFile.setIsDownloadComplete(false);
 
-				if (!storedFile.isDownloadComplete())
-					StoreFilesService.queueFileForDownload(mContext, file, storedFile);
+				try {
+					storedFilesAccess.createOrUpdate(storedFile);
+				} catch (SQLException e) {
+					mLogger.error("There was an updating the stored file.", e);
+				}
+
+				return storedFile;
 			}
-		} catch (SQLException e) {
-			mLogger.error("There was an updating the stored file.", e);
-		}
+		});
+
+		if (onCreateOrUpdateComplete != null)
+			createOrUpdateStoredFileTask.addOnCompleteListener(onCreateOrUpdateComplete);
+
+		createOrUpdateStoredFileTask.execute(DatabaseHandler.databaseExecutor);
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {

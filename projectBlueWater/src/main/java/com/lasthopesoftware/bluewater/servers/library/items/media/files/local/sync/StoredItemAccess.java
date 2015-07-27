@@ -29,13 +29,13 @@ import java.util.Set;
 /**
  * Created by david on 7/5/15.
  */
-public class SyncListManager {
+public class StoredItemAccess {
 
-    private static final Logger mLogger = LoggerFactory.getLogger(SyncListManager.class);
+    private static final Logger mLogger = LoggerFactory.getLogger(StoredItemAccess.class);
 
     private final Context mContext;
 
-    public SyncListManager(Context context) {
+    public StoredItemAccess(Context context) {
         mContext = context;
     }
 
@@ -143,6 +143,28 @@ public class SyncListManager {
             }
         });
     }
+
+	public void getAllStoredItems(ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>> onStoredListsRetrieved) {
+		final SimpleTask<Void, Void, List<StoredItem>> getAllStoredListsTasks = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredItem>>() {
+			@Override
+			public List<StoredItem> onExecute(ISimpleTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
+				try {
+					final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
+					final Dao<StoredItem, Integer> storedItemAccess = dbHandler.getAccessObject(StoredItem.class);
+					return storedItemAccess.queryForAll();
+				} catch (SQLException e) {
+					mLogger.error("Error accessing the stored list access", e);
+				}
+
+				return new ArrayList<>();
+			}
+		});
+
+		if (onStoredListsRetrieved != null)
+			getAllStoredListsTasks.addOnCompleteListener(onStoredListsRetrieved);
+
+		getAllStoredListsTasks.execute(DatabaseHandler.databaseExecutor);
+	}
 
     private static boolean isItemMarkedForSync(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
         return getStoredList(storedListAccess, library, item, itemType) != null;
