@@ -11,4 +11,5 @@ public interface IFile extends IIntKeyStringValue {
 	String getRefreshedProperty(String name) throws IOException;
 	int getDuration() throws IOException;
 	String getPlaybackUrl();
+	String[] getPlaybackParams();
 }

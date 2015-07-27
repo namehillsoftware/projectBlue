@@ -145,7 +145,7 @@
         </service>
 
         <service
-            android:name=".servers.library.items.media.files.local.sync.service.StoreFilesService"
+            android:name=".servers.library.items.media.files.local.sync.service.ItemSyncService"
             android:enabled="true"
             android:exported="false" >
         </service>

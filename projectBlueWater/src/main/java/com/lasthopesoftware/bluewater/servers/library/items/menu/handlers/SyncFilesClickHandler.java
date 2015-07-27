@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 import android.view.View;
 import android.widget.ViewFlipper;
 
-import com.lasthopesoftware.bluewater.MainApplication;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
 
 /**
  * Created by david on 7/18/15.
@@ -28,8 +28,7 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 		mIsSynced = !mIsSynced;
 		mSyncListManager.toggleSync(mItem, mIsSynced);
 
-		if (MainApplication.DEBUG_MODE) // For development purposes only
-			mSyncListManager.startSync();
+		ItemSyncService.doSync(v.getContext());
 
 		super.onClick(v);
 	}

@@ -193,29 +193,32 @@ public class ConnectionProvider {
 						accessDao.setRemoteIp(jrUrl.getHost());
 						accessDao.setPort(jrUrl.getPort());
 						accessDao.setStatus(true);
-					} else {
-						final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
-						
-						conn.setConnectTimeout(timeout);
-						try {
-							final InputStream is = conn.getInputStream();
-							try {
-								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-								accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-								accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-								accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-                                accessDao.setLocalOnly(isLocalOnly);
-								for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-									accessDao.getLocalIps().add(localIp);
-								for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-									accessDao.getMacAddresses().add(macAddress);
-							} finally {
-								is.close();
-							}
-						} finally {
-							conn.disconnect();
-						}
+
+						return accessDao;
 					}
+
+					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
+
+					conn.setConnectTimeout(timeout);
+					try {
+						final InputStream is = conn.getInputStream();
+						try {
+							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
+							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+							accessDao.setRemoteIp(xml.getUnique("ip").getValue());
+                            accessDao.setLocalOnly(isLocalOnly);
+							for (String localIp : xml.getUnique("localiplist").getValue().split(","))
+								accessDao.getLocalIps().add(localIp);
+							for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
+								accessDao.getMacAddresses().add(macAddress);
+						} finally {
+							is.close();
+						}
+					} finally {
+						conn.disconnect();
+					}
+
 					return accessDao;
 				} catch (ClientProtocolException c) {
 					mLogger.error(c.getMessage());
