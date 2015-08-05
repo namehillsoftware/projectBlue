@@ -240,6 +240,11 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
+		public String[] getPlaybackParams() {
+			return new String[0];
+		}
+
+		@Override
 		public int compareTo(IItem another) {
 			// TODO Auto-generated method stub
 			return 0;
