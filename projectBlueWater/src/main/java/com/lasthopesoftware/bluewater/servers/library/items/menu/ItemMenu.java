@@ -92,7 +92,7 @@ public final class ItemMenu {
 
 	private static Drawable getSyncOnDrawable(Context context) {
 		if (mSyncOnDrawable == null)
-			mSyncOnDrawable = context.getResources().getDrawable(R.drawable.ic_sync);
+			mSyncOnDrawable = context.getResources().getDrawable(R.drawable.ic_sync_on);
 
 		return mSyncOnDrawable;
 	}

@@ -18,12 +18,10 @@ import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Permission;
 import java.util.List;
@@ -511,6 +509,8 @@ public class ConnectionProvider {
 					Boolean result = Boolean.FALSE;
 										
 					final HttpURLConnection conn = getConnection("Alive");
+					if (conn == null) return result;
+
 					try {
 				    	conn.setConnectTimeout(params[0]);
 				    	final InputStream is = conn.getInputStream();
@@ -521,14 +521,8 @@ public class ConnectionProvider {
 				    	} finally {
 				    		is.close();
 				    	}
-					} catch (MalformedURLException m) {
-						mLogger.warn(m.getMessage());
-					} catch (FileNotFoundException f) {
-						mLogger.warn(f.getMessage());
-					} catch (IOException e) {
+					} catch (IOException | IllegalArgumentException e) {
 						mLogger.warn(e.getMessage());
-					} catch (IllegalArgumentException i) {
-						mLogger.warn(i.getMessage());
 					} finally {
 						conn.disconnect();
 					}
@@ -546,8 +540,8 @@ public class ConnectionProvider {
 	}
 	
 	public interface OnAccessStateChange {
-		public void gettingUri(String accessString);
-		public void establishingConnection(Uri destinationUri);
-		public void establishingConnectionCompleted(Uri destinationUri);
+		void gettingUri(String accessString);
+		void establishingConnection(Uri destinationUri);
+		void establishingConnectionCompleted(Uri destinationUri);
 	}
 }
