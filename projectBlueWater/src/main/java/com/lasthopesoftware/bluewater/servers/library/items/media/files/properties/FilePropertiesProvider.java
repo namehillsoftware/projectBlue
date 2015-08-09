@@ -75,7 +75,7 @@ public class FilePropertiesProvider {
 			@Override
 			public void run() {
 				try {
-					final HttpURLConnection conn = ConnectionProvider.getConnection("File/SetInfo", "File=" + mFileKeyString, "Field=" + name, "Value=" + value);;
+					final HttpURLConnection conn = ConnectionProvider.getActiveConnection("File/SetInfo", "File=" + mFileKeyString, "Field=" + name, "Value=" + value);;
 					try {
 						conn.setReadTimeout(5000);
 						conn.getInputStream().close();
@@ -129,7 +129,7 @@ public class FilePropertiesProvider {
 				    returnProperties.putAll(mFilePropertiesContainer.getProperties());
 					
 					try {
-						final HttpURLConnection conn = ConnectionProvider.getConnection("File/GetInfo", "File=" + mFileKeyString);
+						final HttpURLConnection conn = ConnectionProvider.getActiveConnection("File/GetInfo", "File=" + mFileKeyString);
 						conn.setReadTimeout(45000);
 						try {
 							final InputStream is = conn.getInputStream();

@@ -3,18 +3,7 @@ package com.lasthopesoftware.bluewater.servers.connection;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
-import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,137 +15,21 @@ import java.net.URL;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import xmlwise.XmlElement;
-import xmlwise.Xmlwise;
 
 public class ConnectionProvider {
-	private static AccessConfiguration mAccessConfiguration;
-	private static String mAccessString = null;
-	private static String mAuthCode = null;
-	private static boolean mIsLocalOnly = false;
-	
+
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionProvider.class);
-	
-	private static CopyOnWriteArrayList<OnAccessStateChange> mOnAccessStateChangeListeners = new CopyOnWriteArrayList<>();
-	
-	private static final Object syncObj = new Object();
-	
-	public static void buildConfiguration(Context context, String accessString, boolean isLocalOnly, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, isLocalOnly, stdTimeoutTime, onBuildComplete);
-	}
-	
-	public static void buildConfiguration(Context context, String accessString, boolean isLocalOnly, int timeout, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, null, isLocalOnly, timeout, onBuildComplete);
-	}
-	
-	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly, OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
-		buildConfiguration(context, accessString, authCode, isLocalOnly, stdTimeoutTime, onBuildComplete);
-	}
-	
-	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly,int timeout, final OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
-		if (accessString == null)
-			throw new NullPointerException("The access string cannot be null.");
-		
-		mAccessString = accessString;
-		mIsLocalOnly = isLocalOnly;
-		synchronized(syncObj) {
-			mAuthCode = authCode;
-			if (timeout <= 0) timeout = stdTimeoutTime;
-			try {
 
-				final NetworkInfo networkInfo = getActiveNetworkInfo(context);
-				if (networkInfo == null || !networkInfo.isConnected()) {
-					executeReturnFalseTask(onBuildComplete);
-					return;
-				}
-				
-				buildAccessConfiguration(mAccessString, mIsLocalOnly, timeout, new OnCompleteListener<String, Void, AccessConfiguration>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
-						synchronized(syncObj) {
-							mAccessConfiguration = result;
-						}
-						
-						if (mAccessConfiguration == null) {
-							executeReturnFalseTask(onBuildComplete);
-							return;
-						}
-	
-						ConnectionTester.doTest(onBuildComplete);
-					}
-				});
-			} catch (NullPointerException ne) {
-				throw ne;
-			}
-		}
-	}
-	
-	private static void executeReturnFalseTask(OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
-		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
-			
-			@Override
-			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-				return Boolean.FALSE;
-			}
-			
-		});
-		
-		returnFalseTask.addOnCompleteListener(onReturnFalseListener);
-		returnFalseTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-	
-	public static void refreshConfiguration(Context context, OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-		refreshConfiguration(context, -1, onRefreshComplete);
-	}
-	
-	public static void refreshConfiguration(final Context context, final int timeout, final OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-		if (mAccessConfiguration == null) {
-			if (mAccessString == null || mAccessString.isEmpty())
-				throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
-			
-			buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
-			return;
-		}
-		
-		final OnCompleteListener<Integer, Void, Boolean> mTestConnectionCompleteListener = new OnCompleteListener<Integer, Void, Boolean>() {
+	private final AccessConfiguration mAccessConfiguration;
 
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) {
-					onRefreshComplete.onComplete(owner, result);
-					return;
-				}
-				
-				buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
-			}
-		
-		};
-				
-		if (timeout > 0)
-			ConnectionTester.doTest(timeout, mTestConnectionCompleteListener);
-		else
-			ConnectionTester.doTest(mTestConnectionCompleteListener);
-	}
-	
-	public static MediaCenterConnection getConnection(String... params) throws IOException {
-		synchronized(syncObj) {
-			if (mAccessConfiguration == null) return null;
-			final URL url = new URL(mAccessConfiguration.buildMediaCenterUrl(params));
-			return mAuthCode == null || mAuthCode.isEmpty() ? new MediaCenterConnection(url) : new MediaCenterConnection(url, mAuthCode);
-		}
-	}
-	
-	public static String getFormattedUrl(String... params) {
-		synchronized(syncObj) {
-			if (mAccessConfiguration == null) return null;
-			return mAccessConfiguration.buildMediaCenterUrl(params);
-		}
+	private final Object syncObj = new Object();
+
+	public ConnectionProvider(AccessConfiguration accessConfiguration) {
+		mAccessConfiguration = accessConfiguration;
 	}
 
+	// Utility methods. Questionable location for these methods
 	public static int getConnectionType(Context context) {
 		final NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
 		return activeNetworkInfo == null ? -1 : activeNetworkInfo.getType();
@@ -166,76 +39,24 @@ public class ConnectionProvider {
 		final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		return connectivityManager.getActiveNetworkInfo();
 	}
-	
-	private static void buildAccessConfiguration(String accessString, final boolean isLocalOnly, final int timeout, OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
-		if (accessString == null)
-			throw new NullPointerException("The access string cannot be null");
-		
-		for (OnAccessStateChange onAccessStateChange : mOnAccessStateChangeListeners)
-			onAccessStateChange.gettingUri(accessString);
-		
-		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<>(new OnExecuteListener<String, Void, AccessConfiguration>() {
-			
-			@Override
-			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
-				try {
-					final AccessConfiguration accessDao = new AccessConfiguration();
-					String accessString = params[0];
-					if (accessString.contains(".")) {
-						if (!accessString.contains(":")) accessString += ":80";
-						if (!accessString.startsWith("http://")) accessString = "http://" + accessString;
-					}
-					
-					if (UrlValidator.getInstance().isValid(accessString)) {
-						final Uri jrUrl = Uri.parse(accessString);
-						accessDao.setRemoteIp(jrUrl.getHost());
-						accessDao.setPort(jrUrl.getPort());
-						accessDao.setStatus(true);
 
-						return accessDao;
-					}
+	public MediaCenterConnection getConnection(String... params) throws IOException {
+		synchronized(syncObj) {
+			if (mAccessConfiguration == null) return null;
 
-					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
+			final URL url = new URL(mAccessConfiguration.buildMediaCenterUrl(params));
+			final String authCode = mAccessConfiguration.getAuthCode();
 
-					conn.setConnectTimeout(timeout);
-					try {
-						final InputStream is = conn.getInputStream();
-						try {
-							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-							accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-                            accessDao.setLocalOnly(isLocalOnly);
-							for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-								accessDao.getLocalIps().add(localIp);
-							for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-								accessDao.getMacAddresses().add(macAddress);
-						} finally {
-							is.close();
-						}
-					} finally {
-						conn.disconnect();
-					}
-
-					return accessDao;
-				} catch (ClientProtocolException c) {
-					mLogger.error(c.getMessage());
-				} catch (IOException i) {
-					mLogger.error(i.getMessage());
-				} catch (Exception e) {
-					mLogger.warn(e.toString());
-				}
-				
-				return null;
-			}
-		});
-		
-		if (onGetAccessComplete != null)
-			mediaCenterAccessTask.addOnCompleteListener(onGetAccessComplete);
-		
-		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
+			return authCode == null || authCode.isEmpty() ? new MediaCenterConnection(url) : new MediaCenterConnection(url, authCode);
+		}
 	}
-		
+
+	public String getFormattedUrl(String... params) {
+		synchronized(syncObj) {
+			return mAccessConfiguration != null ? mAccessConfiguration.buildMediaCenterUrl(params) : null;
+		}
+	}
+
 	private static class MediaCenterConnection extends HttpURLConnection {
 	
 		private HttpURLConnection mHttpConnection;
@@ -491,57 +312,5 @@ public class ConnectionProvider {
 		public boolean usingProxy() {
 			return mHttpConnection.usingProxy();
 		}
-	}
-	
-	private static class ConnectionTester {
-		
-		private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class); 
-		
-		public static void doTest(OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			doTest(stdTimeoutTime, onTestComplete);
-		}
-		
-		public static void doTest(int timeout, OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
-
-				@Override
-				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-					Boolean result = Boolean.FALSE;
-										
-					final HttpURLConnection conn = getConnection("Alive");
-					if (conn == null) return result;
-
-					try {
-				    	conn.setConnectTimeout(params[0]);
-				    	final InputStream is = conn.getInputStream();
-				    	try {
-							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
-					    	
-					    	result = responseDao != null && responseDao.isStatus();
-				    	} finally {
-				    		is.close();
-				    	}
-					} catch (IOException | IllegalArgumentException e) {
-						mLogger.warn(e.getMessage());
-					} finally {
-						conn.disconnect();
-					}
-					
-					return result;
-				}
-				
-			});
-			
-			if (onTestComplete != null)
-				connectionTestTask.addOnCompleteListener(onTestComplete);
-			
-			connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, timeout);
-		}		
-	}
-	
-	public interface OnAccessStateChange {
-		void gettingUri(String accessString);
-		void establishingConnection(Uri destinationUri);
-		void establishingConnectionCompleted(Uri destinationUri);
 	}
 }

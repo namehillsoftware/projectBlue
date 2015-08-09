@@ -31,9 +31,9 @@ import android.util.SparseArray;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnectionBuilder;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnectionBuilder.BuildingSessionConnectionStatus;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnectionBuilder.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
@@ -533,7 +533,7 @@ public class PlaybackService extends Service implements
 		
 		if (ConnectionProvider.getFormattedUrl() == null) {
 			// TODO this should probably be its own service soon
-			handleBuildStatusChange(BuildSessionConnection.build(mStreamingMusicService, new OnBuildSessionStateChangeListener() {
+			handleBuildStatusChange(SessionConnectionBuilder.build(mStreamingMusicService, new OnBuildSessionStateChangeListener() {
 				
 				@Override
 				public void onBuildSessionStatusChange(BuildingSessionConnectionStatus status) {

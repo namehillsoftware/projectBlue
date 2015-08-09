@@ -12,12 +12,23 @@ public class AccessConfiguration {
 	private volatile String mActiveUrl = "";
 	private String remoteIp;
 	private int port;
-	private List<String> localIps = new ArrayList<>();
-	private List<String> macAddresses = new ArrayList<>();
+	private final List<String> localIps = new ArrayList<>();
+	private final List<String> macAddresses = new ArrayList<>();
 	private int urlIndex = -1;
 	private boolean isLocalOnly;
-	
+
+	private final String authCode;
+
 	public AccessConfiguration() {
+		this(null);
+	}
+
+	public AccessConfiguration(String authCode) {
+		this.authCode = authCode;
+	}
+
+	public String getAuthCode() {
+		return authCode;
 	}
 
 	/**
@@ -26,17 +37,18 @@ public class AccessConfiguration {
 	public boolean isStatus() {
 		return status;
 	}
-	
+
 	public void setStatus(boolean status) {
 		this.status = status;
 	}
-	
+
 	/**
 	 * @return the remoteIp
 	 */
 	public String getRemoteIp() {
 		return remoteIp;
 	}
+
 	/**
 	 * @param remoteIp the remoteIp to set
 	 */

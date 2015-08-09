@@ -42,7 +42,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
         if (mCachedPlaylists != null && revision.equals(mRevision))
             return getPlaylists(mPlaylistId);
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
         try {
             if (task.isCancelled()) return new ArrayList<>();
 

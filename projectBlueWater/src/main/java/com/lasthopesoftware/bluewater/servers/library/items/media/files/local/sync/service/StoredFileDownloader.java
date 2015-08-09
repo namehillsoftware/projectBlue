@@ -76,7 +76,7 @@ public class StoredFileDownloader {
 
 					HttpURLConnection connection;
 					try {
-						connection = ConnectionProvider.getConnection(serviceFile.getPlaybackParams());
+						connection = ConnectionProvider.getActiveConnection(serviceFile.getPlaybackParams());
 					} catch (IOException e) {
 						mLogger.error("Error getting connection", e);
 						return;

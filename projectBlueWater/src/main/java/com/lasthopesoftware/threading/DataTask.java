@@ -13,7 +13,7 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> impleme
 			@Override
 			public TResult onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
 
-				final HttpURLConnection conn = ConnectionProvider.getConnection(params);
+				final HttpURLConnection conn = ConnectionProvider.getActiveConnection(params);
 				try {
 					final InputStream is = conn.getInputStream();
 					try {

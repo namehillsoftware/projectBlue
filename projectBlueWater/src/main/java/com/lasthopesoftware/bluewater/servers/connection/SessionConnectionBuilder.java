@@ -1,9 +1,8 @@
-package com.lasthopesoftware.bluewater.servers.connection.helpers;
+package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.store.Library;
@@ -17,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class BuildSessionConnection {
+public class SessionConnectionBuilder {
 
 	private static final AtomicBoolean isRunning = new AtomicBoolean();
 	private static volatile BuildingSessionConnectionStatus mBuildingStatus = BuildingSessionConnectionStatus.GETTING_LIBRARY;

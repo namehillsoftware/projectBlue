@@ -41,7 +41,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
                 return mCachedFileSystemItems;
         }
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
         try {
             if (task.isCancelled()) return new ArrayList<>();
 

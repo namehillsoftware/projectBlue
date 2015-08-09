@@ -36,7 +36,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
             return mCachedRevision;
         }
 
-        final HttpURLConnection conn = ConnectionProvider.getConnection("Library/GetRevision");
+        final HttpURLConnection conn = ConnectionProvider.getActiveConnection("Library/GetRevision");
         try {
             final InputStream is = conn.getInputStream();
             try {

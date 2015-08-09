@@ -119,13 +119,13 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			}
 			
 			try {
-				final HttpURLConnection conn = ConnectionProvider.getConnection(
-											"File/GetImage", 
-											"File=" + String.valueOf(mFile.getKey()), 
-											"Type=Full", 
-											"Pad=1",
-											"Format=" + IMAGE_FORMAT,
-											"FillTransparency=ffffff");
+				final HttpURLConnection conn = ConnectionProvider.getActiveConnection(
+						"File/GetImage",
+						"File=" + String.valueOf(mFile.getKey()),
+						"Type=Full",
+						"Pad=1",
+						"Format=" + IMAGE_FORMAT,
+						"FillTransparency=ffffff");
 				
 				// Connection failed to build
 				if (conn == null) return getFillerBitmap();

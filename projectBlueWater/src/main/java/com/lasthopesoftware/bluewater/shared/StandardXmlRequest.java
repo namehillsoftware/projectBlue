@@ -18,7 +18,7 @@ public class StandardXmlRequest extends AsyncTask<String, Void, StandardRequest>
 		StandardRequest responseDao = null;
 		
 		try {
-			HttpURLConnection conn = ConnectionProvider.getConnection(params);
+			HttpURLConnection conn = ConnectionProvider.getActiveConnection(params);
 	    	
 			try {
 				final InputStream is = conn.getInputStream();

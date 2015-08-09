@@ -54,7 +54,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
+        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
         try {
             if (task.isCancelled()) return new ArrayList<>();
 
