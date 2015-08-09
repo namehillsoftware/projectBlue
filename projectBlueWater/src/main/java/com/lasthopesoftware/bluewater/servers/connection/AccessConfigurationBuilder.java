@@ -26,47 +26,38 @@ import xmlwise.Xmlwise;
  * Created by david on 8/8/15.
  */
 public class AccessConfigurationBuilder {
-	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+
+	private static final int stdTimeoutTime = 30000;
+	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
+
+	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
 		buildConfiguration(context, accessString, authCode, isLocalOnly, stdTimeoutTime, onBuildComplete);
 	}
 
-	public static void buildConfiguration(Context context, String accessString, String authCode, boolean isLocalOnly,int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
+	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null.");
 
-		mAccessString = accessString;
-		mIsLocalOnly = isLocalOnly;
-		synchronized (syncObj) {
-			mAuthCode = authCode;
-			if (timeout <= 0) timeout = stdTimeoutTime;
-			try {
+		if (timeout <= 0) timeout = stdTimeoutTime;
 
-				final NetworkInfo networkInfo = getActiveNetworkInfo(context);
-				if (networkInfo == null || !networkInfo.isConnected()) {
+		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
+		if (networkInfo == null || !networkInfo.isConnected()) {
+			executeReturnFalseTask(onBuildComplete);
+			return;
+		}
+
+		buildAccessConfiguration(accessString, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration>() {
+
+			@Override
+			public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
+				if (result == null) {
 					executeReturnFalseTask(onBuildComplete);
 					return;
 				}
 
-				buildAccessConfiguration(mAccessString, mIsLocalOnly, timeout, new ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration>() {
-
-					@Override
-					public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
-						synchronized (syncObj) {
-							mAccessConfiguration = result;
-						}
-
-						if (mAccessConfiguration == null) {
-							executeReturnFalseTask(onBuildComplete);
-							return;
-						}
-
-						ConnectionTester.doTest(onBuildComplete);
-					}
-				});
-			} catch (NullPointerException ne) {
-				throw ne;
+				ConnectionTester.doTest(new ConnectionProvider(result), onBuildComplete);
 			}
-		}
+		});
 	}
 
 	private static void executeReturnFalseTask(ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
@@ -185,22 +176,22 @@ public class AccessConfigurationBuilder {
 
 		private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-		public static void doTest(ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			doTest(stdTimeoutTime, onTestComplete);
+		public static void doTest(ConnectionProvider connectionProvider, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+			doTest(connectionProvider, stdTimeoutTime, onTestComplete);
 		}
 
-		public static void doTest(int timeout, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+		public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
 			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 					Boolean result = Boolean.FALSE;
 
-					final HttpURLConnection conn = getActiveConnection("Alive");
+					final HttpURLConnection conn = connectionProvider.getConnection("Alive");
 					if (conn == null) return result;
 
 					try {
-						conn.setConnectTimeout(params[0]);
+						conn.setConnectTimeout(timeout);
 						final InputStream is = conn.getInputStream();
 						try {
 							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
@@ -223,7 +214,7 @@ public class AccessConfigurationBuilder {
 			if (onTestComplete != null)
 				connectionTestTask.addOnCompleteListener(onTestComplete);
 
-			connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, timeout);
+			connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 	}
 }

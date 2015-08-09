@@ -1,9 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.connection;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +14,6 @@ import java.util.Map;
 
 public class ConnectionProvider {
 
-	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionProvider.class);
 
 	private final AccessConfiguration mAccessConfiguration;
@@ -27,17 +22,6 @@ public class ConnectionProvider {
 
 	public ConnectionProvider(AccessConfiguration accessConfiguration) {
 		mAccessConfiguration = accessConfiguration;
-	}
-
-	// Utility methods. Questionable location for these methods
-	public static int getConnectionType(Context context) {
-		final NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
-		return activeNetworkInfo == null ? -1 : activeNetworkInfo.getType();
-	}
-
-	private static NetworkInfo getActiveNetworkInfo(Context context) {
-		final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		return connectivityManager.getActiveNetworkInfo();
 	}
 
 	public MediaCenterConnection getConnection(String... params) throws IOException {
