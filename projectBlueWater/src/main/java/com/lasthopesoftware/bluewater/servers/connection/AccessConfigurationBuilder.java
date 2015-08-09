@@ -46,7 +46,7 @@ public class AccessConfigurationBuilder {
 			return;
 		}
 
-		buildAccessConfiguration(accessString, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration>() {
+		buildAccessConfiguration(accessString, authCode, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration>() {
 
 			@Override
 			public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
@@ -107,8 +107,7 @@ public class AccessConfigurationBuilder {
 			ConnectionTester.doTest(mTestConnectionCompleteListener);
 	}
 
-
-	private static void buildAccessConfiguration(String accessString, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final String accessString, final String authCode, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null");
 
@@ -117,15 +116,15 @@ public class AccessConfigurationBuilder {
 			@Override
 			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
 				try {
-					final AccessConfiguration accessDao = new AccessConfiguration();
-					String accessString = params[0];
-					if (accessString.contains(".")) {
-						if (!accessString.contains(":")) accessString += ":80";
-						if (!accessString.startsWith("http://")) accessString = "http://" + accessString;
+					final AccessConfiguration accessDao = new AccessConfiguration(authCode);
+					String localAccessString = accessString;
+					if (localAccessString.contains(".")) {
+						if (!localAccessString.contains(":")) localAccessString += ":80";
+						if (!localAccessString.startsWith("http://")) localAccessString = "http://" + localAccessString;
 					}
 
-					if (UrlValidator.getInstance().isValid(accessString)) {
-						final Uri jrUrl = Uri.parse(accessString);
+					if (UrlValidator.getInstance().isValid(localAccessString)) {
+						final Uri jrUrl = Uri.parse(localAccessString);
 						accessDao.setRemoteIp(jrUrl.getHost());
 						accessDao.setPort(jrUrl.getPort());
 						accessDao.setStatus(true);
@@ -133,7 +132,7 @@ public class AccessConfigurationBuilder {
 						return accessDao;
 					}
 
-					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + accessString)).openConnection();
+					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + localAccessString)).openConnection();
 
 					conn.setConnectTimeout(timeout);
 					try {
