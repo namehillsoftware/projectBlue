@@ -9,8 +9,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnectionBuilder.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnectionBuilder.OnBuildSessionStateChangeListener;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 
 public class InstantiateSessionConnectionActivity extends Activity {
@@ -49,7 +49,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		selectServerIntent = new Intent(this, ServerListActivity.class);
 		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
 		
-		handleBuildStatusChange(SessionConnectionBuilder.build(this, new OnBuildSessionStateChangeListener() {
+		handleBuildStatusChange(SessionConnection.build(this, new OnBuildSessionStateChangeListener() {
 			
 			@Override
 			public void onBuildSessionStatusChange(BuildingSessionConnectionStatus status) {

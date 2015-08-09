@@ -30,11 +30,11 @@ public class AccessConfigurationBuilder {
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) {
+	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) {
 		buildConfiguration(context, accessString, authCode, isLocalOnly, stdTimeoutTime, onBuildComplete);
 	}
 
-	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onBuildComplete) throws NullPointerException {
+	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, int timeout, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null.");
 
@@ -42,30 +42,36 @@ public class AccessConfigurationBuilder {
 
 		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
 		if (networkInfo == null || !networkInfo.isConnected()) {
-			executeReturnFalseTask(onBuildComplete);
+			executeReturnNullTask(onBuildComplete);
 			return;
 		}
 
-		buildAccessConfiguration(accessString, authCode, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration>() {
+		buildAccessConfiguration(accessString, authCode, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
-			public void onComplete(ISimpleTask<String, Void, AccessConfiguration> owner, AccessConfiguration result) {
-				if (result == null) {
-					executeReturnFalseTask(onBuildComplete);
+			public void onComplete(final ISimpleTask<Void, Void, AccessConfiguration> builderOwner, final AccessConfiguration accessConfiguration) {
+				if (accessConfiguration == null) {
+					executeReturnNullTask(onBuildComplete);
 					return;
 				}
 
-				ConnectionTester.doTest(new ConnectionProvider(result), onBuildComplete);
+				ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean isConnected) {
+						if (onBuildComplete != null)
+							onBuildComplete.onComplete(builderOwner, accessConfiguration);
+					}
+				});
 			}
 		});
 	}
 
-	private static void executeReturnFalseTask(ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onReturnFalseListener) {
-		final SimpleTask<Integer, Void, Boolean> returnFalseTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Integer, Void, Boolean>() {
+	private static void executeReturnNullTask(ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onReturnFalseListener) {
+		final SimpleTask<Void, Void, AccessConfiguration> returnFalseTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
-			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-				return Boolean.FALSE;
+			public AccessConfiguration onExecute(ISimpleTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
+				return null;
 			}
 
 		});
@@ -107,14 +113,14 @@ public class AccessConfigurationBuilder {
 			ConnectionTester.doTest(mTestConnectionCompleteListener);
 	}
 
-	private static void buildAccessConfiguration(final String accessString, final String authCode, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<String, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final String accessString, final String authCode, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
 		if (accessString == null)
 			throw new NullPointerException("The access string cannot be null");
 
-		final SimpleTask<String, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<String, Void, AccessConfiguration>() {
+		final SimpleTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
-			public AccessConfiguration onExecute(ISimpleTask<String, Void, AccessConfiguration> owner, String... params) throws Exception {
+			public AccessConfiguration onExecute(ISimpleTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
 				try {
 					final AccessConfiguration accessDao = new AccessConfiguration(authCode);
 					String localAccessString = accessString;
@@ -168,7 +174,7 @@ public class AccessConfigurationBuilder {
 		if (onGetAccessComplete != null)
 			mediaCenterAccessTask.addOnCompleteListener(onGetAccessComplete);
 
-		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, accessString);
+		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private static class ConnectionTester {

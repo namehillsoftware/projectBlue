@@ -59,7 +59,7 @@ public class ConnectionProvider {
 			}
 		}
 		
-		public void setConnection(URL url) throws IOException {
+		private void setConnection(URL url) throws IOException {
 			mHttpConnection = (HttpURLConnection)url.openConnection();
 			mHttpConnection.setConnectTimeout(5000);
 			mHttpConnection.setReadTimeout(180000);

@@ -11,23 +11,31 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SessionConnectionBuilder {
+public class SessionConnection {
 
 	private static final AtomicBoolean isRunning = new AtomicBoolean();
-	private static volatile BuildingSessionConnectionStatus mBuildingStatus = BuildingSessionConnectionStatus.GETTING_LIBRARY;
-	private static final CopyOnWriteArraySet<OnBuildSessionStateChangeListener> mBuildSessionListeners = new CopyOnWriteArraySet<>();
-	private static final EnumSet<BuildingSessionConnectionStatus> mRunningConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY, BuildingSessionConnectionStatus.BUILDING_CONNECTION, BuildingSessionConnectionStatus.GETTING_VIEW);
-	private static final EnumSet<BuildingSessionConnectionStatus> mCompleteConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY_FAILED, BuildingSessionConnectionStatus.BUILDING_CONNECTION_FAILED, BuildingSessionConnectionStatus.GETTING_VIEW_FAILED, BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+	private static volatile BuildingSessionConnectionStatus buildingStatus = BuildingSessionConnectionStatus.GETTING_LIBRARY;
+	private static final CopyOnWriteArraySet<OnBuildSessionStateChangeListener> buildSessionListeners = new CopyOnWriteArraySet<>();
+	private static final EnumSet<BuildingSessionConnectionStatus> runningConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY, BuildingSessionConnectionStatus.BUILDING_CONNECTION, BuildingSessionConnectionStatus.GETTING_VIEW);
+	private static final EnumSet<BuildingSessionConnectionStatus> completeConditions = EnumSet.of(BuildingSessionConnectionStatus.GETTING_LIBRARY_FAILED, BuildingSessionConnectionStatus.BUILDING_CONNECTION_FAILED, BuildingSessionConnectionStatus.GETTING_VIEW_FAILED, BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
+
+	private static ConnectionProvider sessionConnectionProvider;
+
+	public static HttpURLConnection getSessionConnection(String... params) throws IOException {
+		return sessionConnectionProvider.getConnection(params);
+	}
 	
 	public static synchronized BuildingSessionConnectionStatus build(final Context context, OnBuildSessionStateChangeListener buildSessionStateChangeListener) {
-		mBuildSessionListeners.add(buildSessionStateChangeListener);
+		buildSessionListeners.add(buildSessionStateChangeListener);
 		
-		if (isRunning.get()) return mBuildingStatus;
+		if (isRunning.get()) return buildingStatus;
 		
 		doStateChange(BuildingSessionConnectionStatus.GETTING_LIBRARY);
 		LibrarySession.GetActiveLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
@@ -42,14 +50,16 @@ public class SessionConnectionBuilder {
 				
 				doStateChange(BuildingSessionConnectionStatus.BUILDING_CONNECTION);
 				
-				ConnectionProvider.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Integer, Void, Boolean>() {
+				AccessConfigurationBuilder.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Void, Void, AccessConfiguration>() {
 
 					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-						if (result == Boolean.FALSE) {
+					public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
+						if (result == null) {
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_CONNECTION_FAILED);
 							return;
 						}
+
+						sessionConnectionProvider = new ConnectionProvider(result);
 						
 						if (library.getSelectedView() >= 0) {
 							doStateChange(BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE);
@@ -57,7 +67,6 @@ public class SessionConnectionBuilder {
 						}
 
 						doStateChange(BuildingSessionConnectionStatus.GETTING_VIEW);
-
 
 						LibraryViewsProvider.provide()
 								.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
@@ -90,24 +99,28 @@ public class SessionConnectionBuilder {
 			
 		});
 		
-		return mBuildingStatus;
+		return buildingStatus;
+	}
+
+	public static void refresh() {
+
 	}
 	
 	private static void doStateChange(final BuildingSessionConnectionStatus status) {
-		mBuildingStatus = status;
+		buildingStatus = status;
 		
-		if (mRunningConditions.contains(status))
+		if (runningConditions.contains(status))
 			isRunning.set(true);
 		
-		for (OnBuildSessionStateChangeListener listener : mBuildSessionListeners)
+		for (OnBuildSessionStateChangeListener listener : buildSessionListeners)
 			listener.onBuildSessionStatusChange(status);
 		
 		if (status == BuildingSessionConnectionStatus.BUILDING_SESSION_COMPLETE)
 			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
 		
-		if (mCompleteConditions.contains(status)) {
+		if (completeConditions.contains(status)) {
 			isRunning.set(false);
-			mBuildSessionListeners.clear();
+			buildSessionListeners.clear();
 		}
 	}
 	
