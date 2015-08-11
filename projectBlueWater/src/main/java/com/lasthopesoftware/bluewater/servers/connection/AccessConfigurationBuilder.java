@@ -5,7 +5,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -85,32 +84,7 @@ public class AccessConfigurationBuilder {
 	}
 
 	public static void refreshConfiguration(final Context context, final int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-		if (mAccessConfiguration == null) {
-			if (mAccessString == null || mAccessString.isEmpty())
-				throw new NullPointerException("The static access string has been lost. Please reset the connection session.");
 
-			buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
-			return;
-		}
-
-		final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> mTestConnectionCompleteListener = new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
-
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) {
-					onRefreshComplete.onComplete(owner, result);
-					return;
-				}
-
-				buildConfiguration(context, mAccessString, mAuthCode, mIsLocalOnly, timeout, onRefreshComplete);
-			}
-
-		};
-
-		if (timeout > 0)
-			ConnectionTester.doTest(timeout, mTestConnectionCompleteListener);
-		else
-			ConnectionTester.doTest(mTestConnectionCompleteListener);
 	}
 
 	private static void buildAccessConfiguration(final String accessString, final String authCode, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
@@ -175,51 +149,5 @@ public class AccessConfigurationBuilder {
 			mediaCenterAccessTask.addOnCompleteListener(onGetAccessComplete);
 
 		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
-	private static class ConnectionTester {
-
-		private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
-
-		public static void doTest(ConnectionProvider connectionProvider, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			doTest(connectionProvider, stdTimeoutTime, onTestComplete);
-		}
-
-		public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-			final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Integer, Void, Boolean>() {
-
-				@Override
-				public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-					Boolean result = Boolean.FALSE;
-
-					final HttpURLConnection conn = connectionProvider.getConnection("Alive");
-					if (conn == null) return result;
-
-					try {
-						conn.setConnectTimeout(timeout);
-						final InputStream is = conn.getInputStream();
-						try {
-							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
-
-							result = responseDao != null && responseDao.isStatus();
-						} finally {
-							is.close();
-						}
-					} catch (IOException | IllegalArgumentException e) {
-						mLogger.warn(e.getMessage());
-					} finally {
-						conn.disconnect();
-					}
-
-					return result;
-				}
-
-			});
-
-			if (onTestComplete != null)
-				connectionTestTask.addOnCompleteListener(onTestComplete);
-
-			connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-		}
 	}
 }

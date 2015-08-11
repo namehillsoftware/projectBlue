@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.connection;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.store.Library;
@@ -102,8 +103,28 @@ public class SessionConnection {
 		return buildingStatus;
 	}
 
-	public static void refresh() {
+	public static void refresh(final Context context, final int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+		if (sessionConnectionProvider == null)
+			throw new NullPointerException("The session connectioni needs to be built first.");
 
+		final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> testConnectionCompleteListener = new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+				if (result == Boolean.TRUE) {
+					onRefreshComplete.onComplete(owner, result);
+					return;
+				}
+
+				build(context, null);
+			}
+
+		};
+
+		if (timeout > 0)
+			ConnectionTester.doTest(sessionConnectionProvider, timeout, testConnectionCompleteListener);
+		else
+			ConnectionTester.doTest(sessionConnectionProvider, testConnectionCompleteListener);
 	}
 	
 	private static void doStateChange(final BuildingSessionConnectionStatus status) {
