@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
@@ -185,7 +186,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 					return;
 				}
 
-				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+				FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -199,7 +200,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 	@SuppressWarnings("unchecked")
 	public void displayLibrary(final Library library, final FileSystem fileSystem) {
-		final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider();
+		final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider());
 
         libraryViewsProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
@@ -221,7 +222,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 						@Override
 						public void onConnectionRegained() {
-							FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+							FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 								@Override
 								public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -250,7 +251,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 								library.setSelectedView(selectedViewKey);
 								LibrarySession.SaveLibrary(mBrowseLibrary, library);
 
-								FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+								FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 									@Override
 									public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -266,7 +267,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 			@Override
 			public void onConnectionRegained() {
-				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+				FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 					@Override
 					public void onGetFileSystemComplete(FileSystem fileSystem) {
