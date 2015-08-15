@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.connection.helpers;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
+import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
@@ -57,21 +59,49 @@ public class PollConnection {
 					
 					if (isCancelled()) return null;
 					
-					if (!mIsRefreshing.get()) {
-						mIsRefreshing.set(true);
-						ConnectionProvider.refreshConfiguration(mContext, new OnCompleteListener<Integer, Void, Boolean>() {
-			
-							@Override
-							public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-								mIsRefreshing.set(false);
-								if (result == Boolean.TRUE) mIsConnectionRestored.set(true);
-								// Build the connect time up to 32 seconds
-								if (mConnectionTime < 32000) mConnectionTime *= 2;	
-							}
-							
-						});
-					}
+					if (mIsRefreshing.get()) continue;
+					mIsRefreshing.set(true);
+
+					final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mContext);
+
+					final BroadcastReceiver buildSessionBroadcastReceiver = new BroadcastReceiver() {
+						@Override
+						public void onReceive(Context context, Intent intent) {
+							final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+
+							if (!SessionConnection.completeConditions.contains(buildStatus)) return;
+
+							mIsRefreshing.set(false);
+							localBroadcastManager.unregisterReceiver(this);
+
+							mIsConnectionRestored.set(buildStatus == SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete);
+						}
+					};
+
+					final BroadcastReceiver refreshBroadcastReceiver = new BroadcastReceiver() {
+						@Override
+						public void onReceive(Context context, Intent intent) {
+							localBroadcastManager.unregisterReceiver(this);
+
+							// Build the connect time up to 32 seconds
+							if (mConnectionTime < 32000) mConnectionTime *= 2;
+
+							final boolean isRefreshSuccessful = intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false);
+							if (!isRefreshSuccessful) return;
+
+							localBroadcastManager.unregisterReceiver(buildSessionBroadcastReceiver);
+
+							mIsRefreshing.set(false);
+							mIsConnectionRestored.set(true);
+						}
+					};
+
+					localBroadcastManager.registerReceiver(buildSessionBroadcastReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+					localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
+
+					SessionConnection.refresh(mContext);
 				}
+
 				return null;
 			}
 			

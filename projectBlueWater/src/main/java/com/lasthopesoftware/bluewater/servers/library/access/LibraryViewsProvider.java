@@ -17,49 +17,44 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
 
     public final static String browseLibraryParameter = "Browse/Children";
 
-    private static List<Item> mCachedFileSystemItems;
-    private static Integer mRevision;
+    private static List<Item> cachedFileSystemItems;
+    private static Integer revision;
 
-    public static LibraryViewsProvider provide() {
-        return new LibraryViewsProvider();
+    private final ConnectionProvider connectionProvider;
+
+    public static LibraryViewsProvider provide(ConnectionProvider connectionProvider) {
+        return new LibraryViewsProvider(connectionProvider);
     }
 
-    public LibraryViewsProvider() {
-        this(null);
-    }
+    public LibraryViewsProvider(ConnectionProvider connectionProvider) {
+        super(connectionProvider, browseLibraryParameter);
 
-    public LibraryViewsProvider(HttpURLConnection connection) {
-        super(connection, browseLibraryParameter);
+        this.connectionProvider = connectionProvider;
     }
 
     @Override
-    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
-        final Integer serverRevision = RevisionChecker.getRevision();
+    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {
-            if (mCachedFileSystemItems != null && mRevision.equals(serverRevision))
-                return mCachedFileSystemItems;
+            if (cachedFileSystemItems != null && revision.equals(serverRevision))
+                return cachedFileSystemItems;
         }
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
+        if (task.isCancelled()) return new ArrayList<>();
+
+        final InputStream is = connection.getInputStream();
         try {
-            if (task.isCancelled()) return new ArrayList<>();
+            final List<Item> items = FilesystemResponse.GetItems(is);
 
-            final InputStream is = conn.getInputStream();
-            try {
-                final List<Item> items = FilesystemResponse.GetItems(is);
-
-                synchronized(browseLibraryParameter) {
-                    mRevision = serverRevision;
-                    mCachedFileSystemItems = items;
-                }
-
-                return items;
-            } finally {
-                is.close();
+            synchronized(browseLibraryParameter) {
+                revision = serverRevision;
+                cachedFileSystemItems = items;
             }
+
+            return items;
         } finally {
-            if (connection == null) conn.disconnect();
+            is.close();
         }
     }
 }

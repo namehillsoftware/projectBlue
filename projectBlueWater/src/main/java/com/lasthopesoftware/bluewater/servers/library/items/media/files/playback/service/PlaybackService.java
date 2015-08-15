@@ -971,7 +971,7 @@ public class PlaybackService extends Service implements
 				
 				if (android.os.Build.VERSION.SDK_INT < 19) return;		
 				
-				ImageAccess.getImage(mStreamingMusicService, playingFile, new OnCompleteListener<Void, Void, Bitmap>() {
+				ImageAccess.getImage(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), playingFile, new OnCompleteListener<Void, Void, Bitmap>() {
 					
 					@TargetApi(Build.VERSION_CODES.KITKAT)
 					@Override

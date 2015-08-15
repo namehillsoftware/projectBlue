@@ -15,73 +15,67 @@ import java.util.List;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
-    private static List<Playlist> mCachedPlaylists;
-    private static SparseArray<Playlist> mMappedPlaylists;
-    private static Integer mRevision;
+    private static List<Playlist> cachedPlaylists;
+    private static SparseArray<Playlist> mappedPlaylists;
+    private static Integer revision;
 
-    private final int mPlaylistId;
+    private final int playlistId;
 
-    public PlaylistsProvider() {
-        this(-1);
-    }
+    private final ConnectionProvider connectionProvider;
 
-	public PlaylistsProvider(int playlistId) {
-		this(null, playlistId);
+	public PlaylistsProvider(ConnectionProvider connectionProvider) {
+		this(connectionProvider, -1);
 	}
 	
-	public PlaylistsProvider(HttpURLConnection connection, int playlistId) {
-		super(connection, "Playlists/List");
+	public PlaylistsProvider(ConnectionProvider connectionProvider, int playlistId) {
+		super(connectionProvider, "Playlists/List");
 
-        mPlaylistId = playlistId;
+		this.connectionProvider = connectionProvider;
+        this.playlistId = playlistId;
 	}
 
     @Override
-    protected List<Playlist> getItems(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection, final String... params) throws Exception {
+    protected List<Playlist> getItems(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection) throws Exception {
 
-        final Integer revision = RevisionChecker.getRevision();
-        if (mCachedPlaylists != null && revision.equals(mRevision))
-            return getPlaylists(mPlaylistId);
+        final Integer revision = RevisionChecker.getRevision(connectionProvider);
+        if (cachedPlaylists != null && revision.equals(PlaylistsProvider.revision))
+            return getPlaylists(playlistId);
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
+        if (task.isCancelled()) return new ArrayList<>();
+
+        final InputStream is = connection.getInputStream();
         try {
-            if (task.isCancelled()) return new ArrayList<>();
+            final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
 
-            final InputStream is = conn.getInputStream();
-            try {
-                final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
-
-                int i = 0;
-                while (i < streamResult.size()) {
-                    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-                    else i++;
-                }
-
-                mRevision = revision;
-                mCachedPlaylists = streamResult;
-                mMappedPlaylists = null;
-                return getPlaylists(mPlaylistId);
-            } finally {
-                is.close();
+            int i = 0;
+            while (i < streamResult.size()) {
+                if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+                else i++;
             }
+
+            PlaylistsProvider.revision = revision;
+            cachedPlaylists = streamResult;
+            mappedPlaylists = null;
+            return getPlaylists(playlistId);
         } finally {
-            if (connection == null) conn.disconnect();
+            is.close();
         }
     }
 
     private static List<Playlist> getPlaylists(int playlistId) {
-        if (playlistId == -1) return mCachedPlaylists;
+        if (playlistId == -1) return cachedPlaylists;
 
-        if (mMappedPlaylists == null) {
-            mMappedPlaylists = new SparseArray<>(mCachedPlaylists.size());
-            denormalizeAndMap(mCachedPlaylists);
+        if (mappedPlaylists == null) {
+            mappedPlaylists = new SparseArray<>(cachedPlaylists.size());
+            denormalizeAndMap(cachedPlaylists);
         }
 
-        return mMappedPlaylists.get(playlistId).getChildren();
+        return mappedPlaylists.get(playlistId).getChildren();
     }
 
     private static void denormalizeAndMap(List<Playlist> items) {
         for (Playlist playlist : items) {
-            mMappedPlaylists.append(playlist.getKey(), playlist);
+            mappedPlaylists.append(playlist.getKey(), playlist);
             if (playlist.getChildren().size() > 0) denormalizeAndMap(playlist.getChildren());
         }
     }

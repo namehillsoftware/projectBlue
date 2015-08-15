@@ -22,12 +22,18 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 
     private static final ExecutorService mRevisionExecutor = Executors.newSingleThreadExecutor();
 
-	public static Integer getRevision() {
+	private final ConnectionProvider connectionProvider;
+
+	public static Integer getRevision(ConnectionProvider connectionProvider) {
         try {
-            return (new SimpleTask<>(new RevisionChecker())).execute(mRevisionExecutor).get();
+            return (new SimpleTask<>(new RevisionChecker(connectionProvider))).execute(mRevisionExecutor).get();
         } catch (ExecutionException | InterruptedException e) {
             return mCachedRevision;
         }
+    }
+
+    private RevisionChecker(ConnectionProvider connectionProvider) {
+	    this.connectionProvider = connectionProvider;
     }
 
 	@Override
@@ -36,7 +42,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
             return mCachedRevision;
         }
 
-        final HttpURLConnection conn = ConnectionProvider.getActiveConnection("Library/GetRevision");
+        final HttpURLConnection conn = connectionProvider.getConnection("Library/GetRevision");
         try {
             final InputStream is = conn.getInputStream();
             try {

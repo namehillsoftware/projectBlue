@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -15,36 +16,32 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class AbstractCollectionProvider<T extends IItem> {
-	private final HttpURLConnection mConnection;
-	private OnCompleteListener<Void, Void, List<T>> mOnGetItemsComplete;
-    private OnErrorListener<Void, Void, List<T>> mOnGetItemsError;
-    private final String[] mParams;
-    private static final ExecutorService mCollectionAccessExecutor = Executors.newSingleThreadExecutor();
-    private Exception mException = null;
-    private SimpleTask<Void, Void, List<T>> mTask;
-
-	public AbstractCollectionProvider(String... params) {
-		this(null, params);
-	}
+	private final ConnectionProvider connectionProvider;
+	private OnCompleteListener<Void, Void, List<T>> onGetItemsComplete;
+    private OnErrorListener<Void, Void, List<T>> onGetItemsError;
+    private final String[] params;
+    private static final ExecutorService collectionAccessExecutor = Executors.newSingleThreadExecutor();
+    private Exception exception = null;
+    private SimpleTask<Void, Void, List<T>> task;
 	
-	protected AbstractCollectionProvider(HttpURLConnection connection, String... params) {
-		mConnection = connection;
-		mParams = params;
+	protected AbstractCollectionProvider(ConnectionProvider connectionProvider, String... params) {
+        this.connectionProvider = connectionProvider;
+		this.params = params;
 		
 	}
 	
 	public AbstractCollectionProvider<T> onComplete(OnCompleteListener<Void, Void, List<T>> onGetItemsComplete) {
-		mOnGetItemsComplete = onGetItemsComplete;
+		this.onGetItemsComplete = onGetItemsComplete;
 		return this;
 	}
 	
 	public AbstractCollectionProvider<T> onError(OnErrorListener<Void, Void, List<T>> onGetItemsError) {
-		mOnGetItemsError = onGetItemsError;
+		this.onGetItemsError = onGetItemsError;
 		return this;
 	}
 	
 	public void execute() {
-		execute(mCollectionAccessExecutor);
+		execute(collectionAccessExecutor);
 	}
 	
 	public void execute(Executor executor) {
@@ -52,7 +49,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 	}
 	
 	public List<T> get() throws ExecutionException, InterruptedException {
-		return get(mCollectionAccessExecutor);
+		return get(collectionAccessExecutor);
 	}
 	
 	public List<T> get(Executor executor) throws ExecutionException, InterruptedException {
@@ -64,19 +61,24 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
     }
 
     private SimpleTask<Void, Void, List<T>> getTask() {
-        if (mTask != null) return mTask;
+        if (task != null) return task;
 
-        mTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<T>>() {
+        task = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<T>>() {
 
             @Override
             public List<T> onExecute(ISimpleTask<Void, Void, List<T>> owner, Void... voidParams) throws Exception {
                 if (owner.isCancelled()) return new ArrayList<>();
 
-                return getItems(owner, mConnection, mParams);
+                final HttpURLConnection connection = connectionProvider.getConnection(params);
+	            try {
+		            return getItems(owner, connectionProvider.getConnection(params));
+	            } finally {
+		            connection.disconnect();
+	            }
             }
         });
 
-        mTask.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<T>>() {
+        task.addOnErrorListener(new ISimpleTask.OnErrorListener<Void, Void, List<T>>() {
             @Override
             public boolean onError(ISimpleTask<Void, Void, List<T>> owner, boolean isHandled, Exception innerException) {
                 setException(innerException);
@@ -84,22 +86,22 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
             }
         });
 
-        if (mOnGetItemsComplete != null)
-            mTask.addOnCompleteListener(mOnGetItemsComplete);
+        if (onGetItemsComplete != null)
+            task.addOnCompleteListener(onGetItemsComplete);
 
-        if (mOnGetItemsError != null)
-            mTask.addOnErrorListener(mOnGetItemsError);
+        if (onGetItemsError != null)
+            task.addOnErrorListener(onGetItemsError);
 
-        return mTask;
+        return task;
     }
 
-	protected abstract List<T> getItems(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection, String... params) throws Exception;
+	protected abstract List<T> getItems(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection) throws Exception;
 
     public Exception getException() {
-        return mException;
+        return exception;
     }
 
     protected void setException(Exception exception) {
-        mException = exception;
+        this.exception = exception;
     }
 }
