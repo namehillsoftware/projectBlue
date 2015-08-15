@@ -37,22 +37,22 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	
 	private static final ExecutorService imageAccessExecutor = Executors.newSingleThreadExecutor();
 	
-	public static ImageAccess getImage(final Context context, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		return getImage(context, new File(fileKey), onGetBitmapComplete);
+	public static ImageAccess getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		return getImage(context, connectionProvider, new File(fileKey), onGetBitmapComplete);
 	}
 	
-	public static ImageAccess getImage(final Context context, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		final ImageAccess imageAccessTask = new ImageAccess(context, file, onGetBitmapComplete);
+	public static ImageAccess getImage(final Context context, ConnectionProvider connectionProvider, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+		final ImageAccess imageAccessTask = new ImageAccess(context, connectionProvider, file, onGetBitmapComplete);
 		imageAccessTask.execute();
 		return imageAccessTask;
 	}
 
 	private SimpleTask<Void, Void, Bitmap> mImageAccessTask;
 	
-	private ImageAccess(final Context context, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
+	private ImageAccess(final Context context, final ConnectionProvider connectionProvider, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
 		super();
 		
-		mImageAccessTask = new SimpleTask<>(new GetFileImageOnExecute(context, file));
+		mImageAccessTask = new SimpleTask<>(new GetFileImageOnExecute(context, connectionProvider, file));
 		mImageAccessTask.addOnCompleteListener(onGetBitmapComplete);
 	}
 	
@@ -66,22 +66,24 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	
 	private static class GetFileImageOnExecute implements OnExecuteListener<Void, Void, Bitmap> {
 		
-		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
+		private static final Logger logger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
 		
 		private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 		private static final int MAX_MEMORY_CACHE_SIZE = 5;
 		private static final int MAX_DAYS_IN_CACHE = 30;
 		private static final String IMAGES_CACHE_NAME = "images";
 		
-		private static Bitmap mFillerBitmap;
-		private static final LruCache<String, Byte[]> mImageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
+		private static Bitmap fillerBitmap;
+		private static final LruCache<String, Byte[]> imageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 		
-		private final Context mContext;
-		private final IFile mFile;
+		private final Context context;
+		private final ConnectionProvider connectionProvider;
+		private final IFile file;
 		
-		public GetFileImageOnExecute(final Context context, final IFile file) {
-			mContext = context;
-			mFile = file;
+		public GetFileImageOnExecute(final Context context, ConnectionProvider connectionProvider, final IFile file) {
+			this.context = context;
+			this.connectionProvider = connectionProvider;
+			this.file = file;
 		}
 		
 		@Override
@@ -92,24 +94,24 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			try {
 				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 				// artists), and then by artist if that field is empty
-				String artist = mFile.getProperty(FilePropertiesProvider.ALBUM_ARTIST);
+				String artist = file.getProperty(FilePropertiesProvider.ALBUM_ARTIST);
 				if (artist == null || artist.isEmpty())
-					artist = mFile.getProperty(FilePropertiesProvider.ARTIST);
+					artist = file.getProperty(FilePropertiesProvider.ARTIST);
 				
-				uniqueKey = artist + ":" + mFile.getProperty(FilePropertiesProvider.ALBUM);
+				uniqueKey = artist + ":" + file.getProperty(FilePropertiesProvider.ALBUM);
 			} catch (IOException ioE) {
-				mLogger.error("Error getting file properties.");
+				logger.error("Error getting file properties.");
 				return getFillerBitmap();
 			}
 			
 			byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
-            final Library library = LibrarySession.GetActiveLibrary(mContext);
+            final Library library = LibrarySession.GetActiveLibrary(context);
 			if (library == null) return getFillerBitmap();
 
 
-            final DiskFileCache imageDiskCache = new DiskFileCache(mContext, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
+            final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
 			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
 			if (imageCacheFile != null) {
@@ -119,9 +121,9 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			}
 			
 			try {
-				final HttpURLConnection conn = ConnectionProvider.getActiveConnection(
+				final HttpURLConnection conn = connectionProvider.getConnection(
 						"File/GetImage",
-						"File=" + String.valueOf(mFile.getKey()),
+						"File=" + String.valueOf(file.getKey()),
 						"Type=Full",
 						"Pad=1",
 						"Format=" + IMAGE_FORMAT,
@@ -144,34 +146,34 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 					if (imageBytes.length == 0)
 						return getFillerBitmap();
 				} catch (FileNotFoundException fe) {
-					mLogger.warn("Image not found!");
+					logger.warn("Image not found!");
 					return getFillerBitmap();
 				} finally {
 					conn.disconnect();
 				}
 
 				try {
-					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(mContext, IMAGES_CACHE_NAME);
+					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
 					if (!cacheDir.exists())
 						cacheDir.mkdirs();
 					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 
 					imageDiskCache.put(uniqueKey, file, imageBytes);
 				} catch (IOException ioe) {
-					mLogger.error("Error writing file!", ioe);
+					logger.error("Error writing file!", ioe);
 				}
 
 				putBitmapIntoMemory(uniqueKey, imageBytes);
 				return getBitmapFromBytes(imageBytes);
 			} catch (Exception e) {
-				mLogger.error(e.toString(), e);
+				logger.error(e.toString(), e);
 			}
 			
 			return null;
 		}
 		
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
-			final Byte[] memoryImageBytes = mImageMemoryCache.get(uniqueKey);
+			final Byte[] memoryImageBytes = imageMemoryCache.get(uniqueKey);
 			
 			if (memoryImageBytes == null) return new byte[0];
 			
@@ -196,10 +198,10 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		        	fis.close();
 		        }
 		    } catch (FileNotFoundException e) {
-		    	mLogger.error("Could not find file.", e);
+		    	logger.error("Could not find file.", e);
 		    	return new byte[0];
 		    } catch (IOException e) {
-		    	mLogger.error("Error reading file.", e);
+		    	logger.error("Error reading file.", e);
 		    	return new byte[0];
 		    }
 		    
@@ -213,7 +215,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 			for (int i = 0; i < imageBytes.length; i++)
 				memoryImageBytes[i] = imageBytes[i];
 			
-			mImageMemoryCache.put(uniqueKey, memoryImageBytes);
+			imageMemoryCache.put(uniqueKey, memoryImageBytes);
 		}
 
 		private static Bitmap getBitmapFromBytes(final byte[] imageBytes) {
@@ -225,15 +227,15 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		}
 		
 		private static Bitmap getFillerBitmap() {
-			if (mFillerBitmap != null) return getBitmapCopy(mFillerBitmap);
+			if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
 
-			mFillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+			fillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 			// Make a canvas with which we can draw to the bitmap
-			final Canvas canvas = new Canvas(mFillerBitmap);
+			final Canvas canvas = new Canvas(fillerBitmap);
 
 			// Fill with white
 			canvas.drawColor(0xffffffff);
-			return getBitmapCopy(mFillerBitmap);
+			return getBitmapCopy(fillerBitmap);
 		}
 	}
 

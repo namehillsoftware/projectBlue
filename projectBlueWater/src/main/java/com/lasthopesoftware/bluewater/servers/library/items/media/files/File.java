@@ -60,8 +60,8 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 		return new String[] { "File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0" };
 	}
 	
-	public String getPlaybackUrl() {
-		return ConnectionProvider.getFormattedUrl(getPlaybackParams());
+	public String getPlaybackUrl(ConnectionProvider connectionProvider) {
+		return connectionProvider.getFormattedUrl(getPlaybackParams());
 	}
 	
 	public void setProperty(String name, String value) {

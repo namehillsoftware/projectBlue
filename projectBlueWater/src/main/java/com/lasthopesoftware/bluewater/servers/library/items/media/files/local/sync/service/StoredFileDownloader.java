@@ -9,7 +9,8 @@ import android.os.BatteryManager;
 
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
@@ -57,7 +58,7 @@ public class StoredFileDownloader {
 					if (mIsHalted || (storedFile.isDownloadComplete() && file.exists()))
 						return;
 
-					if (ConnectionProvider.getConnectionType(mContext) != ConnectivityManager.TYPE_WIFI) {
+					if (ConnectionInfo.getConnectionType(mContext) != ConnectivityManager.TYPE_WIFI) {
 						halt();
 						return;
 					}
@@ -76,7 +77,7 @@ public class StoredFileDownloader {
 
 					HttpURLConnection connection;
 					try {
-						connection = ConnectionProvider.getActiveConnection(serviceFile.getPlaybackParams());
+						connection = SessionConnection.getSessionConnection(serviceFile.getPlaybackParams());
 					} catch (IOException e) {
 						mLogger.error("Error getting connection", e);
 						return;

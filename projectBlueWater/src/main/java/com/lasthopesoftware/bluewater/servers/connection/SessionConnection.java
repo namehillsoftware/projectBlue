@@ -27,6 +27,9 @@ public class SessionConnection {
 
 	public static final String buildSessionBroadcast = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
 	public static final String buildSessionBroadcastStatus = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
+	public static final String refreshSessionBroadcast = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
+	public static final String isRefreshSuccessfulStatus = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
+
 	public static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
 	public static final Set<Integer> completeConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete));
 
@@ -37,6 +40,14 @@ public class SessionConnection {
 
 	public static HttpURLConnection getSessionConnection(String... params) throws IOException {
 		return sessionConnectionProvider.getConnection(params);
+	}
+
+	public static ConnectionProvider getSessionConnectionProvider() {
+		return sessionConnectionProvider;
+	}
+
+	public static boolean isBuilt() {
+		return sessionConnectionProvider != null;
 	}
 	
 	public static synchronized int build(final Context context) {
@@ -107,20 +118,23 @@ public class SessionConnection {
 		return buildingStatus;
 	}
 
-	public static void refresh(final Context context, final int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) {
+	public static void refresh(final Context context) {
+		refresh(context, -1);
+	}
+
+	public static void refresh(final Context context, final int timeout) {
 		if (sessionConnectionProvider == null)
-			throw new NullPointerException("The session connectioni needs to be built first.");
+			throw new NullPointerException("The session connection needs to be built first.");
 
 		final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> testConnectionCompleteListener = new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) {
-					onRefreshComplete.onComplete(owner, result);
-					return;
-				}
+				if (!result) build(context);
 
-				build(context);
+				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
+				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
 			}
 
 		};

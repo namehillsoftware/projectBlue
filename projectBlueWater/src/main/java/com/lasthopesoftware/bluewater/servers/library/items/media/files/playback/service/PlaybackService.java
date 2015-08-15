@@ -9,9 +9,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
@@ -26,14 +28,13 @@ import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
@@ -51,6 +52,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.threading.IOneParameterAction;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -323,27 +325,45 @@ public class PlaybackService extends Service implements
 		mStreamingMusicService = this;
 	}
 		
-	private void restorePlaylistControllerFromStorage(final OnCompleteListener<Integer, Void, Boolean> onPlaylistRestored) {
+	private void restorePlaylistControllerFromStorage(final IOneParameterAction<Boolean> onPlaylistRestored) {
 		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
-				
-				ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
+				final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mStreamingMusicService);
+
+				final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
 					@Override
-					public void onComplete(final ISimpleTask<Integer, Void, Boolean> owner, final Boolean result) {
-						initializePlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress(), new Runnable() {
-							
-							@Override
-							public void run() {
-								onPlaylistRestored.onComplete(owner, result);
-							}
-						});
+					public void onReceive(Context context, Intent intent) {
+						final int result = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+						if (!SessionConnection.completeConditions.contains(result)) return;
+
+						localBroadcastManager.unregisterReceiver(this);
+
+						onPlaylistRestored.run(result == BuildingSessionConnectionStatus.BuildingSessionComplete);
 					}
-					
-				});
+				};
+
+				localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+				final BroadcastReceiver refreshBroadcastReceiver = new BroadcastReceiver() {
+					@Override
+					public void onReceive(Context context, Intent intent) {
+						localBroadcastManager.unregisterReceiver(this);
+
+						final boolean result = intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false);
+						if (!result) return;
+
+						localBroadcastManager.unregisterReceiver(buildSessionReceiver);
+						onPlaylistRestored.run(result);
+					}
+				};
+
+				localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
+
+				SessionConnection.refresh(mStreamingMusicService);
 			}
 			
 		});
@@ -531,15 +551,24 @@ public class PlaybackService extends Service implements
 		
 		mStreamingMusicService = this;
 		
-		if (ConnectionProvider.getFormattedUrl() == null) {
+		if (!SessionConnection.isBuilt()) {
 			// TODO this should probably be its own service soon
-			handleBuildStatusChange(SessionConnection.build(mStreamingMusicService, new OnBuildSessionStateChangeListener() {
-				
+			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mStreamingMusicService);
+
+			final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
 				@Override
-				public void onBuildSessionStatusChange(BuildingSessionConnectionStatus status) {
-					handleBuildStatusChange(status, intent);
+				public void onReceive(Context context, Intent intent) {
+					final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+					handleBuildStatusChange(buildStatus, intent);
+
+					if (SessionConnection.completeConditions.contains(buildStatus))
+						localBroadcastManager.unregisterReceiver(this);
 				}
-			}), intent);
+			};
+
+			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+			handleBuildStatusChange(SessionConnection.build(mStreamingMusicService), intent);
 			
 			return START_NOT_STICKY;
 		}
@@ -549,35 +578,35 @@ public class PlaybackService extends Service implements
 		return START_NOT_STICKY;
 	}
 	
-	private void handleBuildStatusChange(final BuildingSessionConnectionStatus status, final Intent intentToRun) {
+	private void handleBuildStatusChange(final int status, final Intent intentToRun) {
 		final Builder notifyBuilder = new Builder(mStreamingMusicService);
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
-		case GETTING_LIBRARY:
+		case BuildingSessionConnectionStatus.GettingLibrary:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
 			break;
-		case GETTING_LIBRARY_FAILED:
+		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 //			notifyBuilder.setContentText(getText(R.string.lbl_please_connect_to_valid_server));
 			stopSelf(mStartId);
 //			launchActivityDelayed(selectServerIntent);
 			return;
-		case BUILDING_CONNECTION:
+		case BuildingSessionConnectionStatus.BuildingConnection:
 			notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
 			break;
-		case BUILDING_CONNECTION_FAILED:
+		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 //			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
 //			launchActivityDelayed(selectServerIntent);
 			stopSelf(mStartId);
 			return;
-		case GETTING_VIEW:
+		case BuildingSessionConnectionStatus.GettingView:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
 			return;
-		case GETTING_VIEW_FAILED:
+		case BuildingSessionConnectionStatus.GettingViewFailed:
 //			lblConnectionStatus.setText(R.string.lbl_library_no_views);
 //			launchActivityDelayed(selectServerIntent);
 			stopSelf(mStartId);
 			return;
-		case BUILDING_SESSION_COMPLETE:
+		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			notifyBuilder.setContentText(getText(R.string.lbl_connected));
 			actOnIntent(intentToRun);
 			break;
@@ -672,11 +701,10 @@ public class PlaybackService extends Service implements
 	private void restorePlaylistForIntent(final Intent intent) {
 		notifyStartingService();
 
-		restorePlaylistControllerFromStorage(new OnCompleteListener<Integer, Void, Boolean>() {
-			
+		restorePlaylistControllerFromStorage(new IOneParameterAction<Boolean>() {
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) actOnIntent(intent);
+			public void run(Boolean result) {
+				if (result) actOnIntent(intent);
 			}
 		});
 	}
@@ -765,21 +793,14 @@ public class PlaybackService extends Service implements
 	    		
 	    		if (mPlaylistController.resume()) return;
 			}
-    		
-        	ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
+			restorePlaylistControllerFromStorage(new IOneParameterAction<Boolean>() {
 				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-					LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-							startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
-						}
-					});
+				public void run(Boolean result) {
+					if (result)
+						mPlaylistController.resume();
 				}
-        		
-        	});
+			});
         	
             return;
 		}

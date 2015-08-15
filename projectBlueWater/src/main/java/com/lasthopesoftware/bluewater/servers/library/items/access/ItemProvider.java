@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
@@ -54,7 +54,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getActiveConnection(params) : connection;
+        final HttpURLConnection conn = connection == null ? SessionConnection.getSessionConnection(params) : connection;
         try {
             if (task.isCancelled()) return new ArrayList<>();
 
