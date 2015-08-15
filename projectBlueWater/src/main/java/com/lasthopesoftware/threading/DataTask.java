@@ -7,13 +7,13 @@ import java.net.HttpURLConnection;
 
 public class DataTask<TResult> extends SimpleTask<String, Void, TResult> implements IDataTask<TResult> {
 
-	public DataTask(final OnConnectListener<TResult> listener) {
+	public DataTask(final ConnectionProvider connectionProvider, final OnConnectListener<TResult> listener) {
 		super(new OnExecuteListener<String, Void, TResult>() {
 
 			@Override
 			public TResult onExecute(ISimpleTask<String, Void, TResult> owner, String... params) throws Exception {
 
-				final HttpURLConnection conn = ConnectionProvider.getActiveConnection(params);
+				final HttpURLConnection conn = connectionProvider.getConnection(params);
 				try {
 					final InputStream is = conn.getInputStream();
 					try {

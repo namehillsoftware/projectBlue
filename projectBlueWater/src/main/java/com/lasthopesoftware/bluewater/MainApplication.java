@@ -11,6 +11,7 @@ import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.store.Library;
@@ -64,7 +65,7 @@ public class MainApplication extends Application {
 						final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 						if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-						storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
+						storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(SessionConnection.getSessionConnectionProvider(), fileKey), mediaFileId, mediaFilePath);
 					}
 				});
 			}

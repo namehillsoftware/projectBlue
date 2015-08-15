@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
@@ -50,12 +50,12 @@ public class PlaybackController implements
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
-	public PlaybackController(final Context context, final String playlistString) {
-		this(context, playlistString != null ? Files.parseFileStringList(playlistString) : new ArrayList<IFile>());
+	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
+		this(context, connectionProvider, playlistString != null ? Files.parseFileStringList(connectionProvider, playlistString) : new ArrayList<IFile>());
 	}
 	
-	public PlaybackController(final Context context, final ArrayList<IFile> playlist) {
-		this(new PlaybackFileProvider(context, playlist));
+	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
+		this(new PlaybackFileProvider(context, connectionProvider, playlist));
 	}
 	
 	public PlaybackController(IPlaybackFileProvider playbackFileProvider) {
@@ -255,10 +255,6 @@ public class PlaybackController implements
 	}
 	
 	/* End playlist control */
-	
-	public void addFile(final int fileKey) {
-		addFile(new File(fileKey));
-	}
 	
 	public void addFile(final IFile file) {
 		mPlaybackFileProvider.add(file);

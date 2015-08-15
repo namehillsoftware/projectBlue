@@ -120,7 +120,7 @@ public class FilePropertiesProvider {
 				
 				@Override
 				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
-                    final Integer revision = RevisionChecker.getRevision();
+                    final Integer revision = RevisionChecker.getRevision(connectionProvider);
                     if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
                         return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
 

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
 import android.util.SparseArray;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Playlist extends AbstractIntKeyStringValue implements IItem, IFilesContainer {
+	private final ConnectionProvider connectionProvider;
+
 	private SparseArray<Playlist> mSubItems;
 	private Playlist mParent = null;
 	private String mPath;
@@ -21,15 +24,18 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 	
 	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
 
-	public Playlist() {
+	public Playlist(ConnectionProvider connectionProvider) {
 		super();
+		this.connectionProvider = connectionProvider;
 	}
 	
-	public Playlist(int key) {
+	public Playlist(ConnectionProvider connectionProvider, int key) {
+		this.connectionProvider = connectionProvider;
 		setKey(key);
 	}
 	
-	public Playlist(int key, Playlist parent) {
+	public Playlist(ConnectionProvider connectionProvider, int key, Playlist parent) {
+		this.connectionProvider = connectionProvider;
 		setKey(key);
 		mParent = parent;
 	}
@@ -92,7 +98,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 
 	@Override
 	public IItemFiles getFiles() {
-		if (mFiles == null) mFiles = new Files(getSubItemParams());
+		if (mFiles == null) mFiles = new Files(connectionProvider, getSubItemParams());
 		return mFiles;
 	}
 

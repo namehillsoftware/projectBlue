@@ -13,6 +13,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -66,7 +67,7 @@ public class SearchFilesActivity extends FragmentActivity {
 
         setTitle(String.format(getString(R.string.title_activity_search_results), query));
         
-		final Files filesContainer = new Files("Files/Search", "Query=[Media Type]=[Audio] " + query);
+		final Files filesContainer = new Files(SessionConnection.getSessionConnectionProvider(), "Files/Search", "Query=[Media Type]=[Audio] " + query);
         final SearchFilesActivity _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
 			

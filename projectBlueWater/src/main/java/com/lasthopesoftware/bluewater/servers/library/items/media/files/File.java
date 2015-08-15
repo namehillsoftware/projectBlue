@@ -11,28 +11,31 @@ import java.io.IOException;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
 	private FilePropertiesProvider mFilePropertiesProvider;
+	private final ConnectionProvider connectionProvider;
 
 	private static final Logger mLogger = LoggerFactory.getLogger(File.class);
 
-	public File(int key) {
-		this();
+	public File(ConnectionProvider connectionProvider, int key) {
+		this(connectionProvider);
 		this.setKey(key);
 	}
 	
-	public File(int key, String value) {
-		this();
+	public File(ConnectionProvider connectionProvider, int key, String value) {
+		this(connectionProvider);
 		this.setKey(key);
 		this.setValue(value);
 	}
 	
-	public File() {
+	public File(ConnectionProvider connectionProvider) {
 		super();
+
+		this.connectionProvider = connectionProvider;
 	}
 	
 	@Override
 	public void setKey(int key) {
 		super.setKey(key);
-		mFilePropertiesProvider = new FilePropertiesProvider(key);
+		mFilePropertiesProvider = new FilePropertiesProvider(connectionProvider, key);
 	}
 
 	/**

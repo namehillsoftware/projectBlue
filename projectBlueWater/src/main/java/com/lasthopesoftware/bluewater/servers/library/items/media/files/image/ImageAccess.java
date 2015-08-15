@@ -38,7 +38,7 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	private static final ExecutorService imageAccessExecutor = Executors.newSingleThreadExecutor();
 	
 	public static ImageAccess getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {
-		return getImage(context, connectionProvider, new File(fileKey), onGetBitmapComplete);
+		return getImage(context, connectionProvider, new File(connectionProvider, fileKey), onGetBitmapComplete);
 	}
 	
 	public static ImageAccess getImage(final Context context, ConnectionProvider connectionProvider, final IFile file, final OnCompleteListener<Void, Void, Bitmap> onGetBitmapComplete) {

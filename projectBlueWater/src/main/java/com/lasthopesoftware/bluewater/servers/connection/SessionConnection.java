@@ -84,7 +84,7 @@ public class SessionConnection {
 
 						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
-						LibraryViewsProvider.provide()
+						LibraryViewsProvider.provide(sessionConnectionProvider)
 								.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
 									@Override

@@ -13,6 +13,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
@@ -55,7 +56,7 @@ public class PlaylistListActivity extends FragmentActivity implements OnViewFlip
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(mPlaylistId);
+        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId);
         playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
 			
 			@Override

@@ -12,6 +12,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
@@ -56,7 +57,7 @@ public class FileListActivity extends FragmentActivity {
         pbLoading.setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
-        mItem = getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
+        mItem = getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(SessionConnection.getSessionConnectionProvider(), mItemId) : new Item(SessionConnection.getSessionConnectionProvider(), mItemId);
         
         setTitle(getIntent().getStringExtra(VALUE));
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
@@ -26,51 +26,46 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     }
 
     private static final int maxSize = 50;
-    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
+    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> itemsCache = new ConcurrentLinkedHashMap
                                                                                             .Builder<Integer, ItemHolder>()
                                                                                             .maximumWeightedCapacity(maxSize)
                                                                                             .build();
 
-    private final int mItemKey;
+    private final int itemKey;
 
-	public static ItemProvider provide(int itemKey) {
-		return new ItemProvider(itemKey);
-	}
+	private final ConnectionProvider connectionProvider;
 
-	public ItemProvider(int itemKey) {
-		this(null, itemKey);
+	public static ItemProvider provide(ConnectionProvider connectionProvider, int itemKey) {
+		return new ItemProvider(connectionProvider, itemKey);
 	}
 	
-	public ItemProvider(HttpURLConnection connection, int itemKey) {
-		super(connection, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
+	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
+		super(connectionProvider, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
 
-        mItemKey = itemKey;
+		this.connectionProvider = connectionProvider;
+        this.itemKey = itemKey;
 	}
 
-    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
-        final Integer serverRevision = RevisionChecker.getRevision();
-        final Integer boxedItemKey = mItemKey;
-        ItemHolder itemHolder = mItemsCache.get(boxedItemKey);
+    @Override
+    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
+        final Integer boxedItemKey = itemKey;
+        ItemHolder itemHolder = itemsCache.get(boxedItemKey);
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        final HttpURLConnection conn = connection == null ? SessionConnection.getSessionConnection(params) : connection;
+        if (task.isCancelled()) return new ArrayList<>();
+
+        final InputStream is = connection.getInputStream();
         try {
-            if (task.isCancelled()) return new ArrayList<>();
+            final List<Item> items = FilesystemResponse.GetItems(is);
 
-            final InputStream is = conn.getInputStream();
-            try {
-                final List<Item> items = FilesystemResponse.GetItems(is);
+            itemHolder = new ItemHolder(serverRevision, items);
+            itemsCache.put(boxedItemKey, itemHolder);
 
-                itemHolder = new ItemHolder(serverRevision, items);
-                mItemsCache.put(boxedItemKey, itemHolder);
-
-                return items;
-            } finally {
-                is.close();
-            }
+            return items;
         } finally {
-            if (connection == null) conn.disconnect();
+            is.close();
         }
 	}
 }

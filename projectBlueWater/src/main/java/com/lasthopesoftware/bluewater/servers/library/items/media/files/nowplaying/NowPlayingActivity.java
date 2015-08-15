@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionLostListener;
@@ -229,7 +230,7 @@ public class NowPlayingActivity extends Activity implements
 
 					@Override
 					protected List<IFile> doInBackground(Void... params) {
-						return Files.parseFileStringList(savedTracksString);
+						return Files.parseFileStringList(SessionConnection.getSessionConnectionProvider(), savedTracksString);
 					}
 
 					@Override
@@ -347,7 +348,7 @@ public class NowPlayingActivity extends Activity implements
 					mNowPlayingImageView.setVisibility(View.INVISIBLE);
 					mLoadingImg.setVisibility(View.VISIBLE);
 					
-					getFileImageTask = ImageAccess.getImage(this, file, new OnCompleteListener<Void, Void, Bitmap>() {
+					getFileImageTask = ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), file, new OnCompleteListener<Void, Void, Bitmap>() {
 						
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
@@ -12,20 +13,21 @@ import java.util.List;
 
 public class PlaybackFileProvider implements IPlaybackFileProvider {
 
-	private final ArrayList<IFile> mFiles;
-	private final Context mContext;
+	private final ArrayList<IFile> files;
+	private final Context context;
+	private final ConnectionProvider connectionProvider;
 	
 	private String mPlaylistString = null; 
 	
-	public PlaybackFileProvider(Context context, List<IFile> files) {
-		mContext = context;
-		
-		mFiles = files instanceof ArrayList<?> ? (ArrayList<IFile>)files : new ArrayList<>(files);
+	public PlaybackFileProvider(Context context, ConnectionProvider connectionProvider, List<IFile> files) {
+		this.context = context;
+		this.connectionProvider = connectionProvider;
+		this.files = files instanceof ArrayList<?> ? (ArrayList<IFile>)files : new ArrayList<>(files);
 	}
 	
 	@Override
 	public IPlaybackFile getNewPlaybackFile(int filePos) {
-		return new PlaybackFile(mContext, get(filePos));
+		return new PlaybackFile(context, connectionProvider, get(filePos));
 	}
 
 	@Override
@@ -35,8 +37,8 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	
 	@Override
 	public int indexOf(int startingIndex, IFile file) {
-		for (int i = startingIndex; i < mFiles.size(); i++) {
-			if (mFiles.get(i).equals(file)) return i;
+		for (int i = startingIndex; i < files.size(); i++) {
+			if (files.get(i).equals(file)) return i;
 		}
 		
 		return -1;
@@ -44,29 +46,29 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 
 	@Override
 	public List<IFile> getFiles() {
-		return Collections.unmodifiableList(mFiles);
+		return Collections.unmodifiableList(files);
 	}
 
 	@Override
 	public int size() {
-		return mFiles.size();
+		return files.size();
 	}
 
 	@Override
 	public IFile get(int filePos) {
-		return mFiles.get(filePos);
+		return files.get(filePos);
 	}
 
 	@Override
 	public boolean add(IFile file) {
-		final boolean isAdded = mFiles.add(file);
+		final boolean isAdded = files.add(file);
 		mPlaylistString = null;
 		return isAdded;
 	}
 
 	@Override
 	public IFile remove(int filePos) {
-		final IFile removedFile = mFiles.remove(filePos);
+		final IFile removedFile = files.remove(filePos);
 		mPlaylistString = null;
 		
 		return removedFile;
@@ -75,7 +77,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	@Override
 	public String toPlaylistString() {
 		if (mPlaylistString == null)
-			mPlaylistString = Files.serializeFileStringList(mFiles);
+			mPlaylistString = Files.serializeFileStringList(files);
 		
 		return mPlaylistString;
 	}

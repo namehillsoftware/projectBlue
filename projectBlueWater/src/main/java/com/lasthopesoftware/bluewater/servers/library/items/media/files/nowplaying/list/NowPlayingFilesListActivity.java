@@ -14,6 +14,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
@@ -97,7 +98,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
 				
 				@Override
 				public ArrayList<IFile> onExecute(ISimpleTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
-					return Files.parseFileStringList(library.getSavedTracksString());
+					return Files.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
 				}
 			});
 	        

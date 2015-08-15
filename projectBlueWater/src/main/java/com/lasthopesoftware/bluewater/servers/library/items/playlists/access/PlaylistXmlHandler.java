@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists.access;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
 
@@ -11,19 +12,25 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class PlaylistXmlHandler extends DefaultHandler {
-	
+
+	private final ConnectionProvider connectionProvider;
+
 	private TreeMap<String, Playlist> playlists = new TreeMap<>();
 	private Playlist currentPlaylist;
 	private String currentValue;
 	private String currentKey;
 	private StringBuilder valueSb;
+
+	public PlaylistXmlHandler(ConnectionProvider connectionProvider) {
+		this.connectionProvider = connectionProvider;
+	}
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
 		currentValue = "";
 		valueSb = new StringBuilder();
 		if (qName.equalsIgnoreCase("item"))
-			currentPlaylist = new Playlist();
+			currentPlaylist = new Playlist(connectionProvider);
 		
 		if (qName.equalsIgnoreCase("field"))
 			currentKey = attributes.getValue("Name");

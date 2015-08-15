@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.test;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -144,7 +145,7 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testAddFile() {
-		final File testFile = new File(5);
+		final File testFile = new File(null, 5);
 		final int originalSize = mPlaybackFileProvider.size();
 		mPlaybackController.addFile(testFile);
 		
@@ -235,7 +236,7 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public String getPlaybackUrl() {
+		public String getPlaybackUrl(ConnectionProvider connectionProvider) {
 			return null;
 		}
 

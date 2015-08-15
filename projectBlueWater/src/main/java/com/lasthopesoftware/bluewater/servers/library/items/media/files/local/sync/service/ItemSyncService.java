@@ -12,6 +12,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
@@ -100,7 +101,7 @@ public class ItemSyncService extends Service {
 
 								for (StoredItem listToSync : storedItems) {
 									final int serviceId = listToSync.getServiceId();
-									final IFilesContainer filesContainer = listToSync.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+									final IFilesContainer filesContainer = listToSync.getItemType() == StoredItem.ItemType.ITEM ? new Item(SessionConnection.getSessionConnectionProvider(), serviceId) : new Playlist(SessionConnection.getSessionConnectionProvider(), serviceId);
 									final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
 									for (final IFile file : files) {
 										allSyncedFileKeys.add(file.getKey());

@@ -12,6 +12,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -58,7 +59,7 @@ public class ItemListActivity extends FragmentActivity implements OnViewFlippedL
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final ItemProvider itemProvider = new ItemProvider(mItemId);
+        final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
             @Override
             public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {

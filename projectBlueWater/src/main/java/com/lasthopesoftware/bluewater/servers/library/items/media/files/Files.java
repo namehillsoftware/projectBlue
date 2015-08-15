@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.DataTask;
 import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
@@ -20,60 +21,63 @@ import java.util.List;
 
 
 public class Files implements IItemFiles {
-	private final static Logger mLogger = LoggerFactory.getLogger(Files.class);
+	private final static Logger logger = LoggerFactory.getLogger(Files.class);
 	
-	private final String[] mParams;
-	private OnStartListener<List<IFile>> mFileStartListener;
-	private OnErrorListener<List<IFile>> mFileErrorListener;
-	private IDataTask.OnCompleteListener<List<IFile>> mFileCompleteListener;
+	private final String[] params;
+	private OnStartListener<List<IFile>> fileStartListener;
+	private OnErrorListener<List<IFile>> fileErrorListener;
+	private IDataTask.OnCompleteListener<List<IFile>> fileCompleteListener;
 	public static final int GET_SHUFFLED = 1;
+
+	private final ConnectionProvider connectionProvider;
 
 	private final OnConnectListener<List<IFile>> mFileConnectListener = new OnConnectListener<List<IFile>>() {
 		
 		@Override
 		public List<IFile> onConnect(InputStream is) {
 			try {
-				return parseFileStringList(IOUtils.toString(is));
+				return parseFileStringList(connectionProvider, IOUtils.toString(is));
 			} catch (IOException e) {
-				mLogger.error("Error reading string from stream", e);
+				logger.error("Error reading string from stream", e);
 				return null;
 			}
 		}
 	};
 	
-	public Files(String... fileParams) {
-		mParams = new String[fileParams.length + 1];
-		System.arraycopy(fileParams, 0, mParams, 0, fileParams.length);
-		mParams[fileParams.length] = "Action=Serialize";
+	public Files(ConnectionProvider connectionProvider, String... fileParams) {
+		params = new String[fileParams.length + 1];
+		System.arraycopy(fileParams, 0, params, 0, fileParams.length);
+		params[fileParams.length] = "Action=Serialize";
+		this.connectionProvider = connectionProvider;
 	}
 	
 	/* Required Methods for File Async retrieval */
 	protected String[] getFileParams() {
-		return mParams;
+		return params;
 	}
 	
 	protected String[] getFileParams(final int option) {
 		switch (option) {
 			case GET_SHUFFLED:
-				final String[] fileParams = new String[mParams.length + 1];
-				System.arraycopy(mParams, 0, fileParams, 0, mParams.length);
-				fileParams[mParams.length] = "Shuffle=1";
+				final String[] fileParams = new String[params.length + 1];
+				System.arraycopy(params, 0, fileParams, 0, params.length);
+				fileParams[params.length] = "Shuffle=1";
 				return fileParams;
 			default:
-				return mParams;
+				return params;
 		}
 	}
 
 	public void setOnFilesCompleteListener(OnCompleteListener<List<IFile>> listener) {
-		mFileCompleteListener = listener;
+		fileCompleteListener = listener;
 	}
 
 	public void setOnFilesStartListener(OnStartListener<List<IFile>> listener) {
-		mFileStartListener = listener;
+		fileStartListener = listener;
 	}
 
 	public void setOnFilesErrorListener(OnErrorListener<List<IFile>> listener) {
-		mFileErrorListener = listener;
+		fileErrorListener = listener;
 	}
 
 	protected OnConnectListener<List<IFile>> getOnFileConnectListener() {
@@ -94,7 +98,7 @@ public class Files implements IItemFiles {
 		try {
 			return (ArrayList<IFile>) getNewFilesTask().execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
 		} catch (Exception e) {
-			mLogger.error(e.toString(), e);
+			logger.error(e.toString(), e);
 			return getFiles();
 		}
 	}
@@ -114,14 +118,14 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete, final IDataTask.OnErrorListener<String> onGetStringListError) {
-		final DataTask<String> getStringListTask = new DataTask<>(new OnConnectListener<String>() {
+		final DataTask<String> getStringListTask = new DataTask<>(connectionProvider, new OnConnectListener<String>() {
 			
 			@Override
 			public String onConnect(InputStream is) {
 				try {
 					return IOUtils.toString(is);
 				} catch (IOException e) {
-					mLogger.error("Error reading string from stream", e);
+					logger.error("Error reading string from stream", e);
 					return null;
 				}
 			}
@@ -135,21 +139,21 @@ public class Files implements IItemFiles {
 	}
 
 	protected DataTask<List<IFile>> getNewFilesTask() {
-		final DataTask<List<IFile>> fileTask = new DataTask<>(getOnFileConnectListener());
+		final DataTask<List<IFile>> fileTask = new DataTask<>(connectionProvider, getOnFileConnectListener());
 		
-		if (mFileCompleteListener != null)
-			fileTask.addOnCompleteListener(mFileCompleteListener);
+		if (fileCompleteListener != null)
+			fileTask.addOnCompleteListener(fileCompleteListener);
 			
-		if (mFileStartListener != null)
-			fileTask.addOnStartListener(mFileStartListener);
+		if (fileStartListener != null)
+			fileTask.addOnStartListener(fileStartListener);
 		
-		if (mFileErrorListener != null)
-			fileTask.addOnErrorListener(mFileErrorListener);
+		if (fileErrorListener != null)
+			fileTask.addOnErrorListener(fileErrorListener);
 		
 		return fileTask;
 	}
 
-	public static final ArrayList<IFile> parseFileStringList(String fileList) {
+	public static final ArrayList<IFile> parseFileStringList(ConnectionProvider connectionProvider, String fileList) {
 		final String[] keys = fileList.split(";");
 		
 		final int offset = Integer.parseInt(keys[0]) + 1;
@@ -158,7 +162,7 @@ public class Files implements IItemFiles {
 		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;
 			
-			files.add(new File(Integer.parseInt(keys[i])));
+			files.add(new File(connectionProvider, Integer.parseInt(keys[i])));
 		}
 		
 		return files;

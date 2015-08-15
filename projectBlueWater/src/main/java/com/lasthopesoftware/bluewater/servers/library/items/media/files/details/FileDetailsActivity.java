@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
@@ -127,7 +128,7 @@ public class FileDetailsActivity extends Activity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(fileKey);
+        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
@@ -196,7 +197,7 @@ public class FileDetailsActivity extends Activity {
 			
 			@Override
 			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(mFileKey);
+				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
 				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
 				
@@ -222,7 +223,7 @@ public class FileDetailsActivity extends Activity {
         getFilePropertiesTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFilePropertiesTask.execute();
                 
-        ImageAccess.getImage(this, fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
+        ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {

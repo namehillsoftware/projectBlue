@@ -45,7 +45,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
         final InputStream is = connection.getInputStream();
         try {
-            final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+            final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(connectionProvider, is);
 
             int i = 0;
             while (i < streamResult.size()) {

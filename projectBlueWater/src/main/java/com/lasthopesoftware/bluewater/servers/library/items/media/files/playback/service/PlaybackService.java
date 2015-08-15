@@ -432,7 +432,7 @@ public class PlaybackService extends Service implements
 								mPlaylistController.release();
 							}
 
-							mPlaylistController = new PlaybackController(mStreamingMusicService, mPlaylistString);
+							mPlaylistController = new PlaybackController(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), mPlaylistString);
 
 							mPlaylistController.setIsRepeating(result.isRepeating());
 							mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);

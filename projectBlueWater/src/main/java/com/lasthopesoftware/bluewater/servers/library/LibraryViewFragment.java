@@ -17,6 +17,7 @@ import com.github.amlcurran.showcaseview.targets.PointTarget;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
@@ -66,7 +67,7 @@ public class LibraryViewFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	FileSystem.Instance.get(activity, new OnGetFileSystemCompleteListener() {
+    	FileSystem.Instance.get(activity, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -93,7 +94,7 @@ public class LibraryViewFragment extends Fragment {
 					@Override
 					public void onConnectionRegained() {
 						final OnConnectionRegainedListener _this = this;
-						FileSystem.Instance.get(activity, new OnGetFileSystemCompleteListener() {
+						FileSystem.Instance.get(activity, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
 
 							@Override
 							public void onGetFileSystemComplete(FileSystem fileSystem) {
@@ -115,7 +116,7 @@ public class LibraryViewFragment extends Fragment {
 
 		final ListView listView = new ListView(activity);
 		listView.setVisibility(View.INVISIBLE);
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 		playlistsProvider
 			.onComplete(new OnCompleteListener<Void, Void, List<Playlist>>() {
 
@@ -150,7 +151,7 @@ public class LibraryViewFragment extends Fragment {
 		final ListView listView = new ListView(activity);
     	listView.setVisibility(View.INVISIBLE);
 
-    	final ItemProvider itemProvider = new ItemProvider(category.getKey());
+    	final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), category.getKey());
 
     	itemProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 

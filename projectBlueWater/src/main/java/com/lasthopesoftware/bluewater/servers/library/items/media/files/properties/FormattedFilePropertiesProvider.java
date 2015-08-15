@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormatter;
@@ -47,8 +49,8 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	
 	private static final DateTime mExcelEpoch = new DateTime(1899, 12, 30, 0, 0);
 	
-	public FormattedFilePropertiesProvider(int fileKey) {
-		super(fileKey);
+	public FormattedFilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
+		super(connectionProvider, fileKey);
 	}
 
 	@Override
