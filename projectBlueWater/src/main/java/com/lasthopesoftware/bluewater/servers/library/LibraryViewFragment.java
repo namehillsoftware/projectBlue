@@ -16,10 +16,10 @@ import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlayl
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -67,46 +68,45 @@ public class LibraryViewFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	FileSystem.Instance.get(activity, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
+    	LibrarySession.GetActiveLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+		    @Override
+		    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+			    final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
 
-			@SuppressWarnings("unchecked")
-			@Override
-			public void onGetFileSystemComplete(FileSystem fileSystem) {
+				    @Override
+				    public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
+					    if (result == null || result.size() == 0) return;
 
-		    	final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
+					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
+					    final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					@Override
-					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
-						if (result == null || result.size() == 0) return;
+					    if (category instanceof Playlists)
+						    layout.addView(BuildPlaylistView(activity, container, categoryPosition, pbLoading));
+					    else if (category instanceof Item)
+						    layout.addView(BuildStandardItemView(activity, container, categoryPosition, (Item) category, pbLoading));
+				    }
+			    };
 
-                        final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
-						final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
+			    final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new OnConnectionRegainedListener() {
 
-                        if (category instanceof Playlists)
-                            layout.addView(BuildPlaylistView(activity, container, categoryPosition, pbLoading));
-                        else if (category instanceof Item)
-                            layout.addView(BuildStandardItemView(activity, container, categoryPosition, (Item) category, pbLoading));
-					}
-				};
+				    @Override
+				    public void onConnectionRegained() {
+					    final OnConnectionRegainedListener _this = this;
 
-				final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+					    LibrarySession.GetActiveLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+						    @Override
+						    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+							    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
+							    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(activity, _this));
+						    }
+					    });
+				    }
+			    });
 
-					@Override
-					public void onConnectionRegained() {
-						final OnConnectionRegainedListener _this = this;
-						FileSystem.Instance.get(activity, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
-
-							@Override
-							public void onGetFileSystemComplete(FileSystem fileSystem) {
-								fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(activity, _this));
-							}
-						});
-					}
-				});
-
-				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
-			}
-        });
+			    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
+			    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
+		    }
+	    });
 
         return layout;
     }

@@ -31,7 +31,6 @@ import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
@@ -186,13 +185,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 					return;
 				}
 
-				FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
-
-					@Override
-					public void onGetFileSystemComplete(FileSystem fileSystem) {
-						displayLibrary(result, fileSystem);
-					}
-				});
+				displayLibrary(result, new FileSystem(SessionConnection.getSessionConnectionProvider(), result));
 			}
 		});
 
@@ -222,13 +215,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 						@Override
 						public void onConnectionRegained() {
-							FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
-
-								@Override
-								public void onGetFileSystemComplete(FileSystem fileSystem) {
-									fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
-								}
-							});
+							new FileSystem(SessionConnection.getSessionConnectionProvider(), library).getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
 						}
 
 				}));
@@ -251,13 +238,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 								library.setSelectedView(selectedViewKey);
 								LibrarySession.SaveLibrary(mBrowseLibrary, library);
 
-								FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
-
-									@Override
-									public void onGetFileSystemComplete(FileSystem fileSystem) {
-										displayLibrary(library, fileSystem);
-									}
-								});
+								displayLibrary(library, new FileSystem(SessionConnection.getSessionConnectionProvider(), library));
 							}
 						});
 					}
@@ -267,13 +248,8 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 			@Override
 			public void onConnectionRegained() {
-				FileSystem.Instance.get(mBrowseLibrary, SessionConnection.getSessionConnectionProvider(), new OnGetFileSystemCompleteListener() {
-
-					@Override
-					public void onGetFileSystemComplete(FileSystem fileSystem) {
-                        libraryViewsProvider.execute();
-					}
-				});
+				// Get a new instance of the file system as the connection provider may have changed
+				displayLibrary(library, new FileSystem(SessionConnection.getSessionConnectionProvider(), library));
 			}
 		}));
 
@@ -328,15 +304,12 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item))
-			return true;
-
-		return ViewUtils.handleMenuClicks(this, item);
+		return mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
 	}
 
 	@Override
     protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+		super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
         if (mDrawerToggle != null) mDrawerToggle.syncState();
     }
@@ -354,7 +327,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		if (mViewPager == null) return;
 
         savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
-        savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
+		savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
         LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 	        @Override
 	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {

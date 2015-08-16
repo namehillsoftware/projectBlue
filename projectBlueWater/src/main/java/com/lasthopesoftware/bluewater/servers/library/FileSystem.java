@@ -1,9 +1,8 @@
 package com.lasthopesoftware.bluewater.servers.library;
 
-import android.content.Context;
 import android.os.AsyncTask;
+import android.util.SparseArray;
 
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
@@ -17,40 +16,38 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 public class FileSystem extends AbstractIntKeyStringValue implements IItem {
-	private TreeSet<IItem> visibleViews;
-	private int[] visibleViewKeys;
+
+	private static class ViewsHolder {
+		public final Set<Integer> visibleViewKeys;
+		public final TreeSet<IItem> visibleViews;
+		public ViewsHolder(Set<Integer> visibleViewKeys, TreeSet<IItem> visibleViews) {
+			this.visibleViewKeys = visibleViewKeys;
+			this.visibleViews = visibleViews;
+		}
+
+	}
+
+	private static final SparseArray<ViewsHolder> viewsCache = new SparseArray<>();
+
+	private final Set<Integer> visibleViewKeys;
 	private final ConnectionProvider connectionProvider;
+	private final Library library;
 
     public FileSystem(ConnectionProvider connectionProvider, Library library) {
-        this(connectionProvider, library.getSelectedView());
+        super();
+
+	    this.connectionProvider = connectionProvider;
+	    this.library = library;
+	    this.visibleViewKeys = new HashSet<>(1);
+		this.visibleViewKeys.add(library.getSelectedView());
     }
-
-	private FileSystem(ConnectionProvider connectionProvider, int... visibleViewKeys) {
-		super();
-
-		this.connectionProvider = connectionProvider;
-		this.visibleViewKeys = visibleViewKeys;
-	}
-	
-	public String getSubItemUrl() {
-		return connectionProvider.getAccessConfiguration().buildMediaCenterUrl("Browse/Children");
-	}
-	
-	public void setVisibleViews(int... visibleViewKeys) {
-		if (Arrays.equals(this.visibleViewKeys, visibleViewKeys)) return;
-		this.visibleViewKeys = visibleViewKeys;
-		visibleViews = null;
-	}
-
-	public void getVisibleViewsAsync() {
-		getVisibleViewsAsync(null);
-	}
 	
 	public void getVisibleViewsAsync(ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onCompleteListener) {
 		getVisibleViewsAsync(onCompleteListener, null);
@@ -67,36 +64,44 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 			@Override
 			public ArrayList<IItem> onExecute(final ISimpleTask<String, Void, ArrayList<IItem>> thisTask, String... params) throws Exception {
 
-				if (visibleViews == null || visibleViews.size() == 0) {
-					visibleViews = new TreeSet<>(new Comparator<IItem>() {
+				ViewsHolder viewsHolder = viewsCache.get(library.getId());
 
-						@Override
-						public int compare(IItem lhs, IItem rhs) {
-							return lhs.getKey() - rhs.getKey();
+				if (viewsHolder != null && viewsHolder.visibleViewKeys.containsAll(visibleViewKeys)) {
+					final TreeSet<IItem> visibleViews = viewsHolder.visibleViews;
+					if (visibleViews != null && visibleViews.size() != 0)
+						return new ArrayList<>(visibleViews);
+				}
+
+				final TreeSet<IItem> visibleViews = new TreeSet<>(new Comparator<IItem>() {
+
+					@Override
+					public int compare(IItem lhs, IItem rhs) {
+						return lhs.getKey() - rhs.getKey();
+					}
+				});
+
+				final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider(connectionProvider);
+				final List<Item> libraries = libraryViewsProvider.get();
+
+				if (libraryViewsProvider.getException() != null)
+				    throw libraryViewsProvider.getException();
+
+				for (int viewKey : visibleViewKeys) {
+					for (Item library : libraries) {
+						if (visibleViewKeys.size() > 0 && viewKey != library.getKey()) continue;
+
+						if (library.getValue().equalsIgnoreCase("Playlists")) {
+							visibleViews.add(new Playlists());
+							continue;
 						}
-					});
 
-                    final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider(connectionProvider);
-					final List<Item> libraries = libraryViewsProvider.get();
-
-                    if (libraryViewsProvider.getException() != null)
-                        throw libraryViewsProvider.getException();
-
-					for (int viewKey : visibleViewKeys) {
-						for (Item library : libraries) {
-							if (visibleViewKeys.length > 0 && viewKey != library.getKey()) continue;
-							
-							if (library.getValue().equalsIgnoreCase("Playlists")) {
-								visibleViews.add(new Playlists());
-								continue;
-							}
-							
-							final List<Item> views = ItemProvider.provide(connectionProvider, library.getKey()).get();
-							for (Item view : views)
-								visibleViews.add(view);
-						}
+						final List<Item> views = ItemProvider.provide(connectionProvider, library.getKey()).get();
+						for (Item view : views)
+							visibleViews.add(view);
 					}
 				}
+
+				viewsCache.put(library.getId(), new ViewsHolder(visibleViewKeys, visibleViews));
 				
 				return new ArrayList<>(visibleViews);
 			}
@@ -120,35 +125,6 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	
 	public interface OnGetFileSystemCompleteListener {
 		void onGetFileSystemComplete(FileSystem fileSystem);
-	}
-	
-	public static class Instance {
-
-		private static int mInstanceVisibleViewKey = -1;
-		private static FileSystem mInstance = null;
-		
-		public final static void get(final Context context, final ConnectionProvider connectionProvider, final OnGetFileSystemCompleteListener onGetFileSystemCompleteListener) {
-			if (onGetFileSystemCompleteListener == null)
-				throw new IllegalArgumentException("onGetFileSystemCompleteListener cannot be null.");
-			
-			LibrarySession.GetActiveLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-					onGetFileSystemCompleteListener.onGetFileSystemComplete(get(connectionProvider, result));
-				}
-			});
-		}
-		
-		public final static synchronized FileSystem get(ConnectionProvider connectionProvider, final Library library) {
-			final int storedSelectedViewKey = library.getSelectedView();
-			if (mInstance == null || storedSelectedViewKey != mInstanceVisibleViewKey) {
-				mInstance = new FileSystem(connectionProvider, storedSelectedViewKey);
-				mInstanceVisibleViewKey = storedSelectedViewKey;
-			}
-			
-			return mInstance;
-		}
 	}
 }
 
