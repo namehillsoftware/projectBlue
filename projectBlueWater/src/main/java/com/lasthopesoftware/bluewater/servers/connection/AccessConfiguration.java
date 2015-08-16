@@ -9,7 +9,7 @@ import java.util.List;
 
 public class AccessConfiguration {
 	private boolean status;
-	private volatile String mActiveUrl = "";
+	private volatile String activeUrl = "";
 	private String remoteIp;
 	private int port;
 	private final List<String> localIps = new ArrayList<>();
@@ -98,9 +98,9 @@ public class AccessConfiguration {
 	}
 
 	public String getActiveUrl() {
-		if (!mActiveUrl.isEmpty()) {
+		if (!activeUrl.isEmpty()) {
 			try {
-				/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
+				/*if (testConnection(activeUrl))*/ return activeUrl;
 			} catch (Exception e) {
 				LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 			}
@@ -109,30 +109,30 @@ public class AccessConfiguration {
 		try {
 			if (!isLocalOnly) {
 				try {
-					mActiveUrl = getRemoteUrl();
-			    	/*if (testConnection(getRemoteUrl()))*/ return mActiveUrl;
+					activeUrl = getRemoteUrl();
+			    	/*if (testConnection(getRemoteUrl()))*/ return activeUrl;
 				} catch (Exception e) {
-					mActiveUrl = "";
+					activeUrl = "";
 					LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 				}
 			} else { 
 				for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
 					try {
-						mActiveUrl = getLocalIpUrl(urlIndex);
-			        	/*if (testConnection(mActiveUrl))*/ return mActiveUrl;
+						activeUrl = getLocalIpUrl(urlIndex);
+			        	/*if (testConnection(activeUrl))*/ return activeUrl;
 					} catch (Exception e) {
-						mActiveUrl = "";
+						activeUrl = "";
 						LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 					}
 				}
 			}
 		} catch (Exception e) {
-			mActiveUrl = "";
+			activeUrl = "";
 			LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 		}
 		
-		mActiveUrl = "";
-		return mActiveUrl;
+		activeUrl = "";
+		return activeUrl;
 	}
 	
 	public String buildMediaCenterUrl(String... params) {
