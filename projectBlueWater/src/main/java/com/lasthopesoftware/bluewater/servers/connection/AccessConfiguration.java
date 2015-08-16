@@ -18,13 +18,11 @@ public class AccessConfiguration {
 	private boolean isLocalOnly;
 
 	private final String authCode;
+	private final int libraryId;
 
-	public AccessConfiguration() {
-		this(null);
-	}
-
-	public AccessConfiguration(String authCode) {
+	public AccessConfiguration(int libraryId, String authCode) {
 		this.authCode = authCode;
+		this.libraryId = libraryId;
 	}
 
 	public String getAuthCode() {
@@ -175,4 +173,7 @@ public class AccessConfiguration {
 		}
 	}
 	
+	public int getLibraryId() {
+		return libraryId;
+	}
 }

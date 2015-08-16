@@ -66,7 +66,7 @@ public class SessionConnection {
 				
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 				
-				AccessConfigurationBuilder.buildConfiguration(context, library.getAccessCode(), library.getAuthKey(), library.isLocalOnly(), new OnCompleteListener<Void, Void, AccessConfiguration>() {
+				AccessConfigurationBuilder.buildConfiguration(context, library, new OnCompleteListener<Void, Void, AccessConfiguration>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
