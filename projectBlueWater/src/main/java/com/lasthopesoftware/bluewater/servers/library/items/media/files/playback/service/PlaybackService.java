@@ -270,9 +270,9 @@ public class PlaybackService extends Service implements
 	
 	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new ListenerThrower.CallbackAction<OnNowPlayingChangeListener>() {
+            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new IOneParameterAction<OnNowPlayingChangeListener>() {
                 @Override
-                public void call(OnNowPlayingChangeListener parameter) {
+                public void run(OnNowPlayingChangeListener parameter) {
                     parameter.onNowPlayingChange(controller, filePlayer);
                 }
             });
@@ -281,9 +281,9 @@ public class PlaybackService extends Service implements
 
 	private void throwStartEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStartListeners, new ListenerThrower.CallbackAction<OnNowPlayingStartListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStartListeners, new IOneParameterAction<OnNowPlayingStartListener>() {
                 @Override
-                public void call(OnNowPlayingStartListener parameter) {
+                public void run(OnNowPlayingStartListener parameter) {
                     parameter.onNowPlayingStart(controller, filePlayer);
                 }
             });
@@ -292,9 +292,9 @@ public class PlaybackService extends Service implements
 	
 	private void throwStopEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStopListeners, new ListenerThrower.CallbackAction<OnNowPlayingStopListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStopListeners, new IOneParameterAction<OnNowPlayingStopListener>() {
                 @Override
-                public void call(OnNowPlayingStopListener parameter) {
+                public void run(OnNowPlayingStopListener parameter) {
                     parameter.onNowPlayingStop(controller, filePlayer);
                 }
             });
@@ -303,9 +303,9 @@ public class PlaybackService extends Service implements
 	
 	private void throwPauseEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new ListenerThrower.CallbackAction<OnNowPlayingPauseListener>() {
+            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new IOneParameterAction<OnNowPlayingPauseListener>() {
                 @Override
-                public void call(OnNowPlayingPauseListener parameter) {
+                public void run(OnNowPlayingPauseListener parameter) {
                     parameter.onNowPlayingPause(controller, filePlayer);
                 }
             });
