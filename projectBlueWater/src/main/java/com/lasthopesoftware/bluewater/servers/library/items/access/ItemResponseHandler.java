@@ -17,11 +17,10 @@ public class ItemResponseHandler extends DefaultHandler {
 	private String currentValue;
 	private String currentKey;
 	
-	public List<Item> items;
+	public final List<Item> items = new ArrayList<>();
 
 	public ItemResponseHandler(ConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
-		items = new ArrayList<>();
 	}
 	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
@@ -29,10 +28,8 @@ public class ItemResponseHandler extends DefaultHandler {
 		currentValue = "";
 		currentKey = "";
 		
-		if (qName.equalsIgnoreCase("item")) {
+		if (qName.equalsIgnoreCase("item"))
 			currentKey = attributes.getValue("Name");
-			
-		}
 	}
 	
 	public void characters(char[] ch, int start, int length) throws SAXException {
@@ -41,6 +38,6 @@ public class ItemResponseHandler extends DefaultHandler {
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if (qName.equalsIgnoreCase("item"))
-			items.add(new Item(connectionProvider, Integer.parseInt(currentKey), currentValue));
+			items.add(new Item(connectionProvider, Integer.parseInt(currentValue), currentKey));
 	}
 }
