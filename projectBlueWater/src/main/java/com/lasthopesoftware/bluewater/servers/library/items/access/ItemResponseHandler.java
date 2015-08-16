@@ -1,0 +1,43 @@
+package com.lasthopesoftware.bluewater.servers.library.items.access;
+
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.Item;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemResponseHandler extends DefaultHandler {
+
+	private final ConnectionProvider connectionProvider;
+
+	private String currentValue;
+	private String currentKey;
+	
+	public final List<Item> items = new ArrayList<>();
+
+	public ItemResponseHandler(ConnectionProvider connectionProvider) {
+		this.connectionProvider = connectionProvider;
+	}
+	
+	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
+	{
+		currentValue = "";
+		currentKey = "";
+		
+		if (qName.equalsIgnoreCase("item"))
+			currentKey = attributes.getValue("Name");
+	}
+	
+	public void characters(char[] ch, int start, int length) throws SAXException {
+		currentValue = new String(ch,start,length);
+	}
+	
+	public void endElement(String uri, String localName, String qName) throws SAXException {
+		if (qName.equalsIgnoreCase("item"))
+			items.add(new Item(connectionProvider, Integer.parseInt(currentValue), currentKey));
+	}
+}

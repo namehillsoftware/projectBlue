@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.servers.store.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
@@ -30,13 +31,13 @@ public class AccessConfigurationBuilder {
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) {
-		buildConfiguration(context, accessString, authCode, isLocalOnly, stdTimeoutTime, onBuildComplete);
+	public static void buildConfiguration(final Context context, final Library library, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) {
+		buildConfiguration(context, library, stdTimeoutTime, onBuildComplete);
 	}
 
-	public static void buildConfiguration(final Context context, final String accessString, final String authCode, final boolean isLocalOnly, int timeout, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
-		if (accessString == null)
-			throw new NullPointerException("The access string cannot be null.");
+	public static void buildConfiguration(final Context context, final Library library, int timeout, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
+		if (library == null)
+			throw new NullPointerException("The library cannot be null.");
 
 		if (timeout <= 0) timeout = stdTimeoutTime;
 
@@ -46,7 +47,7 @@ public class AccessConfigurationBuilder {
 			return;
 		}
 
-		buildAccessConfiguration(accessString, authCode, isLocalOnly, timeout, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
+		buildAccessConfiguration(library, timeout, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
 			public void onComplete(final ISimpleTask<Void, Void, AccessConfiguration> builderOwner, final AccessConfiguration accessConfiguration) {
@@ -80,25 +81,20 @@ public class AccessConfigurationBuilder {
 		returnFalseTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public static void refreshConfiguration(Context context, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-		refreshConfiguration(context, -1, onRefreshComplete);
-	}
+	private static void buildAccessConfiguration(final Library library, final int timeout, ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+		if (library == null)
+			throw new IllegalArgumentException("The library cannot be null");
 
-	public static void refreshConfiguration(final Context context, final int timeout, final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onRefreshComplete) throws NullPointerException  {
-
-	}
-
-	private static void buildAccessConfiguration(final String accessString, final String authCode, final boolean isLocalOnly, final int timeout, ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
-		if (accessString == null)
-			throw new NullPointerException("The access string cannot be null");
+		if (library.getAccessCode() == null)
+			throw new IllegalArgumentException("The access code cannot be null");
 
 		final SimpleTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
 			public AccessConfiguration onExecute(ISimpleTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
 				try {
-					final AccessConfiguration accessDao = new AccessConfiguration(authCode);
-					String localAccessString = accessString;
+					final AccessConfiguration accessDao = new AccessConfiguration(library.getId(), library.getAuthKey());
+					String localAccessString = library.getAccessCode();
 					if (localAccessString.contains(".")) {
 						if (!localAccessString.contains(":")) localAccessString += ":80";
 						if (!localAccessString.startsWith("http://")) localAccessString = "http://" + localAccessString;
@@ -123,7 +119,7 @@ public class AccessConfigurationBuilder {
 							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
 							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
 							accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-							accessDao.setLocalOnly(isLocalOnly);
+							accessDao.setLocalOnly(library.isLocalOnly());
 							for (String localIp : xml.getUnique("localiplist").getValue().split(","))
 								accessDao.getLocalIps().add(localIp);
 							for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))

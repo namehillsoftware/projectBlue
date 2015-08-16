@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.access;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
@@ -58,7 +57,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 
         final InputStream is = connection.getInputStream();
         try {
-            final List<Item> items = FilesystemResponse.GetItems(is);
+            final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
             itemHolder = new ItemHolder(serverRevision, items);
             itemsCache.put(boxedItemKey, itemHolder);

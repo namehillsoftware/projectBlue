@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.access;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.access.ItemResponse;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
@@ -45,7 +46,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
 
         final InputStream is = connection.getInputStream();
         try {
-            final List<Item> items = FilesystemResponse.GetItems(is);
+            final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
             synchronized(browseLibraryParameter) {
                 revision = serverRevision;

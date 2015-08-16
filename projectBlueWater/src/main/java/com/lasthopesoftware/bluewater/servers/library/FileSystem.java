@@ -39,7 +39,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	}
 	
 	public String getSubItemUrl() {
-		return connectionProvider.getFormattedUrl("Browse/Children");
+		return connectionProvider.getAccessConfiguration().buildMediaCenterUrl("Browse/Children");
 	}
 	
 	public void setVisibleViews(int... visibleViewKeys) {
