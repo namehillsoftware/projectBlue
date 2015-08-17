@@ -365,8 +365,7 @@ public class PlaybackService extends Service implements
 					public void onReceive(Context context, Intent intent) {
 						localBroadcastManager.unregisterReceiver(this);
 
-						final boolean result = intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false);
-						if (!result) return;
+						if (!intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false)) return;
 
 						localBroadcastManager.unregisterReceiver(buildSessionReceiver);
 						initializePlaylist(library, onPlaylistInitialized);
