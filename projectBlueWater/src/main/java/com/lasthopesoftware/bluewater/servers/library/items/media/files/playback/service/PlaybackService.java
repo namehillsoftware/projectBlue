@@ -332,6 +332,13 @@ public class PlaybackService extends Service implements
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
 
+				final Runnable onPlaylistInitialized = new Runnable() {
+					@Override
+					public void run() {
+						onPlaylistRestored.run(true);
+					}
+				};
+
 				final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mStreamingMusicService);
 
 				final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
@@ -342,7 +349,12 @@ public class PlaybackService extends Service implements
 
 						localBroadcastManager.unregisterReceiver(this);
 
-						onPlaylistRestored.run(result == BuildingSessionConnectionStatus.BuildingSessionComplete);
+						if (result != BuildingSessionConnectionStatus.BuildingSessionComplete) {
+							onPlaylistRestored.run(false);
+							return;
+						}
+
+						initializePlaylist(library, onPlaylistInitialized);
 					}
 				};
 
@@ -357,7 +369,7 @@ public class PlaybackService extends Service implements
 						if (!result) return;
 
 						localBroadcastManager.unregisterReceiver(buildSessionReceiver);
-						onPlaylistRestored.run(result);
+						initializePlaylist(library, onPlaylistInitialized);
 					}
 				};
 
@@ -368,7 +380,7 @@ public class PlaybackService extends Service implements
 			
 		});
 	}
-	
+
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress) {
 		startPlaylist(playlistString, filePos, fileProgress, null);
 	}
@@ -393,6 +405,10 @@ public class PlaybackService extends Service implements
         mPlaylistController.startAt(filePos, fileProgress);
         
         if (onPlaylistStarted != null) onPlaylistStarted.run();
+	}
+
+	private void initializePlaylist(final Library library, final Runnable onPlaylistControllerInitialized) {
+		initializePlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress(), onPlaylistControllerInitialized);
 	}
 
 	private void initializePlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistControllerInitialized) {
