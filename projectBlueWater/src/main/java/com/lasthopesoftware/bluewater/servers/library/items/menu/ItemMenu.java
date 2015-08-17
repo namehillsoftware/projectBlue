@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.menu;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +13,10 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesIsVisibleHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
-import com.lasthopesoftware.threading.ISimpleTask;
 
 public final class ItemMenu {
 	private static class ViewHolder {
@@ -36,9 +33,8 @@ public final class ItemMenu {
         public final ImageButton playButton;
         public final ImageButton viewButton;
 		public final ImageButton syncButton;
+		public View.OnLayoutChangeListener onSyncButtonLayoutChangeListener;
 	}
-
-	private static Drawable mSyncOnDrawable;
 
 	public static View getView(final IItem item, View convertView, ViewGroup parent) {
         ViewFlipper parentView = (ViewFlipper)convertView;
@@ -72,28 +68,19 @@ public final class ItemMenu {
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 		viewHolder.textView.setText(item.getValue());
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer) item));
-		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
+		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer) item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		final ViewFlipper viewFlipper = parentView;
-		final StoredItemAccess syncListManager = new StoredItemAccess(parentView.getContext());
-		syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-				if (isSynced)
-					viewHolder.syncButton.setImageDrawable(getSyncOnDrawable(viewHolder.syncButton.getContext()));
+		viewHolder.syncButton.setEnabled(false);
 
-				viewHolder.syncButton.setOnClickListener(new SyncFilesClickHandler(viewFlipper, item, isSynced));
-			}
-		});
+		if (viewHolder.onSyncButtonLayoutChangeListener != null)
+			viewHolder.syncButton.removeOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
+
+		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(viewFlipper, viewHolder.syncButton, item);
+
+		viewHolder.syncButton.addOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
 		return convertView;
-	}
-
-	private static Drawable getSyncOnDrawable(Context context) {
-		if (mSyncOnDrawable == null)
-			mSyncOnDrawable = context.getResources().getDrawable(R.drawable.ic_sync_on);
-
-		return mSyncOnDrawable;
 	}
 }
