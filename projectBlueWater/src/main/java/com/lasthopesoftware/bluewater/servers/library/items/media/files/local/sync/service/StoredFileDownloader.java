@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
 import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.threading.IOneParameterAction;
 
 import org.apache.commons.io.IOUtils;
 
@@ -38,8 +39,8 @@ public class StoredFileDownloader {
 	private final Context mContext;
 	private final Set<Integer> mQueuedFileKeys = new HashSet<>();
 
-	private OnFileDownloaded mOnFileDownloaded;
-	private OnFileQueueEmpty mOnFileQueueEmpty;
+	private IOneParameterAction<StoredFile> mOnFileDownloaded;
+	private Runnable mOnFileQueueEmpty;
 
 	public StoredFileDownloader(Context context, Library library) {
 		mContext = context;
@@ -110,7 +111,7 @@ public class StoredFileDownloader {
 							mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
 
 							if (mOnFileDownloaded != null)
-								mOnFileDownloaded.onFileDownloaded(storedFile);
+								mOnFileDownloaded.run(storedFile);
 
 							mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
 						} catch (IOException ioe) {
@@ -133,7 +134,7 @@ public class StoredFileDownloader {
 					mQueuedFileKeys.remove(fileKey);
 
 					if (mQueuedFileKeys.size() == 0 && mOnFileQueueEmpty != null)
-						mOnFileQueueEmpty.onFileQueueEmpty();
+						mOnFileQueueEmpty.run();
 				}
 			}
 		});
@@ -143,19 +144,11 @@ public class StoredFileDownloader {
 		mIsHalted = true;
 	}
 
-	public void setOnFileDownloaded(OnFileDownloaded onFileDownloaded) {
+	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
 		mOnFileDownloaded = onFileDownloaded;
 	}
 
-	public void setOnFileQueueEmpty(OnFileQueueEmpty onFileQueueEmpty) {
+	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
 		mOnFileQueueEmpty = onFileQueueEmpty;
-	}
-
-	public interface OnFileDownloaded {
-		void onFileDownloaded(StoredFile storedFile);
-	}
-
-	public interface OnFileQueueEmpty {
-		void onFileQueueEmpty();
 	}
 }
