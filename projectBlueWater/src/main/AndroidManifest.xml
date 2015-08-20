@@ -138,7 +138,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver">
+        <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver">
             <intent-filter>
                 <action android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.doScheduledSync" />
             </intent-filter>

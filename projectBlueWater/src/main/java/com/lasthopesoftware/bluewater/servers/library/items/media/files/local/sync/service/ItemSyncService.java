@@ -50,6 +50,19 @@ public class ItemSyncService extends Service {
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
 
+	private final Runnable finishServiceRunnable = new Runnable() {
+		@Override
+		public void run() {
+			// Set an alarm for the next time we run this bad boy
+			final AlarmManager alarmManager = (AlarmManager) ItemSyncService.this.getSystemService(ALARM_SERVICE);
+			final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
+			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
+
+			stopForeground(true);
+			stopSelf();
+		}
+	};
+
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, ItemSyncService.class);
 		intent.setAction(doSyncAction);
@@ -84,6 +97,11 @@ public class ItemSyncService extends Service {
 		storedItemAccess.getAllStoredItems(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<StoredItem>> owner, final List<StoredItem> storedItems) {
+				if (storedItems.size() == 0) {
+					finishServiceRunnable.run();
+					return;
+				}
+
 				LibrarySession.GetActiveLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
@@ -93,18 +111,7 @@ public class ItemSyncService extends Service {
 								final Set<Integer> allSyncedFileKeys = new HashSet<>();
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 								final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, library);
-								storedFileDownloader.setOnFileQueueEmpty(new Runnable() {
-									@Override
-									public void run() {
-										// Set an alarm for the next time we run this bad boy
-										final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-										final PendingIntent pendingIntent = PendingIntent.getService(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), 0);
-										alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
-
-										stopForeground(true);
-										stopSelf();
-									}
-								});
+								storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
 
 								storedFileDownloader.setOnFileDownloaded(new IOneParameterAction<StoredFile>() {
 									@Override
