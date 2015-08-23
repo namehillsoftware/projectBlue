@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -45,7 +44,7 @@ public class ItemSyncService extends Service {
 	public static final String onFileDownloadedStoreId = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "onFileDownloadedStoreId");
 
 	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "doSyncAction");
-	private static final long syncInterval = 60 * 1000; //3 * 60 * 60 * 1000; // 3 hours
+	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
 
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
@@ -56,7 +55,7 @@ public class ItemSyncService extends Service {
 			// Set an alarm for the next time we run this bad boy
 			final AlarmManager alarmManager = (AlarmManager) ItemSyncService.this.getSystemService(ALARM_SERVICE);
 			final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
+			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, syncInterval, pendingIntent);
 
 			stopForeground(true);
 			stopSelf();
