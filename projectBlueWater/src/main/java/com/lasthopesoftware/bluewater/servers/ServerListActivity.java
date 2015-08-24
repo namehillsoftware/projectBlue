@@ -9,7 +9,7 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;

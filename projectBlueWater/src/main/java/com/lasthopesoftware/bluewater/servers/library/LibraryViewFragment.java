@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlayl
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 

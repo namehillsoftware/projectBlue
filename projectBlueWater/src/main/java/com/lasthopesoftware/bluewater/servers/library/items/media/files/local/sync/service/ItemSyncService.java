@@ -21,10 +21,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesCo
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.IOneParameterAction;

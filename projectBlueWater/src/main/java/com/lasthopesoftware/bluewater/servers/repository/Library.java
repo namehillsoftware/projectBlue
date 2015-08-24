@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.store;
+package com.lasthopesoftware.bluewater.servers.repository;
 
 import android.content.Context;
 import android.os.Environment;
@@ -8,9 +8,9 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 
 import java.io.File;
 import java.util.ArrayList;

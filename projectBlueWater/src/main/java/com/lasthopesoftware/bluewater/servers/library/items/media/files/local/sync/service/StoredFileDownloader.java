@@ -13,8 +13,8 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.IOneParameterAction;
 
 import org.apache.commons.io.IOUtils;

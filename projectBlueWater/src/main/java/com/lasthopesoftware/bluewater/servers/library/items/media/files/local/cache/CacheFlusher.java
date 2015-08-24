@@ -6,7 +6,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

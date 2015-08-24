@@ -49,7 +49,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.IOneParameterAction;

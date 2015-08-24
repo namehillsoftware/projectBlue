@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.servers.library.items.store;
+package com.lasthopesoftware.bluewater.servers.library.items.repository;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 
 @DatabaseTable(tableName = "StoredItems")
 public class StoredItem {

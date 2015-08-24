@@ -7,7 +7,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;

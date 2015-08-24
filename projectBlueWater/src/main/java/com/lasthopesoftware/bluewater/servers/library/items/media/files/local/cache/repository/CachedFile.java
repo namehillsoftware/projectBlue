@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 
 @DatabaseTable(tableName = "CachedFile")
 public class CachedFile {

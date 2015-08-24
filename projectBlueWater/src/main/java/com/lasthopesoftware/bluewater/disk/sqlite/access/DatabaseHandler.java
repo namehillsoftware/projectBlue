@@ -7,10 +7,10 @@ import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.store.CachedFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.store.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.store.StoredItem;
-import com.lasthopesoftware.bluewater.servers.store.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
