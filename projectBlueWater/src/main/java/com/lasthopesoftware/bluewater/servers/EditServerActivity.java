@@ -15,7 +15,7 @@ import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.downloads.FileDownloadsActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -88,7 +88,7 @@ public class EditServerActivity extends FragmentActivity {
 		mViewActiveDownloadsButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				final Intent intent = new Intent(v.getContext(), FileDownloadsActivity.class);
+				final Intent intent = new Intent(v.getContext(), ActiveFileDownloadsActivity.class);
 				startActivity(intent);
 			}
 		});
