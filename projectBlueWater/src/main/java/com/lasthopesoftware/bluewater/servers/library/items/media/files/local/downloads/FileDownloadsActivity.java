@@ -2,19 +2,27 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.d
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.ListView;
+import android.support.v7.widget.RecyclerView;
+
+import com.lasthopesoftware.bluewater.R;
 
 /**
  * Created by david on 6/6/15.
  */
 public class FileDownloadsActivity extends Activity {
 
-    private ListView mActiveDownloadsListView;
+    private RecyclerView activeDownloadsRecyclerView;
+	private RecyclerView.Adapter activeDownloadsAdapter;
 //	private FileDownloadProvider mFileDownloadProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_file_downloads);
+
+	    activeDownloadsRecyclerView = (RecyclerView) findViewById(R.id.activeDownloadsRecyclerView);
+	    activeDownloadsRecyclerView.setHasFixedSize(true);
+
 
 //	    mFileDownloadProvider = new FileDownloadProvider(this);
 //

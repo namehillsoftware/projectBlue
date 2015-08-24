@@ -4,9 +4,10 @@
     android:layout_height="match_parent"
     android:id="@+id/rlViewActiveDownloads"
     android:orientation="vertical">
-	<ListView
-	    android:layout_width="match_parent"
+	<android.support.v7.widget.RecyclerView
+		android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    android:id="@+id/lvActiveDownloads" >
-	</ListView>
+	    android:id="@+id/activeDownloadsRecyclerView"
+		android:scrollbars="vertical">
+	</android.support.v7.widget.RecyclerView>
 </RelativeLayout>
