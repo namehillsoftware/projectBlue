@@ -56,6 +56,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
         mNowPlayingFilePos = nowPlayingFilePos;
 	}
 
+    @Override
     public final View getView(final int position, View convertView, final ViewGroup parent) {
         final IFile file = getItem(position);
 
