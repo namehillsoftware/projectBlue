@@ -21,6 +21,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -86,6 +87,26 @@ public class StoredFileAccess {
 				}
 			}
 		};
+	}
+
+	public void getDownloadingStoredFiles(ISimpleTask.OnCompleteListener<Void, Void, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+		final SimpleTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredFile>>() {
+			@Override
+			public List<StoredFile> onExecute(ISimpleTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
+				try {
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					return storedFileAccess.queryForEq(StoredFile.isDownloadCompleteColumnName, false);
+				} catch (SQLException se) {
+					mLogger.error("There was an error retrieving the downloading files.", se);
+					return new ArrayList<>();
+				}
+			}
+		});
+
+		if (onGetDownloadingStoredFilesComplete != null)
+			getDownloadingStoredFilesTask.addOnCompleteListener(onGetDownloadingStoredFilesComplete);
+
+		getDownloadingStoredFilesTask.execute(DatabaseHandler.databaseExecutor);
 	}
 
 	public void markStoredFileAsDownloaded(final int storedFileId) {

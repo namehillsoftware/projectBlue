@@ -12,6 +12,7 @@ public class StoredFile {
 	public static final String pathColumnName = "path";
 	public static final String isOwnerColumnName = "isOwner";
 	public static final String storedMediaIdColumnName = "storedMediaId";
+	public static final String isDownloadCompleteColumnName = "isDownloadComplete";
 
 	@DatabaseField(generatedId = true)
 	private int id;
