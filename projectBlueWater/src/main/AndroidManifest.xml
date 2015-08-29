@@ -126,6 +126,9 @@
                 android:value="com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity" />
         </activity>
         
+        <activity android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity"
+                  android:label="Downloads" />
+        
         <receiver android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.AudioBecomingNoisyReceiver">
             <intent-filter android:priority="1000">
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
