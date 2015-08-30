@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
@@ -21,7 +23,7 @@ import java.util.Set;
 /**
  * Created by david on 8/30/15.
  */
-public class LibrarySyncRunnable implements Runnable {
+public class LibrarySyncHandler implements Runnable {
 
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
@@ -29,7 +31,20 @@ public class LibrarySyncRunnable implements Runnable {
 	private final List<StoredItem> storedItems;
 	private final StoredFileDownloader storedFileDownloader;
 
-	public LibrarySyncRunnable(Context context, ConnectionProvider connectionProvider, Library library, List<StoredItem> storedItems, StoredFileDownloader storedFileDownloader) {
+	public static void SyncLibrary(final Context context, final ConnectionProvider connectionProvider, final Library library, final StoredFileDownloader storedFileDownloader) {
+		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
+		storedItemAccess.getStoredItems(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, List<StoredItem>> owner, List<StoredItem> storedItems) {
+				AsyncTask
+					.THREAD_POOL_EXECUTOR
+					.execute(new LibrarySyncHandler(context, connectionProvider, library, storedItems, storedFileDownloader));
+			}
+		});
+	}
+
+	private LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, List<StoredItem> storedItems, StoredFileDownloader storedFileDownloader) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.library = library;

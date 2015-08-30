@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -15,11 +14,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
@@ -98,17 +95,11 @@ public class ItemSyncService extends Service {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				for (final Library library : libraries) {
-					final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-					storedItemAccess.getStoredItems(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>>() {
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, List<StoredItem>> owner, List<StoredItem> storedItems) {
-							final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, library);
-							storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
-							storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
+					final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, library);
+					storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
+					storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
 
-							AsyncTask.THREAD_POOL_EXECUTOR.execute(new LibrarySyncRunnable(context, SessionConnection.getSessionConnectionProvider(), library, storedItems, storedFileDownloader));
-						}
-					});
+					LibrarySyncHandler.SyncLibrary(context, SessionConnection.getSessionConnectionProvider(), library, storedFileDownloader);
 				}
 			}
 		});
