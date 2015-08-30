@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 public class Files implements IItemFiles {
@@ -97,9 +98,9 @@ public class Files implements IItemFiles {
 	public ArrayList<IFile> getFiles(int option) {
 		try {
 			return (ArrayList<IFile>) getNewFilesTask().execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option)).get();
-		} catch (Exception e) {
+		} catch (ExecutionException | InterruptedException e) {
 			logger.error(e.toString(), e);
-			return getFiles();
+			return new ArrayList<>();
 		}
 	}
 	
