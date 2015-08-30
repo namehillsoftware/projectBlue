@@ -709,7 +709,6 @@ public class PlaybackService extends Service implements
 		
 		if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
         	PollConnection.Instance.get(mStreamingMusicService).stopPolling();
-        	return;
         }
 	}
 	

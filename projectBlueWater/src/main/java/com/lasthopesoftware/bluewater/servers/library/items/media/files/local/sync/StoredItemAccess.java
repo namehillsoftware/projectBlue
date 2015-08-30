@@ -5,7 +5,6 @@ import android.content.Context;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
@@ -25,12 +24,14 @@ import java.util.List;
  */
 public class StoredItemAccess {
 
-    private static final Logger mLogger = LoggerFactory.getLogger(StoredItemAccess.class);
+    private static final Logger logger = LoggerFactory.getLogger(StoredItemAccess.class);
 
-    private final Context mContext;
+    private final Context context;
+	private final Library library;
 
-    public StoredItemAccess(Context context) {
-        mContext = context;
+    public StoredItemAccess(Context context, Library library) {
+        this.context = context;
+	    this.library = library;
     }
 
     public void toggleSync(IItem item, boolean enable) {
@@ -44,8 +45,8 @@ public class StoredItemAccess {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
             @Override
             public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
-                final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
-                return isItemMarkedForSync(storedListAccess, LibrarySession.GetActiveLibrary(mContext), item, getListType(item));
+                final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
+                return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
             }
         });
 
@@ -60,9 +61,8 @@ public class StoredItemAccess {
             @Override
             public void run() {
                 try {
-                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
+                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
 
-                    final Library library = LibrarySession.GetActiveLibrary(mContext);
                     if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
 
                     final StoredItem storedItem = new StoredItem();
@@ -73,10 +73,10 @@ public class StoredItemAccess {
                     try {
                         storedListAccess.create(storedItem);
                     } catch (SQLException e) {
-                        mLogger.error("Error while creating new stored list", e);
+                        logger.error("Error while creating new stored list", e);
                     }
                 } catch (SQLException e) {
-                    mLogger.error("Error getting access to the stored list table", e);
+                    logger.error("Error getting access to the stored list table", e);
                 }
             }
         });
@@ -87,44 +87,44 @@ public class StoredItemAccess {
             @Override
             public void run() {
                 try {
-                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredItem.class);
+                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
 
-                    final StoredItem storedItem = getStoredList(storedListAccess, LibrarySession.GetActiveLibrary(mContext), item, itemType);
+                    final StoredItem storedItem = getStoredList(storedListAccess, library, item, itemType);
 	                if (storedItem == null) return;
 
 	                try {
 		                storedListAccess.delete(storedItem);
                     } catch (SQLException e) {
-                        mLogger.error("Error removing stored list", e);
+                        logger.error("Error removing stored list", e);
                     }
                 } catch (SQLException e) {
-                    mLogger.error("Error getting access to the stored list table", e);
+                    logger.error("Error getting access to the stored list table", e);
                 }
             }
         });
     }
 
-	public void getAllStoredItems(ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>> onStoredListsRetrieved) {
-		final SimpleTask<Void, Void, List<StoredItem>> getAllStoredListsTasks = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredItem>>() {
-			@Override
-			public List<StoredItem> onExecute(ISimpleTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
-				try {
-					final DatabaseHandler dbHandler = new DatabaseHandler(mContext);
-					final Dao<StoredItem, Integer> storedItemAccess = dbHandler.getAccessObject(StoredItem.class);
-					return storedItemAccess.queryForAll();
-				} catch (SQLException e) {
-					mLogger.error("Error accessing the stored list access", e);
-				}
+    public void getStoredItems(ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>> onStoredListsRetrieved) {
+        final SimpleTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredItem>>() {
+            @Override
+            public List<StoredItem> onExecute(ISimpleTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
+                try {
+                    final DatabaseHandler dbHandler = new DatabaseHandler(context);
+                    final Dao<StoredItem, Integer> storedItemAccess = dbHandler.getAccessObject(StoredItem.class);
+                    return storedItemAccess.queryForEq(StoredItem.libraryIdColumnName, library.getId());
+                } catch (SQLException e) {
+                    logger.error("Error accessing the stored list access", e);
+                }
 
-				return new ArrayList<>();
-			}
-		});
+                return new ArrayList<>();
+            }
+        });
 
-		if (onStoredListsRetrieved != null)
-			getAllStoredListsTasks.addOnCompleteListener(onStoredListsRetrieved);
+        if (onStoredListsRetrieved != null)
+            getAllStoredItemsTasks.addOnCompleteListener(onStoredListsRetrieved);
 
-		getAllStoredListsTasks.execute(DatabaseHandler.databaseExecutor);
-	}
+        getAllStoredItemsTasks.execute(DatabaseHandler.databaseExecutor);
+    }
 
     private static boolean isItemMarkedForSync(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
         return getStoredList(storedListAccess, library, item, itemType) != null;
@@ -144,7 +144,7 @@ public class StoredItemAccess {
                             .prepare();
             return storedListAccess.queryForFirst(storedListPreparedQuery);
         } catch (SQLException e) {
-            mLogger.error("Error while checking whether stored list exists.", e);
+            logger.error("Error while checking whether stored list exists.", e);
         }
 
         return null;
