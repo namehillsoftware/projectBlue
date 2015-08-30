@@ -7,8 +7,10 @@ import android.widget.ImageButton;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 /**
@@ -34,15 +36,21 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 
 		v.removeOnLayoutChangeListener(this);
 
-		final StoredItemAccess syncListManager = new StoredItemAccess(viewFlipper.getContext());
-		syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
+		final Context context = viewFlipper.getContext();
+		LibrarySession.GetActiveLibrary(context, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-				if (isSynced)
-					syncButton.setImageDrawable(getSyncOnDrawable(viewFlipper.getContext()));
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+				final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
+				syncListManager.isItemMarkedForSync(item, new ISimpleTask.OnCompleteListener<Void, Void, Boolean>() {
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Boolean> owner, final Boolean isSynced) {
+						if (isSynced)
+							syncButton.setImageDrawable(getSyncOnDrawable(viewFlipper.getContext()));
 
-				syncButton.setOnClickListener(new SyncFilesClickHandler(viewFlipper, item, isSynced));
-				syncButton.setEnabled(true);
+						syncButton.setOnClickListener(new SyncFilesClickHandler(viewFlipper, library, item, isSynced));
+						syncButton.setEnabled(true);
+					}
+				});
 			}
 		});
 	}

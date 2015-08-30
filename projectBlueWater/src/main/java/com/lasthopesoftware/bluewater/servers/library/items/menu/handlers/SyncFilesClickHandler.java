@@ -6,6 +6,7 @@ import android.widget.ViewFlipper;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
+import com.lasthopesoftware.bluewater.servers.repository.Library;
 
 /**
  * Created by david on 7/18/15.
@@ -15,12 +16,12 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 	private boolean mIsSynced;
 	private final IItem mItem;
 
-	public SyncFilesClickHandler(ViewFlipper menuContainer, IItem item, boolean isSynced) {
+	public SyncFilesClickHandler(ViewFlipper menuContainer, Library library, IItem item, boolean isSynced) {
 		super(menuContainer);
 
 		mItem = item;
 		mIsSynced = isSynced;
-		mSyncListManager = new StoredItemAccess(menuContainer.getContext());
+		mSyncListManager = new StoredItemAccess(menuContainer.getContext(), library);
 	}
 
 	@Override
