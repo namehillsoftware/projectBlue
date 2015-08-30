@@ -14,6 +14,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
@@ -105,7 +106,7 @@ public class ItemSyncService extends Service {
 							storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
 							storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
 
-							AsyncTask.THREAD_POOL_EXECUTOR.execute(new LibrarySyncRunnable(context, library, storedItems, storedFileDownloader));
+							AsyncTask.THREAD_POOL_EXECUTOR.execute(new LibrarySyncRunnable(context, SessionConnection.getSessionConnectionProvider(), library, storedItems, storedFileDownloader));
 						}
 					});
 				}

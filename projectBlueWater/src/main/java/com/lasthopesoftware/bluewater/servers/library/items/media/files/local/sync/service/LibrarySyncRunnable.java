@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
@@ -24,12 +24,14 @@ import java.util.Set;
 public class LibrarySyncRunnable implements Runnable {
 
 	private final Context context;
+	private final ConnectionProvider connectionProvider;
 	private final Library library;
 	private final List<StoredItem> storedItems;
 	private final StoredFileDownloader storedFileDownloader;
 
-	public LibrarySyncRunnable(Context context, Library library, List<StoredItem> storedItems, StoredFileDownloader storedFileDownloader) {
+	public LibrarySyncRunnable(Context context, ConnectionProvider connectionProvider, Library library, List<StoredItem> storedItems, StoredFileDownloader storedFileDownloader) {
 		this.context = context;
+		this.connectionProvider = connectionProvider;
 		this.library = library;
 		this.storedItems = storedItems;
 		this.storedFileDownloader = storedFileDownloader;
@@ -40,9 +42,9 @@ public class LibrarySyncRunnable implements Runnable {
 		final Set<Integer> allSyncedFileKeys = new HashSet<>();
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-		for (StoredItem listToSync : storedItems) {
-			final int serviceId = listToSync.getServiceId();
-			final IFilesContainer filesContainer = listToSync.getItemType() == StoredItem.ItemType.ITEM ? new Item(SessionConnection.getSessionConnectionProvider(), serviceId) : new Playlist(SessionConnection.getSessionConnectionProvider(), serviceId);
+		for (StoredItem storedItem : storedItems) {
+			final int serviceId = storedItem.getServiceId();
+			final IFilesContainer filesContainer = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(connectionProvider, serviceId) : new Playlist(connectionProvider, serviceId);
 			final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
 			for (final IFile file : files) {
 				allSyncedFileKeys.add(file.getKey());
