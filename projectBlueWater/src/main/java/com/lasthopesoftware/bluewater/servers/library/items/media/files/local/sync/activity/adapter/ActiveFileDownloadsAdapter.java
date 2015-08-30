@@ -49,7 +49,7 @@ public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 		final ArrayList<IFile> files = new ArrayList<>(storedFiles.size());
 
 		for (StoredFile storedFile : storedFiles)
-			files.add(new File(connectionProvider, storedFile.getId()));
+			files.add(new File(connectionProvider, storedFile.getServiceId()));
 
 		return files;
 	}
