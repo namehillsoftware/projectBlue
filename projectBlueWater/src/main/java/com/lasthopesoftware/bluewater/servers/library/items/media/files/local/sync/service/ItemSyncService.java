@@ -6,6 +6,9 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -13,6 +16,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
@@ -82,11 +86,25 @@ public class ItemSyncService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (!intent.getAction().equals(doSyncAction)) return START_REDELIVER_INTENT;
 
-		doSync();
-		return START_STICKY;
-	}
+		final int result = START_NOT_STICKY;
 
-	private void doSync() {
+		if (ConnectionInfo.getConnectionType(this) != ConnectivityManager.TYPE_WIFI) {
+			stopSelf();
+			return result;
+		}
+
+		final Intent batteryStatusReceiver = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		if (batteryStatusReceiver == null) {
+			stopSelf();
+			return result;
+		}
+
+		final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+		if (batteryStatus == 0) {
+			stopSelf();
+			return result;
+		}
+
 		final Context context = this;
 
 		startForeground(23, buildSyncNotification());
@@ -103,6 +121,8 @@ public class ItemSyncService extends Service {
 				}
 			}
 		});
+
+		return result;
 	}
 
 	private Notification buildSyncNotification() {
