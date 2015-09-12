@@ -138,7 +138,7 @@ public class ItemSyncService extends Service {
 
 	private Notification buildSyncNotification() {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
-		notifyBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
+		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsActivity.class),0));
 

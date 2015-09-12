@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
@@ -14,7 +13,6 @@ import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -27,7 +25,6 @@ public class EditServerActivity extends FragmentActivity {
 	private Library library;
 
 	private Button saveButton;
-	private Button viewActiveDownloadsButton;
 	private EditText txtAccessCode;
 	private EditText txtUserName;
 	private EditText txtPassword;
@@ -83,14 +80,6 @@ public class EditServerActivity extends FragmentActivity {
 
 		saveButton = (Button)findViewById(R.id.btnConnect);
         saveButton.setOnClickListener(connectionButtonListener);
-		viewActiveDownloadsButton = (Button)findViewById(R.id.btnViewActiveDownloads);
-		viewActiveDownloadsButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				final Intent intent = new Intent(v.getContext(), ActiveFileDownloadsActivity.class);
-				startActivity(intent);
-			}
-		});
 		txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
 		txtUserName = (EditText)findViewById(R.id.txtUserName);
 		txtPassword = (EditText)findViewById(R.id.txtPassword);
