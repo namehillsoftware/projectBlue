@@ -17,8 +17,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.listeners.EditServerClickListener;
-import com.lasthopesoftware.bluewater.servers.repository.Library;
 
 import java.util.List;
 

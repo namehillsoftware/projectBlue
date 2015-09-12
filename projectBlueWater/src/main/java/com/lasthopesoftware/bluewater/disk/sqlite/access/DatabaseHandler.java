@@ -10,7 +10,7 @@ import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
-import com.lasthopesoftware.bluewater.servers.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +22,11 @@ import java.util.concurrent.Executors;
 public class DatabaseHandler {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final ThreadLocal<SessionsDbHelper> mSessionsDbInstance = new ThreadLocal<>();
+	private static final ThreadLocal<SessionsDbHelper> sessionsDbInstance = new ThreadLocal<>();
 
 	public DatabaseHandler(Context context) {
-		if (mSessionsDbInstance.get() == null)
-			mSessionsDbInstance.set(new SessionsDbHelper(context));
+		if (sessionsDbInstance.get() == null)
+			sessionsDbInstance.set(new SessionsDbHelper(context));
 	}
 
 	public static DatabaseHandler getInstance(Context context) {
@@ -34,7 +34,7 @@ public class DatabaseHandler {
 	}
 	
 	public <D extends Dao<T, ?>, T> D getAccessObject(Class<T> c) throws SQLException {
-		return mSessionsDbInstance.get().getDao(c);
+		return sessionsDbInstance.get().getDao(c);
 	}
 
 	private static class SessionsDbHelper extends OrmLiteSqliteOpenHelper {
@@ -94,6 +94,7 @@ public class DatabaseHandler {
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
 					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+					libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
 					libraryDao.executeRaw("DROP TABLE `StoredLists`;");
 				} catch (SQLException e) {
 					mLogger.error("Error adding column syncedFilesPath to library table", e);

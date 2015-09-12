@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.repository;
+package com.lasthopesoftware.bluewater.servers.library.repository;
 
 import android.content.Context;
 import android.os.Environment;
@@ -55,6 +55,9 @@ public class Library {
 
 	@DatabaseField
 	private boolean isUsingExistingFiles;
+
+	@DatabaseField
+	private boolean isSyncLocalConnectionsOnly;
 	
 	@ForeignCollectionField(eager = true)
 	private Collection<StoredFile> storedFiles = null;
@@ -246,6 +249,14 @@ public class Library {
 
 	public void setIsUsingExistingFiles(boolean isUsingExistingFiles) {
 		this.isUsingExistingFiles = isUsingExistingFiles;
+	}
+
+	public boolean isSyncLocalConnectionsOnly() {
+		return isSyncLocalConnectionsOnly;
+	}
+
+	public void setIsSyncLocalConnectionsOnly(boolean isSyncLocalConnections) {
+		this.isSyncLocalConnectionsOnly = isSyncLocalConnections;
 	}
 
 	public enum SyncedFileLocation {

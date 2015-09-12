@@ -134,11 +134,11 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/lbl_use_existing_music"/>
-            <Button
-                android:id="@+id/btnViewActiveDownloads"
-                android:layout_width="wrap_content"
+            <CheckBox
+                android:id="@+id/chkIsUsingLocalConnectionForSync"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="View active downloads"/>
+                android:text="@string/lbl_sync_local_connection"/>
         </LinearLayout>
     </LinearLayout>
 

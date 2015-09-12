@@ -72,4 +72,5 @@
     <string name="rbCustomLocation">Custom:</string>
     <string name="lbl_use_existing_music">Use existing music on device</string>
     <string name="title_sync_files">Syncing files</string>
+    <string name="lbl_sync_local_connection">Sync only on local connections</string>
 </resources>

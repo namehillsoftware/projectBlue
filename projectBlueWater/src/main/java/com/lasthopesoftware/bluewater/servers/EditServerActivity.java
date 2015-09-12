@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,7 +15,7 @@ import android.widget.RadioGroup;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
-import com.lasthopesoftware.bluewater.servers.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.File;
@@ -25,52 +24,52 @@ public class EditServerActivity extends FragmentActivity {
 
 	public static final String serverIdExtra = EditServerActivity.class.getCanonicalName() + ".serverIdExtra";
 
-	private Library mLibrary;
+	private Library library;
 
-	private Button mSaveButton;
-	private Button mViewActiveDownloadsButton;
-	private EditText mTxtAccessCode;
-	private EditText mTxtUserName;
-	private EditText mTxtPassword;
-	private EditText mTxtSyncPath;
-	private CheckBox mChkLocalOnly;
-	private RadioGroup mRgSyncFileOptions;
-	private CheckBox mChkIsUsingExistingFiles;
+	private Button saveButton;
+	private Button viewActiveDownloadsButton;
+	private EditText txtAccessCode;
+	private EditText txtUserName;
+	private EditText txtPassword;
+	private EditText txtSyncPath;
+	private CheckBox chkLocalOnly;
+	private RadioGroup rgSyncFileOptions;
+	private CheckBox chkIsUsingExistingFiles;
+	private CheckBox chkIsUsingLocalConnectionForSync;
 
-	private OnClickListener mConnectionButtonListener = new OnClickListener() {
+	private final OnClickListener connectionButtonListener = new OnClickListener() {
         public void onClick(View v) {
 
-        	final Context _context = v.getContext();
-
-        	if (mLibrary == null) {
-        		mLibrary = new Library();
-        		mLibrary.setNowPlayingId(-1);
+        	if (library == null) {
+        		library = new Library();
+        		library.setNowPlayingId(-1);
         	}
 
-	        mLibrary.setAccessCode(mTxtAccessCode.getText().toString());
-        	mLibrary.setAuthKey(Base64.encodeToString((mTxtUserName.getText().toString() + ":" + mTxtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        	mLibrary.setLocalOnly(mChkLocalOnly.isChecked());
-	        mLibrary.setCustomSyncedFilesPath(mTxtSyncPath.getText().toString());
-	        switch (mRgSyncFileOptions.getCheckedRadioButtonId()) {
+	        library.setAccessCode(txtAccessCode.getText().toString());
+        	library.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
+        	library.setLocalOnly(chkLocalOnly.isChecked());
+	        library.setCustomSyncedFilesPath(txtSyncPath.getText().toString());
+	        switch (rgSyncFileOptions.getCheckedRadioButtonId()) {
 		        case R.id.rbPublicLocation:
-			        mLibrary.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL);
+			        library.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL);
 			        break;
 		        case R.id.rbPrivateToApp:
-			        mLibrary.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL);
+			        library.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL);
 			        break;
 		        case R.id.rbCustomLocation:
-			        mLibrary.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
+			        library.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
 			        break;
 	        }
-	        mLibrary.setIsUsingExistingFiles(mChkIsUsingExistingFiles.isChecked());
+	        library.setIsUsingExistingFiles(chkIsUsingExistingFiles.isChecked());
+	        library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.isChecked());
 
-        	mSaveButton.setEnabled(false);
+        	saveButton.setEnabled(false);
 
-        	LibrarySession.SaveLibrary(_context, mLibrary, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
+        	LibrarySession.SaveLibrary(v.getContext(), library, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
 
 		        @Override
 		        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-			        mSaveButton.setText(getText(R.string.btn_saved));
+			        saveButton.setText(getText(R.string.btn_saved));
 			        finish();
 		        }
 	        });
@@ -82,34 +81,35 @@ public class EditServerActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_server);
 
-		mSaveButton = (Button)findViewById(R.id.btnConnect);
-        mSaveButton.setOnClickListener(mConnectionButtonListener);
-		mViewActiveDownloadsButton = (Button)findViewById(R.id.btnViewActiveDownloads);
-		mViewActiveDownloadsButton.setOnClickListener(new OnClickListener() {
+		saveButton = (Button)findViewById(R.id.btnConnect);
+        saveButton.setOnClickListener(connectionButtonListener);
+		viewActiveDownloadsButton = (Button)findViewById(R.id.btnViewActiveDownloads);
+		viewActiveDownloadsButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				final Intent intent = new Intent(v.getContext(), ActiveFileDownloadsActivity.class);
 				startActivity(intent);
 			}
 		});
-		mTxtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
-		mTxtUserName = (EditText)findViewById(R.id.txtUserName);
-		mTxtPassword = (EditText)findViewById(R.id.txtPassword);
-		mTxtSyncPath = (EditText) findViewById(R.id.txtSyncPath);
-		mChkLocalOnly = (CheckBox) findViewById(R.id.chkLocalOnly);
-		mRgSyncFileOptions = (RadioGroup) findViewById(R.id.rgSyncFileOptions);
-		mChkIsUsingExistingFiles = (CheckBox) findViewById(R.id.chkIsUsingExistingFiles);
+		txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
+		txtUserName = (EditText)findViewById(R.id.txtUserName);
+		txtPassword = (EditText)findViewById(R.id.txtPassword);
+		txtSyncPath = (EditText) findViewById(R.id.txtSyncPath);
+		chkLocalOnly = (CheckBox) findViewById(R.id.chkLocalOnly);
+		rgSyncFileOptions = (RadioGroup) findViewById(R.id.rgSyncFileOptions);
+		chkIsUsingExistingFiles = (CheckBox) findViewById(R.id.chkIsUsingExistingFiles);
+		chkIsUsingLocalConnectionForSync = (CheckBox) findViewById(R.id.chkIsUsingLocalConnectionForSync);
 
 		final File externalFilesDir = Environment.getExternalStorageDirectory();
 		if (externalFilesDir != null)
-			mTxtSyncPath.setText(externalFilesDir.getPath());
+			txtSyncPath.setText(externalFilesDir.getPath());
 
-		mRgSyncFileOptions.check(R.id.rbPrivateToApp);
+		rgSyncFileOptions.check(R.id.rbPrivateToApp);
 
-		mRgSyncFileOptions.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+		rgSyncFileOptions.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
-				mTxtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation);
+				txtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation);
 			}
 		});
 
@@ -120,36 +120,37 @@ public class EditServerActivity extends FragmentActivity {
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 
-				mLibrary = result;
+				library = result;
 
-				mChkLocalOnly.setChecked(mLibrary.isLocalOnly());
-				mChkIsUsingExistingFiles.setChecked(mLibrary.isUsingExistingFiles());
+				chkLocalOnly.setChecked(library.isLocalOnly());
+				chkIsUsingExistingFiles.setChecked(library.isUsingExistingFiles());
+				chkIsUsingLocalConnectionForSync.setChecked(library.isSyncLocalConnectionsOnly());
 
-				final String customSyncPath = mLibrary.getCustomSyncedFilesPath();
+				final String customSyncPath = library.getCustomSyncedFilesPath();
 				if (customSyncPath != null && !customSyncPath.isEmpty())
-					mTxtSyncPath.setText(customSyncPath);
+					txtSyncPath.setText(customSyncPath);
 
-				switch (mLibrary.getSyncedFileLocation()) {
+				switch (library.getSyncedFileLocation()) {
 					case EXTERNAL:
-						mRgSyncFileOptions.check(R.id.rbPublicLocation);
+						rgSyncFileOptions.check(R.id.rbPublicLocation);
 						break;
 					case INTERNAL:
-						mRgSyncFileOptions.check(R.id.rbPrivateToApp);
+						rgSyncFileOptions.check(R.id.rbPrivateToApp);
 						break;
 					case CUSTOM:
-						mRgSyncFileOptions.check(R.id.rbCustomLocation);
+						rgSyncFileOptions.check(R.id.rbCustomLocation);
 						break;
 				}
 
-				mTxtAccessCode.setText(mLibrary.getAccessCode());
-				if (mLibrary.getAuthKey() == null) return;
+				txtAccessCode.setText(library.getAccessCode());
+				if (library.getAuthKey() == null) return;
 
-				final String decryptedUserAuth = new String(Base64.decode(mLibrary.getAuthKey(), Base64.DEFAULT));
+				final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
 				if (decryptedUserAuth.isEmpty()) return;
 
 				final String[] userDetails = decryptedUserAuth.split(":", 2);
-				mTxtUserName.setText(userDetails[0]);
-				mTxtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
+				txtUserName.setText(userDetails[0]);
+				txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
 			}
 		});
         
