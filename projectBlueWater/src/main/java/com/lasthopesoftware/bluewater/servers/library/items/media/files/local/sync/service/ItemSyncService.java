@@ -119,6 +119,7 @@ public class ItemSyncService extends Service {
 					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
+							if (library.isSyncLocalConnectionsOnly()) accessConfiguration.setLocalOnly(true);
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 
 							final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
