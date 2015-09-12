@@ -16,8 +16,10 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
+import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
@@ -113,11 +115,19 @@ public class ItemSyncService extends Service {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				for (final Library library : libraries) {
-					final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, library);
-					storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
-					storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
 
-					LibrarySyncHandler.SyncLibrary(context, SessionConnection.getSessionConnectionProvider(), library, storedFileDownloader);
+					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
+						@Override
+						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
+							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
+
+							final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
+							storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
+							storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
+
+							LibrarySyncHandler.SyncLibrary(context, connectionProvider, library, storedFileDownloader);
+						}
+					});
 				}
 			}
 		});

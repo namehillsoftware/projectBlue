@@ -10,7 +10,7 @@ import android.os.BatteryManager;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
@@ -30,74 +30,76 @@ import java.util.concurrent.Executors;
 
 public class StoredFileDownloader {
 
-	private static final ExecutorService mStoreFilesExecutor = Executors.newSingleThreadExecutor();
-	private static final Logger mLogger = LoggerFactory.getLogger(StoredFileDownloader.class);
+	private static final ExecutorService storeFilesExecutor = Executors.newSingleThreadExecutor();
+	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
 
-	private boolean mIsHalted = false;
+	private boolean isHalted = false;
 
-	private final StoredFileAccess mStoredFileAccess;
-	private final Context mContext;
-	private final Set<Integer> mQueuedFileKeys = new HashSet<>();
+	private final StoredFileAccess storedFileAccess;
+	private final Context context;
+	private final ConnectionProvider connectionProvider;
+	private final Set<Integer> queuedFileKeys = new HashSet<>();
 
-	private IOneParameterAction<StoredFile> mOnFileDownloaded;
-	private Runnable mOnFileQueueEmpty;
+	private IOneParameterAction<StoredFile> onFileDownloaded;
+	private Runnable onFileQueueEmpty;
 
-	public StoredFileDownloader(Context context, Library library) {
-		mContext = context;
-		mStoredFileAccess = new StoredFileAccess(context, library);
+	public StoredFileDownloader(Context context, ConnectionProvider connectionProvider, Library library) {
+		this.context = context;
+		this.connectionProvider = connectionProvider;
+		storedFileAccess = new StoredFileAccess(context, library);
 	}
 
 	public void queueFileForDownload(final IFile serviceFile, final StoredFile storedFile) {
 		final int fileKey = serviceFile.getKey();
-		if (!mQueuedFileKeys.add(fileKey)) return;
+		if (!queuedFileKeys.add(fileKey)) return;
 
-		mStoreFilesExecutor.execute(new Runnable() {
+		storeFilesExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
 					final java.io.File file = new java.io.File(storedFile.getPath());
-					if (mIsHalted || (storedFile.isDownloadComplete() && file.exists()))
+					if (isHalted || (storedFile.isDownloadComplete() && file.exists()))
 						return;
-
-					if (ConnectionInfo.getConnectionType(mContext) != ConnectivityManager.TYPE_WIFI) {
+					
+					if (ConnectionInfo.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) {
 						halt();
 						return;
 					}
-
-					final Intent batteryStatusReceiver = mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+					
+					final Intent batteryStatusReceiver = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 					if (batteryStatusReceiver == null) {
 						halt();
 						return;
 					}
-
+					
 					final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
 					if (batteryStatus == 0) {
 						halt();
 						return;
 					}
-
+					
 					HttpURLConnection connection;
 					try {
-						connection = SessionConnection.getSessionConnection(serviceFile.getPlaybackParams());
+						connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
 					} catch (IOException e) {
-						mLogger.error("Error getting connection", e);
+						logger.error("Error getting connection", e);
 						return;
 					}
-
+					
 					if (connection == null) return;
-
+					
 					try {
 						InputStream is;
 						try {
 							is = connection.getInputStream();
 						} catch (IOException ioe) {
-							mLogger.error("Error opening data connection", ioe);
+							logger.error("Error opening data connection", ioe);
 							return;
 						}
-
+						
 						final java.io.File parent = file.getParentFile();
 						if (!parent.exists() && !parent.mkdirs()) return;
-
+						
 						try {
 							final FileOutputStream fos = new FileOutputStream(file);
 							try {
@@ -106,22 +108,22 @@ public class StoredFileDownloader {
 							} finally {
 								fos.close();
 							}
-
+							
 							final int storedFileId = storedFile.getId();
-							mStoredFileAccess.markStoredFileAsDownloaded(storedFileId);
-
-							if (mOnFileDownloaded != null)
-								mOnFileDownloaded.run(storedFile);
-
-							mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+							storedFileAccess.markStoredFileAsDownloaded(storedFileId);
+							
+							if (onFileDownloaded != null)
+								onFileDownloaded.run(storedFile);
+							
+							context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
 						} catch (IOException ioe) {
-							mLogger.error("Error writing file!", ioe);
+							logger.error("Error writing file!", ioe);
 						} finally {
 							if (is != null) {
 								try {
 									is.close();
 								} catch (IOException e) {
-									mLogger.error("Error closing input stream", e);
+									logger.error("Error closing input stream", e);
 								}
 							}
 						}
@@ -131,24 +133,24 @@ public class StoredFileDownloader {
 				} finally {
 					// This needs to be tied to the executor runnable in order to maintain
 					// a sync between the set and the executor queue
-					mQueuedFileKeys.remove(fileKey);
-
-					if (mQueuedFileKeys.size() == 0 && mOnFileQueueEmpty != null)
-						mOnFileQueueEmpty.run();
+					queuedFileKeys.remove(fileKey);
+					
+					if (queuedFileKeys.size() == 0 && onFileQueueEmpty != null)
+						onFileQueueEmpty.run();
 				}
 			}
 		});
 	}
 
 	private void halt() {
-		mIsHalted = true;
+		isHalted = true;
 	}
 
 	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
-		mOnFileDownloaded = onFileDownloaded;
+		this.onFileDownloaded = onFileDownloaded;
 	}
 
 	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
-		mOnFileQueueEmpty = onFileQueueEmpty;
+		this.onFileQueueEmpty = onFileQueueEmpty;
 	}
 }
