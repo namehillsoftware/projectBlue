@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -38,6 +39,7 @@ public class ItemSyncService extends Service {
 
 	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "doSyncAction");
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
+	private static final int notificationId = 23;
 
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
@@ -51,6 +53,8 @@ public class ItemSyncService extends Service {
 			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, syncInterval, pendingIntent);
 
 			stopForeground(true);
+			NotificationManager notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+			notificationMgr.cancel(notificationId);
 			stopSelf();
 		}
 	};
@@ -98,7 +102,7 @@ public class ItemSyncService extends Service {
 			return result;
 		}
 
-		startForeground(23, buildSyncNotification());
+		startForeground(notificationId, buildSyncNotification());
 
 		LibrarySession.GetLibraries(context, new ISimpleTask.OnCompleteListener<Void, Void, List<Library>>() {
 			@Override
