@@ -13,6 +13,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
@@ -45,6 +46,9 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 		initializeLogging();
+
+		// Kick off a file sync if one isn't scheduled on start-up
+		if (!ItemSyncService.isSyncScheduled(this)) ItemSyncService.doSync(this);
 	}
 	
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

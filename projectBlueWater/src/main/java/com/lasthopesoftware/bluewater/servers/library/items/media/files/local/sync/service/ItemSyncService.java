@@ -64,6 +64,10 @@ public class ItemSyncService extends Service {
 		}
 	};
 
+	public static boolean isSyncScheduled(Context context) {
+		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
+	}
+
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, ItemSyncService.class);
 		intent.setAction(doSyncAction);
