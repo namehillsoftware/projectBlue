@@ -6,9 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -18,13 +15,13 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
+import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.IOneParameterAction;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -90,24 +87,12 @@ public class ItemSyncService extends Service {
 
 		final int result = START_NOT_STICKY;
 
-		if (ConnectionInfo.getConnectionType(this) != ConnectivityManager.TYPE_WIFI) {
-			stopSelf();
-			return result;
-		}
-
-		final Intent batteryStatusReceiver = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-		if (batteryStatusReceiver == null) {
-			stopSelf();
-			return result;
-		}
-
-		final int batteryStatus = batteryStatusReceiver.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-		if (batteryStatus == 0) {
-			stopSelf();
-			return result;
-		}
-
 		final Context context = this;
+
+		if (!IoCommon.isWifiAndPowerConnected(context)) {
+			finishServiceRunnable.run();
+			return result;
+		}
 
 		startForeground(23, buildSyncNotification());
 
@@ -119,7 +104,8 @@ public class ItemSyncService extends Service {
 					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
-							if (library.isSyncLocalConnectionsOnly()) accessConfiguration.setLocalOnly(true);
+							if (library.isSyncLocalConnectionsOnly())
+								accessConfiguration.setLocalOnly(true);
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 
 							final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
