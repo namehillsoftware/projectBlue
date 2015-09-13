@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="@android:style/Theme.Holo.Light">
+    <style name="AppTheme" parent="@android:Theme.Material">
         <item name="attr/action_search">@drawable/action_search</item>
         <item name="attr/action_settings">@drawable/action_settings</item>
         <item name="attr/av_download">@drawable/av_download</item>
