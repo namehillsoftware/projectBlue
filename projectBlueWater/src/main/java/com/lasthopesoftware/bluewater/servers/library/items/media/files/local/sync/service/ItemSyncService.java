@@ -9,9 +9,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.j256.ormlite.logger.Logger;
+import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
@@ -41,16 +44,20 @@ public class ItemSyncService extends Service {
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
 	private static final int notificationId = 23;
 
+	private static final Logger logger = LoggerFactory.getLogger(ItemSyncService.class);
+
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
 
 	private final Runnable finishServiceRunnable = new Runnable() {
 		@Override
 		public void run() {
+			logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
+
 			// Set an alarm for the next time we run this bad boy
 			final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 			final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, syncInterval, pendingIntent);
+			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 			stopForeground(true);
 			NotificationManager notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
@@ -102,6 +109,7 @@ public class ItemSyncService extends Service {
 			return result;
 		}
 
+		logger.info("Starting sync.");
 		startForeground(notificationId, buildSyncNotification());
 
 		LibrarySession.GetLibraries(context, new ISimpleTask.OnCompleteListener<Void, Void, List<Library>>() {
