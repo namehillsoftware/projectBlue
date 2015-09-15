@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.threading.IOneParameterAction;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
@@ -28,28 +29,16 @@ public class LibrarySyncHandler implements Runnable {
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
 	private final Library library;
-	private final List<StoredItem> storedItems;
 	private final StoredFileDownloader storedFileDownloader;
 
-	public static void SyncLibrary(final Context context, final ConnectionProvider connectionProvider, final Library library, final StoredFileDownloader storedFileDownloader) {
-		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-		storedItemAccess.getStoredItems(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>>() {
+	private List<StoredItem> storedItems;
+	private Runnable onFileQueueEmpty;
 
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<StoredItem>> owner, List<StoredItem> storedItems) {
-				AsyncTask
-					.THREAD_POOL_EXECUTOR
-					.execute(new LibrarySyncHandler(context, connectionProvider, library, storedItems, storedFileDownloader));
-			}
-		});
-	}
-
-	private LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, List<StoredItem> storedItems, StoredFileDownloader storedFileDownloader) {
+	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.library = library;
-		this.storedItems = storedItems;
-		this.storedFileDownloader = storedFileDownloader;
+		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
 	@Override
@@ -75,5 +64,28 @@ public class LibrarySyncHandler implements Runnable {
 		}
 
 		storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+	}
+
+	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
+		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
+	}
+
+	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
+		this.onFileQueueEmpty = onFileQueueEmpty;
+		storedFileDownloader.setOnFileQueueEmpty(onFileQueueEmpty);
+	}
+
+	public void startSync() {
+		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
+		storedItemAccess.getStoredItems(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredItem>>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Void, Void, List<StoredItem>> owner, List<StoredItem> storedItems) {
+				LibrarySyncHandler.this.storedItems = storedItems;
+				AsyncTask
+					.THREAD_POOL_EXECUTOR
+					.execute(LibrarySyncHandler.this);
+			}
+		});
 	}
 }

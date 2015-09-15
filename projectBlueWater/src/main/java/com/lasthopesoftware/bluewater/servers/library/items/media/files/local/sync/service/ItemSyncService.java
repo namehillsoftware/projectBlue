@@ -124,11 +124,10 @@ public class ItemSyncService extends Service {
 								accessConfiguration.setLocalOnly(true);
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 
-							final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
-							storedFileDownloader.setOnFileDownloaded(storedFileDownloadedAction);
-							storedFileDownloader.setOnFileQueueEmpty(finishServiceRunnable);
-
-							LibrarySyncHandler.SyncLibrary(context, connectionProvider, library, storedFileDownloader);
+							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+							librarySyncHandler.setOnFileQueueEmpty(finishServiceRunnable);
+							librarySyncHandler.startSync();
 						}
 					});
 				}
