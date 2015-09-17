@@ -25,20 +25,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by david on 7/14/15.
  */
 public class StoredFileAccess {
 
-	private static final Logger mLogger = LoggerFactory.getLogger(StoredFileAccess.class);
+	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
+	private static final ExecutorService storedFileExecutor = Executors.newSingleThreadExecutor();
 
-	private final Context mContext;
-	private final Library mLibrary;
+	private final Context context;
+	private final Library library;
 
 	public StoredFileAccess(Context context, Library library) {
-		mContext = context;
-		mLibrary = library;
+		this.context = context;
+		this.library = library;
 	}
 
 	public void getStoredFile(final int storedFileId, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
@@ -46,10 +49,10 @@ public class StoredFileAccess {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					return storedFileAccess.queryForId(storedFileId);
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the stored file", se);
+					logger.error("There was an error retrieving the stored file", se);
 					return null;
 				}
 			}
@@ -58,7 +61,7 @@ public class StoredFileAccess {
 		if (onStoredFileRetrieved != null)
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
 
-		getStoredFileTask.execute(DatabaseHandler.databaseExecutor);
+		getStoredFileTask.execute(storedFileExecutor);
 	}
 
 	public void getStoredFile(final IFile serviceFile, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
@@ -67,11 +70,11 @@ public class StoredFileAccess {
 		if (onStoredFileRetrieved != null)
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
 
-		getStoredFileTask.execute(DatabaseHandler.databaseExecutor);
+		getStoredFileTask.execute(storedFileExecutor);
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return SimpleTask.executeNew(DatabaseHandler.databaseExecutor, getFileExecutor(serviceFile)).get();
+		return SimpleTask.executeNew(storedFileExecutor, getFileExecutor(serviceFile)).get();
 	}
 
 	private ISimpleTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
@@ -79,10 +82,10 @@ public class StoredFileAccess {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					return getStoredFile(storedFileAccess, serviceFile);
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the stored file", se);
+					logger.error("There was an error retrieving the stored file", se);
 					return null;
 				}
 			}
@@ -94,10 +97,10 @@ public class StoredFileAccess {
 			@Override
 			public List<StoredFile> onExecute(ISimpleTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					return storedFileAccess.queryForEq(StoredFile.isDownloadCompleteColumnName, false);
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the downloading files.", se);
+					logger.error("There was an error retrieving the downloading files.", se);
 					return new ArrayList<>();
 				}
 			}
@@ -106,36 +109,36 @@ public class StoredFileAccess {
 		if (onGetDownloadingStoredFilesComplete != null)
 			getDownloadingStoredFilesTask.addOnCompleteListener(onGetDownloadingStoredFilesComplete);
 
-		getDownloadingStoredFilesTask.execute(DatabaseHandler.databaseExecutor);
+		getDownloadingStoredFilesTask.execute(storedFileExecutor);
 	}
 
 	public void markStoredFileAsDownloaded(final int storedFileId) {
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					final StoredFile storedFile = storedFileAccess.queryForId(storedFileId);
 
 					storedFile.setIsDownloadComplete(true);
 					try {
 						storedFileAccess.createOrUpdate(storedFile);
 					} catch (SQLException se) {
-						mLogger.error("There was an error updating the stored file", se);
+						logger.error("There was an error updating the stored file", se);
 					}
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the stored file", se);
+					logger.error("There was an error retrieving the stored file", se);
 				}
 			}
 		});
 	}
 
 	public void deleteStoredFile(final StoredFile storedFile) {
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					try {
 						storedFileAccess.delete(storedFile);
 
@@ -144,21 +147,21 @@ public class StoredFileAccess {
 						final File file = new File(storedFile.getPath());
 						if (file.exists()) file.delete();
 					} catch (SQLException se) {
-						mLogger.error("There was an error updating the stored file", se);
+						logger.error("There was an error updating the stored file", se);
 					}
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the stored file", se);
+					logger.error("There was an error retrieving the stored file", se);
 				}
 			}
 		});
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					StoredFile storedFile = getStoredFile(storedFileAccess, file);
 					if (storedFile == null) {
 						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.storedMediaIdColumnName, mediaFileId);
@@ -178,7 +181,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile = new StoredFile();
 						storedFile.setServiceId(file.getKey());
-						storedFile.setLibrary(mLibrary);
+						storedFile.setLibrary(library);
 						storedFile.setIsOwner(true);
 					}
 
@@ -188,10 +191,10 @@ public class StoredFileAccess {
 					try {
 						storedFileAccess.createOrUpdate(storedFile);
 					} catch (SQLException se) {
-						mLogger.error("There was an updating/creating the stored file", se);
+						logger.error("There was an updating/creating the stored file", se);
 					}
 				} catch (SQLException se) {
-					mLogger.error("There was an error retrieving the stored file", se);
+					logger.error("There was an error retrieving the stored file", se);
 				}
 			}
 		});
@@ -202,18 +205,18 @@ public class StoredFileAccess {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				try {
-					final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					StoredFile storedFile = getStoredFile(storedFilesAccess, file);
 					if (storedFile == null) {
 						storedFile = new StoredFile();
 						storedFile.setServiceId(file.getKey());
-						storedFile.setLibrary(mLibrary);
+						storedFile.setLibrary(library);
 						storedFile.setIsOwner(true);
 					}
 
 					if (storedFile.getPath() == null) {
 						try {
-							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(mContext, file, true);
+							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, file, true);
 							final Uri localUri = mediaFileUriProvider.getFileUri();
 							if (localUri != null) {
 								storedFile.setPath(localUri.getPath());
@@ -222,17 +225,17 @@ public class StoredFileAccess {
 								try {
 									storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
 								} catch (IOException e) {
-									mLogger.error("Error retrieving media file ID", e);
+									logger.error("Error retrieving media file ID", e);
 								}
 							}
 						} catch (IOException e) {
-							mLogger.error("Error retrieving media file URI", e);
+							logger.error("Error retrieving media file URI", e);
 						}
 					}
 
 					if (storedFile.getPath() == null) {
 						try {
-							String fullPath = mLibrary.getSyncDir(mContext).getPath();
+							String fullPath = library.getSyncDir(context).getPath();
 
 							String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
 							if (artist == null)
@@ -256,7 +259,7 @@ public class StoredFileAccess {
 							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
 							storedFile.setPath(fullPath);
 						} catch (IOException e) {
-							mLogger.error("Error getting filename for file " + file.getValue(), e);
+							logger.error("Error getting filename for file " + file.getValue(), e);
 						}
 					}
 
@@ -267,12 +270,12 @@ public class StoredFileAccess {
 					try {
 						storedFilesAccess.createOrUpdate(storedFile);
 					} catch (SQLException e) {
-						mLogger.error("There was an updating the stored file.", e);
+						logger.error("There was an updating the stored file.", e);
 					}
 
 					return storedFile;
 				} catch (SQLException e) {
-					mLogger.error("There was an error getting access to the StoredFile table.", e);
+					logger.error("There was an error getting access to the StoredFile table.", e);
 				}
 
 				return null;
@@ -280,19 +283,19 @@ public class StoredFileAccess {
 		});
 
 		try {
-			return createOrUpdateStoredFileTask.execute(DatabaseHandler.databaseExecutor).get();
+			return createOrUpdateStoredFileTask.execute(storedFileExecutor).get();
 		} catch (ExecutionException | InterruptedException e) {
-			mLogger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
+			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
 		}
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
 					// Since we could be pulling back a lot of data, only query for what we need.
 					// This query is very custom to this scenario, so it's being kept here.
 					final PreparedQuery<StoredFile> storedFilePreparedQuery =
@@ -300,7 +303,7 @@ public class StoredFileAccess {
 									.queryBuilder()
 									.selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
 									.where()
-									.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
+									.eq(StoredFile.libraryIdColumnName, library.getId())
 									.and()
 									.eq(StoredFile.isOwnerColumnName, true)
 									.prepare();
@@ -311,7 +314,7 @@ public class StoredFileAccess {
 							deleteStoredFile(storedFile);
 					}
 				} catch (SQLException e) {
-					mLogger.error("Error updating the ", e);
+					logger.error("Error updating the ", e);
 				}
 			}
 		});
@@ -326,11 +329,11 @@ public class StoredFileAccess {
 					.where()
 					.eq(StoredFile.serviceIdColumnName, file.getKey())
 					.and()
-					.eq(StoredFile.libraryIdColumnName, mLibrary.getId())
+					.eq(StoredFile.libraryIdColumnName, library.getId())
 					.prepare();
 			return storedFileAccess.queryForFirst(storedFilePreparedQuery);
 		} catch (SQLException e) {
-			mLogger.error("Error getting file!", e);
+			logger.error("Error getting file!", e);
 		}
 
 		return null;
