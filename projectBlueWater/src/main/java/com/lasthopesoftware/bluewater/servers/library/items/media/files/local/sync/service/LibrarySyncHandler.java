@@ -32,7 +32,6 @@ public class LibrarySyncHandler implements Runnable {
 	private final StoredFileDownloader storedFileDownloader;
 
 	private List<StoredItem> storedItems;
-	private Runnable onFileQueueEmpty;
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
@@ -46,7 +45,6 @@ public class LibrarySyncHandler implements Runnable {
 		final Set<Integer> allSyncedFileKeys = new HashSet<>();
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-		boolean isAnyFileDownloaded = false;
 		for (StoredItem storedItem : storedItems) {
 			final int serviceId = storedItem.getServiceId();
 			final IFilesContainer filesContainer = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(connectionProvider, serviceId) : new Playlist(connectionProvider, serviceId);
@@ -55,19 +53,14 @@ public class LibrarySyncHandler implements Runnable {
 				allSyncedFileKeys.add(file.getKey());
 
 				final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
-				if (storedFile.isDownloadComplete()) continue;
-
-				storedFileDownloader.queueFileForDownload(file, storedFile);
-				isAnyFileDownloaded = true;
+				if (!storedFile.isDownloadComplete())
+					storedFileDownloader.queueFileForDownload(file, storedFile);
 			}
 		}
 
 		storedFileDownloader.process();
 
 		storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
-
-		if (!isAnyFileDownloaded && onFileQueueEmpty != null)
-			onFileQueueEmpty.run();
 	}
 
 	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
@@ -75,7 +68,6 @@ public class LibrarySyncHandler implements Runnable {
 	}
 
 	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
-		this.onFileQueueEmpty = onFileQueueEmpty;
 		storedFileDownloader.setOnFileQueueEmpty(onFileQueueEmpty);
 	}
 
