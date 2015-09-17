@@ -67,8 +67,8 @@ public class LibrarySyncHandler implements Runnable {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
-	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
-		storedFileDownloader.setOnFileQueueEmpty(onFileQueueEmpty);
+	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
+		storedFileDownloader.setOnQueueProcessingCompleted(onQueueProcessingCompleted);
 	}
 
 	public void startSync() {

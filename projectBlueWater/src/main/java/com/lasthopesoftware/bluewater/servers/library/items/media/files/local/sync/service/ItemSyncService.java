@@ -126,7 +126,7 @@ public class ItemSyncService extends Service {
 
 							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
 							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-							librarySyncHandler.setOnFileQueueEmpty(finishServiceRunnable);
+							librarySyncHandler.setOnQueueProcessingCompleted(finishServiceRunnable);
 							librarySyncHandler.startSync();
 						}
 					});

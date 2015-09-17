@@ -49,7 +49,7 @@ public class StoredFileDownloader {
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
 	private IOneParameterAction<StoredFile> onFileDownloaded;
-	private Runnable onFileQueueEmpty;
+	private Runnable onQueueProcessingCompleted;
 
 	public StoredFileDownloader(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
@@ -138,7 +138,7 @@ public class StoredFileDownloader {
 					}
 
 				} finally {
-					if (onFileQueueEmpty != null) onFileQueueEmpty.run();
+					if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 				}
 			}
 		});
@@ -148,7 +148,7 @@ public class StoredFileDownloader {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 
-	public void setOnFileQueueEmpty(Runnable onFileQueueEmpty) {
-		this.onFileQueueEmpty = onFileQueueEmpty;
+	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
+		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 }
