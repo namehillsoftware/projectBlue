@@ -197,86 +197,94 @@ public class StoredFileAccess {
 		});
 	}
 
-	public void createOrUpdateFile(final IFile file, final ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onCreateOrUpdateComplete) {
+	public StoredFile createOrUpdateFile(final IFile file) {
 		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
-				final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
-				StoredFile storedFile = getStoredFile(storedFilesAccess, file);
-				if (storedFile == null) {
-					storedFile = new StoredFile();
-					storedFile.setServiceId(file.getKey());
-					storedFile.setLibrary(mLibrary);
-					storedFile.setIsOwner(true);
-				}
-
-				if (storedFile.getPath() == null) {
-					try {
-						final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(mContext, file, true);
-						final Uri localUri = mediaFileUriProvider.getFileUri();
-						if (localUri != null) {
-							storedFile.setPath(localUri.getPath());
-							storedFile.setIsDownloadComplete(true);
-							storedFile.setIsOwner(false);
-							try {
-								storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
-							} catch (IOException e) {
-								mLogger.error("Error retrieving media file ID", e);
-							}
-						}
-					} catch (IOException e) {
-						mLogger.error("Error retrieving media file URI", e);
-					}
-				}
-
-				if (storedFile.getPath() == null) {
-					try {
-						String fullPath = mLibrary.getSyncDir(mContext).getPath();
-
-						String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
-						if (artist == null)
-							artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
-
-						if (artist != null)
-							fullPath = FilenameUtils.concat(fullPath, artist);
-
-						final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
-						if (album != null)
-							fullPath = FilenameUtils.concat(fullPath, album);
-
-						String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
-						fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
-
-						final int extensionIndex = fileName.lastIndexOf('.');
-						if (extensionIndex > -1)
-							fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
-
-						// The media player API apparently bombs on colons, so let's cleanse it of colons (tee-hee)
-						fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
-						storedFile.setPath(fullPath);
-					} catch (IOException e) {
-						mLogger.error("Error getting filename for file " + file.getValue(), e);
-					}
-				}
-
-				final File systemFile = new File(storedFile.getPath());
-				if (!systemFile.exists())
-					storedFile.setIsDownloadComplete(false);
-
 				try {
-					storedFilesAccess.createOrUpdate(storedFile);
+					final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(mContext).getAccessObject(StoredFile.class);
+					StoredFile storedFile = getStoredFile(storedFilesAccess, file);
+					if (storedFile == null) {
+						storedFile = new StoredFile();
+						storedFile.setServiceId(file.getKey());
+						storedFile.setLibrary(mLibrary);
+						storedFile.setIsOwner(true);
+					}
+
+					if (storedFile.getPath() == null) {
+						try {
+							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(mContext, file, true);
+							final Uri localUri = mediaFileUriProvider.getFileUri();
+							if (localUri != null) {
+								storedFile.setPath(localUri.getPath());
+								storedFile.setIsDownloadComplete(true);
+								storedFile.setIsOwner(false);
+								try {
+									storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
+								} catch (IOException e) {
+									mLogger.error("Error retrieving media file ID", e);
+								}
+							}
+						} catch (IOException e) {
+							mLogger.error("Error retrieving media file URI", e);
+						}
+					}
+
+					if (storedFile.getPath() == null) {
+						try {
+							String fullPath = mLibrary.getSyncDir(mContext).getPath();
+
+							String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
+							if (artist == null)
+								artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
+
+							if (artist != null)
+								fullPath = FilenameUtils.concat(fullPath, artist);
+
+							final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
+							if (album != null)
+								fullPath = FilenameUtils.concat(fullPath, album);
+
+							String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
+							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+
+							final int extensionIndex = fileName.lastIndexOf('.');
+							if (extensionIndex > -1)
+								fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
+
+							// The media player API apparently bombs on colons, so let's cleanse it of colons (tee-hee)
+							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
+							storedFile.setPath(fullPath);
+						} catch (IOException e) {
+							mLogger.error("Error getting filename for file " + file.getValue(), e);
+						}
+					}
+
+					final File systemFile = new File(storedFile.getPath());
+					if (!systemFile.exists())
+						storedFile.setIsDownloadComplete(false);
+
+					try {
+						storedFilesAccess.createOrUpdate(storedFile);
+					} catch (SQLException e) {
+						mLogger.error("There was an updating the stored file.", e);
+					}
+
+					return storedFile;
 				} catch (SQLException e) {
-					mLogger.error("There was an updating the stored file.", e);
+					mLogger.error("There was an error getting access to the StoredFile table.", e);
 				}
 
-				return storedFile;
+				return null;
 			}
 		});
 
-		if (onCreateOrUpdateComplete != null)
-			createOrUpdateStoredFileTask.addOnCompleteListener(onCreateOrUpdateComplete);
-
-		createOrUpdateStoredFileTask.execute(DatabaseHandler.databaseExecutor);
+		try {
+			return createOrUpdateStoredFileTask.execute(DatabaseHandler.databaseExecutor).get();
+		} catch (ExecutionException | InterruptedException e) {
+			mLogger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
+			return null;
+		}
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {

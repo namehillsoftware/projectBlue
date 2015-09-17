@@ -46,6 +46,7 @@ public class LibrarySyncHandler implements Runnable {
 		final Set<Integer> allSyncedFileKeys = new HashSet<>();
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
+		boolean isAnyFileDownloaded = false;
 		for (StoredItem storedItem : storedItems) {
 			final int serviceId = storedItem.getServiceId();
 			final IFilesContainer filesContainer = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(connectionProvider, serviceId) : new Playlist(connectionProvider, serviceId);
@@ -53,17 +54,18 @@ public class LibrarySyncHandler implements Runnable {
 			for (final IFile file : files) {
 				allSyncedFileKeys.add(file.getKey());
 
-				storedFileAccess.createOrUpdateFile(file, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
-					@Override
-					public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
-						if (!storedFile.isDownloadComplete())
-							storedFileDownloader.queueFileForDownload(file, storedFile);
-					}
-				});
+				final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
+				if (storedFile.isDownloadComplete()) continue;
+
+				storedFileDownloader.queueFileForDownload(file, storedFile);
+				isAnyFileDownloaded = true;
 			}
 		}
 
 		storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+
+		if (!isAnyFileDownloaded && onFileQueueEmpty != null)
+			onFileQueueEmpty.run();
 	}
 
 	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
