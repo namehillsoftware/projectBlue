@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.logger.Logger;
@@ -61,7 +62,7 @@ public class StoredFileAccess {
 		if (onStoredFileRetrieved != null)
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
 
-		getStoredFileTask.execute(storedFileExecutor);
+		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public void getStoredFile(final IFile serviceFile, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
@@ -70,11 +71,11 @@ public class StoredFileAccess {
 		if (onStoredFileRetrieved != null)
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
 
-		getStoredFileTask.execute(storedFileExecutor);
+		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return SimpleTask.executeNew(storedFileExecutor, getFileExecutor(serviceFile)).get();
+		return SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, getFileExecutor(serviceFile)).get();
 	}
 
 	private ISimpleTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
@@ -109,7 +110,7 @@ public class StoredFileAccess {
 		if (onGetDownloadingStoredFilesComplete != null)
 			getDownloadingStoredFilesTask.addOnCompleteListener(onGetDownloadingStoredFilesComplete);
 
-		getDownloadingStoredFilesTask.execute(storedFileExecutor);
+		getDownloadingStoredFilesTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public void markStoredFileAsDownloaded(final int storedFileId) {
@@ -201,7 +202,7 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(final IFile file) {
-		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = SimpleTask.executeNew(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				try {
@@ -283,7 +284,7 @@ public class StoredFileAccess {
 		});
 
 		try {
-			return createOrUpdateStoredFileTask.execute(storedFileExecutor).get();
+			return createOrUpdateStoredFileTask.get();
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
