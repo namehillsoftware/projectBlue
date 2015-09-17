@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
@@ -21,21 +22,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class StoredFileDownloader {
 
-	private static final ExecutorService storeFilesExecutor = Executors.newSingleThreadExecutor();
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
 
-	private boolean isHalted = false;
+	private static class QueuedFileHolder {
+		public final IFile file;
+		public final StoredFile storedFile;
+
+		private QueuedFileHolder(IFile file, StoredFile storedFile) {
+			this.file = file;
+			this.storedFile = storedFile;
+		}
+	}
+
+	private boolean isProcessing;
 
 	private final StoredFileAccess storedFileAccess;
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
+	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
 	private IOneParameterAction<StoredFile> onFileDownloaded;
 	private Runnable onFileQueueEmpty;
@@ -47,88 +58,90 @@ public class StoredFileDownloader {
 	}
 
 	public void queueFileForDownload(final IFile serviceFile, final StoredFile storedFile) {
-		final int fileKey = serviceFile.getKey();
-		if (!queuedFileKeys.add(fileKey)) return;
+		if (isProcessing)
+			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
-		storeFilesExecutor.execute(new Runnable() {
+		final int fileKey = serviceFile.getKey();
+		if (queuedFileKeys.add(fileKey))
+			queuedFiles.add(new QueuedFileHolder(serviceFile, storedFile));
+	}
+
+	public void process() {
+		isProcessing = true;
+
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					final java.io.File file = new java.io.File(storedFile.getPath());
-					if (isHalted || (storedFile.isDownloadComplete() && file.exists()))
-						return;
+					QueuedFileHolder queuedFileHolder;
+					while ((queuedFileHolder = queuedFiles.poll()) != null) {
+						if (!IoCommon.isWifiAndPowerConnected(context)) return;
 
-					if (!IoCommon.isWifiAndPowerConnected(context)) {
-						halt();
-						return;
-					}
-					
-					HttpURLConnection connection;
-					try {
-						connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
-					} catch (IOException e) {
-						logger.error("Error getting connection", e);
-						return;
-					}
-					
-					if (connection == null) return;
-					
-					try {
-						InputStream is;
+						final StoredFile storedFile = queuedFileHolder.storedFile;
+						final IFile serviceFile = queuedFileHolder.file;
+
+						final java.io.File file = new java.io.File(storedFile.getPath());
+						if (storedFile.isDownloadComplete() && file.exists()) continue;
+
+						HttpURLConnection connection;
 						try {
-							is = connection.getInputStream();
-						} catch (IOException ioe) {
-							logger.error("Error opening data connection", ioe);
+							connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+						} catch (IOException e) {
+							logger.error("Error getting connection", e);
 							return;
 						}
-						
-						final java.io.File parent = file.getParentFile();
-						if (!parent.exists() && !parent.mkdirs()) return;
-						
+
+						if (connection == null) return;
+
 						try {
-							final FileOutputStream fos = new FileOutputStream(file);
+							InputStream is;
 							try {
-								IOUtils.copy(is, fos);
-								fos.flush();
-							} finally {
-								fos.close();
+								is = connection.getInputStream();
+							} catch (IOException ioe) {
+								logger.error("Error opening data connection", ioe);
+								return;
 							}
-							
-							final int storedFileId = storedFile.getId();
-							storedFileAccess.markStoredFileAsDownloaded(storedFileId);
-							
-							if (onFileDownloaded != null)
-								onFileDownloaded.run(storedFile);
-							
-							context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-						} catch (IOException ioe) {
-							logger.error("Error writing file!", ioe);
-						} finally {
-							if (is != null) {
+
+							final java.io.File parent = file.getParentFile();
+							if (!parent.exists() && !parent.mkdirs()) return;
+
+							try {
+								final FileOutputStream fos = new FileOutputStream(file);
 								try {
-									is.close();
-								} catch (IOException e) {
-									logger.error("Error closing input stream", e);
+									IOUtils.copy(is, fos);
+									fos.flush();
+								} finally {
+									fos.close();
+								}
+
+								final int storedFileId = storedFile.getId();
+								storedFileAccess.markStoredFileAsDownloaded(storedFileId);
+
+								if (onFileDownloaded != null)
+									onFileDownloaded.run(storedFile);
+
+								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+							} catch (IOException ioe) {
+								logger.error("Error writing file!", ioe);
+							} finally {
+								if (is != null) {
+									try {
+										is.close();
+									} catch (IOException e) {
+										logger.error("Error closing input stream", e);
+									}
 								}
 							}
+						} finally {
+							connection.disconnect();
 						}
-					} finally {
-						connection.disconnect();
 					}
+
 				} finally {
-					// This needs to be tied to the executor runnable in order to maintain
-					// a sync between the set and the executor queue
-					queuedFileKeys.remove(fileKey);
-					
-					if (queuedFileKeys.size() == 0 && onFileQueueEmpty != null)
-						onFileQueueEmpty.run();
+					if (onFileQueueEmpty != null) onFileQueueEmpty.run();
 				}
 			}
 		});
-	}
-
-	private void halt() {
-		isHalted = true;
 	}
 
 	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {

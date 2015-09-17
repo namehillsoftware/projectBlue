@@ -62,6 +62,8 @@ public class LibrarySyncHandler implements Runnable {
 			}
 		}
 
+		storedFileDownloader.process();
+
 		storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 
 		if (!isAnyFileDownloaded && onFileQueueEmpty != null)
