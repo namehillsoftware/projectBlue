@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
-import android.util.Log;
-
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.j256.ormlite.logger.Logger;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -54,6 +53,7 @@ public class FilePropertiesProvider {
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final ConcurrentLinkedHashMap<Integer, FilePropertiesContainer> propertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, FilePropertiesContainer>().maximumWeightedCapacity(maxSize).build();
+	private static final Logger logger = com.j256.ormlite.logger.LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		this.connectionProvider = connectionProvider;
@@ -149,8 +149,7 @@ public class FilePropertiesProvider {
 						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					}
 
-					if (returnProperties != null)
-                        filePropertiesContainer.updateProperties(revision, returnProperties);
+					filePropertiesContainer.updateProperties(revision, returnProperties);
 
                     return filePropertiesContainer.getProperties();
 				}
@@ -160,10 +159,8 @@ public class FilePropertiesProvider {
 		} catch (ExecutionException ee) {
 			if (ee.getCause() instanceof IOException)
 				throw new IOException(ee.getCause());
-		} catch (InterruptedException e) {
-			Log.d(getClass().toString(), e.getMessage());
 		} catch (Exception e) {
-			LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
+			logger.error(e.toString(), e);
 		}
 		
 		return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
