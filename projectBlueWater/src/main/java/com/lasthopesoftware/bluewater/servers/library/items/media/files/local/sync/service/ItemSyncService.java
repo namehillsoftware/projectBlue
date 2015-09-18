@@ -49,9 +49,13 @@ public class ItemSyncService extends Service {
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
 
+	private volatile int librariesProcessing;
+
 	private final Runnable finishServiceRunnable = new Runnable() {
 		@Override
 		public void run() {
+			if (--librariesProcessing > 0) return;
+
 			logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
 
 			// Set an alarm for the next time we run this bad boy
@@ -60,8 +64,7 @@ public class ItemSyncService extends Service {
 			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 			stopForeground(true);
-			NotificationManager notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-			notificationMgr.cancel(notificationId);
+			((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
 			stopSelf();
 		}
 	};
@@ -115,8 +118,9 @@ public class ItemSyncService extends Service {
 		LibrarySession.GetLibraries(context, new ISimpleTask.OnCompleteListener<Void, Void, List<Library>>() {
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
-				for (final Library library : libraries) {
+				librariesProcessing += libraries.size();
 
+				for (final Library library : libraries) {
 					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 						@Override
 						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
