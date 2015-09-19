@@ -14,7 +14,6 @@ import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTask;
 
 import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,8 +208,6 @@ public class ConnectionProvider {
 						}
 					}
 					return accessDao;
-				} catch (ClientProtocolException c) {
-					mLogger.error(c.getMessage());
 				} catch (IOException i) {
 					mLogger.error(i.getMessage());
 				} catch (Exception e) {
