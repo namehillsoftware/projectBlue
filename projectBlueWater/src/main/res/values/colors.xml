@@ -2,13 +2,16 @@
 <resources>
 
     <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
     <color name="bright_blue">#33B5E5</color>
     <color name="blue">#0000FF</color>
     <color name="overlay_dark">#66000000</color>
     <color name="overlay_light">#DDDDDD</color>
     <color name="ics_gray">#858585</color>
     <color name="project_blue_water_blue">#003B6F</color>
-    <color name="clearstream_blue">#97acec</color>
+    <!--<color name="clearstream_blue">#97acec</color>-->
+    <color name="clearstream_blue">#3f51b5</color>
+    <color name="clearstream_dark">#97acec</color>
     <color name="faint_gray">#FFE2E2E2</color>
     <color name="nearly_white">#FFF4F4F4</color>
     <!-- Use Gingerbread-orange -->

@@ -6,9 +6,11 @@
         <!--   your app branding color for the app bar -->
         <item name="android:colorPrimary">@color/clearstream_blue</item>
         <!--   darker variant for the status bar and contextual app bars -->
-        <item name="android:colorPrimaryDark">@color/clearstream_blue</item>
+        <item name="android:colorPrimaryDark">@color/clearstream_dark</item>
         <!--   theme UI controls like checkboxes and text fields -->
         <item name="android:colorAccent">@color/clearstream_blue</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColor">@color/black</item>
     </style>
 
 </resources>
