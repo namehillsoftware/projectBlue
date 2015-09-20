@@ -5,7 +5,10 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.misc.SqlExceptionUtil;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.DatabaseTable;
+import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
@@ -15,7 +18,10 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,6 +54,8 @@ public class DatabaseHandler {
 		private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
 
 		private final static Logger mLogger = LoggerFactory.getLogger(SessionsDbHelper.class);
+
+		private static Map<Class<?>, DatabaseTableConfig<?>> configMap = new ConcurrentHashMap<>();
 
 		public SessionsDbHelper (Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -99,6 +107,29 @@ public class DatabaseHandler {
 				} catch (SQLException e) {
 					mLogger.error("Error adding column syncedFilesPath to library table", e);
 				}
+			}
+		}
+
+		@Override
+		public <D extends Dao<T, ?>, T> D getDao(Class<T> clazz) throws SQLException {
+			if (!configMap.containsKey(clazz))
+				configMap.put(clazz, connectionSource.getDatabaseType().extractDatabaseTableConfig(connectionSource, clazz));
+
+			final DatabaseTableConfig<T> databaseTableConfig = (DatabaseTableConfig<T>)configMap.get(clazz);
+
+			Object[] arguments = new Object[] { connectionSource, databaseTableConfig };
+			Constructor<?> constructor = databaseTableConfig.getConstructor();
+			if (constructor == null) {
+				final Class<?> daoClass = databaseTableConfig.getDataClass().getAnnotation(DatabaseTable.class).daoClass();
+				throw new SQLException(
+						"Could not find public constructor with ConnectionSource, DatabaseTableConfig parameters in class "
+								+ daoClass);
+			}
+			try {
+				return (D) constructor.newInstance(arguments);
+			} catch (Exception e) {
+				final Class<?> daoClass = databaseTableConfig.getDataClass().getAnnotation(DatabaseTable.class).daoClass();
+				throw SqlExceptionUtil.create("Could not call the constructor in class " + daoClass, e);
 			}
 		}
 	}
