@@ -9,7 +9,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -101,7 +100,6 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 		mOldTitle = getTitle();
-//		mDrawerToggle = new ActionBarDrawerToggle()
 		mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
                 mDrawerLayout,         /* DrawerLayout object */
@@ -209,7 +207,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						mDrawerLayout.closeDrawer(Gravity.START);
+						mDrawerLayout.closeDrawer(GravityCompat.START);
 						mDrawerToggle.syncState();
 
 						final int selectedViewKey = items.get(position).getKey();
