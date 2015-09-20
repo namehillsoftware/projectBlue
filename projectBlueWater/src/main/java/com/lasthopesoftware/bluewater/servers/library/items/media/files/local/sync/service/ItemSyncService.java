@@ -121,6 +121,11 @@ public class ItemSyncService extends Service {
 			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				librariesProcessing += libraries.size();
 
+				if (librariesProcessing == 0) {
+					finishServiceRunnable.run();
+					return;
+				}
+
 				for (final Library library : libraries) {
 					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 						@Override
