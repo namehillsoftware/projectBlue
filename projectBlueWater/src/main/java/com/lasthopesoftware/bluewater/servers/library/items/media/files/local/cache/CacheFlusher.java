@@ -22,11 +22,11 @@ import java.sql.SQLException;
  */
 public class CacheFlusher implements Runnable {
 
-	private final static Logger mLogger = LoggerFactory.getLogger(CacheFlusher.class);
+	private final static Logger logger = LoggerFactory.getLogger(CacheFlusher.class);
 	
-	private final Context mContext;
-	private final String mCacheName;
-	private final long mTargetSize;
+	private final Context context;
+	private final String cacheName;
+	private final long targetSize;
 	
 	/*
 	 * Flush a given cache until it reaches the given target size
@@ -40,27 +40,27 @@ public class CacheFlusher implements Runnable {
 	}
 	
 	private CacheFlusher(final Context context, final String cacheName, final long targetSize) {
-		mContext = context;
-		mCacheName = cacheName;
-		mTargetSize = targetSize;
+		this.context = context;
+		this.cacheName = cacheName;
+		this.targetSize = targetSize;
 	}
 	
 	@Override
 	public final void run() {
-		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(mContext);
+		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 		try {
 			final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
 			
-			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
+			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= targetSize) return;
 			
-			while (getCachedFileSizeFromDatabase(cachedFileAccess) > mTargetSize) {
+			while (getCachedFileSizeFromDatabase(cachedFileAccess) > targetSize) {
 				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess);
 				if (cachedFile != null)
 					deleteCachedFile(cachedFileAccess, cachedFile);
 			}
 			
 			// Remove any files in the cache dir but not in the database
-			final File cacheDir = DiskFileCache.getDiskCacheDir(mContext, mCacheName);
+			final File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
 			
 			if (cacheDir == null || !cacheDir.exists()) return;
 			
@@ -76,12 +76,12 @@ public class CacheFlusher implements Runnable {
 				try {
 					if (getCachedFileByFilename(cachedFileAccess, fileInCacheDir.getCanonicalPath()) != null) continue;
 				} catch (IOException e) {
-					mLogger.warn("Issue getting canonical file path.");
+					logger.warn("Issue getting canonical file path.");
 				}
 				fileInCacheDir.delete();
 			}
 		} catch (SQLException accessException) {
-			mLogger.error("Error accessing cache", accessException);
+			logger.error("Error accessing cache", accessException);
 		} finally {
 			repositoryAccessHelper.close();
 		}
@@ -97,9 +97,9 @@ public class CacheFlusher implements Runnable {
 						.eq(CachedFile.CACHE_NAME, new SelectArg())
 						.prepare();
 			
-			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName);
+			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName);
 		} catch (SQLException e) {
-			mLogger.error("Error getting file size", e);
+			logger.error("Error getting file size", e);
 			return -1;
 		}
 	}
@@ -116,9 +116,9 @@ public class CacheFlusher implements Runnable {
 //						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
 //						.prepare();
 //			
-//			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), mCacheName, String.valueOf(startTime), String.valueOf(endTime));
+//			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
 //		} catch (SQLException e) {
-//			mLogger.error("Error getting file size", e);
+//			logger.error("Error getting file size", e);
 //			return -1;
 //		}
 //	}
@@ -130,12 +130,12 @@ public class CacheFlusher implements Runnable {
 					cachedFileAccess.queryBuilder()
 						.orderBy(CachedFile.LAST_ACCESSED_TIME, true)
 						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
 						.prepare();
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);			
 		} catch (SQLException e) {
-			mLogger.error("Error getting oldest cached file", e);
+			logger.error("Error getting oldest cached file", e);
 			return null;
 		}
 	}
@@ -147,12 +147,12 @@ public class CacheFlusher implements Runnable {
 					cachedFileAccess.queryBuilder()
 						.setCountOf(true)
 						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(mCacheName))
+						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
 						.prepare();
 			
 			return cachedFileAccess.countOf(preparedQuery);
 		} catch (SQLException e) {
-			mLogger.error("Error getting file count", e);
+			logger.error("Error getting file count", e);
 			return -1;
 		}
 	}
@@ -168,7 +168,7 @@ public class CacheFlusher implements Runnable {
 			
 			return cachedFileAccess.queryForFirst(preparedQuery);	
 		} catch (SQLException e) {
-			mLogger.error("Error getting cached file by filename", e);
+			logger.error("Error getting cached file by filename", e);
 			return null;
 		}
 	}
@@ -182,7 +182,7 @@ public class CacheFlusher implements Runnable {
 			cachedFileAccess.delete(cachedFile);
 			return true;
 		} catch (SQLException deleteException) {
-			mLogger.error("Error deleting file pointer from database", deleteException);
+			logger.error("Error deleting file pointer from database", deleteException);
 		}
 		
 		return false;
