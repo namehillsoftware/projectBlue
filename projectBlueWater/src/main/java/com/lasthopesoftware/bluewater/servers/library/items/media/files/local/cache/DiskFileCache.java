@@ -7,7 +7,7 @@ import android.os.Environment;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -76,12 +76,13 @@ public class DiskFileCache {
 	}
 	
 	public void put(final String uniqueKey, final File file) {
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
 
 			@Override
 			public void run() {
+				RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(mContext);
 				try {
-					final Dao<CachedFile, Integer> cachedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(CachedFile.class);
+					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
 										
 					CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile == null) {
@@ -109,6 +110,7 @@ public class DiskFileCache {
 				} catch (SQLException se) {
 					mLogger.warn("Couldn't get database access object.");
 				} finally {
+					repositoryAccessHelper.close();
 					CacheFlusher.doFlush(mContext, mCacheName, mMaxSize);
 				}
 			}
@@ -120,34 +122,39 @@ public class DiskFileCache {
 
 			@Override
 			public File onExecute(ISimpleTask<Void, Void, File> owner, Void... params) throws Exception {
-				final Dao<CachedFile, Integer> cachedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(CachedFile.class);
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(mContext);
+				try {
+					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
 
-				final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
+					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 
-				if (cachedFile == null) return null;
+					if (cachedFile == null) return null;
 
-				final File returnFile = new File(cachedFile.getFileName());
-				if (!returnFile.exists()) {
-					cachedFileAccess.delete(cachedFile);
-					return null;
+					final File returnFile = new File(cachedFile.getFileName());
+					if (!returnFile.exists()) {
+						cachedFileAccess.delete(cachedFile);
+						return null;
+					}
+
+					// Remove the file and return null if it's past its expired time
+					if (cachedFile.getCreatedTime() < System.currentTimeMillis() - mExpirationTime) {
+						cachedFileAccess.delete(cachedFile);
+						returnFile.delete();
+						return null;
+					}
+
+					doFileAccessedUpdate(uniqueKey);
+
+					return returnFile;
+				} finally {
+					repositoryAccessHelper.close();
 				}
-
-				// Remove the file and return null if it's past its expired time
-				if (cachedFile.getCreatedTime() < System.currentTimeMillis() - mExpirationTime) {
-					cachedFileAccess.delete(cachedFile);
-					returnFile.delete();
-					return null;
-				}
-
-				doFileAccessedUpdate(uniqueKey);
-
-				return returnFile;
 			}
 			
 		});
 		
 		try {
-			return getTask.execute(DatabaseHandler.databaseExecutor).get();
+			return getTask.execute(RepositoryAccessHelper.databaseExecutor).get();
 		} catch (Exception e) {
 			mLogger.error("There was an error running the database task.", e);
 			return null;
@@ -160,12 +167,13 @@ public class DiskFileCache {
 	
 	private final void doFileAccessedUpdate(final String uniqueKey) {
 		final long updateTime = System.currentTimeMillis();
-		DatabaseHandler.databaseExecutor.execute(new Runnable() {
+		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
 
 			@Override
 			public void run() {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(mContext);
 				try {
-					final Dao<CachedFile, Integer> cachedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(CachedFile.class);
+					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
 					final CachedFile cachedFile = getCachedFile(cachedFileAccess, mLibrary.getId(), mCacheName, uniqueKey);
 					if (cachedFile == null) return;
 					cachedFile.setLastAccessedTime(updateTime);
@@ -176,6 +184,8 @@ public class DiskFileCache {
 					}
 				} catch (SQLException e) {
 					mLogger.error("Error getting database access object.", e);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
