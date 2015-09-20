@@ -13,8 +13,6 @@ import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.j256.ormlite.logger.Logger;
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
@@ -29,6 +27,9 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.IOneParameterAction;
 import com.lasthopesoftware.threading.ISimpleTask;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class ItemSyncService extends Service {
 			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 			stopForeground(true);
-			((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
 			stopSelf();
 		}
 	};

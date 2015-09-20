@@ -4,8 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
+
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by david on 8/19/15.
