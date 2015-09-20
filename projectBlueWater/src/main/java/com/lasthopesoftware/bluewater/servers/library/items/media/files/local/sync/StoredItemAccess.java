@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
@@ -45,23 +45,29 @@ public class StoredItemAccess {
         final SimpleTask<Void, Void, Boolean> isItemSyncedTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, Boolean>() {
             @Override
             public Boolean onExecute(ISimpleTask<Void, Void, Boolean> owner, Void... params) throws Exception {
-                final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
-                return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
-            }
+                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+	            try {
+		            final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
+		            return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
+	            } finally {
+		            repositoryAccessHelper.close();
+	            }
+	        }
         });
 
         if (isItemSyncedResult != null)
             isItemSyncedTask.addOnCompleteListener(isItemSyncedResult);
 
-        isItemSyncedTask.execute(DatabaseHandler.databaseExecutor);
+        isItemSyncedTask.execute(RepositoryAccessHelper.databaseExecutor);
     }
 
     private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-        DatabaseHandler.databaseExecutor.execute(new Runnable() {
+        RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
+                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
-                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
+                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
 
                     if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
 
@@ -77,17 +83,20 @@ public class StoredItemAccess {
                     }
                 } catch (SQLException e) {
                     logger.error("Error getting access to the stored list table", e);
+                } finally {
+	                repositoryAccessHelper.close();
                 }
             }
         });
     }
 
     private void disableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-        DatabaseHandler.databaseExecutor.execute(new Runnable() {
+        RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                try {
-                    final Dao<StoredItem, Integer> storedListAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredItem.class);
+                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+	            try {
+                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
 
                     final StoredItem storedItem = getStoredList(storedListAccess, library, item, itemType);
 	                if (storedItem == null) return;
@@ -99,7 +108,9 @@ public class StoredItemAccess {
                     }
                 } catch (SQLException e) {
                     logger.error("Error getting access to the stored list table", e);
-                }
+                } finally {
+		            repositoryAccessHelper.close();
+	            }
             }
         });
     }
@@ -108,13 +119,15 @@ public class StoredItemAccess {
         final SimpleTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredItem>>() {
             @Override
             public List<StoredItem> onExecute(ISimpleTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
-                try {
-                    final DatabaseHandler dbHandler = new DatabaseHandler(context);
-                    final Dao<StoredItem, Integer> storedItemAccess = dbHandler.getAccessObject(StoredItem.class);
+	            final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+	            try {
+                    final Dao<StoredItem, Integer> storedItemAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
                     return storedItemAccess.queryForEq(StoredItem.libraryIdColumnName, library.getId());
                 } catch (SQLException e) {
                     logger.error("Error accessing the stored list access", e);
-                }
+                } finally {
+		            repositoryAccessHelper.close();
+	            }
 
                 return new ArrayList<>();
             }
@@ -123,7 +136,7 @@ public class StoredItemAccess {
         if (onStoredListsRetrieved != null)
             getAllStoredItemsTasks.addOnCompleteListener(onStoredListsRetrieved);
 
-        getAllStoredItemsTasks.execute(DatabaseHandler.databaseExecutor);
+        getAllStoredItemsTasks.execute(RepositoryAccessHelper.databaseExecutor);
     }
 
     private static boolean isItemMarkedForSync(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {

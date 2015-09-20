@@ -5,7 +5,7 @@ import android.content.Context;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public class CacheFlusher implements Runnable {
 	 * Flush a given cache until it reaches the given target size
 	 */
 	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
-		DatabaseHandler.databaseExecutor.execute(new CacheFlusher(context, cacheName, targetSize));
+		RepositoryAccessHelper.databaseExecutor.execute(new CacheFlusher(context, cacheName, targetSize));
 	}
 
 	public static void doFlushSynchronously(final Context context, final String cacheName, final long targetSize) {
@@ -47,8 +47,9 @@ public class CacheFlusher implements Runnable {
 	
 	@Override
 	public final void run() {
+		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(mContext);
 		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = DatabaseHandler.getInstance(mContext).getAccessObject(CachedFile.class);
+			final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
 			
 			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= mTargetSize) return;
 			
@@ -81,6 +82,8 @@ public class CacheFlusher implements Runnable {
 			}
 		} catch (SQLException accessException) {
 			mLogger.error("Error accessing cache", accessException);
+		} finally {
+			repositoryAccessHelper.close();
 		}
 	}
 

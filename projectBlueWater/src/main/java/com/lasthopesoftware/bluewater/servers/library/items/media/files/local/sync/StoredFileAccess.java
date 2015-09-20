@@ -8,7 +8,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.LoggerFactory;
 import com.j256.ormlite.stmt.PreparedQuery;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.DatabaseHandler;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
@@ -49,12 +49,15 @@ public class StoredFileAccess {
 		final SimpleTask<Void, Void, StoredFile> getStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					return storedFileAccess.queryForId(storedFileId);
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the stored file", se);
 					return null;
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
@@ -82,12 +85,15 @@ public class StoredFileAccess {
 		return new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					return getStoredFile(storedFileAccess, serviceFile);
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the stored file", se);
 					return null;
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		};
@@ -97,12 +103,15 @@ public class StoredFileAccess {
 		final SimpleTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredFile>>() {
 			@Override
 			public List<StoredFile> onExecute(ISimpleTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					return storedFileAccess.queryForEq(StoredFile.isDownloadCompleteColumnName, false);
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the downloading files.", se);
 					return new ArrayList<>();
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
@@ -117,8 +126,9 @@ public class StoredFileAccess {
 		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					final StoredFile storedFile = storedFileAccess.queryForId(storedFileId);
 
 					storedFile.setIsDownloadComplete(true);
@@ -129,6 +139,8 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the stored file", se);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
@@ -138,8 +150,9 @@ public class StoredFileAccess {
 		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					try {
 						storedFileAccess.delete(storedFile);
 
@@ -152,6 +165,8 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the stored file", se);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
@@ -161,8 +176,9 @@ public class StoredFileAccess {
 		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					StoredFile storedFile = getStoredFile(storedFileAccess, file);
 					if (storedFile == null) {
 						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.storedMediaIdColumnName, mediaFileId);
@@ -196,6 +212,8 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException se) {
 					logger.error("There was an error retrieving the stored file", se);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});
@@ -205,8 +223,9 @@ public class StoredFileAccess {
 		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = SimpleTask.executeNew(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFilesAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFilesAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					StoredFile storedFile = getStoredFile(storedFilesAccess, file);
 					if (storedFile == null) {
 						storedFile = new StoredFile();
@@ -277,6 +296,8 @@ public class StoredFileAccess {
 					return storedFile;
 				} catch (SQLException e) {
 					logger.error("There was an error getting access to the StoredFile table.", e);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 
 				return null;
@@ -295,8 +316,9 @@ public class StoredFileAccess {
 		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = DatabaseHandler.getInstance(context).getAccessObject(StoredFile.class);
+					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					// Since we could be pulling back a lot of data, only query for what we need.
 					// This query is very custom to this scenario, so it's being kept here.
 					final PreparedQuery<StoredFile> storedFilePreparedQuery =
@@ -316,6 +338,8 @@ public class StoredFileAccess {
 					}
 				} catch (SQLException e) {
 					logger.error("Error updating the ", e);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 			}
 		});

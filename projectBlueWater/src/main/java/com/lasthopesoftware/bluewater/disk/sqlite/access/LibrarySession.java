@@ -36,14 +36,15 @@ public class LibrarySession {
 
 			@Override
 			public Library onExecute(ISimpleTask<Void, Void, Library> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<Library, Integer> libraryAccess = DatabaseHandler.getInstance(context).getAccessObject(Library.class);
-
-					libraryAccess.createOrUpdate(library);
+					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
 					mLogger.debug("Library saved.");
 					return library;
 				} catch (SQLException e) {
 					mLogger.error(e.toString(), e);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 
 				return null;
@@ -53,7 +54,7 @@ public class LibrarySession {
 		if (onSaveComplete != null)
 			writeToDatabaseTask.addOnCompleteListener(onSaveComplete);
 
-		writeToDatabaseTask.execute(DatabaseHandler.databaseExecutor);
+		writeToDatabaseTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static void GetActiveLibrary(final Context context, final OnCompleteListener<Integer, Void, Library> onGetLibraryComplete) {
@@ -87,7 +88,7 @@ public class LibrarySession {
 			}
 		});
 
-		getLibraryTask.execute(DatabaseHandler.databaseExecutor);
+		getLibraryTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static synchronized Library GetActiveLibrary(final Context context) {
@@ -101,11 +102,14 @@ public class LibrarySession {
 	private static synchronized Library GetLibrary(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
+		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 		try {
-			final Dao<Library, Integer> libraryAccess = DatabaseHandler.getInstance(context).getAccessObject(Library.class);
+			final Dao<Library, Integer> libraryAccess = repositoryAccessHelper.getDataAccess(Library.class);
 			return libraryAccess.queryForId(libraryId);
 		} catch (SQLException e) {
 			mLogger.error(e.toString(), e);
+		} finally {
+			repositoryAccessHelper.close();
 		}
 
 		return null;
@@ -116,10 +120,13 @@ public class LibrarySession {
 			
 			@Override
 			public List<Library> onExecute(ISimpleTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
+				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					return DatabaseHandler.getInstance(context).getAccessObject(Library.class).queryForAll();
+					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();
 				} catch (SQLException e) {
 					mLogger.error(e.toString(), e);
+				} finally {
+					repositoryAccessHelper.close();
 				}
 				
 				return new ArrayList<>();
@@ -129,7 +136,7 @@ public class LibrarySession {
 		if (onGetLibrariesComplete != null)
 			getLibrariesTask.addOnCompleteListener(onGetLibrariesComplete);
 
-		getLibrariesTask.execute(DatabaseHandler.databaseExecutor);
+		getLibrariesTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 		
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
