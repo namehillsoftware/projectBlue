@@ -95,7 +95,7 @@ public class DiskFileCache {
 							return;
 						}
 						cachedFile.setFileSize(file.length());
-						cachedFile.setLibrary(library);
+						cachedFile.setLibraryId(library.getId());
 						cachedFile.setUniqueKey(uniqueKey);
 						cachedFile.setCreatedTime(System.currentTimeMillis());
 					}

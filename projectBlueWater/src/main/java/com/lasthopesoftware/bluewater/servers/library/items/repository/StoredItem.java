@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.repository;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 @DatabaseTable(tableName = "StoredItems")
 public class StoredItem {
@@ -14,8 +13,8 @@ public class StoredItem {
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = "libraryId", uniqueCombo = true)
-	private Library library;
+	@DatabaseField(uniqueCombo = true)
+	private int libraryId;
 
 	// unique with library id
 	@DatabaseField(uniqueCombo = true)
@@ -24,12 +23,12 @@ public class StoredItem {
 	@DatabaseField(uniqueCombo = true)
 	private ItemType itemType;
 	
-	public Library getLibrary() {
-		return library;
+	public int getLibraryId() {
+		return libraryId;
 	}
 
-	public void setLibrary(Library library) {
-		this.library = library;
+	public void setLibraryId(int libraryId) {
+		this.libraryId = libraryId;
 	}
 
 	public int getServiceId() {

@@ -4,17 +4,11 @@ import android.content.Context;
 import android.os.Environment;
 
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @DatabaseTable(tableName = "LIBRARIES")
@@ -58,16 +52,7 @@ public class Library {
 
 	@DatabaseField
 	private boolean isSyncLocalConnectionsOnly;
-	
-	@ForeignCollectionField(eager = true)
-	private Collection<StoredFile> storedFiles = null;
-	
-	@ForeignCollectionField(eager = true)
-	private Collection<StoredItem> storedItems = null;
-	
-	@ForeignCollectionField()
-	private Collection<CachedFile> cachedFiles = null;
-	
+
 	/**
 	 * @return the nowPlayingId
 	 */
@@ -184,29 +169,6 @@ public class Library {
 	 */
 	public void setRepeating(boolean isRepeating) {
 		this.isRepeating = isRepeating;
-	}
-	
-	public Collection<StoredFile> getStoredFiles() {
-		if (storedFiles == null)
-			storedFiles = new ArrayList<>();
-		
-		return storedFiles;
-	}
-	
-	public Collection<StoredItem> getStoredItems() {
-		if (storedItems == null)
-			storedItems = new ArrayList<>();
-		
-		return storedItems;
-	}
-	/**
-	 * @return the cachedFiles
-	 */
-	public final Collection<CachedFile> getCachedFiles() {
-		if (cachedFiles == null)
-			cachedFiles = new ArrayList<>();
-		
-		return cachedFiles;
 	}
 
 	public String getCustomSyncedFilesPath() {

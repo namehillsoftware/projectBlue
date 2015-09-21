@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTableConfig;
 import com.j256.ormlite.table.TableUtils;
@@ -36,7 +37,7 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 
 	private final static Logger mLogger = LoggerFactory.getLogger(RepositoryAccessHelper.class);
 
-	private static Map<Class<?>, DatabaseTableConfig<?>> configMap = new ConcurrentHashMap<>();
+	private final static Map<Class<?>, DatabaseTableConfig<?>> configMap = new ConcurrentHashMap<>();
 
 	public RepositoryAccessHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -98,14 +99,24 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 
 	public <T, TId> Dao<T, TId> getDataAccess(Class<T> clazz) throws SQLException {
 		if (!configMap.containsKey(clazz))
-			configMap.put(clazz, connectionSource.getDatabaseType().extractDatabaseTableConfig(connectionSource, clazz));
+			configMap.put(clazz, DatabaseTableConfig.fromClass(connectionSource, clazz));
 
 		return new GenericDao<>(connectionSource, (DatabaseTableConfig<T>) configMap.get(clazz));
 	}
 
+	@Override
+	public void close() {
+		super.close();
+		DaoManager.clearCache();
+	}
+
 	private static class GenericDao<TClass, TId> extends BaseDaoImpl<TClass, TId> {
-		public GenericDao(ConnectionSource connectionSource, DatabaseTableConfig<TClass> config) throws SQLException {
-			super(connectionSource, config);
+		public GenericDao(ConnectionSource connectionSource, Class<TClass> clazz) throws SQLException {
+			super(connectionSource, clazz);
+		}
+
+		public GenericDao(ConnectionSource connectionSource, DatabaseTableConfig<TClass> databaseTableConfig) throws SQLException {
+			super(connectionSource, databaseTableConfig);
 		}
 	}
 }

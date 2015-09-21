@@ -5,8 +5,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.logger.Logger;
-import com.j256.ormlite.logger.LoggerFactory;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -18,6 +16,8 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTask;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -198,7 +198,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile = new StoredFile();
 						storedFile.setServiceId(file.getKey());
-						storedFile.setLibrary(library);
+						storedFile.setLibraryId(library.getId());
 						storedFile.setIsOwner(true);
 					}
 
@@ -230,7 +230,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile = new StoredFile();
 						storedFile.setServiceId(file.getKey());
-						storedFile.setLibrary(library);
+						storedFile.setLibraryId(library.getId());
 						storedFile.setIsOwner(true);
 					}
 

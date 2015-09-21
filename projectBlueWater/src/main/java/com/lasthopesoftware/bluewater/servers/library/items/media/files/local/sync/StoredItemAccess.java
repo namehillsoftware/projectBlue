@@ -72,7 +72,7 @@ public class StoredItemAccess {
                     if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
 
                     final StoredItem storedItem = new StoredItem();
-                    storedItem.setLibrary(library);
+                    storedItem.setLibraryId(library.getId());
                     storedItem.setServiceId(item.getKey());
                     storedItem.setItemType(itemType);
 

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.c
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 @DatabaseTable(tableName = "CachedFile")
 public class CachedFile {
@@ -18,8 +17,8 @@ public class CachedFile {
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = LIBRARY_ID, uniqueCombo = true)
-	private Library library;
+	@DatabaseField(columnName = LIBRARY_ID, uniqueCombo = true)
+	private int libraryId;
 	
 	@DatabaseField(uniqueCombo = true, index = true)
 	private String cacheName;
@@ -42,15 +41,15 @@ public class CachedFile {
 	/**
 	 * @return the library
 	 */
-	public final Library getLibrary() {
-		return library;
+	public final int getLibraryId() {
+		return libraryId;
 	}
 
 	/**
-	 * @param library the library to set
+	 * @param libraryId the library to set
 	 */
-	public final void setLibrary(Library library) {
-		this.library = library;
+	public final void setLibraryId(int libraryId) {
+		this.libraryId = libraryId;
 	}
 
 	/**

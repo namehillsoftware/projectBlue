@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 @DatabaseTable(tableName = "StoredFiles")
 public class StoredFile {
@@ -17,8 +16,8 @@ public class StoredFile {
 	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, columnName = "libraryId", uniqueCombo = true)
-	private Library library;
+	@DatabaseField(uniqueCombo = true)
+	private int libraryId;
 	
 	@DatabaseField
 	private int storedMediaId;
@@ -39,12 +38,12 @@ public class StoredFile {
 		return id;
 	}
 
-	public Library getLibrary() {
-		return library;
+	public int getLibraryId() {
+		return libraryId;
 	}
 
-	public void setLibrary(Library library) {
-		this.library = library;
+	public void setLibraryId(int libraryId) {
+		this.libraryId = libraryId;
 	}
 
 	public int getStoredMediaId() {
