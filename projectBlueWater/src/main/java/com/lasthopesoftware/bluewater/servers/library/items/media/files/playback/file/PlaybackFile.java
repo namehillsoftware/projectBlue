@@ -67,6 +67,7 @@ public class PlaybackFile implements
 	private volatile int bufferPercentage = 0;
 	private volatile int lastBufferPercentage = 0;
 	private volatile float volume = 1.0f;
+	private boolean isRemoteUri;
 	
 	private final Context mpContext;
 	private final IFile file;
@@ -95,6 +96,7 @@ public class PlaybackFile implements
 		isPrepared = false;
 		isPreparing = false;
 		isInErrorState = false;
+		isRemoteUri = false;
 		bufferPercentage = mBufferMin;
 		
 		mediaPlayer = new MediaPlayer(); // initialize it here
@@ -198,6 +200,7 @@ public class PlaybackFile implements
 			throw new NullPointerException("The file player's context cannot be null");
 
 		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
+			isRemoteUri = true;
 			final Library library = LibrarySession.GetActiveLibrary(mpContext);
 			if (library != null) {
 				final String authKey = library.getAuthKey();
@@ -356,6 +359,7 @@ public class PlaybackFile implements
 		if (isPreparing) {
 			try {
 				mediaPlayer.reset();
+				return;
 			} catch (IllegalStateException e) {
 				handleIllegalStateException(e);
 				resetMediaPlayer();
@@ -365,7 +369,12 @@ public class PlaybackFile implements
 		
 		try {
 			position = mediaPlayer.getCurrentPosition();
-			mediaPlayer.pause();
+			if (isRemoteUri)
+				mediaPlayer.pause();
+			// The media player has weird behavior with local files when paused for long timespans
+			// so releasing is easiest
+			else
+				resetMediaPlayer();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
