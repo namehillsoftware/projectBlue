@@ -312,7 +312,7 @@ public class PlaybackFile implements
 	
 	public int getCurrentPosition() {
 		try {
-			if (mediaPlayer != null && isPlaying()) position = mediaPlayer.getCurrentPosition();
+			if (isPlaying()) position = mediaPlayer.getCurrentPosition();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
