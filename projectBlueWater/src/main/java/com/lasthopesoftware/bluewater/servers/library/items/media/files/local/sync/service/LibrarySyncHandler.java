@@ -44,8 +44,13 @@ public class LibrarySyncHandler {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
-	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
-		storedFileDownloader.setOnQueueProcessingCompleted(onQueueProcessingCompleted);
+	public void setOnQueueProcessingCompleted(final IOneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
+		storedFileDownloader.setOnQueueProcessingCompleted(new Runnable() {
+			@Override
+			public void run() {
+				onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+			}
+		});
 	}
 
 	public void cancel() {

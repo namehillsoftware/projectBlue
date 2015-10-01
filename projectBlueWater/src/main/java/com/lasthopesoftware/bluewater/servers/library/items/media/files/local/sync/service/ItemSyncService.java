@@ -5,8 +5,12 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -17,6 +21,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
@@ -31,6 +36,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,22 +57,13 @@ public class ItemSyncService extends Service {
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
+	private List<LibrarySyncHandler> librarySyncHandlers = new ArrayList<>();
 
-	private final Runnable finishServiceRunnable = new Runnable() {
+	private final IOneParameterRunnable<LibrarySyncHandler> finishServiceRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
 		@Override
-		public void run() {
-			if (--librariesProcessing > 0) return;
-
-			logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
-
-			// Set an alarm for the next time we run this bad boy
-			final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-			final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-			alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
-
-			stopForeground(true);
-			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
-			stopSelf();
+		public void run(LibrarySyncHandler librarySyncHandler) {
+			librarySyncHandlers.remove(librarySyncHandler);
+			if (--librariesProcessing == 0) finishSync();
 		}
 	};
 
@@ -76,6 +73,20 @@ public class ItemSyncService extends Service {
 			final Intent fileDownloadedIntent = new Intent(onFileDownloadedEvent);
 			fileDownloadedIntent.putExtra(onFileDownloadedStoreId, storedFile.getId());
 			localBroadcastManager.sendBroadcast(fileDownloadedIntent);
+		}
+	};
+
+	private final BroadcastReceiver onNetworkConnectivityBroadcast = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (ConnectionInfo.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) cancelSync();
+		}
+	};
+
+	private final BroadcastReceiver onBatteryStatusChangedBroadcast = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) <= 0) cancelSync();
 		}
 	};
 
@@ -99,7 +110,8 @@ public class ItemSyncService extends Service {
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "wakeLock"));
 		wakeLock.acquire();
 
-		registerReceiver()
+		registerReceiver(onNetworkConnectivityBroadcast, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+		registerReceiver(onBatteryStatusChangedBroadcast, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 	}
 
 	@Override
@@ -111,7 +123,7 @@ public class ItemSyncService extends Service {
 		final Context context = this;
 
 		if (!IoCommon.isWifiAndPowerConnected(context)) {
-			finishServiceRunnable.run();
+			finishSync();
 			return result;
 		}
 
@@ -124,7 +136,7 @@ public class ItemSyncService extends Service {
 				librariesProcessing += libraries.size();
 
 				if (librariesProcessing == 0) {
-					finishServiceRunnable.run();
+					finishSync();
 					return;
 				}
 
@@ -140,6 +152,8 @@ public class ItemSyncService extends Service {
 							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 							librarySyncHandler.setOnQueueProcessingCompleted(finishServiceRunnable);
 							librarySyncHandler.startSync();
+
+							librarySyncHandlers.add(librarySyncHandler);
 						}
 					});
 				}
@@ -153,14 +167,34 @@ public class ItemSyncService extends Service {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
-		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsActivity.class),0));
+		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsActivity.class), 0));
 
 		return notifyBuilder.build();
+	}
+
+	private void cancelSync() {
+		for (LibrarySyncHandler librarySyncHandler : librarySyncHandlers) librarySyncHandler.cancel();
+	}
+
+	private void finishSync() {
+		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
+
+		// Set an alarm for the next time we run this bad boy
+		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
+		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
+
+		stopForeground(true);
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
+		stopSelf();
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+
+		unregisterReceiver(onNetworkConnectivityBroadcast);
+		unregisterReceiver(onBatteryStatusChangedBroadcast);
 
 		wakeLock.release();
 	}
