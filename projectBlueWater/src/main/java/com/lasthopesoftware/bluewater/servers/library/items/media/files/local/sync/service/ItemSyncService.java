@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
-import com.lasthopesoftware.threading.IOneParameterAction;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.slf4j.Logger;
@@ -70,7 +70,7 @@ public class ItemSyncService extends Service {
 		}
 	};
 
-	private final IOneParameterAction<StoredFile> storedFileDownloadedAction = new IOneParameterAction<StoredFile>() {
+	private final IOneParameterRunnable<StoredFile> storedFileDownloadedAction = new IOneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
 			final Intent fileDownloadedIntent = new Intent(onFileDownloadedEvent);
@@ -98,6 +98,8 @@ public class ItemSyncService extends Service {
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "wakeLock"));
 		wakeLock.acquire();
+
+		registerReceiver()
 	}
 
 	@Override

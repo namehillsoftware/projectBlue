@@ -52,7 +52,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.IOneParameterAction;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -270,7 +270,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new IOneParameterAction<OnNowPlayingChangeListener>() {
+            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new IOneParameterRunnable<OnNowPlayingChangeListener>() {
                 @Override
                 public void run(OnNowPlayingChangeListener parameter) {
                     parameter.onNowPlayingChange(controller, filePlayer);
@@ -281,7 +281,7 @@ public class PlaybackService extends Service implements
 
 	private void throwStartEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStartListeners, new IOneParameterAction<OnNowPlayingStartListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStartListeners, new IOneParameterRunnable<OnNowPlayingStartListener>() {
                 @Override
                 public void run(OnNowPlayingStartListener parameter) {
                     parameter.onNowPlayingStart(controller, filePlayer);
@@ -292,7 +292,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwStopEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStopListeners, new IOneParameterAction<OnNowPlayingStopListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStopListeners, new IOneParameterRunnable<OnNowPlayingStopListener>() {
                 @Override
                 public void run(OnNowPlayingStopListener parameter) {
                     parameter.onNowPlayingStop(controller, filePlayer);
@@ -303,7 +303,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwPauseEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new IOneParameterAction<OnNowPlayingPauseListener>() {
+            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new IOneParameterRunnable<OnNowPlayingPauseListener>() {
                 @Override
                 public void run(OnNowPlayingPauseListener parameter) {
                     parameter.onNowPlayingPause(controller, filePlayer);
@@ -325,7 +325,7 @@ public class PlaybackService extends Service implements
 		mStreamingMusicService = this;
 	}
 		
-	private void restorePlaylistControllerFromStorage(final IOneParameterAction<Boolean> onPlaylistRestored) {
+	private void restorePlaylistControllerFromStorage(final IOneParameterRunnable<Boolean> onPlaylistRestored) {
 		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
@@ -715,7 +715,7 @@ public class PlaybackService extends Service implements
 	private void restorePlaylistForIntent(final Intent intent) {
 		notifyStartingService();
 
-		restorePlaylistControllerFromStorage(new IOneParameterAction<Boolean>() {
+		restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
 			@Override
 			public void run(Boolean result) {
 				if (result) actOnIntent(intent);
@@ -799,7 +799,7 @@ public class PlaybackService extends Service implements
 	    		if (mPlaylistController.resume()) return;
 			}
 
-			restorePlaylistControllerFromStorage(new IOneParameterAction<Boolean>() {
+			restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
 				@Override
 				public void run(Boolean result) {
 					if (result)

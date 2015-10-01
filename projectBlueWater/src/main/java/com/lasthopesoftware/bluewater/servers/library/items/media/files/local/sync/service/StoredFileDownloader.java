@@ -12,8 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.bluewater.shared.IoCommon;
-import com.lasthopesoftware.threading.IOneParameterAction;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
 
@@ -48,8 +47,10 @@ public class StoredFileDownloader {
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
-	private IOneParameterAction<StoredFile> onFileDownloaded;
+	private IOneParameterRunnable<StoredFile> onFileDownloaded;
 	private Runnable onQueueProcessingCompleted;
+
+	private volatile boolean isCancelled;
 
 	public StoredFileDownloader(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
@@ -58,7 +59,7 @@ public class StoredFileDownloader {
 	}
 
 	public void queueFileForDownload(final IFile serviceFile, final StoredFile storedFile) {
-		if (isProcessing)
+		if (isProcessing || isCancelled)
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
 		final int fileKey = serviceFile.getKey();
@@ -66,7 +67,18 @@ public class StoredFileDownloader {
 			queuedFiles.add(new QueuedFileHolder(serviceFile, storedFile));
 	}
 
+	public void cancel() {
+		isCancelled = true;
+
+		if (isProcessing || onQueueProcessingCompleted == null) return;
+
+		onQueueProcessingCompleted.run();
+	}
+
 	public void process() {
+		if (isCancelled)
+			throw new IllegalStateException("Processing cannot be started once the stored file downloader has been cancelled.");
+
 		isProcessing = true;
 
 		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
@@ -75,7 +87,7 @@ public class StoredFileDownloader {
 				try {
 					QueuedFileHolder queuedFileHolder;
 					while ((queuedFileHolder = queuedFiles.poll()) != null) {
-						if (!IoCommon.isWifiAndPowerConnected(context)) return;
+						if (isCancelled) return;
 
 						final StoredFile storedFile = queuedFileHolder.storedFile;
 						final IFile serviceFile = queuedFileHolder.file;
@@ -91,7 +103,7 @@ public class StoredFileDownloader {
 							return;
 						}
 
-						if (connection == null) return;
+						if (isCancelled || connection == null) return;
 
 						try {
 							InputStream is;
@@ -101,6 +113,8 @@ public class StoredFileDownloader {
 								logger.error("Error opening data connection", ioe);
 								return;
 							}
+
+							if (isCancelled) return;
 
 							final java.io.File parent = file.getParentFile();
 							if (!parent.exists() && !parent.mkdirs()) return;
@@ -144,7 +158,7 @@ public class StoredFileDownloader {
 		});
 	}
 
-	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
+	public void setOnFileDownloaded(IOneParameterRunnable<StoredFile> onFileDownloaded) {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 

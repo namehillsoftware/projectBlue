@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.threading.IOneParameterAction;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
@@ -31,6 +31,8 @@ public class LibrarySyncHandler {
 	private final Library library;
 	private final StoredFileDownloader storedFileDownloader;
 
+	private volatile boolean isCancelled;
+
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
@@ -38,12 +40,18 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
-	public void setOnFileDownloaded(IOneParameterAction<StoredFile> onFileDownloaded) {
+	public void setOnFileDownloaded(IOneParameterRunnable<StoredFile> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
 	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
 		storedFileDownloader.setOnQueueProcessingCompleted(onQueueProcessingCompleted);
+	}
+
+	public void cancel() {
+		isCancelled = true;
+
+		storedFileDownloader.cancel();
 	}
 
 	public void startSync() {
@@ -57,15 +65,21 @@ public class LibrarySyncHandler {
 					.execute(new Runnable() {
 						@Override
 						public void run() {
+							if (isCancelled) return;
+
 							final Set<Integer> allSyncedFileKeys = new HashSet<>();
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
 							for (StoredItem storedItem : storedItems) {
+								if (isCancelled) return;
+
 								final int serviceId = storedItem.getServiceId();
 								final IFilesContainer filesContainer = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(connectionProvider, serviceId) : new Playlist(connectionProvider, serviceId);
 								final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
 								for (final IFile file : files) {
 									allSyncedFileKeys.add(file.getKey());
+
+									if (isCancelled) return;
 
 									final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
 									if (!storedFile.isDownloadComplete())
@@ -73,7 +87,11 @@ public class LibrarySyncHandler {
 								}
 							}
 
+							if (isCancelled) return;
+
 							storedFileDownloader.process();
+
+							if (isCancelled) return;
 
 							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 						}
