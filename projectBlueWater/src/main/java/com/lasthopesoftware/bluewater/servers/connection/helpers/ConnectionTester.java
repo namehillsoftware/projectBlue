@@ -32,10 +32,8 @@ public class ConnectionTester {
 
 			@Override
 			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-				Boolean result = Boolean.FALSE;
-
 				final HttpURLConnection conn = connectionProvider.getConnection("Alive");
-				if (conn == null) return result;
+				if (conn == null) return Boolean.FALSE;
 
 				try {
 					conn.setConnectTimeout(timeout);
@@ -43,7 +41,7 @@ public class ConnectionTester {
 					try {
 						final StandardRequest responseDao = StandardRequest.fromInputStream(is);
 
-						result = responseDao != null && responseDao.isStatus();
+						return responseDao != null && responseDao.isStatus();
 					} finally {
 						is.close();
 					}
@@ -53,7 +51,7 @@ public class ConnectionTester {
 					conn.disconnect();
 				}
 
-				return result;
+				return Boolean.FALSE;
 			}
 
 		});
