@@ -10,7 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.os.BatteryManager;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
@@ -59,7 +60,7 @@ public class ItemSyncService extends Service {
 	private volatile int librariesProcessing;
 	private List<LibrarySyncHandler> librarySyncHandlers = new ArrayList<>();
 
-	private final IOneParameterRunnable<LibrarySyncHandler> finishServiceRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
+	private final IOneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
 		@Override
 		public void run(LibrarySyncHandler librarySyncHandler) {
 			librarySyncHandlers.remove(librarySyncHandler);
@@ -76,17 +77,17 @@ public class ItemSyncService extends Service {
 		}
 	};
 
-	private final BroadcastReceiver onNetworkConnectivityBroadcast = new BroadcastReceiver() {
+	private final BroadcastReceiver onWifiStateChangedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (ConnectionInfo.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) cancelSync();
 		}
 	};
 
-	private final BroadcastReceiver onBatteryStatusChangedBroadcast = new BroadcastReceiver() {
+	private final BroadcastReceiver onPowerDisconnectedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) <= 0) cancelSync();
+			cancelSync();
 		}
 	};
 
@@ -110,8 +111,8 @@ public class ItemSyncService extends Service {
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "wakeLock"));
 		wakeLock.acquire();
 
-		registerReceiver(onNetworkConnectivityBroadcast, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-		registerReceiver(onBatteryStatusChangedBroadcast, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+		registerReceiver(onPowerDisconnectedReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 	}
 
 	@Override
@@ -148,12 +149,24 @@ public class ItemSyncService extends Service {
 								accessConfiguration.setLocalOnly(true);
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 
-							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
-							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-							librarySyncHandler.setOnQueueProcessingCompleted(finishServiceRunnable);
-							librarySyncHandler.startSync();
+							ConnectionTester.doTest(connectionProvider, 5, new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+								@Override
+								public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean success) {
+									if (!success) {
+										if (--librariesProcessing == 0)
+											finishSync();
 
-							librarySyncHandlers.add(librarySyncHandler);
+										return;
+									}
+
+									final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+									librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+									librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
+									librarySyncHandler.startSync();
+
+									librarySyncHandlers.add(librarySyncHandler);
+								}
+							});
 						}
 					});
 				}
@@ -193,8 +206,8 @@ public class ItemSyncService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
-		unregisterReceiver(onNetworkConnectivityBroadcast);
-		unregisterReceiver(onBatteryStatusChangedBroadcast);
+		unregisterReceiver(onWifiStateChangedReceiver);
+		unregisterReceiver(onPowerDisconnectedReceiver);
 
 		wakeLock.release();
 	}
