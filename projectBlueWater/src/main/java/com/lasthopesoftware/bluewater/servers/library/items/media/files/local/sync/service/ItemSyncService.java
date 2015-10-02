@@ -37,7 +37,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -58,7 +58,7 @@ public class ItemSyncService extends Service {
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
-	private List<LibrarySyncHandler> librarySyncHandlers = new ArrayList<>();
+	private HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
 	private final IOneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
 		@Override
@@ -147,15 +147,13 @@ public class ItemSyncService extends Service {
 						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
 							if (library.isSyncLocalConnectionsOnly())
 								accessConfiguration.setLocalOnly(true);
-							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 
+							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 							ConnectionTester.doTest(connectionProvider, 5, new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
 								@Override
 								public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean success) {
 									if (!success) {
-										if (--librariesProcessing == 0)
-											finishSync();
-
+										if (--librariesProcessing == 0) finishSync();
 										return;
 									}
 
