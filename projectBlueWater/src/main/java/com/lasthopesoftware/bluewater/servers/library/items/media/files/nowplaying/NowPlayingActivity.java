@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
@@ -23,7 +22,6 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
@@ -64,10 +62,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private NowPlayingActivityMessageHandler mHandler;
 	private ImageButton mPlay;
 	private ImageButton mPause;
-	private ImageButton mNext;
-	private ImageButton mPrevious;
 	private RatingBar mSongRating;
-	private RelativeLayout mContentView, mControlNowPlaying, mViewCoverArt;
+	private RelativeLayout mContentView, mControlNowPlaying;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
@@ -82,6 +78,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private static ViewStructure mViewStructure;
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";
+
+	private static Drawable repeatingDrawable, notRepeatingDrawable;
 
 	private static class ViewStructure {
 		public final int fileKey;
@@ -106,17 +104,13 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 		setContentView(R.layout.activity_view_now_playing);
 
-//		setSupportActionBar((Toolbar) findViewById(R.id.nowPlayingToolbar));
-
 		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
 
-		mViewCoverArt = (RelativeLayout) findViewById(R.id.rlViewCoverArt);
 		mControlNowPlaying = (RelativeLayout) findViewById(R.id.rlCtlNowPlaying);
 		mControlNowPlaying.setVisibility(View.INVISIBLE);
 
 		mHideTimer = new Timer("Fade Timer");
-		
-		
+
 		mContentView.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -127,8 +121,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
 		mPause = (ImageButton) findViewById(R.id.btnPause);
-		mNext = (ImageButton) findViewById(R.id.btnNext);
-		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
 		mSongProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
 		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
@@ -143,7 +135,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
@@ -154,7 +146,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		});
 		
 		mPause.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
@@ -164,7 +156,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			}
 		});
 
-		mNext.setOnClickListener(new View.OnClickListener() {
+		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
+		next.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -172,8 +165,9 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				PlaybackService.next(v.getContext());
 			}
 		});
-		
-		mPrevious.setOnClickListener(new View.OnClickListener() {
+
+		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
+		previous.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -181,7 +175,34 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				PlaybackService.previous(v.getContext());
 			}
 		});
-		
+
+		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
+		setRepeatingIcon(shuffleButton);
+
+		shuffleButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				LibrarySession.GetLibrary(v.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						if (result == null) return;
+						final boolean isRepeating = !result.isRepeating();
+						PlaybackService.setIsRepeating(v.getContext(), isRepeating);
+						setRepeatingIcon(shuffleButton, isRepeating);
+					}
+				});
+			}
+		});
+
+		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
+		viewNowPlayingListButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class));
+			}
+		});
+
 		mHandler = new NowPlayingActivityMessageHandler(this);
 	}
 	
@@ -242,55 +263,36 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		});
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_now_playing, menu);
-		setRepeatingIcon(menu.findItem(R.id.menu_repeat_playlist));
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.menu_connection_settings:
-				startActivity(new Intent(this, ServerListActivity.class));
-				return true;
-			case R.id.menu_repeat_playlist:
-				final Context _context = this;
-				LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-
-					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-						if (result == null) return;
-						final boolean isRepeating = !result.isRepeating();
-						PlaybackService.setIsRepeating(_context, isRepeating);
-						setRepeatingIcon(item, isRepeating);
-					}
-				});
-				return true;
-			case R.id.menu_view_now_playing_files:
-				startActivity(new Intent(this, NowPlayingFilesListActivity.class));
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
-		}
-	}
-	
-	private void setRepeatingIcon(final MenuItem item) {
-		item.setIcon(R.drawable.av_no_repeat_dark);
+	private void setRepeatingIcon(final ImageButton imageButton) {
+		setRepeatingIcon(imageButton, false);
 		LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
-					setRepeatingIcon(item, result.isRepeating());
+					setRepeatingIcon(imageButton, result.isRepeating());
 			}
 
 		});
 	}
 	
-	private static void setRepeatingIcon(final MenuItem item, boolean isRepeating) {
-		item.setIcon(isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
+		imageButton.setImageDrawable(isRepeating ? getRepeatingDrawable(imageButton.getContext()) : getNotRepeatingDrawable(imageButton.getContext()));
+		;
+	}
+
+	private static Drawable getRepeatingDrawable(Context context) {
+		if (repeatingDrawable == null)
+			repeatingDrawable = context.getResources().getDrawable(R.drawable.av_repeat_dark);
+
+		return repeatingDrawable;
+	}
+
+	private static Drawable getNotRepeatingDrawable(Context context) {
+		if (notRepeatingDrawable == null)
+			notRepeatingDrawable = context.getResources().getDrawable(R.drawable.av_no_repeat_dark);
+
+		return notRepeatingDrawable;
 	}
 	
 	@Override
