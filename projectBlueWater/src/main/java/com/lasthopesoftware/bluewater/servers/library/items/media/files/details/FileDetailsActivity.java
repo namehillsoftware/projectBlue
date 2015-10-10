@@ -1,11 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.details;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
@@ -39,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class FileDetailsActivity extends Activity {
+public class FileDetailsActivity extends AppCompatActivity {
 
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
     private static final int trackNameMarqueeDelay = 1500;
@@ -84,7 +83,7 @@ public class FileDetailsActivity extends Activity {
 
 		super.onCreate(savedInstanceState);
 
-        final ActionBar actionBar = getActionBar();
+        final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
 

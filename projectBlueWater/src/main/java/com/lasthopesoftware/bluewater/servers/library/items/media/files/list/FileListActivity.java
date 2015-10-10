@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,7 +27,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
 
-public class FileListActivity extends FragmentActivity {
+public class FileListActivity extends AppCompatActivity {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -46,8 +46,8 @@ public class FileListActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);

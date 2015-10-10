@@ -4,11 +4,11 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseLibraryActivity extends FragmentActivity {
+public class BrowseLibraryActivity extends AppCompatActivity {
 
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_TAB_KEY";
 	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SCROLL_POS";
@@ -93,8 +93,11 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 		setTitle(R.string.title_activity_library);
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
+//		Toolbar toolbar = (Toolbar) findViewById(R.id.standardToolbar);
+//		setSupportActionBar(toolbar);
+
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setHomeButtonEnabled(true);
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -110,7 +113,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 			@Override
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
-                getActionBar().setTitle(mOldTitle);
+				getSupportActionBar().setTitle(mOldTitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -118,8 +121,8 @@ public class BrowseLibraryActivity extends FragmentActivity {
 			@Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                mOldTitle = getActionBar().getTitle();
-                getActionBar().setTitle("Select view");
+                mOldTitle = getSupportActionBar().getTitle();
+				getSupportActionBar().setTitle("Select view");
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -181,7 +184,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 				for (IItem item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
-					getActionBar().setTitle(mOldTitle);
+					getSupportActionBar().setTitle(mOldTitle);
 					break;
 				}
 
@@ -298,10 +301,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item))
-			return true;
-
-		return ViewUtils.handleMenuClicks(this, item);
+		return mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
 	}
 
 	@Override
@@ -326,12 +326,12 @@ public class BrowseLibraryActivity extends FragmentActivity {
         savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
         savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
         LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-                if (library != null)
-                    savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-            }
-        });
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+				if (library != null)
+					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+			}
+		});
 	}
 
 	@Override
@@ -346,20 +346,20 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-                final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-                if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 
-                final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-                if (savedTabKey > -1)
-                    mViewPager.setCurrentItem(savedTabKey);
+				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+				if (savedTabKey > -1)
+					mViewPager.setCurrentItem(savedTabKey);
 
-                final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-                if (savedScrollPosition > -1)
-                    mViewPager.setScrollY(savedScrollPosition);
-            }
-        });
+				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+				if (savedScrollPosition > -1)
+					mViewPager.setScrollY(savedScrollPosition);
+			}
+		});
     }
 
     private void toggleViewsVisibility(boolean isVisible) {
@@ -380,8 +380,4 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
         super.onBackPressed();
     }
-
-    public ViewPager getViewPager() {
-		return mViewPager;
-	}
 }

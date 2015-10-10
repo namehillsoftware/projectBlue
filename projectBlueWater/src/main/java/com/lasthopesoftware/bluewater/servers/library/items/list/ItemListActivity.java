@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.list;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends FragmentActivity implements OnViewFlippedListener {
+public class ItemListActivity extends AppCompatActivity implements OnViewFlippedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
@@ -45,7 +45,7 @@ public class ItemListActivity extends FragmentActivity implements OnViewFlippedL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_items);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         itemListView = (ListView) findViewById(R.id.lvItems);
         pbLoading = (ProgressBar) findViewById(R.id.pbLoadingItems);
 

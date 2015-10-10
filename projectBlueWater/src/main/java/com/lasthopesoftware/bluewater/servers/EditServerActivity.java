@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.servers;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-public class EditServerActivity extends FragmentActivity {
+public class EditServerActivity extends AppCompatActivity {
 	private Button mConnectionButton;
 	private Library mLibrary;
 
@@ -63,7 +63,7 @@ public class EditServerActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         setContentView(R.layout.activity_set_connection);
-        getActionBar().setDisplayHomeAsUpEnabled(true);        
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         
         mConnectionButton = (Button)findViewById(R.id.btnConnect);
         mConnectionButton.setOnClickListener(mConnectionButtonListener);

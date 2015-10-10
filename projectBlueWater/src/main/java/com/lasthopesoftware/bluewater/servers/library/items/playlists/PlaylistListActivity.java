@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,7 +24,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
-public class PlaylistListActivity extends FragmentActivity implements OnViewFlippedListener {
+public class PlaylistListActivity extends AppCompatActivity implements OnViewFlippedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
@@ -42,7 +42,7 @@ public class PlaylistListActivity extends FragmentActivity implements OnViewFlip
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_items);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         playlistView = (ListView)findViewById(R.id.lvItems);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
