@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -107,7 +106,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 		setContentView(R.layout.activity_view_now_playing);
 
-		setSupportActionBar((Toolbar) findViewById(R.id.nowPlayingToolbar));
+//		setSupportActionBar((Toolbar) findViewById(R.id.nowPlayingToolbar));
 
 		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
 
