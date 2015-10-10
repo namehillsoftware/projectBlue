@@ -78,9 +78,6 @@ public class FileDetailsActivity extends AppCompatActivity {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-        if (!getResources().getBoolean(R.bool.is_landscape))
-            setTheme(R.style.AppThemeNoActionBarShadowTheme);
-
 		super.onCreate(savedInstanceState);
 
         final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
