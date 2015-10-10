@@ -93,9 +93,6 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 		setTitle(R.string.title_activity_library);
 
-//		Toolbar toolbar = (Toolbar) findViewById(R.id.standardToolbar);
-//		setSupportActionBar(toolbar);
-
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
 
