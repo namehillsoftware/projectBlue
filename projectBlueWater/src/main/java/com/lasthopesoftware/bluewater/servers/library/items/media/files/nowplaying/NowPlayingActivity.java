@@ -1,18 +1,17 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
-import android.view.LayoutInflater;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -55,7 +54,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class NowPlayingActivity extends Activity implements 
+public class NowPlayingActivity extends AppCompatActivity implements
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
 	OnNowPlayingStopListener,
@@ -69,8 +68,7 @@ public class NowPlayingActivity extends Activity implements
 	private ImageButton mNext;
 	private ImageButton mPrevious;
 	private RatingBar mSongRating;
-	private FrameLayout mContentView;
-	private RelativeLayout mControlNowPlaying, mViewCoverArt;
+	private RelativeLayout mContentView, mControlNowPlaying, mViewCoverArt;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
@@ -106,16 +104,17 @@ public class NowPlayingActivity extends Activity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		mContentView = new FrameLayout(this);
-		setContentView(mContentView);
-		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-		mViewCoverArt = (RelativeLayout) inflater.inflate(R.layout.activity_view_cover_art, mContentView, false);
-		mControlNowPlaying = (RelativeLayout) inflater.inflate(R.layout.activity_control_now_playing, mContentView, false);
+
+		setContentView(R.layout.activity_view_now_playing);
+
+		setSupportActionBar((Toolbar) findViewById(R.id.nowPlayingToolbar));
+
+		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
+
+		mViewCoverArt = (RelativeLayout) findViewById(R.id.rlViewCoverArt);
+		mControlNowPlaying = (RelativeLayout) findViewById(R.id.rlCtlNowPlaying);
 		mControlNowPlaying.setVisibility(View.INVISIBLE);
-		mContentView.addView(mViewCoverArt);
-		mContentView.addView(mControlNowPlaying);
-		
+
 		mHideTimer = new Timer("Fade Timer");
 		
 		
@@ -312,7 +311,7 @@ public class NowPlayingActivity extends Activity implements
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
 	}
 	
-	public FrameLayout getContentView() {
+	public RelativeLayout getContentView() {
 		return mContentView;
 	}
 	
