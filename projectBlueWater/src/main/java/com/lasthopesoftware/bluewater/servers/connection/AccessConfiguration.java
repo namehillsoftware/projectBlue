@@ -38,6 +38,7 @@ public class AccessConfiguration {
 
 	public void setStatus(boolean status) {
 		this.status = status;
+		activeUrl = "";
 	}
 
 	/**
@@ -52,6 +53,7 @@ public class AccessConfiguration {
 	 */
 	public void setRemoteIp(String remoteIp) {
 		this.remoteIp = remoteIp;
+		activeUrl = "";
 	}
 	/**
 	 * @return the port
@@ -64,6 +66,7 @@ public class AccessConfiguration {
 	 */
 	public void setPort(int port) {
 		this.port = port;
+		activeUrl = "";
 	}
 	/**
 	 * @return the localIps
@@ -78,6 +81,7 @@ public class AccessConfiguration {
 
 	public void setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
+		activeUrl = "";
 	}
 
 	/**
