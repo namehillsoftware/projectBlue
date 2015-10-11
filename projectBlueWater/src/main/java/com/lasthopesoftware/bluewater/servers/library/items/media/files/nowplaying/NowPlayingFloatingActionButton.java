@@ -23,7 +23,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
  */
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
     private static Drawable nowPlayingIconDrawable;
-    private static boolean isNowPlayingVisible = false;
 
     public static void addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
@@ -66,7 +65,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
+                final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
                 floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingVisible));
 
                 if (isNowPlayingVisible) return;
@@ -75,8 +74,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                 PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
                     @Override
                     public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        isNowPlayingVisible = true;
-                        floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingVisible));
+                        floatingActionButton.setVisibility(ViewUtils.GetVisibility(true));
                         PlaybackService.removeOnStreamingStartListener(this);
                     }
                 });
