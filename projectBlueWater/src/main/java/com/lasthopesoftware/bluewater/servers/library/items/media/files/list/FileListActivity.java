@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,7 +50,8 @@ public class FileListActivity extends AppCompatActivity {
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
-        fileListView = (ListView)findViewById(R.id.lvFilelist);
+
+		fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
         fileListView.setVisibility(View.INVISIBLE);
@@ -83,15 +85,17 @@ public class FileListActivity extends AppCompatActivity {
 		});
         
         filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new OnConnectionRegainedListener() {
-			
-				@Override
-				public void onConnectionRegained() {
-					filesContainer.getFilesAsync();
-				}
-			})
-        );
+
+					@Override
+					public void onConnectionRegained() {
+						filesContainer.getFilesAsync();
+					}
+				})
+		);
         
         filesContainer.getFilesAsync();
+
+		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
 	}
 	
 	@Override

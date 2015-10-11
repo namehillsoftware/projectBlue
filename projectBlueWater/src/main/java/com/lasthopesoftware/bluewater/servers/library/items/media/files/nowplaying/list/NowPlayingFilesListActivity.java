@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,6 +48,8 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
         this.setTitle(R.string.title_view_now_playing_files);     
         
         LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+
+		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
 	}
 	
 	@Override

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.list;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -77,6 +78,8 @@ public class ItemListActivity extends AppCompatActivity implements OnViewFlipped
             }
         }));
         itemProvider.execute();
+
+        ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
     }
 
     private void BuildItemListView(final List<Item> items) {

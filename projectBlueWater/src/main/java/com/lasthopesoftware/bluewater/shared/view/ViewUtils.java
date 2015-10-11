@@ -3,10 +3,12 @@ package com.lasthopesoftware.bluewater.shared.view;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -27,32 +29,6 @@ public class ViewUtils {
 	public final static boolean buildStandardMenu(final Activity activity, final Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		
-		final MenuItem nowPlayingItem = menu.findItem(R.id.menu_view_now_playing);
-        nowPlayingItem.setVisible(mIsNowPlayingVisible);
-
-        // The user can change the library, so let's check if the state of visibility on the
-        // now playing menu item should change
-        LibrarySession.GetLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
-
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                nowPlayingItem.setVisible(mIsNowPlayingVisible);
-
-                if (mIsNowPlayingVisible) return;
-
-                // If now playing shouldn't be visible, detect when it should be
-                PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
-                    @Override
-                    public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        mIsNowPlayingVisible = true;
-                        nowPlayingItem.setVisible(mIsNowPlayingVisible);
-                        PlaybackService.removeOnStreamingStartListener(this);
-                    }
-                });
-            }
-        });
-		
 //		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
 //	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
 //	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
@@ -63,20 +39,17 @@ public class ViewUtils {
 		return true;
 	}
 	
-	public final static boolean handleMenuClicks(final Context context, final MenuItem item) {
+	public static boolean handleMenuClicks(final Context context, final MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
 				context.startActivity(new Intent(context, ServerListActivity.class));
-				return true;
-			case R.id.menu_view_now_playing:
-				CreateNowPlayingView(context);
 				return true;
 			default:
 				return false;
 		}
 	}
 	
-	public final static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
+	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				Intent upIntent = NavUtils.getParentActivityIntent(activity);
@@ -100,9 +73,46 @@ public class ViewUtils {
 		
 	}
 		
-	public final static void CreateNowPlayingView(final Context context) {
+	public static void CreateNowPlayingView(final Context context) {
     	final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		context.startActivity(viewIntent);
     }
+
+	public static void InitializeNowPlayingFloatingActionButton(final FloatingActionButton floatingActionButton) {
+		floatingActionButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CreateNowPlayingView(v.getContext());
+			}
+		});
+
+		floatingActionButton.setVisibility(GetVisibility(false));
+		// The user can change the library, so let's check if the state of visibility on the
+		// now playing menu item should change
+		LibrarySession.GetLibrary(floatingActionButton.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+				mIsNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
+				floatingActionButton.setVisibility(GetVisibility(mIsNowPlayingVisible));
+
+				if (mIsNowPlayingVisible) return;
+
+				// If now playing shouldn't be visible, detect when it should be
+				PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
+					@Override
+					public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+						mIsNowPlayingVisible = true;
+						floatingActionButton.setVisibility(GetVisibility(mIsNowPlayingVisible));
+						PlaybackService.removeOnStreamingStartListener(this);
+					}
+				});
+			}
+		});
+	}
+
+	public static int GetVisibility(boolean isVisible) {
+		return isVisible ? View.VISIBLE : View.INVISIBLE;
+	}
 }

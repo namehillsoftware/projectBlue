@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -74,6 +75,8 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 				playlistsProvider.execute();
 			}
 		})).execute();
+
+		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
 	}
 	
 	@Override

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -90,6 +91,8 @@ public class BrowseLibraryActivity extends AppCompatActivity {
         }
 
 		setContentView(R.layout.activity_browse_library);
+
+		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton)findViewById(R.id.nowPlayingFloatingActionButton));
 
 		setTitle(R.string.title_activity_library);
 

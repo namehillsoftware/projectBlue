@@ -3,7 +3,7 @@
     <style name="NowPlayingTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
-        <item name="colorPrimary">@android:color/transparent</item>
+        <item name="colorPrimary">@color/clearstream_dark</item>
         <!--   darker variant for the status bar and contextual app bars -->
         <item name="colorPrimaryDark">@color/overlay_dark</item>
         <!--   theme UI controls like checkboxes and text fields -->

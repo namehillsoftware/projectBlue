@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.View;
@@ -42,7 +43,8 @@ public class SearchFilesActivity extends AppCompatActivity {
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);
-        
+        ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
+
         handleIntent(getIntent());
 	}
 	
