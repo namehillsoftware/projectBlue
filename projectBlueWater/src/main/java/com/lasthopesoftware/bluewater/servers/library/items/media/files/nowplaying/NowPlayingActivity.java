@@ -524,7 +524,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	
 	private void resetViewOnReconnect(final IFile file) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-			
+
 			@Override
 			public void onConnectionRegained() {
 				setView(file);
