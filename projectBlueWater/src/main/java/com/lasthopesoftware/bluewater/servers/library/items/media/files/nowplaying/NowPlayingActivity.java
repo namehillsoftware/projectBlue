@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -202,6 +203,12 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class));
 			}
 		});
+
+		final Drawable songRatingDrawable = mSongRating.getProgressDrawable();
+		DrawableCompat.setTint(songRatingDrawable, getResources().getColor(R.color.custom_transparent_white));
+
+		final Drawable progressDrawable = mSongProgressBar.getProgressDrawable();
+		DrawableCompat.setTint(progressDrawable, getResources().getColor(R.color.custom_transparent_white));
 
 		mHandler = new NowPlayingActivityMessageHandler(this);
 	}

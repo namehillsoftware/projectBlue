@@ -13,7 +13,7 @@
     <color name="clearstream_blue">#3f51b5</color>
     <color name="clearstream_dark">#97acec</color>
     <color name="faint_gray">#FFE2E2E2</color>
-    <color name="nearly_white">#FFF4F4F4</color>
+    <color name="custom_transparent_white">#CCFFFFFF</color>
     <!-- Use Gingerbread-orange -->
     <color name="selection_background_color_dark">#FEBB20</color>
     <color name="selection_background_color_light">#FEBB20</color>
