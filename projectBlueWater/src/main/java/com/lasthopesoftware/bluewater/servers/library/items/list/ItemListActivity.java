@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.list;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -79,7 +80,7 @@ public class ItemListActivity extends AppCompatActivity implements OnViewFlipped
         }));
         itemProvider.execute();
 
-        ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
+        NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
     private void BuildItemListView(final List<Item> items) {

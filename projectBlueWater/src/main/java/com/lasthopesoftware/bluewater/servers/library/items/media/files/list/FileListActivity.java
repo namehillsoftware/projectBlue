@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -64,23 +65,23 @@ public class FileListActivity extends AppCompatActivity {
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final FileListActivity _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
-				
-                final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-                longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
-                    @Override
-                    public void onViewFlipped(ViewFlipper viewFlipper) {
-                        mFlippedView = viewFlipper;
-                    }
-                });
-		    	fileListView.setOnItemLongClickListener(longClickViewFlipListener);
-		    	fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
-		    	
-		    	fileListView.setVisibility(View.VISIBLE);
-		        pbLoading.setVisibility(View.INVISIBLE);
+
+				final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+				longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
+					@Override
+					public void onViewFlipped(ViewFlipper viewFlipper) {
+						mFlippedView = viewFlipper;
+					}
+				});
+				fileListView.setOnItemLongClickListener(longClickViewFlipListener);
+				fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
+
+				fileListView.setVisibility(View.VISIBLE);
+				pbLoading.setVisibility(View.INVISIBLE);
 			}
 		});
         
@@ -95,7 +96,7 @@ public class FileListActivity extends AppCompatActivity {
         
         filesContainer.getFilesAsync();
 
-		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
+		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override
