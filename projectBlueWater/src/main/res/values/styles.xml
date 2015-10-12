@@ -35,6 +35,7 @@
         <item name="editTextColor">@color/black</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
+        <item name="searchViewStyle">@style/SearchViewStyle</item>
     </style>
 
     <style name="AppTheme.ActionBarStyle" parent="Widget.AppCompat.ActionBar.Solid">
@@ -53,6 +54,28 @@
         <item name="android:textColor">@color/white</item>
         <item name="android:editTextColor">@color/white</item>
         <item name="android:windowActionBarOverlay">true</item>
+    </style>
+
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <!-- Background for the search query section (e.g. EditText) -->
+        <!--<item name="queryBackground">...</item>-->
+        <!--&lt;!&ndash; Background for the actions section (e.g. voice, submit) &ndash;&gt;-->
+        <!--<item name="submitBackground">...</item>-->
+        <!--&lt;!&ndash; Close button icon &ndash;&gt;-->
+        <!--<item name="closeIcon">...</item>-->
+        <!--&lt;!&ndash; Search button icon &ndash;&gt;-->
+        <!--<item name="searchIcon">...</item>-->
+        <!--&lt;!&ndash; Go/commit button icon &ndash;&gt;-->
+        <!--<item name="goIcon">...</item>-->
+        <!--&lt;!&ndash; Voice search button icon &ndash;&gt;-->
+        <!--<item name="voiceIcon">...</item>-->
+        <!--&lt;!&ndash; Commit icon shown in the query suggestion row &ndash;&gt;-->
+        <!--<item name="commitIcon">...</item>-->
+        <!--&lt;!&ndash; Layout for query suggestion rows &ndash;&gt;-->
+        <!--<item name="suggestionRowLayout">...</item>-->
+        <item name="colorPrimary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="editTextColor">@color/white</item>
     </style>
 
     <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">

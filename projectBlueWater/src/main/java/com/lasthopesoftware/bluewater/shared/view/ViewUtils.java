@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.view;
 
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,16 +19,13 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 
 public class ViewUtils {
 
-	public final static boolean buildStandardMenu(final Activity activity, final Menu menu) {
+	public static boolean buildStandardMenu(final Activity activity, final Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		
-//		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-//	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
-//	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
-		
-//		final int id = searchView.getResources().getIdentifier("android:id/search_src_text", null, null);
-//		final TextView textView = (TextView) searchView.findViewById(id);
-//		textView.setTextColor(Color.WHITE);
+		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
+	    final SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
+	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
+
 		return true;
 	}
 	
