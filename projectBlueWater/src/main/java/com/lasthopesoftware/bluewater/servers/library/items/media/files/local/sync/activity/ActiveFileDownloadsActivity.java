@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Created by david on 6/6/15.
  */
-public class ActiveFileDownloadsActivity extends Activity {
+public class ActiveFileDownloadsActivity extends AppCompatActivity {
 
     private BroadcastReceiver onFileDownloadedReceiver;
     private LocalBroadcastManager localBroadcastManager;
