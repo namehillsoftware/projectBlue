@@ -5,7 +5,7 @@
         android:title="@string/title_activity_set_up_connection"
         android:orderInCategory="100"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_action_settings" />
+        android:icon="@drawable/ic_action_settings_dark" />
 
     <item android:id="@+id/menu_view_active_downloads"
           android:title="@string/title_view_active_downloads"

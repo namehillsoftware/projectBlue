@@ -20,6 +20,7 @@ import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
@@ -183,7 +184,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		shuffleButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				LibrarySession.GetLibrary(v.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.GetActiveLibrary(v.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

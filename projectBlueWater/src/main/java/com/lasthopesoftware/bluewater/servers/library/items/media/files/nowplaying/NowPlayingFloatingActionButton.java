@@ -10,11 +10,11 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -61,7 +61,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         floatingActionButton.setVisibility(ViewUtils.GetVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetLibrary(floatingActionButton.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(floatingActionButton.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {

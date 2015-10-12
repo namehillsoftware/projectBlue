@@ -11,6 +11,7 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 
 public class ViewUtils {
