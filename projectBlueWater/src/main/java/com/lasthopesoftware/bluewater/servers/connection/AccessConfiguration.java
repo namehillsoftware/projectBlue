@@ -14,7 +14,6 @@ public class AccessConfiguration {
 	private int port;
 	private final List<String> localIps = new ArrayList<>();
 	private final List<String> macAddresses = new ArrayList<>();
-	private int urlIndex = -1;
 	private boolean isLocalOnly;
 
 	private final String authCode;
@@ -38,6 +37,7 @@ public class AccessConfiguration {
 
 	public void setStatus(boolean status) {
 		this.status = status;
+		activeUrl = "";
 	}
 
 	/**
@@ -52,6 +52,7 @@ public class AccessConfiguration {
 	 */
 	public void setRemoteIp(String remoteIp) {
 		this.remoteIp = remoteIp;
+		activeUrl = "";
 	}
 	/**
 	 * @return the port
@@ -64,6 +65,7 @@ public class AccessConfiguration {
 	 */
 	public void setPort(int port) {
 		this.port = port;
+		activeUrl = "";
 	}
 	/**
 	 * @return the localIps
@@ -78,6 +80,7 @@ public class AccessConfiguration {
 
 	public void setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
+		activeUrl = "";
 	}
 
 	/**
@@ -88,11 +91,15 @@ public class AccessConfiguration {
 	}
 	
 	private String getRemoteUrl() {
-		return "http://" + remoteIp  + ":" + String.valueOf(port) + "/MCWS/v1/";
+		return generateUrl(remoteIp, port);
 	}
 	
 	private String getLocalIpUrl(int index) {
-		return "http://" + localIps.get(index) + ":" + String.valueOf(port) + "/MCWS/v1/";
+		return generateUrl(localIps.get(index), port);
+	}
+
+	private static String generateUrl(String ipAddress, int port) {
+		return "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
 
 	public String getActiveUrl() {
@@ -113,8 +120,8 @@ public class AccessConfiguration {
 					activeUrl = "";
 					LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 				}
-			} else { 
-				for (urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
+			} else {
+				for (int urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
 					try {
 						activeUrl = getLocalIpUrl(urlIndex);
 			        	/*if (testConnection(activeUrl))*/ return activeUrl;
