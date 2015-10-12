@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.list;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -16,6 +17,7 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -28,7 +30,7 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends FragmentActivity implements OnViewFlippedListener {
+public class ItemListActivity extends AppCompatActivity implements OnViewFlippedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
@@ -46,7 +48,7 @@ public class ItemListActivity extends FragmentActivity implements OnViewFlippedL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_items);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         itemListView = (ListView) findViewById(R.id.lvItems);
         pbLoading = (ProgressBar) findViewById(R.id.pbLoadingItems);
 
@@ -78,6 +80,8 @@ public class ItemListActivity extends FragmentActivity implements OnViewFlippedL
             }
         }));
         itemProvider.execute();
+
+        NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
     private void BuildItemListView(final List<Item> items) {

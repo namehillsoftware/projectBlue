@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -19,6 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -28,7 +30,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
 
-public class FileListActivity extends FragmentActivity {
+public class FileListActivity extends AppCompatActivity {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -47,10 +49,11 @@ public class FileListActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
-        fileListView = (ListView)findViewById(R.id.lvFilelist);
+
+		fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
         fileListView.setVisibility(View.INVISIBLE);
@@ -63,36 +66,38 @@ public class FileListActivity extends FragmentActivity {
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final FileListActivity _this = this;
         filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
-				
-                final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-                longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
-                    @Override
-                    public void onViewFlipped(ViewFlipper viewFlipper) {
-                        mFlippedView = viewFlipper;
-                    }
-                });
-		    	fileListView.setOnItemLongClickListener(longClickViewFlipListener);
-		    	fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
-		    	
-		    	fileListView.setVisibility(View.VISIBLE);
-		        pbLoading.setVisibility(View.INVISIBLE);
+
+				final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
+				longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
+					@Override
+					public void onViewFlipped(ViewFlipper viewFlipper) {
+						mFlippedView = viewFlipper;
+					}
+				});
+				fileListView.setOnItemLongClickListener(longClickViewFlipListener);
+				fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
+
+				fileListView.setVisibility(View.VISIBLE);
+				pbLoading.setVisibility(View.INVISIBLE);
 			}
 		});
         
         filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new OnConnectionRegainedListener() {
-			
-				@Override
-				public void onConnectionRegained() {
-					filesContainer.getFilesAsync();
-				}
-			})
-        );
+
+					@Override
+					public void onConnectionRegained() {
+						filesContainer.getFilesAsync();
+					}
+				})
+		);
         
         filesContainer.getFilesAsync();
+
+		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override

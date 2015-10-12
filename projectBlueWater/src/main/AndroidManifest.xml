@@ -114,7 +114,8 @@
         <activity
         	android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity"
         	android:label="@string/title_activity_view_now_playing"
-            android:launchMode="singleTask" >
+            android:launchMode="singleTask"
+            android:theme="@style/NowPlayingTheme">
         </activity>
         
         <activity

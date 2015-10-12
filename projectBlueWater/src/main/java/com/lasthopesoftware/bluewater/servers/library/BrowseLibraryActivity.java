@@ -14,7 +14,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.view.Gravity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.astuetz.PagerSlidingTabStrip;
@@ -34,6 +36,7 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -46,7 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseLibraryActivity extends FragmentActivity {
+public class BrowseLibraryActivity extends AppCompatActivity {
 
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_TAB_KEY";
 	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SCROLL_POS";
@@ -105,10 +108,14 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 		setContentView(R.layout.activity_browse_library);
 
+//		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
+
+		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
+
 		setTitle(R.string.title_activity_library);
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setHomeButtonEnabled(true);
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -117,7 +124,6 @@ public class BrowseLibraryActivity extends FragmentActivity {
 		mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
                 mDrawerLayout,         /* DrawerLayout object */
-                R.drawable.ic_drawer,  /* nav drawer icon to replace 'Up' caret */
                 R.string.drawer_open,  /* "open drawer" description */
                 R.string.drawer_close  /* "close drawer" description */
 		) {
@@ -125,7 +131,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 			@Override
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
-                getActionBar().setTitle(mOldTitle);
+				getSupportActionBar().setTitle(mOldTitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -133,8 +139,8 @@ public class BrowseLibraryActivity extends FragmentActivity {
 			@Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                mOldTitle = getActionBar().getTitle();
-                getActionBar().setTitle("Select view");
+                mOldTitle = getSupportActionBar().getTitle();
+				getSupportActionBar().setTitle("Select view");
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -204,7 +210,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 				for (IItem item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
-					getActionBar().setTitle(mOldTitle);
+					getSupportActionBar().setTitle(mOldTitle);
 					break;
 				}
 
@@ -224,7 +230,7 @@ public class BrowseLibraryActivity extends FragmentActivity {
 
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						mDrawerLayout.closeDrawer(Gravity.START);
+						mDrawerLayout.closeDrawer(GravityCompat.START);
 						mDrawerToggle.syncState();
 
 						final int selectedViewKey = items.get(position).getKey();

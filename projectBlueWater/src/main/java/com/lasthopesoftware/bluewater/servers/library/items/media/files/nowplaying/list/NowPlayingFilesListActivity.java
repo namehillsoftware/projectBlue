@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -28,7 +29,7 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 import java.util.ArrayList;
 
-public class NowPlayingFilesListActivity extends FragmentActivity {
+public class NowPlayingFilesListActivity extends AppCompatActivity {
 	
 	private ListView mFileListView;
 	private ProgressBar mLoadingProgressBar;
@@ -39,7 +40,7 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final ActionBar actionBar = getActionBar();
+        final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
@@ -49,6 +50,8 @@ public class NowPlayingFilesListActivity extends FragmentActivity {
         this.setTitle(R.string.title_view_now_playing_files);     
         
         LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		
+		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override

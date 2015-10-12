@@ -1,8 +1,12 @@
 package com.lasthopesoftware.bluewater.servers;
 
+import android.content.Context;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -11,13 +15,12 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
-
 import java.util.List;
 
-public class ServerListActivity extends Activity {
-
+public class ServerListActivity extends AppCompatActivity {
 	private ProgressBar mProgressBar;
 	private ListView mServerListView;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

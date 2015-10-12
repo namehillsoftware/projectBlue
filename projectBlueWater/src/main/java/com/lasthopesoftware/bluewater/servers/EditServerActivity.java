@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.servers;
 
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -16,9 +17,9 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-import java.io.File;
-
 public class EditServerActivity extends FragmentActivity {
+	private Button mConnectionButton;
+	private Library mLibrary;
 
 	public static final String serverIdExtra = EditServerActivity.class.getCanonicalName() + ".serverIdExtra";
 
@@ -75,8 +76,14 @@ public class EditServerActivity extends FragmentActivity {
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState); 
         setContentView(R.layout.activity_edit_server);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        mConnectionButton = (Button)findViewById(R.id.btnConnect);
+        mConnectionButton.setOnClickListener(mConnectionButtonListener);
+        
+        LibrarySession.GetLibrary(this, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
 		saveButton = (Button)findViewById(R.id.btnConnect);
         saveButton.setOnClickListener(connectionButtonListener);

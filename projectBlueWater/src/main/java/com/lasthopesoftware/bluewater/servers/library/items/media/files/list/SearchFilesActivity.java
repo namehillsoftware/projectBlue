@@ -3,11 +3,12 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.list;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
@@ -17,6 +18,7 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -25,7 +27,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
 
-public class SearchFilesActivity extends FragmentActivity {
+public class SearchFilesActivity extends AppCompatActivity {
 
 	private ProgressBar pbLoading;
 	private ListView fileListView;
@@ -35,15 +37,16 @@ public class SearchFilesActivity extends FragmentActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_files);
         fileListView = (ListView)findViewById(R.id.lvFilelist);
         pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);
-        
+
+        NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
         handleIntent(getIntent());
 	}
 	

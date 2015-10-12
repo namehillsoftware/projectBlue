@@ -1,18 +1,16 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -25,6 +23,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
+import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
@@ -56,7 +55,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class NowPlayingActivity extends Activity implements 
+public class NowPlayingActivity extends AppCompatActivity implements
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
 	OnNowPlayingStopListener,
@@ -67,11 +66,8 @@ public class NowPlayingActivity extends Activity implements
 	private NowPlayingActivityMessageHandler mHandler;
 	private ImageButton mPlay;
 	private ImageButton mPause;
-	private ImageButton mNext;
-	private ImageButton mPrevious;
 	private RatingBar mSongRating;
-	private FrameLayout mContentView;
-	private RelativeLayout mControlNowPlaying, mViewCoverArt;
+	private RelativeLayout mContentView, mControlNowPlaying;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
@@ -86,6 +82,8 @@ public class NowPlayingActivity extends Activity implements
 	private static ViewStructure mViewStructure;
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";
+
+	private static Drawable repeatingDrawable, notRepeatingDrawable;
 
 	private static class ViewStructure {
 		public final int fileKey;
@@ -107,19 +105,16 @@ public class NowPlayingActivity extends Activity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		mContentView = new FrameLayout(this);
-		setContentView(mContentView);
-		LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-		mViewCoverArt = (RelativeLayout) inflater.inflate(R.layout.activity_view_cover_art, mContentView, false);
-		mControlNowPlaying = (RelativeLayout) inflater.inflate(R.layout.activity_control_now_playing, mContentView, false);
+
+		setContentView(R.layout.activity_view_now_playing);
+
+		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
+
+		mControlNowPlaying = (RelativeLayout) findViewById(R.id.rlCtlNowPlaying);
 		mControlNowPlaying.setVisibility(View.INVISIBLE);
-		mContentView.addView(mViewCoverArt);
-		mContentView.addView(mControlNowPlaying);
-		
+
 		mHideTimer = new Timer("Fade Timer");
-		
-		
+
 		mContentView.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -130,8 +125,6 @@ public class NowPlayingActivity extends Activity implements
 
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
 		mPause = (ImageButton) findViewById(R.id.btnPause);
-		mNext = (ImageButton) findViewById(R.id.btnNext);
-		mPrevious = (ImageButton) findViewById(R.id.btnPrevious);
 		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
 		mSongProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
 		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
@@ -146,7 +139,7 @@ public class NowPlayingActivity extends Activity implements
 		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
@@ -157,7 +150,7 @@ public class NowPlayingActivity extends Activity implements
 		});
 		
 		mPause.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (!mControlNowPlaying.isShown()) return;
@@ -167,7 +160,8 @@ public class NowPlayingActivity extends Activity implements
 			}
 		});
 
-		mNext.setOnClickListener(new View.OnClickListener() {
+		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
+		next.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -175,8 +169,9 @@ public class NowPlayingActivity extends Activity implements
 				PlaybackService.next(v.getContext());
 			}
 		});
-		
-		mPrevious.setOnClickListener(new View.OnClickListener() {
+
+		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
+		previous.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -184,7 +179,40 @@ public class NowPlayingActivity extends Activity implements
 				PlaybackService.previous(v.getContext());
 			}
 		});
-		
+
+		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
+		setRepeatingIcon(shuffleButton);
+
+		shuffleButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				LibrarySession.GetLibrary(v.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+						if (result == null) return;
+						final boolean isRepeating = !result.isRepeating();
+						PlaybackService.setIsRepeating(v.getContext(), isRepeating);
+						setRepeatingIcon(shuffleButton, isRepeating);
+					}
+				});
+			}
+		});
+
+		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
+		viewNowPlayingListButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class));
+			}
+		});
+
+		final Drawable songRatingDrawable = mSongRating.getProgressDrawable();
+		DrawableCompat.setTint(songRatingDrawable, getResources().getColor(R.color.custom_transparent_white));
+
+		final Drawable progressDrawable = mSongProgressBar.getProgressDrawable();
+		DrawableCompat.setTint(progressDrawable, getResources().getColor(R.color.custom_transparent_white));
+
 		mHandler = new NowPlayingActivityMessageHandler(this);
 	}
 	
@@ -245,55 +273,36 @@ public class NowPlayingActivity extends Activity implements
 		});
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_now_playing, menu);
-		setRepeatingIcon(menu.findItem(R.id.menu_repeat_playlist));
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.menu_connection_settings:
-				startActivity(new Intent(this, ServerListActivity.class));
-				return true;
-			case R.id.menu_repeat_playlist:
-				final Context _context = this;
-				LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-
-					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-						if (result == null) return;
-						final boolean isRepeating = !result.isRepeating();
-						PlaybackService.setIsRepeating(_context, isRepeating);
-						setRepeatingIcon(item, isRepeating);
-					}
-				});
-				return true;
-			case R.id.menu_view_now_playing_files:
-				startActivity(new Intent(this, NowPlayingFilesListActivity.class));
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
-		}
-	}
-	
-	private void setRepeatingIcon(final MenuItem item) {
-		item.setIcon(R.drawable.av_no_repeat_dark);
+	private void setRepeatingIcon(final ImageButton imageButton) {
+		setRepeatingIcon(imageButton, false);
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
-					setRepeatingIcon(item, result.isRepeating());
+					setRepeatingIcon(imageButton, result.isRepeating());
 			}
 
 		});
 	}
 	
-	private static void setRepeatingIcon(final MenuItem item, boolean isRepeating) {
-		item.setIcon(isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark);
+	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
+		imageButton.setImageDrawable(isRepeating ? getRepeatingDrawable(imageButton.getContext()) : getNotRepeatingDrawable(imageButton.getContext()));
+		;
+	}
+
+	private static Drawable getRepeatingDrawable(Context context) {
+		if (repeatingDrawable == null)
+			repeatingDrawable = context.getResources().getDrawable(R.drawable.av_repeat_dark);
+
+		return repeatingDrawable;
+	}
+
+	private static Drawable getNotRepeatingDrawable(Context context) {
+		if (notRepeatingDrawable == null)
+			notRepeatingDrawable = context.getResources().getDrawable(R.drawable.av_no_repeat_dark);
+
+		return notRepeatingDrawable;
 	}
 	
 	@Override
@@ -313,7 +322,7 @@ public class NowPlayingActivity extends Activity implements
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
 	}
 	
-	public FrameLayout getContentView() {
+	public RelativeLayout getContentView() {
 		return mContentView;
 	}
 	
@@ -525,7 +534,7 @@ public class NowPlayingActivity extends Activity implements
 	
 	private void resetViewOnReconnect(final IFile file) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
-			
+
 			@Override
 			public void onConnectionRegained() {
 				setView(file);
