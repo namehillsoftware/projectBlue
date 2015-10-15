@@ -329,23 +329,23 @@ public class PlaybackService extends Service implements
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
-				
+
 				ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
 					@Override
 					public void onComplete(final ISimpleTask<Integer, Void, Boolean> owner, final Boolean result) {
 						initializePlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress(), new Runnable() {
-							
+
 							@Override
 							public void run() {
 								onPlaylistRestored.onComplete(owner, result);
 							}
 						});
 					}
-					
+
 				});
 			}
-			
+
 		});
 	}
 	
@@ -674,7 +674,13 @@ public class PlaybackService extends Service implements
 			
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (result == Boolean.TRUE) actOnIntent(intent);
+				if (result) {
+					actOnIntent(intent);
+
+					if (mPlaylistController != null && mPlaylistController.isPlaying()) return;
+				}
+
+				stopNotification();
 			}
 		});
 	}
@@ -725,9 +731,9 @@ public class PlaybackService extends Service implements
 						stopSelf(mStartId);
 						return;
 					}
-					
+
 					LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-						
+
 						@Override
 						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 							startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
@@ -762,16 +768,16 @@ public class PlaybackService extends Service implements
 			if (mPlaylistController != null) {
 				mPlaylistController.setVolume(1.0f);
 	    		if (mPlaylistController.isPlaying()) return;
-	    		
-	    		if (mPlaylistController.resume()) return;
+
+				if (mPlaylistController.resume()) return;
 			}
-    		
-        	ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
+
+			ConnectionProvider.refreshConfiguration(mStreamingMusicService, new OnCompleteListener<Integer, Void, Boolean>() {
 
 				@Override
 				public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
 					LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-						
+
 						@Override
 						public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
 							startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
@@ -843,10 +849,10 @@ public class PlaybackService extends Service implements
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		LibrarySession.GetLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				
+
 				result.setSavedTracksString(controller.getPlaylistString());
 				result.setNowPlayingId(controller.getCurrentPosition());
 				result.setNowPlayingProgress(filePlayer.getCurrentPosition());
