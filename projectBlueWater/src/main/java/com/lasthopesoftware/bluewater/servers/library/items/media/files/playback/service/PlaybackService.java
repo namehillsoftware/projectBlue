@@ -60,7 +60,9 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -87,6 +89,17 @@ public class PlaybackService extends Service implements
 	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.action.SYSTEM_PAUSE";
 	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.action.STOP_WAITING_FOR_CONNECTION";
 	private static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.action.INITIALIZE_PLAYLIST";
+
+	private static final Set<String> validActions = new HashSet<String>(Arrays.asList(new String[] {
+			ACTION_LAUNCH_MUSIC_SERVICE,
+			ACTION_PLAY,
+			ACTION_PAUSE,
+			ACTION_PREVIOUS,
+			ACTION_NEXT,
+			ACTION_SEEK_TO,
+			ACTION_STOP_WAITING_FOR_CONNECTION,
+			ACTION_INITIALIZE_PLAYLIST
+	}));
 	
 	/* Bag constants */
 	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
@@ -526,6 +539,11 @@ public class PlaybackService extends Service implements
 	public int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
 		mStartId = startId;
+
+		if (!validActions.contains(intent.getAction())) {
+			stopSelf(startId);
+			return START_NOT_STICKY;
+		}
 		
 		mStreamingMusicService = this;
 		
@@ -576,9 +594,9 @@ public class PlaybackService extends Service implements
 			stopSelf(mStartId);
 			return;
 		case BUILDING_SESSION_COMPLETE:
-			notifyBuilder.setContentText(getText(R.string.lbl_connected));
+			stopNotification();
 			actOnIntent(intentToRun);
-			break;
+			return;
 		}
 		notifyForeground(notifyBuilder.build());
 	}
@@ -663,7 +681,6 @@ public class PlaybackService extends Service implements
 		
 		if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
         	PollConnection.Instance.get(mStreamingMusicService).stopPolling();
-        	return;
         }
 	}
 	
@@ -798,7 +815,6 @@ public class PlaybackService extends Service implements
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
 	            if (mPlaylistController.isPlaying()) mPlaylistController.setVolume(0.1f);
-	            return;
 	    }
 	}
 	
