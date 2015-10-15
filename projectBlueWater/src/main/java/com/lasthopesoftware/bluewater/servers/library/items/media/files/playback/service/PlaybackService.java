@@ -727,8 +727,7 @@ public class PlaybackService extends Service implements
 		
 		if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
         	PollConnection.Instance.get(mStreamingMusicService).stopPolling();
-        	return;
-        }
+		}
 	}
 	
 	private void restorePlaylistForIntent(final Intent intent) {
@@ -842,7 +841,7 @@ public class PlaybackService extends Service implements
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (mPlaylistController.isPlaying()) mPlaylistController.setVolume(0.1f);
+	            if (mPlaylistController.isPlaying()) mPlaylistController.setVolume(0.2f);
 	    }
 	}
 	
