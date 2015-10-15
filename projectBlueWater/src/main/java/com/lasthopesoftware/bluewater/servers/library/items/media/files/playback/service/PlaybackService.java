@@ -817,14 +817,15 @@ public class PlaybackService extends Service implements
 	    		
 	    		if (mPlaylistController.resume()) return;
 			}
-		
-		        @Override
+
+			restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
+				@Override
 				public void run(Boolean result) {
 					if (result)
 						mPlaylistController.resume();
-		        }
+				}
 			});
-			
+
 			return;
 		}
 		
