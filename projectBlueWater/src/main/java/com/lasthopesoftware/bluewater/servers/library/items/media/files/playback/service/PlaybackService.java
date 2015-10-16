@@ -389,7 +389,7 @@ public class PlaybackService extends Service implements
 
 				SessionConnection.refresh(mStreamingMusicService);
 			}
-			
+
 		});
 	}
 
@@ -736,7 +736,13 @@ public class PlaybackService extends Service implements
 		restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
 			@Override
 			public void run(Boolean result) {
-				if (result) actOnIntent(intent);
+				if (result) {
+					actOnIntent(intent);
+
+					if (mPlaylistController != null && mPlaylistController.isPlaying()) return;
+				}
+
+				stopNotification();
 			}
 		});
 	}
@@ -813,8 +819,8 @@ public class PlaybackService extends Service implements
 			if (mPlaylistController != null) {
 				mPlaylistController.setVolume(1.0f);
 	    		if (mPlaylistController.isPlaying()) return;
-	    		
-	    		if (mPlaylistController.resume()) return;
+
+				if (mPlaylistController.resume()) return;
 			}
 
 			restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
@@ -886,10 +892,10 @@ public class PlaybackService extends Service implements
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
-			
+
 			@Override
 			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-				
+
 				result.setSavedTracksString(controller.getPlaylistString());
 				result.setNowPlayingId(controller.getCurrentPosition());
 				result.setNowPlayingProgress(filePlayer.getCurrentPosition());
