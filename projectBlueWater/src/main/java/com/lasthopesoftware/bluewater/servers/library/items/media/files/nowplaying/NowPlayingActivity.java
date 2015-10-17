@@ -207,7 +207,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			}
 		});
 
-		DrawableCompat.setTint(mSongRating.getProgressDrawable(), Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? getColor(R.color.custom_transparent_white) : getResources().getColor(R.color.custom_transparent_white));
+		DrawableCompat.setTint(mSongRating.getProgressDrawable(), Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? getColor(R.color.custom_transparent_white) : getResources().getColor(R.color.custom_transparent_white));
 
 		mHandler = new NowPlayingActivityMessageHandler(this);
 	}
