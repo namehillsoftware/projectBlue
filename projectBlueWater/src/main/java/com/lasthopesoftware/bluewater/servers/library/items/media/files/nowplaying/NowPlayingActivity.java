@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -289,14 +290,14 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private static Drawable getRepeatingDrawable(Context context) {
 		if (repeatingDrawable == null)
-			repeatingDrawable = context.getResources().getDrawable(R.drawable.av_repeat_dark);
+			repeatingDrawable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? context.getDrawable(R.drawable.av_repeat_dark) : context.getResources().getDrawable(R.drawable.av_repeat_dark);;
 
 		return repeatingDrawable;
 	}
 
 	private static Drawable getNotRepeatingDrawable(Context context) {
 		if (notRepeatingDrawable == null)
-			notRepeatingDrawable = context.getResources().getDrawable(R.drawable.av_no_repeat_dark);
+			notRepeatingDrawable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? context.getDrawable(R.drawable.av_no_repeat_dark) : context.getResources().getDrawable(R.drawable.av_no_repeat_dark);
 
 		return notRepeatingDrawable;
 	}
