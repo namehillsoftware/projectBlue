@@ -149,7 +149,7 @@ public class ItemSyncService extends Service {
 								accessConfiguration.setLocalOnly(true);
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							ConnectionTester.doTest(connectionProvider, 5, new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+							ConnectionTester.doTest(connectionProvider, 5000, new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
 								@Override
 								public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean success) {
 									if (!success) {
