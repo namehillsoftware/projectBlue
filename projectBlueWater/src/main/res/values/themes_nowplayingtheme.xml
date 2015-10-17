@@ -3,16 +3,16 @@
     <style name="NowPlayingTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
-        <item name="colorPrimary">@color/clearstream_dark</item>
+        <item name="colorPrimary">@android:color/transparent</item>
         <!--   darker variant for the status bar and contextual app bars -->
         <item name="colorPrimaryDark">@color/overlay_dark</item>
         <!--   theme UI controls like checkboxes and text fields -->
         <item name="colorAccent">@color/white</item>
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColor">@color/white</item>
-        <item name="editTextColor">@color/white</item>
+        <item name="android:editTextColor">@color/white</item>
         <item name="android:windowActionBarOverlay">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
+
+        <item name="android:progressBarStyleHorizontal">@style/ProgressBarAppTheme</item>
     </style>
 </resources>
