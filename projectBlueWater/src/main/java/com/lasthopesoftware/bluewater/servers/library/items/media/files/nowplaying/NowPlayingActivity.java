@@ -14,6 +14,7 @@ import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RatingBar.OnRatingBarChangeListener;
@@ -64,7 +65,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private ImageButton mPlay;
 	private ImageButton mPause;
 	private RatingBar mSongRating;
-	private RelativeLayout mContentView, mControlNowPlaying;
+	private RelativeLayout mContentView;
+	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 	private Timer mHideTimer;
 	private TimerTask mTimerTask;
 	
@@ -107,9 +109,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
 
-		mControlNowPlaying = (RelativeLayout) findViewById(R.id.rlCtlNowPlaying);
-		mControlNowPlaying.setVisibility(View.INVISIBLE);
-
 		mHideTimer = new Timer("Fade Timer");
 
 		mContentView.setOnClickListener(new OnClickListener() {
@@ -128,7 +127,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mNowPlayingImageView = (ImageView) findViewById(R.id.imgNowPlaying);
 		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
 		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
-		
+
+		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls((LinearLayout) findViewById(R.id.llNpButtons), (LinearLayout) findViewById(R.id.menuControlsLinearLayout), mSongRating);
+		nowPlayingToggledVisibilityControls.toggleVisibility(false);
+
 		PlaybackService.addOnStreamingChangeListener(this);
 		PlaybackService.addOnStreamingPauseListener(this);
 		PlaybackService.addOnStreamingStopListener(this);
@@ -139,7 +141,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 			@Override
 			public void onClick(View v) {
-				if (!mControlNowPlaying.isShown()) return;
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 				PlaybackService.play(v.getContext());
 				mPlay.setVisibility(View.INVISIBLE);
 				mPause.setVisibility(View.VISIBLE);
@@ -150,7 +152,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 			@Override
 			public void onClick(View v) {
-				if (!mControlNowPlaying.isShown()) return;
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 				PlaybackService.pause(v.getContext());
 				mPlay.setVisibility(View.VISIBLE);
 				mPause.setVisibility(View.INVISIBLE);
@@ -162,7 +164,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 			@Override
 			public void onClick(View v) {
-				if (!mControlNowPlaying.isShown()) return;
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 				PlaybackService.next(v.getContext());
 			}
 		});
@@ -172,7 +174,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 			@Override
 			public void onClick(View v) {
-				if (!mControlNowPlaying.isShown()) return;
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 				PlaybackService.previous(v.getContext());
 			}
 		});
@@ -323,8 +325,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		return mContentView;
 	}
 	
-	public RelativeLayout getControlNowPlaying() {
-		return mControlNowPlaying;
+	public NowPlayingToggledVisibilityControls getNowPlayingToggledVisibilityControls() {
+		return nowPlayingToggledVisibilityControls;
 	}
 
 	public ProgressBar getSongProgressBar() {
@@ -463,7 +465,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 						
 						@Override
 						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-							if (!fromUser || !mControlNowPlaying.isShown()) return;
+							if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible()) return;
 							file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 							
 							viewStructure.nowPlayingRating = rating;
@@ -511,8 +513,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private void showNowPlayingControls(final IPlaybackFile filePlayer) {
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 		if (filePlayer != null) mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(filePlayer, mHandler);
-		
-		mControlNowPlaying.setVisibility(View.VISIBLE);
+
+		nowPlayingToggledVisibilityControls.toggleVisibility(true);
 		mContentView.invalidate();
 		if (mTimerTask != null) mTimerTask.cancel();
 		mHideTimer.purge();
@@ -579,8 +581,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
-		
-		mControlNowPlaying.invalidate();
 	}
 
 	@Override
