@@ -28,7 +28,6 @@ public class NowPlayingActivityMessageHandler extends Handler {
 		case HIDE_CONTROLS:
 			mOwner.getNowPlayingToggledVisibilityControls().toggleVisibility(false);
 			mOwner.getContentView().invalidate();
-			return;
 		}
 	}
 }
