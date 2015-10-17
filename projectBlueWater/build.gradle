@@ -40,8 +40,8 @@ repositories {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:design:23.0.1'
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:design:23.1.0'
     compile 'joda-time:joda-time:2.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-validator:commons-validator:1.4.0'
