@@ -24,7 +24,18 @@ import com.lasthopesoftware.threading.ISimpleTask;
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
     private static Drawable nowPlayingIconDrawable;
 
-    public static void addNowPlayingFloatingActionButton(RelativeLayout container) {
+//    private static final int fadeDurationMs = 500;
+//    private static final Animation fadeInAnimation = new AlphaAnimation(0, 1);
+//    static {
+//        fadeInAnimation.setDuration(fadeDurationMs);
+//    }
+//    private static final Animation fadeOutAnimation = new AlphaAnimation(1, 0);
+//    static {
+//        fadeOutAnimation.setStartOffset(fadeDurationMs);
+//        fadeOutAnimation.setDuration(fadeDurationMs);
+//    }
+
+    public static NowPlayingFloatingActionButton addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
 
         final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -35,6 +46,8 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
         nowPlayingFloatingActionButton.setLayoutParams(layoutParams);
         container.addView(nowPlayingFloatingActionButton);
+
+        return nowPlayingFloatingActionButton;
     }
 
     private NowPlayingFloatingActionButton(Context context) {
@@ -80,5 +93,10 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                 });
             }
         });
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
     }
 }

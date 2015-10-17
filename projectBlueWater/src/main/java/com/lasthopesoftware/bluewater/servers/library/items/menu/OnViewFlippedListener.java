@@ -6,5 +6,5 @@ import android.widget.ViewFlipper;
  * Created by david on 3/29/15.
  */
 public interface OnViewFlippedListener {
-    public void onViewFlipped(ViewFlipper viewFlipper);
+    void onViewFlipped(ViewFlipper viewFlipper);
 }
