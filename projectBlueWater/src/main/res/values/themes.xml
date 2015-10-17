@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <item name="attr/action_search">@drawable/action_search</item>
+        <item name="attr/action_settings">@drawable/action_settings</item>
+        <item name="attr/av_download">@drawable/av_download</item>
+        <item name="attr/av_fast_forward">@drawable/av_fast_forward</item>
+        <item name="attr/av_pause">@drawable/av_pause</item>
+        <item name="attr/av_play">@drawable/av_play</item>
+        <item name="attr/av_rewind">@drawable/av_rewind</item>
+        <item name="attr/content_discard">@drawable/content_discard</item>
+        <item name="attr/content_new">@drawable/content_new</item>
+        <item name="attr/navigation_expand">@drawable/navigation_expand</item>
+        <item name="attr/navigation_collapse">@drawable/navigation_collapse</item>
+        <item name="attr/navigation_refresh">@drawable/navigation_refresh</item>
+        <item name="attr/navigation_shownotes">@drawable/navigation_shownotes</item>
+        <item name="attr/non_transparent_background">@color/white</item>
+        <item name="attr/borderless_button">@drawable/borderless_button</item>
+        <item name="attr/overlay_background">@color/overlay_light</item>
+        <item name="attr/dragview_background">@drawable/dragview_background</item>
+        <item name="attr/dragview_float_background">@color/white</item>
+        <!--<item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>-->
+        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <!-- Main theme colors -->
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@color/clearstream_blue</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/clearstream_dark</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/clearstream_blue</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:editTextColor">@color/black</item>
+        <item name="editTextColor">@color/black</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
+        <item name="searchViewStyle">@style/SearchViewStyle</item>
+    </style>
+</resources>
