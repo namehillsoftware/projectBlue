@@ -113,7 +113,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mHideTimer = new Timer("Fade Timer");
 
 		mContentView.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				showNowPlayingControls();
@@ -236,7 +236,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		if (PlaybackService.getPlaylistController() != null) {
 			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
 
-			setView(filePlayer.getFile());
+			setView(filePlayer.getFile(), filePlayer.getCurrentPosition());
 			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
 			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 
@@ -263,8 +263,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 					@Override
 					protected void onPostExecute(List<IFile> result) {
-						setView(result.get(library.getNowPlayingId()));
-						mSongProgressBar.setProgress(library.getNowPlayingProgress());
+						setView(result.get(library.getNowPlayingId()), library.getNowPlayingProgress());
 					}
 				};
 
@@ -288,7 +287,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	
 	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
 		imageButton.setImageDrawable(isRepeating ? getRepeatingDrawable(imageButton.getContext()) : getNotRepeatingDrawable(imageButton.getContext()));
-		;
 	}
 
 	private static Drawable getRepeatingDrawable(Context context) {
@@ -334,166 +332,187 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		return mSongProgressBar;
 	}
 	
-	private void setView(final IFile file) {
+	private void setView(final IFile file, final int initialFilePosition) {
 		
-		try {
-			
-			if (mViewStructure != null && mViewStructure.fileKey != file.getKey()) {
-				mViewStructure.release();
-				mViewStructure = null;
-			}
-			
-			if (mViewStructure == null)
-				mViewStructure = new ViewStructure(file);
-			
-			final ViewStructure viewStructure = mViewStructure;
-
-			if (viewStructure.nowPlayingImage == null) {
-				try {				
-					// Cancel the getFileImageTask if it is already in progress
-					if (getFileImageTask != null)
-						getFileImageTask.cancel();
-					
-					mNowPlayingImageView.setVisibility(View.INVISIBLE);
-					mLoadingImg.setVisibility(View.VISIBLE);
-					
-					getFileImageTask = ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), file, new OnCompleteListener<Void, Void, Bitmap>() {
-						
-						@Override
-						public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-							if (viewStructure.nowPlayingImage != null)
-								viewStructure.nowPlayingImage.recycle();
-							viewStructure.nowPlayingImage = result;
-							
-							mNowPlayingImageView.setImageBitmap(result);
-							
-							displayImageBitmap();
-						}
-					});
-					
-				} catch (Exception e) {
-					mLogger.error(e.toString(), e);
-				}
-			} else {
-				mNowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
-				displayImageBitmap();
-			}
-			
-			final AsyncTask<Void, Void, String> getArtistTask = new AsyncExceptionTask<Void, Void, String>() {
-
-				@Override
-				protected String doInBackground(Void... params) {
-					if (viewStructure.nowPlayingArtist != null)
-						return viewStructure.nowPlayingArtist;
-					
-					try {
-						return file.getProperty(FilePropertiesProvider.ARTIST);
-					} catch (FileNotFoundException e) {
-						handleFileNotFoundException(file, e);
-						return null;
-					} catch (IOException e) {
-						setException(e);
-						return null;
-					}
-				}
-			
-				@Override
-				protected void onPostExecute(String result, Exception exception) {
-					if (handleIoException(file, exception)) return;
-					
-					mNowPlayingArtist.setText(result);
-					viewStructure.nowPlayingArtist = result;
-				}
-			};
-			getArtistTask.execute();
-			
-			final AsyncExceptionTask<Void, Void, String> getTitleTask = new AsyncExceptionTask<Void, Void, String>() {
-
-				@Override
-				protected String doInBackground(Void... params) {
-					if (viewStructure.nowPlayingTitle != null)
-						return viewStructure.nowPlayingTitle;
-					
-					return file.getValue();
-				}
-				
-				@Override
-				protected void onPostExecute(String result, Exception exception) {
-					if (handleIoException(file, exception)) return;
-					
-					mNowPlayingTitle.setText(result);
-                    mNowPlayingTitle.setSelected(true);
-					viewStructure.nowPlayingTitle = result;
-				}
-			};
-			getTitleTask.execute();
-			
-			final AsyncExceptionTask<Void, Void, Float> getRatingsTask = new AsyncExceptionTask<Void, Void, Float>() {
-
-				@Override
-				protected Float doInBackground(Void... params) {
-					if (viewStructure.nowPlayingRating != null)
-						return viewStructure.nowPlayingRating;
-					
-					try {
-						if (file.getProperty(FilePropertiesProvider.RATING) != null && !file.getProperty(FilePropertiesProvider.RATING).isEmpty())
-							return Float.valueOf(file.getProperty(FilePropertiesProvider.RATING));
-					} catch (FileNotFoundException e) {
-						handleFileNotFoundException(file, e);
-					} catch (NumberFormatException | IOException e) {
-						setException(e);
-						
-						return null;
-					}
-					
-					return null;
-				}
-				
-				@Override
-				protected void onPostExecute(Float result, Exception exception) {
-					if (handleIoException(file, exception)) {
-						mSongRating.setRating(0f);
-						mSongRating.setOnRatingBarChangeListener(null);
-						
-						return;
-					}
-					
-					viewStructure.nowPlayingRating = result;
-					
-					mSongRating.setRating(result != null ? result : 0f);
-					
-					mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
-						
-						@Override
-						public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-							if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible()) return;
-							file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
-							
-							viewStructure.nowPlayingRating = rating;
-						}
-					});
-				}
-			};
-			getRatingsTask.execute();
-			
-			mSongProgressBar.setMax(file.getDuration());			
-		} catch (IOException ioE) {
-			resetViewOnReconnect(file);
+		if (mViewStructure != null && mViewStructure.fileKey != file.getKey()) {
+			mViewStructure.release();
+			mViewStructure = null;
 		}
+		
+		if (mViewStructure == null)
+			mViewStructure = new ViewStructure(file);
+		
+		final ViewStructure viewStructure = mViewStructure;
+		
+		if (viewStructure.nowPlayingImage == null) {
+			try {				
+				// Cancel the getFileImageTask if it is already in progress
+				if (getFileImageTask != null)
+					getFileImageTask.cancel();
+				
+				mNowPlayingImageView.setVisibility(View.INVISIBLE);
+				mLoadingImg.setVisibility(View.VISIBLE);
+				
+				getFileImageTask = ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), file, new OnCompleteListener<Void, Void, Bitmap>() {
+					
+					@Override
+					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+						if (viewStructure.nowPlayingImage != null)
+							viewStructure.nowPlayingImage.recycle();
+						viewStructure.nowPlayingImage = result;
+						
+						mNowPlayingImageView.setImageBitmap(result);
+						
+						displayImageBitmap();
+					}
+				});
+				
+			} catch (Exception e) {
+				mLogger.error(e.toString(), e);
+			}
+		} else {
+			mNowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
+			displayImageBitmap();
+		}
+		
+		final AsyncTask<Void, Void, String> getArtistTask = new AsyncExceptionTask<Void, Void, String>() {
+
+            @Override
+            protected String doInBackground(Void... params) {
+                if (viewStructure.nowPlayingArtist != null)
+                    return viewStructure.nowPlayingArtist;
+
+                try {
+                    return file.getProperty(FilePropertiesProvider.ARTIST);
+                } catch (FileNotFoundException e) {
+                    handleFileNotFoundException(file, e);
+                    return null;
+                } catch (IOException e) {
+                    setException(e);
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String result, Exception exception) {
+                if (handleIoException(file, initialFilePosition, exception)) return;
+
+                mNowPlayingArtist.setText(result);
+                viewStructure.nowPlayingArtist = result;
+            }
+        };
+		getArtistTask.execute();
+
+		final AsyncExceptionTask<Void, Void, String> getTitleTask = new AsyncExceptionTask<Void, Void, String>() {
+
+            @Override
+            protected String doInBackground(Void... params) {
+                if (viewStructure.nowPlayingTitle != null)
+                    return viewStructure.nowPlayingTitle;
+
+                return file.getValue();
+            }
+
+            @Override
+            protected void onPostExecute(String result, Exception exception) {
+                if (handleIoException(file, initialFilePosition, exception)) return;
+
+                mNowPlayingTitle.setText(result);
+				mNowPlayingTitle.setSelected(true);
+                viewStructure.nowPlayingTitle = result;
+            }
+        };
+		getTitleTask.execute();
+
+		final AsyncExceptionTask<Void, Void, Float> getRatingsTask = new AsyncExceptionTask<Void, Void, Float>() {
+
+            @Override
+            protected Float doInBackground(Void... params) {
+                if (viewStructure.nowPlayingRating != null)
+                    return viewStructure.nowPlayingRating;
+
+                try {
+                    if (file.getProperty(FilePropertiesProvider.RATING) != null && !file.getProperty(FilePropertiesProvider.RATING).isEmpty())
+                        return Float.valueOf(file.getProperty(FilePropertiesProvider.RATING));
+                } catch (FileNotFoundException e) {
+                    handleFileNotFoundException(file, e);
+                } catch (NumberFormatException | IOException e) {
+                    setException(e);
+
+                    return null;
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Float result, Exception exception) {
+                if (handleIoException(file, initialFilePosition, exception)) {
+                    mSongRating.setRating(0f);
+                    mSongRating.setOnRatingBarChangeListener(null);
+
+                    return;
+                }
+
+                viewStructure.nowPlayingRating = result;
+
+                mSongRating.setRating(result != null ? result : 0f);
+
+                mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+
+                    @Override
+                    public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                        if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
+                            return;
+                        file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
+
+                        viewStructure.nowPlayingRating = rating;
+                    }
+                });
+            }
+        };
+		getRatingsTask.execute();
+
+		final AsyncExceptionTask<Void, Void, Integer> getNowPlayingDuration = new AsyncExceptionTask<Void, Void, Integer>() {
+            @Override
+            protected Integer doInBackground(Void... params) {
+                try {
+                    return file.getDuration();
+                } catch (IOException e) {
+                    setException(e);
+                    return -1;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Integer result, Exception exception) {
+                if (handleIoException(file, initialFilePosition, exception)) {
+                    mSongProgressBar.setMax(100);
+                    return;
+                }
+
+                if (result < 0) return;
+
+				mSongProgressBar.setMax(result);
+				mSongProgressBar.setProgress(initialFilePosition);
+            }
+        };
+
+		getNowPlayingDuration.execute();
 	}
 
 	private void handleFileNotFoundException(IFile file, FileNotFoundException fe) {
 		mLogger.error(String.format(mFileNotFoundError, file), fe);
 	}
 	
-	private boolean handleIoException(IFile file, Exception exception) {
+	private boolean handleIoException(IFile file, int position, Exception exception) {
 		if (exception instanceof FileNotFoundException) {
 			handleFileNotFoundException(file, (FileNotFoundException)exception);
 			return false;
 		}
 
 		if (exception instanceof IOException) {
-			resetViewOnReconnect(file);
+			resetViewOnReconnect(file, position);
 			return true;
 		}
 		
@@ -512,9 +531,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	}
 	
 	private void showNowPlayingControls(final IPlaybackFile filePlayer) {
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		if (filePlayer != null) mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(filePlayer, mHandler);
-
 		nowPlayingToggledVisibilityControls.toggleVisibility(true);
 		mContentView.invalidate();
 		if (mTimerTask != null) mTimerTask.cancel();
@@ -526,18 +542,17 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				final Message msg = new Message();
 				msg.what = NowPlayingActivityMessageHandler.HIDE_CONTROLS;
 				mHandler.sendMessage(msg);
-				if (mTrackerTask != null) mTrackerTask.cancel(false);
 			}
 		};
 		mHideTimer.schedule(mTimerTask, 5000);
 	}
 	
-	private void resetViewOnReconnect(final IFile file) {
+	private void resetViewOnReconnect(final IFile file, final int position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
 
 			@Override
 			public void onConnectionRegained() {
-				setView(file);
+				setView(file, position);
 			}
 		});
 		WaitForConnectionDialog.show(this);
@@ -545,8 +560,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	@Override
 	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {		
-		setView(filePlayer.getFile());
-		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
+		setView(filePlayer.getFile(), filePlayer.getCurrentPosition());
+
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
+		mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(filePlayer, mHandler);
 	}
 	
 	@Override
