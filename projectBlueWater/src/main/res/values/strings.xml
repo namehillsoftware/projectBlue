@@ -74,4 +74,5 @@
     <string name="title_sync_files">Syncing files</string>
     <string name="lbl_sync_local_connection">Sync only on local connections</string>
     <string name="title_view_active_downloads">View Active Downloads</string>
+    <string name="select_view_title">Select view</string>
 </resources>
