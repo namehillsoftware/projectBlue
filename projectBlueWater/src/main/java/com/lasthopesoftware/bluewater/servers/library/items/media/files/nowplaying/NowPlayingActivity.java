@@ -236,9 +236,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		if (PlaybackService.getPlaylistController() != null) {
 			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
 
-			setView(filePlayer.getFile(), filePlayer.getCurrentPosition());
-			mPlay.setVisibility(filePlayer.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
-			mPause.setVisibility(filePlayer.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+			setView(filePlayer);
+
 
 			return;
 		}
@@ -330,6 +329,16 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	public ProgressBar getSongProgressBar() {
 		return mSongProgressBar;
+	}
+
+	private void setView(final IPlaybackFile playbackFile) {
+		setView(playbackFile.getFile(), playbackFile.getCurrentPosition());
+
+		mPlay.setVisibility(playbackFile.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
+		mPause.setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
+		mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, mHandler);
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
@@ -560,10 +569,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	@Override
 	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {		
-		setView(filePlayer.getFile(), filePlayer.getCurrentPosition());
-
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(filePlayer, mHandler);
+		setView(filePlayer);
 	}
 	
 	@Override
