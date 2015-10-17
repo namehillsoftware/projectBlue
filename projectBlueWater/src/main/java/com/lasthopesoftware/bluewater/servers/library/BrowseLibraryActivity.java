@@ -106,6 +106,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 		mOldTitle = getTitle();
+		final CharSequence selectViewTitle = getText(R.string.select_view_title);
 		mDrawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
                 mDrawerLayout,         /* DrawerLayout object */
@@ -125,7 +126,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
                 mOldTitle = getSupportActionBar().getTitle();
-				getSupportActionBar().setTitle("Select view");
+				getSupportActionBar().setTitle(selectViewTitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
