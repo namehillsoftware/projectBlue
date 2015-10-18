@@ -6,3 +6,4 @@
 /build
 /*.apk
 /bin
+*.iml

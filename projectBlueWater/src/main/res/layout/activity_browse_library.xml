@@ -6,7 +6,6 @@
 
 	<android.support.v4.widget.DrawerLayout
 			android:id="@+id/drawer_layout"
-
 			android:layout_width="match_parent"
 			android:layout_height="match_parent">
 
@@ -43,18 +42,8 @@
 			android:layout_height="match_parent"
 			android:layout_gravity="start"
 			android:orientation="vertical"
-			android:divider="@color/ics_gray"
-			android:dividerHeight="1dp"
-			android:background="@color/overlay_light" />
+			android:dividerHeight="0dp"
+			android:background="@color/clearstream_dark"/>
 
 	</android.support.v4.widget.DrawerLayout>
-
-	<!--<include-->
-		<!--layout="@layout/now_playing_action_button"-->
-		<!--android:layout_width="wrap_content"-->
-		<!--android:layout_height="wrap_content"-->
-		<!--android:layout_alignParentBottom="true"-->
-		<!--android:layout_alignParentEnd="true"-->
-		<!--android:layout_alignParentRight="true"-->
-		<!--android:layout_margin="16dp" />-->
 </RelativeLayout>

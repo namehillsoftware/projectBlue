@@ -17,22 +17,26 @@
 			android:layout_alignParentEnd="true"
 			android:layout_alignParentRight="true"
 			android:layout_centerInParent="true"
-			android:id="@+id/miscControls">
+			android:id="@+id/menuControlsLinearLayout">
 			<ImageButton
 				android:id="@+id/shuffleButton"
 				android:layout_width="0dip"
 				android:layout_weight="1"
 				android:layout_height="wrap_content"
-				android:layout_marginEnd="10dp"
-				android:layout_marginRight="10dp"
+				android:paddingRight="10dp"
+				android:paddingEnd="10dp"
 				android:background="?android:attr/selectableItemBackground"
 				android:contentDescription="@string/btn_next"
-				android:src="@drawable/av_no_repeat_dark" />
+				android:src="@drawable/av_no_repeat_dark"/>
 			<ImageButton
 				android:id="@+id/viewNowPlayingListButton"
 				android:layout_width="0dip"
 				android:layout_weight="1"
 				android:layout_height="wrap_content"
+				android:paddingLeft="10dp"
+				android:paddingStart="10dp"
+				android:paddingRight="20dp"
+				android:paddingEnd="20dp"
 				android:background="?android:attr/selectableItemBackground"
 				android:contentDescription="@string/btn_next"
 				android:src="@drawable/ic_list_dark" />
@@ -42,8 +46,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical"
-			android:layout_toStartOf="@id/miscControls"
-			android:layout_toLeftOf="@id/miscControls">
+			android:layout_toStartOf="@id/menuControlsLinearLayout"
+			android:layout_toLeftOf="@id/menuControlsLinearLayout">
 			<TextView
 				android:id="@+id/tvSongTitle"
 				android:layout_width="wrap_content"
@@ -79,12 +83,25 @@
 	    android:rating="0"
 	    android:stepSize="1" />
 
+	<ProgressBar
+		android:id="@+id/pbNowPlaying"
+		style="?android:attr/progressBarStyleHorizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_above="@+id/llNpButtons"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentStart="true"
+		android:layout_marginBottom="20dp"
+		android:indeterminate="false"
+		android:max="100" />
+
 	<LinearLayout
 	    android:id="@+id/llNpButtons"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
 	    android:layout_alignParentLeft="true"
+		android:layout_alignParentStart="true"
 	    android:orientation="horizontal"
 	    android:paddingLeft="2dip"
 	    android:paddingRight="2dip" >
@@ -131,17 +148,5 @@
 	        android:contentDescription="@string/btn_next"
 	        android:src="@drawable/av_fast_forward_dark" />
 	</LinearLayout>
-
-	<ProgressBar
-	    android:id="@+id/pbNowPlaying"
-	    style="?android:attr/progressBarStyleHorizontal"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_above="@+id/llNpButtons"
-	    android:layout_alignParentLeft="true"
-		android:layout_alignParentStart="true"
-	    android:layout_marginBottom="20dp"
-	    android:indeterminate="false"
-	    android:max="100" />
     
 </RelativeLayout>

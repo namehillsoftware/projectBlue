@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 
 import android.os.Handler;
 import android.os.Message;
-import android.view.View;
 
 public class NowPlayingActivityMessageHandler extends Handler {
 //	private static int UPDATE_ALL = 0;
@@ -27,9 +26,8 @@ public class NowPlayingActivityMessageHandler extends Handler {
 			mOwner.getSongProgressBar().setProgress(msg.arg1);
 			return;
 		case HIDE_CONTROLS:
-			mOwner.getControlNowPlaying().setVisibility(View.INVISIBLE);
+			mOwner.getNowPlayingToggledVisibilityControls().toggleVisibility(false);
 			mOwner.getContentView().invalidate();
-			return;
 		}
 	}
 }

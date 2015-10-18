@@ -36,7 +36,7 @@ public class LongClickViewFlipListener implements OnItemLongClickListener {
         mOnViewFlippedListener = onViewFlippedListener;
     }
 
-    public final static boolean tryFlipToPreviousView(final ViewFlipper flippedView) {
+    public static boolean tryFlipToPreviousView(final ViewFlipper flippedView) {
         if (flippedView == null || flippedView.getDisplayedChild() == 0) return false;
 
         flippedView.showPrevious();
