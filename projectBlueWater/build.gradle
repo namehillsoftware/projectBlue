@@ -38,8 +38,8 @@ repositories {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:design:23.0.1'
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:design:23.1.0'
     compile 'joda-time:joda-time:2.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-validator:commons-validator:1.4.0'
@@ -51,6 +51,5 @@ dependencies {
     compile 'com.j256.ormlite:ormlite-core:4.48'
     compile 'com.j256.ormlite:ormlite-android:4.48'
     compile files('libs/xmlwise-debug-1_2.jar')
-    compile 'com.github.amlcurran.showcaseview:library:5.0.0'
     testCompile 'junit:junit:4.12'
 }
