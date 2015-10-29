@@ -29,15 +29,25 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends AppCompatActivity implements OnViewChangedListener {
+public class ItemListActivity extends AppCompatActivity {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
 
     private ListView itemListView;
     private ProgressBar pbLoading;
-
     private ViewAnimator viewAnimator;
+    private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
+
+    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
+        @Override
+        public void onViewChanged(ViewAnimator viewAnimator) {
+            ItemListActivity.this.viewAnimator = viewAnimator;
+
+            if (nowPlayingFloatingActionButton != null)
+                nowPlayingFloatingActionButton.toggleVisibility(viewAnimator.getDisplayedChild() == 0);
+        }
+    };
 
     private int mItemId;
 
@@ -80,12 +90,12 @@ public class ItemListActivity extends AppCompatActivity implements OnViewChanged
         }));
         itemProvider.execute();
 
-        NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+        nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
     private void BuildItemListView(final List<Item> items) {
         final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items);
-        itemListAdapter.setOnViewChangedListener(this);
+        itemListAdapter.setOnViewChangedListener(onViewChangedListener);
         itemListView.setAdapter(itemListAdapter);
         itemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
         final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
@@ -128,10 +138,5 @@ public class ItemListActivity extends AppCompatActivity implements OnViewChanged
         if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
-    }
-
-    @Override
-    public void onViewChanged(ViewAnimator viewAnimator) {
-        this.viewAnimator = viewAnimator;
     }
 }

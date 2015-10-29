@@ -56,7 +56,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 	private DrawerLayout mDrawerLayout;
     private PagerSlidingTabStrip mLibraryViewsTabs;
     private ProgressBar mPbLoadingViews;
-    private ViewAnimator mFlippedView;
+    private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
@@ -69,19 +69,15 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
 
-    private final OnViewChangedListener mOnViewFlippedListener = new OnViewChangedListener() {
+    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
 		@Override
 		public void onViewChanged(ViewAnimator viewAnimator) {
-			mFlippedView = viewAnimator;
+			BrowseLibraryActivity.this.viewAnimator = viewAnimator;
 
-//			if (mFlippedView.getDisplayedChild() == 1)
-//				nowPlayingFloatingActionButton.hide();
-//			else
-//				nowPlayingFloatingActionButton.setVisibility(View.VISIBLE);
-
-			nowPlayingFloatingActionButton.setVisibility(mFlippedView.getDisplayedChild() == 0 ? View.VISIBLE : View.GONE);
+			if (nowPlayingFloatingActionButton != null)
+				nowPlayingFloatingActionButton.toggleVisibility(viewAnimator.getDisplayedChild() == 0);
 		}
-	    };
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -274,7 +270,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
                 viewChildPagerAdapter.setLibraryViews(result);
-                viewChildPagerAdapter.setOnViewChangedListener(mOnViewFlippedListener);
+                viewChildPagerAdapter.setOnViewChangedListener(onViewChangedListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
@@ -288,7 +284,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
                     @Override
                     public void onPageSelected(int position) {
-                        LongClickViewAnimatorListener.tryFlipToPreviousView(mFlippedView);
+                        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
                     }
 
                     @Override
@@ -386,7 +382,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewAnimatorListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }
