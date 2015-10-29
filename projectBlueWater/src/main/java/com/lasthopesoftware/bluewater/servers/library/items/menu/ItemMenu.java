@@ -8,7 +8,6 @@ import android.widget.AbsListView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
@@ -32,15 +31,14 @@ public final class ItemMenu {
         public final ImageButton viewButton;
 	}
 
-	public static View getView(IItem item, View convertView, ViewGroup parent) {
-        ViewFlipper parentView = (ViewFlipper)convertView;
+	public static NotifyOnFlipViewAnimator getView(IItem item, View convertView, ViewGroup parent) {
+		NotifyOnFlipViewAnimator parentView = (NotifyOnFlipViewAnimator)convertView;
 		if (parentView == null) {
 		
 			final AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
 		            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-            parentView = new ViewFlipper(parent.getContext());
-            convertView = parentView;
+            parentView = new NotifyOnFlipViewAnimator(parent.getContext());
             parentView.setLayoutParams(lp);
 			
 	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -54,18 +52,18 @@ public final class ItemMenu {
 	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
 
 			parentView.addView(fileMenu);
-			
-			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
+
+			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
 		}
 		
 		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
 		
-		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
 		viewHolder.textView.setText(item.getValue());
 		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer)item));
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
-		return convertView;
+		return parentView;
 	}
 }

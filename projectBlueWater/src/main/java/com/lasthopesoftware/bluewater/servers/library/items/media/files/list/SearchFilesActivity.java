@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -31,7 +31,7 @@ public class SearchFilesActivity extends AppCompatActivity {
 	private ProgressBar pbLoading;
 	private ListView fileListView;
 
-    private ViewFlipper mFlippedView;
+    private ViewAnimator viewAnimator;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,17 +78,15 @@ public class SearchFilesActivity extends AppCompatActivity {
 				if (result == null) return;
 				
 				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
-                final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-                longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
+                fileListAdapter.setOnViewChangedListener(new OnViewChangedListener() {
                     @Override
-                    public void onViewFlipped(ViewFlipper viewFlipper) {
-                        mFlippedView = viewFlipper;
+                    public void onViewChanged(ViewAnimator viewAnimator) {
+                        SearchFilesActivity.this.viewAnimator = viewAnimator;
                     }
                 });
-                fileListView.setOnItemLongClickListener(longClickViewFlipListener);
+
+                fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 		    	fileListView.setAdapter(fileListAdapter);
-		    	
-		    	
 			}
 		});
         
@@ -116,7 +114,7 @@ public class SearchFilesActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }

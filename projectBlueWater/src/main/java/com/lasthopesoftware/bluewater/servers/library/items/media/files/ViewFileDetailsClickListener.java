@@ -2,16 +2,16 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import android.content.Intent;
 import android.view.View;
-import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.details.FileDetailsActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 
 public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 
 	private final IFile mFile;
 	
-	public ViewFileDetailsClickListener(ViewFlipper viewFlipper, IFile file) {
+	public ViewFileDetailsClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
         super(viewFlipper);
 		mFile = file;
 	}

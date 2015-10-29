@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.view.View;
-import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 
@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access
 public final class ShuffleClickHandler extends AbstractMenuClickHandler {
     private final IFilesContainer mItem;
 
-    public ShuffleClickHandler(ViewFlipper menuContainer, IFilesContainer item) {
+    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFilesContainer item) {
         super(menuContainer);
         mItem = item;
     }

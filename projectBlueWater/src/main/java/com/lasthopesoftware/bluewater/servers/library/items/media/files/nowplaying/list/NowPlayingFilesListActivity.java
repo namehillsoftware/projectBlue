@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -33,7 +33,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
 	private ListView mFileListView;
 	private ProgressBar mLoadingProgressBar;
 
-    private ViewFlipper mFlippedView;
+    private ViewAnimator viewAnimator;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -108,16 +108,17 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-			        mFileListView.setAdapter(new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId()));
+					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId());
+					nowPlayingFilesListAdapter.setOnViewChangedListener(new OnViewChangedListener() {
+						@Override
+						public void onViewChanged(ViewAnimator viewAnimator) {
+							mNowPlayingFilesListActivity.setViewAnimator(viewAnimator);
+						}
+					});
+			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 
-                    final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-                    longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
-                        @Override
-                        public void onViewFlipped(ViewFlipper viewFlipper) {
-                            mNowPlayingFilesListActivity.setFlippedView(viewFlipper);
-                        }
-                    });
-                    mFileListView.setOnItemLongClickListener(longClickViewFlipListener);
+                    final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+                    mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
 			        
 			        if (library.getNowPlayingId() < result.size())
 			        	mFileListView.setSelection(library.getNowPlayingId());
@@ -131,13 +132,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
 		}
 	}
 
-    public void setFlippedView(ViewFlipper flippedView) {
-        mFlippedView = flippedView;
+    public void setViewAnimator(ViewAnimator viewAnimator) {
+        this.viewAnimator = viewAnimator;
     }
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }

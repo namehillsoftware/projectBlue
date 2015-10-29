@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -17,8 +17,8 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -26,7 +26,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
-public class PlaylistListActivity extends AppCompatActivity implements OnViewFlippedListener {
+public class PlaylistListActivity extends AppCompatActivity implements OnViewChangedListener {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
@@ -34,7 +34,7 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 
 	private ProgressBar pbLoading;
 	private ListView playlistView;
-    private ViewFlipper mFlippedView;
+    private ViewAnimator viewAnimator;
 
 	private Activity thisContext = this;
 
@@ -88,11 +88,12 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-        playlistView.setAdapter(new ItemListAdapter(thisContext, R.id.tvStandard, playlist));
+		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(thisContext, R.id.tvStandard, playlist);
+		itemListAdapter.setOnViewChangedListener(this);
+        playlistView.setAdapter(itemListAdapter);
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
-        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-        longClickViewFlipListener.setOnViewFlipped(this);
-        playlistView.setOnItemLongClickListener(longClickViewFlipListener);
+        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+        playlistView.setOnItemLongClickListener(longClickViewAnimatorListener);
 	}
 	
 	@Override
@@ -120,13 +121,13 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }
 
-    @Override
-    public void onViewFlipped(ViewFlipper viewFlipper) {
-        mFlippedView = viewFlipper;
-    }
+	@Override
+	public void onViewChanged(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
 }

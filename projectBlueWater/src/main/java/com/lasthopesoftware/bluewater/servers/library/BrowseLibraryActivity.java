@@ -17,7 +17,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
@@ -31,8 +31,8 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -56,7 +56,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 	private DrawerLayout mDrawerLayout;
     private PagerSlidingTabStrip mLibraryViewsTabs;
     private ProgressBar mPbLoadingViews;
-    private ViewFlipper mFlippedView;
+    private ViewAnimator mFlippedView;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
 
@@ -68,11 +68,11 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
 
-    private final OnViewFlippedListener mOnViewFlippedListener = new OnViewFlippedListener() {
-        @Override
-        public void onViewFlipped(ViewFlipper viewFlipper) {
-            mFlippedView = viewFlipper;
-        }
+    private final OnViewChangedListener mOnViewFlippedListener = new OnViewChangedListener() {
+		@Override
+		public void onViewChanged(ViewAnimator viewAnimator) {
+			mFlippedView = viewAnimator;
+		}
     };
 
 	@Override
@@ -268,7 +268,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
                 viewChildPagerAdapter.setLibraryViews(result);
-                viewChildPagerAdapter.setOnViewFlippedListener(mOnViewFlippedListener);
+                viewChildPagerAdapter.setOnViewChangedListener(mOnViewFlippedListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
@@ -282,7 +282,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
                     @Override
                     public void onPageSelected(int position) {
-                        LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView);
+                        LongClickViewAnimatorListener.tryFlipToPreviousView(mFlippedView);
                     }
 
                     @Override
@@ -380,7 +380,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(mFlippedView)) return;
 
         super.onBackPressed();
     }
