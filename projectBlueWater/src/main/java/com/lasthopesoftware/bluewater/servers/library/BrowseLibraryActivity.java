@@ -57,6 +57,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
     private PagerSlidingTabStrip mLibraryViewsTabs;
     private ProgressBar mPbLoadingViews;
     private ViewAnimator mFlippedView;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
 
@@ -72,8 +73,15 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 		@Override
 		public void onViewChanged(ViewAnimator viewAnimator) {
 			mFlippedView = viewAnimator;
+
+//			if (mFlippedView.getDisplayedChild() == 1)
+//				nowPlayingFloatingActionButton.hide();
+//			else
+//				nowPlayingFloatingActionButton.setVisibility(View.VISIBLE);
+
+			nowPlayingFloatingActionButton.setVisibility(mFlippedView.getDisplayedChild() == 0 ? View.VISIBLE : View.GONE);
 		}
-    };
+	    };
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -93,9 +101,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 		setContentView(R.layout.activity_browse_library);
 
-//		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
-
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
 
 		setTitle(R.string.title_activity_library);
 

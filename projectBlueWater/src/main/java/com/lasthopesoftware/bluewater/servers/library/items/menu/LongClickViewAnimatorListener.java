@@ -4,7 +4,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ViewAnimator;
-import android.widget.ViewFlipper;
 
 /***
  * Will flip a menu item if it is a ViewFlipper class and will set all sibling views to previous view
@@ -20,8 +19,8 @@ public class LongClickViewAnimatorListener implements OnItemLongClickListener {
 	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         tryFlipToPreviousView(viewAnimator);
 
-		if (view instanceof ViewFlipper) {
-			final ViewFlipper parentView = (ViewFlipper)view;
+		if (view instanceof ViewAnimator) {
+			final ViewAnimator parentView = (ViewAnimator)view;
 			parentView.showNext();
             viewAnimator = parentView;
 			return true;
