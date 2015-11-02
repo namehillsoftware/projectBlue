@@ -73,9 +73,20 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 		@Override
 		public void onViewChanged(ViewAnimator viewAnimator) {
 			BrowseLibraryActivity.this.viewAnimator = viewAnimator;
+		}
+	};
 
-			if (nowPlayingFloatingActionButton != null)
-				nowPlayingFloatingActionButton.toggleVisibility(viewAnimator.getDisplayedChild() == 0);
+	private final Runnable onAnyMenuShownListener = new Runnable() {
+		@Override
+		public void run() {
+			nowPlayingFloatingActionButton.hide();
+		}
+	};
+
+	private final Runnable onAllMenusHiddenListener = new Runnable() {
+		@Override
+		public void run() {
+			nowPlayingFloatingActionButton.show();
 		}
 	};
 
@@ -271,6 +282,8 @@ public class BrowseLibraryActivity extends AppCompatActivity {
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
                 viewChildPagerAdapter.setLibraryViews(result);
                 viewChildPagerAdapter.setOnViewChangedListener(onViewChangedListener);
+				viewChildPagerAdapter.setOnAnyMenuShown(onAnyMenuShownListener);
+				viewChildPagerAdapter.setOnAllMenusHidden(onAllMenusHiddenListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);

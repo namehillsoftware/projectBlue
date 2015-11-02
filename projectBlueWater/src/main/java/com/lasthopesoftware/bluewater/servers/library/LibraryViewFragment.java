@@ -44,8 +44,10 @@ public class LibraryViewFragment extends Fragment {
     private static boolean wasTutorialShown;
 
     private OnViewChangedListener onViewChangedListener;
+	private Runnable onAnyMenuShown;
+	private Runnable onAllMenusHidden;
 
-    public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
+	public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
         final LibraryViewFragment returnFragment = new LibraryViewFragment();
         final Bundle args = new Bundle();
         args.putInt(LibraryViewFragment.ARG_CATEGORY_POSITION, libraryViewId);
@@ -169,15 +171,21 @@ public class LibraryViewFragment extends Fragment {
 				if (onViewChangedListener != null)
 					itemListAdapter.setOnViewChangedListener(onViewChangedListener);
 
+				if (onAllMenusHidden != null)
+					itemListAdapter.setOnAllMenusHidden(onAllMenusHidden);
+
+				if (onAnyMenuShown != null)
+					itemListAdapter.setOnAnyMenuShown(onAnyMenuShown);
+
                 if (position == 0) buildTutorialView(activity, container, listView);
 			}
 		}).onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
 
-            @Override
-            public void onConnectionRegained() {
-                itemProvider.execute();
-            }
-        }));
+			@Override
+			public void onConnectionRegained() {
+				itemProvider.execute();
+			}
+		}));
 
     	itemProvider.execute();
 
@@ -191,6 +199,14 @@ public class LibraryViewFragment extends Fragment {
     public void setOnViewChangedListener(OnViewChangedListener onViewChangedListener) {
         this.onViewChangedListener = onViewChangedListener;
     }
+
+	public void setOnAnyMenuShown(Runnable onAnyMenuShown) {
+		this.onAnyMenuShown = onAnyMenuShown;
+	}
+
+	public void setOnAllMenusHidden(Runnable onAllMenusHidden) {
+		this.onAllMenusHidden = onAllMenusHidden;
+	}
 
     private final static boolean DEBUGGING_TUTORIAL = false;
     private static void buildTutorialView(final Activity activity, final ViewGroup container, final ListView listView) {

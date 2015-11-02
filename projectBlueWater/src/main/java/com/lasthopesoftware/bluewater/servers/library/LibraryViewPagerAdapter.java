@@ -17,6 +17,8 @@ import java.util.Locale;
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IItem> mLibraryViews = new ArrayList<>();
     private OnViewChangedListener onViewChangedListener;
+	private Runnable onAnyMenuShown;
+	private Runnable onAllMenusHidden;
 
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
@@ -31,6 +33,9 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
         // The position correlates to the ID returned by the server at the high-level Library views
         final LibraryViewFragment libraryViewFragment = LibraryViewFragment.getPreparedFragment(i);
         if (onViewChangedListener != null) libraryViewFragment.setOnViewChangedListener(onViewChangedListener);
+		if (onAllMenusHidden != null) libraryViewFragment.setOnAllMenusHidden(onAllMenusHidden);
+		if (onAnyMenuShown != null) libraryViewFragment.setOnAnyMenuShown(onAnyMenuShown);
+
 		return libraryViewFragment;
 	}
 
@@ -49,4 +54,11 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
         this.onViewChangedListener = onViewChangedListener;
     }
 
+	public void setOnAnyMenuShown(Runnable onAnyMenuShown) {
+		this.onAnyMenuShown = onAnyMenuShown;
+	}
+
+	public void setOnAllMenusHidden(Runnable onAllMenusHidden) {
+		this.onAllMenusHidden = onAllMenusHidden;
+	}
 }
