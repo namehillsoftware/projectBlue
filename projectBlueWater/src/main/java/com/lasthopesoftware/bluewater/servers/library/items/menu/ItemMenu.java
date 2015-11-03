@@ -58,7 +58,7 @@ public final class ItemMenu {
 
 			parentView.addView(fileMenu);
 			
-			convertView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton, syncButton));
+			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton, syncButton));
 		}
 		
 		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
