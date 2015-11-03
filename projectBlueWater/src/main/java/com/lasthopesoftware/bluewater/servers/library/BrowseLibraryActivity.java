@@ -76,32 +76,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private boolean mIsLibraryChanged = false;
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
-
-    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
-		@Override
-		public void onViewChanged(ViewAnimator viewAnimator) {
-			BrowseLibraryActivity.this.viewAnimator = viewAnimator;
-		}
-	};
-
+	
 	private final BroadcastReceiver mOnLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			mIsLibraryChanged = true;
-		}
-	};
-
-	private final Runnable onAnyMenuShownListener = new Runnable() {
-		@Override
-		public void run() {
-			nowPlayingFloatingActionButton.hide();
-		}
-	};
-
-	private final Runnable onAllMenusHiddenListener = new Runnable() {
-		@Override
-		public void run() {
-			nowPlayingFloatingActionButton.show();
 		}
 	};
 
