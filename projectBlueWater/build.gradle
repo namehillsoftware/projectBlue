@@ -53,6 +53,5 @@ dependencies {
     compile 'com.j256.ormlite:ormlite-core:4.48'
     compile 'com.j256.ormlite:ormlite-android:4.48'
     compile files('libs/xmlwise-debug-1_2.jar')
-    compile 'com.github.amlcurran.showcaseview:library:5.0.0'
     testCompile 'junit:junit:4.12'
 }

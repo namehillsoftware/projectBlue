@@ -6,9 +6,9 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 
 /**
  * Created by david on 4/14/15.
@@ -17,19 +17,19 @@ public class FileListItemContainer {
 
     private final RelativeLayout mTextContainer;
     private final TextView mTextView;
-    private final ViewFlipper mViewFlipper;
+    private final NotifyOnFlipViewAnimator notifyOnFlipViewAnimator;
 
     public FileListItemContainer(Context parentContext) {
-        mViewFlipper = new ViewFlipper(parentContext);
+        notifyOnFlipViewAnimator = new NotifyOnFlipViewAnimator(parentContext);
 
-        mViewFlipper.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        notifyOnFlipViewAnimator.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final LayoutInflater inflater = (LayoutInflater) parentContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mTextContainer = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, mViewFlipper, false);
+        mTextContainer = (RelativeLayout) inflater.inflate(R.layout.layout_standard_text, notifyOnFlipViewAnimator, false);
         mTextView = (TextView) mTextContainer.findViewById(R.id.tvStandard);
         mTextView.setMarqueeRepeatLimit(1);
 
-        mViewFlipper.addView(mTextContainer);
+        notifyOnFlipViewAnimator.addView(mTextContainer);
     }
 
     public RelativeLayout getTextViewContainer() {
@@ -40,7 +40,7 @@ public class FileListItemContainer {
         return mTextView;
     }
 
-    public ViewFlipper getViewFlipper() {
-        return mViewFlipper;
+    public NotifyOnFlipViewAnimator getViewAnimator() {
+        return notifyOnFlipViewAnimator;
     }
 }

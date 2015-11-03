@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.content.Intent;
 import android.view.View;
-import android.widget.ViewFlipper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 
 /**
@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 public final class ViewFilesClickHandler extends AbstractMenuClickHandler {
     private final IItem mItem;
 
-    public ViewFilesClickHandler(ViewFlipper menuContainer, IItem item) {
+    public ViewFilesClickHandler(NotifyOnFlipViewAnimator menuContainer, IItem item) {
         super(menuContainer);
         mItem = item;
     }

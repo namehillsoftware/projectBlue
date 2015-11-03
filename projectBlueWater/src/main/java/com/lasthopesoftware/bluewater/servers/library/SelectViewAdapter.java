@@ -24,7 +24,7 @@ public class SelectViewAdapter extends ArrayAdapter<Item> {
 		
 		this.selectedViewKey = selectedViewKey;
 
-		final int colorResource = R.color.clearstream_blue;
+		final int colorResource = R.color.clearstream_dark;
 		if (selectedColor == -1)
 			selectedColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? context.getColor(colorResource) : context.getResources().getColor(colorResource);
 	}

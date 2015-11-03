@@ -9,17 +9,18 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -27,7 +28,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
-public class PlaylistListActivity extends AppCompatActivity implements OnViewFlippedListener {
+public class PlaylistListActivity extends AppCompatActivity implements IItemListViewContainer {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
@@ -35,7 +36,8 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 
 	private ProgressBar pbLoading;
 	private ListView playlistView;
-    private ViewFlipper mFlippedView;
+    private ViewAnimator viewAnimator;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private Activity thisContext = this;
 
@@ -78,7 +80,7 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 			}
 		})).execute();
 
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 	
 	@Override
@@ -89,11 +91,11 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-        playlistView.setAdapter(new ItemListAdapter(thisContext, R.id.tvStandard, playlist));
+		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(thisContext, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
+        playlistView.setAdapter(itemListAdapter);
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
-        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-        longClickViewFlipListener.setOnViewFlipped(this);
-        playlistView.setOnItemLongClickListener(longClickViewFlipListener);
+        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+        playlistView.setOnItemLongClickListener(longClickViewAnimatorListener);
 	}
 	
 	@Override
@@ -121,13 +123,18 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewFli
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }
 
-    @Override
-    public void onViewFlipped(ViewFlipper viewFlipper) {
-        mFlippedView = viewFlipper;
-    }
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
 }

@@ -22,7 +22,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
@@ -34,10 +34,11 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseLibraryActivity extends AppCompatActivity {
+public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_TAB_KEY";
 	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SCROLL_POS";
@@ -61,7 +62,8 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 	private DrawerLayout mDrawerLayout;
     private PagerSlidingTabStrip mLibraryViewsTabs;
     private ProgressBar mPbLoadingViews;
-    private ViewFlipper mFlippedView;
+    private ViewAnimator viewAnimator;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
 
@@ -74,17 +76,31 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
 
-    private final OnViewFlippedListener mOnViewFlippedListener = new OnViewFlippedListener() {
-        @Override
-        public void onViewFlipped(ViewFlipper viewFlipper) {
-            mFlippedView = viewFlipper;
-        }
-    };
+    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
+		@Override
+		public void onViewChanged(ViewAnimator viewAnimator) {
+			BrowseLibraryActivity.this.viewAnimator = viewAnimator;
+		}
+	};
 
 	private final BroadcastReceiver mOnLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			mIsLibraryChanged = true;
+		}
+	};
+
+	private final Runnable onAnyMenuShownListener = new Runnable() {
+		@Override
+		public void run() {
+			nowPlayingFloatingActionButton.hide();
+		}
+	};
+
+	private final Runnable onAllMenusHiddenListener = new Runnable() {
+		@Override
+		public void run() {
+			nowPlayingFloatingActionButton.show();
 		}
 	};
 
@@ -106,9 +122,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 		setContentView(R.layout.activity_browse_library);
 
-//		ViewUtils.InitializeNowPlayingFloatingActionButton((FloatingActionButton) findViewById(R.id.nowPlayingFloatingActionButton));
-
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
 
 		setTitle(R.string.title_activity_library);
 
@@ -206,6 +220,8 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
 				if (mIsStopped || items == null) return;
 
+				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+
 				for (IItem item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
@@ -271,8 +287,9 @@ public class BrowseLibraryActivity extends AppCompatActivity {
                 if (mIsStopped || result == null) return;
 
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
+				viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+
                 viewChildPagerAdapter.setLibraryViews(result);
-                viewChildPagerAdapter.setOnViewFlippedListener(mOnViewFlippedListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
@@ -286,7 +303,7 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
                     @Override
                     public void onPageSelected(int position) {
-                        LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView);
+                        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
                     }
 
                     @Override
@@ -391,8 +408,18 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
 	@Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }
+
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
 }

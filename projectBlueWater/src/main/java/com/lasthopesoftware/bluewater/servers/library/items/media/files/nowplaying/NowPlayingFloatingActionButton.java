@@ -24,17 +24,6 @@ import com.lasthopesoftware.threading.ISimpleTask;
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
     private static Drawable nowPlayingIconDrawable;
 
-//    private static final int fadeDurationMs = 500;
-//    private static final Animation fadeInAnimation = new AlphaAnimation(0, 1);
-//    static {
-//        fadeInAnimation.setDuration(fadeDurationMs);
-//    }
-//    private static final Animation fadeOutAnimation = new AlphaAnimation(1, 0);
-//    static {
-//        fadeOutAnimation.setStartOffset(fadeDurationMs);
-//        fadeOutAnimation.setDuration(fadeDurationMs);
-//    }
-
     public static NowPlayingFloatingActionButton addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
 
@@ -95,8 +84,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         });
     }
 
-    @Override
-    public void hide() {
-        super.hide();
+    public void toggleVisibility(boolean isVisible) {
+        setVisibility(isVisible ? VISIBLE : GONE);
     }
 }

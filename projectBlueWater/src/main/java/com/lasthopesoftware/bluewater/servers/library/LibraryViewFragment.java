@@ -25,8 +25,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
@@ -45,9 +45,9 @@ public class LibraryViewFragment extends Fragment {
 
     private static boolean wasTutorialShown;
 
-    private OnViewFlippedListener mOnViewFlippedListener;
+	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
-    public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
+	public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
         final LibraryViewFragment returnFragment = new LibraryViewFragment();
         final Bundle args = new Bundle();
         args.putInt(LibraryViewFragment.ARG_CATEGORY_POSITION, libraryViewId);
@@ -126,7 +126,7 @@ public class LibraryViewFragment extends Fragment {
 
 					listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
 					listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
-					listView.setAdapter(new ItemListAdapter(activity, R.id.tvStandard, result));
+					listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
 					loadingView.setVisibility(View.INVISIBLE);
 					listView.setVisibility(View.VISIBLE);
 
@@ -159,40 +159,34 @@ public class LibraryViewFragment extends Fragment {
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 				if (result == null) return;
 
-                listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>)result : new ArrayList<>(result)));
-                listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
+				listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
+				listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
+				listView.setAdapter(new ItemListAdapter<>(activity, R.layout.layout_list_item, result, itemListMenuChangeHandler));
+				loadingView.setVisibility(View.INVISIBLE);
+				listView.setVisibility(View.VISIBLE);
 
-                final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter(activity, R.layout.layout_list_item, result);
-		    	listView.setAdapter(itemListAdapter);
-		    	loadingView.setVisibility(View.INVISIBLE);
-	    		listView.setVisibility(View.VISIBLE);
-
-                if (position == 0) buildTutorialView(activity, container, listView);
+				if (position == 0) buildTutorialView(activity, container, listView);
 			}
 		}).onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
 
-            @Override
-            public void onConnectionRegained() {
-                itemProvider.execute();
-            }
-        }));
+			@Override
+			public void onConnectionRegained() {
+				itemProvider.execute();
+			}
+		}));
 
     	itemProvider.execute();
 
 		return listView;
 	}
 
-    private LongClickViewFlipListener getNewLongClickViewFlipListener() {
-        final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-        if (mOnViewFlippedListener != null)
-            longClickViewFlipListener.setOnViewFlipped(mOnViewFlippedListener);
-
-        return longClickViewFlipListener;
+    private LongClickViewAnimatorListener getNewLongClickViewFlipListener() {
+		return new LongClickViewAnimatorListener();
     }
 
-    public void setOnViewFlippedListener(OnViewFlippedListener onViewFlippedListener) {
-        mOnViewFlippedListener = onViewFlippedListener;
-    }
+	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler;
+	}
 
     private final static boolean DEBUGGING_TUTORIAL = false;
     private static void buildTutorialView(final Activity activity, final ViewGroup container, final ListView listView) {

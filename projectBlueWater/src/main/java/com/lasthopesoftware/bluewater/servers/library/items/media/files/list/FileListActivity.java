@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ViewFlipper;
+import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
@@ -17,12 +17,13 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewFlipListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewFlippedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.IDataTask;
@@ -30,7 +31,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -43,8 +44,9 @@ public class FileListActivity extends AppCompatActivity {
 	private ProgressBar pbLoading;
 	private ListView fileListView;
 
-    private ViewFlipper mFlippedView;
-	
+    private ViewAnimator viewAnimator;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
+
 	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,15 +73,12 @@ public class FileListActivity extends AppCompatActivity {
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
-				final LongClickViewFlipListener longClickViewFlipListener = new LongClickViewFlipListener();
-				longClickViewFlipListener.setOnViewFlipped(new OnViewFlippedListener() {
-					@Override
-					public void onViewFlipped(ViewFlipper viewFlipper) {
-						mFlippedView = viewFlipper;
-					}
-				});
-				fileListView.setOnItemLongClickListener(longClickViewFlipListener);
-				fileListView.setAdapter(new FileListAdapter(_this, R.id.tvStandard, result));
+				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+
+				fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
+
+				fileListView.setAdapter(fileListAdapter);
 
 				fileListView.setVisibility(View.VISIBLE);
 				pbLoading.setVisibility(View.INVISIBLE);
@@ -97,7 +96,7 @@ public class FileListActivity extends AppCompatActivity {
         
         filesContainer.getFilesAsync();
 
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override
@@ -132,8 +131,18 @@ public class FileListActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (LongClickViewFlipListener.tryFlipToPreviousView(mFlippedView)) return;
+        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
     }
+
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
 }
