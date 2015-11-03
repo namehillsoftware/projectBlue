@@ -43,7 +43,7 @@
 			android:layout_gravity="start"
 			android:orientation="vertical"
 			android:dividerHeight="0dp"
-			android:background="@color/clearstream_dark"/>
+			android:background="@color/clearstream_blue"/>
 
 	</android.support.v4.widget.DrawerLayout>
 </RelativeLayout>
