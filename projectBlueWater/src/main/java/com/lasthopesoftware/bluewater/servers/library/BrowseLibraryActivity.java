@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;

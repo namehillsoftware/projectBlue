@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -26,8 +26,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 

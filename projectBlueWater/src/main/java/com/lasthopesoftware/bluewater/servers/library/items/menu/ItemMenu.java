@@ -69,13 +69,12 @@ public final class ItemMenu {
 		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer) item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
-		final ViewFlipper viewFlipper = parentView;
 		viewHolder.syncButton.setEnabled(false);
 
 		if (viewHolder.onSyncButtonLayoutChangeListener != null)
 			viewHolder.syncButton.removeOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
-		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(viewFlipper, viewHolder.syncButton, item);
+		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(parentView, viewHolder.syncButton, item);
 
 		viewHolder.syncButton.addOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
