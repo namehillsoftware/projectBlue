@@ -15,10 +15,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -26,7 +27,7 @@ import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
-public class PlaylistListActivity extends AppCompatActivity implements OnViewChangedListener {
+public class PlaylistListActivity extends AppCompatActivity implements IItemListViewContainer {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.playlists.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.playlists.value";
@@ -35,6 +36,7 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewCha
 	private ProgressBar pbLoading;
 	private ListView playlistView;
     private ViewAnimator viewAnimator;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private Activity thisContext = this;
 
@@ -77,7 +79,7 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewCha
 			}
 		})).execute();
 
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 	
 	@Override
@@ -88,8 +90,7 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewCha
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(thisContext, R.id.tvStandard, playlist);
-		itemListAdapter.setOnViewChangedListener(this);
+		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(thisContext, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
         playlistView.setAdapter(itemListAdapter);
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
         final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
@@ -127,7 +128,12 @@ public class PlaylistListActivity extends AppCompatActivity implements OnViewCha
     }
 
 	@Override
-	public void onViewChanged(ViewAnimator viewAnimator) {
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
 		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
 	}
 }

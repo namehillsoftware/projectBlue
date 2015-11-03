@@ -30,6 +30,8 @@ import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystem
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
@@ -42,7 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseLibraryActivity extends AppCompatActivity {
+public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_TAB_KEY";
 	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SCROLL_POS";
@@ -198,6 +200,8 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
 				if (mIsStopped || items == null) return;
 
+				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+
 				for (IItem item : items) {
 					if (item.getKey() != library.getSelectedView()) continue;
 					mOldTitle = item.getValue();
@@ -280,10 +284,9 @@ public class BrowseLibraryActivity extends AppCompatActivity {
                 if (mIsStopped || result == null) return;
 
                 final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
+				viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+
                 viewChildPagerAdapter.setLibraryViews(result);
-                viewChildPagerAdapter.setOnViewChangedListener(onViewChangedListener);
-				viewChildPagerAdapter.setOnAnyMenuShown(onAnyMenuShownListener);
-				viewChildPagerAdapter.setOnAllMenusHidden(onAllMenusHiddenListener);
 
                 // Set up the ViewPager with the sections adapter.
                 mViewPager.setAdapter(viewChildPagerAdapter);
@@ -399,4 +402,14 @@ public class BrowseLibraryActivity extends AppCompatActivity {
 
         super.onBackPressed();
     }
+
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
 }

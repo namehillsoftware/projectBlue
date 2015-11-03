@@ -15,11 +15,12 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -28,12 +29,13 @@ import com.lasthopesoftware.threading.SimpleTask;
 
 import java.util.ArrayList;
 
-public class NowPlayingFilesListActivity extends AppCompatActivity {
+public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
 	private ListView mFileListView;
 	private ProgressBar mLoadingProgressBar;
 
     private ViewAnimator viewAnimator;
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,7 +52,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
         
         LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override
@@ -79,7 +81,17 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
         return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item);
     }
-	
+
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
+
 	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
@@ -108,13 +120,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity {
 				
 				@Override
 				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, result, library.getNowPlayingId());
-					nowPlayingFilesListAdapter.setOnViewChangedListener(new OnViewChangedListener() {
-						@Override
-						public void onViewChanged(ViewAnimator viewAnimator) {
-							mNowPlayingFilesListActivity.setViewAnimator(viewAnimator);
-						}
-					});
+					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
 			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 
                     final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

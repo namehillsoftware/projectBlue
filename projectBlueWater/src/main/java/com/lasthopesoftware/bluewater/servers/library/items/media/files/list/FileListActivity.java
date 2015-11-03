@@ -16,12 +16,13 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.IDataTask;
@@ -29,7 +30,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -43,7 +44,8 @@ public class FileListActivity extends AppCompatActivity {
 	private ListView fileListView;
 
     private ViewAnimator viewAnimator;
-	
+	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
+
 	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,13 +75,7 @@ public class FileListActivity extends AppCompatActivity {
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
 
 				fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result);
-				fileListAdapter.setOnViewChangedListener(new OnViewChangedListener() {
-					@Override
-					public void onViewChanged(ViewAnimator viewAnimator) {
-						FileListActivity.this.viewAnimator = viewAnimator;
-					}
-				});
+				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
 
 				fileListView.setAdapter(fileListAdapter);
 
@@ -99,7 +95,7 @@ public class FileListActivity extends AppCompatActivity {
         
         filesContainer.getFilesAsync();
 
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
 	}
 	
 	@Override
@@ -138,4 +134,14 @@ public class FileListActivity extends AppCompatActivity {
 
         super.onBackPressed();
     }
+
+	@Override
+	public void updateViewAnimator(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+		return nowPlayingFloatingActionButton;
+	}
 }

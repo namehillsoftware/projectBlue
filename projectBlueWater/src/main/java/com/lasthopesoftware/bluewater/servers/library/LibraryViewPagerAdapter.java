@@ -5,7 +5,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -16,9 +16,7 @@ import java.util.Locale;
  */
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	private ArrayList<IItem> mLibraryViews = new ArrayList<>();
-    private OnViewChangedListener onViewChangedListener;
-	private Runnable onAnyMenuShown;
-	private Runnable onAllMenusHidden;
+    private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
@@ -32,9 +30,7 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	public Fragment getItem(int i) {
         // The position correlates to the ID returned by the server at the high-level Library views
         final LibraryViewFragment libraryViewFragment = LibraryViewFragment.getPreparedFragment(i);
-        if (onViewChangedListener != null) libraryViewFragment.setOnViewChangedListener(onViewChangedListener);
-		if (onAllMenusHidden != null) libraryViewFragment.setOnAllMenusHidden(onAllMenusHidden);
-		if (onAnyMenuShown != null) libraryViewFragment.setOnAnyMenuShown(onAnyMenuShown);
+		libraryViewFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler);
 
 		return libraryViewFragment;
 	}
@@ -50,15 +46,7 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	}
 
 
-    public void setOnViewChangedListener(OnViewChangedListener onViewChangedListener) {
-        this.onViewChangedListener = onViewChangedListener;
+    public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {
+        this.itemListMenuChangeHandler = itemListMenuChangeHandler;
     }
-
-	public void setOnAnyMenuShown(Runnable onAnyMenuShown) {
-		this.onAnyMenuShown = onAnyMenuShown;
-	}
-
-	public void setOnAllMenusHidden(Runnable onAllMenusHidden) {
-		this.onAllMenusHidden = onAllMenusHidden;
-	}
 }

@@ -24,8 +24,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
@@ -43,9 +43,7 @@ public class LibraryViewFragment extends Fragment {
 
     private static boolean wasTutorialShown;
 
-    private OnViewChangedListener onViewChangedListener;
-	private Runnable onAnyMenuShown;
-	private Runnable onAllMenusHidden;
+	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
 	public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
         final LibraryViewFragment returnFragment = new LibraryViewFragment();
@@ -74,19 +72,19 @@ public class LibraryViewFragment extends Fragment {
 			@Override
 			public void onGetFileSystemComplete(FileSystem fileSystem) {
 
-		    	final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
+				final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
 
 					@Override
 					public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
 						if (result == null || result.size() == 0) return;
 
-                        final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
+						final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 						final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-                        if (category instanceof Playlists)
-                            layout.addView(BuildPlaylistView(activity, container, categoryPosition, pbLoading));
-                        else if (category instanceof Item)
-                            layout.addView(BuildStandardItemView(activity, container, categoryPosition, (Item) category, pbLoading));
+						if (category instanceof Playlists)
+							layout.addView(BuildPlaylistView(activity, container, categoryPosition, pbLoading));
+						else if (category instanceof Item)
+							layout.addView(BuildStandardItemView(activity, container, categoryPosition, (Item) category, pbLoading));
 					}
 				};
 
@@ -107,7 +105,7 @@ public class LibraryViewFragment extends Fragment {
 
 				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
 			}
-        });
+		});
 
         return layout;
     }
@@ -127,7 +125,7 @@ public class LibraryViewFragment extends Fragment {
 
 					listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
 					listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
-					listView.setAdapter(new ItemListAdapter(activity, R.id.tvStandard, result));
+					listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
 					loadingView.setVisibility(View.INVISIBLE);
 					listView.setVisibility(View.VISIBLE);
 
@@ -160,24 +158,13 @@ public class LibraryViewFragment extends Fragment {
 			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 				if (result == null) return;
 
-                listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
-                listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
+				listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
+				listView.setOnItemLongClickListener(getNewLongClickViewFlipListener());
+				listView.setAdapter(new ItemListAdapter<>(activity, R.layout.layout_list_item, result, itemListMenuChangeHandler));
+				loadingView.setVisibility(View.INVISIBLE);
+				listView.setVisibility(View.VISIBLE);
 
-                final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter(activity, R.layout.layout_list_item, result);
-		    	listView.setAdapter(itemListAdapter);
-		    	loadingView.setVisibility(View.INVISIBLE);
-	    		listView.setVisibility(View.VISIBLE);
-
-				if (onViewChangedListener != null)
-					itemListAdapter.setOnViewChangedListener(onViewChangedListener);
-
-				if (onAllMenusHidden != null)
-					itemListAdapter.setOnAllMenusHidden(onAllMenusHidden);
-
-				if (onAnyMenuShown != null)
-					itemListAdapter.setOnAnyMenuShown(onAnyMenuShown);
-
-                if (position == 0) buildTutorialView(activity, container, listView);
+				if (position == 0) buildTutorialView(activity, container, listView);
 			}
 		}).onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
 
@@ -196,16 +183,8 @@ public class LibraryViewFragment extends Fragment {
 		return new LongClickViewAnimatorListener();
     }
 
-    public void setOnViewChangedListener(OnViewChangedListener onViewChangedListener) {
-        this.onViewChangedListener = onViewChangedListener;
-    }
-
-	public void setOnAnyMenuShown(Runnable onAnyMenuShown) {
-		this.onAnyMenuShown = onAnyMenuShown;
-	}
-
-	public void setOnAllMenusHidden(Runnable onAllMenusHidden) {
-		this.onAllMenusHidden = onAllMenusHidden;
+	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler;
 	}
 
     private final static boolean DEBUGGING_TUTORIAL = false;

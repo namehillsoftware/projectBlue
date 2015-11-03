@@ -8,11 +8,11 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -26,8 +26,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
@@ -50,21 +50,18 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
         public GetFileListItemTextTask getFileListItemTextTask;
 	}
 
-    private OnViewChangedListener onViewChangedListener;
-
-    private final OnViewChangedListener onViewChangedListenerWrapper = new OnViewChangedListener() {
-        @Override
-        public void onViewChanged(ViewAnimator viewAnimator) {
-            onViewChangedListener.onViewChanged(viewAnimator);
-        }
-    };
+    private final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
 
     private final int mNowPlayingFilePos;
 	
-	public NowPlayingFileListAdapter(Context context, int resource, List<IFile> files, int nowPlayingFilePos) {
+	public NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<IFile> files, int nowPlayingFilePos) {
 		super(context, resource, files);
 
         mNowPlayingFilePos = nowPlayingFilePos;
+
+        viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler);
+        viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler);
+        viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler);
 	}
 
     public final View getView(final int position, View convertView, final ViewGroup parent) {
@@ -85,7 +82,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
             viewFlipper.addView(fileMenu);
 
             viewFlipper.setTag(new ViewHolder(fileItemMenu, viewFileDetailsButton, playButton, removeButton));
-            viewFlipper.setViewChangedListener(onViewChangedListenerWrapper);
+            viewFlipper.setViewChangedListener(viewChangedHandler);
         }
 
         final ViewHolder viewHolder = (ViewHolder)convertView.getTag();
@@ -121,10 +118,6 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
         viewHolder.removeButton.setOnClickListener(new RemoveClickListener(viewFlipper, position, this));
 
         return viewFlipper;
-    }
-
-    public void setOnViewChangedListener(OnViewChangedListener onViewChangedListener) {
-        this.onViewChangedListener = onViewChangedListener;
     }
 
 	private static class RemoveClickListener extends AbstractMenuClickHandler {

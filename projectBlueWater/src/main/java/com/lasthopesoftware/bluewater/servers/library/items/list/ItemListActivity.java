@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends AppCompatActivity {
+public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer {
 
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
@@ -43,9 +44,6 @@ public class ItemListActivity extends AppCompatActivity {
         @Override
         public void onViewChanged(ViewAnimator viewAnimator) {
             ItemListActivity.this.viewAnimator = viewAnimator;
-
-            if (nowPlayingFloatingActionButton != null)
-                nowPlayingFloatingActionButton.toggleVisibility(viewAnimator.getDisplayedChild() == 0);
         }
     };
 
@@ -94,8 +92,7 @@ public class ItemListActivity extends AppCompatActivity {
     }
 
     private void BuildItemListView(final List<Item> items) {
-        final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items);
-        itemListAdapter.setOnViewChangedListener(onViewChangedListener);
+        final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this));
         itemListView.setAdapter(itemListAdapter);
         itemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
         final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
@@ -138,5 +135,15 @@ public class ItemListActivity extends AppCompatActivity {
         if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 
         super.onBackPressed();
+    }
+
+    @Override
+    public void updateViewAnimator(ViewAnimator viewAnimator) {
+        this.viewAnimator = viewAnimator;
+    }
+
+    @Override
+    public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
+        return nowPlayingFloatingActionButton;
     }
 }
