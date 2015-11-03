@@ -34,7 +34,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewCo
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -70,27 +69,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private boolean mIsStopped = false;
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
-
-    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
-		@Override
-		public void onViewChanged(ViewAnimator viewAnimator) {
-			BrowseLibraryActivity.this.viewAnimator = viewAnimator;
-		}
-	};
-
-	private final Runnable onAnyMenuShownListener = new Runnable() {
-		@Override
-		public void run() {
-			nowPlayingFloatingActionButton.hide();
-		}
-	};
-
-	private final Runnable onAllMenusHiddenListener = new Runnable() {
-		@Override
-		public void run() {
-			nowPlayingFloatingActionButton.show();
-		}
-	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
