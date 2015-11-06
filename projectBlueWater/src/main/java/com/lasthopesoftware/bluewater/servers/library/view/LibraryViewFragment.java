@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewIItemResultsComplete;
+import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -45,6 +46,7 @@ public class LibraryViewFragment extends Fragment {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
     	final Activity activity = getActivity();
 
@@ -57,7 +59,7 @@ public class LibraryViewFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+    	LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 		    @Override
 		    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 			    final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
@@ -82,7 +84,7 @@ public class LibraryViewFragment extends Fragment {
 				    public void onConnectionRegained() {
 					    final OnConnectionRegainedListener _this = this;
 					
-					    LibrarySession.GetActiveLibrary(activity, new OnCompleteListener<Integer, Void, Library>() {
+					    LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 						    @Override
 						    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 							    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
@@ -115,7 +117,7 @@ public class LibraryViewFragment extends Fragment {
 
 				@Override
 				public void onConnectionRegained() {
-					final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+					final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 
 					playlistsProvider
 							.onComplete(onGetLibraryViewPlaylistResultsComplete)
@@ -143,7 +145,7 @@ public class LibraryViewFragment extends Fragment {
 					@Override
 					public void onConnectionRegained() {
 							ItemProvider
-								.provide(category.getKey())
+								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
 								.onError(new HandleViewIoException(activity, this))
 									.execute();
