@@ -17,7 +17,6 @@
         <item name="attr/non_transparent_background">@color/white</item>
         <item name="attr/borderless_button">@drawable/borderless_button</item>
         <item name="attr/overlay_background">@color/overlay_light</item>
-        <item name="attr/dragview_background">@drawable/dragview_background</item>
         <item name="attr/dragview_float_background">@color/white</item>
         <!--<item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>-->
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>

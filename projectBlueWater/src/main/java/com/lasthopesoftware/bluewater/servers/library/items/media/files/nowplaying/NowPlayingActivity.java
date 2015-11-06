@@ -3,12 +3,12 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -208,7 +208,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			}
 		});
 
-		DrawableCompat.setTint(mSongRating.getProgressDrawable(), Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? getColor(R.color.custom_transparent_white) : getResources().getColor(R.color.custom_transparent_white));
+		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
+			mSongProgressBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
 
 		mHandler = new NowPlayingActivityMessageHandler(this);
 	}
