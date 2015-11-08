@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -17,7 +18,7 @@ import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements RemovePlaylistFileClickListener.OnPlaylistFileRemoved {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
@@ -29,11 +30,18 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter {
         viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler);
         viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler);
 
-        nowPlayingFileListItemMenuBuilder = new NowPlayingFileListItemMenuBuilder(this, files, nowPlayingFilePos);
+        nowPlayingFileListItemMenuBuilder = new NowPlayingFileListItemMenuBuilder(files, nowPlayingFilePos);
+        nowPlayingFileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
+        nowPlayingFileListItemMenuBuilder.setOnPlaylistFileRemovedListener(this);
 	}
 
     @Override
     public final View getView(final int position, View convertView, final ViewGroup parent) {
         return nowPlayingFileListItemMenuBuilder.getView(position, getItem(position), convertView, parent);
+    }
+
+    @Override
+    public void onPlaylistFileRemoved(int position) {
+        remove(getItem(position));
     }
 }

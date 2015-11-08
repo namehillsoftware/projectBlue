@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFile
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileListItemContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
@@ -53,12 +53,12 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
     private final List<IFile> files;
     private final int nowPlayingPosition;
-    private final NowPlayingFileListAdapter nowPlayingFileListAdapter;
 
-    public NowPlayingFileListItemMenuBuilder(final NowPlayingFileListAdapter nowPlayingFileListAdapter, final List<IFile> files, final int nowPlayingPosition) {
+    private RemovePlaylistFileClickListener.OnPlaylistFileRemoved onPlaylistFileRemovedListener;
+
+    public NowPlayingFileListItemMenuBuilder(final List<IFile> files, final int nowPlayingPosition) {
         this.files = files;
         this.nowPlayingPosition = nowPlayingPosition;
-        this.nowPlayingFileListAdapter = nowPlayingFileListAdapter;
     }
 
     @Override
@@ -111,52 +111,12 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper);
         viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, files));
         viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
-        viewHolder.removeButton.setOnClickListener(new RemoveClickListener(viewFlipper, position, nowPlayingFileListAdapter));
+        viewHolder.removeButton.setOnClickListener(new RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener));
 
         return viewFlipper;
     }
 
-    private static class RemoveClickListener extends AbstractMenuClickHandler {
-        private final int position;
-        private final NowPlayingFileListAdapter adapter;
-
-        // TODO Add event and remove interdepency on NowPlayingFileListAdapter adapter
-        public RemoveClickListener(NotifyOnFlipViewAnimator parent, final int position, final NowPlayingFileListAdapter adapter) {
-            super(parent);
-            this.position = position;
-            this.adapter = adapter;
-        }
-
-        @Override
-        public void onClick(final View view) {
-            final PlaybackController playbackController = PlaybackService.getPlaylistController();
-            if (playbackController != null)
-                playbackController.removeFile(position);
-            
-            LibrarySession.GetActiveLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-
-                @Override
-                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                    if (result == null) return;
-
-                    String newFileString = playbackController.getPlaylistString();
-                    result.setSavedTracksString(newFileString);
-
-                    LibrarySession.SaveLibrary(view.getContext(), result, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
-
-                        @Override
-                        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-                            if (PlaybackService.getPlaylistController() != null)
-                                PlaybackService.getPlaylistController().removeFile(position);
-
-                            adapter.remove(adapter.getItem(position));
-                        }
-                    });
-                }
-
-            });
-
-            super.onClick(view);
-        }
+    public void setOnPlaylistFileRemovedListener(RemovePlaylistFileClickListener.OnPlaylistFileRemoved onPlaylistFileRemovedListener) {
+        this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener;
     }
 }
