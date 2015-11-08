@@ -129,13 +129,17 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         @Override
         public void onClick(final View view) {
+            final PlaybackController playbackController = PlaybackService.getPlaylistController();
+            if (playbackController != null)
+                playbackController.removeFile(position);
+            
             LibrarySession.GetActiveLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
                 @Override
                 public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
                     if (result == null) return;
 
-                    String newFileString = PlaybackService.getPlaylistController().getPlaylistString();
+                    String newFileString = playbackController.getPlaylistString();
                     result.setSavedTracksString(newFileString);
 
                     LibrarySession.SaveLibrary(view.getContext(), result, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
