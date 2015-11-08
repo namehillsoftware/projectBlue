@@ -36,8 +36,6 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionCon
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
@@ -137,9 +135,9 @@ public class PlaybackService extends Service implements
 	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<>();
 	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<>();
 		
-	private OnConnectionRegainedListener mConnectionRegainedListener;
+	private Runnable mConnectionRegainedListener;
 	
-	private OnPollingCancelledListener mOnPollingCancelledListener;
+	private Runnable mOnPollingCancelledListener;
 	
 	private static Intent getNewSelfIntent(final Context context, String action) {
 		final Intent newIntent = new Intent(context, PlaybackService.class);
@@ -740,10 +738,10 @@ public class PlaybackService extends Service implements
 		final PollConnection checkConnection = PollConnection.Instance.get(mStreamingMusicService);
 		
 		if (mConnectionRegainedListener == null) {
-			mConnectionRegainedListener = new OnConnectionRegainedListener() {
+			mConnectionRegainedListener = new Runnable() {
 				
 				@Override
-				public void onConnectionRegained() {
+				public void run() {
 					if (mPlaylistController != null && !mPlaylistController.isPlaying()) {
 						stopSelf(mStartId);
 						return;
@@ -764,10 +762,10 @@ public class PlaybackService extends Service implements
 		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
 		
 		if (mOnPollingCancelledListener == null) {
-			mOnPollingCancelledListener = new OnPollingCancelledListener() {
+			mOnPollingCancelledListener = new Runnable() {
 				
 				@Override
-				public void onPollingCancelled() {
+				public void run() {
 					unregisterListeners();
 					stopSelf(mStartId);
 				}

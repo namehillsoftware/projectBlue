@@ -24,9 +24,9 @@ public class PollConnection {
 	private final AtomicBoolean mIsConnectionRestored = new AtomicBoolean();
 	private final AtomicBoolean mIsRefreshing = new AtomicBoolean();
 	
-	private static final HashSet<OnConnectionLostListener> mUniqueOnConnectionLostListeners = new HashSet<>();
-	private final HashSet<OnConnectionRegainedListener> mUniqueOnConnectionRegainedListeners = new HashSet<>();
-	private final HashSet<OnPollingCancelledListener> mUniqueOnCancelListeners = new HashSet<>();
+	private static final HashSet<Runnable> mUniqueOnConnectionLostListeners = new HashSet<>();
+	private final HashSet<Runnable> mUniqueOnConnectionRegainedListeners = new HashSet<>();
+	private final HashSet<Runnable> mUniqueOnCancelListeners = new HashSet<>();
 	
 	private PollConnection(Context context) {
 		mContext = context;
@@ -36,7 +36,7 @@ public class PollConnection {
 			@Override
 			protected void onPreExecute() {
 				synchronized (mUniqueOnConnectionLostListeners) {
-					for (OnConnectionLostListener onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.onConnectionLost();
+					for (Runnable onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.run();
 				}
 			}
 			
@@ -77,7 +77,7 @@ public class PollConnection {
 			
 			@Override
 			protected void onPostExecute(Void result) {
-				for (OnConnectionRegainedListener onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.onConnectionRegained();
+				for (Runnable onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.run();
 
 				// Let on cancelled clear the completed listeners
 				if (!isCancelled())
@@ -86,7 +86,7 @@ public class PollConnection {
 			
 			@Override
 			protected void onCancelled(Void result) {
-				for (OnPollingCancelledListener onCancelListener : mUniqueOnCancelListeners) onCancelListener.onPollingCancelled();
+				for (Runnable onCancelListener : mUniqueOnCancelListeners) onCancelListener.run();
 				
 				clearCompleteListeners();
 			}
@@ -117,7 +117,7 @@ public class PollConnection {
 	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener)
 	 */
-	public void addOnConnectionLostListener(OnConnectionLostListener listener) {
+	public void addOnConnectionLostListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
 			mUniqueOnConnectionLostListeners.add(listener);
 		}
@@ -126,7 +126,7 @@ public class PollConnection {
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
-	public void addOnConnectionRegainedListener(OnConnectionRegainedListener listener) {
+	public void addOnConnectionRegainedListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionRegainedListeners) {
 			mUniqueOnConnectionRegainedListeners.add(listener);
 		}
@@ -135,42 +135,30 @@ public class PollConnection {
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
 	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
-	public void addOnPollingCancelledListener(OnPollingCancelledListener listener) {
+	public void addOnPollingCancelledListener(Runnable listener) {
 		synchronized(mUniqueOnCancelListeners) {
 			mUniqueOnCancelListeners.add(listener);
 		}
 	}
 
-	public void removeOnConnectionLostListener(OnConnectionLostListener listener) {
+	public void removeOnConnectionLostListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
 			mUniqueOnConnectionLostListeners.remove(listener);
 		}
 	}
 
-	public void removeOnConnectionRegainedListener(OnConnectionRegainedListener listener) {
+	public void removeOnConnectionRegainedListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionRegainedListeners) {
 			mUniqueOnConnectionRegainedListeners.remove(listener);
 		}
 	}
 	
-	public void removeOnPollingCancelledListener(OnPollingCancelledListener listener) {
+	public void removeOnPollingCancelledListener(Runnable listener) {
 		synchronized(mUniqueOnCancelListeners) {
 			mUniqueOnCancelListeners.remove(listener);
 		}
 	}
-	
-	public interface OnConnectionLostListener {
-		void onConnectionLost();
-	}
-	
-	public interface OnConnectionRegainedListener {
-		void onConnectionRegained();
-	}
-	
-	public interface OnPollingCancelledListener {
-		void onPollingCancelled();
-	}
-	
+
 	public static class Instance {
 		private static PollConnection _instance = null;
 		

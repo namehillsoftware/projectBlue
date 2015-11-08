@@ -24,10 +24,10 @@ public class OnGetFileStringListForClickErrorListener implements IDataTask.OnErr
     @Override
     public boolean onError(ISimpleTask<String, Void, String> owner, boolean isHandled, Exception innerException) {
         if (innerException instanceof IOException) {
-            PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new PollConnection.OnConnectionRegainedListener() {
+            PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new Runnable() {
 
                 @Override
-                public void onConnectionRegained() {
+                public void run() {
                     mOnClickListener.onClick(mView);
                 }
             });

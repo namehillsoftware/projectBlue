@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
@@ -191,10 +190,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, items, library.getSelectedView()));
 
 				fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
-					new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
+					new HandleViewIoException(mBrowseLibrary, new Runnable() {
 
 						@Override
-						public void onConnectionRegained() {
+						public void run() {
 							FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 
 								@Override
@@ -236,10 +235,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					}
 				});
 			}
-		}).onError(new HandleViewIoException(mBrowseLibrary, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(mBrowseLibrary, new Runnable() {
 
 			@Override
-			public void onConnectionRegained() {
+			public void run() {
 				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
 
 					@Override

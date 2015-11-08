@@ -14,7 +14,6 @@ import android.widget.ViewAnimator;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -71,10 +70,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 				playlistView.setVisibility(View.VISIBLE);
 	        	pbLoading.setVisibility(View.INVISIBLE);
 			}
-		}).onError(new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(thisContext, new Runnable() {
 					
 			@Override
-			public void onConnectionRegained() {
+			public void run() {
 				playlistsProvider.execute();
 			}
 		})).execute();

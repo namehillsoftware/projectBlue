@@ -14,7 +14,6 @@ import android.widget.ViewAnimator;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
@@ -85,10 +84,10 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 			}
 		});
         
-        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new OnConnectionRegainedListener() {
+        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new Runnable() {
 			
 				@Override
-				public void onConnectionRegained() {
+				public void run() {
 					filesContainer.getFilesAsync();
 				}
 			})

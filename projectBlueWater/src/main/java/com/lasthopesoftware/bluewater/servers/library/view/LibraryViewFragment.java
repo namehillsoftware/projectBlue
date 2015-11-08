@@ -12,7 +12,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
@@ -78,11 +77,11 @@ public class LibraryViewFragment extends Fragment {
 					}
 				};
 
-				final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+				final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new Runnable() {
 
 					@Override
-					public void onConnectionRegained() {
-						final OnConnectionRegainedListener _this = this;
+					public void run() {
+						final Runnable _this = this;
 						FileSystem.Instance.get(activity, new OnGetFileSystemCompleteListener() {
 
 							@Override
@@ -111,10 +110,10 @@ public class LibraryViewFragment extends Fragment {
 		final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
 		playlistsProvider
 			.onComplete(onGetLibraryViewPlaylistResultsComplete)
-			.onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+			.onError(new HandleViewIoException(activity, new Runnable() {
 
 				@Override
-				public void onConnectionRegained() {
+				public void run() {
 					final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
 
 					playlistsProvider
@@ -138,10 +137,10 @@ public class LibraryViewFragment extends Fragment {
 		ItemProvider
 				.provide(category.getKey())
 				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+				.onError(new HandleViewIoException(activity, new Runnable() {
 
 					@Override
-					public void onConnectionRegained() {
+					public void run() {
 							ItemProvider
 								.provide(category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)

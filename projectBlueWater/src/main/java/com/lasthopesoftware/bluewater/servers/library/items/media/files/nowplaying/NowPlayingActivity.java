@@ -28,8 +28,6 @@ import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionLostListener;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
@@ -58,9 +56,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	OnNowPlayingChangeListener, 
 	OnNowPlayingPauseListener,
 	OnNowPlayingStopListener,
-	OnNowPlayingStartListener,
-	OnConnectionLostListener
+	OnNowPlayingStartListener
 {
+	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
+
 	private NowPlayingActivityProgressTrackerTask mTrackerTask;
 	private NowPlayingActivityMessageHandler mHandler;
 	private ImageButton mPlay;
@@ -69,19 +68,25 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private RelativeLayout mContentView;
 	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 	private Timer mHideTimer;
+
 	private TimerTask mTimerTask;
-	
 	private ProgressBar mSongProgressBar;
 	private ProgressBar mLoadingImg;
 	private ImageView mNowPlayingImageView;
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
-	private static ImageAccess getFileImageTask;
 
-	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
+	private static ImageAccess getFileImageTask;
 	private static ViewStructure mViewStructure;
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";
+
+	private final Runnable onConnectionLostListener = new Runnable() {
+		@Override
+		public void run() {
+			WaitForConnectionDialog.show(NowPlayingActivity.this);
+		}
+	};
 
 	private static Drawable repeatingDrawable, notRepeatingDrawable;
 
@@ -136,7 +141,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		PlaybackService.addOnStreamingPauseListener(this);
 		PlaybackService.addOnStreamingStopListener(this);
 		PlaybackService.addOnStreamingStartListener(this);
-		PollConnection.Instance.get(this).addOnConnectionLostListener(this);
+		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
 		mPlay.setOnClickListener(new OnClickListener() {
 
@@ -313,7 +318,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		PlaybackService.removeOnStreamingStartListener(this);
 		PlaybackService.removeOnStreamingChangeListener(this);
 		PlaybackService.removeOnStreamingPauseListener(this);
-		PollConnection.Instance.get(this).removeOnConnectionLostListener(this);
+		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
 	}
 	
 	public RelativeLayout getContentView() {
@@ -331,7 +336,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private void setView(final IPlaybackFile playbackFile) {
 		setView(playbackFile.getFile(), playbackFile.getCurrentPosition());
 
-		mPlay.setVisibility(playbackFile.isPlaying() ?  View.INVISIBLE : View.VISIBLE);
+		mPlay.setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
 		mPause.setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
@@ -554,10 +559,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	}
 	
 	private void resetViewOnReconnect(final IFile file, final int position) {
-		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new Runnable() {
 
 			@Override
-			public void onConnectionRegained() {
+			public void run() {
 				setView(file, position);
 			}
 		});
@@ -565,7 +570,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {		
+	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {
 		setView(filePlayer);
 	}
 	
@@ -602,10 +607,5 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
-	}
-
-	@Override
-	public void onConnectionLost() {
-		WaitForConnectionDialog.show(this);
 	}
 }

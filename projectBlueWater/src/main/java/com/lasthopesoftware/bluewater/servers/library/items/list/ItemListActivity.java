@@ -13,7 +13,6 @@ import android.widget.ViewAnimator;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -80,9 +79,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
                 pbLoading.setVisibility(View.INVISIBLE);
             }
         });
-        itemProvider.onError(new HandleViewIoException(this, new PollConnection.OnConnectionRegainedListener() {
+        itemProvider.onError(new HandleViewIoException(this, new Runnable() {
             @Override
-            public void onConnectionRegained() {
+            public void run() {
                 itemProvider.execute();
             }
         }));

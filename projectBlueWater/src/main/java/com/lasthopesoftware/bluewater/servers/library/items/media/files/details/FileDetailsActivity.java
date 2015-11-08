@@ -19,7 +19,6 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
@@ -69,10 +68,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 	private boolean mIsDestroyed;
 
-	private final OnConnectionRegainedListener mOnConnectionRegainedListener = new OnConnectionRegainedListener() {
+	private final Runnable mOnConnectionRegainedListener = new Runnable() {
 		
 		@Override
-		public void onConnectionRegained() {
+		public void run() {
 			setView(mFileKey);
 		}
 	};

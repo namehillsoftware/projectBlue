@@ -11,12 +11,10 @@ import android.widget.Button;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnectionActivity extends Activity {
 	
-	public static void beginWaiting(final Context context, final OnConnectionRegainedListener onConnectionRegainedListener) {
+	public static void beginWaiting(final Context context, final Runnable onConnectionRegainedListener) {
 		final PollConnection pollConnectionInstance = PollConnection.Instance.get(context);
 		pollConnectionInstance.addOnConnectionRegainedListener(onConnectionRegainedListener);
 		pollConnectionInstance.startPolling();
@@ -31,18 +29,18 @@ public class WaitForConnectionActivity extends Activity {
 		final Intent selectServerIntent = new Intent(this, ServerListActivity.class);
 		final WaitForConnectionActivity _this = this;
 		
-		PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+		PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new Runnable() {
 			
 			@Override
-			public void onConnectionRegained() {
+			public void run() {
 				finish();
 			}
 		});
 		
-		PollConnection.Instance.get(_this).addOnPollingCancelledListener(new OnPollingCancelledListener() {
+		PollConnection.Instance.get(_this).addOnPollingCancelledListener(new Runnable() {
 			
 			@Override
-			public void onPollingCancelled() {
+			public void run() {
 				_this.startActivity(selectServerIntent);
 			}
 		});
