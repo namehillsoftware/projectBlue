@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -27,6 +26,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListIte
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -129,7 +129,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         @Override
         public void onClick(final View view) {
-            LibrarySession.GetLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+            LibrarySession.GetActiveLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
                 @Override
                 public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
