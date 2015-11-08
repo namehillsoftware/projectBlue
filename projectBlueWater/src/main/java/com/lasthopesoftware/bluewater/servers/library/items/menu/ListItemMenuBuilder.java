@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayCl
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 
-public final class ItemMenu {
+public final class ListItemMenuBuilder extends AbstractListItemMenuBuilder<IItem> {
 	private static class ViewHolder {
 		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
 			this.textView = textView;
@@ -31,7 +31,8 @@ public final class ItemMenu {
         public final ImageButton viewButton;
 	}
 
-	public static NotifyOnFlipViewAnimator getView(IItem item, View convertView, ViewGroup parent) {
+	@Override
+	public View getView(int position, IItem item, View convertView, ViewGroup parent) {
 		NotifyOnFlipViewAnimator parentView = (NotifyOnFlipViewAnimator)convertView;
 		if (parentView == null) {
 		
@@ -55,7 +56,9 @@ public final class ItemMenu {
 
 			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
 		}
-		
+
+		parentView.setViewChangedListener(getOnViewChangedListener());
+
 		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
 		
 		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
