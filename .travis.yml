@@ -2,7 +2,7 @@ language: android
 android:
   components:
     # The BuildTools version used by your project
-    - build-tools-23.0.1
+    - build-tools-23.0.2
     - android-23
     - addon-google_apis-google-23
     - extra-android-m2repository
