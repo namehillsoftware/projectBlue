@@ -4,21 +4,16 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements RemovePlaylistFileClickListener.OnPlaylistFileRemoved {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements IOneParameterRunnable<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
@@ -41,7 +36,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter implement
     }
 
     @Override
-    public void onPlaylistFileRemoved(int position) {
+    public void run(Integer position) {
         remove(getItem(position));
     }
 }
