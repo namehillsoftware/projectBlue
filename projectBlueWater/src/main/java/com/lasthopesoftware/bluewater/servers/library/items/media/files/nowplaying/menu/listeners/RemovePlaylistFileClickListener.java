@@ -4,13 +4,14 @@ import android.os.AsyncTask;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View view) {
-        LibrarySession.GetLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
@@ -48,7 +49,7 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
                             return playbackController.getPlaylistString();
                         }
 
-                        final List<IFile> savedTracks = Files.parseFileStringList(library.getSavedTracksString());
+                        final List<IFile> savedTracks = Files.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
                         savedTracks.remove(position);
                         return Files.serializeFileStringList(savedTracks);
                     }
