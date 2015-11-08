@@ -85,10 +85,10 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 			}
 		});
         
-        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new OnConnectionRegainedListener() {
+        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new Runnable() {
 
 					@Override
-					public void onConnectionRegained() {
+					public void run() {
 						filesContainer.getFilesAsync();
 					}
 				})

@@ -72,10 +72,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 				playlistView.setVisibility(View.VISIBLE);
 	        	pbLoading.setVisibility(View.INVISIBLE);
 			}
-		}).onError(new HandleViewIoException(thisContext, new OnConnectionRegainedListener() {
+		}).onError(new HandleViewIoException(thisContext, new Runnable() {
 					
 			@Override
-			public void onConnectionRegained() {
+			public void run() {
 				playlistsProvider.execute();
 			}
 		})).execute();

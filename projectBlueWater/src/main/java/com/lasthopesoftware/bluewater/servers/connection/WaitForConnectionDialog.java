@@ -7,8 +7,6 @@ import android.content.DialogInterface.OnClickListener;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnPollingCancelledListener;
 
 public class WaitForConnectionDialog {
 
@@ -35,18 +33,18 @@ public class WaitForConnectionDialog {
 		_instance.setOnShowListener(new DialogInterface.OnShowListener() {
 			@Override
 			public void onShow(DialogInterface dialog) {
-				PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new OnConnectionRegainedListener() {
+				PollConnection.Instance.get(_context).addOnConnectionRegainedListener(new Runnable() {
 
 					@Override
-					public void onConnectionRegained() {
+					public void run() {
 						if (_instance.isShowing()) _instance.dismiss();
 					}
 				});
 
-				PollConnection.Instance.get(_context).addOnPollingCancelledListener(new OnPollingCancelledListener() {
+				PollConnection.Instance.get(_context).addOnPollingCancelledListener(new Runnable() {
 
 					@Override
-					public void onPollingCancelled() {
+					public void run() {
 						if (_instance.isShowing()) _instance.dismiss();
 					}
 				});

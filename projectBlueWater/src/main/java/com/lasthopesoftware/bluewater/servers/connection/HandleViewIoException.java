@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 public class HandleViewIoException implements ISimpleTask.OnErrorListener, IDataTask.OnErrorListener {
 	
 	private final Context mContext;
-	private final OnConnectionRegainedListener mOnConnectionRegainedListener;
+	private final Runnable mOnConnectionRegainedListener;
 	
 	@Override
 	public boolean onError(ISimpleTask owner, boolean isHandled, Exception innerException) {
@@ -23,7 +22,7 @@ public class HandleViewIoException implements ISimpleTask.OnErrorListener, IData
 		return true;
 	}
 	
-	public HandleViewIoException(final Context context, final OnConnectionRegainedListener onConnectionRegainedListener) {		
+	public HandleViewIoException(final Context context, final Runnable onConnectionRegainedListener) {
 		mContext = context;
 		mOnConnectionRegainedListener = onConnectionRegainedListener;
 	}

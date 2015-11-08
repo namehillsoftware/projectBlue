@@ -13,8 +13,6 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
@@ -113,11 +111,11 @@ public class LibraryViewFragment extends Fragment {
 		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 		playlistsProvider
 			.onComplete(onGetLibraryViewPlaylistResultsComplete)
-			.onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+			.onError(new HandleViewIoException(activity, new Runnable() {
 
 				@Override
-				public void onConnectionRegained() {
-					final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+				public void run() {
+					final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
 
 					playlistsProvider
 							.onComplete(onGetLibraryViewPlaylistResultsComplete)
@@ -140,10 +138,10 @@ public class LibraryViewFragment extends Fragment {
 		ItemProvider
 				.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+				.onError(new HandleViewIoException(activity, new Runnable() {
 
 					@Override
-					public void onConnectionRegained() {
+					public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
