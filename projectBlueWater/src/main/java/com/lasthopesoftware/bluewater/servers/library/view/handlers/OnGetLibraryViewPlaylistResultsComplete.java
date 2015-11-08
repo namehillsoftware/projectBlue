@@ -29,6 +29,7 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
 
     public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
         super.onComplete(owner, result);
+        if (result == null) return;
 
         listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
     }

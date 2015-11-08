@@ -29,6 +29,7 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
 
     public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
         super.onComplete(owner, result);
+        if (result == null) return;
 
         listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
     }
