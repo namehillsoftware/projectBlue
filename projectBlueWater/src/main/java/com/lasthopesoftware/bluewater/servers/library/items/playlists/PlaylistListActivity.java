@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;

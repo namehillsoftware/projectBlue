@@ -13,6 +13,7 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.FileSystem;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
@@ -76,11 +77,11 @@ public class LibraryViewFragment extends Fragment {
 				    }
 			    };
 			
-			    final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new OnConnectionRegainedListener() {
+			    final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new Runnable() {
 				
 				    @Override
-				    public void onConnectionRegained() {
-					    final OnConnectionRegainedListener _this = this;
+				    public void run() {
+					    final Runnable _this = this;
 					
 					    LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 						    @Override
@@ -115,7 +116,7 @@ public class LibraryViewFragment extends Fragment {
 
 				@Override
 				public void run() {
-					final PlaylistsProvider playlistsProvider = new PlaylistsProvider();
+					final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 
 					playlistsProvider
 							.onComplete(onGetLibraryViewPlaylistResultsComplete)

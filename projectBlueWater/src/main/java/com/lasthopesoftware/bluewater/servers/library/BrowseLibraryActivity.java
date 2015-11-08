@@ -30,8 +30,6 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection.OnConnectionRegainedListener;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
