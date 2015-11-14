@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers;
+package com.lasthopesoftware.bluewater.servers.settings;
 
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-public class EditServerActivity extends AppCompatActivity {
-	public static final String serverIdExtra = EditServerActivity.class.getCanonicalName() + ".serverIdExtra";
+public class EditServerSettingsActivity extends AppCompatActivity {
+	public static final String serverIdExtra = EditServerSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
 
 	private Library library;
 

@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.servers.listeners;
+package com.lasthopesoftware.bluewater.servers.list.listeners;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 
-import com.lasthopesoftware.bluewater.servers.EditServerActivity;
+import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsActivity;
 
 /**
  * Created by david on 7/9/15.
@@ -21,8 +21,8 @@ public class EditServerClickListener implements View.OnClickListener {
 
 	@Override
 	public void onClick(View v) {
-		final Intent intent = new Intent(v.getContext(), EditServerActivity.class);
-		intent.putExtra(EditServerActivity.serverIdExtra, mServerId);
+		final Intent intent = new Intent(v.getContext(), EditServerSettingsActivity.class);
+		intent.putExtra(EditServerSettingsActivity.serverIdExtra, mServerId);
 		mActivity.startActivityForResult(intent, 5388);
 	}
 }

@@ -13,8 +13,8 @@ import android.widget.RelativeLayout;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.ServerListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.list.ServerListAdapter;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;

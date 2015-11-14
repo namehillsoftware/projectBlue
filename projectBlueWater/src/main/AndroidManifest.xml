@@ -37,7 +37,7 @@
             android:label="@string/layout_settings" >
         </activity>
         <activity
-            android:name=".servers.EditServerActivity"
+            android:name=".servers.settings.EditServerSettingsActivity"
             android:label="@string/title_activity_set_up_connection"
             android:noHistory="true" >
             <meta-data

@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
  */
 public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem> implements ISimpleTask.OnCompleteListener<Void, Void, List<T>> {
 
-	private static final String PREFS_KEY = "com.lasthopesoftware.bluewater.servers.library.view.LibraryViewFragment.TUTORIAL_SHOWN";
+	private static final String PREFS_KEY = SpecialValueHelpers.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
 	private static boolean wasTutorialShown;
 

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers;
+package com.lasthopesoftware.bluewater.servers.list;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -18,7 +18,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.bluewater.servers.listeners.EditServerClickListener;
+import com.lasthopesoftware.bluewater.servers.list.listeners.EditServerClickListener;
 
 import java.util.List;
 
