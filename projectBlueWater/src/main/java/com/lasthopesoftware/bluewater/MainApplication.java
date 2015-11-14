@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
-import com.lasthopesoftware.bluewater.sync.service.ItemSyncService;
+import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public class MainApplication extends Application {
 		initializeLogging();
 
 		// Kick off a file sync if one isn't scheduled on start-up
-		if (!ItemSyncService.isSyncScheduled(this)) ItemSyncService.doSync(this);
+		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
 	}
 	
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

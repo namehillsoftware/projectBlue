@@ -140,7 +140,7 @@
             android:exported="false" >
         </service>
         <service
-            android:name=".sync.service.ItemSyncService"
+            android:name=".sync.service.SyncService"
             android:enabled="true"
             android:exported="false" >
         </service>

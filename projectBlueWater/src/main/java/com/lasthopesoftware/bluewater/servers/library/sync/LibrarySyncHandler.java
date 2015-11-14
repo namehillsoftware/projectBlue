@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.sync.service;
+package com.lasthopesoftware.bluewater.servers.library.sync;
 
 import android.content.Context;
 import android.os.AsyncTask;

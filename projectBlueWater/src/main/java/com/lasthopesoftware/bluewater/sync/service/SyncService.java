@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
@@ -43,16 +44,16 @@ import java.util.List;
 /**
  * Created by david on 7/26/15.
  */
-public class ItemSyncService extends Service {
+public class SyncService extends Service {
 
-	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "onFileDownloadedEvent");
-	public static final String onFileDownloadedStoreId = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "onFileDownloadedStoreId");
+	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
+	public static final String onFileDownloadedStoreId = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedStoreId");
 
-	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "doSyncAction");
+	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "doSyncAction");
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
 	private static final int notificationId = 23;
 
-	private static final Logger logger = LoggerFactory.getLogger(ItemSyncService.class);
+	private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
 
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
@@ -96,7 +97,7 @@ public class ItemSyncService extends Service {
 	}
 
 	public static void doSync(Context context) {
-		final Intent intent = new Intent(context, ItemSyncService.class);
+		final Intent intent = new Intent(context, SyncService.class);
 		intent.setAction(doSyncAction);
 
 		context.startService(intent);
@@ -108,7 +109,7 @@ public class ItemSyncService extends Service {
 
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
-		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(ItemSyncService.class, "wakeLock"));
+		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "wakeLock"));
 		wakeLock.acquire();
 
 		registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
@@ -192,7 +193,7 @@ public class ItemSyncService extends Service {
 
 		// Set an alarm for the next time we run this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(ItemSyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
+		final PendingIntent pendingIntent = PendingIntent.getBroadcast(SyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 		stopForeground(true);

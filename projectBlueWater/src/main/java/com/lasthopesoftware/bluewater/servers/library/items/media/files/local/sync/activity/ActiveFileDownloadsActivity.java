@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.sync.service.ItemSyncService;
+import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -60,7 +60,7 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                         onFileDownloadedReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
-                                final int storedFileId = intent.getIntExtra(ItemSyncService.onFileDownloadedStoreId, -1);
+                                final int storedFileId = intent.getIntExtra(SyncService.onFileDownloadedStoreId, -1);
 
 	                            final List<IFile> files = activeFileDownloadsAdapter.getFiles();
 
@@ -80,7 +80,7 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                             }
                         };
 
-                        localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(ItemSyncService.onFileDownloadedEvent));
+                        localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
 	                    listView.setAdapter(activeFileDownloadsAdapter);
 
 	                    progressBar.setVisibility(View.INVISIBLE);
