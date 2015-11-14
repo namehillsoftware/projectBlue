@@ -14,9 +14,11 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 public class IoCommon {
 	public static final String FileUriScheme = "file";
 
-	public static boolean isWifiAndPowerConnected(Context context) {
-		if (ConnectionInfo.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) return false;
+	public static boolean isWifiConnected(Context context) {
+		return ConnectionInfo.getConnectionType(context) == ConnectivityManager.TYPE_WIFI;
+	}
 
+	public static boolean isPowerConnected(Context context) {
 		final Intent batteryStatusReceiver = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 		if (batteryStatusReceiver == null) return false;
 

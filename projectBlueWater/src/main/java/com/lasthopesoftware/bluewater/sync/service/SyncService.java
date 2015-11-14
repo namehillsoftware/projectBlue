@@ -9,18 +9,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
@@ -81,7 +82,7 @@ public class SyncService extends Service {
 	private final BroadcastReceiver onWifiStateChangedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (ConnectionInfo.getConnectionType(context) != ConnectivityManager.TYPE_WIFI) cancelSync();
+			if (!IoCommon.isWifiConnected(context)) cancelSync();
 		}
 	};
 
@@ -111,9 +112,6 @@ public class SyncService extends Service {
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "wakeLock"));
 		wakeLock.acquire();
-
-		registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-		registerReceiver(onPowerDisconnectedReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 	}
 
 	@Override
@@ -122,12 +120,12 @@ public class SyncService extends Service {
 
 		final int result = START_NOT_STICKY;
 
-		final Context context = this;
-
-		if (!IoCommon.isWifiAndPowerConnected(context)) {
+		if (!isDeviceStateValidForSync()) {
 			finishSync();
 			return result;
 		}
+
+		final Context context = this;
 
 		logger.info("Starting sync.");
 		startForeground(notificationId, buildSyncNotification());
@@ -173,6 +171,28 @@ public class SyncService extends Service {
 		});
 
 		return result;
+	}
+
+	private boolean isDeviceStateValidForSync() {
+		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
+
+		if (isSyncOnWifiOnly) {
+			if (!IoCommon.isWifiConnected(this)) return false;
+
+			registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+		}
+
+
+
+		final boolean isSyncOnPowerOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
+		if (isSyncOnPowerOnly) {
+			if (!IoCommon.isPowerConnected(this)) return false;
+
+			registerReceiver(onPowerDisconnectedReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+		}
+
+		return true;
 	}
 
 	private Notification buildSyncNotification() {
