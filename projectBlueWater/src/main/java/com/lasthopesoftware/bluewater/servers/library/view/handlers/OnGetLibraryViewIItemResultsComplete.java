@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.servers.library.view.handlers;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.PointTarget;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
@@ -62,7 +62,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem> impl
         if (wasTutorialShown) return;
         wasTutorialShown = true;
 
-        final SharedPreferences sharedPreferences = activity.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
         if (!DEBUGGING_TUTORIAL && sharedPreferences.getBoolean(PREFS_KEY, false)) return;
 
         int[] position = new int[2];

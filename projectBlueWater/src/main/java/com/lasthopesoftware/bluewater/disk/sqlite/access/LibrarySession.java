@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.disk.sqlite.access;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -95,7 +95,7 @@ public class LibrarySession {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 
-		final int chosenLibraryId = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0).getInt(chosenLibraryInt, -1);
+		final int chosenLibraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(chosenLibraryInt, -1);
 		return chosenLibraryId >= 0 ? GetLibrary(context, chosenLibraryId) : null;
 	}
 
@@ -141,7 +141,7 @@ public class LibrarySession {
 		
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final OnCompleteListener<Integer, Void, Library> onLibraryChangeComplete) {
 
-        final SharedPreferences sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1)) {
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
 		}

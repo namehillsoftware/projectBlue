@@ -3,10 +3,9 @@ package com.lasthopesoftware.bluewater.settings;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-
-import com.lasthopesoftware.bluewater.ApplicationConstants;
 
 /**
  * Created by david on 11/14/15.
@@ -24,7 +23,7 @@ public class HandleCheckboxPreference extends AsyncTask<Void, Void, Boolean> {
 		settingCheckbox.setEnabled(false);
 		this.settingKey = settingKey;
 		this.settingCheckbox = settingCheckbox;
-		sharedPreferences = context.getSharedPreferences(ApplicationConstants.PREFS_FILE, 0);
+		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 	}
 
 	@Override
