@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers;
+package com.lasthopesoftware.bluewater.sync.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
+import com.lasthopesoftware.bluewater.sync.service.ItemSyncService;
 
 import org.slf4j.LoggerFactory;
 

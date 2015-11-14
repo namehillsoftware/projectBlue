@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service;
+package com.lasthopesoftware.bluewater.sync.service;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;

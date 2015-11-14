@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.sync.service.ItemSyncService;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;

@@ -13,10 +13,10 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service.ItemSyncService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
+import com.lasthopesoftware.bluewater.sync.service.ItemSyncService;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.slf4j.Logger;

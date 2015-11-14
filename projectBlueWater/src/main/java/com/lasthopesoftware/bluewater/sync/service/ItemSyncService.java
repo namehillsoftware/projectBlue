@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.service;
+package com.lasthopesoftware.bluewater.sync.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -25,12 +25,12 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.threading.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
