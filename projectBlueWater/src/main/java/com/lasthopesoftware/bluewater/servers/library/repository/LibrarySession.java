@@ -8,6 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
@@ -22,8 +23,8 @@ import java.util.List;
 
 public class LibrarySession {
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(LibrarySession.class);
-	public static final String libraryChosenEvent = LibrarySession.class.getCanonicalName() + ".libraryChosenEvent";
+	private static final Logger logger = LoggerFactory.getLogger(LibrarySession.class);
+	public static final String libraryChosenEvent = SpecialValueHelpers.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
 	public static void SaveLibrary(final Context context, final Library library) {
@@ -39,10 +40,10 @@ public class LibrarySession {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
-					mLogger.debug("Library saved.");
+					logger.debug("Library saved.");
 					return library;
 				} catch (SQLException e) {
-					mLogger.error(e.toString(), e);
+					logger.error(e.toString(), e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -107,7 +108,7 @@ public class LibrarySession {
 			final Dao<Library, Integer> libraryAccess = repositoryAccessHelper.getDataAccess(Library.class);
 			return libraryAccess.queryForId(libraryId);
 		} catch (SQLException e) {
-			mLogger.error(e.toString(), e);
+			logger.error(e.toString(), e);
 		} finally {
 			repositoryAccessHelper.close();
 		}
@@ -124,7 +125,7 @@ public class LibrarySession {
 				try {
 					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();
 				} catch (SQLException e) {
-					mLogger.error(e.toString(), e);
+					logger.error(e.toString(), e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
