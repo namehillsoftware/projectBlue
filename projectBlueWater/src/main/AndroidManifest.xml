@@ -34,8 +34,8 @@
         </activity>
         
         <activity
-            android:name="com.lasthopesoftware.bluewater.servers.ServerListActivity"
-            android:label="@string/title_activity_select_server">
+            android:name=".AppSettingsActivity"
+            android:label="@string/layout_settings">
         </activity>
         
         <activity
@@ -45,7 +45,7 @@
             
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.servers.ServerListActivity" />
+                android:value=".AppSettingsActivity" />
         </activity>
         <!-- End Connection intents -->
         

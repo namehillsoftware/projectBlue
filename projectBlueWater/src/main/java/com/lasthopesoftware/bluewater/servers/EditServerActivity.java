@@ -73,7 +73,7 @@ public class EditServerActivity extends AppCompatActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
-        setContentView(R.layout.activity_edit_server);
+        setContentView(R.layout.activity_edit_server_settings);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		saveButton = (Button)findViewById(R.id.btnConnect);
