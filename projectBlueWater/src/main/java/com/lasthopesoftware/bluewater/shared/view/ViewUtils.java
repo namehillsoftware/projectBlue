@@ -12,10 +12,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.lasthopesoftware.bluewater.AppSettingsActivity;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
 public class ViewUtils {
 
@@ -32,7 +32,7 @@ public class ViewUtils {
 	public static boolean handleMenuClicks(final Context context, final MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_connection_settings:
-				context.startActivity(new Intent(context, AppSettingsActivity.class));
+				context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
 				return true;
 			case R.id.menu_view_active_downloads:
 				context.startActivity(new Intent(context, ActiveFileDownloadsActivity.class));

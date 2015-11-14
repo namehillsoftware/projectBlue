@@ -10,10 +10,10 @@ import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
 
-import com.lasthopesoftware.bluewater.AppSettingsActivity;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -56,7 +56,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		setContentView(R.layout.layout_status);
 		
 		lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
-		selectServerIntent = new Intent(this, AppSettingsActivity.class);
+		selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
