@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.disk.sqlite.access;
+package com.lasthopesoftware.bluewater.repository;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

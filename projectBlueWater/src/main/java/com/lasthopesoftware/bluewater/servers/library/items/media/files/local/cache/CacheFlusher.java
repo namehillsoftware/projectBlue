@@ -5,7 +5,7 @@ import android.content.Context;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.SelectArg;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 
 import org.slf4j.Logger;
