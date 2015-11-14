@@ -175,8 +175,8 @@ public class SyncService extends Service {
 
 	private boolean isDeviceStateValidForSync() {
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
 
+		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
 		if (isSyncOnWifiOnly) {
 			if (!IoCommon.isWifiConnected(this)) return false;
 
