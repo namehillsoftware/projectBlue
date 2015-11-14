@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.disk.sqlite.access;
+package com.lasthopesoftware.bluewater.servers.library.repository;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.j256.ormlite.dao.Dao;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.disk.sqlite.access.RepositoryAccessHelper;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
