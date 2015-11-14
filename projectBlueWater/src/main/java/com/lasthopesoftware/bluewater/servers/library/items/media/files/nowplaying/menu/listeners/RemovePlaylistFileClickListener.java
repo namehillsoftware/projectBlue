@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -21,10 +22,10 @@ import java.util.List;
  */
 public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
     private final int position;
-    private final OnPlaylistFileRemoved onPlaylistFileRemoved;
+    private final IOneParameterRunnable<Integer> onPlaylistFileRemoved;
 
     // TODO Add event and remove interdepency on NowPlayingFileListAdapter adapter
-    public RemovePlaylistFileClickListener(NotifyOnFlipViewAnimator parent, final int position, final OnPlaylistFileRemoved onPlaylistFileRemoved) {
+    public RemovePlaylistFileClickListener(NotifyOnFlipViewAnimator parent, final int position, final IOneParameterRunnable<Integer> onPlaylistFileRemoved) {
         super(parent);
         this.position = position;
         this.onPlaylistFileRemoved = onPlaylistFileRemoved;
@@ -65,8 +66,7 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
                             @Override
                             public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
                                 if (onPlaylistFileRemoved != null)
-                                    onPlaylistFileRemoved.onPlaylistFileRemoved(position);
-//                                adapter.remove(adapter.getItem(position));
+                                    onPlaylistFileRemoved.run(position);
                             }
                         });
                     }
@@ -76,9 +76,5 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
         });
 
         super.onClick(view);
-    }
-
-    public interface OnPlaylistFileRemoved {
-        void onPlaylistFileRemoved (int position);
     }
 }

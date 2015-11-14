@@ -10,7 +10,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -25,9 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IOneParameterRunnable;
 
 import java.util.List;
 
@@ -54,7 +51,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
     private final List<IFile> files;
     private final int nowPlayingPosition;
 
-    private RemovePlaylistFileClickListener.OnPlaylistFileRemoved onPlaylistFileRemovedListener;
+    private IOneParameterRunnable<Integer> onPlaylistFileRemovedListener;
 
     public NowPlayingFileListItemMenuBuilder(final List<IFile> files, final int nowPlayingPosition) {
         this.files = files;
@@ -116,7 +113,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         return viewFlipper;
     }
 
-    public void setOnPlaylistFileRemovedListener(RemovePlaylistFileClickListener.OnPlaylistFileRemoved onPlaylistFileRemovedListener) {
+    public void setOnPlaylistFileRemovedListener(IOneParameterRunnable<Integer> onPlaylistFileRemovedListener) {
         this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener;
     }
 }

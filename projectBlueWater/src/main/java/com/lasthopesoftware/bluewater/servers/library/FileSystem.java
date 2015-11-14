@@ -81,21 +81,21 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 				});
 
 				final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider(connectionProvider);
-				final List<Item> libraries = libraryViewsProvider.get();
+				final List<Item> libraryViews = libraryViewsProvider.get();
 
 				if (libraryViewsProvider.getException() != null)
 				    throw libraryViewsProvider.getException();
 
 				for (int viewKey : visibleViewKeys) {
-					for (Item library : libraries) {
-						if (visibleViewKeys.size() > 0 && viewKey != library.getKey()) continue;
+					for (Item libraryView : libraryViews) {
+						if (visibleViewKeys.size() > 0 && viewKey != libraryView.getKey()) continue;
 
-						if (library.getValue().equalsIgnoreCase("Playlists")) {
+						if (libraryView.getValue().equalsIgnoreCase("Playlists")) {
 							visibleViews.add(new Playlists());
 							continue;
 						}
 
-						final List<Item> views = ItemProvider.provide(connectionProvider, library.getKey()).get();
+						final List<Item> views = ItemProvider.provide(connectionProvider, libraryView.getKey()).get();
 						for (Item view : views)
 							visibleViews.add(view);
 					}
