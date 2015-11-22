@@ -68,8 +68,8 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		
 		private static final Logger mLogger = LoggerFactory.getLogger(GetFileImageOnExecute.class);
 		
-		private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
-		private static final int MAX_MEMORY_CACHE_SIZE = 5;
+		private static final int MAX_DISK_CACHE_SIZE = 35 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
+		private static final int MAX_MEMORY_CACHE_SIZE = 10;
 		private static final int MAX_DAYS_IN_CACHE = 30;
 		private static final String IMAGES_CACHE_NAME = "images";
 		
