@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +10,7 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -39,6 +38,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
@@ -69,6 +69,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private RelativeLayout mContentView;
 	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 	private Timer mHideTimer;
+	private ImageButton isScreenKeptOnButton;
 
 	private TimerTask mTimerTask;
 	private ProgressBar mSongProgressBar;
@@ -82,14 +83,14 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";
 
+	private static boolean isScreenKeptOn;
+
 	private final Runnable onConnectionLostListener = new Runnable() {
 		@Override
 		public void run() {
 			WaitForConnectionDialog.show(NowPlayingActivity.this);
 		}
 	};
-
-	private static Drawable repeatingDrawable, notRepeatingDrawable;
 
 	private static class ViewStructure {
 		public final int fileKey;
@@ -213,6 +214,15 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			}
 		});
 
+		isScreenKeptOnButton = (ImageButton) findViewById(R.id.isScreenKeptOnButton);
+		isScreenKeptOnButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				isScreenKeptOn = !isScreenKeptOn;
+				toggleIsScreenKeptOn(isScreenKeptOn);
+			}
+		});
+
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			mSongProgressBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
 
@@ -222,7 +232,9 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	@Override
 	public void onStart() {
 		super.onStart();
-		
+
+		toggleIsScreenKeptOn(isScreenKeptOn);
+
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 	}
 
@@ -288,40 +300,18 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	}
 	
 	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
-		imageButton.setImageDrawable(isRepeating ? getRepeatingDrawable(imageButton.getContext()) : getNotRepeatingDrawable(imageButton.getContext()));
+		imageButton.setImageDrawable(ViewUtils.getDrawable(imageButton.getContext(), isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark));
 	}
 
-	private static Drawable getRepeatingDrawable(Context context) {
-		if (repeatingDrawable == null)
-			repeatingDrawable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? context.getDrawable(R.drawable.av_repeat_dark) : context.getResources().getDrawable(R.drawable.av_repeat_dark);;
+	private void toggleIsScreenKeptOn(boolean isScreenKeptOn) {
+		isScreenKeptOnButton.setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
 
-		return repeatingDrawable;
+		if (isScreenKeptOn)
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		else
+			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	private static Drawable getNotRepeatingDrawable(Context context) {
-		if (notRepeatingDrawable == null)
-			notRepeatingDrawable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? context.getDrawable(R.drawable.av_no_repeat_dark) : context.getResources().getDrawable(R.drawable.av_no_repeat_dark);
-
-		return notRepeatingDrawable;
-	}
-	
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		
-		if (mHideTimer != null) {
-			mHideTimer.cancel();
-			mHideTimer.purge();
-		}
-		
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		
-		PlaybackService.removeOnStreamingStartListener(this);
-		PlaybackService.removeOnStreamingChangeListener(this);
-		PlaybackService.removeOnStreamingPauseListener(this);
-		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
-	}
-	
 	public RelativeLayout getContentView() {
 		return mContentView;
 	}
@@ -608,5 +598,29 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+
+		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		if (mHideTimer != null) {
+			mHideTimer.cancel();
+			mHideTimer.purge();
+		}
+
+		if (mTrackerTask != null) mTrackerTask.cancel(false);
+
+		PlaybackService.removeOnStreamingStartListener(this);
+		PlaybackService.removeOnStreamingChangeListener(this);
+		PlaybackService.removeOnStreamingPauseListener(this);
+		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
 	}
 }
