@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.MenuItemCompat;
@@ -75,5 +77,11 @@ public class ViewUtils {
 	public static int dpToPx(Context context, int dp) {
 		final float densityDpi = context.getResources().getDisplayMetrics().density;
 		return (int)(dp * densityDpi + .5f);
+	}
+
+	public static Drawable getDrawable(Context context, int id) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) return context.getDrawable(id);
+
+		return context.getResources().getDrawable(id);
 	}
 }

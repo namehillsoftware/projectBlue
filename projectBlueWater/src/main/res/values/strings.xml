@@ -62,4 +62,6 @@
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
     <string name="lbl_details">%1$s details</string>
     <string name="select_view_title">Select view</string>
+    <string name="screen_is_off">Screen Off</string>
+    <string name="screen_is_on">Screen On</string>
 </resources>

@@ -26,8 +26,20 @@
 				android:paddingRight="10dp"
 				android:paddingEnd="10dp"
 				android:background="?android:attr/selectableItemBackground"
-				android:contentDescription="@string/btn_next"
+				android:contentDescription="@string/btn_repeat_playlist"
 				android:src="@drawable/av_no_repeat_dark"/>
+			<ImageButton
+				android:id="@+id/isScreenKeptOnButton"
+				android:layout_width="0dip"
+				android:layout_weight="1"
+				android:layout_height="wrap_content"
+				android:paddingLeft="10dp"
+				android:paddingStart="10dp"
+				android:paddingRight="10dp"
+				android:paddingEnd="10dp"
+				android:background="?android:attr/selectableItemBackground"
+				android:contentDescription="@string/screen_is_off"
+				android:src="@drawable/screen_off" />
 			<ImageButton
 				android:id="@+id/viewNowPlayingListButton"
 				android:layout_width="0dip"
@@ -38,7 +50,7 @@
 				android:paddingRight="20dp"
 				android:paddingEnd="20dp"
 				android:background="?android:attr/selectableItemBackground"
-				android:contentDescription="@string/btn_next"
+				android:contentDescription="@string/btn_view_files"
 				android:src="@drawable/ic_list_dark" />
 		</LinearLayout>
 
