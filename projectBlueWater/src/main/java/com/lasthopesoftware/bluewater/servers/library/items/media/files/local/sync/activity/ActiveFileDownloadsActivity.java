@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.adapter.ActiveFileDownloadsAdapter;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 public class ActiveFileDownloadsActivity extends AppCompatActivity {
 
+    private BroadcastReceiver onFileQueuedReceiver;
     private BroadcastReceiver onFileDownloadedReceiver;
     private LocalBroadcastManager localBroadcastManager;
 
@@ -60,7 +62,7 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                         onFileDownloadedReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
-                                final int storedFileId = intent.getIntExtra(SyncService.onFileDownloadedStoreId, -1);
+                                final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 
 	                            final List<IFile> files = activeFileDownloadsAdapter.getFiles();
 
@@ -80,6 +82,26 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                             }
                         };
 
+
+	                    if (onFileQueuedReceiver != null)
+		                    localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
+
+	                    onFileQueuedReceiver = new BroadcastReceiver() {
+		                    @Override
+		                    public void onReceive(Context context, Intent intent) {
+			                    final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+			                    if (storedFileId == -1) return;
+
+			                    storedFileAccess.getStoredFile(storedFileId, new ISimpleTask.OnCompleteListener<Void, Void, StoredFile>() {
+				                    @Override
+				                    public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
+					                    if (storedFile != null)
+					                        activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
+				                    }
+			                    });
+		                    }
+	                    };
+
                         localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
 	                    listView.setAdapter(activeFileDownloadsAdapter);
 
@@ -95,7 +117,12 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if (localBroadcastManager != null && onFileDownloadedReceiver != null)
+        if (localBroadcastManager == null) return;
+
+        if (onFileDownloadedReceiver != null)
             localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
+
+        if (onFileQueuedReceiver != null)
+            localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
     }
 }

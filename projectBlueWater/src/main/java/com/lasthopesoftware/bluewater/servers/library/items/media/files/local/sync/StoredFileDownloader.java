@@ -47,6 +47,7 @@ public class StoredFileDownloader {
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
 	private IOneParameterRunnable<StoredFile> onFileDownloaded;
+	private IOneParameterRunnable<StoredFile> onFileQueued;
 	private Runnable onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
@@ -62,8 +63,11 @@ public class StoredFileDownloader {
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
 		final int fileKey = serviceFile.getKey();
-		if (queuedFileKeys.add(fileKey))
-			queuedFiles.add(new QueuedFileHolder(serviceFile, storedFile));
+		if (!queuedFileKeys.add(fileKey)) return;
+
+		queuedFiles.add(new QueuedFileHolder(serviceFile, storedFile));
+		if (onFileQueued != null)
+			onFileQueued.run(storedFile);
 	}
 
 	public void cancel() {
@@ -155,6 +159,10 @@ public class StoredFileDownloader {
 				}
 			}
 		});
+	}
+
+	public void setOnFileQueued(IOneParameterRunnable<StoredFile> onFileQueued) {
+		this.onFileQueued = onFileQueued;
 	}
 
 	public void setOnFileDownloaded(IOneParameterRunnable<StoredFile> onFileDownloaded) {

@@ -47,8 +47,9 @@ import java.util.List;
  */
 public class SyncService extends Service {
 
+	public static final String onFileQueuedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileQueuedEvent");
 	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
-	public static final String onFileDownloadedStoreId = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedStoreId");
+	public static final String storedFileEventKey = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "storedFileEventKey");
 
 	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "doSyncAction");
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
@@ -70,11 +71,20 @@ public class SyncService extends Service {
 		}
 	};
 
+	private final IOneParameterRunnable<StoredFile> storedFileQueuedAction = new IOneParameterRunnable<StoredFile>() {
+		@Override
+		public void run(StoredFile storedFile) {
+			final Intent fileDownloadedIntent = new Intent(onFileQueuedEvent);
+			fileDownloadedIntent.putExtra(storedFileEventKey, storedFile.getId());
+			localBroadcastManager.sendBroadcast(fileDownloadedIntent);
+		}
+	};
+
 	private final IOneParameterRunnable<StoredFile> storedFileDownloadedAction = new IOneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
 			final Intent fileDownloadedIntent = new Intent(onFileDownloadedEvent);
-			fileDownloadedIntent.putExtra(onFileDownloadedStoreId, storedFile.getId());
+			fileDownloadedIntent.putExtra(storedFileEventKey, storedFile.getId());
 			localBroadcastManager.sendBroadcast(fileDownloadedIntent);
 		}
 	};
@@ -147,6 +157,7 @@ public class SyncService extends Service {
 									}
 
 									final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+									librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
 									librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 									librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
 									librarySyncHandler.startSync();
