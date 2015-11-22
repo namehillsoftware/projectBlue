@@ -83,6 +83,9 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                         };
 
 
+
+	                    localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
+
 	                    if (onFileQueuedReceiver != null)
 		                    localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
 
@@ -96,13 +99,14 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
 				                    @Override
 				                    public void onComplete(ISimpleTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
 					                    if (storedFile != null)
-					                        activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
+						                    activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
 				                    }
 			                    });
 		                    }
 	                    };
 
-                        localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
+	                    localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
+
 	                    listView.setAdapter(activeFileDownloadsAdapter);
 
 	                    progressBar.setVisibility(View.INVISIBLE);
