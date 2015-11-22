@@ -82,8 +82,6 @@ public class ActiveFileDownloadsActivity extends AppCompatActivity {
                             }
                         };
 
-
-
 	                    localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
 
 	                    if (onFileQueuedReceiver != null)
