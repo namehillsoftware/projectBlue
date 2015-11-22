@@ -79,19 +79,9 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final BroadcastReceiver onWifiStateChangedReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (!IoCommon.isWifiConnected(context)) cancelSync();
-		}
-	};
+	private BroadcastReceiver onWifiStateChangedReceiver;
 
-	private final BroadcastReceiver onPowerDisconnectedReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			cancelSync();
-		}
-	};
+	private BroadcastReceiver onPowerDisconnectedReceiver;
 
 	public static boolean isSyncScheduled(Context context) {
 		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
@@ -180,6 +170,12 @@ public class SyncService extends Service {
 		if (isSyncOnWifiOnly) {
 			if (!IoCommon.isWifiConnected(this)) return false;
 
+			onWifiStateChangedReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					if (!IoCommon.isWifiConnected(context)) cancelSync();
+				}
+			};
 			registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		}
 
@@ -189,6 +185,12 @@ public class SyncService extends Service {
 		if (isSyncOnPowerOnly) {
 			if (!IoCommon.isPowerConnected(this)) return false;
 
+			onPowerDisconnectedReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					cancelSync();
+				}
+			};
 			registerReceiver(onPowerDisconnectedReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 		}
 
@@ -225,8 +227,11 @@ public class SyncService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
-		unregisterReceiver(onWifiStateChangedReceiver);
-		unregisterReceiver(onPowerDisconnectedReceiver);
+		if (onWifiStateChangedReceiver != null)
+			unregisterReceiver(onWifiStateChangedReceiver);
+
+		if (onPowerDisconnectedReceiver != null)
+			unregisterReceiver(onPowerDisconnectedReceiver);
 
 		wakeLock.release();
 	}
