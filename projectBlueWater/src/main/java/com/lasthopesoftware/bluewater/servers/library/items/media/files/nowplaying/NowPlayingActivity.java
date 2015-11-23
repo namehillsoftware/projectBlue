@@ -219,7 +219,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			@Override
 			public void onClick(View v) {
 				isScreenKeptOn = !isScreenKeptOn;
-				toggleIsScreenKeptOn(isScreenKeptOn);
+				updateKeepScreenOnStatus();
 			}
 		});
 
@@ -233,7 +233,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	public void onStart() {
 		super.onStart();
 
-		toggleIsScreenKeptOn(isScreenKeptOn);
+		updateKeepScreenOnStatus();
 
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 	}
@@ -303,13 +303,17 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		imageButton.setImageDrawable(ViewUtils.getDrawable(imageButton.getContext(), isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark));
 	}
 
-	private void toggleIsScreenKeptOn(boolean isScreenKeptOn) {
+	private void updateKeepScreenOnStatus() {
 		isScreenKeptOnButton.setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
 
 		if (isScreenKeptOn)
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		else
-			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+			disableKeepScreenOn();
+	}
+
+	private void disableKeepScreenOn() {
+		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	public RelativeLayout getContentView() {
@@ -571,6 +575,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		
 		mPlay.setVisibility(View.INVISIBLE);
 		mPause.setVisibility(View.VISIBLE);
+
+		updateKeepScreenOnStatus();
 	}
 	
 	@Override
@@ -598,13 +604,15 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		
 		mPlay.setVisibility(View.VISIBLE);
 		mPause.setVisibility(View.INVISIBLE);
+
+		disableKeepScreenOn();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
 
-		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		disableKeepScreenOn();
 	}
 
 	@Override
