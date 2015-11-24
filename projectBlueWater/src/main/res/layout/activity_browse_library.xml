@@ -34,14 +34,25 @@
 				android:layout_below="@+id/tabsLibraryViews" />
 		</RelativeLayout>
 
-		<ListView
-			android:id="@+id/lvLibraryViewSelection"
+		<RelativeLayout
 			android:layout_width="240dp"
 			android:layout_height="match_parent"
 			android:layout_gravity="start"
-			android:orientation="vertical"
-			android:dividerHeight="0dp"
-			android:background="@color/clearstream_blue"/>
+			android:background="@color/clearstream_blue">
+			<ListView
+				android:id="@+id/lvLibraryViewSelection"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:dividerHeight="0dp"/>
+
+			<ListView
+				android:id="@+id/specialLibraryItemsListView"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:dividerHeight="0dp">
+			</ListView>
+		</RelativeLayout>
 
 	</android.support.v4.widget.DrawerLayout>
 </RelativeLayout>
