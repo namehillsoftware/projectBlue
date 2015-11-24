@@ -274,6 +274,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
                 mViewPager.setAdapter(viewChildPagerAdapter);
                 mLibraryViewsTabs.setViewPager(mViewPager);
 
+	            if (result.size() <= 1) {
+		            mLibraryViewsTabs.setVisibility(View.GONE);
+		            return;
+	            }
+
+	            mLibraryViewsTabs.setVisibility(View.VISIBLE);
+
                 mLibraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                     @Override
                     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {

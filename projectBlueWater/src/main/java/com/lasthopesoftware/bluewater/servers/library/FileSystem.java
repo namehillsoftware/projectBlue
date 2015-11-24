@@ -122,9 +122,5 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	public int compareTo(IItem another) {
 		return 0;
 	}
-	
-	public interface OnGetFileSystemCompleteListener {
-		void onGetFileSystemComplete(FileSystem fileSystem);
-	}
 }
 
