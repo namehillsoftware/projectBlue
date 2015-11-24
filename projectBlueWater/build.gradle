@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 22
     buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
-        targetSdkVersion 23
+        targetSdkVersion 22
     }
 
     compileOptions {
@@ -38,8 +38,8 @@ repositories {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:appcompat-v7:23.1.0'
-    compile 'com.android.support:design:23.1.0'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:design:23.1.1'
     compile 'joda-time:joda-time:2.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-validator:commons-validator:1.4.0'
