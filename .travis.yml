@@ -9,6 +9,8 @@ android:
     - extra-android-support
     - tools
     - platform-tools
+  licenses:
+    - /android-sdk-license-[0-9a-f]{8}/
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 cache:
