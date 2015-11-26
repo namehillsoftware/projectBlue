@@ -61,9 +61,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private ViewPager mViewPager;
 	private ListView mLvSelectViews;
 	private DrawerLayout mDrawerLayout;
-    private PagerSlidingTabStrip mLibraryViewsTabs;
-    private ProgressBar mPbLoadingViews;
-    private ViewAnimator viewAnimator;
+	private PagerSlidingTabStrip mLibraryViewsTabs;
+	private RelativeLayout tabbedLibraryViewsRelativeLayout;
+	private ProgressBar mPbLoadingViews;
+	private ViewAnimator viewAnimator;
+
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private ActionBarDrawerToggle mDrawerToggle = null;
@@ -71,12 +73,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private BrowseLibraryActivity mBrowseLibrary = this;
 
 	private CharSequence mOldTitle;
-
 	private boolean mIsStopped = false;
+
 	private boolean mIsLibraryChanged = false;
 
 	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
-	
 	private final BroadcastReceiver mOnLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -142,6 +143,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		mViewPager = (ViewPager) findViewById(R.id.libraryViewPager);
+		tabbedLibraryViewsRelativeLayout = (RelativeLayout) findViewById(R.id.tabbedLibraryViewsRelativeLayout);
         mLibraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
         mPbLoadingViews = (ProgressBar) findViewById(R.id.pbLoadingViews);
 
@@ -375,9 +377,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     }
 
     private void toggleViewsVisibility(boolean isVisible) {
-        mLibraryViewsTabs.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-        mViewPager.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-        mPbLoadingViews.setVisibility(isVisible ? View.INVISIBLE : View.VISIBLE);
+        tabbedLibraryViewsRelativeLayout.setVisibility(ViewUtils.GetVisibility(isVisible));
+        mPbLoadingViews.setVisibility(ViewUtils.GetVisibility(!isVisible));
     }
 	
 	@Override

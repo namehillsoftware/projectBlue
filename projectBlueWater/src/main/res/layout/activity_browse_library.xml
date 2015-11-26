@@ -23,15 +23,28 @@
 				android:layout_centerInParent="true"
 				android:visibility="invisible" />
 
-			<com.astuetz.PagerSlidingTabStrip
-				android:id="@+id/tabsLibraryViews"
+			<RelativeLayout
+				android:id="@+id/tabbedLibraryViewsRelativeLayout"
 				android:layout_width="match_parent"
-				android:layout_height="48dip" />
-			<android.support.v4.view.ViewPager
-				android:id="@+id/libraryViewPager"
+				android:layout_height="match_parent"
+				android:visibility="invisible">
+				<com.astuetz.PagerSlidingTabStrip
+					android:id="@+id/tabsLibraryViews"
+					android:layout_width="match_parent"
+					android:layout_height="48dip" />
+				<android.support.v4.view.ViewPager
+					android:id="@+id/libraryViewPager"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@+id/tabsLibraryViews" />
+			</RelativeLayout>
+
+			<FrameLayout
+				android:id="@+id/singleLibraryViewFrameLayout"
 				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_below="@+id/tabsLibraryViews" />
+				android:layout_height="match_parent"
+				android:visibility="invisible" />
+
 		</RelativeLayout>
 
 		<RelativeLayout
