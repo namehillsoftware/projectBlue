@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -72,7 +71,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         
 		final Files filesContainer = new Files(SessionConnection.getSessionConnectionProvider(), "Files/Search", "Query=[Media Type]=[Audio] " + query);
         final SearchFilesActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
+        filesContainer.setOnFilesCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<IFile>>() {
 			
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {

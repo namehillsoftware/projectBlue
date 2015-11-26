@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -54,10 +55,6 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 		
 		mImageAccessTask = new SimpleTask<>(new GetFileImageOnExecute(context, connectionProvider, file));
 		mImageAccessTask.addOnCompleteListener(onGetBitmapComplete);
-	}
-	
-	private void execute() {
-		mImageAccessTask.execute(imageAccessExecutor);
 	}
 		
 	public void cancel() {
@@ -323,5 +320,19 @@ public class ImageAccess implements ISimpleTask<Void, Void, Bitmap> {
 	@Override
 	public boolean isCancelled() {
 		return mImageAccessTask.isCancelled();
+	}
+
+	private void execute() {
+		execute(imageAccessExecutor);
+	}
+
+	@Override
+	public ISimpleTask<Void, Void, Bitmap> execute(Void... params) {
+		return mImageAccessTask.execute(params);
+	}
+
+	@Override
+	public ISimpleTask<Void, Void, Bitmap> execute(Executor exec, Void... params) {
+		return mImageAccessTask.execute(exec, params);
 	}
 }

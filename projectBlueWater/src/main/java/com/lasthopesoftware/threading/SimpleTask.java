@@ -96,12 +96,14 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	}
 		
 	@SafeVarargs
-	public final SimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
+	@Override
+	public final ISimpleTask<TParams, TProgress, TResult> execute(TParams... params) {
 		return execute(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final SimpleTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
+	@Override
+	public final ISimpleTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
 		mState = SimpleTaskState.EXECUTING;
 		getTask().executeOnExecutor(exec, params);
 		return this;

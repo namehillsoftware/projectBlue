@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.IntDef;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.MenuItemCompat;
@@ -18,6 +19,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 public class ViewUtils {
 
@@ -74,6 +78,11 @@ public class ViewUtils {
 		context.startActivity(viewIntent);
     }
 
+	@IntDef({View.VISIBLE, View.INVISIBLE, View.GONE})
+	@Retention(RetentionPolicy.SOURCE)
+	public @interface Visibility {}
+
+	@Visibility
 	public static int GetVisibility(boolean isVisible) {
 		return isVisible ? View.VISIBLE : View.INVISIBLE;
 	}

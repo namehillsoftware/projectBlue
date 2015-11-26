@@ -88,6 +88,8 @@
           <option name="FORCE_REARRANGE_MODE" value="1" />
           <indentOptions>
             <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="USE_TAB_CHARACTER" value="true" />
+            <option name="SMART_TABS" value="true" />
           </indentOptions>
           <arrangement>
             <rules>
@@ -244,6 +246,5 @@
       </value>
     </option>
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
-    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Named Scheme for Android Studio's silly-ness" />
   </component>
 </project>

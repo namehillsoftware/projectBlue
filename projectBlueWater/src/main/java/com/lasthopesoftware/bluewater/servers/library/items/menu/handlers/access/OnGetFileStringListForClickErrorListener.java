@@ -4,7 +4,6 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.IOException;
@@ -12,7 +11,7 @@ import java.io.IOException;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements IDataTask.OnErrorListener<String> {
+public class OnGetFileStringListForClickErrorListener implements ISimpleTask.OnErrorListener<String, Void, String> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 

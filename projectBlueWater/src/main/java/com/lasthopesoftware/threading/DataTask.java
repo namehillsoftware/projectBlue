@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class DataTask<TResult> extends SimpleTask<String, Void, TResult> implements IDataTask<TResult> {
+public class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
 
 	public DataTask(final ConnectionProvider connectionProvider, final OnConnectListener<TResult> listener) {
 		super(new OnExecuteListener<String, Void, TResult>() {
@@ -26,5 +26,9 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> impleme
 				}
 			}
 		});
+	}
+
+	public interface OnConnectListener<TResult> {
+		TResult onConnect(InputStream is);
 	}
 }

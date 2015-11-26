@@ -3,12 +3,9 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.threading.DataTask;
-import com.lasthopesoftware.threading.IDataTask;
-import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
-import com.lasthopesoftware.threading.IDataTask.OnConnectListener;
-import com.lasthopesoftware.threading.IDataTask.OnErrorListener;
-import com.lasthopesoftware.threading.IDataTask.OnStartListener;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -25,14 +22,14 @@ public class Files implements IItemFiles {
 	private final static Logger logger = LoggerFactory.getLogger(Files.class);
 	
 	private final String[] params;
-	private OnStartListener<List<IFile>> fileStartListener;
-	private OnErrorListener<List<IFile>> fileErrorListener;
-	private IDataTask.OnCompleteListener<List<IFile>> fileCompleteListener;
+	private ISimpleTask.OnStartListener<String, Void, List<IFile>> fileStartListener;
+	private ISimpleTask.OnErrorListener<String, Void, List<IFile>> fileErrorListener;
+	private ISimpleTask.OnCompleteListener<String, Void, List<IFile>> fileCompleteListener;
 	public static final int GET_SHUFFLED = 1;
 
 	private final ConnectionProvider connectionProvider;
 
-	private final OnConnectListener<List<IFile>> mFileConnectListener = new OnConnectListener<List<IFile>>() {
+	private final DataTask.OnConnectListener<List<IFile>> mFileConnectListener = new DataTask.OnConnectListener<List<IFile>>() {
 		
 		@Override
 		public List<IFile> onConnect(InputStream is) {
@@ -69,19 +66,19 @@ public class Files implements IItemFiles {
 		}
 	}
 
-	public void setOnFilesCompleteListener(OnCompleteListener<List<IFile>> listener) {
+	public void setOnFilesCompleteListener(ISimpleTask.OnCompleteListener<String, Void, List<IFile>> listener) {
 		fileCompleteListener = listener;
 	}
 
-	public void setOnFilesStartListener(OnStartListener<List<IFile>> listener) {
+	public void setOnFilesStartListener(ISimpleTask.OnStartListener<String, Void, List<IFile>> listener) {
 		fileStartListener = listener;
 	}
 
-	public void setOnFilesErrorListener(OnErrorListener<List<IFile>> listener) {
+	public void setOnFilesErrorListener(HandleViewIoException listener) {
 		fileErrorListener = listener;
 	}
 
-	protected OnConnectListener<List<IFile>> getOnFileConnectListener() {
+	protected DataTask.OnConnectListener<List<IFile>> getOnFileConnectListener() {
 		return mFileConnectListener;
 	}
 	
@@ -104,22 +101,22 @@ public class Files implements IItemFiles {
 		}
 	}
 	
-	public final void getFileStringList(OnCompleteListener< String> onGetStringListComplete) {
+	public final void getFileStringList(ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete) {
 		getFileStringList(onGetStringListComplete, null);
 	}
 	
 
 	@Override
-	public void getFileStringList(OnCompleteListener<String> onGetStringListComplete, OnErrorListener<String> onGetStringListError) {
+	public void getFileStringList(ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete, ISimpleTask.OnErrorListener<String, Void, String> onGetStringListError) {
 		getFileStringList(-1, onGetStringListComplete, onGetStringListError);
 	}
 	
-	public final void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete) {
+	public final void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete) {
 		getFileStringList(option, onGetStringListComplete, null);
 	}
 	
-	public void getFileStringList(final int option, final OnCompleteListener<String> onGetStringListComplete, final IDataTask.OnErrorListener<String> onGetStringListError) {
-		final DataTask<String> getStringListTask = new DataTask<>(connectionProvider, new OnConnectListener<String>() {
+	public void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete, final ISimpleTask.OnErrorListener<String, Void, String> onGetStringListError) {
+		final DataTask<String> getStringListTask = new DataTask<>(connectionProvider, new DataTask.OnConnectListener<String>() {
 			
 			@Override
 			public String onConnect(InputStream is) {
@@ -139,8 +136,8 @@ public class Files implements IItemFiles {
 		getStringListTask.execute(AsyncTask.THREAD_POOL_EXECUTOR, getFileParams(option));
 	}
 
-	protected DataTask<List<IFile>> getNewFilesTask() {
-		final DataTask<List<IFile>> fileTask = new DataTask<>(connectionProvider, getOnFileConnectListener());
+	protected ISimpleTask<String, Void, List<IFile>> getNewFilesTask() {
+		final ISimpleTask<String, Void, List<IFile>> fileTask = new DataTask<>(connectionProvider, getOnFileConnectListener());
 		
 		if (fileCompleteListener != null)
 			fileTask.addOnCompleteListener(fileCompleteListener);
@@ -154,7 +151,7 @@ public class Files implements IItemFiles {
 		return fileTask;
 	}
 
-	public static final ArrayList<IFile> parseFileStringList(ConnectionProvider connectionProvider, String fileList) {
+	public static ArrayList<IFile> parseFileStringList(ConnectionProvider connectionProvider, String fileList) {
 		final String[] keys = fileList.split(";");
 		
 		final int offset = Integer.parseInt(keys[0]) + 1;

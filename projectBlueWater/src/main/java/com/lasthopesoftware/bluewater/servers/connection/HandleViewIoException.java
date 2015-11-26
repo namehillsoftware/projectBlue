@@ -2,13 +2,12 @@ package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.IOException;
 
 @SuppressWarnings("rawtypes")
-public class HandleViewIoException implements ISimpleTask.OnErrorListener, IDataTask.OnErrorListener {
+public class HandleViewIoException implements ISimpleTask.OnErrorListener {
 	
 	private final Context mContext;
 	private final Runnable mOnConnectionRegainedListener;

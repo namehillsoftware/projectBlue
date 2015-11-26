@@ -3,13 +3,12 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.acces
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements IDataTask.OnCompleteListener<String> {
+public class OnGetFileStringListForClickCompleteListener implements ISimpleTask.OnCompleteListener<String, Void, String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {

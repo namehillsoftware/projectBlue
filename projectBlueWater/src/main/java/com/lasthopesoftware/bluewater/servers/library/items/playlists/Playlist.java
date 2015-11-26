@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IItemFiles;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
-import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
+import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 	private String mGroup;
 	private Files mFiles;
 	
-	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
+	private ArrayList<ISimpleTask.OnCompleteListener<String, Void, List<Playlist>>> mOnCompleteListeners;
 
 	public Playlist(ConnectionProvider connectionProvider) {
 		super();

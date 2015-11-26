@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.IDataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
@@ -66,7 +65,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
         final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
         final FileListActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
+        filesContainer.setOnFilesCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<IFile>>() {
 
 			@Override
 			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {

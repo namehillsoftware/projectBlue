@@ -1,6 +1,7 @@
 package com.lasthopesoftware.threading;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 public interface ISimpleTask<TParams, TProgress, TResult> {
 
@@ -24,31 +25,35 @@ public interface ISimpleTask<TParams, TProgress, TResult> {
 	
 	ISimpleTask<TParams, TProgress, TResult> cancel(boolean interrupt);
 	boolean isCancelled();
-	
+
+	ISimpleTask<TParams, TProgress, TResult> execute(TParams... params);
+
+	ISimpleTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params);
+
 	/* Events */
-	public interface OnStartListener<TParams, TProgress, TResult> {
+	interface OnStartListener<TParams, TProgress, TResult> {
 		void onStart(ISimpleTask<TParams, TProgress, TResult> owner);
 	}
 	
-	public interface OnExecuteListener<TParams, TProgress, TResult> {
+	interface OnExecuteListener<TParams, TProgress, TResult> {
 		@SuppressWarnings("unchecked")
 		TResult onExecute(ISimpleTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
 	}
 	
-	public interface OnProgressListener<TParams, TProgress, TResult> {
+	interface OnProgressListener<TParams, TProgress, TResult> {
 		@SuppressWarnings("unchecked")
 		void onReportProgress(ISimpleTask<TParams, TProgress, TResult> owner, TProgress...progresses);
 	}
 	
-	public interface OnCompleteListener<TParams, TProgress, TResult> {
+	interface OnCompleteListener<TParams, TProgress, TResult> {
 		void onComplete(ISimpleTask<TParams, TProgress, TResult> owner, TResult result);
 	}
 	
-	public interface OnCancelListener<TParams, TProgress, TResult> {
+	interface OnCancelListener<TParams, TProgress, TResult> {
 		void onCancel(ISimpleTask<TParams, TProgress, TResult> owner, TResult result);
 	}
 	
-	public interface OnErrorListener<TParams, TProgress, TResult> {
+	interface OnErrorListener<TParams, TProgress, TResult> {
 		boolean onError(ISimpleTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException);
 	}
 }
