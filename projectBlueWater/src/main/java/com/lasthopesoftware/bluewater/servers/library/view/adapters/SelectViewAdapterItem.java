@@ -23,11 +23,9 @@ public class SelectViewAdapterItem {
 		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);
 		tvViewName.setText(viewText);
 
-		if (isSelected) {
-			final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(tvViewName.getLayoutParams());
-			layoutParams.setMargins(0, 0, ViewUtils.dpToPx(parent.getContext(), 10), 0);
-			tvViewName.setLayoutParams(layoutParams);
-		}
+		final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(tvViewName.getLayoutParams());
+		layoutParams.setMargins(0, 0, isSelected ? ViewUtils.dpToPx(parent.getContext(), 10) : 0, 0);
+		tvViewName.setLayoutParams(layoutParams);
 
 		return convertView;
 	}
