@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.view;
+package com.lasthopesoftware.bluewater.servers.library.views;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;

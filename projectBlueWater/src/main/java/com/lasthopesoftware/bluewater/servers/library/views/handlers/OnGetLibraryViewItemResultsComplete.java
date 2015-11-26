@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.view.handlers;
+package com.lasthopesoftware.bluewater.servers.library.views.handlers;
 
 import android.app.Activity;
 import android.view.View;

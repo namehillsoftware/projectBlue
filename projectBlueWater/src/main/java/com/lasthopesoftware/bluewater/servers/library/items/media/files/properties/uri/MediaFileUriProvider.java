@@ -27,6 +27,7 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	public static final String mediaFileFoundFileKey = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundFileKey");
 	public static final String mediaFileFoundPath = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundPath");
 
+	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 	private static final String mediaDataQuery = MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	private static final String[] mediaQueryProjection = { MediaStore.Audio.Media.DATA };
 
@@ -69,27 +70,27 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 			if (!mIsSilent) {
 				final Intent broadcastIntent = new Intent(mediaFileFoundEvent);
 				broadcastIntent.putExtra(mediaFileFoundPath, file.getPath());
-				broadcastIntent.putExtra(mediaFileFoundMediaId, cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)));
+				try {
+					broadcastIntent.putExtra(mediaFileFoundMediaId, cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey)));
+				} catch (IllegalArgumentException ie) {
+					mLogger.info("Illegal column name.", ie);
+				}
 				broadcastIntent.putExtra(mediaFileFoundFileKey, getFile().getKey());
 				LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcastIntent);
 			}
 
 			mLogger.info("Returning file URI from local disk.");
 			return Uri.fromFile(file);
-		} catch (IllegalArgumentException ie) {
-			mLogger.info("Illegal column name.", ie);
 		} finally {
 			cursor.close();
 		}
-
-		return null;
 	}
 
 	public int getMediaId() throws IOException {
 		final Cursor cursor = getMediaQueryCursor();
 		try {
 			if (cursor.moveToFirst())
-				return cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+				return cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey));
 		} catch (IllegalArgumentException ie) {
 			mLogger.info("Illegal column name.", ie);
 		} finally {

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.view.adapters;
+package com.lasthopesoftware.bluewater.servers.library.views.adapters;
 
 import android.content.Context;
 import android.view.View;

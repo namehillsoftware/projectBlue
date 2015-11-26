@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.view;
+package com.lasthopesoftware.bluewater.servers.library.views;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -23,9 +23,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewIItemResultsComplete;
-import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewItemResultsComplete;
-import com.lasthopesoftware.bluewater.servers.library.view.handlers.OnGetLibraryViewPlaylistResultsComplete;
+import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewIItemResultsComplete;
+import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
+import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
