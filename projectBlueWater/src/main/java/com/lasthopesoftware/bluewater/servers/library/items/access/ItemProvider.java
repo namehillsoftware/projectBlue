@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.providers.AbstractCollectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
@@ -46,7 +47,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 	}
 
     @Override
-    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+    protected List<Item> getCollection(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final Integer boxedItemKey = itemKey;
         ItemHolder itemHolder = itemsCache.get(boxedItemKey);

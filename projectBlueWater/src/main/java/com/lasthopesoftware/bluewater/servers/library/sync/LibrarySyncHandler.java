@@ -6,7 +6,9 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.AbstractFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.ItemFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.PlaylistFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
@@ -17,15 +19,20 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by david on 8/30/15.
  */
 public class LibrarySyncHandler {
+
+	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
@@ -84,16 +91,21 @@ public class LibrarySyncHandler {
 								if (isCancelled) return;
 
 								final int serviceId = storedItem.getServiceId();
-								final IFilesContainer filesContainer = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(connectionProvider, serviceId) : new Playlist(connectionProvider, serviceId);
-								final ArrayList<IFile> files = filesContainer.getFiles().getFiles();
-								for (final IFile file : files) {
-									allSyncedFileKeys.add(file.getKey());
+								final AbstractFileProvider fileProvider = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new ItemFileProvider(connectionProvider, new Item(connectionProvider, serviceId)) : new PlaylistFileProvider(connectionProvider, new Playlist(connectionProvider, serviceId));
 
-									if (isCancelled) return;
+								try {
+									final List<IFile> files = fileProvider.get();
+									for (final IFile file : files) {
+										allSyncedFileKeys.add(file.getKey());
 
-									final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
-									if (!storedFile.isDownloadComplete())
-										storedFileDownloader.queueFileForDownload(file, storedFile);
+										if (isCancelled) return;
+
+										final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
+										if (!storedFile.isDownloadComplete())
+											storedFileDownloader.queueFileForDownload(file, storedFile);
+									}
+								} catch (ExecutionException | InterruptedException e) {
+									logger.warn("There was an error retrieving the files", e);
 								}
 							}
 

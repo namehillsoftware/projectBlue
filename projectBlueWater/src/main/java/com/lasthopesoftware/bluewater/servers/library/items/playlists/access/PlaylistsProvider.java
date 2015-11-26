@@ -4,8 +4,8 @@ import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
-import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.providers.AbstractCollectionProvider;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.io.InputStream;
@@ -35,7 +35,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 
     @Override
-    protected List<Playlist> getItems(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection) throws Exception {
+    protected List<Playlist> getCollection(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection) throws Exception {
 
         final Integer revision = RevisionChecker.getRevision(connectionProvider);
         if (cachedPlaylists != null && revision.equals(PlaylistsProvider.revision))

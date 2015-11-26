@@ -1,7 +1,6 @@
-package com.lasthopesoftware.bluewater.servers.library.items.access;
+package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 import com.lasthopesoftware.threading.ISimpleTask.OnErrorListener;
@@ -15,7 +14,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class AbstractCollectionProvider<T extends IItem> {
+public abstract class AbstractCollectionProvider<T> {
 	private final ConnectionProvider connectionProvider;
 	private OnCompleteListener<Void, Void, List<T>> onGetItemsComplete;
     private OnErrorListener<Void, Void, List<T>> onGetItemsError;
@@ -71,7 +70,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
 
                 final HttpURLConnection connection = connectionProvider.getConnection(params);
 	            try {
-		            return getItems(owner, connectionProvider.getConnection(params));
+		            return getCollection(owner, connectionProvider.getConnection(params));
 	            } finally {
 		            connection.disconnect();
 	            }
@@ -95,7 +94,7 @@ public abstract class AbstractCollectionProvider<T extends IItem> {
         return task;
     }
 
-	protected abstract List<T> getItems(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection) throws Exception;
+	protected abstract List<T> getCollection(ISimpleTask<Void, Void, List<T>> task, HttpURLConnection connection) throws Exception;
 
     public Exception getException() {
         return exception;

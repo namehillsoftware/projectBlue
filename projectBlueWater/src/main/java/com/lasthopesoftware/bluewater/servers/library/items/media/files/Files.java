@@ -167,7 +167,7 @@ public class Files implements IItemFiles {
 		return files;
 	}
 	
-	public static final String serializeFileStringList(List<IFile> files) {
+	public static String serializeFileStringList(List<IFile> files) {
 		final int fileSize = files.size();
 		// Take a guess that most keys will not be greater than 8 characters and add some more
 		// for the first characters
