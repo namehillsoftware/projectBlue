@@ -4,5 +4,6 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="standard_textview_padding">10dp</dimen>
+    <dimen name="now_playing_menu_padding">3dp</dimen>
 
 </resources>
