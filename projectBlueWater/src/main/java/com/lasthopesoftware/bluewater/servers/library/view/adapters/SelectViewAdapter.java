@@ -23,6 +23,6 @@ public class SelectViewAdapter extends ArrayAdapter<Item> {
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final IItem item = getItem(position);
-		return ViewAdapterItem.getView(convertView, parent, item.getValue(), item.getKey() == selectedViewKey);
+		return SelectViewAdapterItem.getView(convertView, parent, item.getValue(), item.getKey() == selectedViewKey);
 	}
 }

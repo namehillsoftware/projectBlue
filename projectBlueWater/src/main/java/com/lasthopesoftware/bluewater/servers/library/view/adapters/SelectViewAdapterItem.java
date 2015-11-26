@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 /**
  * Created by david on 11/23/15.
  */
-public class ViewAdapterItem {
+public class SelectViewAdapterItem {
 	public static View getView(View convertView, ViewGroup parent, CharSequence viewText, boolean isSelected) {
 		if (convertView == null) {
 			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
