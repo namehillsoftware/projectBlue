@@ -1,8 +1,6 @@
 # audiocanoe _aka_ projectBlueWater
 Alternative streaming music player for [JRiver Media Center] (http://jriver.com/)
 
-[![Build Status](https://travis-ci.org/danrien/projectBlueWater.svg?branch=master "Build Status")](https://travis-ci.org/danrien/projectBlueWater)
-
 Folder structure is organized by _context_, or rather, it moves away from the "sock drawer" folder structure
 that Android follows. It is inspired by this post on AngularJS project structure (another Google framework that
 encourage sock drawer app structuring): http://cliffmeyers.com/blog/2013/4/21/code-organization-angularjs-javascript.
