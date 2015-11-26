@@ -25,7 +25,8 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
     public void onClick(final View v) {
 	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider(), item))
 			    .onComplete(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			    .onError(new OnGetFileStringListForClickErrorListener(v, this));
+			    .onError(new OnGetFileStringListForClickErrorListener(v, this))
+	            .execute();
 
         super.onClick(v);
     }
