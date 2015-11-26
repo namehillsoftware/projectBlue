@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.threading.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
 
 import java.util.List;
 

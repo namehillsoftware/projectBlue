@@ -1,13 +1,14 @@
 package com.lasthopesoftware.threading;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.callables.IOneParameterCallable;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
 public class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
 
-	public DataTask(final ConnectionProvider connectionProvider, final OnConnectListener<TResult> listener) {
+	public DataTask(final ConnectionProvider connectionProvider, final IOneParameterCallable<InputStream, TResult> onConnectListener) {
 		super(new OnExecuteListener<String, Void, TResult>() {
 
 			@Override
@@ -17,7 +18,7 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
 				try {
 					final InputStream is = conn.getInputStream();
 					try {
-						return listener.onConnect(is);
+						return onConnectListener.call(is);
 					} finally {
 						is.close();
 					}
@@ -26,9 +27,5 @@ public class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
 				}
 			}
 		});
-	}
-
-	public interface OnConnectListener<TResult> {
-		TResult onConnect(InputStream is);
 	}
 }

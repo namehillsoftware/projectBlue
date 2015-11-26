@@ -1,4 +1,4 @@
-package com.lasthopesoftware.threading;
+package com.lasthopesoftware.runnables;
 
 /**
  * Created by david on 8/15/15.

@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
+import com.lasthopesoftware.callables.IOneParameterCallable;
 import com.lasthopesoftware.threading.DataTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 
@@ -29,10 +30,10 @@ public class Files implements IItemFiles {
 
 	private final ConnectionProvider connectionProvider;
 
-	private final DataTask.OnConnectListener<List<IFile>> mFileConnectListener = new DataTask.OnConnectListener<List<IFile>>() {
+	private final IOneParameterCallable<InputStream, List<IFile>> mFileConnectListener = new IOneParameterCallable<InputStream, List<IFile>>() {
 		
 		@Override
-		public List<IFile> onConnect(InputStream is) {
+		public List<IFile> call(InputStream is) {
 			try {
 				return parseFileStringList(connectionProvider, IOUtils.toString(is));
 			} catch (IOException e) {
@@ -78,7 +79,7 @@ public class Files implements IItemFiles {
 		fileErrorListener = listener;
 	}
 
-	protected DataTask.OnConnectListener<List<IFile>> getOnFileConnectListener() {
+	protected IOneParameterCallable<InputStream, List<IFile>> getOnFileConnectListener() {
 		return mFileConnectListener;
 	}
 	
@@ -116,10 +117,10 @@ public class Files implements IItemFiles {
 	}
 	
 	public void getFileStringList(final int option, final ISimpleTask.OnCompleteListener<String, Void, String> onGetStringListComplete, final ISimpleTask.OnErrorListener<String, Void, String> onGetStringListError) {
-		final DataTask<String> getStringListTask = new DataTask<>(connectionProvider, new DataTask.OnConnectListener<String>() {
+		final DataTask<String> getStringListTask = new DataTask<>(connectionProvider, new IOneParameterCallable<InputStream, String>() {
 			
 			@Override
-			public String onConnect(InputStream is) {
+			public String call(InputStream is) {
 				try {
 					return IOUtils.toString(is);
 				} catch (IOException e) {

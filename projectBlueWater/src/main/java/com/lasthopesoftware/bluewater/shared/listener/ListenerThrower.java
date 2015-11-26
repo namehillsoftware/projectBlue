@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.listener;
 
-import com.lasthopesoftware.threading.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
 
 import java.util.Collection;
 import java.util.HashSet;

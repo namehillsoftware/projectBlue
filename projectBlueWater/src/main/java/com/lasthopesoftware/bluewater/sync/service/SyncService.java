@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.threading.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import org.slf4j.Logger;

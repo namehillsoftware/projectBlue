@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.threading.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
 
 import java.util.List;
 

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.threading.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.List;
