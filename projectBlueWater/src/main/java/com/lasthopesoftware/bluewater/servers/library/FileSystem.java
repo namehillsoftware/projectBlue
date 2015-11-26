@@ -114,11 +114,6 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 	}
 
 	@Override
-	public String[] getSubItemParams() {
-		return new String[] { "Browse/Children" };
-	}
-
-	@Override
 	public int compareTo(IItem another) {
 		return 0;
 	}

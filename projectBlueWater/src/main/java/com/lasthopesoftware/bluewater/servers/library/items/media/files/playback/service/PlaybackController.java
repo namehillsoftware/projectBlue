@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.PlaybackFile;
@@ -51,7 +51,7 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, connectionProvider, playlistString != null ? Files.parseFileStringList(connectionProvider, playlistString) : new ArrayList<IFile>());
+		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(connectionProvider, playlistString) : new ArrayList<IFile>());
 	}
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {

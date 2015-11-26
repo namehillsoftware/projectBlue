@@ -7,14 +7,15 @@ import android.widget.ArrayAdapter;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.ListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
 
 import java.util.List;
 
-public class ItemListAdapter<T extends IItem> extends ArrayAdapter<T> {
+public class ItemListAdapter<T extends IItem & IFileListParameterProvider> extends ArrayAdapter<T> {
 
-	private final ListItemMenuBuilder listItemMenuBuilder = new ListItemMenuBuilder();
+	private final ListItemMenuBuilder<T> listItemMenuBuilder = new ListItemMenuBuilder<>();
 
 	public ItemListAdapter(Activity activity, int resource, List<T> items) {
 		super(activity, resource, items);

@@ -4,8 +4,8 @@ import android.os.AsyncTask;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
@@ -50,9 +50,9 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
                             return playbackController.getPlaylistString();
                         }
 
-                        final List<IFile> savedTracks = Files.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+                        final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
                         savedTracks.remove(position);
-                        return Files.serializeFileStringList(savedTracks);
+                        return FileStringListUtilities.serializeFileStringList(savedTracks);
                     }
 
                     @Override

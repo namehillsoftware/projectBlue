@@ -8,7 +8,7 @@ import com.lasthopesoftware.threading.ISimpleTask;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements ISimpleTask.OnCompleteListener<String, Void, String> {
+public class OnGetFileStringListForClickCompleteListener implements ISimpleTask.OnCompleteListener<Void, Void, String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -16,7 +16,7 @@ public class OnGetFileStringListForClickCompleteListener implements ISimpleTask.
     }
 
     @Override
-    public void onComplete(ISimpleTask<String, Void, String> owner, String result) {
+    public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
         PlaybackService.launchMusicService(mContext, result);
     }
 }

@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements ISimpleTask.OnErrorListener<String, Void, String> {
+public class OnGetFileStringListForClickErrorListener implements ISimpleTask.OnErrorListener<Void, Void, String> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -21,7 +21,7 @@ public class OnGetFileStringListForClickErrorListener implements ISimpleTask.OnE
     }
 
     @Override
-    public boolean onError(ISimpleTask<String, Void, String> owner, boolean isHandled, Exception innerException) {
+    public boolean onError(ISimpleTask<Void, Void, String> owner, boolean isHandled, Exception innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new Runnable() {
 

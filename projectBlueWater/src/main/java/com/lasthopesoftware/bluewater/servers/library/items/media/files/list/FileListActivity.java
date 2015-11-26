@@ -14,13 +14,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -37,8 +35,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	public static final String VIEW_PLAYLIST_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_playlist_files";
 	
 	private int mItemId;
-	private IItem mItem;
-	
+
 	private ProgressBar pbLoading;
 	private ListView fileListView;
 
@@ -60,41 +57,47 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
         pbLoading.setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
-        mItem = getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(SessionConnection.getSessionConnectionProvider(), mItemId) : new Item(SessionConnection.getSessionConnectionProvider(), mItemId);
-        
+
         setTitle(getIntent().getStringExtra(VALUE));
-        final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
-        final FileListActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<IFile>>() {
+
+		final ISimpleTask.OnCompleteListener<Void, Void, List<IFile>> onFileProviderComplete = new ISimpleTask.OnCompleteListener<Void, Void, List<IFile>>() {
 
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
+			public void onComplete(ISimpleTask<Void, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
 
 				fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
+				final FileListAdapter fileListAdapter = new FileListAdapter(FileListActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
 
 				fileListView.setAdapter(fileListAdapter);
 
 				fileListView.setVisibility(View.VISIBLE);
 				pbLoading.setVisibility(View.INVISIBLE);
 			}
-		});
-        
-        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new Runnable() {
+		};
 
-					@Override
-					public void run() {
-						filesContainer.getFilesAsync();
-					}
-				})
-		);
-        
-        filesContainer.getFilesAsync();
+		getNewFileProvider()
+			.onComplete(onFileProviderComplete)
+			.onError(new HandleViewIoException(this, new Runnable() {
+
+						@Override
+						public void run() {
+							getNewFileProvider()
+									.onComplete(onFileProviderComplete)
+									.onError(new HandleViewIoException(FileListActivity.this, this))
+									.execute();
+						}
+					})
+			)
+			.execute();
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+	}
+
+	private FileProvider getNewFileProvider() {
+		return new FileProvider(SessionConnection.getSessionConnectionProvider(), getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId));
 	}
 	
 	@Override

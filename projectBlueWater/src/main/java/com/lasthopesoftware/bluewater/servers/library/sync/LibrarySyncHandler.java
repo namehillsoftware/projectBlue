@@ -6,9 +6,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.AbstractFileProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.ItemFileProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.PlaylistFileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
@@ -91,7 +89,7 @@ public class LibrarySyncHandler {
 								if (isCancelled) return;
 
 								final int serviceId = storedItem.getServiceId();
-								final AbstractFileProvider fileProvider = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new ItemFileProvider(connectionProvider, new Item(connectionProvider, serviceId)) : new PlaylistFileProvider(connectionProvider, new Playlist(connectionProvider, serviceId));
+								final FileProvider fileProvider = new FileProvider(connectionProvider, storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId));
 
 								try {
 									final List<IFile> files = fileProvider.get();

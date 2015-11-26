@@ -17,8 +17,8 @@ import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConne
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.SearchFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -68,37 +68,37 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         if (query == null || query.isEmpty()) return;
 
         setTitle(String.format(getString(R.string.title_activity_search_results), query));
-        
-		final Files filesContainer = new Files(SessionConnection.getSessionConnectionProvider(), "Files/Search", "Query=[Media Type]=[Audio] " + query);
-        final SearchFilesActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new ISimpleTask.OnCompleteListener<String, Void, List<IFile>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
-				if (result == null) return;
-				
-				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
+
+		fileListView.setVisibility(View.VISIBLE);
+		pbLoading.setVisibility(View.INVISIBLE);
+
+        final ISimpleTask.OnCompleteListener<Void, Void, List<IFile>> onSearchFilesComplete = new ISimpleTask.OnCompleteListener<Void, Void, List<IFile>>() {
+
+            @Override
+            public void onComplete(ISimpleTask<Void, Void, List<IFile>> owner, List<IFile> result) {
+                if (result == null) return;
+
+                final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
 
                 fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-		    	fileListView.setAdapter(fileListAdapter);
-			}
-		});
-        
-        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new Runnable() {
-			
-				@Override
-				public void run() {
-					filesContainer.getFilesAsync();
-				}
-			})
-        );
-                
-        fileListView.setVisibility(View.VISIBLE);
-        pbLoading.setVisibility(View.INVISIBLE);
-        
-        filesContainer.getFilesAsync();
+                fileListView.setAdapter(fileListAdapter);
+            }
+        };
+
+        SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
+            .onComplete(onSearchFilesComplete)
+            .onError(new HandleViewIoException(this, new Runnable() {
+
+                        @Override
+                        public void run() {
+                            SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
+                                    .onComplete(onSearchFilesComplete)
+                                    .onError(new HandleViewIoException(SearchFilesActivity.this, this));
+                        }
+                    })
+            ).execute();
 	}
-	
+
 	@Override
 	public void onStart() {
 		super.onStart();

@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,7 +77,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	@Override
 	public String toPlaylistString() {
 		if (mPlaylistString == null)
-			mPlaylistString = Files.serializeFileStringList(files);
+			mPlaylistString = FileStringListUtilities.serializeFileStringList(files);
 		
 		return mPlaylistString;
 	}

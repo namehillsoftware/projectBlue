@@ -47,7 +47,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 	}
 
     @Override
-    protected List<Item> getCollection(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+    protected List<Item> getData(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final Integer boxedItemKey = itemKey;
         ItemHolder itemHolder = itemsCache.get(boxedItemKey);

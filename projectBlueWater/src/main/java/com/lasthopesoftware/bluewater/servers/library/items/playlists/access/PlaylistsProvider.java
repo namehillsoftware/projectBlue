@@ -35,7 +35,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 
     @Override
-    protected List<Playlist> getCollection(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection) throws Exception {
+    protected List<Playlist> getData(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection) throws Exception {
 
         final Integer revision = RevisionChecker.getRevision(connectionProvider);
         if (cachedPlaylists != null && revision.equals(PlaylistsProvider.revision))

@@ -30,7 +30,7 @@ public class PlaylistXmlHandler extends DefaultHandler {
 		currentValue = "";
 		valueSb = new StringBuilder();
 		if (qName.equalsIgnoreCase("item"))
-			currentPlaylist = new Playlist(connectionProvider);
+			currentPlaylist = new Playlist();
 		
 		if (qName.equalsIgnoreCase("field"))
 			currentKey = attributes.getValue("Name");

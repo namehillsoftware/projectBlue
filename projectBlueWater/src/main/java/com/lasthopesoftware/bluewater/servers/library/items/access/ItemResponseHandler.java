@@ -38,6 +38,6 @@ public class ItemResponseHandler extends DefaultHandler {
 	
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if (qName.equalsIgnoreCase("item"))
-			items.add(new Item(connectionProvider, Integer.parseInt(currentValue), currentKey));
+			items.add(new Item(Integer.parseInt(currentValue), currentKey));
 	}
 }

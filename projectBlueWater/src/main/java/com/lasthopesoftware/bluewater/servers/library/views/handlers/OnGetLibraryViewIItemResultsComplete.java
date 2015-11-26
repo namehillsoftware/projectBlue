@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * Created by david on 11/5/15.
  */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem> implements ISimpleTask.OnCompleteListener<Void, Void, List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ISimpleTask.OnCompleteListener<Void, Void, List<T>> {
 
 	private static final String PREFS_KEY = SpecialValueHelpers.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -49,7 +50,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem> impl
         if (result == null) return;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-        listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
+        listView.setAdapter(new ItemListAdapter<T>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
         loadingView.setVisibility(View.INVISIBLE);
         listView.setVisibility(View.VISIBLE);
 

@@ -5,8 +5,8 @@ import android.os.Environment;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
 import java.io.File;
 import java.util.List;
@@ -126,7 +126,7 @@ public class Library {
 	}
 		
 	public void setSavedTracks(List<IFile> files) {
-		savedTracksString = Files.serializeFileStringList(files);
+		savedTracksString = FileStringListUtilities.serializeFileStringList(files);
 	}
 	/**
 	 * @return the id
