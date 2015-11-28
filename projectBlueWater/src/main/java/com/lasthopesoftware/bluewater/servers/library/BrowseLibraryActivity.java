@@ -144,8 +144,26 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		mViewPager = (ViewPager) findViewById(R.id.libraryViewPager);
 		tabbedLibraryViewsRelativeLayout = (RelativeLayout) findViewById(R.id.tabbedLibraryViewsRelativeLayout);
-        mLibraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
         mPbLoadingViews = (ProgressBar) findViewById(R.id.pbLoadingViews);
+
+		mLibraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
+
+		mLibraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+			@Override
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+			}
+
+			@Override
+			public void onPageSelected(int position) {
+				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+			}
+
+			@Override
+			public void onPageScrollStateChanged(int state) {
+
+			}
+		});
 
         if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
 
@@ -277,29 +295,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
                 mViewPager.setAdapter(viewChildPagerAdapter);
                 mLibraryViewsTabs.setViewPager(mViewPager);
 
-	            if (result.size() <= 1) {
-		            mLibraryViewsTabs.setVisibility(View.GONE);
-		            return;
-	            }
-
-	            mLibraryViewsTabs.setVisibility(View.VISIBLE);
-
-                mLibraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                    @Override
-                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-                    }
-
-                    @Override
-                    public void onPageSelected(int position) {
-                        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-                    }
-
-                    @Override
-                    public void onPageScrollStateChanged(int state) {
-
-                    }
-                });
+	            mLibraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
                 toggleViewsVisibility(true);
             }
