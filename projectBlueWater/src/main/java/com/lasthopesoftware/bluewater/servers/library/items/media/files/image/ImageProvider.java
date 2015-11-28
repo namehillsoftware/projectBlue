@@ -53,9 +53,7 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	}
 
 	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final IFile file) {
-		final ImageProvider imageAccessTask = new ImageProvider(context, connectionProvider, file);
-		imageAccessTask.execute();
-		return imageAccessTask;
+		return new ImageProvider(context, connectionProvider, file);
 	}
 
 	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final IFile file) {
