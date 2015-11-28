@@ -13,7 +13,7 @@ import java.util.List;
 
 @DatabaseTable(tableName = "LIBRARIES")
 public class Library {
-	
+
 	@DatabaseField(generatedId = true)
 	private int id;
 	
@@ -34,10 +34,13 @@ public class Library {
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int nowPlayingProgress;
-	
+
+	@DatabaseField
+	private ViewType selectedViewType;
+
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int selectedView = -1;
-	
+
 	@DatabaseField
 	private String savedTracksString;
 
@@ -221,9 +224,22 @@ public class Library {
 		this.isSyncLocalConnectionsOnly = isSyncLocalConnections;
 	}
 
+	public ViewType getSelectedViewType() {
+		return selectedViewType;
+	}
+
+	public void setSelectedViewType(ViewType selectedViewType) {
+		this.selectedViewType = selectedViewType;
+	}
+
 	public enum SyncedFileLocation {
 		EXTERNAL,
 		INTERNAL,
 		CUSTOM
+	}
+
+	public enum ViewType {
+		ServerView,
+		ClientView
 	}
 }

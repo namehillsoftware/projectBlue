@@ -329,6 +329,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						if (library.getSelectedView() == selectedViewKey) return;
 
 						library.setSelectedView(selectedViewKey);
+						library.setSelectedViewType(Library.ViewType.ServerView);
 						LibrarySession.SaveLibrary(browseLibraryActivity, library);
 
 						displayLibrary(library, new FileSystem(SessionConnection.getSessionConnectionProvider(), library));
