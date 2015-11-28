@@ -46,12 +46,14 @@ import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -84,7 +86,33 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private boolean isStopped = false;
 
 	private boolean isLibraryChanged = false;
-	private OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener;
+
+	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
+		@Override
+		public OnCompleteListener<String, Void, ArrayList<IItem>> call() throws Exception {
+			return new OnCompleteListener<String, Void, ArrayList<IItem>>() {
+
+				@Override
+				public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
+					if (isStopped || result == null) return;
+
+					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
+					viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+
+					viewChildPagerAdapter.setLibraryViews(result);
+
+					// Set up the ViewPager with the sections adapter.
+					viewPager.setAdapter(viewChildPagerAdapter);
+					libraryViewsTabs.setViewPager(viewPager);
+
+					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
+
+					toggleViewsVisibility(true);
+				}
+			};
+		}
+	});
+
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -257,15 +285,17 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				}
 
 				selectViewsListView.setAdapter(new SelectViewAdapter(selectViewsListView.getContext(), items, library.getSelectedView()));
-				fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
+				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getValue(),
 						new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, new Runnable() {
 
 							@Override
 							public void run() {
-								new FileSystem(SessionConnection.getSessionConnectionProvider(), library).getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
+								new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
+										.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getValue(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, this));
 							}
 
-						}));
+						})
+				);
 
 				selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 			}
@@ -279,33 +309,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		}));
 
         libraryViewsProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
-	private OnCompleteListener<String, Void, ArrayList<IItem>> getOnVisibleViewsCompleteListener() {
-		if (onGetVisibleViewsCompleteListener != null) return onGetVisibleViewsCompleteListener;
-
-        onGetVisibleViewsCompleteListener = new OnCompleteListener<String, Void, ArrayList<IItem>>() {
-
-            @Override
-            public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
-                if (isStopped || result == null) return;
-
-                final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-				viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-
-                viewChildPagerAdapter.setLibraryViews(result);
-
-                // Set up the ViewPager with the sections adapter.
-                viewPager.setAdapter(viewChildPagerAdapter);
-                libraryViewsTabs.setViewPager(viewPager);
-
-	            libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
-
-                toggleViewsVisibility(true);
-            }
-        };
-
-        return onGetVisibleViewsCompleteListener;
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {

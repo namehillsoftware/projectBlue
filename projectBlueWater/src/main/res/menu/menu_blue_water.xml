@@ -7,12 +7,6 @@
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_action_settings_dark" />
 
-    <item android:id="@+id/menu_view_active_downloads"
-          android:title="@string/title_view_active_downloads"
-          android:orderInCategory="300"
-          app:showAsAction="ifRoom"
-          android:icon="@drawable/ic_sync_dark" />
-    
     <item android:id="@+id/search"
           android:title="@string/lbl_search"
           android:orderInCategory="400"

@@ -16,7 +16,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
@@ -36,16 +35,10 @@ public class ViewUtils {
 	}
 	
 	public static boolean handleMenuClicks(final Context context, final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.menu_connection_settings:
-				context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
-				return true;
-			case R.id.menu_view_active_downloads:
-				context.startActivity(new Intent(context, ActiveFileDownloadsFragment.class));
-				return true;
-			default:
-				return false;
-		}
+		if (item.getItemId() != R.id.menu_connection_settings) return false;
+
+		context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
+		return true;
 	}
 	
 	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
