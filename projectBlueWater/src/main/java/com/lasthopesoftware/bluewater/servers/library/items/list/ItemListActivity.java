@@ -49,7 +49,6 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
     private int mItemId;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,7 +79,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
                 pbLoading.setVisibility(View.INVISIBLE);
             }
         });
-        itemProvider.onError(new HandleViewIoException(this, new Runnable() {
+        itemProvider.onError(new HandleViewIoException<Void, Void, List<Item>>(this, new Runnable() {
             @Override
             public void run() {
                 itemProvider.execute();

@@ -41,7 +41,6 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 	private Activity thisContext = this;
 
-	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +71,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 				playlistView.setVisibility(View.VISIBLE);
 	        	pbLoading.setVisibility(View.INVISIBLE);
 			}
-		}).onError(new HandleViewIoException(thisContext, new Runnable() {
+		}).onError(new HandleViewIoException<Void, Void, List<Playlist>>(thisContext, new Runnable() {
 					
 			@Override
 			public void run() {

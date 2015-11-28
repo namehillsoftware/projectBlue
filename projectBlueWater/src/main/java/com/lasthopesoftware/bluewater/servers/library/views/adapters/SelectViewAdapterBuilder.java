@@ -13,11 +13,16 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 /**
  * Created by david on 11/23/15.
  */
-public class SelectViewAdapterItem {
-	public static View getView(View convertView, ViewGroup parent, CharSequence viewText, boolean isSelected) {
+public class SelectViewAdapterBuilder {
+	private final LayoutInflater layoutInflater;
+
+	public SelectViewAdapterBuilder(Context context) {
+		this.layoutInflater = LayoutInflater.from(context);
+	}
+
+	public View getView(View convertView, ViewGroup parent, CharSequence viewText, boolean isSelected) {
 		if (convertView == null) {
-			final LayoutInflater inflator = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			convertView = inflator.inflate(R.layout.layout_select_views, parent, false);
+			convertView = layoutInflater.inflate(R.layout.layout_select_views, parent, false);
 		}
 
 		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);

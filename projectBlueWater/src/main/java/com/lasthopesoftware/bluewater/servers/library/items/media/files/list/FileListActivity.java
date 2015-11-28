@@ -42,7 +42,6 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
-	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,13 +79,13 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		getNewFileProvider()
 			.onComplete(onFileProviderComplete)
-			.onError(new HandleViewIoException(this, new Runnable() {
+			.onError(new HandleViewIoException<Void, Void, List<IFile>>(this, new Runnable() {
 
 						@Override
 						public void run() {
 							getNewFileProvider()
 									.onComplete(onFileProviderComplete)
-									.onError(new HandleViewIoException(FileListActivity.this, this))
+									.onError(new HandleViewIoException<Void, Void, List<IFile>>(FileListActivity.this, this))
 									.execute();
 						}
 					})

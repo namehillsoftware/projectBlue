@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.adapter.viewholder;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.adapter.viewholder;
 
 import android.widget.TextView;
 

@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 
@@ -13,16 +14,18 @@ import java.util.List;
 public class SelectViewAdapter extends ArrayAdapter<Item> {
 
 	private final int selectedViewKey;
+	private final SelectViewAdapterBuilder selectViewAdapterBuilder;
 
-	public SelectViewAdapter(Context context, int resource, List<Item> views, final int selectedViewKey) {
-		super(context, resource, views);
-		
+	public SelectViewAdapter(Context context, List<Item> views, final int selectedViewKey) {
+		super(context, R.layout.layout_select_views, views);
+
 		this.selectedViewKey = selectedViewKey;
+		this.selectViewAdapterBuilder = new SelectViewAdapterBuilder(context);
 	}
 	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final IItem item = getItem(position);
-		return SelectViewAdapterItem.getView(convertView, parent, item.getValue(), item.getKey() == selectedViewKey);
+		return selectViewAdapterBuilder.getView(convertView, parent, item.getValue(), item.getKey() == selectedViewKey);
 	}
 }

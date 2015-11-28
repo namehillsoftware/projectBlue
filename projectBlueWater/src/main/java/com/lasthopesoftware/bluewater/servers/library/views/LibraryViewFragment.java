@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibrar
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LibraryViewFragment extends Fragment {
 
@@ -101,7 +102,6 @@ public class LibraryViewFragment extends Fragment {
         return layout;
     }
 
-	@SuppressWarnings("unchecked")
 	private ListView BuildPlaylistView(final Activity activity, final ViewGroup container, final int position, final View loadingView) {
 
 		final ListView listView = new ListView(activity);
@@ -112,7 +112,7 @@ public class LibraryViewFragment extends Fragment {
 		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 		playlistsProvider
 			.onComplete(onGetLibraryViewPlaylistResultsComplete)
-			.onError(new HandleViewIoException(activity, new Runnable() {
+			.onError(new HandleViewIoException<Void, Void, List<Playlist>>(activity, new Runnable() {
 
 				@Override
 				public void run() {
@@ -120,7 +120,7 @@ public class LibraryViewFragment extends Fragment {
 
 					playlistsProvider
 							.onComplete(onGetLibraryViewPlaylistResultsComplete)
-							.onError(new HandleViewIoException(activity, this))
+							.onError(new HandleViewIoException<Void, Void, List<Playlist>>(activity, this))
 							.execute();
 				}
 			}))
@@ -129,7 +129,6 @@ public class LibraryViewFragment extends Fragment {
 		return listView;
     }
 
-	@SuppressWarnings("unchecked")
 	private ListView BuildStandardItemView(final Activity activity, final ViewGroup container, final int position, final Item category, final View loadingView) {
 		final ListView listView = new ListView(activity);
     	listView.setVisibility(View.INVISIBLE);
@@ -139,14 +138,14 @@ public class LibraryViewFragment extends Fragment {
 		ItemProvider
 				.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException(activity, new Runnable() {
+				.onError(new HandleViewIoException<Void, Void, List<Item>>(activity, new Runnable() {
 
 					@Override
 					public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
-								.onError(new HandleViewIoException(activity, this))
+								.onError(new HandleViewIoException<Void, Void, List<Item>>(activity, this))
 									.execute();
 					}
 				}))

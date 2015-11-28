@@ -59,8 +59,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         super.onNewIntent(intent);
         handleIntent(intent);
     }
-	
-	@SuppressWarnings("unchecked")
+
 	private void handleIntent(Intent intent) {
 		if (!Intent.ACTION_SEARCH.equals(intent.getAction())) return;
         
@@ -87,13 +86,13 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
             .onComplete(onSearchFilesComplete)
-            .onError(new HandleViewIoException(this, new Runnable() {
+            .onError(new HandleViewIoException<Void, Void, List<IFile>>(this, new Runnable() {
 
                         @Override
                         public void run() {
                             SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
                                     .onComplete(onSearchFilesComplete)
-                                    .onError(new HandleViewIoException(SearchFilesActivity.this, this));
+                                    .onError(new HandleViewIoException<Void, Void, List<IFile>>(SearchFilesActivity.this, this));
                         }
                     })
             ).execute();

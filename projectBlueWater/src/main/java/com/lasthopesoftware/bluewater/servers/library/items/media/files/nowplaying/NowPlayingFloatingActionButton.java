@@ -60,7 +60,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
             }
         });
 
-        floatingActionButton.setVisibility(ViewUtils.GetVisibility(false));
+        floatingActionButton.setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
         LibrarySession.GetActiveLibrary(floatingActionButton.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
@@ -68,7 +68,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
                 final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingVisible));
+                floatingActionButton.setVisibility(ViewUtils.getVisibility(isNowPlayingVisible));
 
                 if (isNowPlayingVisible) return;
 
@@ -76,7 +76,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                 PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
                     @Override
                     public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        floatingActionButton.setVisibility(ViewUtils.GetVisibility(true));
+                        floatingActionButton.setVisibility(ViewUtils.getVisibility(true));
                         PlaybackService.removeOnStreamingStartListener(this);
                     }
                 });

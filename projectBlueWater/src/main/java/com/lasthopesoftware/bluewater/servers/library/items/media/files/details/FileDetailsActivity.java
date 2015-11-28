@@ -112,7 +112,6 @@ public class FileDetailsActivity extends AppCompatActivity {
         super.onPostCreate(savedInstanceState);
     }
 
-    @SuppressWarnings("unchecked")
 	private void setView(final int fileKey) {
 		if (fileKey < 0) {
         	finish();
@@ -155,7 +154,7 @@ public class FileDetailsActivity extends AppCompatActivity {
                 setTitle(spannableString);
 			}
 		});
-        getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+        getFileNameTask.addOnErrorListener(new HandleViewIoException<Void, Void, String>(this, mOnConnectionRegainedListener));
         getFileNameTask.execute();
         
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -217,7 +216,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				lvFileDetails.setVisibility(View.VISIBLE);
 			}
 		});
-        getFilePropertiesTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+        getFilePropertiesTask.addOnErrorListener(new HandleViewIoException<Void, Void, List<Entry<String, String>>>(this, mOnConnectionRegainedListener));
         getFilePropertiesTask.execute();
                 
         ImageProvider
@@ -259,7 +258,7 @@ public class FileDetailsActivity extends AppCompatActivity {
                 tvArtist.setText(result);
             }
         });
-        getFileArtistTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+        getFileArtistTask.addOnErrorListener(new HandleViewIoException<Void, Void, String>(this, mOnConnectionRegainedListener));
         getFileArtistTask.execute();
 	}
 

@@ -1,5 +1,6 @@
 <RelativeLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:id="@+id/browseLibraryRelativeLayout">
@@ -39,11 +40,13 @@
 					android:layout_below="@+id/tabsLibraryViews" />
 			</RelativeLayout>
 
-			<FrameLayout
-				android:id="@+id/singleLibraryViewFrameLayout"
+			<fragment
+				android:id="@+id/downloadsFragment"
+				android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"
-				android:visibility="invisible" />
+				android:visibility="invisible"
+				tools:layout="@layout/activity_view_files"/>
 
 		</RelativeLayout>
 
@@ -57,12 +60,14 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:orientation="vertical"
+				android:layout_alignParentTop="true"
 				android:dividerHeight="0dp"/>
 
 			<ListView
 				android:id="@+id/specialLibraryItemsListView"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
+				android:layout_alignParentBottom="true"
 				android:dividerHeight="0dp">
 			</ListView>
 		</RelativeLayout>

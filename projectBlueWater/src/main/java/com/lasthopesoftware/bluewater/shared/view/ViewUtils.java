@@ -16,7 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.activity.ActiveFileDownloadsActivity;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
@@ -41,7 +41,7 @@ public class ViewUtils {
 				context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
 				return true;
 			case R.id.menu_view_active_downloads:
-				context.startActivity(new Intent(context, ActiveFileDownloadsActivity.class));
+				context.startActivity(new Intent(context, ActiveFileDownloadsFragment.class));
 				return true;
 			default:
 				return false;
@@ -83,7 +83,7 @@ public class ViewUtils {
 	public @interface Visibility {}
 
 	@Visibility
-	public static int GetVisibility(boolean isVisible) {
+	public static int getVisibility(boolean isVisible) {
 		return isVisible ? View.VISIBLE : View.INVISIBLE;
 	}
 

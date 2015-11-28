@@ -1,32 +1,35 @@
 package com.lasthopesoftware.bluewater.servers.library.views.adapters;
 
 import android.content.Context;
-import android.widget.SimpleAdapter;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+
+import com.lasthopesoftware.bluewater.R;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by david on 11/23/15.
  */
-public class SelectStaticViewAdapter extends SimpleAdapter {
-	/**
-	 * Constructor
-	 *
-	 * @param context  The context where the View associated with this SimpleAdapter is running
-	 * @param data     A List of Maps. Each entry in the List corresponds to one row in the list. The
-	 *                 Maps contain the data for each row, and should include all the entries specified in
-	 *                 "from"
-	 * @param resource Resource identifier of a view layout that defines the views for this list
-	 *                 item. The layout file should include at least those named views defined in "to"
-	 * @param from     A list of column names that will be added to the Map associated with each
-	 *                 item.
-	 * @param to       The views that should display column in the "from" parameter. These should all be
-	 *                 TextViews. The first N views in this list are given the values of the first N columns
-	 */
-	public SelectStaticViewAdapter(Context context, List<? extends Map<String, ?>> data, int resource, String[] from, int[] to) {
-		super(context, data, resource, from, to);
+public class SelectStaticViewAdapter extends ArrayAdapter<String> {
+
+	private final SelectViewAdapterBuilder selectViewAdapterBuilder;
+	private String selectedItem = null;
+
+	public SelectStaticViewAdapter(Context context, List<String> objects) {
+		super(context, R.layout.layout_select_views, objects);
+
+		selectViewAdapterBuilder = new SelectViewAdapterBuilder(context);
 	}
 
+	public void setSelectedItem(String selectedItem) {
+		this.selectedItem = selectedItem;
+	}
 
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		final String item = getItem(position);
+		return selectViewAdapterBuilder.getView(convertView, parent, item, item.equals(selectedItem));
+	}
 }
