@@ -28,7 +28,7 @@ import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
@@ -78,7 +79,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 
-	private static ImageAccess getFileImageTask;
+	private static AbstractProvider<Bitmap> getFileImageTask;
 	private static ViewStructure mViewStructure;
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";
@@ -354,24 +355,29 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			try {				
 				// Cancel the getFileImageTask if it is already in progress
 				if (getFileImageTask != null)
-					getFileImageTask.cancel();
+					getFileImageTask.cancel(true);
 				
 				mNowPlayingImageView.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);
 				
-				getFileImageTask = ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), file, new OnCompleteListener<Void, Void, Bitmap>() {
-					
-					@Override
-					public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-						if (viewStructure.nowPlayingImage != null)
-							viewStructure.nowPlayingImage.recycle();
-						viewStructure.nowPlayingImage = result;
-						
-						mNowPlayingImageView.setImageBitmap(result);
-						
-						displayImageBitmap();
-					}
-				});
+				getFileImageTask =
+						ImageProvider
+								.getImage(this, SessionConnection.getSessionConnectionProvider(), file)
+								.onComplete(new OnCompleteListener<Void, Void, Bitmap>() {
+
+									@Override
+									public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+										if (viewStructure.nowPlayingImage != null)
+											viewStructure.nowPlayingImage.recycle();
+										viewStructure.nowPlayingImage = result;
+
+										mNowPlayingImageView.setImageBitmap(result);
+
+										displayImageBitmap();
+									}
+								});
+
+				getFileImageTask.execute();
 				
 			} catch (Exception e) {
 				mLogger.error(e.toString(), e);

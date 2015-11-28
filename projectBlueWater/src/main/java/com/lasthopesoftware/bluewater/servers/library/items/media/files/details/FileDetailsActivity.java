@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
@@ -220,25 +220,28 @@ public class FileDetailsActivity extends AppCompatActivity {
         getFilePropertiesTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
         getFilePropertiesTask.execute();
                 
-        ImageAccess.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-				if (mFileImage != null) mFileImage.recycle();
+        ImageProvider
+		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
+		        .onComplete(new OnCompleteListener<Void, Void, Bitmap>() {
 
-				if (mIsDestroyed) {
-					if (result != null) result.recycle();
-					return;
-				}
+			        @Override
+			        public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+				        if (mFileImage != null) mFileImage.recycle();
 
-				mFileImage = result;
+				        if (mIsDestroyed) {
+					        if (result != null) result.recycle();
+					        return;
+				        }
 
-				imgFileThumbnail.setImageBitmap(result);
+				        mFileImage = result;
 
-				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-				imgFileThumbnail.setVisibility(View.VISIBLE);
-			}
-		});
+				        imgFileThumbnail.setImageBitmap(result);
+
+				        pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+				        imgFileThumbnail.setVisibility(View.VISIBLE);
+			        }
+		        })
+		        .execute();
 
         tvArtist.setText(getText(R.string.lbl_loading));
         final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
