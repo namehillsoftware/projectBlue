@@ -120,8 +120,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
-		return super.onOptionsItemSelected(item);
+		return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item);
 	}
 
     @Override
