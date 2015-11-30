@@ -46,7 +46,6 @@ public class LibraryViewFragment extends Fragment {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
     	final Activity activity = getActivity();
 
@@ -78,17 +77,17 @@ public class LibraryViewFragment extends Fragment {
 				    }
 			    };
 			
-			    final HandleViewIoException handleViewIoException = new HandleViewIoException(activity, new Runnable() {
+			    final HandleViewIoException<String, Void, ArrayList<IItem>> handleViewIoException = new HandleViewIoException<>(activity, new Runnable() {
 				
 				    @Override
 				    public void run() {
-					    final Runnable _this = this;
+					    final Runnable runnable = this;
 					
 					    LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 						    @Override
 						    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
 							    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
-							    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException(activity, _this));
+							    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException<String, Void, ArrayList<IItem>>(activity, runnable));
 						    }
 					    });
 				    }

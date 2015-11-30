@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 @DatabaseTable(tableName = "LIBRARIES")
@@ -239,7 +241,10 @@ public class Library {
 	}
 
 	public enum ViewType {
-		ServerView,
-		ClientView
+		StandardServerView,
+		PlaylistView,
+		DownloadView
 	}
+
+	public static final HashSet<ViewType> serverViewTypes = new HashSet<>(Arrays.asList(Library.ViewType.StandardServerView, Library.ViewType.PlaylistView));
 }

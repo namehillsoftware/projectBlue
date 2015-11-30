@@ -40,6 +40,12 @@
 					android:layout_below="@+id/tabsLibraryViews" />
 			</RelativeLayout>
 
+			<!--<ListView-->
+				<!--android:id="@+id/singleViewListView"-->
+				<!--android:layout_width="match_parent"-->
+				<!--android:layout_height="match_parent"-->
+				<!--android:visibility="invisible"/>-->
+
 			<fragment
 				android:id="@+id/downloadsFragment"
 				android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment"
@@ -47,6 +53,14 @@
 				android:layout_height="match_parent"
 				android:visibility="invisible"
 				tools:layout="@layout/activity_view_files"/>
+
+			<fragment
+				android:id="@+id/playlistListFragment"
+				android:name="com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListFragment"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:visibility="invisible"
+				tools:layout="@layout/activity_view_items"/>
 
 		</RelativeLayout>
 

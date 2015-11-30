@@ -68,25 +68,29 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	 */
 	private ViewPager viewPager;
 	private ListView selectViewsListView;
+	private ListView specialLibraryItemsListView;
 	private View activeFileDownloadsView;
+	private View playlistListView;
 	private DrawerLayout drawerLayout;
 	private PagerSlidingTabStrip libraryViewsTabs;
+
+	private ListView singleViewListView;
+
 	private RelativeLayout tabbedLibraryViewsRelativeLayout;
+
 	private ProgressBar loadingViewsProgressBar;
 
 	private ViewAnimator viewAnimator;
-
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private ActionBarDrawerToggle drawerToggle = null;
 
 	private BrowseLibraryActivity browseLibraryActivity = this;
+
 	private CharSequence oldTitle;
 
 	private boolean isStopped = false;
-
 	private boolean isLibraryChanged = false;
-
 	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
 		@Override
 		public OnCompleteListener<String, Void, ArrayList<IItem>> call() throws Exception {
@@ -107,12 +111,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-					toggleViewsVisibility(true);
+					showSelectedView(Library.ViewType.DownloadView);
 				}
 			};
 		}
 	});
-
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -204,24 +207,27 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		LocalBroadcastManager.getInstance(this).registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
-
-		final ListView specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
-		final SelectStaticViewAdapter selectStaticViewAdapter = new SelectStaticViewAdapter(this, specialViews);
-		specialLibraryItemsListView.setAdapter(selectStaticViewAdapter);
-
+		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
+//		singleViewListView = (ListView) findViewById(R.id.singleViewListView);
+//
 		final Fragment activeFileDownloadsFragment = getSupportFragmentManager().findFragmentById(R.id.downloadsFragment);
-		if (activeFileDownloadsFragment == null) return;
+		if (activeFileDownloadsFragment != null)
+			activeFileDownloadsView = activeFileDownloadsFragment.getView();
 
-		activeFileDownloadsView = activeFileDownloadsFragment.getView();
-		if (activeFileDownloadsView == null) return;
+		final Fragment playlistListFragment = getSupportFragmentManager().findFragmentById(R.id.playlistListFragment);
+		if (playlistListFragment != null)
+			playlistListView = playlistListFragment.getView();
 
 		specialLibraryItemsListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				selectStaticViewAdapter.setSelectedItem(specialViews.get(position));
-				loadingViewsProgressBar.setVisibility(ViewUtils.getVisibility(false));
-				tabbedLibraryViewsRelativeLayout.setVisibility(ViewUtils.getVisibility(false));
-				activeFileDownloadsView.setVisibility(ViewUtils.getVisibility(true));
+				LibrarySession.GetActiveLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
+					@Override
+					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+						library.setSelectedView(0);
+						library.setSelectedViewType(Library.ViewType.DownloadView);
+					}
+				});
 			}
 		});
 	}
@@ -248,7 +254,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		isStopped = false;
 		if ((selectViewsListView.getAdapter() != null && viewPager.getAdapter() != null)) return;
 
-        toggleViewsVisibility(false);
+        hideViews();
 
 		LibrarySession.GetActiveLibrary(browseLibraryActivity, new OnCompleteListener<Integer, Void, Library>() {
 
@@ -260,55 +266,71 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					return;
 				}
 
-				displayLibrary(result, new FileSystem(SessionConnection.getSessionConnectionProvider(), result));
+				displayLibrary(result);
 			}
 		});
 
 	}
 
-	public void displayLibrary(final Library library, final FileSystem fileSystem) {
-		final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider());
+	public void displayLibrary(final Library library) {
+		final Library.ViewType selectedViewType = library.getSelectedViewType();
 
-        libraryViewsProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
+		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(browseLibraryActivity, specialViews, selectedViewType, library.getSelectedView()));
 
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
-				if (isStopped || items == null) return;
+		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
+				.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+			        @Override
+			        public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
+				        if (isStopped || items == null) return;
 
-				for (IItem item : items) {
-					if (item.getKey() != library.getSelectedView()) continue;
-					oldTitle = item.getValue();
-					getSupportActionBar().setTitle(oldTitle);
-					break;
-				}
+				        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-				selectViewsListView.setAdapter(new SelectViewAdapter(selectViewsListView.getContext(), items, library.getSelectedView()));
-				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(),
-						new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, new Runnable() {
 
-							@Override
-							public void run() {
-								new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
-										.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, this));
-							}
+				        selectViewsListView.setAdapter(new SelectViewAdapter(browseLibraryActivity, items, selectedViewType, library.getSelectedView()));
+				        selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 
-						})
-				);
+				        if (!Library.serverViewTypes.contains(selectedViewType)) {
+					        oldTitle = specialViews.get(0);
+					        getSupportActionBar().setTitle(oldTitle);
+					        showSelectedView(Library.ViewType.DownloadView);
+					        return;
+				        }
 
-				selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
-			}
-		}).onError(new HandleViewIoException<Void, Void, List<Item>>(browseLibraryActivity, new Runnable() {
+				        for (IItem item : items) {
+					        if (item.getKey() != library.getSelectedView()) continue;
+					        oldTitle = item.getValue();
+					        getSupportActionBar().setTitle(oldTitle);
+					        break;
+				        }
 
-	        @Override
-	        public void run() {
-		        // Get a new instance of the file system as the connection provider may have changed
-		        displayLibrary(library, new FileSystem(SessionConnection.getSessionConnectionProvider(), library));
-			}
-		}));
+				        if (selectedViewType != Library.ViewType.StandardServerView) {
+					        showSelectedView(Library.ViewType.PlaylistView);
+					        return;
+				        }
 
-        libraryViewsProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+			            new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
+						        .getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, new Runnable() {
+
+									        @Override
+									        public void run() {
+										        new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
+												        .getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, this));
+									        }
+
+								        })
+						        );
+			        }
+                })
+				.onError(new HandleViewIoException<Void, Void, List<Item>>(browseLibraryActivity, new Runnable() {
+
+					@Override
+					public void run() {
+						// Get a new instance of the file system as the connection provider may have changed
+						displayLibrary(library);
+					}
+				}))
+				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
@@ -329,10 +351,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						if (library.getSelectedView() == selectedViewKey) return;
 
 						library.setSelectedView(selectedViewKey);
-						library.setSelectedViewType(Library.ViewType.ServerView);
+						library.setSelectedViewType(Library.ViewType.StandardServerView);
 						LibrarySession.SaveLibrary(browseLibraryActivity, library);
 
-						displayLibrary(library, new FileSystem(SessionConnection.getSessionConnectionProvider(), library));
+						displayLibrary(library);
 					}
 				});
 			}
@@ -407,13 +429,30 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         });
     }
 
-    private void toggleViewsVisibility(boolean isVisible) {
-        tabbedLibraryViewsRelativeLayout.setVisibility(ViewUtils.getVisibility(isVisible));
-	    loadingViewsProgressBar.setVisibility(ViewUtils.getVisibility(!isVisible));
+	private void hideViews() {
+		loadingViewsProgressBar.setVisibility(View.VISIBLE);
+		tabbedLibraryViewsRelativeLayout.setVisibility(View.INVISIBLE);
+		activeFileDownloadsView.setVisibility(View.INVISIBLE);
+		playlistListView.setVisibility(View.INVISIBLE);
+	}
 
-	    if (activeFileDownloadsView != null)
-		    activeFileDownloadsView.setVisibility(ViewUtils.getVisibility(false));
-    }
+	private void showSelectedView(Library.ViewType viewType) {
+		hideViews();
+
+		loadingViewsProgressBar.setVisibility(View.INVISIBLE);
+
+		switch (viewType) {
+			case StandardServerView:
+				tabbedLibraryViewsRelativeLayout.setVisibility(View.VISIBLE);
+				break;
+			case PlaylistView:
+				playlistListView.setVisibility(View.VISIBLE);
+				break;
+			case DownloadView:
+				playlistListView.setVisibility(View.VISIBLE);
+				break;
+		}
+	}
 	
 	@Override
 	public void onStop() {

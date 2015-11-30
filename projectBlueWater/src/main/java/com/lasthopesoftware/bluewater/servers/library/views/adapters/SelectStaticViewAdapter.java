@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 import java.util.List;
 
@@ -15,21 +16,20 @@ import java.util.List;
 public class SelectStaticViewAdapter extends ArrayAdapter<String> {
 
 	private final SelectViewAdapterBuilder selectViewAdapterBuilder;
-	private String selectedItem = null;
+	private final Library.ViewType selectedViewType;
+	private final int selectedViewPosition;
 
-	public SelectStaticViewAdapter(Context context, List<String> objects) {
+	public SelectStaticViewAdapter(Context context, List<String> objects, Library.ViewType selectedViewType, int selectedViewPosition) {
 		super(context, R.layout.layout_select_views, objects);
+		this.selectedViewType = selectedViewType;
+		this.selectedViewPosition = selectedViewPosition;
 
 		selectViewAdapterBuilder = new SelectViewAdapterBuilder(context);
-	}
-
-	public void setSelectedItem(String selectedItem) {
-		this.selectedItem = selectedItem;
 	}
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final String item = getItem(position);
-		return selectViewAdapterBuilder.getView(convertView, parent, item, item.equals(selectedItem));
+		return selectViewAdapterBuilder.getView(convertView, parent, item, selectedViewType == Library.ViewType.DownloadView && position == selectedViewPosition);
 	}
 }

@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -66,7 +65,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 
 				ViewsHolder viewsHolder = viewsCache.get(library.getId());
 
-				if (viewsHolder != null && viewsHolder.visibleViewKeys.containsAll(visibleViewKeys)) {
+				if (viewsHolder != null && viewsHolder.visibleViewKeys.size() == visibleViewKeys.size() && viewsHolder.visibleViewKeys.containsAll(visibleViewKeys)) {
 					final TreeSet<IItem> visibleViews = viewsHolder.visibleViews;
 					if (visibleViews != null && visibleViews.size() != 0)
 						return new ArrayList<>(visibleViews);
@@ -89,11 +88,7 @@ public class FileSystem extends AbstractIntKeyStringValue implements IItem {
 				for (int viewKey : visibleViewKeys) {
 					for (Item libraryView : libraryViews) {
 						if (visibleViewKeys.size() > 0 && viewKey != libraryView.getKey()) continue;
-
-						if (libraryView.getValue().equalsIgnoreCase("Playlists")) {
-							visibleViews.add(new Playlists());
-							continue;
-						}
+						if (libraryView.getValue().equalsIgnoreCase("Playlists")) continue;
 
 						final List<Item> views = ItemProvider.provide(connectionProvider, libraryView.getKey()).get();
 						for (Item view : views)
