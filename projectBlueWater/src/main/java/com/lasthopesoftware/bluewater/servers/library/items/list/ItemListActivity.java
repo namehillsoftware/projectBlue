@@ -19,7 +19,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.menu.OnViewChangedListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
@@ -39,13 +38,6 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     private ProgressBar pbLoading;
     private ViewAnimator viewAnimator;
     private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
-
-    private final OnViewChangedListener onViewChangedListener = new OnViewChangedListener() {
-        @Override
-        public void onViewChanged(ViewAnimator viewAnimator) {
-            ItemListActivity.this.viewAnimator = viewAnimator;
-        }
-    };
 
     private int mItemId;
 
@@ -94,9 +86,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this));
         itemListView.setAdapter(itemListAdapter);
         itemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
-        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-
-        itemListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+        itemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
     }
 
     @Override
