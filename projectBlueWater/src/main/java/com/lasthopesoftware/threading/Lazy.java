@@ -23,8 +23,8 @@ public class Lazy<T> {
 		if (value == null) {
 			try {
 				value = initialization.call();
-			} catch (Exception ignored) {
-
+			} catch (Exception exception) {
+				Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
 			}
 		}
 
