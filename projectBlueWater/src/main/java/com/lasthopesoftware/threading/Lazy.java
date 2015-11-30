@@ -9,25 +9,25 @@ public class Lazy<T> {
 
 	private final Callable<T> initialization;
 
-	private T value;
+	private T object;
 
 	public Lazy(Callable<T> initialization) {
 		this.initialization = initialization;
 	}
 
-	public T getValue() {
-		return value != null ? value : getValueSynchronized();
+	public T getObject() {
+		return object != null ? object : getValueSynchronized();
 	}
 
 	private synchronized T getValueSynchronized() {
-		if (value != null) return value;
+		if (object != null) return object;
 
 		try {
-			value = initialization.call();
+			object = initialization.call();
 		} catch (Exception exception) {
 			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
 		}
 
-		return value;
+		return object;
 	}
 }

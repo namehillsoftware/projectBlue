@@ -285,13 +285,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				}
 
 				selectViewsListView.setAdapter(new SelectViewAdapter(selectViewsListView.getContext(), items, library.getSelectedView()));
-				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getValue(),
+				fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(),
 						new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, new Runnable() {
 
 							@Override
 							public void run() {
 								new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
-										.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getValue(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, this));
+										.getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(browseLibraryActivity, this));
 							}
 
 						})

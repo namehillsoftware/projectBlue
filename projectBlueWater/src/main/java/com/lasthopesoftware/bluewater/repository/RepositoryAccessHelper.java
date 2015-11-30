@@ -65,7 +65,7 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 			try {
 				TableUtils.createTable(conn, table);
 			} catch (SQLException e) {
-				localLogger.getValue().error(e.toString(), e);
+				localLogger.getObject().error(e.toString(), e);
 			}
 		}
 	}
@@ -75,7 +75,7 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 			try {
 				TableUtils.dropTable(conn, table, true);
 			} catch (SQLException e) {
-				localLogger.getValue().error(e.toString(), e);
+				localLogger.getObject().error(e.toString(), e);
 			}
 		}
 		createTables(conn, tableClasses);
@@ -100,7 +100,7 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
 				libraryDao.executeRaw("DROP TABLE `StoredLists`;");
 			} catch (SQLException e) {
-				localLogger.getValue().error("Error adding column syncedFilesPath to library table", e);
+				localLogger.getObject().error("Error adding column syncedFilesPath to library table", e);
 			}
 		}
 	}
@@ -111,10 +111,10 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 	}
 
 	public <T, TId> Dao<T, TId> getDataAccess(Class<T> clazz) throws SQLException {
-		if (!configMap.getValue().containsKey(clazz))
-			configMap.getValue().put(clazz, DatabaseTableConfig.fromClass(connectionSource, clazz));
+		if (!configMap.getObject().containsKey(clazz))
+			configMap.getObject().put(clazz, DatabaseTableConfig.fromClass(connectionSource, clazz));
 
-		return new GenericDao<>(connectionSource, (DatabaseTableConfig<T>) configMap.getValue().get(clazz));
+		return new GenericDao<>(connectionSource, (DatabaseTableConfig<T>) configMap.getObject().get(clazz));
 	}
 
 	@Override
