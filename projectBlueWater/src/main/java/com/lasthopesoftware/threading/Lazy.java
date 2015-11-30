@@ -20,12 +20,12 @@ public class Lazy<T> {
 	}
 
 	private synchronized T getValueSynchronized() {
-		if (value == null) {
-			try {
-				value = initialization.call();
-			} catch (Exception exception) {
-				Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
-			}
+		if (value != null) return value;
+
+		try {
+			value = initialization.call();
+		} catch (Exception exception) {
+			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
 		}
 
 		return value;
