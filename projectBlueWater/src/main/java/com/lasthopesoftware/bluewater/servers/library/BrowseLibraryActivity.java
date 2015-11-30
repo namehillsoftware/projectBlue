@@ -74,8 +74,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private DrawerLayout drawerLayout;
 	private PagerSlidingTabStrip libraryViewsTabs;
 
-	private ListView singleViewListView;
-
 	private RelativeLayout tabbedLibraryViewsRelativeLayout;
 
 	private ProgressBar loadingViewsProgressBar;
@@ -111,7 +109,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-					showSelectedView(Library.ViewType.DownloadView);
+					showSelectedView(Library.ViewType.StandardServerView);
 				}
 			};
 		}
@@ -208,8 +206,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		LocalBroadcastManager.getInstance(this).registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
-//		singleViewListView = (ListView) findViewById(R.id.singleViewListView);
-//
+
 		final Fragment activeFileDownloadsFragment = getSupportFragmentManager().findFragmentById(R.id.downloadsFragment);
 		if (activeFileDownloadsFragment != null)
 			activeFileDownloadsView = activeFileDownloadsFragment.getView();
@@ -224,8 +221,19 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				LibrarySession.GetActiveLibrary(view.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 					@Override
 					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+						drawerLayout.closeDrawer(GravityCompat.START);
+						drawerToggle.syncState();
+
 						library.setSelectedView(0);
 						library.setSelectedViewType(Library.ViewType.DownloadView);
+
+						LibrarySession.SaveLibrary(browseLibraryActivity, library, new OnCompleteListener<Void, Void, Library>() {
+
+							@Override
+							public void onComplete(ISimpleTask<Void, Void, Library> owner, Library library) {
+								displayLibrary(library);
+							}
+						});
 					}
 				});
 			}
@@ -342,7 +350,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				drawerLayout.closeDrawer(GravityCompat.START);
 				drawerToggle.syncState();
 
-				final int selectedViewKey = items.get(position).getKey();
+				final Item selectedItem = items.get(position);
+				final int selectedViewKey = selectedItem.getKey();
 
 				LibrarySession.GetActiveLibrary(browseLibraryActivity, new OnCompleteListener<Integer, Void, Library>() {
 
@@ -351,7 +360,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						if (library.getSelectedView() == selectedViewKey) return;
 
 						library.setSelectedView(selectedViewKey);
-						library.setSelectedViewType(Library.ViewType.StandardServerView);
+						library.setSelectedViewType(selectedItem.getValue().equals("Playlists") ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView);
 						LibrarySession.SaveLibrary(browseLibraryActivity, library);
 
 						displayLibrary(library);
@@ -449,7 +458,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				playlistListView.setVisibility(View.VISIBLE);
 				break;
 			case DownloadView:
-				playlistListView.setVisibility(View.VISIBLE);
+				activeFileDownloadsView.setVisibility(View.VISIBLE);
 				break;
 		}
 	}

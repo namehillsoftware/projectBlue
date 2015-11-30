@@ -98,6 +98,7 @@ public class SessionConnection {
 										doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 										final int selectedView = result.get(0).getKey();
 										library.setSelectedView(selectedView);
+										library.setSelectedViewType(Library.ViewType.StandardServerView);
 
 										LibrarySession.SaveLibrary(context, library, new OnCompleteListener<Void, Void, Library>() {
 
