@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -39,8 +38,6 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
-	private Activity thisContext = this;
-
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,25 +56,32 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId);
-        playlistsProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
-			
+		final ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>> onPlaylistProviderComplete = new ISimpleTask.OnCompleteListener<Void, Void, List<Playlist>>() {
+
 			@Override
 			public void onComplete(ISimpleTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
-				
+
 				BuildPlaylistView(result);
-				
+
 				playlistView.setVisibility(View.VISIBLE);
-	        	pbLoading.setVisibility(View.INVISIBLE);
+				pbLoading.setVisibility(View.INVISIBLE);
 			}
-		}).onError(new HandleViewIoException<Void, Void, List<Playlist>>(thisContext, new Runnable() {
-					
-			@Override
-			public void run() {
-				playlistsProvider.execute();
-			}
-		})).execute();
+		};
+
+		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
+		        .onComplete(onPlaylistProviderComplete)
+		        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(PlaylistListActivity.this, new Runnable() {
+
+			        @Override
+			        public void run() {
+				        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
+						        .onComplete(onPlaylistProviderComplete)
+						        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(PlaylistListActivity.this, this))
+						        .execute();
+			        }
+		        }))
+		        .execute();
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
@@ -90,7 +94,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(thisContext, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
+		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
         playlistView.setAdapter(itemListAdapter);
         playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
         final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
