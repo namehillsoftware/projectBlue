@@ -15,12 +15,16 @@ public class Lazy<T> {
 		this.initialization = initialization;
 	}
 
+	public boolean isInitialized() {
+		return object != null;
+	}
+
 	public T getObject() {
-		return object != null ? object : getValueSynchronized();
+		return isInitialized() ? object : getValueSynchronized();
 	}
 
 	private synchronized T getValueSynchronized() {
-		if (object != null) return object;
+		if (isInitialized()) return object;
 
 		try {
 			object = initialization.call();

@@ -35,12 +35,14 @@ import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Created by david on 7/26/15.
@@ -89,9 +91,29 @@ public class SyncService extends Service {
 		}
 	};
 
-	private BroadcastReceiver onWifiStateChangedReceiver;
+	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
+		@Override
+		public BroadcastReceiver call() throws Exception {
+			return new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					if (!IoCommon.isWifiConnected(context)) cancelSync();
+				}
+			};
+		}
+	});
 
-	private BroadcastReceiver onPowerDisconnectedReceiver;
+	private Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
+		@Override
+		public BroadcastReceiver call() throws Exception {
+			return new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					cancelSync();
+				}
+			};
+		}
+	});
 
 	public static boolean isSyncScheduled(Context context) {
 		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
@@ -181,28 +203,14 @@ public class SyncService extends Service {
 		if (isSyncOnWifiOnly) {
 			if (!IoCommon.isWifiConnected(this)) return false;
 
-			onWifiStateChangedReceiver = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					if (!IoCommon.isWifiConnected(context)) cancelSync();
-				}
-			};
-			registerReceiver(onWifiStateChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+			registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		}
-
-
 
 		final boolean isSyncOnPowerOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
 		if (isSyncOnPowerOnly) {
 			if (!IoCommon.isPowerConnected(this)) return false;
 
-			onPowerDisconnectedReceiver = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					cancelSync();
-				}
-			};
-			registerReceiver(onPowerDisconnectedReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+			registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 		}
 
 		return true;
@@ -238,11 +246,11 @@ public class SyncService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
-		if (onWifiStateChangedReceiver != null)
-			unregisterReceiver(onWifiStateChangedReceiver);
+		if (onWifiStateChangedReceiver.isInitialized())
+			unregisterReceiver(onWifiStateChangedReceiver.getObject());
 
-		if (onPowerDisconnectedReceiver != null)
-			unregisterReceiver(onPowerDisconnectedReceiver);
+		if (onPowerDisconnectedReceiver.isInitialized())
+			unregisterReceiver(onPowerDisconnectedReceiver.getObject());
 
 		wakeLock.release();
 	}
