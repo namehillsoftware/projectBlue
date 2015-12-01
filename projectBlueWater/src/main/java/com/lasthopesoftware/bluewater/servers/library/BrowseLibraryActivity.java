@@ -114,6 +114,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			};
 		}
 	});
+
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -208,12 +209,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
 
 		final Fragment activeFileDownloadsFragment = getSupportFragmentManager().findFragmentById(R.id.downloadsFragment);
-		if (activeFileDownloadsFragment != null)
+		if (activeFileDownloadsFragment != null) {
 			activeFileDownloadsView = activeFileDownloadsFragment.getView();
+			activeFileDownloadsView.setVisibility(View.INVISIBLE);
+		}
 
 		final Fragment playlistListFragment = getSupportFragmentManager().findFragmentById(R.id.playlistListFragment);
-		if (playlistListFragment != null)
+		if (playlistListFragment != null) {
 			playlistListView = playlistListFragment.getView();
+			playlistListView.setVisibility(View.INVISIBLE);
+		}
 
 		specialLibraryItemsListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
@@ -227,13 +232,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						library.setSelectedView(0);
 						library.setSelectedViewType(Library.ViewType.DownloadView);
 
-						LibrarySession.SaveLibrary(browseLibraryActivity, library, new OnCompleteListener<Void, Void, Library>() {
-
-							@Override
-							public void onComplete(ISimpleTask<Void, Void, Library> owner, Library library) {
-								displayLibrary(library);
-							}
-						});
+						LibrarySession.SaveLibrary(browseLibraryActivity, library);
+						displayLibrary(library);
 					}
 				});
 			}
