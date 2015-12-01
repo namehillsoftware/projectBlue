@@ -114,9 +114,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity" />
         </activity>
-        <activity
-            android:name=".servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment"
-            android:label="Downloads" />
 
         <receiver android:name=".servers.library.items.media.files.playback.service.receivers.AudioBecomingNoisyReceiver" >
             <intent-filter android:priority="1000" >
