@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
@@ -90,6 +91,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
+	private final Lazy<IItemListMenuChangeHandler> onItemlistMenuChangedHandler = new Lazy<>(new Callable<IItemListMenuChangeHandler>() {
+		@Override
+		public IItemListMenuChangeHandler call() throws Exception {
+			return new ItemListMenuChangeHandler(BrowseLibraryActivity.this);
+		}
+	});
+
 	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
 		@Override
 		public OnCompleteListener<String, Void, ArrayList<IItem>> call() throws Exception {
@@ -100,7 +108,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-					viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+					viewChildPagerAdapter.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler.getObject());
 
 					viewChildPagerAdapter.setLibraryViews(result);
 
@@ -307,6 +315,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 							        ft.remove(playlistListFragment);
 
 						        playlistListFragment = new PlaylistListFragment();
+						        playlistListFragment.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler.getObject());
 						        ft.add(R.id.browseLibraryContainer, playlistListFragment);
 					        } finally {
 						        ft.commit();
