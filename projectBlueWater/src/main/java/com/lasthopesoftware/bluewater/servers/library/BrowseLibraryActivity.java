@@ -8,7 +8,6 @@ import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
@@ -37,11 +36,14 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewCo
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.LibraryViewPagerAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -71,6 +73,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private ListView specialLibraryItemsListView;
 	private View activeFileDownloadsView;
 	private View playlistListView;
+	private ListView singleLibraryViewListView;
 	private DrawerLayout drawerLayout;
 	private PagerSlidingTabStrip libraryViewsTabs;
 
@@ -182,6 +185,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		viewPager = (ViewPager) findViewById(R.id.libraryViewPager);
 		tabbedLibraryViewsRelativeLayout = (RelativeLayout) findViewById(R.id.tabbedLibraryViewsRelativeLayout);
 		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
+		singleLibraryViewListView = (ListView) findViewById(R.id.singleLibraryViewListView);
 
 		libraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
 
@@ -208,14 +212,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
 
-		final Fragment activeFileDownloadsFragment = getSupportFragmentManager().findFragmentById(R.id.downloadsFragment);
+		final android.app.Fragment activeFileDownloadsFragment = getFragmentManager().findFragmentById(R.id.downloadsFragment);
 		if (activeFileDownloadsFragment != null) {
 			activeFileDownloadsView = activeFileDownloadsFragment.getView();
 			if (activeFileDownloadsView != null)
 				activeFileDownloadsView.setVisibility(View.INVISIBLE);
 		}
 
-		final Fragment playlistListFragment = getSupportFragmentManager().findFragmentById(R.id.playlistListFragment);
+		final android.app.Fragment playlistListFragment = getFragmentManager().findFragmentById(R.id.playlistListFragment);
 		if (playlistListFragment != null) {
 			playlistListView = playlistListFragment.getView();
 			if (playlistListView != null)
@@ -303,7 +307,27 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        }
 
 				        if (selectedViewType != Library.ViewType.StandardServerView) {
-					        showSelectedView(Library.ViewType.PlaylistView);
+					        final OnCompleteListener<Void, Void, List<Playlist>> onGetLibraryViewPlaylistResultsComplete = new OnGetLibraryViewPlaylistResultsComplete(browseLibraryActivity, (RelativeLayout) singleLibraryViewListView.getParent(), singleLibraryViewListView, loadingViewsProgressBar, 0, null);
+
+					        hideViews();
+
+					        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+
+					        playlistsProvider
+							        .onComplete(onGetLibraryViewPlaylistResultsComplete)
+							        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(browseLibraryActivity, new Runnable() {
+
+								        @Override
+								        public void run() {
+									        final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+
+									        playlistsProvider
+											        .onComplete(onGetLibraryViewPlaylistResultsComplete)
+											        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(browseLibraryActivity, this))
+											        .execute();
+								        }
+							        }))
+							        .execute();
 					        return;
 				        }
 
@@ -432,6 +456,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void hideViews() {
 		loadingViewsProgressBar.setVisibility(View.VISIBLE);
 		tabbedLibraryViewsRelativeLayout.setVisibility(View.INVISIBLE);
+		singleLibraryViewListView.setVisibility(View.INVISIBLE);
 
 		if (activeFileDownloadsView != null)
 			activeFileDownloadsView.setVisibility(View.INVISIBLE);
@@ -451,7 +476,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				break;
 			case PlaylistView:
 				if (playlistListView != null)
-					playlistListView.setVisibility(View.VISIBLE);
+					singleLibraryViewListView.setVisibility(View.VISIBLE);
 				break;
 			case DownloadView:
 				if (activeFileDownloadsView != null)
