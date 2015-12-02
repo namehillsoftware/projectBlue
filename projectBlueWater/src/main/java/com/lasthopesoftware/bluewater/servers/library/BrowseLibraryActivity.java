@@ -68,16 +68,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
+	private RelativeLayout browseLibraryContainerRelativeLayout;
 	private ViewPager viewPager;
 	private ListView selectViewsListView;
 	private ListView specialLibraryItemsListView;
 	private View activeFileDownloadsView;
-	private ListView singleLibraryViewListView;
 	private DrawerLayout drawerLayout;
 	private PagerSlidingTabStrip libraryViewsTabs;
-
 	private RelativeLayout tabbedLibraryViewsRelativeLayout;
-
 	private ProgressBar loadingViewsProgressBar;
 
 	private ViewAnimator viewAnimator;
@@ -112,7 +110,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-					hideViews();
+					hideAllViews();
 					tabbedLibraryViewsRelativeLayout.setVisibility(View.VISIBLE);
 				}
 			};
@@ -185,7 +183,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		viewPager = (ViewPager) findViewById(R.id.libraryViewPager);
 		tabbedLibraryViewsRelativeLayout = (RelativeLayout) findViewById(R.id.tabbedLibraryViewsRelativeLayout);
 		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
-		singleLibraryViewListView = (ListView) findViewById(R.id.singleLibraryViewListView);
+		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
 
 		libraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
 
@@ -249,7 +247,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		isStopped = false;
 		if ((selectViewsListView.getAdapter() != null && viewPager.getAdapter() != null)) return;
 
-        hideViews();
+        showProgressBar();
 
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
@@ -288,7 +286,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        oldTitle = specialViews.get(0);
 					        getSupportActionBar().setTitle(oldTitle);
 
-					        hideViews();
+					        hideAllViews();
 					        activeFileDownloadsView.setVisibility(View.VISIBLE);
 					        return;
 				        }
@@ -301,7 +299,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        }
 
 				        if (selectedViewType == Library.ViewType.PlaylistView) {
-					        hideViews();
+					        hideAllViews();
 
 					        final FragmentTransaction ft = getFragmentManager().beginTransaction();
 					        try {
@@ -313,9 +311,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        } finally {
 						        ft.commit();
 					        }
-
-					        hideViews();
-					        playlistListFragment.getView().setVisibility(View.VISIBLE);
 
 					        return;
 				        }
@@ -393,7 +388,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	@Override
     public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
+		super.onConfigurationChanged(newConfig);
         if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
     }
 
@@ -405,13 +400,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         savedInstanceState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-        LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-	        @Override
-	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-		        if (library != null)
-			        savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-	        }
-        });
+		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+			@Override
+			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+				if (library != null)
+					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+			}
+		});
 	}
 
 	@Override
@@ -442,12 +437,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         });
     }
 
-	private void hideViews() {
+	private void showProgressBar() {
+		hideAllViews();
 		loadingViewsProgressBar.setVisibility(View.VISIBLE);
+	}
 
-		tabbedLibraryViewsRelativeLayout.setVisibility(View.INVISIBLE);
-		singleLibraryViewListView.setVisibility(View.INVISIBLE);
-		activeFileDownloadsView.setVisibility(View.INVISIBLE);
+	private void hideAllViews() {
+		for (int i = 0; i < browseLibraryContainerRelativeLayout.getChildCount(); i++)
+			browseLibraryContainerRelativeLayout.getChildAt(i).setVisibility(View.INVISIBLE);
 	}
 	
 	@Override

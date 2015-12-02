@@ -41,12 +41,6 @@
 					android:layout_below="@+id/tabsLibraryViews" />
 			</RelativeLayout>
 			
-			<ListView
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"
-				android:id="@+id/singleLibraryViewListView"
-				android:visibility="invisible" />
-
 			<fragment
 				android:id="@+id/downloadsFragment"
 				android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment"

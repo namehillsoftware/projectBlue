@@ -30,7 +30,7 @@ public class PlaylistListFragment extends Fragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final RelativeLayout itemListLayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_items, container);
+		final RelativeLayout itemListLayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_items, container, false);
 
 		final ListView playlistView = (ListView) itemListLayout.findViewById(R.id.lvItems);
 		final ProgressBar loadingView = (ProgressBar) itemListLayout.findViewById(R.id.pbLoadingItems);
