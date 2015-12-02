@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.propert
 
 import android.util.LruCache;
 
-import com.j256.ormlite.logger.Logger;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -54,7 +53,7 @@ public class FilePropertiesProvider {
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final LruCache<Integer, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
-	private static final Logger logger = com.j256.ormlite.logger.LoggerFactory.getLogger(FilePropertiesProvider.class);
+	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		this.connectionProvider = connectionProvider;
