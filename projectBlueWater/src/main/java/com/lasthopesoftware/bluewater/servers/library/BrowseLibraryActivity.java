@@ -34,7 +34,6 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
@@ -91,12 +90,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final Lazy<IItemListMenuChangeHandler> onItemlistMenuChangedHandler = new Lazy<>(new Callable<IItemListMenuChangeHandler>() {
-		@Override
-		public IItemListMenuChangeHandler call() throws Exception {
-			return new ItemListMenuChangeHandler(BrowseLibraryActivity.this);
-		}
-	});
+	private final ItemListMenuChangeHandler onItemlistMenuChangedHandler = new ItemListMenuChangeHandler(BrowseLibraryActivity.this);
 
 	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
 		@Override
@@ -108,7 +102,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-					viewChildPagerAdapter.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler.getObject());
+					viewChildPagerAdapter.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler);
 
 					viewChildPagerAdapter.setLibraryViews(result);
 
@@ -118,8 +112,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-					hideAllViews();
-					tabbedLibraryViewsRelativeLayout.setVisibility(View.VISIBLE);
+					showContainerView(tabbedLibraryViewsRelativeLayout);
 				}
 			};
 		}
@@ -294,8 +287,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        oldTitle = specialViews.get(0);
 					        getSupportActionBar().setTitle(oldTitle);
 
-					        hideAllViews();
-					        activeFileDownloadsView.setVisibility(View.VISIBLE);
+					        showContainerView(activeFileDownloadsView);
 					        return;
 				        }
 
@@ -315,7 +307,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 							        ft.remove(playlistListFragment);
 
 						        playlistListFragment = new PlaylistListFragment();
-						        playlistListFragment.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler.getObject());
+						        playlistListFragment.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler);
 						        ft.add(R.id.browseLibraryContainer, playlistListFragment);
 					        } finally {
 						        ft.commit();
@@ -447,8 +439,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     }
 
 	private void showProgressBar() {
+		showContainerView(loadingViewsProgressBar);
+	}
+
+	private void showContainerView(View view) {
 		hideAllViews();
-		loadingViewsProgressBar.setVisibility(View.VISIBLE);
+		view.setVisibility(View.VISIBLE);
 	}
 
 	private void hideAllViews() {
