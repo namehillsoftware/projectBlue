@@ -5,6 +5,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 
 import java.util.ArrayList;
@@ -29,10 +30,10 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
 	@Override
 	public Fragment getItem(int i) {
         // The position correlates to the ID returned by the server at the high-level Library views
-        final LibraryViewFragment libraryViewFragment = LibraryViewFragment.getPreparedFragment(i);
-		libraryViewFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler);
+        final ItemListFragment itemListFragment = ItemListFragment.getPreparedFragment(i);
+		itemListFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler);
 
-		return libraryViewFragment;
+		return itemListFragment;
 	}
 
 	@Override

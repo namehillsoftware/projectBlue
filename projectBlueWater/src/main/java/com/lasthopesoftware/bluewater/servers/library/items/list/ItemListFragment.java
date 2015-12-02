@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.views;
+package com.lasthopesoftware.bluewater.servers.library.items.list;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -18,29 +18,24 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlists;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewIItemResultsComplete;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
-import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.threading.ISimpleTask;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LibraryViewFragment extends Fragment {
+public class ItemListFragment extends Fragment {
 
     private static final String ARG_CATEGORY_POSITION = "category_position";
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
-	public static LibraryViewFragment getPreparedFragment(final int libraryViewId) {
-        final LibraryViewFragment returnFragment = new LibraryViewFragment();
+	public static ItemListFragment getPreparedFragment(final int libraryViewId) {
+        final ItemListFragment returnFragment = new ItemListFragment();
         final Bundle args = new Bundle();
-        args.putInt(LibraryViewFragment.ARG_CATEGORY_POSITION, libraryViewId);
+        args.putInt(ItemListFragment.ARG_CATEGORY_POSITION, libraryViewId);
         returnFragment.setArguments(args);
         return returnFragment;
     }
@@ -69,11 +64,8 @@ public class LibraryViewFragment extends Fragment {
 					
 					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					    final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
-					
-					    if (category instanceof Playlists)
-						    layout.addView(BuildPlaylistView(activity, container, categoryPosition, pbLoading));
-					    else if (category instanceof Item)
-						    layout.addView(BuildStandardItemView(activity, container, categoryPosition, (Item) category, pbLoading));
+
+					    layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
 				    }
 			    };
 			
@@ -101,34 +93,7 @@ public class LibraryViewFragment extends Fragment {
         return layout;
     }
 
-	private ListView BuildPlaylistView(final Activity activity, final ViewGroup container, final int position, final View loadingView) {
-
-		final ListView listView = new ListView(activity);
-		listView.setVisibility(View.INVISIBLE);
-
-		final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete = new OnGetLibraryViewPlaylistResultsComplete(activity, container, listView, loadingView, position, itemListMenuChangeHandler);
-
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-		playlistsProvider
-			.onComplete(onGetLibraryViewPlaylistResultsComplete)
-			.onError(new HandleViewIoException<Void, Void, List<Playlist>>(activity, new Runnable() {
-
-				@Override
-				public void run() {
-					final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-
-					playlistsProvider
-							.onComplete(onGetLibraryViewPlaylistResultsComplete)
-							.onError(new HandleViewIoException<Void, Void, List<Playlist>>(activity, this))
-							.execute();
-				}
-			}))
-			.execute();
-
-		return listView;
-    }
-
-	private ListView BuildStandardItemView(final Activity activity, final ViewGroup container, final int position, final Item category, final View loadingView) {
+	private ListView BuildStandardItemView(final Activity activity, final ViewGroup container, final int position, final IItem category, final View loadingView) {
 		final ListView listView = new ListView(activity);
     	listView.setVisibility(View.INVISIBLE);
 
