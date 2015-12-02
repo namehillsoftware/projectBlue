@@ -53,7 +53,7 @@ public class FilePropertiesProvider {
 	private final ConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static final LruCache<Integer, FilePropertiesContainer> propertiesCache = new LruCache(maxSize);
+	private static final LruCache<Integer, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
 	private static final Logger logger = com.j256.ormlite.logger.LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
