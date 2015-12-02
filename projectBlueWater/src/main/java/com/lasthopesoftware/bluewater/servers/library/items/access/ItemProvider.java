@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import android.util.LruCache;
+
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
@@ -26,10 +27,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     }
 
     private static final int maxSize = 50;
-    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> itemsCache = new ConcurrentLinkedHashMap
-                                                                                            .Builder<Integer, ItemHolder>()
-                                                                                            .maximumWeightedCapacity(maxSize)
-                                                                                            .build();
+    private static final LruCache<Integer, ItemHolder> itemsCache = new LruCache<>(maxSize);
 
     private final int itemKey;
 
@@ -50,7 +48,12 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     protected List<Item> getData(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final Integer boxedItemKey = itemKey;
-        ItemHolder itemHolder = itemsCache.get(boxedItemKey);
+
+        ItemHolder itemHolder;
+        synchronized (itemsCache) {
+            itemHolder = itemsCache.get(boxedItemKey);
+        }
+
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
@@ -61,7 +64,10 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
             final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
             itemHolder = new ItemHolder(serverRevision, items);
-            itemsCache.put(boxedItemKey, itemHolder);
+
+            synchronized (itemsCache) {
+                itemsCache.put(boxedItemKey, itemHolder);
+            }
 
             return items;
         } finally {

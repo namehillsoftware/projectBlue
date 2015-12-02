@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import android.util.LruCache;
+
 import com.j256.ormlite.logger.Logger;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
@@ -48,23 +49,26 @@ public class FilePropertiesProvider {
 
 	private static final int maxSize = 500;
 	private final String fileKeyString;
-	private FilePropertiesContainer filePropertiesContainer = null;
+	private final FilePropertiesContainer filePropertiesContainer;
 	private final ConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static final ConcurrentLinkedHashMap<Integer, FilePropertiesContainer> propertiesCache = new ConcurrentLinkedHashMap.Builder<Integer, FilePropertiesContainer>().maximumWeightedCapacity(maxSize).build();
+	private static final LruCache<Integer, FilePropertiesContainer> propertiesCache = new LruCache(maxSize);
 	private static final Logger logger = com.j256.ormlite.logger.LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		this.connectionProvider = connectionProvider;
 		fileKeyString = String.valueOf(fileKey);
-		
-		if (propertiesCache.containsKey(fileKey))
-            filePropertiesContainer = propertiesCache.get(fileKey);
 
-		if (filePropertiesContainer == null) {
-            filePropertiesContainer = new FilePropertiesContainer();
-			propertiesCache.put(fileKey, filePropertiesContainer);
+
+		synchronized (propertiesCache) {
+			FilePropertiesContainer cachedFilePropertiesContainer = propertiesCache.get(fileKey);
+			if (cachedFilePropertiesContainer == null) {
+				cachedFilePropertiesContainer = new FilePropertiesContainer();
+				propertiesCache.put(fileKey, cachedFilePropertiesContainer);
+			}
+
+			filePropertiesContainer = cachedFilePropertiesContainer;
 		}
 	}
 
