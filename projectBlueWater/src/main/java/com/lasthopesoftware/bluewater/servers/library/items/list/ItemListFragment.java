@@ -13,7 +13,6 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
@@ -23,7 +22,6 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.threading.ISimpleTask;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ItemListFragment extends Fragment {
@@ -55,11 +53,11 @@ public class ItemListFragment extends Fragment {
 
     	LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 		    @Override
-		    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-			    final ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<String, Void, ArrayList<IItem>>() {
-				
+		    public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			    final ISimpleTask.OnCompleteListener<Void, Void, List<Item>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
+
 				    @Override
-				    public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
+				    public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 					    if (result == null || result.size() == 0) return;
 					
 					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
@@ -69,24 +67,21 @@ public class ItemListFragment extends Fragment {
 				    }
 			    };
 			
-			    final HandleViewIoException<String, Void, ArrayList<IItem>> handleViewIoException = new HandleViewIoException<>(activity, new Runnable() {
-				
-				    @Override
-				    public void run() {
-					    final Runnable runnable = this;
-					
-					    LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-						    @Override
-						    public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-							    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
-							    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, new HandleViewIoException<String, Void, ArrayList<IItem>>(activity, runnable));
-						    }
-					    });
-				    }
-			    });
-			
-			    final FileSystem fileSystem = new FileSystem(SessionConnection.getSessionConnectionProvider(), library);
-			    fileSystem.getVisibleViewsAsync(onGetVisibleViewsCompleteListener, handleViewIoException);
+			    ItemProvider
+					    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
+					    .onComplete(onGetVisibleViewsCompleteListener)
+					    .onError(new HandleViewIoException<Void, Void, List<Item>>(activity, new Runnable() {
+
+							    @Override
+							    public void run() {
+								    ItemProvider
+										    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
+										    .onComplete(onGetVisibleViewsCompleteListener)
+										    .onError(new HandleViewIoException<Void, Void, List<Item>>(activity, this))
+										    .execute();
+							    }
+				        }))
+					    .execute();
 		    }
 	    });
 
@@ -110,7 +105,7 @@ public class ItemListFragment extends Fragment {
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
 								.onError(new HandleViewIoException<Void, Void, List<Item>>(activity, this))
-									.execute();
+								.execute();
 					}
 				}))
 				.execute();

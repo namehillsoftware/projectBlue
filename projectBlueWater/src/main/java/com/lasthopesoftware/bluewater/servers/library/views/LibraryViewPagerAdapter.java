@@ -4,11 +4,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.ItemListFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -16,14 +17,14 @@ import java.util.Locale;
  * one of the primary sections of the app.
  */
 public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
-	private ArrayList<IItem> mLibraryViews = new ArrayList<>();
+	private List<Item> mLibraryViews = new ArrayList<>();
     private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
 	public LibraryViewPagerAdapter(FragmentManager fm) {
 		super(fm);
 	}
 		
-	public void setLibraryViews(ArrayList<IItem> libraryViews) {
+	public void setLibraryViews(List<Item> libraryViews) {
 		mLibraryViews = libraryViews;
 	}
 

@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
@@ -52,7 +53,6 @@ import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -92,13 +92,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private final ItemListMenuChangeHandler onItemlistMenuChangedHandler = new ItemListMenuChangeHandler(BrowseLibraryActivity.this);
 
-	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
+	private final Lazy<OnCompleteListener<Void, Void, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<Void, Void, List<Item>>>() {
 		@Override
-		public OnCompleteListener<String, Void, ArrayList<IItem>> call() throws Exception {
-			return new OnCompleteListener<String, Void, ArrayList<IItem>>() {
+		public OnCompleteListener<Void, Void, List<Item>> call() throws Exception {
+			return new OnCompleteListener<Void, Void, List<Item>>() {
 
 				@Override
-				public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
+				public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
@@ -316,17 +316,22 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        return;
 				        }
 
-			            new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
-						        .getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(BrowseLibraryActivity.this, new Runnable() {
+				        ItemProvider
+						        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
+						        .onComplete(onGetVisibleViewsCompleteListener.getObject())
+						        .onError(new HandleViewIoException<Void, Void, List<Item>>(BrowseLibraryActivity.this, new Runnable() {
 
-									        @Override
-									        public void run() {
-										        new FileSystem(SessionConnection.getSessionConnectionProvider(), library)
-												        .getVisibleViewsAsync(onGetVisibleViewsCompleteListener.getObject(), new HandleViewIoException<String, Void, ArrayList<IItem>>(BrowseLibraryActivity.this, this));
-									        }
+							        @Override
+							        public void run() {
+								        ItemProvider
+										        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
+										        .onComplete(onGetVisibleViewsCompleteListener.getObject())
+										        .onError(new HandleViewIoException<Void, Void, List<Item>>(BrowseLibraryActivity.this, this))
+										        .execute();
+							        }
 
-								        })
-						        );
+						        }))
+						        .execute();
 			        }
                 })
 				.onError(new HandleViewIoException<Void, Void, List<Item>>(this, new Runnable() {
