@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library;
 
+import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,14 +37,13 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewCo
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.LibraryViewPagerAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.ISimpleTask;
@@ -83,11 +83,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
+	private PlaylistListFragment playlistListFragment;
+
 	private ActionBarDrawerToggle drawerToggle = null;
 
 	private CharSequence oldTitle;
-
 	private boolean isStopped = false;
+
 	private boolean isLibraryChanged = false;
 
 	private final Lazy<OnCompleteListener<String, Void, ArrayList<IItem>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<String, Void, ArrayList<IItem>>>() {
@@ -116,14 +118,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			};
 		}
 	});
-
-	private final Lazy<OnGetLibraryViewPlaylistResultsComplete> onGetLibraryViewPlaylistResultsComplete = new Lazy<>(new Callable<OnGetLibraryViewPlaylistResultsComplete>() {
-		@Override
-		public OnGetLibraryViewPlaylistResultsComplete call() throws Exception {
-			return new OnGetLibraryViewPlaylistResultsComplete(BrowseLibraryActivity.this, (RelativeLayout) findViewById(R.id.browseLibraryContainer), singleLibraryViewListView, loadingViewsProgressBar, 0, new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-		}
-	});
-
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -306,22 +300,23 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        break;
 				        }
 
-				        if (selectedViewType != Library.ViewType.StandardServerView) {
+				        if (selectedViewType == Library.ViewType.PlaylistView) {
 					        hideViews();
 
-					        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider())
-						        .onComplete(onGetLibraryViewPlaylistResultsComplete.getObject())
-						        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(BrowseLibraryActivity.this, new Runnable() {
+					        final FragmentTransaction ft = getFragmentManager().beginTransaction();
+					        try {
+						        if (playlistListFragment != null)
+							        ft.remove(playlistListFragment);
 
-							        @Override
-							        public void run() {
-								        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider())
-									        .onComplete(onGetLibraryViewPlaylistResultsComplete.getObject())
-									        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(BrowseLibraryActivity.this, this))
-									        .execute();
-							        }
-						        }))
-						        .execute();
+						        playlistListFragment = new PlaylistListFragment();
+						        ft.add(R.id.browseLibraryContainer, playlistListFragment);
+					        } finally {
+						        ft.commit();
+					        }
+
+					        hideViews();
+					        playlistListFragment.getView().setVisibility(View.VISIBLE);
+
 					        return;
 				        }
 
@@ -355,7 +350,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				final Item selectedItem = items.get(position);
-				updateSelectedView(selectedItem.getValue().equals("Playlists") ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
+				updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
 			}
 		};
 	}
@@ -452,8 +447,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		tabbedLibraryViewsRelativeLayout.setVisibility(View.INVISIBLE);
 		singleLibraryViewListView.setVisibility(View.INVISIBLE);
-		if (activeFileDownloadsView != null)
-			activeFileDownloadsView.setVisibility(View.INVISIBLE);
+		activeFileDownloadsView.setVisibility(View.INVISIBLE);
 	}
 	
 	@Override

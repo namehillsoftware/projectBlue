@@ -15,6 +15,8 @@ import java.util.List;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
+    public static final String PlaylistsItemKey = "Playlists";
+
     private static List<Playlist> cachedPlaylists;
     private static SparseArray<Playlist> mappedPlaylists;
     private static Integer revision;
@@ -28,7 +30,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 	
 	public PlaylistsProvider(ConnectionProvider connectionProvider, int playlistId) {
-		super(connectionProvider, "Playlists/List");
+		super(connectionProvider, PlaylistsItemKey + "/List");
 
 		this.connectionProvider = connectionProvider;
         this.playlistId = playlistId;
