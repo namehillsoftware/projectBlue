@@ -39,6 +39,8 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         return nowPlayingFloatingActionButton;
     }
 
+    private boolean isNowPlayingFileSet;
+
     private NowPlayingFloatingActionButton(Context context) {
         super(context);
 
@@ -47,44 +49,51 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
         setImageDrawable(nowPlayingIconDrawable);
 
-        initializeNowPlayingFloatingActionButton(this);
+        initializeNowPlayingFloatingActionButton();
     }
 
 
     @SuppressWarnings("ResourceType")
-    private static void initializeNowPlayingFloatingActionButton(final FloatingActionButton floatingActionButton) {
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+    private void initializeNowPlayingFloatingActionButton() {
+        setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ViewUtils.CreateNowPlayingView(v.getContext());
             }
         });
 
-        floatingActionButton.setVisibility(ViewUtils.getVisibility(false));
+        setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetActiveLibrary(floatingActionButton.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                floatingActionButton.setVisibility(ViewUtils.getVisibility(isNowPlayingVisible));
+                isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
+                setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
-                if (isNowPlayingVisible) return;
+                if (isNowPlayingFileSet) return;
 
                 // If now playing shouldn't be visible, detect when it should be
                 PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
                     @Override
                     public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        floatingActionButton.setVisibility(ViewUtils.getVisibility(true));
+                        setVisibility(ViewUtils.getVisibility(true));
                         PlaybackService.removeOnStreamingStartListener(this);
+                        isNowPlayingFileSet = true;
                     }
                 });
             }
         });
     }
 
-    public void toggleVisibility(boolean isVisible) {
-        setVisibility(isVisible ? VISIBLE : GONE);
+    @Override
+    public void show() {
+        if (isNowPlayingFileSet) super.show();
+    }
+
+    @Override
+    public void show(OnVisibilityChangedListener listener) {
+        if (isNowPlayingFileSet) super.show(listener);
     }
 }
