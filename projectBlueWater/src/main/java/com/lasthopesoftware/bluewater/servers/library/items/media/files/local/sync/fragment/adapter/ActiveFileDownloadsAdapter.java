@@ -23,8 +23,8 @@ import java.util.List;
  */
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
-	public ActiveFileDownloadsAdapter(Context context, int resource, ConnectionProvider connectionProvider, List<StoredFile> storedFiles) {
-		super(context, resource, getFilesFromStoredFiles(connectionProvider, storedFiles));
+	public ActiveFileDownloadsAdapter(Context context, ConnectionProvider connectionProvider, List<StoredFile> storedFiles) {
+		super(context, R.id.tvStandard, getFilesFromStoredFiles(connectionProvider, storedFiles));
 	}
 
 	@Override

@@ -25,14 +25,14 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	private final Object syncObj = new Object();
 	
 	@SafeVarargs
-	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+	public static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
 		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<>(onExecuteListener);
 		newSimpleTask.execute(params);
 		return newSimpleTask;
 	}
 	
 	@SafeVarargs
-	public final static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
+	public static <TParams, TProgress, TResult> SimpleTask<TParams, TProgress, TResult> executeNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
 		final SimpleTask<TParams, TProgress, TResult> newSimpleTask = new SimpleTask<>(onExecuteListener);
 		newSimpleTask.execute(executor, params);
 		return newSimpleTask;
@@ -42,7 +42,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 		mOnExecuteListener = onExecuteListener;
 	}
 	
-	private final AsyncTask<TParams, TProgress, TResult> getTask() {
+	private AsyncTask<TParams, TProgress, TResult> getTask() {
 		if (mTask != null) return mTask;
 		
 		synchronized(syncObj) {
@@ -130,7 +130,7 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 	 * 
 	 * @return True if there is an error and it is handled
 	 */
-	private final boolean handleError() {
+	private boolean handleError() {
 		if (mState != SimpleTaskState.ERROR) return false;
 		if (mIsErrorHandled) return true;
 		if (mOnErrorListeners != null) {
@@ -233,14 +233,14 @@ public class SimpleTask<TParams, TProgress, TResult> implements ISimpleTask<TPar
 		return this;
 	}
 	
-	private static final <T> ConcurrentLinkedQueue<T> addListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
+	private static <T> ConcurrentLinkedQueue<T> addListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
 		if (listener == null) return listenerQueue;
 		if (listenerQueue == null) listenerQueue = new ConcurrentLinkedQueue<>();
 		listenerQueue.add(listener);
 		return listenerQueue;
 	}
 	
-	private static final <T> void removeListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
+	private static <T> void removeListener(T listener, ConcurrentLinkedQueue<T> listenerQueue) {
 		if (listenerQueue == null || !listenerQueue.contains(listener)) return;
 		listenerQueue.remove(listener);
 	}

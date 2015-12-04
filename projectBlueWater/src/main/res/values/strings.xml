@@ -77,4 +77,7 @@
     <string name="select_view_title">Select view</string>
     <string name="screen_is_off">Screen Off</string>
     <string name="screen_is_on">Screen On</string>
+    <string name="app_sync_settings">Sync Settings:</string>
+    <string name="app_only_sync_on_wifi">Only sync on Wi-Fi</string>
+    <string name="app_only_sync_ext_power">Only sync on external power</string>
 </resources>

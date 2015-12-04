@@ -355,7 +355,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 			try {				
 				// Cancel the getFileImageTask if it is already in progress
 				if (getFileImageTask != null)
-					getFileImageTask.cancel(true);
+					getFileImageTask.cancel();
 				
 				mNowPlayingImageView.setVisibility(View.INVISIBLE);
 				mLoadingImg.setVisibility(View.VISIBLE);

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 
 import org.xml.sax.Attributes;
@@ -12,17 +11,11 @@ import java.util.List;
 
 public class ItemResponseHandler extends DefaultHandler {
 
-	private final ConnectionProvider connectionProvider;
-
 	private String currentValue;
 	private String currentKey;
 	
 	public final List<Item> items = new ArrayList<>();
 
-	public ItemResponseHandler(ConnectionProvider connectionProvider) {
-		this.connectionProvider = connectionProvider;
-	}
-	
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
 	{
 		currentValue = "";

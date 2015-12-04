@@ -63,7 +63,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				storedFileAccess.getDownloadingStoredFiles(new ISimpleTask.OnCompleteListener<Void, Void, List<StoredFile>>() {
 					@Override
 					public void onComplete(ISimpleTask<Void, Void, List<StoredFile>> owner, final List<StoredFile> storedFiles) {
-						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), R.id.tvStandard, SessionConnection.getSessionConnectionProvider(), storedFiles);
+						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), storedFiles);
 
 						if (onFileDownloadedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);

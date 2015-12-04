@@ -51,11 +51,11 @@ public abstract class AbstractProvider<T> {
 	}
 
 	public T get(Executor executor) throws ExecutionException, InterruptedException {
-		return getTask().execute(executor).get();
+		return getTask().execute(AbstractProvider.collectionAccessExecutor).get();
 	}
 
-	public void cancel(boolean mayInterrupt) {
-		getTask().cancel(mayInterrupt);
+	public void cancel() {
+		getTask().cancel(true);
 	}
 
 	private SimpleTask<Void, Void, T> getTask() {

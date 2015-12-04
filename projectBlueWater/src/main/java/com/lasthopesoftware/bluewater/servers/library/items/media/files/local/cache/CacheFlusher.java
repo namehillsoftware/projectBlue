@@ -87,7 +87,7 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 
-	private final long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess) {
+	private long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -123,7 +123,7 @@ public class CacheFlusher implements Runnable {
 //		}
 //	}
 	
-	private final CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
+	private CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -140,7 +140,7 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 	
-	private final long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess) {
+	private long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -157,7 +157,7 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 	
-	private final static CachedFile getCachedFileByFilename(final Dao<CachedFile, Integer> cachedFileAccess, final String fileName) {
+	private static CachedFile getCachedFileByFilename(final Dao<CachedFile, Integer> cachedFileAccess, final String fileName) {
 		try {
 			
 			final PreparedQuery<CachedFile> preparedQuery =
@@ -173,7 +173,7 @@ public class CacheFlusher implements Runnable {
 		}
 	}
 	
-	private final static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
+	private static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
 		final File fileToDelete = new File(cachedFile.getFileName());
 		if (fileToDelete.exists()) 
 			fileToDelete.delete();

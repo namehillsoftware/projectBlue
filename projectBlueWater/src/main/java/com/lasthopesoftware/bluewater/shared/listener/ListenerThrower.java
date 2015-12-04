@@ -18,7 +18,7 @@ public class ListenerThrower {
      * @param callback The action to perform when a listener is found
      * @param <T> The type of the listeners
      */
-    public final static <T> void throwListeners(Collection<T> listeners, IOneParameterRunnable<T> callback) {
+    public static <T> void throwListeners(Collection<T> listeners, IOneParameterRunnable<T> callback) {
         final HashSet<T> ranListeners = new HashSet<>();
 
         // Track the state of the iterator

@@ -25,17 +25,17 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:layout_marginBottom="10dp"
-                android:text="Sync Settings:"/>
+                android:text="@string/app_sync_settings"/>
             <CheckBox
                 android:id="@+id/syncOnWifiCheckbox"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Only sync on Wi-Fi" />
+                android:text="@string/app_only_sync_on_wifi" />
             <CheckBox
                 android:id="@+id/syncOnPowerCheckbox"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Only sync on when Plugged In" />
+                android:text="@string/app_only_sync_ext_power" />
         </LinearLayout>
 
     </LinearLayout>

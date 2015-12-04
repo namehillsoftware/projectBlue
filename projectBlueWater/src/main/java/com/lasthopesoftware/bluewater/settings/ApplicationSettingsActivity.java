@@ -31,7 +31,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		serverListView = (ListView) findViewById(R.id.lvServerList);
 		progressBar = (ProgressBar) findViewById(R.id.pbLoadingServerList);
 
-		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, null);
+		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, serverListView, false);
 		serverListView.addHeaderView(editAppSettingsView);
 
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, (CheckBox) findViewById(R.id.syncOnPowerCheckbox));

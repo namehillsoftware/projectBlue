@@ -86,9 +86,8 @@ public class FilePropertiesProvider {
 					} finally {
 						conn.disconnect();
 					}
-				} catch (Exception e) {
-					return;
-				} 
+				} catch (Exception ignored) {
+				}
 			}
 		});
 

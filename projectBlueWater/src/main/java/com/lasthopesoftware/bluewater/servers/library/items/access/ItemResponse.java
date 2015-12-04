@@ -22,7 +22,7 @@ public class ItemResponse {
 		try {
 			
 			final SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-	    	final ItemResponseHandler jrResponseHandler = new ItemResponseHandler(connectionProvider);
+	    	final ItemResponseHandler jrResponseHandler = new ItemResponseHandler();
 	    	sp.parse(is, jrResponseHandler);
 	    	
 	    	return jrResponseHandler.items;

@@ -58,14 +58,6 @@
                     android:layout_centerInParent="true"
                     android:visibility="invisible" />
 
-                <!--<ImageView-->
-                    <!--android:id="@+id/imgFileThumbnail"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="match_parent"-->
-                    <!--android:scaleType="fitCenter"-->
-                    <!--android:layout_centerHorizontal="true"-->
-                    <!--android:contentDescription="@string/lbl_track_img"/>-->
-                <!--android:background="@drawable/drop_shadow"-->
             </RelativeLayout>
 
         </RelativeLayout>
@@ -74,15 +66,7 @@
             android:id="@+id/rlFileDetails"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="3"
-            android:layout_below="@id/rlMainFileInformation">
-            <!--android:background="@color/nearly_white">-->
-
-            <!--<View-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="10sp"-->
-                <!--android:background="@drawable/black_white_gradient"-->
-                <!--android:layout_alignParentTop="true"/>-->
+            android:layout_weight="3">
 
             <ProgressBar
                 android:id="@+id/pbLoadingFileDetails"

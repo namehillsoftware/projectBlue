@@ -75,7 +75,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	
 	/* Formatted properties helpers */
 	
-	private static final SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
+	private static SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
 		final SortedMap<String, String> formattedProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		
 		for (Entry<String, String> property : unformattedProperties.entrySet())
@@ -84,7 +84,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		return Collections.unmodifiableSortedMap(formattedProperties);
 	}
 	
-	private static final String getFormattedValue(final String name, final String value) {
+	private static String getFormattedValue(final String name, final String value) {
 		if (value == null || value.isEmpty()) return "";
 		
 		if (DATE_TIME_PROPERTIES.contains(name)) {

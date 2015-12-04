@@ -165,7 +165,7 @@ public class DiskFileCache {
 		return get(uniqueKey) != null;
 	}
 	
-	private final void doFileAccessedUpdate(final String uniqueKey) {
+	private void doFileAccessedUpdate(final String uniqueKey) {
 		final long updateTime = System.currentTimeMillis();
 		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
 
