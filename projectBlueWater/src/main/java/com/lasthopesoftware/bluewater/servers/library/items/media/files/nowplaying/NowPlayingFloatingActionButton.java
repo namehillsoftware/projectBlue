@@ -39,6 +39,8 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         return nowPlayingFloatingActionButton;
     }
 
+    private boolean isNowPlayingFileSet;
+
     private NowPlayingFloatingActionButton(Context context) {
         super(context);
 
@@ -52,7 +54,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
 
     @SuppressWarnings("ResourceType")
-    private static void initializeNowPlayingFloatingActionButton(final FloatingActionButton floatingActionButton) {
+    private void initializeNowPlayingFloatingActionButton(final FloatingActionButton floatingActionButton) {
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,10 +69,10 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
-                floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingVisible));
+                isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
+                floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingFileSet));
 
-                if (isNowPlayingVisible) return;
+                if (isNowPlayingFileSet) return;
 
                 // If now playing shouldn't be visible, detect when it should be
                 PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
@@ -78,13 +80,20 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                     public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
                         floatingActionButton.setVisibility(ViewUtils.GetVisibility(true));
                         PlaybackService.removeOnStreamingStartListener(this);
+                        isNowPlayingFileSet = true;
                     }
                 });
             }
         });
     }
 
-    public void toggleVisibility(boolean isVisible) {
-        setVisibility(isVisible ? VISIBLE : GONE);
+    @Override
+    public void show() {
+        if (isNowPlayingFileSet) super.show();
+    }
+
+    @Override
+    public void show(OnVisibilityChangedListener listener) {
+        if (isNowPlayingFileSet) super.show(listener);
     }
 }
