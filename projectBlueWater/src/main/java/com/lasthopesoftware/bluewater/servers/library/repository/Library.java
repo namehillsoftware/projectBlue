@@ -32,10 +32,10 @@ public class Library {
 	private boolean isRepeating = false;
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
-	private int nowPlayingId;
+	private int nowPlayingId = -1;
 	
 	@DatabaseField(defaultValue = "-1", canBeNull = false)
-	private int nowPlayingProgress;
+	private int nowPlayingProgress = -1;
 
 	@DatabaseField
 	private ViewType selectedViewType;

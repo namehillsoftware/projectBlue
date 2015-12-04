@@ -67,7 +67,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() > 0;
+                final boolean isNowPlayingVisible = result != null && result.getNowPlayingId() >= 0;
                 floatingActionButton.setVisibility(ViewUtils.getVisibility(isNowPlayingVisible));
 
                 if (isNowPlayingVisible) return;
