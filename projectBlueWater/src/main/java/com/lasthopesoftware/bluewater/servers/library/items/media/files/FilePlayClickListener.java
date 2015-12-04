@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.Abstra
 import java.util.List;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private List<IFile> mFiles;
-	private int mPosition;
+	private final List<IFile> mFiles;
+	private final int mPosition;
 	
 	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<IFile> files) {
         super(parent);

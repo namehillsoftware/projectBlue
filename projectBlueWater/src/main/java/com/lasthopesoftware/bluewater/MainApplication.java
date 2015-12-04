@@ -36,7 +36,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 
 public class MainApplication extends Application {
 	
-	public static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
+	private static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
 	
 	@SuppressLint("DefaultLocale")
 	@Override

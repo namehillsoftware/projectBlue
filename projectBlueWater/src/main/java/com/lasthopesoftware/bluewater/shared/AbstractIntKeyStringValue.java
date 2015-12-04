@@ -6,7 +6,7 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	private int mKey;
 	private String mValue;
 	
-	public AbstractIntKeyStringValue(int key, String value) {
+	protected AbstractIntKeyStringValue(int key, String value) {
 		this.setKey(key);
 		this.setValue(value);
 	}
@@ -16,7 +16,7 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 		this.setValue(value);
 	}
 	
-	public AbstractIntKeyStringValue() {
+	protected AbstractIntKeyStringValue() {
 	}
 	
 	/**

@@ -32,7 +32,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileL
 		mParent = parent;
 	}
 
-	public void setParent(Playlist parent) {
+	private void setParent(Playlist parent) {
 		mParent = parent;
 	}
 	

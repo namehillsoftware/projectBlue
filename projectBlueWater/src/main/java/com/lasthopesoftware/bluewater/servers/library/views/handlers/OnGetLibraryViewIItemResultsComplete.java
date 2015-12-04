@@ -36,7 +36,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     private final IItemListMenuChangeHandler itemListMenuChangeHandler;
     private final ViewGroup container;
 
-    protected OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler) {
+    OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler) {
         this.listView = listView;
         this.activity = activity;
         this.loadingView = loadingView;

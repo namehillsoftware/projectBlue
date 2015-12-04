@@ -111,7 +111,7 @@ public class PlaybackService extends Service implements
 	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
 	private static final String SCROBBLE_DROID_INTENT = "net.jjc1138.android.scrobbler.action.MUSIC_STATUS";
 		
-	private static int mId = 42;
+	private static final int mId = 42;
 	private static int mStartId;
 	private WifiLock mWifiLock = null;
 	private NotificationManager mNotificationMgr;

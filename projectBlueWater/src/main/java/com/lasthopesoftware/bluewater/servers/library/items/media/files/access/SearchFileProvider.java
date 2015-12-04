@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
  * Created by david on 11/26/15.
  */
 public class SearchFileProvider extends FileProvider {
-	public SearchFileProvider(ConnectionProvider connectionProvider, String query) {
+	private SearchFileProvider(ConnectionProvider connectionProvider, String query) {
 		super(connectionProvider, FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] " + query);
 	}
 

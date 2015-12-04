@@ -108,7 +108,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
     }
 
     private static class AddClickListener extends AbstractMenuClickHandler {
-        private IFile mFile;
+        private final IFile mFile;
 
         public AddClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
             super(viewFlipper);

@@ -54,7 +54,7 @@ public class PlaybackController implements
 		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(connectionProvider, playlistString) : new ArrayList<IFile>());
 	}
 	
-	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
+	private PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
 		this(new PlaybackFileProvider(context, connectionProvider, playlist));
 	}
 	

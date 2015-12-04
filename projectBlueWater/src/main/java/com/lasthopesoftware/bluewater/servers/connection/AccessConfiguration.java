@@ -102,7 +102,7 @@ public class AccessConfiguration {
 		return "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
 
-	public String getActiveUrl() {
+	private String getActiveUrl() {
 		if (!activeUrl.isEmpty()) {
 			try {
 				/*if (testConnection(activeUrl))*/ return activeUrl;

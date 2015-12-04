@@ -9,14 +9,14 @@ import java.io.IOException;
 /**
  * Created by david on 7/24/15.
  */
-public abstract class AbstractFileUriProvider {
+abstract class AbstractFileUriProvider {
 	private final IFile mFile;
 
-	public AbstractFileUriProvider(IFile file) {
+	AbstractFileUriProvider(IFile file) {
 		mFile = file;
 	}
 
-	protected IFile getFile() {
+	IFile getFile() {
 		return mFile;
 	}
 

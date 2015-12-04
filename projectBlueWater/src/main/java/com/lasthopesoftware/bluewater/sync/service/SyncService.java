@@ -62,7 +62,7 @@ public class SyncService extends Service {
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
-	private HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
+	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
 	private final IOneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
 		@Override
@@ -102,7 +102,7 @@ public class SyncService extends Service {
 		}
 	});
 
-	private Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
+	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
 		@Override
 		public BroadcastReceiver call() throws Exception {
 			return new BroadcastReceiver() {

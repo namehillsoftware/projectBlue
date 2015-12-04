@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 /**
  * Created by david on 11/23/15.
  */
-public class SelectViewAdapterBuilder {
+class SelectViewAdapterBuilder {
 	private final LayoutInflater layoutInflater;
 
 	public SelectViewAdapterBuilder(Context context) {

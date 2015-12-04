@@ -20,13 +20,13 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 		this.setKey(key);
 	}
 	
-	public File(ConnectionProvider connectionProvider, int key, String value) {
+	private File(ConnectionProvider connectionProvider, int key, String value) {
 		this(connectionProvider);
 		this.setKey(key);
 		this.setValue(value);
 	}
 	
-	public File(ConnectionProvider connectionProvider) {
+	private File(ConnectionProvider connectionProvider) {
 		super();
 
 		this.connectionProvider = connectionProvider;

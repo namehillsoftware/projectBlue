@@ -30,7 +30,7 @@ public class SessionConnection {
 	public static final String refreshSessionBroadcast = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
 	public static final String isRefreshSuccessfulStatus = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
-	public static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
+	private static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
 	public static final Set<Integer> completeConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete));
 
 	private static final AtomicBoolean isRunning = new AtomicBoolean();
@@ -123,7 +123,7 @@ public class SessionConnection {
 		refresh(context, -1);
 	}
 
-	public static void refresh(final Context context, final int timeout) {
+	private static void refresh(final Context context, final int timeout) {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 

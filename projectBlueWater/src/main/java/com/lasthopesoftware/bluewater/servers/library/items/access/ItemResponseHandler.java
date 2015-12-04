@@ -9,7 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemResponseHandler extends DefaultHandler {
+class ItemResponseHandler extends DefaultHandler {
 
 	private String currentValue;
 	private String currentKey;

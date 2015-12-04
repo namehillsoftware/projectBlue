@@ -25,7 +25,7 @@ import java.util.List;
 public class ServerListAdapter extends BaseAdapter {
 
 	private final List<Library> mLibraries;
-	private Library mChosenLibrary;
+	private final Library mChosenLibrary;
 	private static Drawable mSelectedServerDrawable;
 	private static Drawable mNotSelectedServerDrawable;
 	private final Activity mActivity;

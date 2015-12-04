@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static int DATABASE_VERSION = 5;
+	private static final int DATABASE_VERSION = 5;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Class<?>[] version2Tables = { Library.class };

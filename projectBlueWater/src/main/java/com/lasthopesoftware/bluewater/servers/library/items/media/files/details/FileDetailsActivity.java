@@ -58,7 +58,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	
 	private int mFileKey = -1;
 
-    private FileDetailsActivity _this = this;
+    private final FileDetailsActivity _this = this;
     private ListView lvFileDetails;
     private ProgressBar pbLoadingFileDetails;
     private ScaledWrapImageView imgFileThumbnail;

@@ -10,7 +10,7 @@ import android.widget.CompoundButton;
 /**
  * Created by david on 11/14/15.
  */
-public class HandleCheckboxPreference extends AsyncTask<Void, Void, Boolean> {
+class HandleCheckboxPreference extends AsyncTask<Void, Void, Boolean> {
 	private final String settingKey;
 	private final CheckBox settingCheckbox;
 	private final SharedPreferences sharedPreferences;

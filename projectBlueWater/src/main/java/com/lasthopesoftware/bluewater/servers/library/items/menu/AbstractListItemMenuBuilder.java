@@ -10,7 +10,7 @@ public abstract class AbstractListItemMenuBuilder<T> {
 
     private OnViewChangedListener onViewChangedListener;
 
-    public final OnViewChangedListener getOnViewChangedListener() {
+    protected final OnViewChangedListener getOnViewChangedListener() {
         return onViewChangedListener;
     }
 

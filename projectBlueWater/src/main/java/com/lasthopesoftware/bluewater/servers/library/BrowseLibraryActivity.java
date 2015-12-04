@@ -264,7 +264,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	}
 
-	public void displayLibrary(final Library library) {
+	private void displayLibrary(final Library library) {
 		final Library.ViewType selectedViewType = library.getSelectedViewType();
 
 		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));

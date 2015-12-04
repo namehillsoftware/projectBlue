@@ -17,7 +17,7 @@ public class ItemListAdapter<T extends IItem & IFileListParameterProvider> exten
 
 	private final ListItemMenuBuilder<T> listItemMenuBuilder = new ListItemMenuBuilder<>();
 
-	public ItemListAdapter(Activity activity, int resource, List<T> items) {
+	private ItemListAdapter(Activity activity, int resource, List<T> items) {
 		super(activity, resource, items);
 	}
 

@@ -140,7 +140,7 @@ public class PollConnection {
 		return mTask.getStatus() == AsyncTask.Status.RUNNING;
 	}
 	
-	public synchronized boolean isFinished() {
+	private synchronized boolean isFinished() {
 		return mTask.getStatus() == AsyncTask.Status.FINISHED;
 	}
 	

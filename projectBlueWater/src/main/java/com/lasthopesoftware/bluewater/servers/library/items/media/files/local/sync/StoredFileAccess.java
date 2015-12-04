@@ -146,7 +146,7 @@ public class StoredFileAccess {
 		});
 	}
 
-	public void deleteStoredFile(final StoredFile storedFile) {
+	private void deleteStoredFile(final StoredFile storedFile) {
 		storedFileExecutor.execute(new Runnable() {
 			@Override
 			public void run() {

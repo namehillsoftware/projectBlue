@@ -35,7 +35,7 @@ public class AccessConfigurationBuilder {
 		buildConfiguration(context, library, stdTimeoutTime, onBuildComplete);
 	}
 
-	public static void buildConfiguration(final Context context, final Library library, int timeout, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
+	private static void buildConfiguration(final Context context, final Library library, int timeout, final ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 

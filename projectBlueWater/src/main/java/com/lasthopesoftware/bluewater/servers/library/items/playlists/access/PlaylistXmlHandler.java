@@ -10,9 +10,9 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-public class PlaylistXmlHandler extends DefaultHandler {
+class PlaylistXmlHandler extends DefaultHandler {
 
-	private TreeMap<String, Playlist> playlists = new TreeMap<>();
+	private final TreeMap<String, Playlist> playlists = new TreeMap<>();
 	private Playlist currentPlaylist;
 	private String currentValue;
 	private String currentKey;

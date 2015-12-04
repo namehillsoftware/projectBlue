@@ -30,7 +30,7 @@ import xmlwise.Xmlwise;
 public class FilePropertiesProvider {
     private static class FilePropertiesContainer {
         private Integer revision = -1;
-        private ConcurrentSkipListMap<String, String> properties = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
+        private final ConcurrentSkipListMap<String, String> properties = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
         public void updateProperties(Integer revision, SortedMap<String, String> properties) {
             this.revision = revision;
@@ -107,14 +107,14 @@ public class FilePropertiesProvider {
 		return getRefreshedProperties().get(name);
 	}
 	
-	public SortedMap<String, String> getProperties() throws IOException {
+	SortedMap<String, String> getProperties() throws IOException {
 		if (filePropertiesContainer.getProperties().size() == 0)
 			return getRefreshedProperties();
 		
 		return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
 	}
 
-	public SortedMap<String, String> getRefreshedProperties() throws IOException {
+	SortedMap<String, String> getRefreshedProperties() throws IOException {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		try {
@@ -178,11 +178,11 @@ public class FilePropertiesProvider {
 	public static final String TRACK = "Track #";
 	public static final String NUMBER_PLAYS = "Number Plays";
 	public static final String LAST_PLAYED = "Last Played";
-	public static final String LAST_SKIPPED = "Last Skipped";
-	public static final String DATE_CREATED = "Date Created";
-	public static final String DATE_IMPORTED = "Date Imported";
-	public static final String DATE_MODIFIED = "Date Modified";
-	public static final String FILE_SIZE = "File Size";
+	static final String LAST_SKIPPED = "Last Skipped";
+	static final String DATE_CREATED = "Date Created";
+	static final String DATE_IMPORTED = "Date Imported";
+	static final String DATE_MODIFIED = "Date Modified";
+	static final String FILE_SIZE = "File Size";
 	public static final String AUDIO_ANALYSIS_INFO = "Audio Analysis Info";
 	public static final String GET_COVER_ART_INFO = "Get Cover Art Info";
 	public static final String IMAGE_FILE = "Image File";
@@ -190,6 +190,6 @@ public class FilePropertiesProvider {
 	public static final String STACK_FILES = "Stack Files";
 	public static final String STACK_TOP = "Stack Top";
 	public static final String STACK_VIEW = "Stack View";
-	public static final String DATE = "Date";
+	static final String DATE = "Date";
 	public static final String RATING = "Rating";
 }

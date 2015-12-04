@@ -75,7 +75,7 @@ public class DiskFileCache {
 		});
 	}
 	
-	public void put(final String uniqueKey, final File file) {
+	private void put(final String uniqueKey, final File file) {
 		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
 
 			@Override
@@ -223,7 +223,7 @@ public class DiskFileCache {
 	    return new java.io.File(cacheDir, uniqueName);
 	}
 
-	public static long getFreeDiskSpace(final Context context) {
+	private static long getFreeDiskSpace(final Context context) {
 		return getDiskCacheDir(context, null).getUsableSpace();
 	}
 }

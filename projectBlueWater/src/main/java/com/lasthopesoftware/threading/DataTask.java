@@ -6,7 +6,7 @@ import com.lasthopesoftware.callables.IOneParameterCallable;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
+class DataTask<TResult> extends SimpleTask<String, Void, TResult> {
 
 	public DataTask(final ConnectionProvider connectionProvider, final IOneParameterCallable<InputStream, TResult> onConnectListener) {
 		super(new OnExecuteListener<String, Void, TResult>() {

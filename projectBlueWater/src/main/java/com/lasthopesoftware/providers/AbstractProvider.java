@@ -50,7 +50,7 @@ public abstract class AbstractProvider<T> {
 		return get(collectionAccessExecutor);
 	}
 
-	public T get(Executor executor) throws ExecutionException, InterruptedException {
+	private T get(Executor executor) throws ExecutionException, InterruptedException {
 		return getTask().execute(AbstractProvider.collectionAccessExecutor).get();
 	}
 
@@ -99,7 +99,7 @@ public abstract class AbstractProvider<T> {
 		return exception;
 	}
 
-	protected void setException(Exception exception) {
+	private void setException(Exception exception) {
 		this.exception = exception;
 	}
 }

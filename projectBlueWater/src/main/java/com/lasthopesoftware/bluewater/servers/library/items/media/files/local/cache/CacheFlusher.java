@@ -20,7 +20,7 @@ import java.sql.SQLException;
  * @author david
  *
  */
-public class CacheFlusher implements Runnable {
+class CacheFlusher implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusher.class);
 	

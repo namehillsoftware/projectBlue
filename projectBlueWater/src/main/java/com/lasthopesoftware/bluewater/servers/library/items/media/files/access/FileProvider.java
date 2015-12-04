@@ -22,11 +22,11 @@ public class FileProvider extends AbstractCollectionProvider<IFile> {
 		this(connectionProvider, item, FileListParameters.Options.None);
 	}
 
-	public FileProvider(ConnectionProvider connectionProvider, IFileListParameterProvider item, FileListParameters.Options option) {
+	private FileProvider(ConnectionProvider connectionProvider, IFileListParameterProvider item, FileListParameters.Options option) {
 		this(connectionProvider, option, item.getFileListParameters());
 	}
 
-	protected FileProvider(ConnectionProvider connectionProvider, FileListParameters.Options option, String... parameters) {
+	FileProvider(ConnectionProvider connectionProvider, FileListParameters.Options option, String... parameters) {
 		super(connectionProvider, FileListParameters.Helpers.processParams(option, parameters));
 
 		this.connectionProvider = connectionProvider;

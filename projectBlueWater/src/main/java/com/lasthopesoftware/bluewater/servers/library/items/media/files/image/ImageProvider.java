@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 
 public class ImageProvider extends AbstractProvider<Bitmap> {
 	
-	public static final String IMAGE_FORMAT = "jpg";
+	private static final String IMAGE_FORMAT = "jpg";
 	
 	private static final ExecutorService imageAccessExecutor = Executors.newSingleThreadExecutor();
 	
