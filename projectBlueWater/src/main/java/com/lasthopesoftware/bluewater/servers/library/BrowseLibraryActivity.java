@@ -90,8 +90,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final ItemListMenuChangeHandler onItemlistMenuChangedHandler = new ItemListMenuChangeHandler(BrowseLibraryActivity.this);
-
 	private final Lazy<OnCompleteListener<Void, Void, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<Void, Void, List<Item>>>() {
 		@Override
 		public OnCompleteListener<Void, Void, List<Item>> call() throws Exception {
@@ -102,7 +100,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-					viewChildPagerAdapter.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler);
+					viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
 
 					viewChildPagerAdapter.setLibraryViews(result);
 
@@ -307,7 +305,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 							        ft.remove(playlistListFragment);
 
 						        playlistListFragment = new PlaylistListFragment();
-						        playlistListFragment.setOnItemListMenuChangeHandler(onItemlistMenuChangedHandler);
+						        playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
 						        ft.add(R.id.browseLibraryContainer, playlistListFragment);
 					        } finally {
 						        ft.commit();
