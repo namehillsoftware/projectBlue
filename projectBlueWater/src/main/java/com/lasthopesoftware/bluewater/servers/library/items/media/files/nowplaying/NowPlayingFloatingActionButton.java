@@ -49,28 +49,28 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
         setImageDrawable(nowPlayingIconDrawable);
 
-        initializeNowPlayingFloatingActionButton(this);
+        initializeNowPlayingFloatingActionButton();
     }
 
 
     @SuppressWarnings("ResourceType")
-    private void initializeNowPlayingFloatingActionButton(final FloatingActionButton floatingActionButton) {
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+    private void initializeNowPlayingFloatingActionButton() {
+        setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ViewUtils.CreateNowPlayingView(v.getContext());
             }
         });
 
-        floatingActionButton.setVisibility(ViewUtils.GetVisibility(false));
+        setVisibility(ViewUtils.GetVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetLibrary(floatingActionButton.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetLibrary(getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
 
             @Override
             public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
                 isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
-                floatingActionButton.setVisibility(ViewUtils.GetVisibility(isNowPlayingFileSet));
+                setVisibility(ViewUtils.GetVisibility(isNowPlayingFileSet));
 
                 if (isNowPlayingFileSet) return;
 
@@ -78,7 +78,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                 PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
                     @Override
                     public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        floatingActionButton.setVisibility(ViewUtils.GetVisibility(true));
+                        setVisibility(ViewUtils.GetVisibility(true));
                         PlaybackService.removeOnStreamingStartListener(this);
                         isNowPlayingFileSet = true;
                     }
