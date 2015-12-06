@@ -185,8 +185,8 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public final FluentTask<Void, Void, Bitmap> execute() {
-		return super.execute(imageAccessExecutor);
+	public void execute() {
+		super.execute(imageAccessExecutor);
 	}
 
 	private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {

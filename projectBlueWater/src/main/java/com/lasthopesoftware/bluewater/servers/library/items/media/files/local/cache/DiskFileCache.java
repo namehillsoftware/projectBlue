@@ -156,7 +156,7 @@ public class DiskFileCache {
 		};
 		
 		try {
-			return getTask.execute(RepositoryAccessHelper.databaseExecutor).get();
+			return getTask.get(RepositoryAccessHelper.databaseExecutor);
 		} catch (Exception e) {
 			logger.error("There was an error running the database task.", e);
 			return null;

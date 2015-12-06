@@ -152,7 +152,7 @@ public class FilePropertiesProvider {
 
 					return filePropertiesContainer.getProperties();
 				}
-			}.execute(filePropertiesExecutor).get();
+			}.get(filePropertiesExecutor);
 
 			return Collections.unmodifiableSortedMap(filePropertiesResult);
 		} catch (ExecutionException ee) {

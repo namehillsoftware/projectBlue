@@ -28,8 +28,8 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 	}
 
 	@Override
-	public FluentTask<String, Void, T> execute() {
-		return super.execute(providerExecutor);
+	public void execute() {
+		super.execute(providerExecutor);
 	}
 
 	@Override

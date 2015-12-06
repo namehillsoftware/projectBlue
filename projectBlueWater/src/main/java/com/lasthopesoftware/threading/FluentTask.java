@@ -60,17 +60,24 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		this.params = params;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> execute() {
-		return execute(AsyncTask.SERIAL_EXECUTOR);
+	public void execute() {
+		execute(AsyncTask.SERIAL_EXECUTOR);
 	}
 
-	public FluentTask<TParams, TProgress, TResult> execute(Executor exec) {
+	public void execute(Executor exec) {
 		task.getObject().executeOnExecutor(exec, params);
-		return this;
+	}
+
+	public TResult get() throws ExecutionException, InterruptedException {
+		return get(AsyncTask.SERIAL_EXECUTOR);
+	}
+
+	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
+		return task.getObject().executeOnExecutor(executor, params).get();
 	}
 
 	/**
-	 * 
+	 *
 	 * @return True if there is an error and it is handled
 	 */
 	private boolean handleError(Exception exception) {
@@ -78,10 +85,6 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 					(twoParameterOnErrorListener != null && twoParameterOnErrorListener.call(this, exception)) |
 					(oneParameterOnErrorListener != null && oneParameterOnErrorListener.call(exception));
 
-	}
-
-	public TResult get() throws ExecutionException, InterruptedException {
-		return task.getObject().get();
 	}
 
 	public FluentTask<TParams, TProgress, TResult> cancel() {

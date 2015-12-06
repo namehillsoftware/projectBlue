@@ -78,7 +78,7 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return getStoredFileTask(serviceFile).execute(AsyncTask.THREAD_POOL_EXECUTOR).get();
+		return getStoredFileTask(serviceFile).get(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
@@ -305,7 +305,7 @@ public class StoredFileAccess {
 		};
 
 		try {
-			return createOrUpdateStoredFileTask.execute(storedFileExecutor).get();
+			return createOrUpdateStoredFileTask.get(storedFileExecutor);
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;

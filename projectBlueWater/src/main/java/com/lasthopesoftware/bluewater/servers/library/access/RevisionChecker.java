@@ -26,7 +26,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
 
 	public static Integer getRevision(ConnectionProvider connectionProvider) {
         try {
-            return (new RevisionChecker(connectionProvider)).execute(revisionExecutor).get();
+            return (new RevisionChecker(connectionProvider)).get(revisionExecutor);
         } catch (ExecutionException | InterruptedException e) {
             return getCachedRevision(connectionProvider);
         }
