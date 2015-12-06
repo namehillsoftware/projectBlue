@@ -305,7 +305,7 @@ public class StoredFileAccess {
 		};
 
 		try {
-			return createOrUpdateStoredFileTask.get();
+			return createOrUpdateStoredFileTask.execute(storedFileExecutor).get();
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
