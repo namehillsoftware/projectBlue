@@ -12,9 +12,6 @@ import java.util.concurrent.Executor;
 
 public abstract class FluentTask<TParams, TProgress, TResult>  {
 
-	private volatile SimpleTaskState state = SimpleTaskState.INITIALIZED;
-
-//	private final OnExecuteListener<TParams, TProgress, TResult> onExecuteListener;
 	private ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private IOneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
@@ -23,56 +20,30 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	private final AsyncExceptionTask<TParams, TProgress, TResult> task = new AsyncExceptionTask<TParams, TProgress, TResult>() {
 
-				@SafeVarargs
-				@Override
-				protected final TResult doInBackground(TParams... params) {
-					return doInBackground(params);
-				}
+		@SafeVarargs
+		@Override
+		protected final TResult doInBackground(TParams... params) {
+			return doInBackground(params);
+		}
 
-				@Override
-				protected final void onPostExecute(TResult result, Exception exception) {
-					if (handleError(exception)) return;
+		@Override
+		protected final void onPostExecute(TResult result, Exception exception) {
+			if (handleError(exception)) return;
 
-					state = SimpleTaskState.SUCCESS;
+			if (twoParameterOnCompleteListener != null)
+				twoParameterOnCompleteListener.run(FluentTask.this, result);
 
-					if (twoParameterOnCompleteListener != null)
-						twoParameterOnCompleteListener.run(FluentTask.this, result);
+			if (oneParameterOnCompleteListener != null)
+				oneParameterOnCompleteListener.run(result);
+		}
 
-					if (oneParameterOnCompleteListener != null)
-						oneParameterOnCompleteListener.run(result);
-				}
+		@Override
+		protected final void onCancelled(TResult result, Exception exception) {
+			if (handleError(exception)) return;
 
-				@Override
-				protected final void onCancelled(TResult result, Exception exception) {
-					if (handleError(exception)) return;
-
-					state = SimpleTaskState.CANCELLED;
-					super.onCancelled(result, exception);
-				}
-			};
-
-
-//	@SafeVarargs
-//	public static <TParams, TProgress, TResult> FluentTask<TParams, TProgress, TResult> executeNew(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
-//		final FluentTask<TParams, TProgress, TResult> newSimpleTask = new FluentTask<>(onExecuteListener);
-//		newSimpleTask.execute(params);
-//		return newSimpleTask;
-//	}
-//
-//	@SafeVarargs
-//	public static <TParams, TProgress, TResult> FluentTask<TParams, TProgress, TResult> executeNew(Executor executor, OnExecuteListener<TParams, TProgress, TResult> onExecuteListener, TParams... params) {
-//		final FluentTask<TParams, TProgress, TResult> newSimpleTask = new FluentTask<>(onExecuteListener);
-//		newSimpleTask.execute(executor, params);
-//		return newSimpleTask;
-//	}
-	
-//	public FluentTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
-//		this.onExecuteListener = onExecuteListener;
-//	}
-
-	public FluentTask() {
-		super();
-	}
+			super.onCancelled(result, exception);
+		}
+	};
 
 
 	public FluentTask<TParams, TProgress, TResult> execute(TParams... params) {
@@ -80,22 +51,9 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public FluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
-		state = SimpleTaskState.EXECUTING;
 		task.executeOnExecutor(exec, params);
 		return this;
 	}
-//
-//	@SafeVarargs
-//	private final TResult executeListener(TParams... params) {
-//		try {
-//			result = onExecuteListener.onExecute(this, params);
-//			state = SimpleTaskState.SUCCESS;
-//		} catch (Exception exception) {
-//			this.exception = exception;
-//			state = SimpleTaskState.ERROR;
-//		}
-//		return result;
-//	}
 
 	/**
 	 * 
@@ -124,31 +82,6 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	public boolean isCancelled() {
 		return task.isCancelled();
 	}
-//
-//	public SimpleTaskState getState() {
-//		return state;
-//	}
-
-//	@Override
-//	protected final void onPostExecute(TResult tResult, Exception exception) {
-//		if (handleError()) return;
-//
-//		super.onPostExecute(result);
-//
-//		if (twoParameterOnCompleteListener != null)
-//			twoParameterOnCompleteListener.run(FluentTask.this, result);
-//
-//		if (oneParameterOnCompleteListener != null)
-//			oneParameterOnCompleteListener.run(result);
-//	}
-//
-//	@Override
-//	protected final void onCancelled(TResult result, Exception exception) {
-//		if (handleError()) return;
-//
-//		state = SimpleTaskState.CANCELLED;
-//		super.onCancelled(result, exception);
-//	}
 
 	protected abstract TResult doInBackground(TParams... params);
 
