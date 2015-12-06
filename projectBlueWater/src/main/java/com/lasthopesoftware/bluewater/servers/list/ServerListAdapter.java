@@ -56,7 +56,7 @@ public class ServerListAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final Context parentContext = parent.getContext();
 		if (position == 0) {
-			final RelativeLayout returnView = (RelativeLayout) getInflater(parentContext).inflate(R.layout.layout_standard_text, parent);
+			final RelativeLayout returnView = (RelativeLayout) getInflater(parentContext).inflate(R.layout.layout_standard_text, parent, false);
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
 			textView.setText(parentContext.getText(R.string.btn_add_server));
 			returnView.setOnClickListener(new EditServerClickListener(mActivity, -1));
@@ -68,7 +68,7 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 
 		if (convertView == null || convertView.getTag() == null) {
-			final RelativeLayout relativeLayout = (RelativeLayout) getInflater(parent.getContext()).inflate(R.layout.layout_server_item, parent);
+			final RelativeLayout relativeLayout = (RelativeLayout) getInflater(parent.getContext()).inflate(R.layout.layout_server_item, parent, false);
 
 			final TextView textView = (TextView) relativeLayout.findViewById(R.id.tvServerItem);
 			final ImageButton btnSelectServer = (ImageButton) relativeLayout.findViewById(R.id.btnSelectServer);
