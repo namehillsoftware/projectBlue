@@ -20,43 +20,7 @@ public abstract class AbstractProvider<T> extends FluentTask<Void, Void, T> {
 
 	private final ConnectionProvider connectionProvider;
 	private final String[] params;
-	private static final ExecutorService collectionAccessExecutor = Executors.newSingleThreadExecutor();
-	private Exception exception = null;
-//	private final Lazy<FluentTask<Void, Void, T>> task = new Lazy<>(new Callable<FluentTask<Void, Void, T>>() {
-//		@Override
-//		public FluentTask<Void, Void, T> call() throws Exception {
-//			final FluentTask<Void, Void, T> task = new FluentTask<>(new OnExecuteListener<Void, Void, T>() {
-//
-//				@Override
-//				public T onExecute(FluentTask<Void, Void, T> owner, Void... voidParams) throws Exception {
-//					if (owner.isCancelled()) return null;
-//
-//					final HttpURLConnection connection = connectionProvider.getConnection(params);
-//					try {
-//						return getData(owner, connectionProvider.getConnection(params));
-//					} finally {
-//						connection.disconnect();
-//					}
-//				}
-//			});
-//
-//			task.onError(new IThreeParameterCallable<FluentTask<Void, Void, T>, Boolean, Exception, Boolean>() {
-//				@Override
-//				public Boolean call(FluentTask<Void, Void, T> owner, Boolean isHandled, Exception innerException) {
-//					setException(innerException);
-//					return false;
-//				}
-//			});
-//
-//			if (onGetItemsComplete != null)
-//				task.onComplete(onGetItemsComplete);
-//
-//			if (onGetItemsError != null)
-//				task.onError(onGetItemsError);
-//
-//			return task;
-//		}
-//	});
+	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
 
 	protected AbstractProvider(ConnectionProvider connectionProvider, String... params) {
 		this.connectionProvider = connectionProvider;
@@ -66,7 +30,7 @@ public abstract class AbstractProvider<T> extends FluentTask<Void, Void, T> {
 
 	@Override
 	public FluentTask<Void, Void, T> execute(Void... params) {
-		return super.execute(collectionAccessExecutor, params);
+		return super.execute(providerExecutor, params);
 	}
 
 	@Override
