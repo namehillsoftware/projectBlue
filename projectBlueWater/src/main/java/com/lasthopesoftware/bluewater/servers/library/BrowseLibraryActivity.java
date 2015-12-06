@@ -90,13 +90,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final Lazy<ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>>>() {
+	private final Lazy<ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
 		@Override
-		public ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>> call() throws Exception {
-			return new ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>>() {
+		public ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> call() throws Exception {
+			return new ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
 
 				@Override
-				public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+				public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
@@ -270,10 +270,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
+				.onComplete(new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
 
 			        @Override
-			        public void run(FluentTask<Void, Void, List<Item>> owner, final List<Item> items) {
+			        public void run(FluentTask<String, Void, List<Item>> owner, final List<Item> items) {
 				        if (isStopped || items == null) return;
 
 				        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -317,14 +317,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        ItemProvider
 						        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
 						        .onComplete(onGetVisibleViewsCompleteListener.getObject())
-						        .onError(new HandleViewIoException<Void, Void, List<Item>>(BrowseLibraryActivity.this, new Runnable() {
+						        .onError(new HandleViewIoException<String, Void, List<Item>>(BrowseLibraryActivity.this, new Runnable() {
 
 							        @Override
 							        public void run() {
 								        ItemProvider
 										        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
 										        .onComplete(onGetVisibleViewsCompleteListener.getObject())
-										        .onError(new HandleViewIoException<Void, Void, List<Item>>(BrowseLibraryActivity.this, this))
+										        .onError(new HandleViewIoException<String, Void, List<Item>>(BrowseLibraryActivity.this, this))
 										        .execute();
 							        }
 
@@ -332,7 +332,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						        .execute();
 			        }
                 })
-				.onError(new HandleViewIoException<Void, Void, List<Item>>(this, new Runnable() {
+				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
 
 					@Override
 					public void run() {

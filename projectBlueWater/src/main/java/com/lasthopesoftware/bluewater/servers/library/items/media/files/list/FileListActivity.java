@@ -60,10 +60,10 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ITwoParameterRunnable<FluentTask<Void, Void, List<IFile>>, List<IFile>> onFileProviderComplete = new ITwoParameterRunnable<FluentTask<Void,Void,List<IFile>>, List<IFile>>() {
+		final ITwoParameterRunnable<FluentTask<String, Void, List<IFile>>, List<IFile>> onFileProviderComplete = new ITwoParameterRunnable<FluentTask<String,Void,List<IFile>>, List<IFile>>() {
 
 			@Override
-			public void run(FluentTask<Void, Void, List<IFile>> owner, List<IFile> result) {
+			public void run(FluentTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
@@ -80,13 +80,13 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		getNewFileProvider()
 			.onComplete(onFileProviderComplete)
-			.onError(new HandleViewIoException<Void, Void, List<IFile>>(this, new Runnable() {
+			.onError(new HandleViewIoException<String, Void, List<IFile>>(this, new Runnable() {
 
 						@Override
 						public void run() {
 							getNewFileProvider()
 									.onComplete(onFileProviderComplete)
-									.onError(new HandleViewIoException<Void, Void, List<IFile>>(FileListActivity.this, this))
+									.onError(new HandleViewIoException<String, Void, List<IFile>>(FileListActivity.this, this))
 									.execute();
 						}
 					})

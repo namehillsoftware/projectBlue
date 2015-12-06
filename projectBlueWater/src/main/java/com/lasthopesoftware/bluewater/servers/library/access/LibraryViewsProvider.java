@@ -34,7 +34,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     }
 
     @Override
-    protected List<Item> getData(FluentTask<Void, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+    protected List<Item> getData(FluentTask<String, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {

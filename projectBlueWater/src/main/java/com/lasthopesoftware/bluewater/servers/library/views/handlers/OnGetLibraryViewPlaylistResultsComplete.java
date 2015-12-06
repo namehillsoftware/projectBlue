@@ -27,7 +27,7 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         this.activity = activity;
     }
 
-    public void run(FluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
+    public void run(FluentTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
         super.run(owner, result);
         if (result == null) return;
 

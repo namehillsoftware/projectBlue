@@ -55,10 +55,10 @@ public class ItemListFragment extends Fragment {
     	LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 		    @Override
 		    public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-			    final ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
+			    final ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
 
 				    @Override
-				    public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+				    public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
 					    if (result == null || result.size() == 0) return;
 					
 					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
@@ -71,14 +71,14 @@ public class ItemListFragment extends Fragment {
 			    ItemProvider
 					    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
 					    .onComplete(onGetVisibleViewsCompleteListener)
-					    .onError(new HandleViewIoException<Void, Void, List<Item>>(activity, new Runnable() {
+					    .onError(new HandleViewIoException<String, Void, List<Item>>(activity, new Runnable() {
 
 							    @Override
 							    public void run() {
 								    ItemProvider
 										    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
 										    .onComplete(onGetVisibleViewsCompleteListener)
-										    .onError(new HandleViewIoException<Void, Void, List<Item>>(activity, this))
+										    .onError(new HandleViewIoException<String, Void, List<Item>>(activity, this))
 										    .execute();
 							    }
 				        }))
@@ -98,14 +98,14 @@ public class ItemListFragment extends Fragment {
 		ItemProvider
 				.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException<Void, Void, List<Item>>(activity, new Runnable() {
+				.onError(new HandleViewIoException<String, Void, List<Item>>(activity, new Runnable() {
 
 					@Override
 					public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
-								.onError(new HandleViewIoException<Void, Void, List<Item>>(activity, this))
+								.onError(new HandleViewIoException<String, Void, List<Item>>(activity, this))
 								.execute();
 					}
 				}))

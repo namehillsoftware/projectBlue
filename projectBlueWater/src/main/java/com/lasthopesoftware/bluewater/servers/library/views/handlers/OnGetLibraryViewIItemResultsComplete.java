@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Created by david on 11/5/15.
  */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ITwoParameterRunnable<FluentTask<Void, Void, List<T>>, List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ITwoParameterRunnable<FluentTask<String, Void, List<T>>, List<T>> {
 
 	private static final String PREFS_KEY = SpecialValueHelpers.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -47,7 +47,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     }
 
     @Override
-    public void run(FluentTask<Void, Void, List<T>> owner, List<T> result) {
+    public void run(FluentTask<String, Void, List<T>> owner, List<T> result) {
         if (result == null) return;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());

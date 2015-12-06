@@ -60,9 +60,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
+        itemProvider.onComplete(new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
             @Override
-            public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> items) {
+            public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
                 if (items == null) return;
 
                 BuildItemListView(items);
@@ -71,7 +71,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
                 pbLoading.setVisibility(View.INVISIBLE);
             }
         });
-        itemProvider.onError(new HandleViewIoException<Void, Void, List<Item>>(this, new Runnable() {
+        itemProvider.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
             @Override
             public void run() {
                 itemProvider.execute();

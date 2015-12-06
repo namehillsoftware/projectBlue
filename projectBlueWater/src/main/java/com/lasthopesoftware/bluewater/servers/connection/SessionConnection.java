@@ -85,10 +85,10 @@ public class SessionConnection {
 						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
 						LibraryViewsProvider.provide(sessionConnectionProvider)
-								.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>>() {
+								.onComplete(new ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
 
 									@Override
-									public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+									public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
 
 										if (result == null || result.size() == 0) {
 											doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);

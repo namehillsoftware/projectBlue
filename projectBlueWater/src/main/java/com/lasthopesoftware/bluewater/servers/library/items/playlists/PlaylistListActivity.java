@@ -56,10 +56,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ITwoParameterRunnable<FluentTask<Void, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new ITwoParameterRunnable<FluentTask<Void,Void,List<Playlist>>, List<Playlist>>() {
+		final ITwoParameterRunnable<FluentTask<String, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new ITwoParameterRunnable<FluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
 
 			@Override
-			public void run(FluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
+			public void run(FluentTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (result == null) return;
 
 				BuildPlaylistView(result);
@@ -71,13 +71,13 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
 		        .onComplete(onPlaylistProviderComplete)
-		        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(PlaylistListActivity.this, new Runnable() {
+		        .onError(new HandleViewIoException<String, Void, List<Playlist>>(PlaylistListActivity.this, new Runnable() {
 
 			        @Override
 			        public void run() {
 				        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
 						        .onComplete(onPlaylistProviderComplete)
-						        .onError(new HandleViewIoException<Void, Void, List<Playlist>>(PlaylistListActivity.this, this))
+						        .onError(new HandleViewIoException<String, Void, List<Playlist>>(PlaylistListActivity.this, this))
 						        .execute();
 			        }
 		        }))

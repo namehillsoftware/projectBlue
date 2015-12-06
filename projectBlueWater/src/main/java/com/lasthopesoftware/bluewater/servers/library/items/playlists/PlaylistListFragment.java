@@ -42,7 +42,7 @@ public class PlaylistListFragment extends Fragment {
 		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 		playlistsProvider
 				.onComplete(onGetLibraryViewPlaylistResultsComplete)
-				.onError(new HandleViewIoException<Void, Void, List<Playlist>>(getActivity(), new Runnable() {
+				.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), new Runnable() {
 
 					@Override
 					public void run() {
@@ -50,7 +50,7 @@ public class PlaylistListFragment extends Fragment {
 
 						playlistsProvider
 								.onComplete(onGetLibraryViewPlaylistResultsComplete)
-								.onError(new HandleViewIoException<Void, Void, List<Playlist>>(getActivity(), this))
+								.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), this))
 								.execute();
 					}
 				}))

@@ -29,7 +29,7 @@ public class FileStringListProvider extends AbstractProvider<String> {
 	}
 
 	@Override
-	protected String getData(FluentTask<Void, Void, String> task, HttpURLConnection connection) throws Exception {
+	protected String getData(FluentTask<String, Void, String> task, HttpURLConnection connection) throws Exception {
 		final InputStream inputStream = connection.getInputStream();
 		try {
 			return IOUtils.toString(inputStream);

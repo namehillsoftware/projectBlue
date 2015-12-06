@@ -9,7 +9,7 @@ import com.lasthopesoftware.threading.FluentTask;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements ITwoParameterRunnable<FluentTask<Void, Void, String>, String> {
+public class OnGetFileStringListForClickCompleteListener implements ITwoParameterRunnable<FluentTask<String, Void, String>, String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -17,7 +17,7 @@ public class OnGetFileStringListForClickCompleteListener implements ITwoParamete
     }
 
     @Override
-    public void run(FluentTask<Void, Void, String> owner, String result) {
+    public void run(FluentTask<String, Void, String> owner, String result) {
         PlaybackService.launchMusicService(mContext, result);
     }
 }

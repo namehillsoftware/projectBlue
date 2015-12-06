@@ -27,7 +27,7 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
         this.activity = activity;
     }
 
-    public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+    public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
         super.run(owner, result);
         if (result == null) return;
 

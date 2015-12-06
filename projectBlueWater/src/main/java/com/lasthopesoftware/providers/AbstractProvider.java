@@ -14,31 +14,30 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 11/26/15.
  */
-public abstract class AbstractProvider<T> extends FluentTask<Void, Void, T> {
+public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractProvider.class);
 
 	private final ConnectionProvider connectionProvider;
-	private final String[] params;
 	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
 
 	protected AbstractProvider(ConnectionProvider connectionProvider, String... params) {
+		super(params);
+
 		this.connectionProvider = connectionProvider;
-		this.params = params;
-
 	}
 
 	@Override
-	public FluentTask<Void, Void, T> execute(Void... params) {
-		return super.execute(providerExecutor, params);
+	public FluentTask<String, Void, T> execute() {
+		return super.execute(providerExecutor);
 	}
 
 	@Override
-	protected final T executeInBackground(Void... params) {
+	protected final T executeInBackground(String[] params) {
 		if (isCancelled()) return null;
 
 		try {
-			final HttpURLConnection connection = connectionProvider.getConnection(this.params);
+			final HttpURLConnection connection = connectionProvider.getConnection(params);
 			try {
 				try {
 					return getData(this, connection);
@@ -57,5 +56,5 @@ public abstract class AbstractProvider<T> extends FluentTask<Void, Void, T> {
 		return null;
 	}
 
-	protected abstract T getData(FluentTask<Void, Void, T> task, HttpURLConnection connection) throws Exception;
+	protected abstract T getData(FluentTask<String, Void, T> task, HttpURLConnection connection) throws Exception;
 }

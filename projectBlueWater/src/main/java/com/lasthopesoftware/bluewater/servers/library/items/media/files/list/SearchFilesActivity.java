@@ -72,10 +72,10 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final ITwoParameterRunnable<FluentTask<Void, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new ITwoParameterRunnable<FluentTask<Void,Void,List<IFile>>, List<IFile>>() {
+        final ITwoParameterRunnable<FluentTask<String, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new ITwoParameterRunnable<FluentTask<String,Void,List<IFile>>, List<IFile>>() {
 
             @Override
-            public void run(FluentTask<Void, Void, List<IFile>> owner, List<IFile> result) {
+            public void run(FluentTask<String, Void, List<IFile>> owner, List<IFile> result) {
                 if (result == null) return;
 
                 final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
@@ -87,13 +87,13 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
             .onComplete(onSearchFilesComplete)
-            .onError(new HandleViewIoException<Void, Void, List<IFile>>(this, new Runnable() {
+            .onError(new HandleViewIoException<String, Void, List<IFile>>(this, new Runnable() {
 
                         @Override
                         public void run() {
                             SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
                                     .onComplete(onSearchFilesComplete)
-                                    .onError(new HandleViewIoException<Void, Void, List<IFile>>(SearchFilesActivity.this, this));
+                                    .onError(new HandleViewIoException<String, Void, List<IFile>>(SearchFilesActivity.this, this));
                         }
                     })
             ).execute();

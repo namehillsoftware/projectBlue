@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements ITwoParameterCallable<FluentTask<Void, Void, String>, Exception, Boolean> {
+public class OnGetFileStringListForClickErrorListener implements ITwoParameterCallable<FluentTask<String, Void, String>, Exception, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -22,7 +22,7 @@ public class OnGetFileStringListForClickErrorListener implements ITwoParameterCa
     }
 
     @Override
-    public Boolean call(FluentTask<Void, Void, String> owner, Exception innerException) {
+    public Boolean call(FluentTask<String, Void, String> owner, Exception innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new Runnable() {
 

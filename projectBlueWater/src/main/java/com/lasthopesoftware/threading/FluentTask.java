@@ -13,6 +13,8 @@ import java.util.concurrent.Executor;
 
 public abstract class FluentTask<TParams, TProgress, TResult>  {
 
+	private final TParams[] params;
+
 	private ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private IOneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
@@ -53,12 +55,16 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		}
 	});
 
-
-	public FluentTask<TParams, TProgress, TResult> execute(TParams... params) {
-		return execute(AsyncTask.SERIAL_EXECUTOR, params);
+	@SafeVarargs
+	public FluentTask(TParams... params) {
+		this.params = params;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
+	public FluentTask<TParams, TProgress, TResult> execute() {
+		return execute(AsyncTask.SERIAL_EXECUTOR);
+	}
+
+	public FluentTask<TParams, TProgress, TResult> execute(Executor exec) {
 		task.getObject().executeOnExecutor(exec, params);
 		return this;
 	}
@@ -91,7 +97,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		return task.getObject().isCancelled();
 	}
 
-	protected abstract TResult executeInBackground(TParams... params);
+	protected abstract TResult executeInBackground(TParams[] params);
 
 	protected void setException(Exception exception) {
 		task.getObject().setException(exception);

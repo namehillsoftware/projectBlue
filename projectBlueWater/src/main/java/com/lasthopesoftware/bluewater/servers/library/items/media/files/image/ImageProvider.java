@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.ca
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.threading.FluentTask;
 
 import org.apache.commons.io.IOUtils;
@@ -29,7 +28,7 @@ import java.net.HttpURLConnection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ImageProvider extends AbstractProvider<Bitmap> {
+public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	
 	private static final String IMAGE_FORMAT = "jpg";
 	
@@ -46,6 +45,7 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	private static final LruCache<String, Byte[]> imageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 
 	private final Context context;
+	private final ConnectionProvider connectionProvider;
 	private final IFile file;
 
 	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey) {
@@ -57,15 +57,16 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	}
 
 	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final IFile file) {
-		super(connectionProvider, "File/GetImage", "File=" + String.valueOf(file.getKey()), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
+
 
 		this.context = context;
+		this.connectionProvider = connectionProvider;
 		this.file = file;
 	}
 
 	@Override
-	protected Bitmap getData(FluentTask<Void, Void, Bitmap> task, HttpURLConnection connection) throws Exception {
-		if (task.isCancelled()) return getFillerBitmap();
+	protected Bitmap executeInBackground(Void[] params) {
+		if (isCancelled()) return getFillerBitmap();
 
 		String uniqueKey;
 		try {
@@ -98,42 +99,49 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 		}
 
 		try {
-			// Connection failed to build
-			if (connection == null) return getFillerBitmap();
-
+			final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(file.getKey()), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 			try {
-				//isCancelled was called, return an empty bitmap but do not put it into the cache
-				if (task.isCancelled()) return getFillerBitmap();
+				// Connection failed to build
+				if (connection == null) return getFillerBitmap();
 
-				final InputStream is = connection.getInputStream();
 				try {
-					imageBytes = IOUtils.toByteArray(is);
-				} finally {
-					is.close();
+					//isCancelled was called, return an empty bitmap but do not put it into the cache
+					if (isCancelled()) return getFillerBitmap();
+
+					final InputStream is = connection.getInputStream();
+					try {
+						imageBytes = IOUtils.toByteArray(is);
+					} finally {
+						is.close();
+					}
+
+					if (imageBytes.length == 0)
+						return getFillerBitmap();
+				} catch (FileNotFoundException fe) {
+					logger.warn("Image not found!");
+					return getFillerBitmap();
 				}
 
-				if (imageBytes.length == 0)
-					return getFillerBitmap();
-			} catch (FileNotFoundException fe) {
-				logger.warn("Image not found!");
-				return getFillerBitmap();
+				try {
+					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
+					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap();
+
+					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
+					imageDiskCache.put(uniqueKey, file, imageBytes);
+				} catch (IOException ioe) {
+					logger.error("Error writing file!", ioe);
+				}
+
+				putBitmapIntoMemory(uniqueKey, imageBytes);
+				return getBitmapFromBytes(imageBytes);
+			} catch (Exception e) {
+				logger.error(e.toString(), e);
+			} finally {
+				if (connection != null)
+					connection.disconnect();
 			}
-
-			try {
-				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
-				if (!cacheDir.exists())
-					cacheDir.mkdirs();
-				final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
-
-				imageDiskCache.put(uniqueKey, file, imageBytes);
-			} catch (IOException ioe) {
-				logger.error("Error writing file!", ioe);
-			}
-
-			putBitmapIntoMemory(uniqueKey, imageBytes);
-			return getBitmapFromBytes(imageBytes);
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
+		} catch (IOException e) {
+			logger.error("There was an error getting the connection for images", e);
 		}
 
 		return null;
@@ -177,8 +185,8 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	}
 
 	@Override
-	public FluentTask<Void, Void, Bitmap> execute(Void... params) {
-		return super.execute(imageAccessExecutor, params);
+	public final FluentTask<Void, Void, Bitmap> execute() {
+		return super.execute(imageAccessExecutor);
 	}
 
 	private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {

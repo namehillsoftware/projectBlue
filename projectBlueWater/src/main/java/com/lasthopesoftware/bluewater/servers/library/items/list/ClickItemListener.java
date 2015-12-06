@@ -31,9 +31,9 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
+            .onComplete(new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
                 @Override
-                public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> items) {
+                public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
                     if (items == null) return;
 
                     if (items.size() > 0) {

@@ -33,7 +33,7 @@ public class FileProvider extends AbstractCollectionProvider<IFile> {
 	}
 
 	@Override
-	protected List<IFile> getData(FluentTask<Void, Void, List<IFile>> task, HttpURLConnection connection) throws Exception {
+	protected List<IFile> getData(FluentTask<String, Void, List<IFile>> task, HttpURLConnection connection) throws Exception {
 		final InputStream is = connection.getInputStream();
 		try {
 			return FileStringListUtilities.parseFileStringList(connectionProvider, IOUtils.toString(is));
