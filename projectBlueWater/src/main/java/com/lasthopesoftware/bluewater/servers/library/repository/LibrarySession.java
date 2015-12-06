@@ -34,7 +34,7 @@ public class LibrarySession {
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
 			@Override
-			protected Library doInBackground(Void... params) {
+			protected Library executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
@@ -59,7 +59,7 @@ public class LibrarySession {
 	public static void GetActiveLibrary(final Context context, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
 			@Override
-			protected Library doInBackground(Integer... params) {
+			protected Library executeInBackground(Integer... params) {
 				return GetActiveLibrary(context);
 			}
 		}, onGetLibraryComplete);
@@ -68,7 +68,7 @@ public class LibrarySession {
 	public static void GetLibrary(final Context context, final int libraryId, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
 			@Override
-			protected Library doInBackground(Integer... params) {
+			protected Library executeInBackground(Integer... params) {
 				return GetLibrary(context, libraryId);
 			}
 		}, onGetLibraryComplete);
@@ -115,7 +115,7 @@ public class LibrarySession {
 	public static void GetLibraries(final Context context, ITwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
 		final FluentTask<Void, Void, List<Library>> getLibrariesTask = new FluentTask<Void, Void, List<Library>>() {
 			@Override
-			protected List<Library> doInBackground(Void... params) {
+			protected List<Library> executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();

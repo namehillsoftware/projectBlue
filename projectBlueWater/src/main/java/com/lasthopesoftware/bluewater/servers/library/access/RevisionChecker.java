@@ -45,7 +45,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
     }
 
     @Override
-    protected Integer doInBackground(Void... params) {
+    protected Integer executeInBackground(Void... params) {
         if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
             return getCachedRevision(connectionProvider);
         }

@@ -118,7 +118,7 @@ public class FilePropertiesProvider {
 			final SortedMap<String, String> filePropertiesResult = new FluentTask<String, Void, SortedMap<String, String>>() {
 				
 				@Override
-				public SortedMap<String, String> doInBackground(String... params) {
+				public SortedMap<String, String> executeInBackground(String... params) {
 					final Integer revision = RevisionChecker.getRevision(connectionProvider);
 					if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
 						return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());

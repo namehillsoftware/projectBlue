@@ -110,7 +110,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<Void, Void, ArrayList<IFile>>() {
 
 		        @Override
-		        protected ArrayList<IFile> doInBackground(Void... params) {
+		        protected ArrayList<IFile> executeInBackground(Void... params) {
 			        return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
 		        }
 	        };

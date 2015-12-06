@@ -119,7 +119,7 @@ public class DiskFileCache {
 		final FluentTask<Void, Void, File> getTask = new FluentTask<Void, Void, File>() {
 
 			@Override
-			protected File doInBackground(Void... params) {
+			protected File executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);

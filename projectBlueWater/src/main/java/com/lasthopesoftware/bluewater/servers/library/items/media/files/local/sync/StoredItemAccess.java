@@ -45,7 +45,7 @@ public class StoredItemAccess {
         final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<Void, Void, Boolean>() {
 
             @Override
-            protected Boolean doInBackground(Void... params) {
+            protected Boolean executeInBackground(Void... params) {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
                     final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
@@ -124,7 +124,7 @@ public class StoredItemAccess {
         final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<Void, Void, List<StoredItem>>() {
 
             @Override
-            protected List<StoredItem> doInBackground(Void... params) {
+            protected List<StoredItem> executeInBackground(Void... params) {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
                     final Dao<StoredItem, Integer> storedItemAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);

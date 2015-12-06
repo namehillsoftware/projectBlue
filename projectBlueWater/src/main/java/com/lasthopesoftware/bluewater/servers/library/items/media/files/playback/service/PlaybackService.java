@@ -917,7 +917,7 @@ public class PlaybackService extends Service implements
 		final FluentTask<Void, Void, String> getNotificationPropertiesTask = new FluentTask<Void, Void, String>() {
 
 			@Override
-			protected String doInBackground(Void... params) {
+			protected String executeInBackground(Void... params) {
 				try {
 					return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
 				} catch (IOException e) {
@@ -945,7 +945,7 @@ public class PlaybackService extends Service implements
 		final FluentTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new FluentTask<Void, Void, SparseArray<Object>>() {
 
 			@Override
-			protected SparseArray<Object> doInBackground(Void... params) {
+			protected SparseArray<Object> executeInBackground(Void... params) {
 				final SparseArray<Object> result = new SparseArray<>(4);
 
 				try {

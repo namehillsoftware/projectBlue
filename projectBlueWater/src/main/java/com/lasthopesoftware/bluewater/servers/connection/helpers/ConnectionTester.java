@@ -30,7 +30,7 @@ public class ConnectionTester {
 	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
 		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<Integer, Void, Boolean>() {
 			@Override
-			protected Boolean doInBackground(Integer... params) {
+			protected Boolean executeInBackground(Integer... params) {
 				try {
 					final HttpURLConnection conn = connectionProvider.getConnection("Alive");
 

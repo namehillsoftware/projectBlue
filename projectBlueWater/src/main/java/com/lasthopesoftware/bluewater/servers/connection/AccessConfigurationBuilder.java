@@ -70,7 +70,7 @@ public class AccessConfigurationBuilder {
 	private static void executeReturnNullTask(ITwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onReturnFalseListener) {
 		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<Void, Void, AccessConfiguration>() {
 			@Override
-			protected AccessConfiguration doInBackground(Void... params) {
+			protected AccessConfiguration executeInBackground(Void... params) {
 				return null;
 			}
 		};
@@ -89,7 +89,7 @@ public class AccessConfigurationBuilder {
 
 		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<Void, Void, AccessConfiguration>() {
 			@Override
-			protected AccessConfiguration doInBackground(Void... params) {
+			protected AccessConfiguration executeInBackground(Void... params) {
 				try {
 					final AccessConfiguration accessDao = new AccessConfiguration(library.getId(), library.getAuthKey());
 					String localAccessString = library.getAccessCode();

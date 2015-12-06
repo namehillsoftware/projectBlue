@@ -7,6 +7,7 @@ import com.lasthopesoftware.callables.ITwoParameterCallable;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -18,32 +19,39 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private IOneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
 	private ITwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
-	private final AsyncExceptionTask<TParams, TProgress, TResult> task = new AsyncExceptionTask<TParams, TProgress, TResult>() {
-
-		@SafeVarargs
-		@Override
-		protected final TResult doInBackground(TParams... params) {
-			return FluentTask.this.doInBackground(params);
-		}
+	private final Lazy<AsyncExceptionTask<TParams, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncExceptionTask<TParams, TProgress, TResult>>()
+	{
 
 		@Override
-		protected final void onPostExecute(TResult result, Exception exception) {
-			if (handleError(exception)) return;
+		public AsyncExceptionTask<TParams, TProgress, TResult> call() throws Exception {
+			return new AsyncExceptionTask<TParams, TProgress, TResult>(){
 
-			if (twoParameterOnCompleteListener != null)
-				twoParameterOnCompleteListener.run(FluentTask.this, result);
+				@SafeVarargs
+				@Override
+				protected final TResult doInBackground(TParams... params) {
+					return executeInBackground(params);
+				}
 
-			if (oneParameterOnCompleteListener != null)
-				oneParameterOnCompleteListener.run(result);
+				@Override
+				protected final void onPostExecute(TResult result, Exception exception) {
+					if (handleError(exception)) return;
+
+					if (twoParameterOnCompleteListener != null)
+						twoParameterOnCompleteListener.run(FluentTask.this, result);
+
+					if (oneParameterOnCompleteListener != null)
+						oneParameterOnCompleteListener.run(result);
+				}
+
+				@Override
+				protected final void onCancelled(TResult result, Exception exception) {
+					if (handleError(exception)) return;
+
+					super.onCancelled(result, exception);
+				}
+			};
 		}
-
-		@Override
-		protected final void onCancelled(TResult result, Exception exception) {
-			if (handleError(exception)) return;
-
-			super.onCancelled(result, exception);
-		}
-	};
+	});
 
 
 	public FluentTask<TParams, TProgress, TResult> execute(TParams... params) {
@@ -51,7 +59,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public FluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
-		task.executeOnExecutor(exec, params);
+		task.getObject().executeOnExecutor(exec, params);
 		return this;
 	}
 
@@ -67,7 +75,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public TResult get() throws ExecutionException, InterruptedException {
-		return task.get();
+		return task.getObject().get();
 	}
 
 	public FluentTask<TParams, TProgress, TResult> cancel() {
@@ -75,18 +83,18 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public FluentTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
-		task.cancel(interrupt);
+		task.getObject().cancel(interrupt);
 		return this;
 	}
 
 	public boolean isCancelled() {
-		return task.isCancelled();
+		return task.getObject().isCancelled();
 	}
 
-	protected abstract TResult doInBackground(TParams... params);
+	protected abstract TResult executeInBackground(TParams... params);
 
 	protected void setException(Exception exception) {
-		task.setException(exception);
+		task.getObject().setException(exception);
 	}
 
 	public FluentTask<TParams, TProgress, TResult> onComplete(ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {

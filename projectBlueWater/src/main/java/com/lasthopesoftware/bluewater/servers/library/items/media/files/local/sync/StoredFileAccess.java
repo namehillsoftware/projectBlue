@@ -48,7 +48,7 @@ public class StoredFileAccess {
 	public void getStoredFile(final int storedFileId, ITwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
-			protected StoredFile doInBackground(Void... params) {
+			protected StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -84,7 +84,7 @@ public class StoredFileAccess {
 	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
 		return new FluentTask<Void, Void, StoredFile>() {
 			@Override
-			public StoredFile doInBackground(Void... params) {
+			public StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -102,7 +102,7 @@ public class StoredFileAccess {
 	public void getDownloadingStoredFiles(ITwoParameterRunnable<FluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
 		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<Void, Void, List<StoredFile>>() {
 			@Override
-			protected List<StoredFile> doInBackground(Void... params) {
+			protected List<StoredFile> executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -222,7 +222,7 @@ public class StoredFileAccess {
 	public StoredFile createOrUpdateFile(final IFile file) {
 		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
-			public StoredFile doInBackground(Void... params) {
+			public StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFilesAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);

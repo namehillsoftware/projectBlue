@@ -133,7 +133,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FluentTask<Void, Void, String> getFileNameTask = new FluentTask<Void, Void, String>() {
 
 	        @Override
-	        protected String doInBackground(Void... params) {
+	        protected String executeInBackground(Void... params) {
 		        try {
 			        return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
 		        } catch (IOException e) {
@@ -200,7 +200,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         
         final FluentTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new FluentTask<Void, Void, List<Entry<String, String>>>() {
 	        @Override
-	        protected List<Entry<String, String>> doInBackground(Void... params) {
+	        protected List<Entry<String, String>> executeInBackground(Void... params) {
 		        final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
 		        try {
 			        final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
@@ -260,7 +260,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FluentTask<Void, Void, String> getFileArtistTask = new FluentTask<Void, Void, String>() {
 
 	        @Override
-	        protected String doInBackground(Void... params) {
+	        protected String executeInBackground(Void... params) {
 		        try {
 			        return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
 		        } catch (IOException e) {

@@ -34,7 +34,7 @@ public abstract class AbstractProvider<T> extends FluentTask<Void, Void, T> {
 	}
 
 	@Override
-	protected final T doInBackground(Void... params) {
+	protected final T executeInBackground(Void... params) {
 		if (isCancelled()) return null;
 
 		try {
