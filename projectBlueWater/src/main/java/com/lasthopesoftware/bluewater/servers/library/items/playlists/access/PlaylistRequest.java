@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.playlists.access;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 
 import org.slf4j.LoggerFactory;
@@ -16,11 +15,11 @@ import javax.xml.parsers.SAXParserFactory;
 
 class PlaylistRequest {
 
-	public static ArrayList<Playlist> GetItems(ConnectionProvider connectionProvider, InputStream is) {
+	public static ArrayList<Playlist> GetItems(InputStream is) {
 	
 		try {			
 			final SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-	    	PlaylistXmlHandler jrPlaylistXml = new PlaylistXmlHandler(connectionProvider);
+	    	PlaylistXmlHandler jrPlaylistXml = new PlaylistXmlHandler();
 	    	sp.parse(is, jrPlaylistXml);
 	    	
 	    	return jrPlaylistXml.getPlaylists();
