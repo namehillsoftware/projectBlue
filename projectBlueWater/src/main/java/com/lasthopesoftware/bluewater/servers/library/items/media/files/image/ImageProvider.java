@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
@@ -58,7 +57,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	}
 
 	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final IFile file) {
-
+		super(imageAccessExecutor);
 
 		this.context = context;
 		this.connectionProvider = connectionProvider;
@@ -183,11 +182,6 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 	    putBitmapIntoMemory(uniqueKey, bytes);
 	    return bytes;
-	}
-
-	@Override
-	protected AsyncTask<Void, Void, Bitmap> executeTask() {
-		return super.executeTask(imageAccessExecutor);
 	}
 
 	private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {

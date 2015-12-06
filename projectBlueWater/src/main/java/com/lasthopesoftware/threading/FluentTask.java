@@ -14,6 +14,7 @@ import java.util.concurrent.Executor;
 public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	private final TParams[] params;
+	private final Executor defaultExecutor;
 
 	private ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private IOneParameterRunnable<TResult> oneParameterOnCompleteListener;
@@ -55,30 +56,36 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	@SafeVarargs
 	public FluentTask(TParams... params) {
-		this.params = params;
+		this(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 
-	public final void execute() {
+	@SafeVarargs
+	public FluentTask(Executor defaultExecutor, TParams... params) {
+		this.params = params;
+		this.defaultExecutor = defaultExecutor;
+	}
+
+	public void execute() {
 		executeTask();
 	}
 
-	public final void execute(Executor exec) {
+	public void execute(Executor exec) {
 		executeTask(exec);
 	}
 
-	public final TResult get() throws ExecutionException, InterruptedException {
+	public TResult get() throws ExecutionException, InterruptedException {
 		return executeTask().get();
 	}
 
-	public final TResult get(Executor executor) throws ExecutionException, InterruptedException {
+	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
 		return executeTask(executor).get();
 	}
 
-	protected AsyncTask<Void, TProgress, TResult> executeTask() {
-		return executeTask(AsyncTask.SERIAL_EXECUTOR);
+	private AsyncTask<Void, TProgress, TResult> executeTask() {
+		return executeTask(defaultExecutor);
 	}
 
-	protected AsyncTask<Void, TProgress, TResult> executeTask(Executor exec) {
+	private AsyncTask<Void, TProgress, TResult> executeTask(Executor exec) {
 		return task.getObject().executeOnExecutor(exec);
 	}
 

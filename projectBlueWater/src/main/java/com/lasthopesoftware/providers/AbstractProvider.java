@@ -1,7 +1,5 @@
 package com.lasthopesoftware.providers;
 
-import android.os.AsyncTask;
-
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.threading.FluentTask;
 
@@ -24,14 +22,9 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
 
 	protected AbstractProvider(ConnectionProvider connectionProvider, String... params) {
-		super(params);
+		super(providerExecutor, params);
 
 		this.connectionProvider = connectionProvider;
-	}
-
-	@Override
-	protected AsyncTask<Void, Void, T> executeTask() {
-		return super.executeTask(providerExecutor);
 	}
 
 	@Override
