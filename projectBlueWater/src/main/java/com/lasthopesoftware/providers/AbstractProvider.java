@@ -1,8 +1,11 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.callables.IThreeParameterCallable;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.net.HttpURLConnection;
 import java.util.concurrent.ExecutionException;
@@ -15,8 +18,8 @@ import java.util.concurrent.Executors;
  */
 public abstract class AbstractProvider<T> {
 	private final ConnectionProvider connectionProvider;
-	private IFluentTask.OnCompleteListener<Void, Void, T> onGetItemsComplete;
-	private IFluentTask.OnErrorListener<Void, Void, T> onGetItemsError;
+	private ITwoParameterRunnable<IFluentTask<Void, Void, T>, T> onGetItemsComplete;
+	private IThreeParameterCallable<IFluentTask<Void, Void, T>, Boolean, Exception, Boolean> onGetItemsError;
 	private final String[] params;
 	private static final ExecutorService collectionAccessExecutor = Executors.newSingleThreadExecutor();
 	private Exception exception = null;
@@ -28,12 +31,12 @@ public abstract class AbstractProvider<T> {
 
 	}
 
-	public AbstractProvider<T> onComplete(IFluentTask.OnCompleteListener<Void, Void, T> onGetItemsComplete) {
+	public AbstractProvider<T> onComplete(ITwoParameterRunnable<IFluentTask<Void, Void, T>, T> onGetItemsComplete) {
 		this.onGetItemsComplete = onGetItemsComplete;
 		return this;
 	}
 
-	public AbstractProvider<T> onError(IFluentTask.OnErrorListener<Void, Void, T> onGetItemsError) {
+	public AbstractProvider<T> onError(IThreeParameterCallable<IFluentTask<Void, Void, T>, Boolean, Exception, Boolean> onGetItemsError) {
 		this.onGetItemsError = onGetItemsError;
 		return this;
 	}
@@ -61,7 +64,7 @@ public abstract class AbstractProvider<T> {
 	private FluentTask<Void, Void, T> getTask() {
 		if (task != null) return task;
 
-		task = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, T>() {
+		task = new FluentTask<>(new OnExecuteListener<Void, Void, T>() {
 
 			@Override
 			public T onExecute(IFluentTask<Void, Void, T> owner, Void... voidParams) throws Exception {
@@ -76,19 +79,19 @@ public abstract class AbstractProvider<T> {
 			}
 		});
 
-		task.addOnErrorListener(new IFluentTask.OnErrorListener<Void, Void, T>() {
+		task.onError(new IThreeParameterCallable<IFluentTask<Void, Void, T>, Boolean, Exception, Boolean>() {
 			@Override
-			public boolean onError(IFluentTask<Void, Void, T> owner, boolean isHandled, Exception innerException) {
+			public Boolean call(IFluentTask<Void, Void, T> owner, Boolean isHandled, Exception innerException) {
 				setException(innerException);
 				return false;
 			}
 		});
 
 		if (onGetItemsComplete != null)
-			task.addOnCompleteListener(onGetItemsComplete);
+			task.onComplete(onGetItemsComplete);
 
 		if (onGetItemsError != null)
-			task.addOnErrorListener(onGetItemsError);
+			task.onError(onGetItemsError);
 
 		return task;
 	}

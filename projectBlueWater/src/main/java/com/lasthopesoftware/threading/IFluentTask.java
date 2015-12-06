@@ -1,5 +1,10 @@
 package com.lasthopesoftware.threading;
 
+import com.lasthopesoftware.callables.IThreeParameterCallable;
+import com.lasthopesoftware.callables.ITwoParameterCallable;
+import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -11,17 +16,13 @@ public interface IFluentTask<TParams, TProgress, TResult> {
 	
 	SimpleTaskState getState();
 	
-	IFluentTask<TParams, TProgress, TResult> addOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> addOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> addOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> addOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> addOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
-	
-	IFluentTask<TParams, TProgress, TResult> removeOnStartListener(OnStartListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> removeOnProgressListener(OnProgressListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> removeOnCompleteListener(OnCompleteListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> removeOnCancelListener(OnCancelListener<TParams, TProgress, TResult> listener);
-	IFluentTask<TParams, TProgress, TResult> removeOnErrorListener(OnErrorListener<TParams, TProgress, TResult> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(ITwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult> listener);
+
+	IFluentTask<TParams, TProgress, TResult> onComplete(IOneParameterRunnable<TResult> listener);
+
+	IFluentTask<TParams, TProgress, TResult> onError(IThreeParameterCallable<IFluentTask<TParams, TProgress, TResult>, Boolean, Exception, Boolean> listener);
+
+	IFluentTask<TParams, TProgress, TResult> onError(ITwoParameterCallable<Boolean, Exception, Boolean> listener);
 	
 	IFluentTask<TParams, TProgress, TResult> cancel(boolean interrupt);
 	boolean isCancelled();
@@ -29,31 +30,4 @@ public interface IFluentTask<TParams, TProgress, TResult> {
 	IFluentTask<TParams, TProgress, TResult> execute(TParams... params);
 
 	IFluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params);
-
-	/* Events */
-	interface OnStartListener<TParams, TProgress, TResult> {
-		void onStart(IFluentTask<TParams, TProgress, TResult> owner);
-	}
-	
-	interface OnExecuteListener<TParams, TProgress, TResult> {
-		@SuppressWarnings("unchecked")
-		TResult onExecute(IFluentTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
-	}
-	
-	interface OnProgressListener<TParams, TProgress, TResult> {
-		@SuppressWarnings("unchecked")
-		void onReportProgress(IFluentTask<TParams, TProgress, TResult> owner, TProgress...progresses);
-	}
-	
-	interface OnCompleteListener<TParams, TProgress, TResult> {
-		void onComplete(IFluentTask<TParams, TProgress, TResult> owner, TResult result);
-	}
-	
-	interface OnCancelListener<TParams, TProgress, TResult> {
-		void onCancel(IFluentTask<TParams, TProgress, TResult> owner, TResult result);
-	}
-	
-	interface OnErrorListener<TParams, TProgress, TResult> {
-		boolean onError(IFluentTask<TParams, TProgress, TResult> owner, boolean isHandled, Exception innerException);
-	}
 }

@@ -51,10 +51,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
-import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
-import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
+import com.lasthopesoftware.threading.OnExecuteListener;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 import org.slf4j.Logger;
@@ -220,10 +220,10 @@ public class PlaybackService extends Service implements
 	}
 	
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetActiveLibrary(context, new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 				result.setRepeating(isRepeating);
 				LibrarySession.SaveLibrary(context, result);
@@ -337,10 +337,10 @@ public class PlaybackService extends Service implements
 	}
 		
 	private void restorePlaylistControllerFromStorage(final IOneParameterRunnable<Boolean> onPlaylistRestored) {
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
 					
 				final Runnable onPlaylistInitialized = new Runnable() {
@@ -436,10 +436,10 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
 				synchronized (syncPlaylistControllerObject) {
 					mLogger.info("Initializing playlist.");
 					mPlaylistString = playlistString;
@@ -449,10 +449,10 @@ public class PlaybackService extends Service implements
 						mPlaylistString = result.getSavedTracksString();
 					
 					result.setSavedTracksString(mPlaylistString);
-					LibrarySession.SaveLibrary(mStreamingMusicService, result, new OnCompleteListener<Void, Void, Library>() {
+					LibrarySession.SaveLibrary(mStreamingMusicService, result, new ITwoParameterRunnable<IFluentTask<Void,Void,Library>, Library>() {
 						
 						@Override
-						public void onComplete(IFluentTask<Void, Void, Library> owner, Library result) {
+						public void run(IFluentTask<Void, Void, Library> owner, Library result) {
 							if (mPlaylistController != null) {
 								mPlaylistController.pause();
 								mPlaylistController.release();
@@ -677,10 +677,10 @@ public class PlaybackService extends Service implements
         	
         	if (mPlaylistController.resume()) return;
         	
-        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
 		        @Override
-		        public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+		        public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
 			        startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
 		        }
 	        });
@@ -781,10 +781,10 @@ public class PlaybackService extends Service implements
 						return;
 					}
 					
-					LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+					LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 						
 						@Override
-						public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+						public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
 							startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
 						}
 					});
@@ -889,10 +889,10 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
 
 				result.setSavedTracksString(controller.getPlaylistString());
 				result.setNowPlayingId(controller.getCurrentPosition());
@@ -922,10 +922,10 @@ public class PlaybackService extends Service implements
 				return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
 			}
 		});
-		getNotificationPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+		getNotificationPropertiesTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,String>, String>() {
 			
 			@Override
-			public void onComplete(IFluentTask<Void, Void, String> owner, String result) {
+			public void run(IFluentTask<Void, Void, String> owner, String result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
 				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
@@ -955,37 +955,37 @@ public class PlaybackService extends Service implements
 			}
 		});
 		
-		getTrackPropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, SparseArray<Object>>() {
+		getTrackPropertiesTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,SparseArray<Object>>, SparseArray<Object>>() {
 			
 			@Override
-			public void onComplete(IFluentTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
+			public void run(IFluentTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
 				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
-				final String artist = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-				final String album = (String)result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-				final String title = (String)result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
-				final Long duration = (Long)result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
-				final Integer trackNumber = (Integer)result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
+				final String artist = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+				final String album = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+				final String title = (String) result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
+				final Long duration = (Long) result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
+				final Integer trackNumber = (Integer) result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
 				
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);
 				pebbleIntent.putExtra("album", album);
 				pebbleIntent.putExtra("track", title);
-			    
-			    sendBroadcast(pebbleIntent);
+
+				sendBroadcast(pebbleIntent);
 
 				final Intent scrobbleDroidIntent = getScrobbleIntent(true);
 				scrobbleDroidIntent.putExtra("artist", artist);
 				scrobbleDroidIntent.putExtra("album", album);
 				scrobbleDroidIntent.putExtra("track", title);
-				scrobbleDroidIntent.putExtra("secs", (int)(duration / 1000));
+				scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
 				if (trackNumber != null)
 					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
-			    
+
 				sendBroadcast(scrobbleDroidIntent);
 				
 				if (mRemoteControlClient == null) return;
-								
+
 				final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
@@ -995,15 +995,15 @@ public class PlaybackService extends Service implements
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
 				
-				if (android.os.Build.VERSION.SDK_INT < 19) return;		
+				if (android.os.Build.VERSION.SDK_INT < 19) return;
 				
 				ImageProvider
 						.getImage(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), playingFile)
-						.onComplete(new OnCompleteListener<Void, Void, Bitmap>() {
+						.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 							@TargetApi(Build.VERSION_CODES.KITKAT)
 							@Override
-							public void onComplete(IFluentTask<Void, Void, Bitmap> owner, Bitmap result) {
+							public void run(IFluentTask<Void, Void, Bitmap> owner, Bitmap result) {
 								// Track the remote client bitmap and recycle it in case the remote control client
 								// does not properly recycle the bitmap
 								if (mRemoteClientBitmap != null) mRemoteClientBitmap.recycle();

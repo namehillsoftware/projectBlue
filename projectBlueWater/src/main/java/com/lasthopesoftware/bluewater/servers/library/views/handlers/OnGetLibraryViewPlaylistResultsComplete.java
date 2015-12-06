@@ -27,8 +27,8 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         this.activity = activity;
     }
 
-    public void onComplete(IFluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
-        super.onComplete(owner, result);
+    public void run(IFluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
+        super.run(owner, result);
         if (result == null) return;
 
         listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));

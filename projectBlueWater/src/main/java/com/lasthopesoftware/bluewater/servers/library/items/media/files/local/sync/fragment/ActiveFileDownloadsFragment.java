@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
@@ -56,13 +57,13 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
 
-		LibrarySession.GetActiveLibrary(getActivity(), new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(getActivity(), new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
+			public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
-				storedFileAccess.getDownloadingStoredFiles(new IFluentTask.OnCompleteListener<Void, Void, List<StoredFile>>() {
+				storedFileAccess.getDownloadingStoredFiles(new ITwoParameterRunnable<IFluentTask<Void,Void,List<StoredFile>>, List<StoredFile>>() {
 					@Override
-					public void onComplete(IFluentTask<Void, Void, List<StoredFile>> owner, final List<StoredFile> storedFiles) {
+					public void run(IFluentTask<Void, Void, List<StoredFile>> owner, final List<StoredFile> storedFiles) {
 						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), storedFiles);
 
 						if (onFileDownloadedReceiver != null)
@@ -102,9 +103,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
-								storedFileAccess.getStoredFile(storedFileId, new IFluentTask.OnCompleteListener<Void, Void, StoredFile>() {
+								storedFileAccess.getStoredFile(storedFileId, new ITwoParameterRunnable<IFluentTask<Void,Void,StoredFile>, StoredFile>() {
 									@Override
-									public void onComplete(IFluentTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
+									public void run(IFluentTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
 										if (storedFile != null)
 											activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
 									}

@@ -9,8 +9,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +43,8 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-    public void isItemMarkedForSync(final IItem item, IFluentTask.OnCompleteListener<Void, Void, Boolean> isItemSyncedResult) {
-        final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, Boolean>() {
+    public void isItemMarkedForSync(final IItem item, ITwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
+        final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<>(new OnExecuteListener<Void, Void, Boolean>() {
             @Override
             public Boolean onExecute(IFluentTask<Void, Void, Boolean> owner, Void... params) throws Exception {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -56,7 +58,7 @@ public class StoredItemAccess {
         });
 
         if (isItemSyncedResult != null)
-            isItemSyncedTask.addOnCompleteListener(isItemSyncedResult);
+            isItemSyncedTask.onComplete(isItemSyncedResult);
 
         isItemSyncedTask.execute(RepositoryAccessHelper.databaseExecutor);
     }
@@ -115,8 +117,8 @@ public class StoredItemAccess {
         });
     }
 
-    public void getStoredItems(IFluentTask.OnCompleteListener<Void, Void, List<StoredItem>> onStoredListsRetrieved) {
-        final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, List<StoredItem>>() {
+    public void getStoredItems(ITwoParameterRunnable<IFluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
+        final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<>(new OnExecuteListener<Void, Void, List<StoredItem>>() {
             @Override
             public List<StoredItem> onExecute(IFluentTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
 	            final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -134,7 +136,7 @@ public class StoredItemAccess {
         });
 
         if (onStoredListsRetrieved != null)
-            getAllStoredItemsTasks.addOnCompleteListener(onStoredListsRetrieved);
+            getAllStoredItemsTasks.onComplete(onStoredListsRetrieved);
 
         getAllStoredItemsTasks.execute(RepositoryAccessHelper.databaseExecutor);
     }

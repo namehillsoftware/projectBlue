@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
@@ -120,20 +121,20 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
             if (PlaybackService.getPlaylistController() != null)
                 PlaybackService.getPlaylistController().addFile(mFile);
 
-            LibrarySession.GetActiveLibrary(view.getContext(), new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+            LibrarySession.GetActiveLibrary(view.getContext(), new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
                 @Override
-                public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+                public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
                     if (result == null) return;
                     String newFileString = result.getSavedTracksString();
                     if (!newFileString.endsWith(";")) newFileString += ";";
                     newFileString += mFile.getKey() + ";";
                     result.setSavedTracksString(newFileString);
 
-                    LibrarySession.SaveLibrary(view.getContext(), result, new IFluentTask.OnCompleteListener<Void, Void, Library>() {
+                    LibrarySession.SaveLibrary(view.getContext(), result, new ITwoParameterRunnable<IFluentTask<Void,Void,Library>, Library>() {
 
                         @Override
-                        public void onComplete(IFluentTask<Void, Void, Library> owner, Library result) {
+                        public void run(IFluentTask<Void, Void, Library> owner, Library result) {
                             Toast.makeText(view.getContext(), view.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
                         }
                     });

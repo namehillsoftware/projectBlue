@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
-import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

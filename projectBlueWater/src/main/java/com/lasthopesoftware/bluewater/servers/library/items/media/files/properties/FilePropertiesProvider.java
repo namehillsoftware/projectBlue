@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
-import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;

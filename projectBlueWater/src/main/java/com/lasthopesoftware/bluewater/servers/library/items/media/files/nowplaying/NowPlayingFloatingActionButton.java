@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 /**
@@ -65,10 +66,10 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetActiveLibrary(getContext(), new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(getContext(), new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
             @Override
-            public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
+            public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
                 isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
                 setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 

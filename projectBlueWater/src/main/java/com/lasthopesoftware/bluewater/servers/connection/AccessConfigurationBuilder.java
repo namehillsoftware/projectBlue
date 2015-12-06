@@ -7,8 +7,10 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -31,11 +33,11 @@ public class AccessConfigurationBuilder {
 	private static final int stdTimeoutTime = 30000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final Library library, final IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) {
+	public static void buildConfiguration(final Context context, final Library library, final ITwoParameterRunnable<IFluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) {
 		buildConfiguration(context, library, stdTimeoutTime, onBuildComplete);
 	}
 
-	private static void buildConfiguration(final Context context, final Library library, int timeout, final IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration> onBuildComplete) throws NullPointerException {
+	private static void buildConfiguration(final Context context, final Library library, int timeout, final ITwoParameterRunnable<IFluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
@@ -47,28 +49,28 @@ public class AccessConfigurationBuilder {
 			return;
 		}
 
-		buildAccessConfiguration(library, timeout, new IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
+		buildAccessConfiguration(library, timeout, new ITwoParameterRunnable<IFluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
 
 			@Override
-			public void onComplete(final IFluentTask<Void, Void, AccessConfiguration> builderOwner, final AccessConfiguration accessConfiguration) {
+			public void run(final IFluentTask<Void, Void, AccessConfiguration> builderOwner, final AccessConfiguration accessConfiguration) {
 				if (accessConfiguration == null) {
 					executeReturnNullTask(onBuildComplete);
 					return;
 				}
 
-				ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), new IFluentTask.OnCompleteListener<Integer, Void, Boolean>() {
+				ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), new ITwoParameterRunnable<IFluentTask<Integer, Void, Boolean>, Boolean>() {
 					@Override
-					public void onComplete(IFluentTask<Integer, Void, Boolean> owner, Boolean isConnected) {
+					public void run(IFluentTask<Integer, Void, Boolean> owner, Boolean isConnected) {
 						if (onBuildComplete != null)
-							onBuildComplete.onComplete(builderOwner, accessConfiguration);
+							onBuildComplete.run(builderOwner, accessConfiguration);
 					}
 				});
 			}
 		});
 	}
 
-	private static void executeReturnNullTask(IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration> onReturnFalseListener) {
-		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, AccessConfiguration>() {
+	private static void executeReturnNullTask(ITwoParameterRunnable<IFluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onReturnFalseListener) {
+		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<>(new OnExecuteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
 			public AccessConfiguration onExecute(IFluentTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
@@ -77,18 +79,18 @@ public class AccessConfigurationBuilder {
 
 		});
 
-		returnFalseTask.addOnCompleteListener(onReturnFalseListener);
+		returnFalseTask.onComplete(onReturnFalseListener);
 		returnFalseTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private static void buildAccessConfiguration(final Library library, final int timeout, IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final Library library, final int timeout, ITwoParameterRunnable<IFluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");
 
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, AccessConfiguration>() {
+		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<>(new OnExecuteListener<Void, Void, AccessConfiguration>() {
 
 			@Override
 			public AccessConfiguration onExecute(IFluentTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
@@ -143,7 +145,7 @@ public class AccessConfigurationBuilder {
 		});
 
 		if (onGetAccessComplete != null)
-			mediaCenterAccessTask.addOnCompleteListener(onGetAccessComplete);
+			mediaCenterAccessTask.onComplete(onGetAccessComplete);
 
 		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}

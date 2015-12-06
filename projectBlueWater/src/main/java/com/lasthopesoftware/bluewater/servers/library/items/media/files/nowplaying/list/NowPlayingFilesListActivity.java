@@ -23,10 +23,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
-import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
-import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.util.ArrayList;
 
@@ -93,7 +93,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
+	private static class OnGetLibraryNowComplete implements ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -106,7 +106,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+		public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
 			if (library == null) return;
 
 	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
@@ -117,23 +117,23 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 				}
 			});
 	        
-	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<IFile>>() {
-				
-				@Override
-				public void onComplete(IFluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
+	        getFileStringTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
+
+		        @Override
+		        public void run(IFluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
+			        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
 			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 
-                    final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-                    mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-			        
+			        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+			        mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+
 			        if (library.getNowPlayingId() < result.size())
-			        	mFileListView.setSelection(library.getNowPlayingId());
-			        
+				        mFileListView.setSelection(library.getNowPlayingId());
+
 			        mFileListView.setVisibility(View.VISIBLE);
 			        mLoadingProgressBar.setVisibility(View.INVISIBLE);
-				}
-			});
+		        }
+	        });
 	        
 	        getFileStringTask.execute();
 		}

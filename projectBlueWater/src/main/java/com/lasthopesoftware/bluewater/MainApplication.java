@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 import org.slf4j.Logger;
@@ -56,9 +57,9 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
-				LibrarySession.GetActiveLibrary(context, new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+				LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 					@Override
-					public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
+					public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;

@@ -145,7 +145,6 @@ public class PollConnection {
 	}
 	
 	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
-	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnStartListener)
 	 */
 	public void addOnConnectionLostListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
@@ -154,7 +153,6 @@ public class PollConnection {
 	}
 
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
-	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
 	public void addOnConnectionRegainedListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionRegainedListeners) {
@@ -163,7 +161,6 @@ public class PollConnection {
 	}
 	
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
-	 * @see com.lasthopesoftware.threading.ISimpleTask#addOnStartListener(com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener)
 	 */
 	public void addOnPollingCancelledListener(Runnable listener) {
 		synchronized(mUniqueOnCancelListeners) {

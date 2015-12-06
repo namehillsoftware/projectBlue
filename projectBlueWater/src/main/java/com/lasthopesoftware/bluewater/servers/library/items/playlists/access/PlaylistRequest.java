@@ -20,7 +20,7 @@ class PlaylistRequest {
 	
 		try {			
 			final SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-	    	PlaylistXmlHandler jrPlaylistXml = new PlaylistXmlHandler(connectionProvider);
+	    	PlaylistXmlHandler jrPlaylistXml = new PlaylistXmlHandler();
 	    	sp.parse(is, jrPlaylistXml);
 	    	
 	    	return jrPlaylistXml.getPlaylists();

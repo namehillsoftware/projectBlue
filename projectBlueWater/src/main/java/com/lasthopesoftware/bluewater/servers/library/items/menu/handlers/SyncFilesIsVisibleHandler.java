@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 /**
@@ -37,13 +38,13 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 		v.removeOnLayoutChangeListener(this);
 
 		final Context context = notifyOnFlipViewAnimator.getContext();
-		LibrarySession.GetActiveLibrary(context, new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
-				syncListManager.isItemMarkedForSync(item, new IFluentTask.OnCompleteListener<Void, Void, Boolean>() {
+				syncListManager.isItemMarkedForSync(item, new ITwoParameterRunnable<IFluentTask<Void,Void,Boolean>, Boolean>() {
 					@Override
-					public void onComplete(IFluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
+					public void run(IFluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
 						if (isSynced)
 							syncButton.setImageDrawable(getSyncOnDrawable(notifyOnFlipViewAnimator.getContext()));
 

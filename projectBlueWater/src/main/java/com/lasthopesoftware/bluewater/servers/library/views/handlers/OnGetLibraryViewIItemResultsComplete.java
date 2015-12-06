@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * Created by david on 11/5/15.
  */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements IFluentTask.OnCompleteListener<Void, Void, List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ITwoParameterRunnable<IFluentTask<Void, Void, List<T>>, List<T>> {
 
 	private static final String PREFS_KEY = SpecialValueHelpers.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -46,7 +47,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     }
 
     @Override
-    public void onComplete(IFluentTask<Void, Void, List<T>> owner, List<T> result) {
+    public void run(IFluentTask<Void, Void, List<T>> owner, List<T> result) {
         if (result == null) return;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());

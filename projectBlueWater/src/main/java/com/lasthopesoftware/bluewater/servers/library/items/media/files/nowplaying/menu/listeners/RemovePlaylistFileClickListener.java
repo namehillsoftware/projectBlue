@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.Abstra
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
@@ -33,10 +34,10 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View view) {
-        LibrarySession.GetActiveLibrary(view.getContext(), new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(view.getContext(), new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
             @Override
-            public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+            public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
                 if (library == null) return;
 
                 // It could take quite a while to split string and put it back together, so let's do it
@@ -61,10 +62,10 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
 
                         library.setSavedTracksString(s);
 
-                        LibrarySession.SaveLibrary(view.getContext(), library, new IFluentTask.OnCompleteListener<Void, Void, Library>() {
+                        LibrarySession.SaveLibrary(view.getContext(), library, new ITwoParameterRunnable<IFluentTask<Void,Void,Library>, Library>() {
 
                             @Override
-                            public void onComplete(IFluentTask<Void, Void, Library> owner, Library result) {
+                            public void run(IFluentTask<Void, Void, Library> owner, Library result) {
                                 if (onPlaylistFileRemoved != null)
                                     onPlaylistFileRemoved.run(position);
                             }

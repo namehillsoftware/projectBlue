@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
@@ -56,10 +57,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final IFluentTask.OnCompleteListener<Void, Void, List<Playlist>> onPlaylistProviderComplete = new IFluentTask.OnCompleteListener<Void, Void, List<Playlist>>() {
+		final ITwoParameterRunnable<IFluentTask<Void, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new ITwoParameterRunnable<IFluentTask<Void,Void,List<Playlist>>, List<Playlist>>() {
 
 			@Override
-			public void onComplete(IFluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
+			public void run(IFluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
 
 				BuildPlaylistView(result);

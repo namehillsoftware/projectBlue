@@ -47,8 +47,8 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStati
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.IFluentTask;
-import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
 import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.LoggerFactory;
@@ -90,13 +90,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final Lazy<OnCompleteListener<Void, Void, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<OnCompleteListener<Void, Void, List<Item>>>() {
+	private final Lazy<ITwoParameterRunnable<IFluentTask<Void, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<ITwoParameterRunnable<IFluentTask<Void, Void, List<Item>>, List<Item>>>() {
 		@Override
-		public OnCompleteListener<Void, Void, List<Item>> call() throws Exception {
-			return new OnCompleteListener<Void, Void, List<Item>>() {
+		public ITwoParameterRunnable<IFluentTask<Void, Void, List<Item>>, List<Item>> call() throws Exception {
+			return new ITwoParameterRunnable<IFluentTask<Void, Void, List<Item>>, List<Item>>() {
 
 				@Override
-				public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+				public void run(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
@@ -248,10 +248,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library result) {
+			public void run(IFluentTask<Integer, Void, Library> owner, final Library result) {
 				// No library, must bail out
 				if (result == null) {
 					finish();
@@ -270,10 +270,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
+				.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,List<Item>>, List<Item>>() {
 
 			        @Override
-			        public void onComplete(IFluentTask<Void, Void, List<Item>> owner, final List<Item> items) {
+			        public void run(IFluentTask<Void, Void, List<Item>> owner, final List<Item> items) {
 				        if (isStopped || items == null) return;
 
 				        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -358,10 +358,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);
@@ -404,9 +404,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         savedInstanceState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 			@Override
-			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
+			public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
 				if (library != null)
 					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}
@@ -423,10 +423,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     private void restoreScrollPosition(final Bundle savedInstanceState) {
         if (viewPager == null) return;
 
-        LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
 
 	        @Override
-	        public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
+	        public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
 		        final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 		        if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

@@ -12,8 +12,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -45,8 +47,8 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, IFluentTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
-		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
+	public void getStoredFile(final int storedFileId, ITwoParameterRunnable<IFluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<>(new OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -63,16 +65,16 @@ public class StoredFileAccess {
 		});
 
 		if (onStoredFileRetrieved != null)
-			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
+			getStoredFileTask.onComplete(onStoredFileRetrieved);
 
 		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public void getStoredFile(final IFile serviceFile, IFluentTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
+	public void getStoredFile(final IFile serviceFile, ITwoParameterRunnable<IFluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<>(getFileExecutor(serviceFile));
 
 		if (onStoredFileRetrieved != null)
-			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
+			getStoredFileTask.onComplete(onStoredFileRetrieved);
 
 		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -81,8 +83,8 @@ public class StoredFileAccess {
 		return FluentTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, getFileExecutor(serviceFile)).get();
 	}
 
-	private IFluentTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
-		return new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
+	private OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
+		return new OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -99,8 +101,8 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(IFluentTask.OnCompleteListener<Void, Void, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
-		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, List<StoredFile>>() {
+	public void getDownloadingStoredFiles(ITwoParameterRunnable<IFluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<>(new OnExecuteListener<Void, Void, List<StoredFile>>() {
 			@Override
 			public List<StoredFile> onExecute(IFluentTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -117,7 +119,7 @@ public class StoredFileAccess {
 		});
 
 		if (onGetDownloadingStoredFilesComplete != null)
-			getDownloadingStoredFilesTask.addOnCompleteListener(onGetDownloadingStoredFilesComplete);
+			getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete);
 
 		getDownloadingStoredFilesTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -220,7 +222,7 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(final IFile file) {
-		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = FluentTask.executeNew(new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
+		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = FluentTask.executeNew(new OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
