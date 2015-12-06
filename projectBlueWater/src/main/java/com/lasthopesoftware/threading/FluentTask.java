@@ -23,7 +23,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		@SafeVarargs
 		@Override
 		protected final TResult doInBackground(TParams... params) {
-			return doInBackground(params);
+			return FluentTask.this.doInBackground(params);
 		}
 
 		@Override
