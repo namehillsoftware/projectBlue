@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import java.util.List;
 
@@ -52,13 +52,13 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+    	LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 		    @Override
-		    public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
-			    final ITwoParameterRunnable<IFluentTask<Void,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new ITwoParameterRunnable<IFluentTask<Void,Void,List<Item>>, List<Item>>() {
+		    public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
+			    final ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
 
 				    @Override
-				    public void run(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+				    public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 					    if (result == null || result.size() == 0) return;
 					
 					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);

@@ -11,21 +11,22 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
-public class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TParams, TProgress, TResult> {
-
-	private TResult mResult;
+public class FluentTask<TParams, TProgress, TResult> {
 
 	private volatile boolean isErrorHandled = false;
-	private volatile SimpleTaskState state = SimpleTaskState.INITIALIZED;
-	private final OnExecuteListener<TParams, TProgress, TResult> mOnExecuteListener;
 
-	private ITwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
+	private volatile SimpleTaskState state = SimpleTaskState.INITIALIZED;
+
+	private final OnExecuteListener<TParams, TProgress, TResult> onExecuteListener;
+	private ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private IOneParameterRunnable<TResult> oneParameterOnCompleteListener;
-	private IThreeParameterCallable<IFluentTask<TParams, TProgress, TResult>, Boolean, Exception, Boolean> threeParameterOnErrorListener;
+	private IThreeParameterCallable<FluentTask<TParams, TProgress, TResult>, Boolean, Exception, Boolean> threeParameterOnErrorListener;
 	private ITwoParameterCallable<Boolean, Exception, Boolean> twoParameterOnErrorListener;
+
+	private TResult result;
 	private Exception exception;
 
-	private Lazy<AsyncTask<TParams, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncTask<TParams, TProgress, TResult>>() {
+	private final Lazy<AsyncTask<TParams, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncTask<TParams, TProgress, TResult>>() {
 		@Override
 		public AsyncTask<TParams, TProgress, TResult> call() throws Exception {
 			return new AsyncTask<TParams, TProgress, TResult>() {
@@ -76,18 +77,16 @@ public class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TPar
 	}
 	
 	public FluentTask(OnExecuteListener<TParams, TProgress, TResult> onExecuteListener) {
-		mOnExecuteListener = onExecuteListener;
+		this.onExecuteListener = onExecuteListener;
 	}
 		
 	@SafeVarargs
-	@Override
-	public final IFluentTask<TParams, TProgress, TResult> execute(TParams... params) {
+	public final FluentTask<TParams, TProgress, TResult> execute(TParams... params) {
 		return execute(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
-	public final IFluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
+	public final FluentTask<TParams, TProgress, TResult> execute(Executor exec, TParams... params) {
 		state = SimpleTaskState.EXECUTING;
 		task.getObject().executeOnExecutor(exec, params);
 		return this;
@@ -96,16 +95,15 @@ public class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TPar
 	@SafeVarargs
 	private final TResult executeListener(TParams... params) {	
 		try {
-			mResult = mOnExecuteListener.onExecute(this, params);
+			result = onExecuteListener.onExecute(this, params);
 			state = SimpleTaskState.SUCCESS;
 		} catch (Exception exception) {
 			this.exception = exception;
 			state = SimpleTaskState.ERROR;
 		}
-		return mResult;
+		return result;
 	}
-	
-	@Override
+
 	public Exception getException() {
 		return exception;
 	}
@@ -121,8 +119,7 @@ public class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TPar
 						(twoParameterOnErrorListener != null && twoParameterOnErrorListener.call(isErrorHandled, exception)));
 
 	}
-	
-	@Override
+
 	public TResult get() throws ExecutionException, InterruptedException {
 		if (state != SimpleTaskState.EXECUTING) execute();
 		final TResult result = task.getObject().get();
@@ -132,48 +129,41 @@ public class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TPar
 		return result; 
 	}
 
-	@Override
-	public IFluentTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
+	public FluentTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
 		task.getObject().cancel(interrupt);
 		return this;
 	}
-	
-	@Override
+
 	public boolean isCancelled() {
 		return state == SimpleTaskState.CANCELLED;
 	}
 
-	@Override
 	public SimpleTaskState getState() {
 		return state;
 	}
-	
-	@Override
-	public IFluentTask<TParams, TProgress, TResult> onComplete(ITwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult> listener) {
-		if (state == SimpleTaskState.SUCCESS) listener.run(this, mResult);
+
+	public FluentTask<TParams, TProgress, TResult> onComplete(ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {
+		if (state == SimpleTaskState.SUCCESS) listener.run(this, result);
 
 		twoParameterOnCompleteListener = listener;
 		return this;
 	}
 
-	@Override
-	public IFluentTask<TParams, TProgress, TResult> onComplete(IOneParameterRunnable<TResult> listener) {
-		if (state == SimpleTaskState.SUCCESS) listener.run(mResult);
+	public FluentTask<TParams, TProgress, TResult> onComplete(IOneParameterRunnable<TResult> listener) {
+		if (state == SimpleTaskState.SUCCESS) listener.run(result);
 
 		oneParameterOnCompleteListener = listener;
 		return this;
 	}
-	
-	@Override
-	public IFluentTask<TParams, TProgress, TResult> onError(IThreeParameterCallable<IFluentTask<TParams, TProgress, TResult>, Boolean, Exception, Boolean> listener) {
+
+	public FluentTask<TParams, TProgress, TResult> onError(IThreeParameterCallable<FluentTask<TParams, TProgress, TResult>, Boolean, Exception, Boolean> listener) {
 		if (state == SimpleTaskState.ERROR) listener.call(this, isErrorHandled, exception);
 
 		threeParameterOnErrorListener = listener;
 		return this;
 	}
 
-	@Override
-	public IFluentTask<TParams, TProgress, TResult> onError(ITwoParameterCallable<Boolean, Exception, Boolean> listener) {
+	public FluentTask<TParams, TProgress, TResult> onError(ITwoParameterCallable<Boolean, Exception, Boolean> listener) {
 		if (state == SimpleTaskState.ERROR) listener.call(isErrorHandled, exception);
 
 		twoParameterOnErrorListener = listener;

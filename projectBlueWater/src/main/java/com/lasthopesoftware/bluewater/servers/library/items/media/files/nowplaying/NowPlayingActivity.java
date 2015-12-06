@@ -44,7 +44,7 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -194,10 +194,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		shuffleButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				LibrarySession.GetActiveLibrary(v.getContext(), new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+				LibrarySession.GetActiveLibrary(v.getContext(), new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 					@Override
-					public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
+					public void run(FluentTask<Integer, Void, Library> owner, Library result) {
 						if (result == null) return;
 						final boolean isRepeating = !result.isRepeating();
 						PlaybackService.setIsRepeating(v.getContext(), isRepeating);
@@ -262,10 +262,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mPause.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				final String savedTracksString = library.getSavedTracksString();
 				if (savedTracksString == null || savedTracksString.isEmpty()) return;
 
@@ -289,10 +289,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating());
 			}
@@ -363,10 +363,10 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				getFileImageTask =
 						ImageProvider
 								.getImage(this, SessionConnection.getSessionConnectionProvider(), file)
-								.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,Bitmap>, Bitmap>() {
+								.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 									@Override
-									public void run(IFluentTask<Void, Void, Bitmap> owner, Bitmap result) {
+									public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
 										if (viewStructure.nowPlayingImage != null)
 											viewStructure.nowPlayingImage.recycle();
 										viewStructure.nowPlayingImage = result;

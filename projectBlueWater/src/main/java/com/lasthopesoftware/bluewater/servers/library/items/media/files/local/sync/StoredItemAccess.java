@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredIte
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
@@ -43,10 +42,10 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-    public void isItemMarkedForSync(final IItem item, ITwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
+    public void isItemMarkedForSync(final IItem item, ITwoParameterRunnable<FluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
         final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<>(new OnExecuteListener<Void, Void, Boolean>() {
             @Override
-            public Boolean onExecute(IFluentTask<Void, Void, Boolean> owner, Void... params) throws Exception {
+            public Boolean onExecute(FluentTask<Void, Void, Boolean> owner, Void... params) throws Exception {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 	            try {
 		            final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
@@ -117,10 +116,10 @@ public class StoredItemAccess {
         });
     }
 
-    public void getStoredItems(ITwoParameterRunnable<IFluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
+    public void getStoredItems(ITwoParameterRunnable<FluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
         final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<>(new OnExecuteListener<Void, Void, List<StoredItem>>() {
             @Override
-            public List<StoredItem> onExecute(IFluentTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
+            public List<StoredItem> onExecute(FluentTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
 	            final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 	            try {
                     final Dao<StoredItem, Integer> storedItemAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);

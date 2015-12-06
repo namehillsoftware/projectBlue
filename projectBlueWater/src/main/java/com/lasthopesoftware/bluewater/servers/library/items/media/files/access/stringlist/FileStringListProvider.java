@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileListParameters;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class FileStringListProvider extends AbstractProvider<String> {
 	}
 
 	@Override
-	protected String getData(IFluentTask<Void, Void, String> task, HttpURLConnection connection) throws Exception {
+	protected String getData(FluentTask<Void, Void, String> task, HttpURLConnection connection) throws Exception {
 		final InputStream inputStream = connection.getInputStream();
 		try {
 			return IOUtils.toString(inputStream);

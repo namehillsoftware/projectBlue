@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
@@ -25,15 +24,15 @@ public class ConnectionTester {
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, ITwoParameterRunnable<IFluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(ConnectionProvider connectionProvider, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
 		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
 	}
 
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ITwoParameterRunnable<IFluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
 		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
 
 			@Override
-			public Boolean onExecute(IFluentTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+			public Boolean onExecute(FluentTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 				final HttpURLConnection conn = connectionProvider.getConnection("Alive");
 				if (conn == null) return Boolean.FALSE;
 

@@ -5,7 +5,6 @@ import android.util.SparseIntArray;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.io.InputStream;
@@ -47,7 +46,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
     }
 
 	@Override
-	public Integer onExecute(IFluentTask<Void, Void, Integer> owner, Void... params) throws Exception {
+	public Integer onExecute(FluentTask<Void, Void, Integer> owner, Void... params) throws Exception {
         if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
             return getCachedRevision(connectionProvider);
         }

@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
@@ -415,7 +414,7 @@ public class PlaybackFile implements
 		}
 		
 		@Override
-		public Void onExecute(IFluentTask<Void, Void, Void> owner, Void... params) throws Exception {
+		public Void onExecute(FluentTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
 				final String numberPlaysString = mFile.getRefreshedProperty(FilePropertiesProvider.NUMBER_PLAYS);
 				

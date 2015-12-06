@@ -5,5 +5,5 @@ package com.lasthopesoftware.threading;
  */
 public interface OnExecuteListener<TParams, TProgress, TResult> {
 
-	TResult onExecute(IFluentTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
+	TResult onExecute(FluentTask<TParams, TProgress, TResult> owner, TParams... params) throws Exception;
 }

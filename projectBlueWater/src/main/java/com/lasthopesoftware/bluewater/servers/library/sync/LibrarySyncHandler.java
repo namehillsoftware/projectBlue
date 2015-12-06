@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredIte
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,10 +72,10 @@ public class LibrarySyncHandler {
 
 	public void startSync() {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-		storedItemAccess.getStoredItems(new ITwoParameterRunnable<IFluentTask<Void,Void,List<StoredItem>>, List<StoredItem>>() {
+		storedItemAccess.getStoredItems(new ITwoParameterRunnable<FluentTask<Void,Void,List<StoredItem>>, List<StoredItem>>() {
 
 			@Override
-			public void run(IFluentTask<Void, Void, List<StoredItem>> owner, final List<StoredItem> storedItems) {
+			public void run(FluentTask<Void, Void, List<StoredItem>> owner, final List<StoredItem> storedItems) {
 				AsyncTask
 					.THREAD_POOL_EXECUTOR
 					.execute(new Runnable() {

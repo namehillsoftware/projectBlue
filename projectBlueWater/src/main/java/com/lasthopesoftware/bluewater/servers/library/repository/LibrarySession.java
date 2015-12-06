@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
@@ -31,12 +30,12 @@ public class LibrarySession {
 		SaveLibrary(context, library, null);
 	}
 
-	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<IFluentTask<Void, Void, Library>, Library> onSaveComplete) {
+	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<>(new OnExecuteListener<Void, Void, Library>() {
 
 			@Override
-			public Library onExecute(IFluentTask<Void, Void, Library> owner, Void... params) throws Exception {
+			public Library onExecute(FluentTask<Void, Void, Library> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
@@ -58,32 +57,32 @@ public class LibrarySession {
 		writeToDatabaseTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static void GetActiveLibrary(final Context context, final ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
+	public static void GetActiveLibrary(final Context context, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentTask<>(new OnExecuteListener<Integer, Void, Library>() {
 
 			@Override
-			public Library onExecute(IFluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+			public Library onExecute(FluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
 				return GetActiveLibrary(context);
 			}
 		}), onGetLibraryComplete);
 	}
 
-	public static void GetLibrary(final Context context, final int libraryId, final ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
+	public static void GetLibrary(final Context context, final int libraryId, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentTask<>(new OnExecuteListener<Integer, Void, Library>() {
 
 			@Override
-			public Library onExecute(IFluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+			public Library onExecute(FluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
 				return GetLibrary(context, libraryId);
 			}
 		}), onGetLibraryComplete);
 	}
 
-	private static void ExecuteGetLibrary(FluentTask<Integer, Void, Library> getLibraryTask, final ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
+	private static void ExecuteGetLibrary(FluentTask<Integer, Void, Library> getLibraryTask, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 
-		getLibraryTask.onComplete(new ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library>() {
+		getLibraryTask.onComplete(new ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
 				if (onGetLibraryComplete != null)
 					onGetLibraryComplete.run(owner, result);
 			}
@@ -116,11 +115,11 @@ public class LibrarySession {
 		return null;
 	}
 	
-	public static void GetLibraries(final Context context, ITwoParameterRunnable<IFluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
+	public static void GetLibraries(final Context context, ITwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
 		final FluentTask<Void, Void, List<Library>> getLibrariesTask = new FluentTask<>(new OnExecuteListener<Void, Void, List<Library>>() {
 			
 			@Override
-			public List<Library> onExecute(IFluentTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
+			public List<Library> onExecute(FluentTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();
@@ -140,16 +139,16 @@ public class LibrarySession {
 		getLibrariesTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 		
-	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> onLibraryChangeComplete) {
+	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1)) {
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
 		}
 		
-		GetActiveLibrary(context, new ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library>() {
+		GetActiveLibrary(context, new ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
+			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
 				final Intent broadcastIntent = new Intent(libraryChosenEvent);
 				broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
 				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);

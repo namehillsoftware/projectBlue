@@ -5,7 +5,6 @@ import android.util.LruCache;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
@@ -121,7 +120,7 @@ public class FilePropertiesProvider {
 			final SortedMap<String, String> filePropertiesResult = FluentTask.executeNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String, String>>() {
 				
 				@Override
-				public SortedMap<String, String> onExecute(IFluentTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+				public SortedMap<String, String> onExecute(FluentTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
 					final Integer revision = RevisionChecker.getRevision(connectionProvider);
 					if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
 						return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());

@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	}
 
 	@Override
-	protected Bitmap getData(IFluentTask<Void, Void, Bitmap> task, HttpURLConnection connection) throws Exception {
+	protected Bitmap getData(FluentTask<Void, Void, Bitmap> task, HttpURLConnection connection) throws Exception {
 		if (task.isCancelled()) return getFillerBitmap();
 
 		String uniqueKey;

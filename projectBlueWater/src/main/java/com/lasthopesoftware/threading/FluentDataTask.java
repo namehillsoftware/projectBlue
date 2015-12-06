@@ -12,7 +12,7 @@ class FluentDataTask<TResult> extends FluentTask<String, Void, TResult> {
 		super(new OnExecuteListener<String, Void, TResult>() {
 
 			@Override
-			public TResult onExecute(IFluentTask<String, Void, TResult> owner, String... params) throws Exception {
+			public TResult onExecute(FluentTask<String, Void, TResult> owner, String... params) throws Exception {
 
 				final HttpURLConnection conn = connectionProvider.getConnection(params);
 				try {

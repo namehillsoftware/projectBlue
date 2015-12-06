@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.util.ArrayList;
@@ -93,7 +92,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements ITwoParameterRunnable<IFluentTask<Integer, Void, Library>, Library> {
+	private static class OnGetLibraryNowComplete implements ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -106,21 +105,21 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
+		public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 			if (library == null) return;
 
 	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
 				
 				@Override
-				public ArrayList<IFile> onExecute(IFluentTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
+				public ArrayList<IFile> onExecute(FluentTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
 					return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
 				}
 			});
 	        
-	        getFileStringTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
+	        getFileStringTask.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
 
 		        @Override
-		        public void run(IFluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
+		        public void run(FluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
 			        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
 			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 

@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.util.ArrayList;
@@ -130,14 +129,14 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FluentTask<Void, Void, String> getFileNameTask = new FluentTask<>(new OnExecuteListener<Void, Void, String>() {
 			
 			@Override
-			public String onExecute(IFluentTask<Void, Void, String> owner, Void... params) throws Exception {
+			public String onExecute(FluentTask<Void, Void, String> owner, Void... params) throws Exception {
 				return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
 			}
 		});
-        getFileNameTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,String>, String>() {
+        getFileNameTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override
-	        public void run(IFluentTask<Void, Void, String> owner, String result) {
+	        public void run(FluentTask<Void, Void, String> owner, String result) {
 		        if (result == null) return;
 		        tvFileName.setText(result);
 
@@ -192,7 +191,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FluentTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new FluentTask<>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
 			
 			@Override
-			public List<Entry<String, String>> onExecute(IFluentTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
+			public List<Entry<String, String>> onExecute(FluentTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
 				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
 				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
 				final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
@@ -206,10 +205,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 			}
 		});
         
-        getFilePropertiesTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,List<Entry<String,String>>>, List<Entry<String,String>>>() {
+        getFilePropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Entry<String,String>>>, List<Entry<String,String>>>() {
 
 	        @Override
-	        public void run(IFluentTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
+	        public void run(FluentTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
 
 		        lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
 		        pbLoadingFileDetails.setVisibility(View.INVISIBLE);
@@ -221,10 +220,10 @@ public class FileDetailsActivity extends AppCompatActivity {
                 
         ImageProvider
 		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
-		        .onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,Bitmap>, Bitmap>() {
+		        .onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 			        @Override
-			        public void run(IFluentTask<Void, Void, Bitmap> owner, Bitmap result) {
+			        public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
 				        if (mFileImage != null) mFileImage.recycle();
 
 				        if (mIsDestroyed) {
@@ -246,14 +245,14 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FluentTask<Void, Void, String> getFileArtistTask = new FluentTask<>(new OnExecuteListener<Void, Void, String>() {
 
             @Override
-            public String onExecute(IFluentTask<Void, Void, String> owner, Void... params) throws Exception {
+            public String onExecute(FluentTask<Void, Void, String> owner, Void... params) throws Exception {
                 return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
             }
         });
-        getFileArtistTask.onComplete(new ITwoParameterRunnable<IFluentTask<Void,Void,String>, String>() {
+        getFileArtistTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override
-	        public void run(IFluentTask<Void, Void, String> owner, String result) {
+	        public void run(FluentTask<Void, Void, String> owner, String result) {
 		        if (result == null || tvArtist == null) return;
 		        tvArtist.setText(result);
 	        }

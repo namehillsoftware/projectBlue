@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +54,10 @@ public class SessionConnection {
 		if (isRunning.get()) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning.set(false);
@@ -66,10 +66,10 @@ public class SessionConnection {
 				
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 				
-				AccessConfigurationBuilder.buildConfiguration(context, library, new ITwoParameterRunnable<IFluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
+				AccessConfigurationBuilder.buildConfiguration(context, library, new ITwoParameterRunnable<FluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
 
 					@Override
-					public void run(IFluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
+					public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
 						if (result == null) {
 							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 							return;
@@ -85,10 +85,10 @@ public class SessionConnection {
 						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
 						LibraryViewsProvider.provide(sessionConnectionProvider)
-								.onComplete(new ITwoParameterRunnable<IFluentTask<Void, Void, List<Item>>, List<Item>>() {
+								.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, List<Item>>, List<Item>>() {
 
 									@Override
-									public void run(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
+									public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 
 										if (result == null || result.size() == 0) {
 											doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
@@ -100,10 +100,10 @@ public class SessionConnection {
 										library.setSelectedView(selectedView);
 										library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-										LibrarySession.SaveLibrary(context, library, new ITwoParameterRunnable<IFluentTask<Void,Void,Library>, Library>() {
+										LibrarySession.SaveLibrary(context, library, new ITwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
 
 											@Override
-											public void run(IFluentTask<Void, Void, Library> owner, Library result) {
+											public void run(FluentTask<Void, Void, Library> owner, Library result) {
 												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
 											}
 										});
@@ -127,10 +127,10 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final ITwoParameterRunnable<IFluentTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = new ITwoParameterRunnable<IFluentTask<Integer, Void, Boolean>, Boolean>() {
+		final ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = new ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Boolean> owner, Boolean result) {
+			public void run(FluentTask<Integer, Void, Boolean> owner, Boolean result) {
 				if (!result) build(context);
 
 				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);

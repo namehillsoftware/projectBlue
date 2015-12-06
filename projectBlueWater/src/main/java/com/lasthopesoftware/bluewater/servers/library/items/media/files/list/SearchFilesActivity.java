@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import java.util.List;
 
@@ -72,10 +72,10 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final ITwoParameterRunnable<IFluentTask<Void, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new ITwoParameterRunnable<IFluentTask<Void,Void,List<IFile>>, List<IFile>>() {
+        final ITwoParameterRunnable<FluentTask<Void, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new ITwoParameterRunnable<FluentTask<Void,Void,List<IFile>>, List<IFile>>() {
 
             @Override
-            public void run(IFluentTask<Void, Void, List<IFile>> owner, List<IFile> result) {
+            public void run(FluentTask<Void, Void, List<IFile>> owner, List<IFile> result) {
                 if (result == null) return;
 
                 final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));

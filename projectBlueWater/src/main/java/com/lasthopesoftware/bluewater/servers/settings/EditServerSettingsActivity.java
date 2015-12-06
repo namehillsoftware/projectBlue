@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 public class EditServerSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditServerSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -60,10 +60,10 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
         	saveButton.setEnabled(false);
 
-        	LibrarySession.SaveLibrary(v.getContext(), library, new ITwoParameterRunnable<IFluentTask<Void,Void,Library>, Library>() {
+        	LibrarySession.SaveLibrary(v.getContext(), library, new ITwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
 
 		        @Override
-		        public void run(IFluentTask<Void, Void, Library> owner, Library result) {
+		        public void run(FluentTask<Void, Void, Library> owner, Library result) {
 			        saveButton.setText(getText(R.string.btn_saved));
 			        finish();
 		        }
@@ -102,10 +102,10 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 		});
 
 		final int libraryId = getIntent().getIntExtra(serverIdExtra, -1);
-		LibrarySession.GetLibrary(this, libraryId, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetLibrary(this, libraryId, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
-			public void run(IFluentTask<Integer, Void, Library> owner, Library result) {
+			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
 				if (result == null) return;
 
 				library = result;

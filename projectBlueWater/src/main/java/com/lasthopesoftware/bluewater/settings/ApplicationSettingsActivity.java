@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.list.ServerListAdapter;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
-import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.FluentTask;
 
 import java.util.List;
 
@@ -54,12 +54,12 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		serverListView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
 
-		LibrarySession.GetLibraries(activity, new ITwoParameterRunnable<IFluentTask<Void,Void,List<Library>>, List<Library>>() {
+		LibrarySession.GetLibraries(activity, new ITwoParameterRunnable<FluentTask<Void,Void,List<Library>>, List<Library>>() {
 			@Override
-			public void run(IFluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
-				LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<IFluentTask<Integer,Void,Library>, Library>() {
+			public void run(FluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
+				LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 					@Override
-					public void run(IFluentTask<Integer, Void, Library> owner, Library library) {
+					public void run(FluentTask<Integer, Void, Library> owner, Library library) {
 						((ListView) findViewById(R.id.lvServerList)).setAdapter(new ServerListAdapter(activity, libraries, library));
 
 						progressBar.setVisibility(View.INVISIBLE);

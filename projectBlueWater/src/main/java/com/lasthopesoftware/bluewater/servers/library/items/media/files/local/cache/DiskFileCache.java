@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
@@ -121,7 +120,7 @@ public class DiskFileCache {
 		final FluentTask<Void, Void, File> getTask = new FluentTask<>(new OnExecuteListener<Void, Void, File>() {
 
 			@Override
-			public File onExecute(IFluentTask<Void, Void, File> owner, Void... params) throws Exception {
+			public File onExecute(FluentTask<Void, Void, File> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
