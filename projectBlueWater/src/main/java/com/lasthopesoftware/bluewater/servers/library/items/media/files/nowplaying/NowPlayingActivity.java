@@ -41,7 +41,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.FluentTask;
@@ -79,7 +78,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 
-	private static AbstractProvider<Bitmap> getFileImageTask;
+	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
 	private static ViewStructure mViewStructure;
 
 	private static final String mFileNotFoundError = "The file %1s was not found!";

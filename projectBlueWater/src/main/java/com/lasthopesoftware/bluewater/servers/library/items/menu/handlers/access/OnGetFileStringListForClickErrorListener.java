@@ -4,7 +4,7 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.callables.IThreeParameterCallable;
+import com.lasthopesoftware.callables.ITwoParameterCallable;
 import com.lasthopesoftware.threading.FluentTask;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements IThreeParameterCallable<FluentTask<Void, Void, String>, Boolean, Exception, Boolean> {
+public class OnGetFileStringListForClickErrorListener implements ITwoParameterCallable<FluentTask<Void, Void, String>, Exception, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -22,7 +22,7 @@ public class OnGetFileStringListForClickErrorListener implements IThreeParameter
     }
 
     @Override
-    public Boolean call(FluentTask<Void, Void, String> owner, Boolean isHandled, Exception innerException) {
+    public Boolean call(FluentTask<Void, Void, String> owner, Exception innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new Runnable() {
 

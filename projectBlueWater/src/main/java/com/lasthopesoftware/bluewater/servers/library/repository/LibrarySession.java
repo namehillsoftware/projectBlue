@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +31,10 @@ public class LibrarySession {
 
 	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
 
-		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<>(new OnExecuteListener<Void, Void, Library>() {
+		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
 			@Override
-			public Library onExecute(FluentTask<Void, Void, Library> owner, Void... params) throws Exception {
+			protected Library doInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
@@ -49,7 +48,7 @@ public class LibrarySession {
 
 				return null;
 			}
-		});
+		};
 
 		if (onSaveComplete != null)
 			writeToDatabaseTask.onComplete(onSaveComplete);
@@ -58,23 +57,21 @@ public class LibrarySession {
 	}
 
 	public static void GetActiveLibrary(final Context context, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentTask<>(new OnExecuteListener<Integer, Void, Library>() {
-
+		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
 			@Override
-			public Library onExecute(FluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+			protected Library doInBackground(Integer... params) {
 				return GetActiveLibrary(context);
 			}
-		}), onGetLibraryComplete);
+		}, onGetLibraryComplete);
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentTask<>(new OnExecuteListener<Integer, Void, Library>() {
-
+		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
 			@Override
-			public Library onExecute(FluentTask<Integer, Void, Library> owner, Integer... params) throws Exception {
+			protected Library doInBackground(Integer... params) {
 				return GetLibrary(context, libraryId);
 			}
-		}), onGetLibraryComplete);
+		}, onGetLibraryComplete);
 	}
 
 	private static void ExecuteGetLibrary(FluentTask<Integer, Void, Library> getLibraryTask, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
@@ -116,10 +113,9 @@ public class LibrarySession {
 	}
 	
 	public static void GetLibraries(final Context context, ITwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
-		final FluentTask<Void, Void, List<Library>> getLibrariesTask = new FluentTask<>(new OnExecuteListener<Void, Void, List<Library>>() {
-			
+		final FluentTask<Void, Void, List<Library>> getLibrariesTask = new FluentTask<Void, Void, List<Library>>() {
 			@Override
-			public List<Library> onExecute(FluentTask<Void, Void, List<Library>> owner, Void... params) throws Exception {
+			protected List<Library> doInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();
@@ -128,17 +124,17 @@ public class LibrarySession {
 				} finally {
 					repositoryAccessHelper.close();
 				}
-				
+
 				return new ArrayList<>();
 			}
-		});
+		};
 
 		if (onGetLibrariesComplete != null)
 			getLibrariesTask.onComplete(onGetLibrariesComplete);
 
 		getLibrariesTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
-		
+
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);

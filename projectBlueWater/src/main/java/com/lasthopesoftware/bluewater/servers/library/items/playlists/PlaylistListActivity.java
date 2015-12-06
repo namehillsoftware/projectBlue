@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.List;
 
@@ -61,7 +60,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 			@Override
 			public void run(FluentTask<Void, Void, List<Playlist>> owner, List<Playlist> result) {
-				if (owner.getState() == SimpleTaskState.ERROR || result == null) return;
+				if (result == null) return;
 
 				BuildPlaylistView(result);
 

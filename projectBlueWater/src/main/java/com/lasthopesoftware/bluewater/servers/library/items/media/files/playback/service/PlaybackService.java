@@ -50,15 +50,15 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.callables.IOneParameterCallable;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -914,19 +914,23 @@ public class PlaybackService extends Service implements
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 		
-		final FluentTask<Void, Void, String> getNotificationPropertiesTask = new FluentTask<>(new OnExecuteListener<Void, Void, String>() {
-			
+		final FluentTask<Void, Void, String> getNotificationPropertiesTask = new FluentTask<Void, Void, String>() {
+
 			@Override
-			public String onExecute(FluentTask<Void, Void, String> owner, Void... params) throws Exception {
-				return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
+			protected String doInBackground(Void... params) {
+				try {
+					return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
+				} catch (IOException e) {
+					setException(e);
+					return null;
+				}
 			}
-		});
-		getNotificationPropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
+		};
+
+		getNotificationPropertiesTask.onComplete(new IOneParameterRunnable<String>() {
 			
 			@Override
-			public void run(FluentTask<Void, Void, String> owner, String result) {
-				if (owner.getState() == SimpleTaskState.ERROR) return;
-				
+			public void run(String result) {
 				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
@@ -938,27 +942,32 @@ public class PlaybackService extends Service implements
 		
 		getNotificationPropertiesTask.execute();
 		
-		final FluentTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new FluentTask<>(new OnExecuteListener<Void, Void, SparseArray<Object>>() {
-			
+		final FluentTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new FluentTask<Void, Void, SparseArray<Object>>() {
+
 			@Override
-			public SparseArray<Object> onExecute(FluentTask<Void, Void, SparseArray<Object>> owner, Void... params) throws Exception {
+			protected SparseArray<Object> doInBackground(Void... params) {
 				final SparseArray<Object> result = new SparseArray<>(4);
-				result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
-				result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FilePropertiesProvider.ALBUM));
-				result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
-				result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, (long) playingFile.getDuration());
-				final String trackNumber = playingFile.getProperty(FilePropertiesProvider.TRACK);
-				if (trackNumber != null && !trackNumber.isEmpty())
-					result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
-				return result;
+
+				try {
+					result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
+					result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FilePropertiesProvider.ALBUM));
+					result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
+					result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, (long) playingFile.getDuration());
+					final String trackNumber = playingFile.getProperty(FilePropertiesProvider.TRACK);
+					if (trackNumber != null && !trackNumber.isEmpty())
+						result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
+					return result;
+				} catch (IOException e) {
+					setException(e);
+					return new SparseArray<>();
+				}
 			}
-		});
-		
+		};
+
 		getTrackPropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,SparseArray<Object>>, SparseArray<Object>>() {
 			
 			@Override
 			public void run(FluentTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
-				if (owner.getState() == SimpleTaskState.ERROR) return;
 				
 				final String artist = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
 				final String album = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
@@ -1016,6 +1025,14 @@ public class PlaybackService extends Service implements
 				
 			}
 		});
+
+		getTrackPropertiesTask.onError(new IOneParameterCallable<Exception, Boolean>() {
+			@Override
+			public Boolean call(Exception e) {
+				return true;
+			}
+		});
+
 		getTrackPropertiesTask.execute();
 		
 		throwStartEvent(controller, filePlayer);

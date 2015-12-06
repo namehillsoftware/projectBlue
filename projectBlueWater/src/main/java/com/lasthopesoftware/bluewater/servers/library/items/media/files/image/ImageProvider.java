@@ -177,8 +177,8 @@ public class ImageProvider extends AbstractProvider<Bitmap> {
 	}
 
 	@Override
-	public void execute() {
-		super.execute(imageAccessExecutor);
+	public FluentTask<Void, Void, Bitmap> execute(Void... params) {
+		return super.execute(imageAccessExecutor, params);
 	}
 
 	private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {

@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ public class ClickItemListener implements OnItemClickListener {
             .onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
                 @Override
                 public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> items) {
-                    if (owner.getState() == SimpleTaskState.ERROR || items == null) return;
+                    if (items == null) return;
 
                     if (items.size() > 0) {
                         final Intent itemlistIntent = new Intent(mContext, ItemListActivity.class);

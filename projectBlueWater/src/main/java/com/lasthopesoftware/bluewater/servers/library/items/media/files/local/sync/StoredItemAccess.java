@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredIte
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,18 +42,23 @@ public class StoredItemAccess {
     }
 
     public void isItemMarkedForSync(final IItem item, ITwoParameterRunnable<FluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
-        final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<>(new OnExecuteListener<Void, Void, Boolean>() {
+        final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<Void, Void, Boolean>() {
+
             @Override
-            public Boolean onExecute(FluentTask<Void, Void, Boolean> owner, Void... params) throws Exception {
+            protected Boolean doInBackground(Void... params) {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-	            try {
-		            final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
-		            return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
-	            } finally {
-		            repositoryAccessHelper.close();
-	            }
-	        }
-        });
+                try {
+                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
+                    return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
+                } catch (SQLException e) {
+                    logger.error("There was an error getting the stored item table", e);
+                    setException(e);
+                    return null;
+                } finally {
+                    repositoryAccessHelper.close();
+                }
+            }
+        };
 
         if (isItemSyncedResult != null)
             isItemSyncedTask.onComplete(isItemSyncedResult);
@@ -117,22 +121,23 @@ public class StoredItemAccess {
     }
 
     public void getStoredItems(ITwoParameterRunnable<FluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
-        final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<>(new OnExecuteListener<Void, Void, List<StoredItem>>() {
+        final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<Void, Void, List<StoredItem>>() {
+
             @Override
-            public List<StoredItem> onExecute(FluentTask<Void, Void, List<StoredItem>> owner, Void... params) throws Exception {
-	            final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-	            try {
+            protected List<StoredItem> doInBackground(Void... params) {
+                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+                try {
                     final Dao<StoredItem, Integer> storedItemAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
                     return storedItemAccess.queryForEq(StoredItem.libraryIdColumnName, library.getId());
                 } catch (SQLException e) {
                     logger.error("Error accessing the stored list access", e);
                 } finally {
-		            repositoryAccessHelper.close();
-	            }
+                    repositoryAccessHelper.close();
+                }
 
                 return new ArrayList<>();
             }
-        });
+        };
 
         if (onStoredListsRetrieved != null)
             getAllStoredItemsTasks.onComplete(onStoredListsRetrieved);

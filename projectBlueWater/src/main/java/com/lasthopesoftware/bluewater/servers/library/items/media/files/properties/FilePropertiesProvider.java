@@ -5,7 +5,6 @@ import android.util.LruCache;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -117,10 +115,10 @@ public class FilePropertiesProvider {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		try {
-			final SortedMap<String, String> filePropertiesResult = FluentTask.executeNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String, String>>() {
+			final SortedMap<String, String> filePropertiesResult = new FluentTask<String, Void, SortedMap<String, String>>() {
 				
 				@Override
-				public SortedMap<String, String> onExecute(FluentTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+				public SortedMap<String, String> doInBackground(String... params) {
 					final Integer revision = RevisionChecker.getRevision(connectionProvider);
 					if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
 						return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
@@ -146,7 +144,7 @@ public class FilePropertiesProvider {
 						} finally {
 							conn.disconnect();
 						}
-					} catch (MalformedURLException | XmlParseException e) {
+					} catch (IOException | XmlParseException e) {
 						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 					}
 
@@ -154,7 +152,7 @@ public class FilePropertiesProvider {
 
 					return filePropertiesContainer.getProperties();
 				}
-			}).get();
+			}.get();
 
 			return Collections.unmodifiableSortedMap(filePropertiesResult);
 		} catch (ExecutionException ee) {

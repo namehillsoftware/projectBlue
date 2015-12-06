@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,10 +116,10 @@ public class DiskFileCache {
 	}
 	
 	public File get(final String uniqueKey) {
-		final FluentTask<Void, Void, File> getTask = new FluentTask<>(new OnExecuteListener<Void, Void, File>() {
+		final FluentTask<Void, Void, File> getTask = new FluentTask<Void, Void, File>() {
 
 			@Override
-			public File onExecute(FluentTask<Void, Void, File> owner, Void... params) throws Exception {
+			protected File doInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
@@ -137,20 +136,24 @@ public class DiskFileCache {
 
 					// Remove the file and return null if it's past its expired time
 					if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
-						cachedFileAccess.delete(cachedFile);
-						returnFile.delete();
+						if (returnFile.delete())
+							cachedFileAccess.delete(cachedFile);
+
 						return null;
 					}
 
 					doFileAccessedUpdate(uniqueKey);
 
 					return returnFile;
+				} catch (SQLException e) {
+					logger.error("There was an error getting the cached file", e);
+					setException(e);
+					return null;
 				} finally {
 					repositoryAccessHelper.close();
 				}
 			}
-			
-		});
+		};
 		
 		try {
 			return getTask.execute(RepositoryAccessHelper.databaseExecutor).get();

@@ -27,8 +27,11 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +43,7 @@ import java.util.Set;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
+	private static final Logger logger = LoggerFactory.getLogger(FileDetailsActivity.class);
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
     private static final int trackNameMarqueeDelay = 1500;
 	
@@ -126,13 +130,19 @@ public class FileDetailsActivity extends AppCompatActivity {
         final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
-        final FluentTask<Void, Void, String> getFileNameTask = new FluentTask<>(new OnExecuteListener<Void, Void, String>() {
-			
-			@Override
-			public String onExecute(FluentTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
-			}
-		});
+        final FluentTask<Void, Void, String> getFileNameTask = new FluentTask<Void, Void, String>() {
+
+	        @Override
+	        protected String doInBackground(Void... params) {
+		        try {
+			        return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
+		        } catch (IOException e) {
+			        setException(e);
+			        return null;
+		        }
+	        }
+        };
+
         getFileNameTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override
@@ -188,24 +198,29 @@ public class FileDetailsActivity extends AppCompatActivity {
 //		getRatingsTask.onError(new HandleViewIoException(this, mOnConnectionRegainedListener));
 //		getRatingsTask.execute();
         
-        final FluentTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new FluentTask<>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
-			
-			@Override
-			public List<Entry<String, String>> onExecute(FluentTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
-				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
-				final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
-				
-				for (Entry<String, String> entry : fileProperties.entrySet()) {
-					if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
-					results.add(entry);
-				}
-				
-				return results;
-			}
-		});
+        final FluentTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new FluentTask<Void, Void, List<Entry<String, String>>>() {
+	        @Override
+	        protected List<Entry<String, String>> doInBackground(Void... params) {
+		        final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
+		        try {
+			        final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
+			        final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
+
+			        for (Entry<String, String> entry : fileProperties.entrySet()) {
+				        if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
+				        results.add(entry);
+			        }
+
+			        return results;
+		        } catch (IOException e) {
+			        logger.error("There was an error getting the refreshed file properties", e);
+		        }
+
+		        return new ArrayList<>();
+	        }
+        };
         
-        getFilePropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Entry<String,String>>>, List<Entry<String,String>>>() {
+        getFilePropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, List<Entry<String, String>>>, List<Entry<String, String>>>() {
 
 	        @Override
 	        public void run(FluentTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
@@ -242,13 +257,18 @@ public class FileDetailsActivity extends AppCompatActivity {
 		        .execute();
 
         tvArtist.setText(getText(R.string.lbl_loading));
-        final FluentTask<Void, Void, String> getFileArtistTask = new FluentTask<>(new OnExecuteListener<Void, Void, String>() {
+        final FluentTask<Void, Void, String> getFileArtistTask = new FluentTask<Void, Void, String>() {
 
-            @Override
-            public String onExecute(FluentTask<Void, Void, String> owner, Void... params) throws Exception {
-                return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
-            }
-        });
+	        @Override
+	        protected String doInBackground(Void... params) {
+		        try {
+			        return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
+		        } catch (IOException e) {
+			        setException(e);
+			        return null;
+		        }
+	        }
+        };
         getFileArtistTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override

@@ -6,11 +6,11 @@ public abstract class AsyncExceptionTask<TParams, TProgress, TResult> extends As
 
 	private Exception mException;
 	
-	public final boolean hasError() {
+	public boolean hasError() {
 		return mException != null;
 	}
 	
-	protected final void setException(Exception exception) {
+	protected void setException(Exception exception) {
 		mException = exception;
 	}
 	
@@ -27,6 +27,6 @@ public abstract class AsyncExceptionTask<TParams, TProgress, TResult> extends As
 	protected void onPostExecute(TResult result, Exception exception) {
 	}
 	
-	private void onCancelled(TResult result, Exception exception) {
+	protected void onCancelled(TResult result, Exception exception) {
 	}
 }

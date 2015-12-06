@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTeste
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -69,17 +68,16 @@ public class AccessConfigurationBuilder {
 	}
 
 	private static void executeReturnNullTask(ITwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onReturnFalseListener) {
-		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<>(new OnExecuteListener<Void, Void, AccessConfiguration>() {
-
+		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<Void, Void, AccessConfiguration>() {
 			@Override
-			public AccessConfiguration onExecute(FluentTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
+			protected AccessConfiguration doInBackground(Void... params) {
 				return null;
 			}
+		};
 
-		});
-
-		returnFalseTask.onComplete(onReturnFalseListener);
-		returnFalseTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		returnFalseTask
+			.onComplete(onReturnFalseListener)
+			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private static void buildAccessConfiguration(final Library library, final int timeout, ITwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
@@ -89,10 +87,9 @@ public class AccessConfigurationBuilder {
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<>(new OnExecuteListener<Void, Void, AccessConfiguration>() {
-
+		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<Void, Void, AccessConfiguration>() {
 			@Override
-			public AccessConfiguration onExecute(FluentTask<Void, Void, AccessConfiguration> owner, Void... params) throws Exception {
+			protected AccessConfiguration doInBackground(Void... params) {
 				try {
 					final AccessConfiguration accessDao = new AccessConfiguration(library.getId(), library.getAuthKey());
 					String localAccessString = library.getAccessCode();
@@ -141,7 +138,7 @@ public class AccessConfigurationBuilder {
 
 				return null;
 			}
-		});
+		};
 
 		if (onGetAccessComplete != null)
 			mediaCenterAccessTask.onComplete(onGetAccessComplete);

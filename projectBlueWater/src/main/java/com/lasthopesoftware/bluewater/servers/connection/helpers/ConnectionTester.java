@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,33 +28,37 @@ public class ConnectionTester {
 	}
 
 	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
-		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<>(new OnExecuteListener<Integer, Void, Boolean>() {
-
+		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<Integer, Void, Boolean>() {
 			@Override
-			public Boolean onExecute(FluentTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
-				final HttpURLConnection conn = connectionProvider.getConnection("Alive");
-				if (conn == null) return Boolean.FALSE;
-
+			protected Boolean doInBackground(Integer... params) {
 				try {
-					conn.setConnectTimeout(timeout);
-					final InputStream is = conn.getInputStream();
-					try {
-						final StandardRequest responseDao = StandardRequest.fromInputStream(is);
+					final HttpURLConnection conn = connectionProvider.getConnection("Alive");
 
-						return responseDao != null && responseDao.isStatus();
+					if (conn == null) return Boolean.FALSE;
+
+					try {
+						conn.setConnectTimeout(timeout);
+						final InputStream is = conn.getInputStream();
+						try {
+							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
+
+							return responseDao != null && responseDao.isStatus();
+						} finally {
+							is.close();
+						}
+					} catch (IOException | IllegalArgumentException e) {
+						mLogger.warn(e.getMessage());
 					} finally {
-						is.close();
+						conn.disconnect();
 					}
-				} catch (IOException | IllegalArgumentException e) {
-					mLogger.warn(e.getMessage());
-				} finally {
-					conn.disconnect();
+				} catch (IOException e) {
+					mLogger.error("Error getting connection", e);
+					setException(e);
 				}
 
 				return Boolean.FALSE;
 			}
-
-		});
+		};
 
 		if (onTestComplete != null)
 			connectionTestTask.onComplete(onTestComplete);

@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +63,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         itemProvider.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,List<Item>>, List<Item>>() {
             @Override
             public void run(FluentTask<Void, Void, List<Item>> owner, List<Item> items) {
-                if (owner.getState() == SimpleTaskState.ERROR || items == null) return;
+                if (items == null) return;
 
                 BuildItemListView(items);
 

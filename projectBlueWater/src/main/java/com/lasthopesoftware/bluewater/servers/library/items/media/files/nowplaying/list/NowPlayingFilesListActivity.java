@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.util.ArrayList;
 
@@ -108,13 +107,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 			if (library == null) return;
 
-	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
-				
-				@Override
-				public ArrayList<IFile> onExecute(FluentTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
-					return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
-				}
-			});
+	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<Void, Void, ArrayList<IFile>>() {
+
+		        @Override
+		        protected ArrayList<IFile> doInBackground(Void... params) {
+			        return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+		        }
+	        };
 	        
 	        getFileStringTask.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
 

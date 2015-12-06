@@ -5,7 +5,6 @@ import android.util.SparseIntArray;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -13,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
+public class RevisionChecker extends FluentTask<Void, Void, Integer> {
 	
 	private final static Integer mBadRevision = -1;
     private static final SparseIntArray cachedRevisions = new SparseIntArray();
@@ -27,7 +26,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 
 	public static Integer getRevision(ConnectionProvider connectionProvider) {
         try {
-            return (new FluentTask<>(new RevisionChecker(connectionProvider))).execute(revisionExecutor).get();
+            return (new RevisionChecker(connectionProvider)).execute(revisionExecutor).get();
         } catch (ExecutionException | InterruptedException e) {
             return getCachedRevision(connectionProvider);
         }
@@ -45,34 +44,36 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 	    this.connectionProvider = connectionProvider;
     }
 
-	@Override
-	public Integer onExecute(FluentTask<Void, Void, Integer> owner, Void... params) throws Exception {
+    @Override
+    protected Integer doInBackground(Void... params) {
         if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
             return getCachedRevision(connectionProvider);
         }
 
-        final HttpURLConnection conn = connectionProvider.getConnection("Library/GetRevision");
         try {
-            final InputStream is = conn.getInputStream();
+            final HttpURLConnection conn = connectionProvider.getConnection("Library/GetRevision");
             try {
-	            final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
-	            if (standardRequest == null)
-		            return getCachedRevision(connectionProvider);
+                final InputStream is = conn.getInputStream();
+                try {
+                    final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
+                    if (standardRequest == null)
+                        return getCachedRevision(connectionProvider);
 
-                final String revisionValue = standardRequest.items.get("Sync");
+                    final String revisionValue = standardRequest.items.get("Sync");
 
-                if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
+                    if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
 
-                cachedRevisions.put(connectionProvider.getAccessConfiguration().getLibraryId(), Integer.valueOf(revisionValue));
-                mLastCheckedTime = System.currentTimeMillis();
-                return getCachedRevision(connectionProvider);
+                    cachedRevisions.put(connectionProvider.getAccessConfiguration().getLibraryId(), Integer.valueOf(revisionValue));
+                    mLastCheckedTime = System.currentTimeMillis();
+                    return getCachedRevision(connectionProvider);
+                } finally {
+                    is.close();
+                }
             } finally {
-                is.close();
+                conn.disconnect();
             }
         } catch (Exception e) {
             return getCachedRevision(connectionProvider);
-        } finally {
-            conn.disconnect();
         }
-	}
+    }
 }
