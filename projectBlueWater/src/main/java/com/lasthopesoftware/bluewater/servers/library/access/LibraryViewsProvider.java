@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemResponse;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
-import com.lasthopesoftware.threading.FluentTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -34,7 +33,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     }
 
     @Override
-    protected List<Item> getData(FluentTask<String, Void, List<Item>> task, HttpURLConnection connection) throws Exception {
+    protected List<Item> getData(HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {
@@ -42,7 +41,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
                 return cachedFileSystemItems;
         }
 
-        if (task.isCancelled()) return new ArrayList<>();
+        if (isCancelled()) return new ArrayList<>();
 
         final InputStream is = connection.getInputStream();
         try {

@@ -42,7 +42,7 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 			final HttpURLConnection connection = connectionProvider.getConnection(params);
 			try {
 				try {
-					return getData(this, connection);
+					return getData(connection);
 				} catch (Exception e) {
 					logger.error("There was an exception getting data", e);
 					setException(e);
@@ -58,5 +58,5 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 		return null;
 	}
 
-	protected abstract T getData(FluentTask<String, Void, T> task, HttpURLConnection connection) throws Exception;
+	protected abstract T getData(HttpURLConnection connection) throws Exception;
 }
