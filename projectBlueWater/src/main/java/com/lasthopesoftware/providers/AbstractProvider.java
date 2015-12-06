@@ -4,9 +4,11 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.callables.IThreeParameterCallable;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.Lazy;
 import com.lasthopesoftware.threading.OnExecuteListener;
 
 import java.net.HttpURLConnection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +24,41 @@ public abstract class AbstractProvider<T> {
 	private final String[] params;
 	private static final ExecutorService collectionAccessExecutor = Executors.newSingleThreadExecutor();
 	private Exception exception = null;
-	private FluentTask<Void, Void, T> task;
+	private final Lazy<FluentTask<Void, Void, T>> task = new Lazy<>(new Callable<FluentTask<Void, Void, T>>() {
+		@Override
+		public FluentTask<Void, Void, T> call() throws Exception {
+			final FluentTask<Void, Void, T> task = new FluentTask<>(new OnExecuteListener<Void, Void, T>() {
+
+				@Override
+				public T onExecute(FluentTask<Void, Void, T> owner, Void... voidParams) throws Exception {
+					if (owner.isCancelled()) return null;
+
+					final HttpURLConnection connection = connectionProvider.getConnection(params);
+					try {
+						return getData(owner, connectionProvider.getConnection(params));
+					} finally {
+						connection.disconnect();
+					}
+				}
+			});
+
+			task.onError(new IThreeParameterCallable<FluentTask<Void, Void, T>, Boolean, Exception, Boolean>() {
+				@Override
+				public Boolean call(FluentTask<Void, Void, T> owner, Boolean isHandled, Exception innerException) {
+					setException(innerException);
+					return false;
+				}
+			});
+
+			if (onGetItemsComplete != null)
+				task.onComplete(onGetItemsComplete);
+
+			if (onGetItemsError != null)
+				task.onError(onGetItemsError);
+
+			return task;
+		}
+	});
 
 	protected AbstractProvider(ConnectionProvider connectionProvider, String... params) {
 		this.connectionProvider = connectionProvider;
@@ -45,7 +81,7 @@ public abstract class AbstractProvider<T> {
 	}
 
 	public void execute(Executor executor) {
-		getTask().execute(executor);
+		task.getObject().execute(executor);
 	}
 
 	public T get() throws ExecutionException, InterruptedException {
@@ -53,46 +89,11 @@ public abstract class AbstractProvider<T> {
 	}
 
 	private T get(Executor executor) throws ExecutionException, InterruptedException {
-		return getTask().execute(AbstractProvider.collectionAccessExecutor).get();
+		return task.getObject().execute(AbstractProvider.collectionAccessExecutor).get();
 	}
 
 	public void cancel() {
-		getTask().cancel(true);
-	}
-
-	private FluentTask<Void, Void, T> getTask() {
-		if (task != null) return task;
-
-		task = new FluentTask<>(new OnExecuteListener<Void, Void, T>() {
-
-			@Override
-			public T onExecute(FluentTask<Void, Void, T> owner, Void... voidParams) throws Exception {
-				if (owner.isCancelled()) return null;
-
-				final HttpURLConnection connection = connectionProvider.getConnection(params);
-				try {
-					return getData(owner, connectionProvider.getConnection(params));
-				} finally {
-					connection.disconnect();
-				}
-			}
-		});
-
-		task.onError(new IThreeParameterCallable<FluentTask<Void, Void, T>, Boolean, Exception, Boolean>() {
-			@Override
-			public Boolean call(FluentTask<Void, Void, T> owner, Boolean isHandled, Exception innerException) {
-				setException(innerException);
-				return false;
-			}
-		});
-
-		if (onGetItemsComplete != null)
-			task.onComplete(onGetItemsComplete);
-
-		if (onGetItemsError != null)
-			task.onError(onGetItemsError);
-
-		return task;
+		task.getObject().cancel(true);
 	}
 
 	protected abstract T getData(FluentTask<Void, Void, T> task, HttpURLConnection connection) throws Exception;
