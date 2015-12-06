@@ -10,9 +10,9 @@ import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,10 +118,10 @@ public class DiskFileCache {
 	}
 	
 	public File get(final String uniqueKey) {
-		final SimpleTask<Void, Void, File> getTask = new SimpleTask<>(new OnExecuteListener<Void, Void, File>() {
+		final FluentTask<Void, Void, File> getTask = new FluentTask<>(new OnExecuteListener<Void, Void, File>() {
 
 			@Override
-			public File onExecute(ISimpleTask<Void, Void, File> owner, Void... params) throws Exception {
+			public File onExecute(IFluentTask<Void, Void, File> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);

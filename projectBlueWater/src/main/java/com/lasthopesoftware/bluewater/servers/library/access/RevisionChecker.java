@@ -4,9 +4,9 @@ import android.util.SparseIntArray;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -28,7 +28,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
 
 	public static Integer getRevision(ConnectionProvider connectionProvider) {
         try {
-            return (new SimpleTask<>(new RevisionChecker(connectionProvider))).execute(revisionExecutor).get();
+            return (new FluentTask<>(new RevisionChecker(connectionProvider))).execute(revisionExecutor).get();
         } catch (ExecutionException | InterruptedException e) {
             return getCachedRevision(connectionProvider);
         }
@@ -47,7 +47,7 @@ public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
     }
 
 	@Override
-	public Integer onExecute(ISimpleTask<Void, Void, Integer> owner, Void... params) throws Exception {
+	public Integer onExecute(IFluentTask<Void, Void, Integer> owner, Void... params) throws Exception {
         if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
             return getCachedRevision(connectionProvider);
         }

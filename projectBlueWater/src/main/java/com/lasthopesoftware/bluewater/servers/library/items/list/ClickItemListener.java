@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.ArrayList;
@@ -31,9 +31,9 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
+            .onComplete(new IFluentTask.OnCompleteListener<Void, Void, List<Item>>() {
                 @Override
-                public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {
+                public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> items) {
                     if (owner.getState() == SimpleTaskState.ERROR || items == null) return;
 
                     if (items.size() > 0) {

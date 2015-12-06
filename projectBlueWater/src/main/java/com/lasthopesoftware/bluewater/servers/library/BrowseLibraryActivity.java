@@ -47,8 +47,8 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStati
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
 import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.LoggerFactory;
@@ -96,7 +96,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			return new OnCompleteListener<Void, Void, List<Item>>() {
 
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
+				public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 					if (isStopped || result == null) return;
 
 					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
@@ -251,7 +251,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library result) {
 				// No library, must bail out
 				if (result == null) {
 					finish();
@@ -273,7 +273,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
 			        @Override
-			        public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
+			        public void onComplete(IFluentTask<Void, Void, List<Item>> owner, final List<Item> items) {
 				        if (isStopped || items == null) return;
 
 				        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -361,7 +361,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);
@@ -406,7 +406,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
 				if (library != null)
 					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}
@@ -426,7 +426,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 	        @Override
-	        public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
+	        public void onComplete(IFluentTask<Integer, Void, Library> owner, Library library) {
 		        final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 		        if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

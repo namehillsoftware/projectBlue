@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.Logger;
@@ -151,9 +151,9 @@ public class SyncService extends Service {
 		logger.info("Starting sync.");
 		startForeground(notificationId, buildSyncNotification());
 
-		LibrarySession.GetLibraries(context, new ISimpleTask.OnCompleteListener<Void, Void, List<Library>>() {
+		LibrarySession.GetLibraries(context, new IFluentTask.OnCompleteListener<Void, Void, List<Library>>() {
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
+			public void onComplete(IFluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				librariesProcessing += libraries.size();
 
 				if (librariesProcessing == 0) {
@@ -162,16 +162,16 @@ public class SyncService extends Service {
 				}
 
 				for (final Library library : libraries) {
-					AccessConfigurationBuilder.buildConfiguration(context, library, new ISimpleTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
+					AccessConfigurationBuilder.buildConfiguration(context, library, new IFluentTask.OnCompleteListener<Void, Void, AccessConfiguration>() {
 						@Override
-						public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
+						public void onComplete(IFluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
 							if (library.isSyncLocalConnectionsOnly())
 								accessConfiguration.setLocalOnly(true);
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							ConnectionTester.doTest(connectionProvider, 5000, new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+							ConnectionTester.doTest(connectionProvider, 5000, new IFluentTask.OnCompleteListener<Integer, Void, Boolean>() {
 								@Override
-								public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean success) {
+								public void onComplete(IFluentTask<Integer, Void, Boolean> owner, Boolean success) {
 									if (!success) {
 										if (--librariesProcessing == 0) finishSync();
 										return;

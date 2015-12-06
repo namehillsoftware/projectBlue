@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
 
@@ -59,10 +59,10 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ISimpleTask.OnCompleteListener<Void, Void, List<IFile>> onFileProviderComplete = new ISimpleTask.OnCompleteListener<Void, Void, List<IFile>>() {
+		final IFluentTask.OnCompleteListener<Void, Void, List<IFile>> onFileProviderComplete = new IFluentTask.OnCompleteListener<Void, Void, List<IFile>>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<IFile>> owner, List<IFile> result) {
+			public void onComplete(IFluentTask<Void, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

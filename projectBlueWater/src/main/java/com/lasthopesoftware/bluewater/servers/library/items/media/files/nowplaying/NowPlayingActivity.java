@@ -43,8 +43,8 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
 
 import org.slf4j.LoggerFactory;
 
@@ -197,7 +197,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				LibrarySession.GetActiveLibrary(v.getContext(), new OnCompleteListener<Integer, Void, Library>() {
 
 					@Override
-					public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+					public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
 						if (result == null) return;
 						final boolean isRepeating = !result.isRepeating();
 						PlaybackService.setIsRepeating(v.getContext(), isRepeating);
@@ -265,7 +265,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				final String savedTracksString = library.getSavedTracksString();
 				if (savedTracksString == null || savedTracksString.isEmpty()) return;
 
@@ -292,7 +292,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		LibrarySession.GetActiveLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, Library result) {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating());
 			}
@@ -366,7 +366,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 								.onComplete(new OnCompleteListener<Void, Void, Bitmap>() {
 
 									@Override
-									public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
+									public void onComplete(IFluentTask<Void, Void, Bitmap> owner, Bitmap result) {
 										if (viewStructure.nowPlayingImage != null)
 											viewStructure.nowPlayingImage.recycle();
 										viewStructure.nowPlayingImage = result;

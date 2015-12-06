@@ -23,9 +23,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,7 +244,7 @@ public class PlaybackFile implements
 					final String lastPlayedString = file.getProperty(FilePropertiesProvider.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
 					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
-						SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(file));
+						FluentTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(file));
 				} catch (NumberFormatException e) {
 					logger.error("There was an error parsing the last played time.");
 				} catch (IOException e) {
@@ -415,7 +415,7 @@ public class PlaybackFile implements
 		}
 		
 		@Override
-		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+		public Void onExecute(IFluentTask<Void, Void, Void> owner, Void... params) throws Exception {
 			try {
 				final String numberPlaysString = mFile.getRefreshedProperty(FilePropertiesProvider.NUMBER_PLAYS);
 				

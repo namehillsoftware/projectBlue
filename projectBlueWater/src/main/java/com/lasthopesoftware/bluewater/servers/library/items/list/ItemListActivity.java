@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 import com.lasthopesoftware.threading.SimpleTaskState;
 
 import java.util.ArrayList;
@@ -60,9 +60,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
+        itemProvider.onComplete(new IFluentTask.OnCompleteListener<Void, Void, List<Item>>() {
             @Override
-            public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {
+            public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> items) {
                 if (owner.getState() == SimpleTaskState.ERROR || items == null) return;
 
                 BuildItemListView(items);

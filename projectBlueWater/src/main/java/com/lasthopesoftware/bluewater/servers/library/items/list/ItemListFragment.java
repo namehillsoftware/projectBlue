@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.List;
 
@@ -51,13 +51,13 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+    	LibrarySession.GetActiveLibrary(activity, new IFluentTask.OnCompleteListener<Integer, Void, Library>() {
 		    @Override
-		    public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
-			    final ISimpleTask.OnCompleteListener<Void, Void, List<Item>> onGetVisibleViewsCompleteListener = new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
+		    public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
+			    final IFluentTask.OnCompleteListener<Void, Void, List<Item>> onGetVisibleViewsCompleteListener = new IFluentTask.OnCompleteListener<Void, Void, List<Item>>() {
 
 				    @Override
-				    public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
+				    public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 					    if (result == null || result.size() == 0) return;
 					
 					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);

@@ -4,8 +4,8 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +23,15 @@ public class ConnectionTester {
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+	public static void doTest(ConnectionProvider connectionProvider, IFluentTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
 		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
 	}
 
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ISimpleTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
-		final SimpleTask<Integer, Void, Boolean> connectionTestTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Integer, Void, Boolean>() {
+	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, IFluentTask.OnCompleteListener<Integer, Void, Boolean> onTestComplete) {
+		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Integer, Void, Boolean>() {
 
 			@Override
-			public Boolean onExecute(ISimpleTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
+			public Boolean onExecute(IFluentTask<Integer, Void, Boolean> owner, Integer... params) throws Exception {
 				final HttpURLConnection conn = connectionProvider.getConnection("Alive");
 				if (conn == null) return Boolean.FALSE;
 

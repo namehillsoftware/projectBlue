@@ -4,9 +4,9 @@ import android.util.LruCache;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -118,18 +118,18 @@ public class FilePropertiesProvider {
 	
 		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		try {
-			final SortedMap<String, String> filePropertiesResult = SimpleTask.executeNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String,String>>() {
+			final SortedMap<String, String> filePropertiesResult = FluentTask.executeNew(filePropertiesExecutor, new OnExecuteListener<String, Void, SortedMap<String, String>>() {
 				
 				@Override
-				public SortedMap<String, String> onExecute(ISimpleTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
-                    final Integer revision = RevisionChecker.getRevision(connectionProvider);
-                    if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
-                        return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
+				public SortedMap<String, String> onExecute(IFluentTask<String, Void, SortedMap<String, String>> owner, String... params) throws IOException {
+					final Integer revision = RevisionChecker.getRevision(connectionProvider);
+					if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
+						return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
 
-                    final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+					final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-                    // Seed with old properties first
-				    returnProperties.putAll(filePropertiesContainer.getProperties());
+					// Seed with old properties first
+					returnProperties.putAll(filePropertiesContainer.getProperties());
 					
 					try {
 						final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKeyString);
@@ -138,9 +138,9 @@ public class FilePropertiesProvider {
 							final InputStream is = conn.getInputStream();
 							try {
 								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-														    	
-						    	for (XmlElement el : xml.get(0))
-						    		returnProperties.put(el.getAttribute("Name"), el.getValue());
+
+								for (XmlElement el : xml.get(0))
+									returnProperties.put(el.getAttribute("Name"), el.getValue());
 							} finally {
 								is.close();
 							}
@@ -153,7 +153,7 @@ public class FilePropertiesProvider {
 
 					filePropertiesContainer.updateProperties(revision, returnProperties);
 
-                    return filePropertiesContainer.getProperties();
+					return filePropertiesContainer.getProperties();
 				}
 			}).get();
 

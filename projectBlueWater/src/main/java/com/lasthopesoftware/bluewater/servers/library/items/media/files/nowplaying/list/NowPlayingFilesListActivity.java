@@ -23,10 +23,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
+import com.lasthopesoftware.threading.IFluentTask.OnExecuteListener;
 
 import java.util.ArrayList;
 
@@ -106,13 +106,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+		public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
 			if (library == null) return;
 
-	        final SimpleTask<Void, Void, ArrayList<IFile>> getFileStringTask = new SimpleTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
+	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
 				
 				@Override
-				public ArrayList<IFile> onExecute(ISimpleTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
+				public ArrayList<IFile> onExecute(IFluentTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
 					return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
 				}
 			});
@@ -120,7 +120,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<IFile>>() {
 				
 				@Override
-				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
+				public void onComplete(IFluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
 					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
 			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 

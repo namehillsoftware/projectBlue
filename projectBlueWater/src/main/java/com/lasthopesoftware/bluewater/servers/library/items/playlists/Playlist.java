@@ -5,7 +5,7 @@ import android.util.SparseArray;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.threading.IFluentTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileL
 	private String mPath;
 	private String mGroup;
 
-	private ArrayList<ISimpleTask.OnCompleteListener<String, Void, List<Playlist>>> mOnCompleteListeners;
+	private ArrayList<IFluentTask.OnCompleteListener<String, Void, List<Playlist>>> mOnCompleteListeners;
 
 	public Playlist() {
 		super();

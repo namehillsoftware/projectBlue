@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.IFluentTask;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -45,10 +45,10 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
-		final SimpleTask<Void, Void, StoredFile> getStoredFileTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+	public void getStoredFile(final int storedFileId, IFluentTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
+		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
-			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -68,8 +68,8 @@ public class StoredFileAccess {
 		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public void getStoredFile(final IFile serviceFile, ISimpleTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
-		final SimpleTask<Void, Void, StoredFile> getStoredFileTask = new SimpleTask<>(getFileExecutor(serviceFile));
+	public void getStoredFile(final IFile serviceFile, IFluentTask.OnCompleteListener<Void, Void, StoredFile> onStoredFileRetrieved) {
+		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<>(getFileExecutor(serviceFile));
 
 		if (onStoredFileRetrieved != null)
 			getStoredFileTask.addOnCompleteListener(onStoredFileRetrieved);
@@ -78,13 +78,13 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, getFileExecutor(serviceFile)).get();
+		return FluentTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, getFileExecutor(serviceFile)).get();
 	}
 
-	private ISimpleTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
-		return new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+	private IFluentTask.OnExecuteListener<Void, Void, StoredFile> getFileExecutor(final IFile serviceFile) {
+		return new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
-			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -99,10 +99,10 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(ISimpleTask.OnCompleteListener<Void, Void, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
-		final SimpleTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new SimpleTask<>(new ISimpleTask.OnExecuteListener<Void, Void, List<StoredFile>>() {
+	public void getDownloadingStoredFiles(IFluentTask.OnCompleteListener<Void, Void, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<>(new IFluentTask.OnExecuteListener<Void, Void, List<StoredFile>>() {
 			@Override
-			public List<StoredFile> onExecute(ISimpleTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
+			public List<StoredFile> onExecute(IFluentTask<Void, Void, List<StoredFile>> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
@@ -220,9 +220,9 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(final IFile file) {
-		final SimpleTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = SimpleTask.executeNew(new ISimpleTask.OnExecuteListener<Void, Void, StoredFile>() {
+		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = FluentTask.executeNew(new IFluentTask.OnExecuteListener<Void, Void, StoredFile>() {
 			@Override
-			public StoredFile onExecute(ISimpleTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
+			public StoredFile onExecute(IFluentTask<Void, Void, StoredFile> owner, Void... params) throws Exception {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					final Dao<StoredFile, Integer> storedFilesAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);

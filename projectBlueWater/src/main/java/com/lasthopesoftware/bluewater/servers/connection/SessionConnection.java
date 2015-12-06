@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
+import com.lasthopesoftware.threading.IFluentTask;
+import com.lasthopesoftware.threading.IFluentTask.OnCompleteListener;
 
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class SessionConnection {
 		LibrarySession.GetActiveLibrary(context, new OnCompleteListener<Integer, Void, Library>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+			public void onComplete(IFluentTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning.set(false);
@@ -69,7 +69,7 @@ public class SessionConnection {
 				AccessConfigurationBuilder.buildConfiguration(context, library, new OnCompleteListener<Void, Void, AccessConfiguration>() {
 
 					@Override
-					public void onComplete(ISimpleTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
+					public void onComplete(IFluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
 						if (result == null) {
 							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 							return;
@@ -88,7 +88,7 @@ public class SessionConnection {
 								.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
 
 									@Override
-									public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> result) {
+									public void onComplete(IFluentTask<Void, Void, List<Item>> owner, List<Item> result) {
 
 										if (result == null || result.size() == 0) {
 											doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
@@ -103,7 +103,7 @@ public class SessionConnection {
 										LibrarySession.SaveLibrary(context, library, new OnCompleteListener<Void, Void, Library>() {
 
 											@Override
-											public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
+											public void onComplete(IFluentTask<Void, Void, Library> owner, Library result) {
 												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
 											}
 										});
@@ -127,10 +127,10 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final ISimpleTask.OnCompleteListener<Integer, Void, Boolean> testConnectionCompleteListener = new ISimpleTask.OnCompleteListener<Integer, Void, Boolean>() {
+		final IFluentTask.OnCompleteListener<Integer, Void, Boolean> testConnectionCompleteListener = new IFluentTask.OnCompleteListener<Integer, Void, Boolean>() {
 
 			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Boolean> owner, Boolean result) {
+			public void onComplete(IFluentTask<Integer, Void, Boolean> owner, Boolean result) {
 				if (!result) build(context);
 
 				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
