@@ -21,8 +21,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private IOneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
 	private ITwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
-	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncExceptionTask<Void, TProgress, TResult>>()
-	{
+	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncExceptionTask<Void, TProgress, TResult>>() {
 
 		@Override
 		public AsyncExceptionTask<Void, TProgress, TResult> call() throws Exception {
@@ -59,20 +58,28 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		this.params = params;
 	}
 
-	public void execute() {
-		execute(AsyncTask.SERIAL_EXECUTOR);
+	public final void execute() {
+		executeTask();
 	}
 
-	public void execute(Executor exec) {
-		task.getObject().executeOnExecutor(exec);
+	public final void execute(Executor exec) {
+		executeTask(exec);
 	}
 
-	public TResult get() throws ExecutionException, InterruptedException {
-		return get(AsyncTask.SERIAL_EXECUTOR);
+	public final TResult get() throws ExecutionException, InterruptedException {
+		return executeTask().get();
 	}
 
-	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
-		return task.getObject().executeOnExecutor(executor).get();
+	public final TResult get(Executor executor) throws ExecutionException, InterruptedException {
+		return executeTask(executor).get();
+	}
+
+	protected AsyncTask<Void, TProgress, TResult> executeTask() {
+		return executeTask(AsyncTask.SERIAL_EXECUTOR);
+	}
+
+	protected AsyncTask<Void, TProgress, TResult> executeTask(Executor exec) {
+		return task.getObject().executeOnExecutor(exec);
 	}
 
 	/**

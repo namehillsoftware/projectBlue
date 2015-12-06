@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
@@ -185,8 +186,8 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public void execute() {
-		super.execute(imageAccessExecutor);
+	protected AsyncTask<Void, Void, Bitmap> executeTask() {
+		return super.executeTask(imageAccessExecutor);
 	}
 
 	private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {
