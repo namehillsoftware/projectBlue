@@ -237,6 +237,17 @@ public class SqlMapper {
 					}
 				}
 			});
+
+			setters.put(Enum.class, new IThreeParameterRunnable<Field, Object, String>() {
+				@Override
+				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+					try {
+						parameterOne.set(parameterTwo, parameterThree);
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+			});
 		}
 	}
 
@@ -288,6 +299,19 @@ public class SqlMapper {
 				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 					try {
 						parameterOne.invoke(parameterTwo, parameterThree);
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			setters.put(Enum.class, new IThreeParameterRunnable<Method, Object, String>() {
+				@Override
+				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+					try {
+						parameterOne.invoke(parameterTwo, Enum.valueOf()parameterThree);
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {
