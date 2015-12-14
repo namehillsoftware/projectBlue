@@ -242,7 +242,7 @@ public class SqlMapper {
 				@Override
 				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 					try {
-						parameterOne.set(parameterTwo, parameterThree);
+						parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>)parameterTwo.getClass(), parameterThree));
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					}
@@ -311,7 +311,7 @@ public class SqlMapper {
 				@Override
 				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 					try {
-						parameterOne.invoke(parameterTwo, Enum.valueOf()parameterThree);
+						parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>)parameterTwo.getClass(), parameterThree));
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {
