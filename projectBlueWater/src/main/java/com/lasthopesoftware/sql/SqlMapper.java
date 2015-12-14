@@ -190,7 +190,7 @@ public class SqlMapper {
 
 	private static class FieldSetter implements ISetter {
 		private final Field field;
-		private final Type type;
+		private final Class<?> type;
 
 		public FieldSetter(Field field) {
 			this.field = field;
@@ -198,7 +198,14 @@ public class SqlMapper {
 		}
 
 		public void set(Object object, String value) {
-			setters.get(type).run(field, object, value);
+			Class<?> currentType = type;
+			while (currentType != Object.class) {
+				if (setters.containsKey(currentType)) {
+					setters.get(type).run(field, object, value);
+					break;
+				}
+				currentType = type.getSuperclass();
+			}
 		}
 
 		private static final HashMap<Type, IThreeParameterRunnable<Field, Object, String>> setters;
@@ -261,7 +268,14 @@ public class SqlMapper {
 		}
 
 		public void set(Object object, String value) {
-			setters.get(type).run(method, object, value);
+			Class<?> currentType = type;
+			while (currentType != Object.class) {
+				if (setters.containsKey(currentType)) {
+					setters.get(type).run(method, object, value);
+					break;
+				}
+				currentType = type.getSuperclass();
+			}
 		}
 
 		private static final HashMap<Class<?>, IThreeParameterRunnable<Method, Object, String>> setters;
