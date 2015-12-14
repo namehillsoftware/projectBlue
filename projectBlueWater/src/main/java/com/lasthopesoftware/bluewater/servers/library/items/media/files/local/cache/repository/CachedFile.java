@@ -1,9 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
-
-@DatabaseTable(tableName = "CachedFile")
 public class CachedFile {
 
 	public static final String LIBRARY_ID = "libraryId";
@@ -14,28 +10,20 @@ public class CachedFile {
 	public static final String FILE_SIZE = "fileSize";
 	public static final String CREATED_TIME = "createdTime";
 	
-	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = LIBRARY_ID, uniqueCombo = true)
 	private int libraryId;
 	
-	@DatabaseField(uniqueCombo = true, index = true)
 	private String cacheName;
 	
-	@DatabaseField(index = true)
 	private long lastAccessedTime;
 	
-	@DatabaseField(index = true)
 	private long createdTime;
 	
-	@DatabaseField(uniqueCombo = true)
 	private String uniqueKey;
 	
-	@DatabaseField(unique = true)
 	private String fileName;
 	
-	@DatabaseField()
 	private long fileSize;
 
 	/**

@@ -21,8 +21,6 @@ import org.sql2o.Connection;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -65,12 +63,7 @@ public class StoredFileAccess {
 			protected StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Connection connection = repositoryAccessHelper.getConnection();
-					try {
-						return getStoredFile(connection, storedFileId);
-					} finally {
-						connection.close();
-					}
+					return getStoredFile(repositoryAccessHelper, storedFileId);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -205,7 +198,7 @@ public class StoredFileAccess {
 						storedFile = getStoredFile(repositoryAccessHelper, file);
 					}
 
-					updateStoredFilePath(repositoryAccessHelper, storedFile.getId(), mediaFileId, filePath);
+					updateStoredFile(repositoryAccessHelper, storedFile);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -223,7 +216,6 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						createStoredFile(repositoryAccessHelper, file);
 						storedFile = getStoredFile(repositoryAccessHelper, file);
-						updateFileOwner(repositoryAccessHelper, storedFile.getId(), true);
 					}
 
 					if (storedFile.getPath() == null) {
@@ -279,20 +271,12 @@ public class StoredFileAccess {
 					if (!systemFile.exists())
 						storedFile.setIsDownloadComplete(false);
 
-					try {
-						storedFilesAccess.createOrUpdate(storedFile);
-					} catch (SQLException e) {
-						logger.getObject().error("There was an updating the stored file.", e);
-					}
+					updateStoredFile(repositoryAccessHelper, storedFile);
 
 					return storedFile;
-				} catch (SQLException e) {
-					logger.getObject().error("There was an error getting access to the StoredFile table.", e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
-
-				return null;
 			}
 		};
 
@@ -344,6 +328,13 @@ public class StoredFileAccess {
 				.fetchFirst(StoredFile.class);
 	}
 
+	private static StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
+		return helper
+				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = :id")
+				.addParameter("id", storedFileId)
+				.fetchFirst(StoredFile.class);
+	}
+
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
 		repositoryAccessHelper
 				.mapSql(
@@ -359,35 +350,21 @@ public class StoredFileAccess {
 				.execute();
 	}
 
-	private static void updateStoredFilePath(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, String filePath) {
-		updateStoredFilePath(repositoryAccessHelper, storedFileId, -1, filePath);
-	}
-
-	private static void updateStoredFilePath(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, int mediaFileId, String filePath) {
-		final HashMap<String, Object> parameters = new HashMap<>(4);
-
-		String updateSql =
+	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
+		final String updateSql =
 				" UPDATE " + StoredFile.tableName +
-				" SET " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName;
+				" SET " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName +
+				", " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName +
+				", " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName +
+				", " + StoredFile.isDownloadCompleteColumnName + " = :" + StoredFile.isDownloadCompleteColumnName +
+				" WHERE id = :id";
 
-		parameters.put(StoredFile.pathColumnName, filePath);
-
-		if (mediaFileId > -1) {
-			updateSql += ", " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName + " , ";
-			parameters.put(StoredFile.storedMediaIdColumnName, mediaFileId);
-		}
-
-		updateSql += " WHERE id = :id";
-		parameters.put("id", storedFileId);
-
-		repositoryAccessHelper.mapSql(updateSql).addParameters(parameters).execute();
-	}
-
-	private void updateFileOwner(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, boolean isOwner) {
 		repositoryAccessHelper
-				.mapSql("UPDATE " + StoredFile.tableName + " SET " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName + " WHERE id = :id")
-				.addParameter(StoredFile.isOwnerColumnName, isOwner)
-				.addParameter("id", storedFileId)
+				.mapSql(updateSql)
+				.addParameter(StoredFile.storedMediaIdColumnName, storedFile.getStoredMediaId())
+				.addParameter(StoredFile.pathColumnName, storedFile.getPath())
+				.addParameter(StoredFile.isOwnerColumnName, storedFile.isOwner())
+				.addParameter(StoredFile.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
 				.execute();
 	}
 }

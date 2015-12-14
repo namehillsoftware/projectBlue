@@ -140,8 +140,9 @@ public class SqlMapper {
 			final String[] parameterHolders = cachedQuery.getValue();
 			final String[] newParameters = new String[parameterHolders.length];
 			for (int i = 0; i < parameterHolders.length; i++) {
-				if (parameters.containsKey(parameterHolders[i]))
-					newParameters[i] = parameters.get(parameterHolders[i]);
+				final String parameterName = parameterHolders[i];
+				if (parameters.containsKey(parameterName))
+					newParameters[i] = parameters.get(parameterName);
 			}
 
 			return new AbstractMap.SimpleImmutableEntry<>(cachedQuery.getKey(), newParameters);
@@ -222,7 +223,7 @@ public class SqlMapper {
 				}
 			});
 
-			setters.put(Object.class, new IThreeParameterRunnable<Field, Object, String>() {
+			setters.put(String.class, new IThreeParameterRunnable<Field, Object, String>() {
 				@Override
 				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 					try {

@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.servers.library.repository;
 import android.content.Context;
 import android.os.Environment;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
@@ -13,49 +11,26 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-@DatabaseTable(tableName = "LIBRARIES")
 public class Library {
 
-	@DatabaseField(generatedId = true)
+	public static final String tableName = "LIBRARIES";
+
 	private int id;
 	
 	// Remote connection fields
-	@DatabaseField(canBeNull = false, columnDefinition = "VARCHAR(50)")
 	private String libraryName;
-	@DatabaseField(canBeNull = false, columnDefinition = "VARCHAR(30)")
 	private String accessCode;
-	@DatabaseField(columnDefinition = "VARCHAR(100)")
 	private String authKey;
-	@DatabaseField
 	private boolean isLocalOnly = false;
-	@DatabaseField
 	private boolean isRepeating = false;
-	
-	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int nowPlayingId = -1;
-	
-	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int nowPlayingProgress = -1;
-
-	@DatabaseField
 	private ViewType selectedViewType;
-
-	@DatabaseField(defaultValue = "-1", canBeNull = false)
 	private int selectedView = -1;
-
-	@DatabaseField
 	private String savedTracksString;
-
-	@DatabaseField
 	private String customSyncedFilesPath;
-
-	@DatabaseField
 	private SyncedFileLocation syncedFileLocation;
-
-	@DatabaseField
 	private boolean isUsingExistingFiles;
-
-	@DatabaseField
 	private boolean isSyncLocalConnectionsOnly;
 
 	/**
@@ -232,6 +207,10 @@ public class Library {
 
 	public void setSelectedViewType(ViewType selectedViewType) {
 		this.selectedViewType = selectedViewType;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public enum SyncedFileLocation {
