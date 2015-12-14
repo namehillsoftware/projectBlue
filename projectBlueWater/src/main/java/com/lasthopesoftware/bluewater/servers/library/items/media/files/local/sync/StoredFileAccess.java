@@ -4,8 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
@@ -14,17 +12,20 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.Lazy;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sql2o.Connection;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,11 +35,24 @@ import java.util.concurrent.Executors;
  */
 public class StoredFileAccess {
 
-	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
-	private static final ExecutorService storedFileExecutor = Executors.newSingleThreadExecutor();
+	private static final Lazy<Logger> logger = new Lazy<>(new Callable<Logger>() {
+		@Override
+		public Logger call() throws Exception {
+			return LoggerFactory.getLogger(StoredFileAccess.class);
+		}
+	});
+
+	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<>(new Callable<ExecutorService>() {
+		@Override
+		public ExecutorService call() throws Exception {
+			return Executors.newSingleThreadExecutor();
+		}
+	});
 
 	private final Context context;
 	private final Library library;
+
+	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFile.tableName;
 
 	public StoredFileAccess(Context context, Library library) {
 		this.context = context;
@@ -51,11 +65,12 @@ public class StoredFileAccess {
 			protected StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					return storedFileAccess.queryForId(storedFileId);
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the stored file", se);
-					return null;
+					final Connection connection = repositoryAccessHelper.getConnection();
+					try {
+						return getStoredFile(connection, storedFileId);
+					} finally {
+						connection.close();
+					}
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -87,11 +102,7 @@ public class StoredFileAccess {
 			public StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					return getStoredFile(storedFileAccess, serviceFile);
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the stored file", se);
-					return null;
+					return getStoredFile(repositoryAccessHelper, serviceFile);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -105,11 +116,11 @@ public class StoredFileAccess {
 			protected List<StoredFile> executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					return storedFileAccess.queryForEq(StoredFile.isDownloadCompleteColumnName, false);
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the downloading files.", se);
-					return new ArrayList<>();
+					return repositoryAccessHelper
+							.mapSql(
+									selectFromStoredFiles + " WHERE " + StoredFile.isDownloadCompleteColumnName + " = :" + StoredFile.isDownloadCompleteColumnName)
+							.addParameter(StoredFile.isDownloadCompleteColumnName, false)
+							.fetch(StoredFile.class);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -123,22 +134,18 @@ public class StoredFileAccess {
 	}
 
 	public void markStoredFileAsDownloaded(final int storedFileId) {
-		storedFileExecutor.execute(new Runnable() {
+		storedFileExecutor.getObject().execute(new Runnable() {
 			@Override
 			public void run() {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					final StoredFile storedFile = storedFileAccess.queryForId(storedFileId);
-
-					storedFile.setIsDownloadComplete(true);
-					try {
-						storedFileAccess.createOrUpdate(storedFile);
-					} catch (SQLException se) {
-						logger.error("There was an error updating the stored file", se);
-					}
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the stored file", se);
+					repositoryAccessHelper
+							.mapSql(
+									" UPDATE " + StoredFile.tableName +
+											" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
+											" WHERE id = :id")
+							.addParameter("id", storedFileId)
+							.execute();
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -147,24 +154,20 @@ public class StoredFileAccess {
 	}
 
 	private void deleteStoredFile(final StoredFile storedFile) {
-		storedFileExecutor.execute(new Runnable() {
+		storedFileExecutor.getObject().execute(new Runnable() {
 			@Override
 			public void run() {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
+					final Connection connection = repositoryAccessHelper.getConnection();
 					try {
-						storedFileAccess.delete(storedFile);
-
-						if (!storedFile.isOwner()) return;
-
-						final File file = new File(storedFile.getPath());
-						if (file.exists()) file.delete();
-					} catch (SQLException se) {
-						logger.error("There was an error updating the stored file", se);
+						connection
+							.createQuery("DELETE FROM " + StoredFile.tableName + " WHERE id = :id")
+							.addParameter("id", storedFile.getId())
+							.executeScalar();
+					} finally {
+						connection.close();
 					}
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the stored file", se);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -173,45 +176,36 @@ public class StoredFileAccess {
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
-		storedFileExecutor.execute(new Runnable() {
+		storedFileExecutor.getObject().execute(new Runnable() {
 			@Override
 			public void run() {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					StoredFile storedFile = getStoredFile(storedFileAccess, file);
+					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 					if (storedFile == null) {
-						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.storedMediaIdColumnName, mediaFileId);
-						if (storedFiles.size() > 0)
-							storedFile = storedFiles.get(0);
+						storedFile =
+							repositoryAccessHelper
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName)
+								.addParameter(StoredFile.storedMediaIdColumnName, mediaFileId)
+								.fetchFirst(StoredFile.class);
 
-						if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
-							return;
-					}
-
-					if (storedFile == null) {
-						final List<StoredFile> storedFiles = storedFileAccess.queryForEq(StoredFile.pathColumnName, filePath);
-						if (storedFiles.size() > 0)
-							storedFile = storedFiles.get(0);
+						if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath)) return;
 					}
 
 					if (storedFile == null) {
-						storedFile = new StoredFile();
-						storedFile.setServiceId(file.getKey());
-						storedFile.setLibraryId(library.getId());
-						storedFile.setIsOwner(true);
+						storedFile =
+							repositoryAccessHelper
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName)
+									.addParameter(StoredFile.pathColumnName, filePath)
+								.fetchFirst(StoredFile.class);
 					}
 
-					storedFile.setStoredMediaId(mediaFileId);
-					storedFile.setPath(filePath);
-
-					try {
-						storedFileAccess.createOrUpdate(storedFile);
-					} catch (SQLException se) {
-						logger.error("There was an updating/creating the stored file", se);
+					if (storedFile == null) {
+						createStoredFile(repositoryAccessHelper, file);
+						storedFile = getStoredFile(repositoryAccessHelper, file);
 					}
-				} catch (SQLException se) {
-					logger.error("There was an error retrieving the stored file", se);
+
+					updateStoredFilePath(repositoryAccessHelper, storedFile.getId(), mediaFileId, filePath);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -225,13 +219,11 @@ public class StoredFileAccess {
 			public StoredFile executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFilesAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
-					StoredFile storedFile = getStoredFile(storedFilesAccess, file);
+					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 					if (storedFile == null) {
-						storedFile = new StoredFile();
-						storedFile.setServiceId(file.getKey());
-						storedFile.setLibraryId(library.getId());
-						storedFile.setIsOwner(true);
+						createStoredFile(repositoryAccessHelper, file);
+						storedFile = getStoredFile(repositoryAccessHelper, file);
+						updateFileOwner(repositoryAccessHelper, storedFile.getId(), true);
 					}
 
 					if (storedFile.getPath() == null) {
@@ -245,11 +237,11 @@ public class StoredFileAccess {
 								try {
 									storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
 								} catch (IOException e) {
-									logger.error("Error retrieving media file ID", e);
+									logger.getObject().error("Error retrieving media file ID", e);
 								}
 							}
 						} catch (IOException e) {
-							logger.error("Error retrieving media file URI", e);
+							logger.getObject().error("Error retrieving media file URI", e);
 						}
 					}
 
@@ -279,7 +271,7 @@ public class StoredFileAccess {
 							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
 							storedFile.setPath(fullPath);
 						} catch (IOException e) {
-							logger.error("Error getting filename for file " + file.getValue(), e);
+							logger.getObject().error("Error getting filename for file " + file.getValue(), e);
 						}
 					}
 
@@ -290,12 +282,12 @@ public class StoredFileAccess {
 					try {
 						storedFilesAccess.createOrUpdate(storedFile);
 					} catch (SQLException e) {
-						logger.error("There was an updating the stored file.", e);
+						logger.getObject().error("There was an updating the stored file.", e);
 					}
 
 					return storedFile;
 				} catch (SQLException e) {
-					logger.error("There was an error getting access to the StoredFile table.", e);
+					logger.getObject().error("There was an error getting access to the StoredFile table.", e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -305,39 +297,34 @@ public class StoredFileAccess {
 		};
 
 		try {
-			return createOrUpdateStoredFileTask.get(storedFileExecutor);
+			return createOrUpdateStoredFileTask.get(storedFileExecutor.getObject());
 		} catch (ExecutionException | InterruptedException e) {
-			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
+			logger.getObject().error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
 		}
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		storedFileExecutor.execute(new Runnable() {
+		storedFileExecutor.getObject().execute(new Runnable() {
 			@Override
 			public void run() {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Dao<StoredFile, Integer> storedFileAccess = repositoryAccessHelper.getDataAccess(StoredFile.class);
 					// Since we could be pulling back a lot of data, only query for what we need.
 					// This query is very custom to this scenario, so it's being kept here.
-					final PreparedQuery<StoredFile> storedFilePreparedQuery =
-							storedFileAccess
-									.queryBuilder()
-									.selectColumns("id", StoredFile.serviceIdColumnName, StoredFile.pathColumnName)
-									.where()
-									.eq(StoredFile.libraryIdColumnName, library.getId())
-									.and()
-									.eq(StoredFile.isOwnerColumnName, true)
-									.prepare();
+					final List<StoredFile> allStoredFiles =
+							repositoryAccessHelper
+								.mapSql(
+									" SELECT id, " + StoredFile.serviceIdColumnName + ", " + StoredFile.pathColumnName +
+									" FROM " + StoredFile.tableName +
+									" WHERE " + StoredFile.libraryIdColumnName + " = :" + StoredFile.libraryIdColumnName +
+									" AND " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName)
+								.fetch(StoredFile.class);
 
-					final List<StoredFile> allStoredFiles = storedFileAccess.query(storedFilePreparedQuery);
 					for (StoredFile storedFile : allStoredFiles) {
 						if (!serviceIdsToKeep.contains(storedFile.getServiceId()))
 							deleteStoredFile(storedFile);
 					}
-				} catch (SQLException e) {
-					logger.error("Error updating the ", e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
@@ -345,22 +332,62 @@ public class StoredFileAccess {
 		});
 	}
 
-	private StoredFile getStoredFile(Dao<StoredFile, Integer> storedFileAccess, IFile file) {
+	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {
+		return helper
+				.mapSql(
+						" SELECT * " +
+								" FROM " + StoredFile.tableName + " " +
+								" WHERE " + StoredFile.serviceIdColumnName + " = :" + StoredFile.serviceIdColumnName +
+								" AND " + StoredFile.libraryIdColumnName + " = :" + StoredFile.libraryIdColumnName)
+				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
+				.addParameter(StoredFile.libraryIdColumnName, library.getId())
+				.fetchFirst(StoredFile.class);
+	}
 
-		final PreparedQuery<StoredFile> storedFilePreparedQuery;
-		try {
-			storedFilePreparedQuery = storedFileAccess
-					.queryBuilder()
-					.where()
-					.eq(StoredFile.serviceIdColumnName, file.getKey())
-					.and()
-					.eq(StoredFile.libraryIdColumnName, library.getId())
-					.prepare();
-			return storedFileAccess.queryForFirst(storedFilePreparedQuery);
-		} catch (SQLException e) {
-			logger.error("Error getting file!", e);
+	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
+		repositoryAccessHelper
+				.mapSql(
+						" INSERT INTO " + StoredFile.tableName + " (" +
+								StoredFile.serviceIdColumnName + ", " +
+								StoredFile.libraryIdColumnName + ", " +
+								StoredFile.isDownloadCompleteColumnName + ") VALUES " +
+								":" + StoredFile.serviceIdColumnName + ", " +
+								":" + StoredFile.libraryIdColumnName + ", " +
+								"1")
+				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
+				.addParameter(StoredFile.libraryIdColumnName, library.getId())
+				.execute();
+	}
+
+	private static void updateStoredFilePath(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, String filePath) {
+		updateStoredFilePath(repositoryAccessHelper, storedFileId, -1, filePath);
+	}
+
+	private static void updateStoredFilePath(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, int mediaFileId, String filePath) {
+		final HashMap<String, Object> parameters = new HashMap<>(4);
+
+		String updateSql =
+				" UPDATE " + StoredFile.tableName +
+				" SET " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName;
+
+		parameters.put(StoredFile.pathColumnName, filePath);
+
+		if (mediaFileId > -1) {
+			updateSql += ", " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName + " , ";
+			parameters.put(StoredFile.storedMediaIdColumnName, mediaFileId);
 		}
 
-		return null;
+		updateSql += " WHERE id = :id";
+		parameters.put("id", storedFileId);
+
+		repositoryAccessHelper.mapSql(updateSql).addParameters(parameters).execute();
+	}
+
+	private void updateFileOwner(RepositoryAccessHelper repositoryAccessHelper, int storedFileId, boolean isOwner) {
+		repositoryAccessHelper
+				.mapSql("UPDATE " + StoredFile.tableName + " SET " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName + " WHERE id = :id")
+				.addParameter(StoredFile.isOwnerColumnName, isOwner)
+				.addParameter("id", storedFileId)
+				.execute();
 	}
 }

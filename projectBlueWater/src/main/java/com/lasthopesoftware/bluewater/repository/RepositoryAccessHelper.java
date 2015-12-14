@@ -2,31 +2,24 @@ package com.lasthopesoftware.bluewater.repository;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 
-import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
-import com.j256.ormlite.dao.BaseDaoImpl;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.DatabaseTableConfig;
-import com.j256.ormlite.table.TableUtils;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.sql.SqlMapper;
 import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sql2o.Sql2o;
 
-import java.sql.SQLException;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
+public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
 	private static final int DATABASE_VERSION = 5;
@@ -44,92 +37,108 @@ public class RepositoryAccessHelper extends OrmLiteSqliteOpenHelper {
 		}
 	});
 
-	private final static Lazy<Map<Class<?>, DatabaseTableConfig<?>>> configMap = new Lazy<>(new Callable<Map<Class<?>, DatabaseTableConfig<?>>>() {
+	private final Context context;
+
+	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<>(new Callable<SQLiteDatabase>() {
 		@Override
-		public Map<Class<?>, DatabaseTableConfig<?>> call() throws Exception {
-			return new ConcurrentHashMap<>();
+		public SQLiteDatabase call() throws Exception {
+			return context.openOrCreateDatabase(DATABASE_NAME, 0, null);
 		}
 	});
 
+	private static Sql2o sql2oInstance;
+
 	public RepositoryAccessHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+		this.context = context;
+
+		if (sql2oInstance != null) return;
+
+		final SQLiteDatabase sqliteDB = sqliteDb.getObject();
+		final String dbUrl = "jdbc:sqlite:" + sqliteDB.getPath();
+		final String dbUser = "";
+
+		sql2oInstance = new Sql2o(dbUrl, dbUser, "", new SqlDroidQuirks());
+	}
+//
+//	@Override
+//	public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
+//		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
+//	}
+
+//	private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
+//		for (Class<?> table : tableClasses) {
+//			try {
+//				TableUtils.createTable(conn, table);
+//			} catch (SQLException e) {
+//				localLogger.getObject().error(e.toString(), e);
+//			}
+//		}
+//	}
+//
+//	private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
+//		for (Class<?> table : tableClasses) {
+//			try {
+//				TableUtils.dropTable(conn, table, true);
+//			} catch (SQLException e) {
+//				localLogger.getObject().error(e.toString(), e);
+//			}
+//		}
+//		createTables(conn, tableClasses);
+//	}
+////
+//	@Override
+//	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
+//		if (oldVersion < 2)
+//			recreateTables(conn, version2Tables);
+//
+//		if (oldVersion < 4)
+//			createTables(conn, version4Tables);
+//
+//		if (oldVersion < 5) {
+//			recreateTables(conn, version3Tables);
+//			try {
+//				final Dao<Library, Integer> libraryDao = getDao(Library.class);
+//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
+//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
+//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
+//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
+//				libraryDao.executeRaw("DROP TABLE `StoredLists`;");
+//			} catch (SQLException e) {
+//				localLogger.getObject().error("Error adding column syncedFilesPath to library table", e);
+//			}
+//		}
+//	}
+
+	public org.sql2o.Connection getConnection() {
+		return sql2oInstance != null ? sql2oInstance.open() : null;
+	}
+
+	public SQLiteDatabase getDatabase() {
+		return sqliteDb.getObject();
+	}
+
+	public  SqlMapper mapSql(String sqlQuery) {
+		return new SqlMapper(sqliteDb.getObject(), sqlQuery);
 	}
 
 	@Override
-	public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
-		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
-	}
-
-	private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
-		for (Class<?> table : tableClasses) {
-			try {
-				TableUtils.createTable(conn, table);
-			} catch (SQLException e) {
-				localLogger.getObject().error(e.toString(), e);
-			}
-		}
-	}
-
-	private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
-		for (Class<?> table : tableClasses) {
-			try {
-				TableUtils.dropTable(conn, table, true);
-			} catch (SQLException e) {
-				localLogger.getObject().error(e.toString(), e);
-			}
-		}
-		createTables(conn, tableClasses);
+	public void onCreate(SQLiteDatabase db) {
+//		sqliteDb.getObject().
 	}
 
 	@Override
-	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
-		if (oldVersion < 2)
-			recreateTables(conn, version2Tables);
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-		if (oldVersion < 4)
-			createTables(conn, version4Tables);
-
-		if (oldVersion < 5) {
-			recreateTables(conn, version3Tables);
-			try {
-				final Dao<Library, Integer> libraryDao = getDao(Library.class);
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
-				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
-				libraryDao.executeRaw("DROP TABLE `StoredLists`;");
-			} catch (SQLException e) {
-				localLogger.getObject().error("Error adding column syncedFilesPath to library table", e);
-			}
-		}
 	}
 
 	@Override
-	public <D extends Dao<T, ?>, T> D getDao(Class<T> clazz) throws SQLException {
-		return (D) getDataAccess(clazz);
-	}
-
-	public <T, TId> Dao<T, TId> getDataAccess(Class<T> clazz) throws SQLException {
-		if (!configMap.getObject().containsKey(clazz))
-			configMap.getObject().put(clazz, DatabaseTableConfig.fromClass(connectionSource, clazz));
-
-		return new GenericDao<>(connectionSource, (DatabaseTableConfig<T>) configMap.getObject().get(clazz));
-	}
-
-	@Override
-	public void close() {
+	public synchronized void close() {
 		super.close();
-		DaoManager.clearCache();
-	}
 
-	private static class GenericDao<TClass, TId> extends BaseDaoImpl<TClass, TId> {
-		public GenericDao(ConnectionSource connectionSource, Class<TClass> clazz) throws SQLException {
-			super(connectionSource, clazz);
-		}
-
-		public GenericDao(ConnectionSource connectionSource, DatabaseTableConfig<TClass> databaseTableConfig) throws SQLException {
-			super(connectionSource, databaseTableConfig);
-		}
+		if (sqliteDb.isInitialized())
+			sqliteDb.getObject().close();
 	}
 }

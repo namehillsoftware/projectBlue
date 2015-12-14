@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
-
-@DatabaseTable(tableName = "StoredFiles")
 public class StoredFile {
+
+	public static final String tableName = "StoredFiles";
 
 	public static final String serviceIdColumnName = "serviceId";
 	public static final String libraryIdColumnName = "libraryId";
@@ -13,25 +11,18 @@ public class StoredFile {
 	public static final String storedMediaIdColumnName = "storedMediaId";
 	public static final String isDownloadCompleteColumnName = "isDownloadComplete";
 
-	@DatabaseField(generatedId = true)
 	private int id;
 	
-	@DatabaseField(uniqueCombo = true)
 	private int libraryId;
 	
-	@DatabaseField
 	private int storedMediaId;
 
-	@DatabaseField(uniqueCombo = true)
 	private int serviceId;
 
-	@DatabaseField
 	private boolean isDownloadComplete;
 
-	@DatabaseField(unique = true)
 	private String path;
 
-	@DatabaseField
 	private boolean isOwner;
 
 	public int getId() {
