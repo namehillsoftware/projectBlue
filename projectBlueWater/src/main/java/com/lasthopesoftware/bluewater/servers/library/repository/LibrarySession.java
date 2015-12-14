@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.j256.ormlite.dao.Dao;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class LibrarySession {
@@ -30,6 +28,11 @@ public class LibrarySession {
 	}
 
 	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
+		final String libraryUpdateSql =
+			" UPDATE " + Library.tableName +
+			" SET " + Library.accessCodeColumn + " = :" + Library.accessCodeColumn +
+			" , " + Library.authKeyColumn + " = :" + Library.authKeyColumn +
+			" WHERE id = :id";
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
@@ -101,15 +104,14 @@ public class LibrarySession {
 
 		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 		try {
-			final Dao<Library, Integer> libraryAccess = repositoryAccessHelper.getDataAccess(Library.class);
-			return libraryAccess.queryForId(libraryId);
-		} catch (SQLException e) {
-			logger.error(e.toString(), e);
+			return
+				repositoryAccessHelper
+					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = :id")
+					.addParameter("id", libraryId)
+					.fetchFirst(Library.class);
 		} finally {
 			repositoryAccessHelper.close();
 		}
-
-		return null;
 	}
 	
 	public static void GetLibraries(final Context context, ITwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
@@ -118,14 +120,13 @@ public class LibrarySession {
 			protected List<Library> executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					return repositoryAccessHelper.getDataAccess(Library.class).queryForAll();
-				} catch (SQLException e) {
-					logger.error(e.toString(), e);
+					return
+						repositoryAccessHelper
+							.mapSql("SELECT * FROM " + Library.tableName)
+							.fetch(Library.class);
 				} finally {
 					repositoryAccessHelper.close();
 				}
-
-				return new ArrayList<>();
 			}
 		};
 

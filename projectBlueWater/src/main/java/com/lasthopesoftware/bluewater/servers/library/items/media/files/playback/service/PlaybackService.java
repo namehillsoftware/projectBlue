@@ -336,12 +336,14 @@ public class PlaybackService extends Service implements
 	}
 		
 	private void restorePlaylistControllerFromStorage(final IOneParameterRunnable<Boolean> onPlaylistRestored) {
+
+
 		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
-					
+
 				final Runnable onPlaylistInitialized = new Runnable() {
 					@Override
 					public void run() {

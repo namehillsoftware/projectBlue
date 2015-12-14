@@ -14,6 +14,10 @@ import java.util.List;
 public class Library {
 
 	public static final String tableName = "LIBRARIES";
+	public static final String libraryNameColumn = "libraryName";
+	public static final String accessCodeColumn = "accessCode";
+	public static final String authKeyColumn = "authKey";
+	public static final String isLocalOnlyColumn = "isLocalOnly";
 
 	private int id;
 	
