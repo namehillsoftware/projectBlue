@@ -3,11 +3,12 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.propert
 import android.content.Context;
 import android.net.Uri;
 
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;

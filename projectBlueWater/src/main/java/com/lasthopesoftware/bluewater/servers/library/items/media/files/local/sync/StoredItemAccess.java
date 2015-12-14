@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import android.content.Context;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -48,12 +46,7 @@ public class StoredItemAccess {
             protected Boolean executeInBackground(Void... params) {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
-                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
-                    return isItemMarkedForSync(storedListAccess, library, item, getListType(item));
-                } catch (SQLException e) {
-                    logger.error("There was an error getting the stored item table", e);
-                    setException(e);
-                    return null;
+                    return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
                 } finally {
                     repositoryAccessHelper.close();
                 }
@@ -74,7 +67,7 @@ public class StoredItemAccess {
                 try {
                     final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
 
-                    if (isItemMarkedForSync(storedListAccess, library, item, itemType)) return;
+                    if (isItemMarkedForSync(repositoryAccessHelper, library, item, itemType)) return;
 
                     final StoredItem storedItem = new StoredItem();
                     storedItem.setLibraryId(library.getId());
@@ -101,9 +94,8 @@ public class StoredItemAccess {
             public void run() {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 	            try {
-                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
 
-                    final StoredItem storedItem = getStoredList(storedListAccess, library, item, itemType);
+                    final StoredItem storedItem = getStoredList(repositoryAccessHelper, library, item, itemType);
 	                if (storedItem == null) return;
 
 	                try {
@@ -145,28 +137,22 @@ public class StoredItemAccess {
         getAllStoredItemsTasks.execute(RepositoryAccessHelper.databaseExecutor);
     }
 
-    private static boolean isItemMarkedForSync(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
-        return getStoredList(storedListAccess, library, item, itemType) != null;
+    private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
+        return getStoredList(helper, library, item, itemType) != null;
     }
 
-    private  static StoredItem getStoredList(Dao<StoredItem, Integer> storedListAccess, Library library, IItem item, StoredItem.ItemType itemType) {
-        try {
-            final PreparedQuery<StoredItem> storedListPreparedQuery =
-                    storedListAccess
-                            .queryBuilder()
-                            .where()
-                            .eq(StoredItem.serviceIdColumnName, item.getKey())
-                            .and()
-                            .eq(StoredItem.libraryIdColumnName, library.getId())
-                            .and()
-                            .eq(StoredItem.itemTypeColumnName, itemType)
-                            .prepare();
-            return storedListAccess.queryForFirst(storedListPreparedQuery);
-        } catch (SQLException e) {
-            logger.error("Error while checking whether stored list exists.", e);
-        }
-
-        return null;
+    private  static StoredItem getStoredList(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
+            return
+                helper
+                    .mapSql(
+                        "SELECT * FROM " + StoredItem.tableName +
+                        "WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
+                        "AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
+                        "AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
+                    .addParameter(StoredItem.serviceIdColumnName, item.getKey())
+                    .addParameter(StoredItem.libraryIdColumnName, library.getId())
+                    .addParameter(StoredItem.itemTypeColumnName, itemType)
+                    .fetchFirst(StoredItem.class);
     }
 
 	private static StoredItem.ItemType getListType(IItem item) {

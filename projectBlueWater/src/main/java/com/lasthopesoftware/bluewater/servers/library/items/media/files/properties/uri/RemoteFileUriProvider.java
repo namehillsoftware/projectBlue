@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.propert
 
 import android.net.Uri;
 
-import com.j256.ormlite.logger.LoggerFactory;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by david on 7/24/15.
