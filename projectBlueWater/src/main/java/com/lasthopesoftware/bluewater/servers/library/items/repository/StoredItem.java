@@ -40,5 +40,13 @@ public class StoredItem {
 		this.itemType = type;
 	}
 
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public enum ItemType { FILE, PLAYLIST, ITEM }
 }

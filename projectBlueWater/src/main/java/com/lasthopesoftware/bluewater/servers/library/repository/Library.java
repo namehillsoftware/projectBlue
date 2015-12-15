@@ -18,6 +18,16 @@ public class Library {
 	public static final String accessCodeColumn = "accessCode";
 	public static final String authKeyColumn = "authKey";
 	public static final String isLocalOnlyColumn = "isLocalOnly";
+	public static final String isRepeatingColumn = "isRepeating";
+	public static final String nowPlayingIdColumn = "nowPlayingId";
+	public static final String nowPlayingProgressColumn = "nowPlayingProgress";
+	public static final String selectedViewTypeColumn = "selectedViewType";
+	public static final String selectedViewColumn = "selectedView";
+	public static final String savedTracksStringColumn = "savedTracksString";
+	public static final String customSyncedFilesPathColumn = "customSyncedFilesPath";
+	public static final String syncedFileLocationColumn = "syncedFileLocation";
+	public static final String isUsingExistingFilesColumn = "isUsingExistingFiles";
+	public static final String isSyncLocalConnectionsOnlyColumn = "isSyncLocalConnectionsOnly";
 
 	private int id;
 	

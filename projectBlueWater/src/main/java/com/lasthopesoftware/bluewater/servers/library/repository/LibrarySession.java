@@ -14,7 +14,6 @@ import com.lasthopesoftware.threading.FluentTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class LibrarySession {
@@ -29,10 +28,22 @@ public class LibrarySession {
 
 	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
 		final String libraryUpdateSql =
-			" UPDATE " + Library.tableName +
-			" SET " + Library.accessCodeColumn + " = :" + Library.accessCodeColumn +
-			" , " + Library.authKeyColumn + " = :" + Library.authKeyColumn +
-			" WHERE id = :id";
+				" UPDATE " + Library.tableName +
+				" SET " + Library.accessCodeColumn + " = :" + Library.accessCodeColumn +
+				", " + Library.authKeyColumn + " = :" + Library.authKeyColumn +
+				", " + Library.isLocalOnlyColumn + " = :" + Library.isLocalOnlyColumn +
+				", " + Library.libraryNameColumn + " + :" + Library.libraryNameColumn +
+				", " + Library.isRepeatingColumn + " + :" + Library.isRepeatingColumn +
+				", " + Library.customSyncedFilesPathColumn + " + :" + Library.customSyncedFilesPathColumn +
+				", " + Library.isSyncLocalConnectionsOnlyColumn + " + :" + Library.isSyncLocalConnectionsOnlyColumn +
+				", " + Library.isUsingExistingFilesColumn + " + :" + Library.isUsingExistingFilesColumn +
+				", " + Library.nowPlayingIdColumn + " + :" + Library.nowPlayingIdColumn +
+				", " + Library.nowPlayingProgressColumn + " + :" + Library.nowPlayingProgressColumn +
+				", " + Library.savedTracksStringColumn + " + :" + Library.savedTracksStringColumn +
+				", " + Library.selectedViewColumn + " + :" + Library.selectedViewColumn +
+				", " + Library.selectedViewTypeColumn + " + :" + Library.selectedViewTypeColumn +
+				", " + Library.syncedFileLocationColumn + " + :" + Library.syncedFileLocationColumn +
+				" WHERE id = :id";
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
@@ -40,16 +51,29 @@ public class LibrarySession {
 			protected Library executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					repositoryAccessHelper.getDataAccess(Library.class).createOrUpdate(library);
+					repositoryAccessHelper
+							.mapSql(libraryUpdateSql)
+							.addParameter(Library.accessCodeColumn, library.getAccessCode())
+							.addParameter(Library.authKeyColumn, library.getAuthKey())
+							.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
+							.addParameter(Library.libraryNameColumn, library.getLibraryName())
+							.addParameter(Library.isRepeatingColumn, library.isRepeating())
+							.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
+							.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
+							.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
+							.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
+							.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
+							.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
+							.addParameter(Library.selectedViewColumn, library.getSelectedView())
+							.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
+							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation())
+							.execute();
+
 					logger.debug("Library saved.");
 					return library;
-				} catch (SQLException e) {
-					logger.error(e.toString(), e);
 				} finally {
 					repositoryAccessHelper.close();
 				}
-
-				return null;
 			}
 		};
 

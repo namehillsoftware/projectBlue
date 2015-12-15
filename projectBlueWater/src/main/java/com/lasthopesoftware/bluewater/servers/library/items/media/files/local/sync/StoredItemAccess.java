@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.s
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
@@ -13,8 +14,6 @@ import com.lasthopesoftware.threading.FluentTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,22 +64,22 @@ public class StoredItemAccess {
             public void run() {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
-                    final Dao<StoredItem, Integer> storedListAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
-
                     if (isItemMarkedForSync(repositoryAccessHelper, library, item, itemType)) return;
 
-                    final StoredItem storedItem = new StoredItem();
-                    storedItem.setLibraryId(library.getId());
-                    storedItem.setServiceId(item.getKey());
-                    storedItem.setItemType(itemType);
+                    final String storedItemInsertSql =
+                        InsertBuilder
+                            .fromTable(StoredItem.tableName)
+                            .addColumn(StoredItem.libraryIdColumnName)
+                            .addColumn(StoredItem.serviceIdColumnName)
+		                    .addColumn(StoredItem.itemTypeColumnName)
+		                    .build();
 
-                    try {
-                        storedListAccess.create(storedItem);
-                    } catch (SQLException e) {
-                        logger.error("Error while creating new stored list", e);
-                    }
-                } catch (SQLException e) {
-                    logger.error("Error getting access to the stored list table", e);
+                    repositoryAccessHelper
+                            .mapSql(storedItemInsertSql)
+		                    .addParameter(StoredItem.libraryIdColumnName, library.getId())
+		                    .addParameter(StoredItem.serviceIdColumnName, item.getKey())
+		                    .addParameter(StoredItem.itemTypeColumnName, itemType)
+		                    .execute();
                 } finally {
 	                repositoryAccessHelper.close();
                 }
@@ -94,18 +93,17 @@ public class StoredItemAccess {
             public void run() {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 	            try {
-
-                    final StoredItem storedItem = getStoredList(repositoryAccessHelper, library, item, itemType);
-	                if (storedItem == null) return;
-
-	                try {
-		                storedListAccess.delete(storedItem);
-                    } catch (SQLException e) {
-                        logger.error("Error removing stored list", e);
-                    }
-                } catch (SQLException e) {
-                    logger.error("Error getting access to the stored list table", e);
-                } finally {
+		            repositoryAccessHelper
+				            .mapSql(
+					            "DELETE FROM " + StoredItem.tableName +
+					            "WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
+					            "AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
+					            "AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
+				            .addParameter(StoredItem.serviceIdColumnName, item.getKey())
+				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
+				            .addParameter(StoredItem.itemTypeColumnName, itemType)
+				            .execute();
+	            } finally {
 		            repositoryAccessHelper.close();
 	            }
             }
@@ -119,15 +117,15 @@ public class StoredItemAccess {
             protected List<StoredItem> executeInBackground(Void... params) {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
                 try {
-                    final Dao<StoredItem, Integer> storedItemAccess = repositoryAccessHelper.getDataAccess(StoredItem.class);
-                    return storedItemAccess.queryForEq(StoredItem.libraryIdColumnName, library.getId());
-                } catch (SQLException e) {
-                    logger.error("Error accessing the stored list access", e);
+	                return
+			                repositoryAccessHelper
+					                .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName)
+					                .addParameter(StoredItem.libraryIdColumnName, library.getId())
+					                .fetch(StoredItem.class);
+
                 } finally {
                     repositoryAccessHelper.close();
                 }
-
-                return new ArrayList<>();
             }
         };
 
