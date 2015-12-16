@@ -143,10 +143,10 @@ public class StoredItemAccess {
             return
                 helper
                     .mapSql(
-                        "SELECT * FROM " + StoredItem.tableName +
-                        "WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
-                        "AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
-                        "AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
+                        " SELECT * FROM " + StoredItem.tableName +
+                        " WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
+                        " AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
+                        " AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
                     .addParameter(StoredItem.serviceIdColumnName, item.getKey())
                     .addParameter(StoredItem.libraryIdColumnName, library.getId())
                     .addParameter(StoredItem.itemTypeColumnName, itemType)

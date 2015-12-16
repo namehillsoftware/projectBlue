@@ -303,6 +303,8 @@ public class StoredFileAccess {
 									" FROM " + StoredFile.tableName +
 									" WHERE " + StoredFile.libraryIdColumnName + " = :" + StoredFile.libraryIdColumnName +
 									" AND " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName)
+								.addParameter(StoredFile.libraryIdColumnName, library.getId())
+								.addParameter(StoredFile.isOwnerColumnName, true)
 								.fetch(StoredFile.class);
 
 					for (StoredFile storedFile : allStoredFiles) {

@@ -187,7 +187,7 @@ public class DiskFileCache {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " =: " + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
+							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = :" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
 							.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
 							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
