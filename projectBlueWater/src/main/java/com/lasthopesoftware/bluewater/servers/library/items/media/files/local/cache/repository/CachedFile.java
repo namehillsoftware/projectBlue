@@ -9,6 +9,7 @@ public class CachedFile {
 	public static final String FILE_NAME = "fileName";
 	public static final String FILE_SIZE = "fileSize";
 	public static final String CREATED_TIME = "createdTime";
+	public static final String tableName = "CachedFile";
 	
 	private int id;
 	
@@ -122,5 +123,13 @@ public class CachedFile {
 	 */
 	public final void setCreatedTime(long createdTime) {
 		this.createdTime = createdTime;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }

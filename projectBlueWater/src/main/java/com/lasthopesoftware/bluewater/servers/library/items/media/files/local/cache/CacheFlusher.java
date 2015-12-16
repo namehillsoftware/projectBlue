@@ -2,9 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.c
 
 import android.content.Context;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.SelectArg;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 
@@ -13,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 
 /**
  * Flush a given cache until it reaches the given target size
@@ -49,14 +45,12 @@ class CacheFlusher implements Runnable {
 	public final void run() {
 		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 		try {
-			final Dao<CachedFile, Integer> cachedFileAccess = repositoryAccessHelper.getDataAccess(CachedFile.class);
+			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
 			
-			if (getCachedFileSizeFromDatabase(cachedFileAccess) <= targetSize) return;
-			
-			while (getCachedFileSizeFromDatabase(cachedFileAccess) > targetSize) {
-				final CachedFile cachedFile = getOldestCachedFile(cachedFileAccess);
+			while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize) {
+				final CachedFile cachedFile = getOldestCachedFile(repositoryAccessHelper);
 				if (cachedFile != null)
-					deleteCachedFile(cachedFileAccess, cachedFile);
+					deleteCachedFile(repositoryAccessHelper, cachedFile);
 			}
 			
 			// Remove any files in the cache dir but not in the database
@@ -69,39 +63,27 @@ class CacheFlusher implements Runnable {
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
-			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(cachedFileAccess))
+			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
 				return;
 			
 			for (File fileInCacheDir : filesInCacheDir) {
 				try {
-					if (getCachedFileByFilename(cachedFileAccess, fileInCacheDir.getCanonicalPath()) != null) continue;
+					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null) continue;
 				} catch (IOException e) {
 					logger.warn("Issue getting canonical file path.");
 				}
 				fileInCacheDir.delete();
 			}
-		} catch (SQLException accessException) {
-			logger.error("Error accessing cache", accessException);
 		} finally {
 			repositoryAccessHelper.close();
 		}
 	}
 
-	private long getCachedFileSizeFromDatabase(final Dao<CachedFile, Integer> cachedFileAccess) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
-						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg())
-						.prepare();
-			
-			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName);
-		} catch (SQLException e) {
-			logger.error("Error getting file size", e);
-			return -1;
-		}
+	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
+		return repositoryAccessHelper
+				.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME)
+				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.execute();
 	}
 	
 //	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
@@ -123,68 +105,38 @@ class CacheFlusher implements Runnable {
 //		}
 //	}
 	
-	private CachedFile getOldestCachedFile(final Dao<CachedFile, Integer> cachedFileAccess) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.orderBy(CachedFile.LAST_ACCESSED_TIME, true)
-						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
-						.prepare();
-			
-			return cachedFileAccess.queryForFirst(preparedQuery);			
-		} catch (SQLException e) {
-			logger.error("Error getting oldest cached file", e);
-			return null;
-		}
+	private CachedFile getOldestCachedFile(final RepositoryAccessHelper repositoryAccessHelper) {
+		return repositoryAccessHelper
+				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
+				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.fetchFirst(CachedFile.class);
 	}
 	
-	private long getCachedFileCount(final Dao<CachedFile, Integer> cachedFileAccess) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.setCountOf(true)
-						.where()
-						.eq(CachedFile.CACHE_NAME, new SelectArg(cacheName))
-						.prepare();
-			
-			return cachedFileAccess.countOf(preparedQuery);
-		} catch (SQLException e) {
-			logger.error("Error getting file count", e);
-			return -1;
-		}
+	private long getCachedFileCount(final RepositoryAccessHelper repositoryAccessHelper) {
+		return repositoryAccessHelper
+				.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME)
+				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.execute();
 	}
 	
-	private static CachedFile getCachedFileByFilename(final Dao<CachedFile, Integer> cachedFileAccess, final String fileName) {
-		try {
-			
-			final PreparedQuery<CachedFile> preparedQuery =
-					cachedFileAccess.queryBuilder()
-						.where()
-						.eq(CachedFile.FILE_NAME, new SelectArg(fileName))
-						.prepare();
-			
-			return cachedFileAccess.queryForFirst(preparedQuery);	
-		} catch (SQLException e) {
-			logger.error("Error getting cached file by filename", e);
-			return null;
-		}
+	private static CachedFile getCachedFileByFilename(final RepositoryAccessHelper repositoryAccessHelper, final String fileName) {
+
+		return repositoryAccessHelper
+				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.FILE_NAME + " = :" + CachedFile.FILE_NAME)
+				.addParameter(CachedFile.FILE_NAME, fileName)
+				.fetchFirst(CachedFile.class);
+
 	}
 	
-	private static boolean deleteCachedFile(final Dao<CachedFile, Integer> cachedFileAccess, final CachedFile cachedFile) {
+	private static boolean deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final CachedFile cachedFile) {
 		final File fileToDelete = new File(cachedFile.getFileName());
-		if (fileToDelete.exists()) 
-			fileToDelete.delete();
-		
-		try {
-			cachedFileAccess.delete(cachedFile);
-			return true;
-		} catch (SQLException deleteException) {
-			logger.error("Error deleting file pointer from database", deleteException);
-		}
-		
-		return false;
+
+		if (fileToDelete.exists() && fileToDelete.delete())
+			repositoryAccessHelper
+					.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = :id")
+					.addParameter("id", cachedFile.getId())
+					.execute();
+
+		return true;
 	}
 }

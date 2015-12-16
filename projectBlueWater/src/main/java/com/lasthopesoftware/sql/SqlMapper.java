@@ -2,6 +2,7 @@ package com.lasthopesoftware.sql;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 
 import com.lasthopesoftware.runnables.IThreeParameterRunnable;
 
@@ -45,6 +46,10 @@ public class SqlMapper {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
+	public SqlMapper addParameter(String parameter, long value) {
+		return addParameter(parameter, String.valueOf(value));
+	}
+
 	public SqlMapper addParameter(String parameter, boolean value) {
 		return addParameter(parameter, value ? 1 : 0);
 	}
@@ -76,7 +81,7 @@ public class SqlMapper {
 					newObject = cls.newInstance();
 
 					for (int i = 0; i < cursor.getColumnCount(); i++) {
-						final String colName = cursor.getColumnName(i);
+						final String colName = cursor.getColumnName(i).toLowerCase();
 
 						if (reflections.setterMap.containsKey(colName))
 							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
@@ -102,10 +107,20 @@ public class SqlMapper {
 		return results.size() > 0 ? results.get(0) : null;
 	}
 
-	public void execute() {
+	public long execute() {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
-		database.execSQL(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
+		final String sqlQuery = compatibleSqlQuery.getKey();
+
+		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
+		sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
+
+		if (sqlQuery.startsWith("update") || sqlQuery.startsWith("delete"))
+			return sqLiteStatement.executeUpdateDelete();
+		if (sqlQuery.startsWith("insert"))
+			return sqLiteStatement.executeInsert();
+
+		return sqLiteStatement.simpleQueryForLong();
 	}
 
 	private static class QueryCache {
@@ -114,6 +129,7 @@ public class SqlMapper {
 		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '='));
 
 		public static Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
+			sqlQuery = sqlQuery.trim().toLowerCase();
 			if (queryCache.containsKey(sqlQuery))
 				return getOrderedSqlParameters(queryCache.get(sqlQuery), parameters);
 
@@ -234,6 +250,17 @@ public class SqlMapper {
 				}
 			});
 
+			setters.put(Long.TYPE, new IThreeParameterRunnable<Field, Object, String>() {
+				@Override
+				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+					try {
+						parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
 			setters.put(String.class, new IThreeParameterRunnable<Field, Object, String>() {
 				@Override
 				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -300,6 +327,19 @@ public class SqlMapper {
 				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 					try {
 						parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			setters.put(Long.TYPE, new IThreeParameterRunnable<Method, Object, String>() {
+				@Override
+				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+					try {
+						parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {
