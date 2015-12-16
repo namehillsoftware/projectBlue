@@ -343,10 +343,10 @@ public class StoredFileAccess {
 						" INSERT INTO " + StoredFile.tableName + " (" +
 								StoredFile.serviceIdColumnName + ", " +
 								StoredFile.libraryIdColumnName + ", " +
-								StoredFile.isDownloadCompleteColumnName + ") VALUES " +
+								StoredFile.isDownloadCompleteColumnName + ") VALUES (" +
 								":" + StoredFile.serviceIdColumnName + ", " +
 								":" + StoredFile.libraryIdColumnName + ", " +
-								"1")
+								"1)")
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
 				.execute();
