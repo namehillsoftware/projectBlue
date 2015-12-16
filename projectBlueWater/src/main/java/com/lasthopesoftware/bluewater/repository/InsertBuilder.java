@@ -24,17 +24,19 @@ public class InsertBuilder {
 	}
 
 	public String build() {
-		for (String column : columns)
-			sqlStringBuilder.append(column).append(", ");
+		for (String column : columns) {
+			sqlStringBuilder.append(column);
+			if (column != columns.get(columns.size() - 1))
+				sqlStringBuilder.append(", ");
+		}
 
-		sqlStringBuilder
-				.delete(sqlStringBuilder.length() - 3, sqlStringBuilder.length() - 1)
-				.append(" VALUES ");
+		sqlStringBuilder.append(") VALUES ");
 
-		for (String column : columns)
-			sqlStringBuilder.append(':').append(column).append(", ");
-
-		sqlStringBuilder.delete(sqlStringBuilder.length() - 3, sqlStringBuilder.length() - 1);
+		for (String column : columns) {
+			sqlStringBuilder.append(':').append(column);
+			if (column != columns.get(columns.size() - 1))
+				sqlStringBuilder.append(", ");
+		}
 
 		return sqlStringBuilder.toString();
 	}
