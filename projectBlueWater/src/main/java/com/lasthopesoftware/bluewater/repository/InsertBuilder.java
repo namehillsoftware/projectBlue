@@ -30,7 +30,7 @@ public class InsertBuilder {
 				sqlStringBuilder.append(", ");
 		}
 
-		sqlStringBuilder.append(") VALUES ");
+		sqlStringBuilder.append(") VALUES (");
 
 		for (String column : columns) {
 			sqlStringBuilder.append(':').append(column);
@@ -38,6 +38,6 @@ public class InsertBuilder {
 				sqlStringBuilder.append(", ");
 		}
 
-		return sqlStringBuilder.toString();
+		return sqlStringBuilder.append(')').toString();
 	}
 }
