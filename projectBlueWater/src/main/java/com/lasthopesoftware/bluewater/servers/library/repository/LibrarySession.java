@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.repository;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.SQLException;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -70,10 +71,14 @@ public class LibrarySession {
 							.addParameter(Library.selectedViewColumn, library.getSelectedView())
 							.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
 							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation())
+							.addParameter("id", library.getId())
 							.execute();
 
 					logger.debug("Library saved.");
 					return library;
+				} catch (SQLException se) {
+					logger.error("There was an error saving the library", se);
+					return null;
 				} finally {
 					repositoryAccessHelper.close();
 				}

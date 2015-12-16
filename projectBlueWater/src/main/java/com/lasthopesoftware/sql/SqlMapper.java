@@ -1,6 +1,7 @@
 package com.lasthopesoftware.sql;
 
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
@@ -34,7 +35,7 @@ public class SqlMapper {
 	}
 
 	public SqlMapper addParameter(String parameter, String value) {
-		parameters.put(parameter, value);
+		parameters.put(parameter.toLowerCase(), value);
 		return this;
 	}
 
@@ -65,47 +66,51 @@ public class SqlMapper {
 		return this;
 	}
 
-	public <T> List<T> fetch(Class<T> cls) {
+	public <T> List<T> fetch(Class<T> cls) throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
-		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
 		try {
-			if (!cursor.moveToFirst()) return new ArrayList<>();
+			final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
+			try {
+				if (!cursor.moveToFirst()) return new ArrayList<>();
 
-			final ClassReflections reflections = ClassCache.getReflections(cls);
+				final ClassReflections reflections = ClassCache.getReflections(cls);
 
-			final ArrayList<T> returnObjects = new ArrayList<>();
-			do {
-				final T newObject;
-				try {
-					newObject = cls.newInstance();
+				final ArrayList<T> returnObjects = new ArrayList<>();
+				do {
+					final T newObject;
+					try {
+						newObject = cls.newInstance();
 
-					for (int i = 0; i < cursor.getColumnCount(); i++) {
-						String colName = cursor.getColumnName(i).toLowerCase();
+						for (int i = 0; i < cursor.getColumnCount(); i++) {
+							String colName = cursor.getColumnName(i).toLowerCase();
 
-						if (reflections.setterMap.containsKey(colName)) {
-							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
-							continue;
+							if (reflections.setterMap.containsKey(colName)) {
+								reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+								continue;
+							}
+
+							if (!colName.startsWith("is")) continue;
+
+							colName = colName.substring(2);
+							if (reflections.setterMap.containsKey(colName))
+								reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
 						}
 
-						if (!colName.startsWith("is")) continue;
-
-						colName = colName.substring(2);
-						if (reflections.setterMap.containsKey(colName))
-							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+						returnObjects.add(newObject);
+					} catch (InstantiationException e) {
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
 					}
+				} while (cursor.moveToNext());
 
-					returnObjects.add(newObject);
-				} catch (InstantiationException e) {
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			} while (cursor.moveToNext());
-
-			return returnObjects;
-		} finally {
-			cursor.close();
+				return returnObjects;
+			} finally {
+				cursor.close();
+			}
+		} catch (SQLException se) {
+			throw se;
 		}
 	}
 
@@ -115,20 +120,24 @@ public class SqlMapper {
 		return results.size() > 0 ? results.get(0) : null;
 	}
 
-	public long execute() {
+	public long execute() throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
 		final String sqlQuery = compatibleSqlQuery.getKey();
 
-		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
-		sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
+		try {
+			final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
+			sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
 
-		if (sqlQuery.startsWith("update") || sqlQuery.startsWith("delete"))
-			return sqLiteStatement.executeUpdateDelete();
-		if (sqlQuery.startsWith("insert"))
-			return sqLiteStatement.executeInsert();
+			if (sqlQuery.startsWith("update") || sqlQuery.startsWith("delete"))
+				return sqLiteStatement.executeUpdateDelete();
+			if (sqlQuery.startsWith("insert"))
+				return sqLiteStatement.executeInsert();
 
-		return sqLiteStatement.simpleQueryForLong();
+			return sqLiteStatement.simpleQueryForLong();
+		} catch (SQLException se) {
+			throw se;
+		}
 	}
 
 	private static class QueryCache {
@@ -154,7 +163,7 @@ public class SqlMapper {
 					paramStringBuilder.append(paramChar);
 				}
 
-				sqlParameters.add(paramStringBuilder.toString());
+				sqlParameters.add(paramStringBuilder.toString().toLowerCase());
 				sqlQueryBuilder.replace(paramIndex - paramStringBuilder.length() - 1, paramIndex, "?");
 			}
 
@@ -170,8 +179,10 @@ public class SqlMapper {
 			final String[] newParameters = new String[parameterHolders.length];
 			for (int i = 0; i < parameterHolders.length; i++) {
 				final String parameterName = parameterHolders[i];
-				if (parameters.containsKey(parameterName))
-					newParameters[i] = parameters.get(parameterName);
+				if (!parameters.containsKey(parameterName)) continue;
+
+				final String parameterValue = parameters.get(parameterName);
+				newParameters[i] = parameterValue != null ? parameterValue : "NULL";
 			}
 
 			return new AbstractMap.SimpleImmutableEntry<>(cachedQuery.getKey(), newParameters);

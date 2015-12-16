@@ -29,9 +29,12 @@ public class UpdateBuilder {
 	}
 
 	public String buildQuery() {
-		for (String setter : setters)
-			sqlStringBuilder.append(setter).append(" = :").append(setter).append(", ");
+		for (String setter : setters) {
+			sqlStringBuilder.append(setter).append(" = :").append(setter);
+			if (setter != setters.get(setters.size()  - 1))
+				sqlStringBuilder.append(", ");
+		}
 
-		return sqlStringBuilder.delete(sqlStringBuilder.length() - 3, sqlStringBuilder.length() - 1).append(filter).toString();
+		return sqlStringBuilder.append(' ').append(filter).toString();
 	}
 }
