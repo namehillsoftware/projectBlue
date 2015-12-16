@@ -10,7 +10,11 @@ public class UpdateBuilder {
 	private final ArrayList<String> setters = new ArrayList<>();
 	private String filter;
 
-	public UpdateBuilder(String tableName) {
+	public static UpdateBuilder fromTable(String tableName) {
+		return new UpdateBuilder(tableName);
+	}
+
+	private UpdateBuilder(String tableName) {
 		sqlStringBuilder = new StringBuilder("UPDATE " + tableName + " SET ");
 	}
 
@@ -28,11 +32,6 @@ public class UpdateBuilder {
 		for (String setter : setters)
 			sqlStringBuilder.append(setter).append(" = :").append(setter).append(", ");
 
-		sqlStringBuilder.delete(sqlStringBuilder.length() - 3, sqlStringBuilder.length() - 1);
-
-		if (filter != null && !filter.isEmpty())
-			sqlStringBuilder.append(" WHERE ").append(filter);
-
-		return sqlStringBuilder.toString();
+		return sqlStringBuilder.delete(sqlStringBuilder.length() - 3, sqlStringBuilder.length() - 1).append(filter).toString();
 	}
 }

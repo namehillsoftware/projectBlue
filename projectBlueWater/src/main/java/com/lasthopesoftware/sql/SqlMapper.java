@@ -38,7 +38,7 @@ public class SqlMapper {
 		return this;
 	}
 
-	public <E extends Enum<E>> SqlMapper addParamter(String parameter, Enum<E> value) {
+	public <E extends Enum<E>> SqlMapper addParameter(String parameter, Enum<E> value) {
 		return addParameter(parameter, value.name());
 	}
 
@@ -81,8 +81,16 @@ public class SqlMapper {
 					newObject = cls.newInstance();
 
 					for (int i = 0; i < cursor.getColumnCount(); i++) {
-						final String colName = cursor.getColumnName(i).toLowerCase();
+						String colName = cursor.getColumnName(i).toLowerCase();
 
+						if (reflections.setterMap.containsKey(colName)) {
+							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+							continue;
+						}
+
+						if (!colName.startsWith("is")) continue;
+
+						colName = colName.substring(2);
 						if (reflections.setterMap.containsKey(colName))
 							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
 					}
@@ -126,7 +134,7 @@ public class SqlMapper {
 	private static class QueryCache {
 		private static final Map<String, Map.Entry<String, String[]>> queryCache = new ConcurrentHashMap<>();
 
-		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '='));
+		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '=', ','));
 
 		public static Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
 			sqlQuery = sqlQuery.trim().toLowerCase();
@@ -141,8 +149,9 @@ public class SqlMapper {
 				while (++paramIndex < sqlQueryBuilder.length()) {
 					final char paramChar = sqlQueryBuilder.charAt(paramIndex);
 
-					if (!endChars.contains(paramChar) && !Character.isWhitespace(paramChar))
-						paramStringBuilder.append(paramChar);
+					if (endChars.contains(paramChar) || Character.isWhitespace(paramChar)) break;
+
+					paramStringBuilder.append(paramChar);
 				}
 
 				sqlParameters.add(paramStringBuilder.toString());
@@ -188,19 +197,16 @@ public class SqlMapper {
 		public final Map<String, ISetter> setterMap = new HashMap<>();
 
 		public <T extends Class<?>> ClassReflections(T cls) {
-			Class<?> currentClass = cls;
-			do {
-				for (final Field f : currentClass.getDeclaredFields()) {
-					setterMap.put(f.getName().toLowerCase(), new FieldSetter(f));
-				}
 
-				// prepare methods. Methods will override fields, if both exists.
-				for (Method m : currentClass.getDeclaredMethods()) {
-					if (m.getParameterTypes().length == 1 && m.getName().startsWith("set"))
-						setterMap.put(m.getName().substring(3).toLowerCase(), new MethodSetter(m));
-				}
-				currentClass = cls.getSuperclass();
-			} while (!currentClass.equals(Object.class));
+			for (final Field f : cls.getFields()) {
+				setterMap.put(f.getName().toLowerCase(), new FieldSetter(f));
+			}
+
+			// prepare methods. Methods will override fields, if both exists.
+			for (Method m : cls.getMethods()) {
+				if (m.getParameterTypes().length == 1 && m.getName().startsWith("set"))
+					setterMap.put(m.getName().substring(3).toLowerCase(), new MethodSetter(m));
+			}
 		}
 	}
 
@@ -298,7 +304,7 @@ public class SqlMapper {
 			Class<?> currentType = type;
 			while (currentType != Object.class) {
 				if (setters.containsKey(currentType)) {
-					setters.get(type).run(method, object, value);
+					setters.get(currentType).run(method, object, value);
 					break;
 				}
 				currentType = type.getSuperclass();
@@ -365,7 +371,7 @@ public class SqlMapper {
 				@Override
 				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 					try {
-						parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>)parameterOne.getParameterTypes()[0], parameterThree));
+						parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {

@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
@@ -28,22 +29,24 @@ public class LibrarySession {
 
 	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
 		final String libraryUpdateSql =
-				" UPDATE " + Library.tableName +
-				" SET " + Library.accessCodeColumn + " = :" + Library.accessCodeColumn +
-				", " + Library.authKeyColumn + " = :" + Library.authKeyColumn +
-				", " + Library.isLocalOnlyColumn + " = :" + Library.isLocalOnlyColumn +
-				", " + Library.libraryNameColumn + " + :" + Library.libraryNameColumn +
-				", " + Library.isRepeatingColumn + " + :" + Library.isRepeatingColumn +
-				", " + Library.customSyncedFilesPathColumn + " + :" + Library.customSyncedFilesPathColumn +
-				", " + Library.isSyncLocalConnectionsOnlyColumn + " + :" + Library.isSyncLocalConnectionsOnlyColumn +
-				", " + Library.isUsingExistingFilesColumn + " + :" + Library.isUsingExistingFilesColumn +
-				", " + Library.nowPlayingIdColumn + " + :" + Library.nowPlayingIdColumn +
-				", " + Library.nowPlayingProgressColumn + " + :" + Library.nowPlayingProgressColumn +
-				", " + Library.savedTracksStringColumn + " + :" + Library.savedTracksStringColumn +
-				", " + Library.selectedViewColumn + " + :" + Library.selectedViewColumn +
-				", " + Library.selectedViewTypeColumn + " + :" + Library.selectedViewTypeColumn +
-				", " + Library.syncedFileLocationColumn + " + :" + Library.syncedFileLocationColumn +
-				" WHERE id = :id";
+			UpdateBuilder
+				.fromTable(Library.tableName)
+				.addSetter(Library.accessCodeColumn)
+				.addSetter(Library.authKeyColumn)
+				.addSetter(Library.isLocalOnlyColumn)
+				.addSetter(Library.libraryNameColumn)
+				.addSetter(Library.isRepeatingColumn)
+				.addSetter(Library.customSyncedFilesPathColumn)
+				.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
+				.addSetter(Library.isUsingExistingFilesColumn)
+				.addSetter(Library.nowPlayingIdColumn)
+				.addSetter(Library.nowPlayingProgressColumn)
+				.addSetter(Library.savedTracksStringColumn)
+				.addSetter(Library.selectedViewColumn)
+				.addSetter(Library.selectedViewTypeColumn)
+				.addSetter(Library.syncedFileLocationColumn)
+				.setFilter("WHERE id = :id")
+				.buildQuery();
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
