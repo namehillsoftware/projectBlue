@@ -143,7 +143,7 @@ public class SqlMapper {
 	private static class QueryCache {
 		private static final Map<String, Map.Entry<String, String[]>> queryCache = new ConcurrentHashMap<>();
 
-		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '=', ','));
+		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '=', ',', '(', ')'));
 
 		public static Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
 			sqlQuery = sqlQuery.trim().toLowerCase();
