@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 import com.lasthopesoftware.runnables.IThreeParameterRunnable;
+import com.lasthopesoftware.threading.Lazy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -233,73 +235,102 @@ public class SqlMapper {
 		public void set(Object object, String value) {
 			Class<?> currentType = type;
 			while (currentType != Object.class) {
-				if (setters.containsKey(currentType)) {
-					setters.get(type).run(field, object, value);
+				if (setters.getObject().containsKey(currentType)) {
+					setters.getObject().get(type).getObject().run(field, object, value);
 					break;
 				}
 				currentType = type.getSuperclass();
 			}
 		}
 
-		private static final HashMap<Type, IThreeParameterRunnable<Field, Object, String>> setters;
+		private static final Lazy<HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>>>() {
+			@Override
+			public HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>> call() throws Exception {
+				final HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
-		static {
-			setters = new HashMap<>();
-			setters.put(Boolean.TYPE, new IThreeParameterRunnable<Field, Object, String>() {
-				@Override
-				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Field, Object, String>() {
+							@Override
+							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Integer.TYPE, new IThreeParameterRunnable<Field, Object, String>() {
-				@Override
-				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Field, Object, String>() {
+							@Override
+							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Long.TYPE, new IThreeParameterRunnable<Field, Object, String>() {
-				@Override
-				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Field, Object, String>() {
+							@Override
+							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(String.class, new IThreeParameterRunnable<Field, Object, String>() {
-				@Override
-				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.set(parameterTwo, parameterThree);
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+				newHashMap.put(String.class, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Field, Object, String>() {
+							@Override
+							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.set(parameterTwo, parameterThree);
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Enum.class, new IThreeParameterRunnable<Field, Object, String>() {
-				@Override
-				public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>)parameterOne.getType(), parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+				newHashMap.put(Enum.class, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Field, Object, String>() {
+							@Override
+							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
-		}
+				}));
+
+				return newHashMap;
+			}
+		});
 	}
 
 	private static class MethodSetter implements ISetter {
@@ -314,82 +345,111 @@ public class SqlMapper {
 		public void set(Object object, String value) {
 			Class<?> currentType = type;
 			while (currentType != Object.class) {
-				if (setters.containsKey(currentType)) {
-					setters.get(currentType).run(method, object, value);
+				if (setters.getObject().containsKey(currentType)) {
+					setters.getObject().get(currentType).getObject().run(method, object, value);
 					break;
 				}
 				currentType = type.getSuperclass();
 			}
 		}
 
-		private static final HashMap<Class<?>, IThreeParameterRunnable<Method, Object, String>> setters;
+		private static final Lazy<HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>>>() {
+			@Override
+			public HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>> call() throws Exception {
+				final HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
-		static {
-			setters = new HashMap<>();
-			setters.put(Boolean.TYPE, new IThreeParameterRunnable<Method, Object, String>() {
-				@Override
-				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
+				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Method, Object, String>() {
+							@Override
+							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								} catch (InvocationTargetException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Integer.TYPE, new IThreeParameterRunnable<Method, Object, String>() {
-				@Override
-				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
+				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Method, Object, String>() {
+							@Override
+							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								} catch (InvocationTargetException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Long.TYPE, new IThreeParameterRunnable<Method, Object, String>() {
-				@Override
-				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
+				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Method, Object, String>() {
+							@Override
+							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								} catch (InvocationTargetException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(String.class, new IThreeParameterRunnable<Method, Object, String>() {
-				@Override
-				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.invoke(parameterTwo, parameterThree);
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
+				newHashMap.put(String.class, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Method, Object, String>() {
+							@Override
+							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.invoke(parameterTwo, parameterThree);
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								} catch (InvocationTargetException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
+				}));
 
-			setters.put(Enum.class, new IThreeParameterRunnable<Method, Object, String>() {
-				@Override
-				public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-					try {
-						parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
+				newHashMap.put(Enum.class, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new IThreeParameterRunnable<Method, Object, String>() {
+							@Override
+							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
+								try {
+									parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								} catch (InvocationTargetException e) {
+									e.printStackTrace();
+								}
+							}
+						};
 					}
-				}
-			});
-		}
+				}));
+
+				return newHashMap;
+			}
+		});
 	}
 }
