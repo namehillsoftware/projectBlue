@@ -13,7 +13,6 @@ import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sql2o.Sql2o;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -46,20 +45,10 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		}
 	});
 
-	private static Sql2o sql2oInstance;
-
 	public RepositoryAccessHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 
 		this.context = context;
-
-		if (sql2oInstance != null) return;
-
-		final SQLiteDatabase sqliteDB = sqliteDb.getObject();
-		final String dbUrl = "jdbc:sqlite:" + sqliteDB.getPath();
-		final String dbUser = "";
-
-		sql2oInstance = new Sql2o(dbUrl, dbUser, "", new SqlDroidQuirks());
 	}
 //
 //	@Override
@@ -111,10 +100,6 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 //			}
 //		}
 //	}
-
-	public org.sql2o.Connection getConnection() {
-		return sql2oInstance != null ? sql2oInstance.open() : null;
-	}
 
 	public SQLiteDatabase getDatabase() {
 		return sqliteDb.getObject();

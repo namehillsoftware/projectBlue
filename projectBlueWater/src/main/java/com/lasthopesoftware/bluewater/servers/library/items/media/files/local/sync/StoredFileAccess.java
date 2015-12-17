@@ -17,7 +17,6 @@ import com.lasthopesoftware.threading.Lazy;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sql2o.Connection;
 
 import java.io.File;
 import java.io.IOException;
@@ -152,15 +151,10 @@ public class StoredFileAccess {
 			public void run() {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					final Connection connection = repositoryAccessHelper.getConnection();
-					try {
-						connection
-							.createQuery("DELETE FROM " + StoredFile.tableName + " WHERE id = :id")
-							.addParameter("id", storedFile.getId())
-							.executeScalar();
-					} finally {
-						connection.close();
-					}
+					repositoryAccessHelper
+						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = :id")
+						.addParameter("id", storedFile.getId())
+						.execute();
 				} finally {
 					repositoryAccessHelper.close();
 				}
