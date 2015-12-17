@@ -85,45 +85,46 @@ public class DiskFileCache {
 				try {
 
 					CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
-					int cachedFileId = cachedFile.getId();
-					if (cachedFile == null) {
-						final String cachedFileSqlInsert =
-							InsertBuilder
-								.fromTable(CachedFile.tableName)
-								.addColumn(CachedFile.CACHE_NAME)
-								.addColumn(CachedFile.FILE_NAME)
-								.addColumn(CachedFile.FILE_SIZE)
-								.addColumn(CachedFile.LIBRARY_ID)
-								.addColumn(CachedFile.UNIQUE_KEY)
-								.addColumn(CachedFile.CREATED_TIME)
-								.build();
+					if (cachedFile != null) {
+						repositoryAccessHelper
+								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = :" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = :id")
+								.addParameter("id", cachedFile.getId())
+								.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
+								.execute();
 
-						final SqlMapper sqlMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
-
-						try {
-							sqlMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
-						} catch (IOException e) {
-							logger.error("There was an error getting the canonical path for " + file, e);
-							return;
-						}
-
-						sqlMapper
-							.addParameter(CachedFile.CACHE_NAME, cacheName)
-							.addParameter(CachedFile.FILE_SIZE, file.length())
-							.addParameter(CachedFile.LIBRARY_ID, library.getId())
-							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-							.addParameter(CachedFile.CREATED_TIME, System.currentTimeMillis());
-
-						cachedFileId = (int)sqlMapper.execute();
+						return;
 					}
 
-					repositoryAccessHelper
-							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = :" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = :id")
-							.addParameter("id", cachedFileId)
-							.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
-							.execute();
+					final String cachedFileSqlInsert =
+						InsertBuilder
+							.fromTable(CachedFile.tableName)
+							.addColumn(CachedFile.CACHE_NAME)
+							.addColumn(CachedFile.FILE_NAME)
+							.addColumn(CachedFile.FILE_SIZE)
+							.addColumn(CachedFile.LIBRARY_ID)
+							.addColumn(CachedFile.UNIQUE_KEY)
+							.addColumn(CachedFile.CREATED_TIME)
+							.addColumn(CachedFile.LAST_ACCESSED_TIME)
+							.build();
 
-					cachedFile.setLastAccessedTime(System.currentTimeMillis());
+					final SqlMapper sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+
+					try {
+						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
+					} catch (IOException e) {
+						logger.error("There was an error getting the canonical path for " + file, e);
+						return;
+					}
+
+					sqlInsertMapper
+						.addParameter(CachedFile.CACHE_NAME, cacheName)
+						.addParameter(CachedFile.FILE_SIZE, file.length())
+						.addParameter(CachedFile.LIBRARY_ID, library.getId())
+						.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
+						.addParameter(CachedFile.CREATED_TIME, System.currentTimeMillis())
+						.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
+						.execute();
+
 				} finally {
 					repositoryAccessHelper.close();
 					CacheFlusher.doFlush(context, cacheName, maxSize);
