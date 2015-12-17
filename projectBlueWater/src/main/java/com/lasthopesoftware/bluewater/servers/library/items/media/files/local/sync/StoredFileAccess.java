@@ -367,6 +367,7 @@ public class StoredFileAccess {
 				.addParameter(StoredFile.pathColumnName, storedFile.getPath())
 				.addParameter(StoredFile.isOwnerColumnName, storedFile.isOwner())
 				.addParameter(StoredFile.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
+				.addParameter("id", storedFile.getId())
 				.execute();
 	}
 }
