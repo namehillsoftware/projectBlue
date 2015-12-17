@@ -255,7 +255,8 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
+									if (parameterThree != null)
+										parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								}
@@ -271,7 +272,8 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
+									if (parameterThree != null)
+										parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								}
@@ -287,7 +289,8 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
+									if (parameterThree != null)
+										parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								}
@@ -365,7 +368,8 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
+									if (parameterThree != null)
+										parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								} catch (InvocationTargetException e) {
@@ -383,7 +387,8 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
+									if (parameterThree != null)
+										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								} catch (InvocationTargetException e) {
@@ -401,7 +406,8 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
+									if (parameterThree != null)
+										parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
 									e.printStackTrace();
 								} catch (InvocationTargetException e) {
