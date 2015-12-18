@@ -40,7 +40,7 @@ public class SqlMapper {
 	}
 
 	public <E extends Enum<E>> SqlMapper addParameter(String parameter, Enum<E> value) {
-		return addParameter(parameter, value.name());
+		return addParameter(parameter, value != null ? value.name() : null);
 	}
 
 	public SqlMapper addParameter(String parameter, int value) {

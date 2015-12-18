@@ -190,8 +190,10 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						createStoredFile(repositoryAccessHelper, file);
 						storedFile = getStoredFile(repositoryAccessHelper, file);
+						storedFile.setIsOwner(false);
 					}
 
+					storedFile.setStoredMediaId(mediaFileId);
 					updateStoredFile(repositoryAccessHelper, storedFile);
 				} finally {
 					repositoryAccessHelper.close();
