@@ -110,7 +110,7 @@ public class StoredFileAccess {
 				try {
 					return repositoryAccessHelper
 							.mapSql(
-									selectFromStoredFiles + " WHERE " + StoredFile.isDownloadCompleteColumnName + " = :" + StoredFile.isDownloadCompleteColumnName)
+									selectFromStoredFiles + " WHERE " + StoredFile.isDownloadCompleteColumnName + " = @" + StoredFile.isDownloadCompleteColumnName)
 							.addParameter(StoredFile.isDownloadCompleteColumnName, false)
 							.fetch(StoredFile.class);
 				} finally {
@@ -135,7 +135,7 @@ public class StoredFileAccess {
 							.mapSql(
 									" UPDATE " + StoredFile.tableName +
 											" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
-											" WHERE id = :id")
+											" WHERE id = @id")
 							.addParameter("id", storedFileId)
 							.execute();
 				} finally {
@@ -152,7 +152,7 @@ public class StoredFileAccess {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = :id")
+						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
 						.addParameter("id", storedFile.getId())
 						.execute();
 				} finally {
@@ -172,7 +172,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile =
 							repositoryAccessHelper
-								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName)
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.storedMediaIdColumnName + " = @" + StoredFile.storedMediaIdColumnName)
 								.addParameter(StoredFile.storedMediaIdColumnName, mediaFileId)
 								.fetchFirst(StoredFile.class);
 
@@ -182,7 +182,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile =
 							repositoryAccessHelper
-								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName)
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName)
 									.addParameter(StoredFile.pathColumnName, filePath)
 								.fetchFirst(StoredFile.class);
 					}
@@ -295,8 +295,8 @@ public class StoredFileAccess {
 								.mapSql(
 									" SELECT id, " + StoredFile.serviceIdColumnName + ", " + StoredFile.pathColumnName +
 									" FROM " + StoredFile.tableName +
-									" WHERE " + StoredFile.libraryIdColumnName + " = :" + StoredFile.libraryIdColumnName +
-									" AND " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName)
+									" WHERE " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName +
+									" AND " + StoredFile.isOwnerColumnName + " = @" + StoredFile.isOwnerColumnName)
 								.addParameter(StoredFile.libraryIdColumnName, library.getId())
 								.addParameter(StoredFile.isOwnerColumnName, true)
 								.fetch(StoredFile.class);
@@ -317,8 +317,8 @@ public class StoredFileAccess {
 				.mapSql(
 						" SELECT * " +
 								" FROM " + StoredFile.tableName + " " +
-								" WHERE " + StoredFile.serviceIdColumnName + " = :" + StoredFile.serviceIdColumnName +
-								" AND " + StoredFile.libraryIdColumnName + " = :" + StoredFile.libraryIdColumnName)
+								" WHERE " + StoredFile.serviceIdColumnName + " = @" + StoredFile.serviceIdColumnName +
+								" AND " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName)
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
 				.fetchFirst(StoredFile.class);
@@ -326,7 +326,7 @@ public class StoredFileAccess {
 
 	private static StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
 		return helper
-				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = :id")
+				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
 				.addParameter("id", storedFileId)
 				.fetchFirst(StoredFile.class);
 	}
@@ -338,8 +338,8 @@ public class StoredFileAccess {
 								StoredFile.serviceIdColumnName + ", " +
 								StoredFile.libraryIdColumnName + ", " +
 								StoredFile.isDownloadCompleteColumnName + ") VALUES (" +
-								":" + StoredFile.serviceIdColumnName + ", " +
-								":" + StoredFile.libraryIdColumnName + ", " +
+								"@" + StoredFile.serviceIdColumnName + ", " +
+								"@" + StoredFile.libraryIdColumnName + ", " +
 								"1)")
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
@@ -349,11 +349,11 @@ public class StoredFileAccess {
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
 		final String updateSql =
 				" UPDATE " + StoredFile.tableName +
-				" SET " + StoredFile.pathColumnName + " = :" + StoredFile.pathColumnName +
-				", " + StoredFile.storedMediaIdColumnName + " = :" + StoredFile.storedMediaIdColumnName +
-				", " + StoredFile.isOwnerColumnName + " = :" + StoredFile.isOwnerColumnName +
-				", " + StoredFile.isDownloadCompleteColumnName + " = :" + StoredFile.isDownloadCompleteColumnName +
-				" WHERE id = :id";
+				" SET " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName +
+				", " + StoredFile.storedMediaIdColumnName + " = @" + StoredFile.storedMediaIdColumnName +
+				", " + StoredFile.isOwnerColumnName + " = @" + StoredFile.isOwnerColumnName +
+				", " + StoredFile.isDownloadCompleteColumnName + " = @" + StoredFile.isDownloadCompleteColumnName +
+				" WHERE id = @id";
 
 		repositoryAccessHelper
 				.mapSql(updateSql)

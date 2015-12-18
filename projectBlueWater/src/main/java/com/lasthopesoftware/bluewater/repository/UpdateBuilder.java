@@ -30,7 +30,7 @@ public class UpdateBuilder {
 
 	public String buildQuery() {
 		for (String setter : setters) {
-			sqlStringBuilder.append(setter).append(" = :").append(setter);
+			sqlStringBuilder.append(setter).append(" = @").append(setter);
 			if (setter != setters.get(setters.size()  - 1))
 				sqlStringBuilder.append(", ");
 		}

@@ -23,9 +23,9 @@ public class DiskFileCache {
 	private final static long msInDay = 86400000L;
 	
 	private static final String cachedFileFilter =
-			" WHERE " + CachedFile.LIBRARY_ID + " = :" + CachedFile.LIBRARY_ID +
-			" AND " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME +
-			" AND " + CachedFile.UNIQUE_KEY + " = :" + CachedFile.UNIQUE_KEY;
+			" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
+			" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
+			" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY;
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCache.class);
 	private final Context context;
@@ -87,7 +87,7 @@ public class DiskFileCache {
 					CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
 					if (cachedFile != null) {
 						repositoryAccessHelper
-								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = :" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = :id")
+								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
 								.addParameter("id", cachedFile.getId())
 								.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
 								.execute();
@@ -188,7 +188,7 @@ public class DiskFileCache {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = :" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
+							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
 							.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
 							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
@@ -206,9 +206,9 @@ public class DiskFileCache {
 		return repositoryAccessHelper
 				.mapSql(
 					"SELECT * FROM " + CachedFile.tableName +
-					" WHERE " + CachedFile.LIBRARY_ID + " = :" + CachedFile.LIBRARY_ID +
-					" AND " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME +
-					" AND " + CachedFile.UNIQUE_KEY + " = :" + CachedFile.UNIQUE_KEY)
+					" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
+					" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
+					" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY)
 				.addParameter(CachedFile.LIBRARY_ID, libraryId)
 				.addParameter(CachedFile.CACHE_NAME, cacheName)
 				.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
@@ -217,7 +217,7 @@ public class DiskFileCache {
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int cachedFileId) {
 		return repositoryAccessHelper
-				.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = :id")
+				.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 				.addParameter("id", cachedFileId)
 				.execute();
 	}

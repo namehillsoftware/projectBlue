@@ -96,9 +96,9 @@ public class StoredItemAccess {
 		            repositoryAccessHelper
 				            .mapSql(
 					            "DELETE FROM " + StoredItem.tableName +
-					            "WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
-					            "AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
-					            "AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
+					            "WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
+					            "AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
+					            "AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
 				            .addParameter(StoredItem.serviceIdColumnName, item.getKey())
 				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
 				            .addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -119,7 +119,7 @@ public class StoredItemAccess {
                 try {
 	                return
 			                repositoryAccessHelper
-					                .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName)
+					                .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
 					                .addParameter(StoredItem.libraryIdColumnName, library.getId())
 					                .fetch(StoredItem.class);
 
@@ -144,9 +144,9 @@ public class StoredItemAccess {
                 helper
                     .mapSql(
                         " SELECT * FROM " + StoredItem.tableName +
-                        " WHERE " + StoredItem.serviceIdColumnName + " = :" + StoredItem.serviceIdColumnName +
-                        " AND " + StoredItem.libraryIdColumnName + " = :" + StoredItem.libraryIdColumnName +
-                        " AND " + StoredItem.itemTypeColumnName + " = :" + StoredItem.itemTypeColumnName)
+                        " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
+                        " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
+                        " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
                     .addParameter(StoredItem.serviceIdColumnName, item.getKey())
                     .addParameter(StoredItem.libraryIdColumnName, library.getId())
                     .addParameter(StoredItem.itemTypeColumnName, itemType)

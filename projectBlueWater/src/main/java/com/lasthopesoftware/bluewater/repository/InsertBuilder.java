@@ -33,7 +33,7 @@ public class InsertBuilder {
 		sqlStringBuilder.append(") VALUES (");
 
 		for (String column : columns) {
-			sqlStringBuilder.append(':').append(column);
+			sqlStringBuilder.append('@').append(column);
 			if (column != columns.get(columns.size() - 1))
 				sqlStringBuilder.append(", ");
 		}

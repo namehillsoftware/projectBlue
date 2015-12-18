@@ -81,7 +81,7 @@ class CacheFlusher implements Runnable {
 
 	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
-				.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME)
+				.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
 				.addParameter(CachedFile.CACHE_NAME, cacheName)
 				.execute();
 	}
@@ -107,14 +107,14 @@ class CacheFlusher implements Runnable {
 	
 	private CachedFile getOldestCachedFile(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
-				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
+				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
 				.addParameter(CachedFile.CACHE_NAME, cacheName)
 				.fetchFirst(CachedFile.class);
 	}
 	
 	private long getCachedFileCount(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
-				.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = :" + CachedFile.CACHE_NAME)
+				.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
 				.addParameter(CachedFile.CACHE_NAME, cacheName)
 				.execute();
 	}
@@ -122,7 +122,7 @@ class CacheFlusher implements Runnable {
 	private static CachedFile getCachedFileByFilename(final RepositoryAccessHelper repositoryAccessHelper, final String fileName) {
 
 		return repositoryAccessHelper
-				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.FILE_NAME + " = :" + CachedFile.FILE_NAME)
+				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME)
 				.addParameter(CachedFile.FILE_NAME, fileName)
 				.fetchFirst(CachedFile.class);
 
@@ -133,7 +133,7 @@ class CacheFlusher implements Runnable {
 
 		if (fileToDelete.exists() && fileToDelete.delete())
 			repositoryAccessHelper
-					.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = :id")
+					.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 					.addParameter("id", cachedFile.getId())
 					.execute();
 

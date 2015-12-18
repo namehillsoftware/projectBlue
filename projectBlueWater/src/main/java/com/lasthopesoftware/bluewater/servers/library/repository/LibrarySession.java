@@ -46,7 +46,7 @@ public class LibrarySession {
 				.addSetter(Library.selectedViewColumn)
 				.addSetter(Library.selectedViewTypeColumn)
 				.addSetter(Library.syncedFileLocationColumn)
-				.setFilter("WHERE id = :id")
+				.setFilter("WHERE id = @id")
 				.buildQuery();
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
@@ -138,7 +138,7 @@ public class LibrarySession {
 		try {
 			return
 				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = :id")
+					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
 					.addParameter("id", libraryId)
 					.fetchFirst(Library.class);
 		} finally {

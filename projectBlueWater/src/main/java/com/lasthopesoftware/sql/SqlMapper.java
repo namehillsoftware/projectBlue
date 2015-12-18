@@ -14,12 +14,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,7 +34,7 @@ public class SqlMapper {
 	}
 
 	public SqlMapper addParameter(String parameter, String value) {
-		parameters.put(parameter.toLowerCase(), value);
+		parameters.put(parameter, value);
 		return this;
 	}
 
@@ -145,27 +142,39 @@ public class SqlMapper {
 	private static class QueryCache {
 		private static final Map<String, Map.Entry<String, String[]>> queryCache = new ConcurrentHashMap<>();
 
-		private static final Set<Character> endChars = new HashSet<>(Arrays.asList(';', '=', ',', '(', ')'));
-
 		public static Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
-			sqlQuery = sqlQuery.trim().toLowerCase();
+			sqlQuery = sqlQuery.trim();
 			if (queryCache.containsKey(sqlQuery))
 				return getOrderedSqlParameters(queryCache.get(sqlQuery), parameters);
 
 			final ArrayList<String> sqlParameters = new ArrayList<>();
 			final StringBuilder sqlQueryBuilder = new StringBuilder(sqlQuery);
 			int paramIndex;
-			while ((paramIndex = sqlQueryBuilder.indexOf(":")) > -1) {
+
+			for (int i = 0; i < sqlQueryBuilder.length(); i++) {
+				final char queryChar = sqlQueryBuilder.charAt(i);
+
+				if (queryChar == '\'') {
+					i = sqlQueryBuilder.indexOf("'", ++i);
+
+					if (i < 0) break;
+
+					continue;
+				}
+
+				if (queryChar != '@') continue;
+
+				paramIndex = i;
 				final StringBuilder paramStringBuilder = new StringBuilder();
 				while (++paramIndex < sqlQueryBuilder.length()) {
 					final char paramChar = sqlQueryBuilder.charAt(paramIndex);
 
-					if (endChars.contains(paramChar) || Character.isWhitespace(paramChar)) break;
+					if (!Character.isJavaIdentifierPart(paramChar)) break;
 
 					paramStringBuilder.append(paramChar);
 				}
 
-				sqlParameters.add(paramStringBuilder.toString().toLowerCase());
+				sqlParameters.add(paramStringBuilder.toString());
 				sqlQueryBuilder.replace(paramIndex - paramStringBuilder.length() - 1, paramIndex, "?");
 			}
 
