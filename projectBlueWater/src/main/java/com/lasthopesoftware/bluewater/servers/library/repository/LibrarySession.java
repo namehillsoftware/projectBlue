@@ -7,16 +7,20 @@ import android.database.SQLException;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.runnables.ITwoParameterRunnable;
+import com.lasthopesoftware.sql.SqlMapper;
 import com.lasthopesoftware.threading.FluentTask;
+import com.lasthopesoftware.threading.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class LibrarySession {
 	
@@ -24,30 +28,60 @@ public class LibrarySession {
 	public static final String libraryChosenEvent = SpecialValueHelpers.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
+	private static final Lazy<String> libraryInsertSql = new Lazy<>(new Callable<String>() {
+		@Override
+		public String call() throws Exception {
+			return
+					InsertBuilder
+							.fromTable(Library.tableName)
+							.addColumn(Library.accessCodeColumn)
+							.addColumn(Library.authKeyColumn)
+							.addColumn(Library.isLocalOnlyColumn)
+							.addColumn(Library.libraryNameColumn)
+							.addColumn(Library.isRepeatingColumn)
+							.addColumn(Library.customSyncedFilesPathColumn)
+							.addColumn(Library.isSyncLocalConnectionsOnlyColumn)
+							.addColumn(Library.isUsingExistingFilesColumn)
+							.addColumn(Library.nowPlayingIdColumn)
+							.addColumn(Library.nowPlayingProgressColumn)
+							.addColumn(Library.savedTracksStringColumn)
+							.addColumn(Library.selectedViewColumn)
+							.addColumn(Library.selectedViewTypeColumn)
+							.addColumn(Library.syncedFileLocationColumn)
+							.build();
+		}
+	});
+
+	private static final Lazy<String> libraryUpdateSql = new Lazy<>(new Callable<String>() {
+		@Override
+		public String call() throws Exception {
+			return
+					UpdateBuilder
+							.fromTable(Library.tableName)
+							.addSetter(Library.accessCodeColumn)
+							.addSetter(Library.authKeyColumn)
+							.addSetter(Library.isLocalOnlyColumn)
+							.addSetter(Library.libraryNameColumn)
+							.addSetter(Library.isRepeatingColumn)
+							.addSetter(Library.customSyncedFilesPathColumn)
+							.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
+							.addSetter(Library.isUsingExistingFilesColumn)
+							.addSetter(Library.nowPlayingIdColumn)
+							.addSetter(Library.nowPlayingProgressColumn)
+							.addSetter(Library.savedTracksStringColumn)
+							.addSetter(Library.selectedViewColumn)
+							.addSetter(Library.selectedViewTypeColumn)
+							.addSetter(Library.syncedFileLocationColumn)
+							.setFilter("WHERE id = @id")
+							.buildQuery();
+		}
+	});
+
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);
 	}
 
 	public static void SaveLibrary(final Context context, final Library library, final ITwoParameterRunnable<FluentTask<Void, Void, Library>, Library> onSaveComplete) {
-		final String libraryUpdateSql =
-			UpdateBuilder
-				.fromTable(Library.tableName)
-				.addSetter(Library.accessCodeColumn)
-				.addSetter(Library.authKeyColumn)
-				.addSetter(Library.isLocalOnlyColumn)
-				.addSetter(Library.libraryNameColumn)
-				.addSetter(Library.isRepeatingColumn)
-				.addSetter(Library.customSyncedFilesPathColumn)
-				.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
-				.addSetter(Library.isUsingExistingFilesColumn)
-				.addSetter(Library.nowPlayingIdColumn)
-				.addSetter(Library.nowPlayingProgressColumn)
-				.addSetter(Library.savedTracksStringColumn)
-				.addSetter(Library.selectedViewColumn)
-				.addSetter(Library.selectedViewTypeColumn)
-				.addSetter(Library.syncedFileLocationColumn)
-				.setFilter("WHERE id = @id")
-				.buildQuery();
 
 		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
 
@@ -55,24 +89,33 @@ public class LibrarySession {
 			protected Library executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
-					repositoryAccessHelper
-							.mapSql(libraryUpdateSql)
-							.addParameter(Library.accessCodeColumn, library.getAccessCode())
-							.addParameter(Library.authKeyColumn, library.getAuthKey())
-							.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
-							.addParameter(Library.libraryNameColumn, library.getLibraryName())
-							.addParameter(Library.isRepeatingColumn, library.isRepeating())
-							.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
-							.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
-							.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
-							.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
-							.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
-							.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
-							.addParameter(Library.selectedViewColumn, library.getSelectedView())
-							.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
-							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation())
-							.addParameter("id", library.getId())
-							.execute();
+					final boolean isLibraryExists = library.getId() > -1;
+
+					final SqlMapper sqlMapper =
+						repositoryAccessHelper
+								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
+								.addParameter(Library.accessCodeColumn, library.getAccessCode())
+								.addParameter(Library.authKeyColumn, library.getAuthKey())
+								.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
+								.addParameter(Library.libraryNameColumn, library.getLibraryName())
+								.addParameter(Library.isRepeatingColumn, library.isRepeating())
+								.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
+								.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
+								.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
+								.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
+								.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
+								.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
+								.addParameter(Library.selectedViewColumn, library.getSelectedView())
+								.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
+								.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
+
+					if (isLibraryExists)
+						sqlMapper.addParameter("id", library.getId());
+
+					final long result = sqlMapper.execute();
+
+					if (!isLibraryExists)
+						library.setId((int)result);
 
 					logger.debug("Library saved.");
 					return library;

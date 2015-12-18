@@ -31,7 +31,7 @@ public class Library implements IRepository {
 	public static final String isUsingExistingFilesColumn = "isUsingExistingFiles";
 	public static final String isSyncLocalConnectionsOnlyColumn = "isSyncLocalConnectionsOnly";
 
-	private int id;
+	private int id = -1;
 	
 	// Remote connection fields
 	private String libraryName;
