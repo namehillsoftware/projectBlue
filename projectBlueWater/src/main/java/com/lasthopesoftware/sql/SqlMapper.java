@@ -132,7 +132,7 @@ public class SqlMapper {
 			final String sqlQueryType = sqlQuery.substring(0, 3).toLowerCase(Locale.ROOT);
 			if (sqlQueryType.equals("upd") || sqlQuery.equals("del"))
 				return sqLiteStatement.executeUpdateDelete();
-			if (sqlQuery.equals("ins"))
+			if (sqlQueryType.equals("ins"))
 				return sqLiteStatement.executeInsert();
 
 			return sqLiteStatement.simpleQueryForLong();
