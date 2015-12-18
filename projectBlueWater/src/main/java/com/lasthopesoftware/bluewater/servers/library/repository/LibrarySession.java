@@ -147,7 +147,7 @@ public class LibrarySession {
 	}
 	
 	public static void GetLibraries(final Context context, ITwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>> onGetLibrariesComplete) {
-		final FluentTask<Void, Void, List<Library>> getLibrariesTask = new FluentTask<Void, Void, List<Library>>() {
+		new FluentTask<Void, Void, List<Library>>() {
 			@Override
 			protected List<Library> executeInBackground(Void... params) {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
@@ -160,12 +160,7 @@ public class LibrarySession {
 					repositoryAccessHelper.close();
 				}
 			}
-		};
-
-		if (onGetLibrariesComplete != null)
-			getLibrariesTask.onComplete(onGetLibrariesComplete);
-
-		getLibrariesTask.execute(RepositoryAccessHelper.databaseExecutor);
+		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onLibraryChangeComplete) {

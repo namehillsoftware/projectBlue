@@ -60,6 +60,8 @@ public class MainApplication extends Application {
 				LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 					@Override
 					public void run(FluentTask<Integer, Void, Library> owner, Library library) {
+						if (library == null) return;
+
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;
