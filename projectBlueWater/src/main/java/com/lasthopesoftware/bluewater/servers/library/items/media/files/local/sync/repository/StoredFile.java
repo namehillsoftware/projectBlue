@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository;
 
-public class StoredFile {
+import android.database.sqlite.SQLiteDatabase;
+
+import com.lasthopesoftware.bluewater.repository.IRepository;
+
+public class StoredFile implements IRepository {
 
 	public static final String tableName = "StoredFiles";
 
@@ -77,5 +81,15 @@ public class StoredFile {
 
 	public void setIsOwner(boolean isOwner) {
 		this.isOwner = isOwner;
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL("CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`path`), UNIQUE (`libraryId`,`serviceId`) ) ");
+	}
+
+	@Override
+	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
+
 	}
 }

@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.repository;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
+import com.lasthopesoftware.bluewater.repository.IRepository;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
@@ -11,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class Library {
+public class Library implements IRepository {
 
 	public static final String tableName = "LIBRARIES";
 	public static final String libraryNameColumn = "libraryName";
@@ -225,6 +227,22 @@ public class Library {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `authKey` VARCHAR(100) , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
+	}
+
+	@Override
+	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
+		if (oldVersion >= 5) return;
+
+		db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
+		db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
+		db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+		db.execSQL("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
+		db.execSQL("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
 	}
 
 	public enum SyncedFileLocation {

@@ -24,10 +24,12 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	private static final int DATABASE_VERSION = 5;
 	private static final String DATABASE_NAME = "sessions_db";
 
-	private final static Class<?>[] version2Tables = { Library.class };
-	private final static Class<?>[] version3Tables = { StoredFile.class, StoredItem.class };
-	private final static Class<?>[] version4Tables = { CachedFile.class };
-	private final static Class<?>[][] allTables = { version2Tables, version3Tables, version4Tables };
+	private final static Lazy<IRepository[]> repositories = new Lazy<IRepository[]>(new Callable<IRepository[]>() {
+		@Override
+		public IRepository[] call() throws Exception {
+			return new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile() };
+		}
+	});
 
 	private final static Lazy<Logger> localLogger = new Lazy<>(new Callable<Logger>() {
 		@Override
@@ -36,87 +38,31 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		}
 	});
 
-	private final Context context;
-
 	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<>(new Callable<SQLiteDatabase>() {
 		@Override
 		public SQLiteDatabase call() throws Exception {
-			return context.openOrCreateDatabase(DATABASE_NAME, 0, null);
+			return getWritableDatabase();
 		}
 	});
 
 	public RepositoryAccessHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
-
-		this.context = context;
-	}
-//
-//	@Override
-//	public void onCreate(SQLiteDatabase db, ConnectionSource conn) {
-//		for (Class<?>[] tableArray : allTables) createTables(conn, tableArray);
-//	}
-
-//	private static void createTables(ConnectionSource conn, Class<?>... tableClasses) {
-//		for (Class<?> table : tableClasses) {
-//			try {
-//				TableUtils.createTable(conn, table);
-//			} catch (SQLException e) {
-//				localLogger.getObject().error(e.toString(), e);
-//			}
-//		}
-//	}
-//
-//	private static void recreateTables(ConnectionSource conn, Class<?>... tableClasses) {
-//		for (Class<?> table : tableClasses) {
-//			try {
-//				TableUtils.dropTable(conn, table, true);
-//			} catch (SQLException e) {
-//				localLogger.getObject().error(e.toString(), e);
-//			}
-//		}
-//		createTables(conn, tableClasses);
-//	}
-////
-//	@Override
-//	public void onUpgrade(SQLiteDatabase db, ConnectionSource conn, int oldVersion, int newVersion) {
-//		if (oldVersion < 2)
-//			recreateTables(conn, version2Tables);
-//
-//		if (oldVersion < 4)
-//			createTables(conn, version4Tables);
-//
-//		if (oldVersion < 5) {
-//			recreateTables(conn, version3Tables);
-//			try {
-//				final Dao<Library, Integer> libraryDao = getDao(Library.class);
-//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
-//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
-//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
-//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
-//				libraryDao.executeRaw("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
-//				libraryDao.executeRaw("DROP TABLE `StoredLists`;");
-//			} catch (SQLException e) {
-//				localLogger.getObject().error("Error adding column syncedFilesPath to library table", e);
-//			}
-//		}
-//	}
-
-	public SQLiteDatabase getDatabase() {
-		return sqliteDb.getObject();
 	}
 
 	public  SqlMapper mapSql(String sqlQuery) {
-		return new SqlMapper(sqliteDb.getObject(), sqlQuery);
+		return new SqlMapper(getWritableDatabase(), sqlQuery);
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-//		sqliteDb.getObject().
+		for (IRepository repository : repositories.getObject())
+			repository.onCreate(db);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+		for (IRepository repository : repositories.getObject())
+			repository.onUpdate(db, oldVersion, newVersion);
 	}
 
 	@Override

@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.repository;
 
-public class StoredItem {
+import android.database.sqlite.SQLiteDatabase;
+
+import com.lasthopesoftware.bluewater.repository.IRepository;
+
+public class StoredItem implements IRepository {
 
 	public static final String tableName = "StoredItems";
 	public static final String serviceIdColumnName = "serviceId";
@@ -46,6 +50,17 @@ public class StoredItem {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL("CREATE TABLE `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) ");
+	}
+
+	@Override
+	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
+		if (oldVersion < 5)
+			db.execSQL("DROP TABLE `StoredLists`;");
 	}
 
 	public enum ItemType { FILE, PLAYLIST, ITEM }

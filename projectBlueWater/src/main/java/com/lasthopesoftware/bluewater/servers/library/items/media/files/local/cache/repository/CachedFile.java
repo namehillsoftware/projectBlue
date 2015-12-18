@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository;
 
-public class CachedFile {
+import android.database.sqlite.SQLiteDatabase;
+
+import com.lasthopesoftware.bluewater.repository.IRepository;
+
+public class CachedFile implements IRepository {
 
 	public static final String LIBRARY_ID = "libraryId";
 	public static final String LAST_ACCESSED_TIME = "lastAccessedTime";
@@ -131,5 +135,18 @@ public class CachedFile {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL("CREATE TABLE `CachedFile` (`cacheName` VARCHAR , `createdTime` BIGINT , `fileName` VARCHAR , `fileSize` BIGINT , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `lastAccessedTime` BIGINT , `libraryId` INTEGER , `uniqueKey` VARCHAR ,  UNIQUE (`fileName`), UNIQUE (`cacheName`,`libraryId`,`uniqueKey`) ) ");
+		db.execSQL("CREATE INDEX `CachedFile_lastAccessedTime_idx` ON `CachedFile` ( `lastAccessedTime` )");
+		db.execSQL("CREATE INDEX `CachedFile_cacheName_idx` ON `CachedFile` ( `cacheName` )");
+		db.execSQL("CREATE INDEX `CachedFile_createdTime_idx` ON `CachedFile` ( `createdTime` )");
+	}
+
+	@Override
+	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
+
 	}
 }
