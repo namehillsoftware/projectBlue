@@ -267,7 +267,7 @@ public class SqlMapper {
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
 									if (parameterThree != null)
-										parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
+										parameterOne.setBoolean(parameterTwo, Integer.parseInt(parameterThree) != 0);
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								}
@@ -380,7 +380,7 @@ public class SqlMapper {
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
 									if (parameterThree != null)
-										parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
+										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree) != 0);
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
