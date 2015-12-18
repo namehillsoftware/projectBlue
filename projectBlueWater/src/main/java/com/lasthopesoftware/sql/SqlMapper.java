@@ -16,6 +16,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,7 +83,7 @@ public class SqlMapper {
 						newObject = cls.newInstance();
 
 						for (int i = 0; i < cursor.getColumnCount(); i++) {
-							String colName = cursor.getColumnName(i).toLowerCase();
+							String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
 
 							if (reflections.setterMap.containsKey(colName)) {
 								reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
@@ -98,9 +99,9 @@ public class SqlMapper {
 
 						returnObjects.add(newObject);
 					} catch (InstantiationException e) {
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+						throw new RuntimeException(e);
 					}
 				} while (cursor.moveToNext());
 
@@ -128,9 +129,10 @@ public class SqlMapper {
 			final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
 			sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
 
-			if (sqlQuery.startsWith("update") || sqlQuery.startsWith("delete"))
+			final String sqlQueryType = sqlQuery.substring(0, 3).toLowerCase(Locale.ROOT);
+			if (sqlQueryType.equals("upd") || sqlQuery.equals("del"))
 				return sqLiteStatement.executeUpdateDelete();
-			if (sqlQuery.startsWith("insert"))
+			if (sqlQuery.equals("ins"))
 				return sqLiteStatement.executeInsert();
 
 			return sqLiteStatement.simpleQueryForLong();
@@ -221,13 +223,13 @@ public class SqlMapper {
 		public <T extends Class<?>> ClassReflections(T cls) {
 
 			for (final Field f : cls.getFields()) {
-				setterMap.put(f.getName().toLowerCase(), new FieldSetter(f));
+				setterMap.put(f.getName().toLowerCase(Locale.ROOT), new FieldSetter(f));
 			}
 
 			// prepare methods. Methods will override fields, if both exists.
 			for (Method m : cls.getMethods()) {
 				if (m.getParameterTypes().length == 1 && m.getName().startsWith("set"))
-					setterMap.put(m.getName().substring(3).toLowerCase(), new MethodSetter(m));
+					setterMap.put(m.getName().substring(3).toLowerCase(Locale.ROOT), new MethodSetter(m));
 			}
 		}
 	}
@@ -267,7 +269,7 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.setBoolean(parameterTwo, Boolean.parseBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -284,7 +286,7 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -301,7 +303,7 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -317,7 +319,7 @@ public class SqlMapper {
 								try {
 									parameterOne.set(parameterTwo, parameterThree);
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -333,7 +335,7 @@ public class SqlMapper {
 								try {
 									parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -380,9 +382,9 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.invoke(parameterTwo, Boolean.parseBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -399,9 +401,9 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -418,9 +420,9 @@ public class SqlMapper {
 									if (parameterThree != null)
 										parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -436,9 +438,9 @@ public class SqlMapper {
 								try {
 									parameterOne.invoke(parameterTwo, parameterThree);
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
@@ -454,9 +456,9 @@ public class SqlMapper {
 								try {
 									parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
 								} catch (IllegalAccessException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
-									e.printStackTrace();
+									throw new RuntimeException(e);
 								}
 							}
 						};
