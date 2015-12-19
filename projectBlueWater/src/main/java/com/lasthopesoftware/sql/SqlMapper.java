@@ -267,7 +267,7 @@ public class SqlMapper {
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
 									if (parameterThree != null)
-										parameterOne.setBoolean(parameterTwo, Integer.parseInt(parameterThree) != 0);
+										parameterOne.setBoolean(parameterTwo, parseSqlBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								}
@@ -380,7 +380,7 @@ public class SqlMapper {
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
 									if (parameterThree != null)
-										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree) != 0);
+										parameterOne.invoke(parameterTwo, parseSqlBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
@@ -468,5 +468,9 @@ public class SqlMapper {
 				return newHashMap;
 			}
 		});
+	}
+
+	private static boolean parseSqlBoolean(String booleanValue) {
+		return Integer.parseInt(booleanValue) != 0;
 	}
 }
