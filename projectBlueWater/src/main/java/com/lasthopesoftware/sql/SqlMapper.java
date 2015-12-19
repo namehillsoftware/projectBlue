@@ -76,7 +76,7 @@ public class SqlMapper {
 
 				final ClassReflections reflections = ClassCache.getReflections(cls);
 
-				final ArrayList<T> returnObjects = new ArrayList<>();
+				final ArrayList<T> returnObjects = new ArrayList<>(cursor.getCount());
 				do {
 					final T newObject;
 					try {
