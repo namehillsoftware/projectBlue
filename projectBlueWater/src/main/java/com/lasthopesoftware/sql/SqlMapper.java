@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by david on 12/13/15.
@@ -142,9 +141,9 @@ public class SqlMapper {
 	}
 
 	private static class QueryCache {
-		private static final Map<String, Map.Entry<String, String[]>> queryCache = new ConcurrentHashMap<>();
+		private static final Map<String, Map.Entry<String, String[]>> queryCache = new HashMap<>();
 
-		public static Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
+		public static synchronized Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
 			sqlQuery = sqlQuery.trim();
 			if (queryCache.containsKey(sqlQuery))
 				return getOrderedSqlParameters(queryCache.get(sqlQuery), parameters);
@@ -171,6 +170,8 @@ public class SqlMapper {
 				while (++paramIndex < sqlQueryBuilder.length()) {
 					final char paramChar = sqlQueryBuilder.charAt(paramIndex);
 
+					// A parameter needs to look like a Java identifier
+					if (paramIndex == i + 1 && !Character.isJavaIdentifierStart(paramChar)) break;
 					if (!Character.isJavaIdentifierPart(paramChar)) break;
 
 					paramStringBuilder.append(paramChar);
@@ -203,9 +204,9 @@ public class SqlMapper {
 	}
 
 	private static class ClassCache {
-		private static final Map<Class<?>, ClassReflections> classCache = new ConcurrentHashMap<>();
+		private static final Map<Class<?>, ClassReflections> classCache = new HashMap<>();
 
-		public static <T extends Class<?>> ClassReflections getReflections(T cls) {
+		public static synchronized <T extends Class<?>> ClassReflections getReflections(T cls) {
 			if (!classCache.containsKey(cls))
 				classCache.put(cls, new ClassReflections(cls));
 
