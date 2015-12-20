@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import java.util.Timer;
 import java.util.TimerTask;
 
 public class NowPlayingActivity extends AppCompatActivity implements
@@ -68,7 +67,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private RatingBar mSongRating;
 	private RelativeLayout mContentView;
 	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
-	private Timer mHideTimer;
 	private ImageButton isScreenKeptOnButton;
 
 	private TimerTask mTimerTask;
@@ -116,8 +114,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		setContentView(R.layout.activity_view_now_playing);
 
 		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
-
-		mHideTimer = new Timer("Fade Timer");
 
 		mContentView.setOnClickListener(new OnClickListener() {
 
@@ -544,18 +540,27 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private void showNowPlayingControls(final IPlaybackFile filePlayer) {
 		nowPlayingToggledVisibilityControls.toggleVisibility(true);
 		mContentView.invalidate();
+
 		if (mTimerTask != null) mTimerTask.cancel();
-		mHideTimer.purge();
 		mTimerTask = new TimerTask() {
-			
+			boolean cancelled;
+
 			@Override
 			public void run() {
+				if (cancelled) return;
+
 				final Message msg = new Message();
 				msg.what = NowPlayingActivityMessageHandler.HIDE_CONTROLS;
 				mHandler.sendMessage(msg);
 			}
+
+			@Override
+			public boolean cancel() {
+				cancelled = true;
+				return super.cancel();
+			}
 		};
-		mHideTimer.schedule(mTimerTask, 5000);
+		mHandler.postDelayed(mTimerTask, 5000);
 	}
 	
 	private void resetViewOnReconnect(final IFile file, final int position) {
@@ -624,11 +629,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	public void onDestroy() {
 		super.onDestroy();
 
-		if (mHideTimer != null) {
-			mHideTimer.cancel();
-			mHideTimer.purge();
-		}
-
+		if (mTimerTask != null) mTimerTask.cancel();
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 
 		PlaybackService.removeOnStreamingStartListener(this);
