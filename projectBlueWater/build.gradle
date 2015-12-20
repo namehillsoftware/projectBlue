@@ -8,7 +8,7 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 1500
+        versionCode 2000
         versionName "1.5.0.0"
     }
 
