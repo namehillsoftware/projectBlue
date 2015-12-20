@@ -49,7 +49,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_files, container);
+		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_files, container, false);
 
 		final ProgressBar progressBar = (ProgressBar) viewFileslayout.findViewById(R.id.pbLoadingFileList);
 		final ListView listView = (ListView) viewFileslayout.findViewById(R.id.lvFilelist);

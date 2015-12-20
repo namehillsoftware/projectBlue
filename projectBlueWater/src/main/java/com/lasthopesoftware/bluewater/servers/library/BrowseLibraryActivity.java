@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListFragment;
@@ -72,7 +73,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private ViewPager viewPager;
 	private ListView selectViewsListView;
 	private ListView specialLibraryItemsListView;
-	private View activeFileDownloadsView;
 	private DrawerLayout drawerLayout;
 	private PagerSlidingTabStrip libraryViewsTabs;
 	private RelativeLayout tabbedLibraryViewsRelativeLayout;
@@ -82,6 +82,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private PlaylistListFragment playlistListFragment;
+	private ActiveFileDownloadsFragment activeFileDownloadsFragment;
 
 	private ActionBarDrawerToggle drawerToggle = null;
 
@@ -208,14 +209,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		LocalBroadcastManager.getInstance(this).registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
-
-		final android.app.Fragment activeFileDownloadsFragment = getFragmentManager().findFragmentById(R.id.downloadsFragment);
-		if (activeFileDownloadsFragment != null) {
-			activeFileDownloadsView = activeFileDownloadsFragment.getView();
-			if (activeFileDownloadsView != null)
-				activeFileDownloadsView.setVisibility(View.INVISIBLE);
-		}
-
 		specialLibraryItemsListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -285,7 +278,19 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					        oldTitle = specialViews.get(0);
 					        getSupportActionBar().setTitle(oldTitle);
 
-					        showContainerView(activeFileDownloadsView);
+					        hideAllViews();
+
+					        final FragmentTransaction ft = getFragmentManager().beginTransaction();
+					        try {
+						        if (activeFileDownloadsFragment != null)
+							        ft.remove(activeFileDownloadsFragment);
+
+						        activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+						        ft.add(R.id.browseLibraryContainer, activeFileDownloadsFragment);
+					        } finally {
+						        ft.commit();
+					        }
+
 					        return;
 				        }
 
