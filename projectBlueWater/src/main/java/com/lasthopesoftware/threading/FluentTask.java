@@ -2,6 +2,7 @@ package com.lasthopesoftware.threading;
 
 import android.os.AsyncTask;
 
+import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;

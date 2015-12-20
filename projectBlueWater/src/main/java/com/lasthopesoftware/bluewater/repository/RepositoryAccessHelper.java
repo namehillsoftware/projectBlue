@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.sql.SqlMapper;
-import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

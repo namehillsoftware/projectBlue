@@ -49,7 +49,7 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewA
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;

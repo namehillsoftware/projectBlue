@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.apache.commons.io.FilenameUtils;

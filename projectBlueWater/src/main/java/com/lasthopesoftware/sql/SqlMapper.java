@@ -5,7 +5,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
-import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
 import java.lang.reflect.Field;

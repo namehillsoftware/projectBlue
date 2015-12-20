@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.threading.FluentTask;
-import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
