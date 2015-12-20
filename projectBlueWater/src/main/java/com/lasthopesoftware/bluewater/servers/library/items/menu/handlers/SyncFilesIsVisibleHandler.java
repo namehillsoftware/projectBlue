@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 8/16/15.
@@ -38,11 +38,11 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 		v.removeOnLayoutChangeListener(this);
 
 		final Context context = notifyOnFlipViewAnimator.getContext();
-		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
-				syncListManager.isItemMarkedForSync(item, new ITwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
+				syncListManager.isItemMarkedForSync(item, new TwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
 					@Override
 					public void run(FluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
 						if (isSynced)

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.listener;
 
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,7 +18,7 @@ public class ListenerThrower {
      * @param callback The action to perform when a listener is found
      * @param <T> The type of the listeners
      */
-    public static <T> void throwListeners(Collection<T> listeners, IOneParameterRunnable<T> callback) {
+    public static <T> void throwListeners(Collection<T> listeners, OneParameterRunnable<T> callback) {
         final HashSet<T> ranListeners = new HashSet<>();
 
         // Track the state of the iterator

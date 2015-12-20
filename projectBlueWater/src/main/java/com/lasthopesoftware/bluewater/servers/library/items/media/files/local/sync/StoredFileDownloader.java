@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -46,8 +46,8 @@ public class StoredFileDownloader {
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
-	private IOneParameterRunnable<StoredFile> onFileDownloaded;
-	private IOneParameterRunnable<StoredFile> onFileQueued;
+	private OneParameterRunnable<StoredFile> onFileDownloaded;
+	private OneParameterRunnable<StoredFile> onFileQueued;
 	private Runnable onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
@@ -161,11 +161,11 @@ public class StoredFileDownloader {
 		});
 	}
 
-	public void setOnFileQueued(IOneParameterRunnable<StoredFile> onFileQueued) {
+	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
 		this.onFileQueued = onFileQueued;
 	}
 
-	public void setOnFileDownloaded(IOneParameterRunnable<StoredFile> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterRunnable<StoredFile> onFileDownloaded) {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 

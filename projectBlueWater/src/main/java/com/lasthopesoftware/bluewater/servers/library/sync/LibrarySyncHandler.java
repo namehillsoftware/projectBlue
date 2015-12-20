@@ -14,9 +14,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,15 +47,15 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
-	public void setOnFileDownloaded(IOneParameterRunnable<StoredFile> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterRunnable<StoredFile> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
-	public void setOnFileQueued(IOneParameterRunnable<StoredFile> onFileQueued) {
+	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
 		storedFileDownloader.setOnFileQueued(onFileQueued);
 	}
 
-	public void setOnQueueProcessingCompleted(final IOneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
+	public void setOnQueueProcessingCompleted(final OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
 		storedFileDownloader.setOnQueueProcessingCompleted(new Runnable() {
 			@Override
 			public void run() {
@@ -72,7 +72,7 @@ public class LibrarySyncHandler {
 
 	public void startSync() {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-		storedItemAccess.getStoredItems(new ITwoParameterRunnable<FluentTask<Void,Void,List<StoredItem>>, List<StoredItem>>() {
+		storedItemAccess.getStoredItems(new TwoParameterRunnable<FluentTask<Void,Void,List<StoredItem>>, List<StoredItem>>() {
 
 			@Override
 			public void run(FluentTask<Void, Void, List<StoredItem>> owner, final List<StoredItem> storedItems) {

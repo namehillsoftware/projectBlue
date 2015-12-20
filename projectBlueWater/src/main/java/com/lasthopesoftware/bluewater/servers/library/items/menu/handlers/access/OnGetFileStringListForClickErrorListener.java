@@ -4,15 +4,15 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.callables.ITwoParameterCallable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;
 
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements ITwoParameterCallable<FluentTask<String, Void, String>, Exception, Boolean> {
+public class OnGetFileStringListForClickErrorListener implements TwoParameterCallable<FluentTask<String, Void, String>, Exception, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 

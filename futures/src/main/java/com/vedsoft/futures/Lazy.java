@@ -1,4 +1,4 @@
-package com.lasthopesoftware.threading;
+package com.vedsoft.futures;
 
 import java.util.concurrent.Callable;
 

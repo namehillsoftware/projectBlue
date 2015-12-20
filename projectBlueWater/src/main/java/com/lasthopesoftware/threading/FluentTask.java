@@ -2,10 +2,10 @@ package com.lasthopesoftware.threading;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.callables.IOneParameterCallable;
-import com.lasthopesoftware.callables.ITwoParameterCallable;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
+import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.callables.TwoParameterCallable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -16,11 +16,11 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private final TParams[] params;
 	private final Executor defaultExecutor;
 
-	private ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
-	private IOneParameterRunnable<TResult> oneParameterOnCompleteListener;
+	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
+	private OneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
-	private IOneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
-	private ITwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
+	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
+	private TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
 	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncExceptionTask<Void, TProgress, TResult>>() {
 
@@ -119,22 +119,22 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		task.getObject().setException(exception);
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onComplete(ITwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {
+	public FluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {
 		twoParameterOnCompleteListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onComplete(IOneParameterRunnable<TResult> listener) {
+	public FluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener) {
 		oneParameterOnCompleteListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onError(ITwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
+	public FluentTask<TParams, TProgress, TResult> onError(TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
 		twoParameterOnErrorListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onError(IOneParameterCallable<Exception, Boolean> listener) {
+	public FluentTask<TParams, TProgress, TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
 		oneParameterOnErrorListener = listener;
 		return this;
 	}

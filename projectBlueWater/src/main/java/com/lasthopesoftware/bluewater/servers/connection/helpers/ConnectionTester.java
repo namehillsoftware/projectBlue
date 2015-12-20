@@ -4,8 +4,8 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +23,11 @@ public class ConnectionTester {
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(ConnectionProvider connectionProvider, TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
 		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
 	}
 
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, ITwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> onTestComplete) {
 		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<Integer, Void, Boolean>() {
 			@Override
 			protected Boolean executeInBackground(Integer... params) {

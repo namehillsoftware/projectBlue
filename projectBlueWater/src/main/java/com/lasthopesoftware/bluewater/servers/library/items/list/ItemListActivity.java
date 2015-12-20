@@ -20,8 +20,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +60,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete(new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+        itemProvider.onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
             @Override
             public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
                 if (items == null) return;

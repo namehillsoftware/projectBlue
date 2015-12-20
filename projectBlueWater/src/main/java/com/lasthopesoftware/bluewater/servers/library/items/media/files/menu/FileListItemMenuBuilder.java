@@ -24,8 +24,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
 
@@ -121,7 +121,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
             if (PlaybackService.getPlaylistController() != null)
                 PlaybackService.getPlaylistController().addFile(mFile);
 
-            LibrarySession.GetActiveLibrary(view.getContext(), new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+            LibrarySession.GetActiveLibrary(view.getContext(), new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
                 @Override
                 public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -131,7 +131,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
                     newFileString += mFile.getKey() + ";";
                     result.setSavedTracksString(newFileString);
 
-                    LibrarySession.SaveLibrary(view.getContext(), result, new ITwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
+                    LibrarySession.SaveLibrary(view.getContext(), result, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
 
                         @Override
                         public void run(FluentTask<Void, Void, Library> owner, Library result) {

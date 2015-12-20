@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.acces
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements ITwoParameterRunnable<FluentTask<String, Void, String>, String> {
+public class OnGetFileStringListForClickCompleteListener implements TwoParameterRunnable<FluentTask<String, Void, String>, String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {

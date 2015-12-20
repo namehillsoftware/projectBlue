@@ -5,8 +5,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
-import com.lasthopesoftware.runnables.IThreeParameterRunnable;
 import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -255,15 +255,15 @@ public class SqlMapper {
 			}
 		}
 
-		private static final Lazy<HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>>>() {
+		private static final Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>>() {
 			@Override
-			public HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>> call() throws Exception {
-				final HashMap<Type, Lazy<IThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
+			public HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> call() throws Exception {
+				final HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Field, Object, String>() {
+					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -277,10 +277,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Field, Object, String>() {
+					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -294,10 +294,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Field, Object, String>() {
+					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -311,10 +311,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(String.class, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(String.class, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Field, Object, String>() {
+					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -327,10 +327,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Enum.class, new Lazy<>(new Callable<IThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Enum.class, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Field, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Field, Object, String>() {
+					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -369,15 +369,15 @@ public class SqlMapper {
 			}
 		}
 
-		private static final Lazy<HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>>>() {
+		private static final Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>>() {
 			@Override
-			public HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>> call() throws Exception {
-				final HashMap<Class<?>, Lazy<IThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
+			public HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> call() throws Exception {
+				final HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Method, Object, String>() {
+					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -393,10 +393,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Method, Object, String>() {
+					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -412,10 +412,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Method, Object, String>() {
+					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -431,10 +431,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(String.class, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(String.class, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Method, Object, String>() {
+					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
@@ -449,10 +449,10 @@ public class SqlMapper {
 					}
 				}));
 
-				newHashMap.put(Enum.class, new Lazy<>(new Callable<IThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Enum.class, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public IThreeParameterRunnable<Method, Object, String> call() throws Exception {
-						return new IThreeParameterRunnable<Method, Object, String>() {
+					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {

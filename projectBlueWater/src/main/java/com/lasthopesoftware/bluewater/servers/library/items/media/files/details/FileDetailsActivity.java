@@ -25,8 +25,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,7 +143,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	        }
         };
 
-        getFileNameTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
+        getFileNameTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override
 	        public void run(FluentTask<Void, Void, String> owner, String result) {
@@ -220,7 +220,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	        }
         };
         
-        getFilePropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, List<Entry<String, String>>>, List<Entry<String, String>>>() {
+        getFilePropertiesTask.onComplete(new TwoParameterRunnable<FluentTask<Void, Void, List<Entry<String, String>>>, List<Entry<String, String>>>() {
 
 	        @Override
 	        public void run(FluentTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
@@ -235,7 +235,7 @@ public class FileDetailsActivity extends AppCompatActivity {
                 
         ImageProvider
 		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
-		        .onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+		        .onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 			        @Override
 			        public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
@@ -269,7 +269,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 		        }
 	        }
         };
-        getFileArtistTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
+        getFileArtistTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
 	        @Override
 	        public void run(FluentTask<Void, Void, String> owner, String result) {

@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements IOneParameterRunnable<Integer> {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterRunnable<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 

@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.callables.ITwoParameterCallable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;
 
-public class HandleViewIoException<TParams, TProgress, TResult> implements ITwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> {
+public class HandleViewIoException<TParams, TProgress, TResult> implements TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> {
 	
 	private final Context mContext;
 	private final Runnable mOnConnectionRegainedListener;

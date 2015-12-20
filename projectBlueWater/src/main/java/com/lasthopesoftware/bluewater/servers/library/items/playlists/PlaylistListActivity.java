@@ -22,8 +22,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
 
@@ -56,7 +56,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ITwoParameterRunnable<FluentTask<String, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new ITwoParameterRunnable<FluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
+		final TwoParameterRunnable<FluentTask<String, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new TwoParameterRunnable<FluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
 
 			@Override
 			public void run(FluentTask<String, Void, List<Playlist>> owner, List<Playlist> result) {

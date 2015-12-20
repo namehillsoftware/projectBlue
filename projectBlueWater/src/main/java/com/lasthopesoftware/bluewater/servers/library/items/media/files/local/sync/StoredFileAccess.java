@@ -10,9 +10,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, ITwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+	public void getStoredFile(final int storedFileId, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground(Void... params) {
@@ -75,7 +75,7 @@ public class StoredFileAccess {
 		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public void getStoredFile(final IFile serviceFile, ITwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+	public void getStoredFile(final IFile serviceFile, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = getStoredFileTask(serviceFile);
 
 		if (onStoredFileRetrieved != null)
@@ -102,7 +102,7 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(ITwoParameterRunnable<FluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
 		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<Void, Void, List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground(Void... params) {

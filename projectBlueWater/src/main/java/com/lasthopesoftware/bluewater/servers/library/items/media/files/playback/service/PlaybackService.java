@@ -50,10 +50,10 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.callables.IOneParameterCallable;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +219,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetActiveLibrary(context, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -280,7 +280,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new IOneParameterRunnable<OnNowPlayingChangeListener>() {
+            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new OneParameterRunnable<OnNowPlayingChangeListener>() {
                 @Override
                 public void run(OnNowPlayingChangeListener parameter) {
                     parameter.onNowPlayingChange(controller, filePlayer);
@@ -291,7 +291,7 @@ public class PlaybackService extends Service implements
 
 	private void throwStartEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStartListeners, new IOneParameterRunnable<OnNowPlayingStartListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStartListeners, new OneParameterRunnable<OnNowPlayingStartListener>() {
                 @Override
                 public void run(OnNowPlayingStartListener parameter) {
                     parameter.onNowPlayingStart(controller, filePlayer);
@@ -302,7 +302,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwStopEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStopListeners, new IOneParameterRunnable<OnNowPlayingStopListener>() {
+            ListenerThrower.throwListeners(mOnStreamingStopListeners, new OneParameterRunnable<OnNowPlayingStopListener>() {
                 @Override
                 public void run(OnNowPlayingStopListener parameter) {
                     parameter.onNowPlayingStop(controller, filePlayer);
@@ -313,7 +313,7 @@ public class PlaybackService extends Service implements
 	
 	private void throwPauseEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new IOneParameterRunnable<OnNowPlayingPauseListener>() {
+            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new OneParameterRunnable<OnNowPlayingPauseListener>() {
                 @Override
                 public void run(OnNowPlayingPauseListener parameter) {
                     parameter.onNowPlayingPause(controller, filePlayer);
@@ -335,10 +335,10 @@ public class PlaybackService extends Service implements
 		mStreamingMusicService = this;
 	}
 		
-	private void restorePlaylistControllerFromStorage(final IOneParameterRunnable<Boolean> onPlaylistRestored) {
+	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
 
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -437,7 +437,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -450,7 +450,7 @@ public class PlaybackService extends Service implements
 						mPlaylistString = result.getSavedTracksString();
 					
 					result.setSavedTracksString(mPlaylistString);
-					LibrarySession.SaveLibrary(mStreamingMusicService, result, new ITwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
+					LibrarySession.SaveLibrary(mStreamingMusicService, result, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
 						
 						@Override
 						public void run(FluentTask<Void, Void, Library> owner, Library result) {
@@ -678,7 +678,7 @@ public class PlaybackService extends Service implements
         	
         	if (mPlaylistController.resume()) return;
         	
-        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 		        @Override
 		        public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -732,7 +732,7 @@ public class PlaybackService extends Service implements
 	private void restorePlaylistForIntent(final Intent intent) {
 		notifyStartingService();
 
-		restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
+		restorePlaylistControllerFromStorage(new OneParameterRunnable<Boolean>() {
 			@Override
 			public void run(Boolean result) {
 				if (result) {
@@ -782,7 +782,7 @@ public class PlaybackService extends Service implements
 						return;
 					}
 					
-					LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+					LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 						
 						@Override
 						public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -822,7 +822,7 @@ public class PlaybackService extends Service implements
 				if (mPlaylistController.resume()) return;
 			}
 
-			restorePlaylistControllerFromStorage(new IOneParameterRunnable<Boolean>() {
+			restorePlaylistControllerFromStorage(new OneParameterRunnable<Boolean>() {
 				@Override
 				public void run(Boolean result) {
 					if (result)
@@ -890,7 +890,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -929,7 +929,7 @@ public class PlaybackService extends Service implements
 			}
 		};
 
-		getNotificationPropertiesTask.onComplete(new IOneParameterRunnable<String>() {
+		getNotificationPropertiesTask.onComplete(new OneParameterRunnable<String>() {
 			
 			@Override
 			public void run(String result) {
@@ -966,7 +966,7 @@ public class PlaybackService extends Service implements
 			}
 		};
 
-		getTrackPropertiesTask.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,SparseArray<Object>>, SparseArray<Object>>() {
+		getTrackPropertiesTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,SparseArray<Object>>, SparseArray<Object>>() {
 			
 			@Override
 			public void run(FluentTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
@@ -1009,7 +1009,7 @@ public class PlaybackService extends Service implements
 				
 				ImageProvider
 						.getImage(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), playingFile)
-						.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+						.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 							@TargetApi(Build.VERSION_CODES.KITKAT)
 							@Override
@@ -1028,7 +1028,7 @@ public class PlaybackService extends Service implements
 			}
 		});
 
-		getTrackPropertiesTask.onError(new IOneParameterCallable<Exception, Boolean>() {
+		getTrackPropertiesTask.onError(new OneParameterCallable<Exception, Boolean>() {
 			@Override
 			public Boolean call(Exception e) {
 				return true;

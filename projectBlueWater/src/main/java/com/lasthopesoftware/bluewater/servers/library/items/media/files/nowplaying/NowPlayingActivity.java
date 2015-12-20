@@ -41,9 +41,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.AsyncExceptionTask;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +189,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		shuffleButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				LibrarySession.GetActiveLibrary(v.getContext(), new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+				LibrarySession.GetActiveLibrary(v.getContext(), new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 					@Override
 					public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -257,7 +257,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mPause.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -284,7 +284,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -358,7 +358,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 				getFileImageTask =
 						ImageProvider
 								.getImage(this, SessionConnection.getSessionConnectionProvider(), file)
-								.onComplete(new ITwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+								.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
 									@Override
 									public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {

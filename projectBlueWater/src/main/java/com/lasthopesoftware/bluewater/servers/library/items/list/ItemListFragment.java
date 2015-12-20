@@ -20,8 +20,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
 
@@ -52,10 +52,10 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+    	LibrarySession.GetActiveLibrary(activity, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 		    @Override
 		    public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-			    final ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+			    final TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
 
 				    @Override
 				    public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {

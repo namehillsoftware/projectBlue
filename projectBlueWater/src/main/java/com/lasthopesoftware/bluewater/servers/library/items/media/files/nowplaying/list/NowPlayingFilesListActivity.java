@@ -23,8 +23,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
 
@@ -91,7 +91,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements ITwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> {
+	private static class OnGetLibraryNowComplete implements TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -115,7 +115,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		        }
 	        };
 	        
-	        getFileStringTask.onComplete(new ITwoParameterRunnable<FluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
+	        getFileStringTask.onComplete(new TwoParameterRunnable<FluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
 
 		        @Override
 		        public void run(FluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {

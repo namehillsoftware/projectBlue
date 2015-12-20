@@ -48,9 +48,9 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStati
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
 
@@ -91,10 +91,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final Lazy<ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
+	private final Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
 		@Override
-		public ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> call() throws Exception {
-			return new ITwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
+		public TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> call() throws Exception {
+			return new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
 
 				@Override
 				public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
@@ -241,7 +241,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library result) {
@@ -263,7 +263,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete(new ITwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+				.onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
 
 			        @Override
 			        public void run(FluentTask<String, Void, List<Item>> owner, final List<Item> items) {
@@ -363,7 +363,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -409,7 +409,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         savedInstanceState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
 				if (library != null)
@@ -428,7 +428,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     private void restoreScrollPosition(final Bundle savedInstanceState) {
         if (viewPager == null) return;
 
-        LibrarySession.GetActiveLibrary(this, new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+        LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
 	        @Override
 	        public void run(FluentTask<Integer, Void, Library> owner, Library library) {

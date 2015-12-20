@@ -32,10 +32,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
 import com.lasthopesoftware.threading.Lazy;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ public class SyncService extends Service {
 	private volatile int librariesProcessing;
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
-	private final IOneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new IOneParameterRunnable<LibrarySyncHandler>() {
+	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new OneParameterRunnable<LibrarySyncHandler>() {
 		@Override
 		public void run(LibrarySyncHandler librarySyncHandler) {
 			librarySyncHandlers.remove(librarySyncHandler);
@@ -73,7 +73,7 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final IOneParameterRunnable<StoredFile> storedFileQueuedAction = new IOneParameterRunnable<StoredFile>() {
+	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = new OneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
 			final Intent fileDownloadedIntent = new Intent(onFileQueuedEvent);
@@ -82,7 +82,7 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final IOneParameterRunnable<StoredFile> storedFileDownloadedAction = new IOneParameterRunnable<StoredFile>() {
+	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = new OneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
 			final Intent fileDownloadedIntent = new Intent(onFileDownloadedEvent);
@@ -152,7 +152,7 @@ public class SyncService extends Service {
 		logger.info("Starting sync.");
 		startForeground(notificationId, buildSyncNotification());
 
-		LibrarySession.GetLibraries(context, new ITwoParameterRunnable<FluentTask<Void,Void,List<Library>>, List<Library>>() {
+		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void,Void,List<Library>>, List<Library>>() {
 			@Override
 			public void run(FluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				librariesProcessing += libraries.size();
@@ -163,14 +163,14 @@ public class SyncService extends Service {
 				}
 
 				for (final Library library : libraries) {
-					AccessConfigurationBuilder.buildConfiguration(context, library, new ITwoParameterRunnable<FluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
+					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
 						@Override
 						public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
 							if (library.isSyncLocalConnectionsOnly())
 								accessConfiguration.setLocalOnly(true);
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							ConnectionTester.doTest(connectionProvider, 5000, new ITwoParameterRunnable<FluentTask<Integer,Void,Boolean>, Boolean>() {
+							ConnectionTester.doTest(connectionProvider, 5000, new TwoParameterRunnable<FluentTask<Integer,Void,Boolean>, Boolean>() {
 								@Override
 								public void run(FluentTask<Integer, Void, Boolean> owner, Boolean success) {
 									if (!success) {

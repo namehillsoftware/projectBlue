@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
     private final List<IFile> files;
     private final int nowPlayingPosition;
 
-    private IOneParameterRunnable<Integer> onPlaylistFileRemovedListener;
+    private OneParameterRunnable<Integer> onPlaylistFileRemovedListener;
 
     public NowPlayingFileListItemMenuBuilder(final List<IFile> files, final int nowPlayingPosition) {
         this.files = files;
@@ -113,7 +113,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         return viewFlipper;
     }
 
-    public void setOnPlaylistFileRemovedListener(IOneParameterRunnable<Integer> onPlaylistFileRemovedListener) {
+    public void setOnPlaylistFileRemovedListener(OneParameterRunnable<Integer> onPlaylistFileRemovedListener) {
         this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener;
     }
 }

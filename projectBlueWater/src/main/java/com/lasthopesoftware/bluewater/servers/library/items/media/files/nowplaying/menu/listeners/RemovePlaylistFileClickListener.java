@@ -12,9 +12,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.runnables.IOneParameterRunnable;
-import com.lasthopesoftware.runnables.ITwoParameterRunnable;
 import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
 
@@ -23,10 +23,10 @@ import java.util.List;
  */
 public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
     private final int position;
-    private final IOneParameterRunnable<Integer> onPlaylistFileRemoved;
+    private final OneParameterRunnable<Integer> onPlaylistFileRemoved;
 
     // TODO Add event and remove interdepency on NowPlayingFileListAdapter adapter
-    public RemovePlaylistFileClickListener(NotifyOnFlipViewAnimator parent, final int position, final IOneParameterRunnable<Integer> onPlaylistFileRemoved) {
+    public RemovePlaylistFileClickListener(NotifyOnFlipViewAnimator parent, final int position, final OneParameterRunnable<Integer> onPlaylistFileRemoved) {
         super(parent);
         this.position = position;
         this.onPlaylistFileRemoved = onPlaylistFileRemoved;
@@ -34,7 +34,7 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View view) {
-        LibrarySession.GetActiveLibrary(view.getContext(), new ITwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+        LibrarySession.GetActiveLibrary(view.getContext(), new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 
             @Override
             public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -62,7 +62,7 @@ public class RemovePlaylistFileClickListener extends AbstractMenuClickHandler {
 
                         library.setSavedTracksString(s);
 
-                        LibrarySession.SaveLibrary(view.getContext(), library, new ITwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
+                        LibrarySession.SaveLibrary(view.getContext(), library, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
 
                             @Override
                             public void run(FluentTask<Void, Void, Library> owner, Library result) {
