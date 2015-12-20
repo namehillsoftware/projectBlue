@@ -52,15 +52,19 @@ public class StoredItem implements IRepository {
 		this.id = id;
 	}
 
+	private static final String createTableSql = "CREATE TABLE `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) ";
+
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) ");
+		db.execSQL(createTableSql);
 	}
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion < 5)
-			db.execSQL("DROP TABLE `StoredLists`;");
+		if (oldVersion >= 5) return;
+
+		db.execSQL("DROP TABLE `StoredLists`;");
+		db.execSQL(createTableSql);
 	}
 
 	public enum ItemType { FILE, PLAYLIST, ITEM }
