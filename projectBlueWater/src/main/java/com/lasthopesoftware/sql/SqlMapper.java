@@ -267,7 +267,7 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.setBoolean(parameterTwo, parseSqlBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -284,7 +284,7 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -301,7 +301,7 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -334,7 +334,8 @@ public class SqlMapper {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
+									if (!isSqlValueNull(parameterThree))
+										parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								}
@@ -380,7 +381,7 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.invoke(parameterTwo, parseSqlBoolean(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -399,7 +400,7 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -418,7 +419,7 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									if (parameterThree != null)
+									if (!isSqlValueNull(parameterThree))
 										parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
@@ -455,7 +456,8 @@ public class SqlMapper {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
 								try {
-									parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
+									if (!isSqlValueNull(parameterThree))
+										parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
 								} catch (IllegalAccessException e) {
 									throw new RuntimeException(e);
 								} catch (InvocationTargetException e) {
@@ -473,5 +475,9 @@ public class SqlMapper {
 
 	private static boolean parseSqlBoolean(String booleanValue) {
 		return Integer.parseInt(booleanValue) != 0;
+	}
+
+	private static boolean isSqlValueNull(String sqlValue) {
+		return sqlValue == null || sqlValue.equals("NULL");
 	}
 }
