@@ -1,4 +1,4 @@
-package com.lasthopesoftware.sql;
+package com.vedsoft.objectified;
 
 import android.database.Cursor;
 import android.database.SQLException;
@@ -23,42 +23,42 @@ import java.util.concurrent.Callable;
 /**
  * Created by david on 12/13/15.
  */
-public class SqlMapper {
+public class Objectified {
 	private final SQLiteDatabase database;
 	private final String sqlQuery;
 	private final HashMap<String, String> parameters = new HashMap<>();
 
-	public SqlMapper(SQLiteDatabase database, String sqlQuery) {
+	public Objectified(SQLiteDatabase database, String sqlQuery) {
 		this.database = database;
 		this.sqlQuery = sqlQuery;
 	}
 
-	public SqlMapper addParameter(String parameter, String value) {
+	public Objectified addParameter(String parameter, String value) {
 		parameters.put(parameter, value);
 		return this;
 	}
 
-	public <E extends Enum<E>> SqlMapper addParameter(String parameter, Enum<E> value) {
+	public <E extends Enum<E>> Objectified addParameter(String parameter, Enum<E> value) {
 		return addParameter(parameter, value != null ? value.name() : null);
 	}
 
-	public SqlMapper addParameter(String parameter, int value) {
+	public Objectified addParameter(String parameter, int value) {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
-	public SqlMapper addParameter(String parameter, long value) {
+	public Objectified addParameter(String parameter, long value) {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
-	public SqlMapper addParameter(String parameter, boolean value) {
+	public Objectified addParameter(String parameter, boolean value) {
 		return addParameter(parameter, value ? 1 : 0);
 	}
 
-	public SqlMapper addParameter(String parameter, Object value) {
+	public Objectified addParameter(String parameter, Object value) {
 		return addParameter(parameter, value.toString());
 	}
 
-	public SqlMapper addParameters(Map<String, Object> parameters) {
+	public Objectified addParameters(Map<String, Object> parameters) {
 		for (Map.Entry<String, Object> parameter : parameters.entrySet())
 			addParameter(parameter.getKey(), parameter.getValue());
 

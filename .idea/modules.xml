@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/fluenttask/fluenttask.iml" filepath="$PROJECT_DIR$/fluenttask/fluenttask.iml" />
       <module fileurl="file://$PROJECT_DIR$/futures/futures.iml" filepath="$PROJECT_DIR$/futures/futures.iml" />
       <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/objectified/objectified.iml" filepath="$PROJECT_DIR$/objectified/objectified.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlue.iml" filepath="$PROJECT_DIR$/projectBlue.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" filepath="$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" />
     </modules>

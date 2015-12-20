@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.ca
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.sql.SqlMapper;
 import com.vedsoft.futures.Lazy;
+import com.vedsoft.objectified.Objectified;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +49,8 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public  SqlMapper mapSql(String sqlQuery) {
-		return new SqlMapper(getWritableDatabase(), sqlQuery);
+	public Objectified mapSql(String sqlQuery) {
+		return new Objectified(getWritableDatabase(), sqlQuery);
 	}
 
 	@Override

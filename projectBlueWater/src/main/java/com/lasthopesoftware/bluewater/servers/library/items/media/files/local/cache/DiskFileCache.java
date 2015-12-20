@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.sql.SqlMapper;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.objectified.Objectified;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +107,7 @@ public class DiskFileCache {
 							.addColumn(CachedFile.LAST_ACCESSED_TIME)
 							.build();
 
-					final SqlMapper sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+					final Objectified sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
 
 					try {
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());

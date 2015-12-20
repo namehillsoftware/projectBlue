@@ -11,10 +11,10 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
-import com.lasthopesoftware.sql.SqlMapper;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.objectified.Objectified;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +91,7 @@ public class LibrarySession {
 				try {
 					final boolean isLibraryExists = library.getId() > -1;
 
-					final SqlMapper sqlMapper =
+					final Objectified objectified =
 						repositoryAccessHelper
 								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 								.addParameter(Library.accessCodeColumn, library.getAccessCode())
@@ -110,9 +110,9 @@ public class LibrarySession {
 								.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
 					if (isLibraryExists)
-						sqlMapper.addParameter("id", library.getId());
+						objectified.addParameter("id", library.getId());
 
-					final long result = sqlMapper.execute();
+					final long result = objectified.execute();
 
 					if (!isLibraryExists)
 						library.setId((int)result);

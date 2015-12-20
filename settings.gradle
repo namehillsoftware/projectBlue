@@ -1,3 +1,3 @@
-include ':library', ':futures'
+include ':library', ':futures', ':objectified'
 include ':fluenttask'
 include ':projectBlueWater'
