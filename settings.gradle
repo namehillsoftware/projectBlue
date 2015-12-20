@@ -1,2 +1,3 @@
 include ':library', ':futures'
+include ':fluenttask'
 include ':projectBlueWater'

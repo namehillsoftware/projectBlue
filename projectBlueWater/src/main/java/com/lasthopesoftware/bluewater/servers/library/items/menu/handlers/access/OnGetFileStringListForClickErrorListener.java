@@ -4,7 +4,7 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;

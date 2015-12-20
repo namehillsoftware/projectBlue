@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;

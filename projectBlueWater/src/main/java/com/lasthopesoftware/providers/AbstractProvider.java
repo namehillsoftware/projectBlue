@@ -1,7 +1,7 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

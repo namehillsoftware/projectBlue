@@ -4,7 +4,7 @@ import android.util.LruCache;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;

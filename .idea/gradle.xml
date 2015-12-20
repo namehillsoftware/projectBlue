@@ -10,6 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/fluenttask" />
             <option value="$PROJECT_DIR$/futures" />
             <option value="$PROJECT_DIR$/library" />
             <option value="$PROJECT_DIR$/projectBlueWater" />

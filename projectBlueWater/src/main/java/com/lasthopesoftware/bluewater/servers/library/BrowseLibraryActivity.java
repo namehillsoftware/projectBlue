@@ -48,7 +48,7 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStati
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 

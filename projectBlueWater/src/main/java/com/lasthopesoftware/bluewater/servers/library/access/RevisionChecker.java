@@ -4,7 +4,7 @@ import android.util.SparseIntArray;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.threading.FluentTask;
+import com.vedsoft.fluent.FluentTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
