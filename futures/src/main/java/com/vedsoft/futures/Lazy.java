@@ -16,7 +16,12 @@ public class Lazy<T> {
 	}
 
 	public Lazy(final Class<T> typeClass) {
-		this(typeClass::newInstance);
+		this(new Callable<T>() {
+			@Override
+			public T call() throws Exception {
+				return typeClass.newInstance();
+			}
+		});
 	}
 
 	public boolean isInitialized() {
