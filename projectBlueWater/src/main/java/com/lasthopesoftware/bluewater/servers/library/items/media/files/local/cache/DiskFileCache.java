@@ -87,7 +87,7 @@ public class DiskFileCache {
 					CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
 					if (cachedFile != null) {
 						repositoryAccessHelper
-								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
+								.objectifySql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
 								.addParameter("id", cachedFile.getId())
 								.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
 								.execute();
@@ -107,7 +107,7 @@ public class DiskFileCache {
 							.addColumn(CachedFile.LAST_ACCESSED_TIME)
 							.build();
 
-					final Objectified sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+					final Objectified sqlInsertMapper = repositoryAccessHelper.objectifySql(cachedFileSqlInsert);
 
 					try {
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
@@ -188,7 +188,7 @@ public class DiskFileCache {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
+							.objectifySql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
 							.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
 							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
@@ -204,11 +204,11 @@ public class DiskFileCache {
 
 	private static CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int libraryId, final String cacheName, final String uniqueKey) {
 		return repositoryAccessHelper
-				.mapSql(
-					"SELECT * FROM " + CachedFile.tableName +
-					" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
-					" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
-					" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY)
+				.objectifySql(
+						"SELECT * FROM " + CachedFile.tableName +
+								" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
+								" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
+								" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY)
 				.addParameter(CachedFile.LIBRARY_ID, libraryId)
 				.addParameter(CachedFile.CACHE_NAME, cacheName)
 				.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
@@ -217,7 +217,7 @@ public class DiskFileCache {
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int cachedFileId) {
 		return repositoryAccessHelper
-				.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+				.objectifySql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 				.addParameter("id", cachedFileId)
 				.execute();
 	}

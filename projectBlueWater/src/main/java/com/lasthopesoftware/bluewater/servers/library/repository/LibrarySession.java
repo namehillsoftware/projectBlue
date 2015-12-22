@@ -93,7 +93,7 @@ public class LibrarySession {
 
 					final Objectified objectified =
 						repositoryAccessHelper
-								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
+								.objectifySql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 								.addParameter(Library.accessCodeColumn, library.getAccessCode())
 								.addParameter(Library.authKeyColumn, library.getAuthKey())
 								.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
@@ -181,7 +181,7 @@ public class LibrarySession {
 		try {
 			return
 				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
+					.objectifySql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
 					.addParameter("id", libraryId)
 					.fetchFirst(Library.class);
 		} finally {
@@ -197,7 +197,7 @@ public class LibrarySession {
 				try {
 					return
 						repositoryAccessHelper
-							.mapSql("SELECT * FROM " + Library.tableName)
+							.objectifySql("SELECT * FROM " + Library.tableName)
 							.fetch(Library.class);
 				} finally {
 					repositoryAccessHelper.close();

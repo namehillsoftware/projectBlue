@@ -49,7 +49,7 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public Objectified mapSql(String sqlQuery) {
+	public Objectified objectifySql(String sqlQuery) {
 		return new Objectified(getWritableDatabase(), sqlQuery);
 	}
 
