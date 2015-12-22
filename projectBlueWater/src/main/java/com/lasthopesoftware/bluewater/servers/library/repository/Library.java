@@ -179,14 +179,14 @@ public class Library implements IRepository {
 		return syncedFileLocation != SyncedFileLocation.CUSTOM ? buildSyncDir(context, syncedFileLocation) : new File(customSyncedFilesPath);
 	}
 
-	private static File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation) {
+	private File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation) {
 		File parentSyncDir = null;
 		switch (syncedFileLocation) {
 			case EXTERNAL:
 				parentSyncDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
 				break;
 			case INTERNAL:
-				parentSyncDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+				parentSyncDir = new File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), id > -1 ? String.valueOf(id) : "");
 				break;
 		}
 
