@@ -119,6 +119,7 @@ public class PlaybackService extends Service implements
 	private ComponentName mRemoteControlReceiver;
 	private RemoteControlClient mRemoteControlClient;
 	private Bitmap mRemoteClientBitmap = null;
+	private volatile boolean hasAudioFocus = true;
 	
 	// State dependent static variables
 	private static volatile String mPlaylistString;
@@ -219,7 +220,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -337,8 +338,7 @@ public class PlaybackService extends Service implements
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
-
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -377,7 +377,8 @@ public class PlaybackService extends Service implements
 					public void onReceive(Context context, Intent intent) {
 						localBroadcastManager.unregisterReceiver(this);
 
-						if (!intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false)) return;
+						if (!intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false))
+							return;
 
 						localBroadcastManager.unregisterReceiver(buildSessionReceiver);
 						initializePlaylist(library, onPlaylistInitialized);
@@ -397,6 +398,8 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistStarted) {
+		hasAudioFocus = false;
+
 		notifyStartingService();
 
 		// If the playlist has changed, change that
@@ -437,7 +440,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -450,7 +453,7 @@ public class PlaybackService extends Service implements
 						mPlaylistString = result.getSavedTracksString();
 					
 					result.setSavedTracksString(mPlaylistString);
-					LibrarySession.SaveLibrary(mStreamingMusicService, result, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
+					LibrarySession.SaveLibrary(mStreamingMusicService, result, new TwoParameterRunnable<FluentTask<Void, Void, Library>, Library>() {
 						
 						@Override
 						public void run(FluentTask<Void, Void, Library> owner, Library result) {
@@ -814,6 +817,8 @@ public class PlaybackService extends Service implements
 	@Override
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+			hasAudioFocus = true;
+
 			// resume playback
 			if (mPlaylistController != null) {
 				mPlaylistController.setVolume(1.0f);
@@ -825,8 +830,7 @@ public class PlaybackService extends Service implements
 			restorePlaylistControllerFromStorage(new OneParameterRunnable<Boolean>() {
 				@Override
 				public void run(Boolean result) {
-					if (result)
-						mPlaylistController.resume();
+					if (result && hasAudioFocus) mPlaylistController.resume();
 				}
 			});
 
@@ -838,7 +842,7 @@ public class PlaybackService extends Service implements
 	    switch (focusChange) {
         	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
-	        	if (mPlaylistController.isPlaying()) pausePlayback(true);
+	        	hasAudioFocus = false;
 	        // Lost focus but it will be regained... cannot release resources
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
 	        	if (mPlaylistController.isPlaying()) pausePlayback(false);
