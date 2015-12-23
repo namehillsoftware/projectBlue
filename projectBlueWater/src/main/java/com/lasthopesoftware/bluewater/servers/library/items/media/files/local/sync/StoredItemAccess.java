@@ -95,10 +95,10 @@ public class StoredItemAccess {
 	            try {
 		            repositoryAccessHelper
 				            .objectifySql(
-                                    "DELETE FROM " + StoredItem.tableName +
-                                            "WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
-                                            "AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
-                                            "AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
+                                    " DELETE FROM " + StoredItem.tableName +
+                                    " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
+                                    " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
+                                    " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
 				            .addParameter(StoredItem.serviceIdColumnName, item.getKey())
 				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
 				            .addParameter(StoredItem.itemTypeColumnName, itemType)
