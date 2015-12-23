@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.view.View;
 import android.widget.ImageButton;
 
@@ -18,8 +19,6 @@ import com.vedsoft.futures.runnables.TwoParameterRunnable;
  * Created by david on 8/16/15.
  */
 public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
-
-	private static Drawable mSyncOnDrawable;
 
 	private final NotifyOnFlipViewAnimator notifyOnFlipViewAnimator;
 	private final ImageButton syncButton;
@@ -57,9 +56,10 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 	}
 
 	private static Drawable getSyncOnDrawable(Context context) {
-		if (mSyncOnDrawable == null)
-			mSyncOnDrawable = context.getResources().getDrawable(R.drawable.ic_sync_on);
+		final int syncOnDrawableId = R.drawable.ic_sync_on;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			return context.getDrawable(syncOnDrawableId);
 
-		return mSyncOnDrawable;
+		return context.getResources().getDrawable(syncOnDrawableId);
 	}
 }
