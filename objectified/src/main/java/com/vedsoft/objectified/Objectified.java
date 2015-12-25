@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Created by david on 12/13/15.
@@ -255,14 +254,14 @@ public class Objectified {
 			}
 		}
 
-		private static final Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>>() {
+		private static final Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>>() {
 			@Override
-			public HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> call() throws Exception {
+			public HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
 				final HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -275,11 +274,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -292,11 +291,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -309,11 +308,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(String.class, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -325,11 +324,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Enum.class, new Lazy<>(new Callable<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -342,11 +341,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
 				return newHashMap;
 			}
-		});
+		};
 	}
 
 	private static class MethodSetter implements ISetter {
@@ -369,14 +368,14 @@ public class Objectified {
 			}
 		}
 
-		private static final Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<>(new Callable<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>>() {
+		private static final Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>>() {
 			@Override
-			public HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> call() throws Exception {
+			public HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
 				final HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -391,11 +390,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Integer.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -410,11 +409,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Long.TYPE, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -429,11 +428,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(String.class, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -447,11 +446,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
-				newHashMap.put(Enum.class, new Lazy<>(new Callable<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> call() throws Exception {
+					public ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -466,11 +465,11 @@ public class Objectified {
 							}
 						};
 					}
-				}));
+				});
 
 				return newHashMap;
 			}
-		});
+		};
 	}
 
 	private static boolean parseSqlBoolean(String booleanValue) {

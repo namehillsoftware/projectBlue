@@ -1,28 +1,11 @@
 package com.vedsoft.futures;
 
-import java.util.concurrent.Callable;
-
 /**
  * Created by david on 11/28/15.
  */
-public class Lazy<T> {
-
-	private final Callable<T> initialization;
+public abstract class Lazy<T> {
 
 	private T object;
-
-	public Lazy(Callable<T> initialization) {
-		this.initialization = initialization;
-	}
-
-	public Lazy(final Class<T> typeClass) {
-		this(new Callable<T>() {
-			@Override
-			public T call() throws Exception {
-				return typeClass.newInstance();
-			}
-		});
-	}
 
 	public boolean isInitialized() {
 		return object != null;
@@ -33,14 +16,11 @@ public class Lazy<T> {
 	}
 
 	private synchronized T getValueSynchronized() {
-		if (isInitialized()) return object;
-
-		try {
-			object = initialization.call();
-		} catch (Exception exception) {
-			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
-		}
+		if (!isInitialized())
+			object = initialize();
 
 		return object;
 	}
+
+	public abstract T initialize();
 }
