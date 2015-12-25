@@ -38,7 +38,7 @@ public class Lazy<T> {
 		try {
 			object = initialization.call();
 		} catch (Exception exception) {
-			throw new RuntimeException(exception);
+			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), exception);
 		}
 
 		return object;
