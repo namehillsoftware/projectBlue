@@ -27,7 +27,7 @@ public abstract class Lazy<T> {
 	public static <T> Lazy<T> fromClass(final Class<T> cls) {
 		return new Lazy<T>() {
 			@Override
-			protected T initialize() {
+			protected final T initialize() {
 				try {
 					return cls.newInstance();
 				} catch (InstantiationException e) {
