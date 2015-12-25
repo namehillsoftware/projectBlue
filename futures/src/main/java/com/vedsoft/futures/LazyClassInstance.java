@@ -11,7 +11,7 @@ public class LazyClassInstance<T> extends Lazy<T> {
 	}
 
 	@Override
-	public T initialize() {
+	protected T initialize() {
 		try {
 			return this.cls.newInstance();
 		} catch (InstantiationException e) {

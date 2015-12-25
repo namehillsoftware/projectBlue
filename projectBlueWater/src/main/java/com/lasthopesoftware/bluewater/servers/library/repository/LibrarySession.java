@@ -29,7 +29,7 @@ public class LibrarySession {
 
 	private static final Lazy<String> libraryInsertSql = new Lazy<String>() {
 		@Override
-		public String initialize() {
+		protected String initialize() {
 			return
 					InsertBuilder
 							.fromTable(Library.tableName)

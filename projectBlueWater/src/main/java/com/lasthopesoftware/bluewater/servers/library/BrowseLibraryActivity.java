@@ -92,7 +92,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private final Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
 		@Override
-		public TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> initialize() {
+		protected TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> initialize() {
 			return new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
 
 				@Override

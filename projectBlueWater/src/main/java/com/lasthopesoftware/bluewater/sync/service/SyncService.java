@@ -92,7 +92,7 @@ public class SyncService extends Service {
 
 	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
-		public BroadcastReceiver initialize() {
+		protected BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {

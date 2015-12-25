@@ -256,12 +256,12 @@ public class Objectified {
 
 		private static final Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>>() {
 			@Override
-			public HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
+			protected HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
 				final HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
 				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -278,7 +278,7 @@ public class Objectified {
 
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -295,7 +295,7 @@ public class Objectified {
 
 				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -312,7 +312,7 @@ public class Objectified {
 
 				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -328,7 +328,7 @@ public class Objectified {
 
 				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
 						return new ThreeParameterRunnable<Field, Object, String>() {
 							@Override
 							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
@@ -370,12 +370,12 @@ public class Objectified {
 
 		private static final Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>>() {
 			@Override
-			public HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
+			protected HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
 				final HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
 				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -394,7 +394,7 @@ public class Objectified {
 
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -413,7 +413,7 @@ public class Objectified {
 
 				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -432,7 +432,7 @@ public class Objectified {
 
 				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
@@ -450,7 +450,7 @@ public class Objectified {
 
 				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					public ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
 						return new ThreeParameterRunnable<Method, Object, String>() {
 							@Override
 							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {

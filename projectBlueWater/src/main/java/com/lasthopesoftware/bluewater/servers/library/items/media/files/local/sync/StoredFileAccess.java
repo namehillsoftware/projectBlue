@@ -33,14 +33,14 @@ public class StoredFileAccess {
 
 	private static final Lazy<Logger> logger = new Lazy<Logger>() {
 		@Override
-		public Logger initialize() {
+		protected Logger initialize() {
 			return LoggerFactory.getLogger(StoredFileAccess.class);
 		}
 	};
 
 	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
 		@Override
-		public ExecutorService initialize() {
+		protected ExecutorService initialize() {
 			return Executors.newSingleThreadExecutor();
 		}
 	};

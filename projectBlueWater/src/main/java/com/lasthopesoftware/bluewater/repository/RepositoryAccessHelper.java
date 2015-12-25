@@ -25,21 +25,21 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 
 	private final static Lazy<IRepository[]> repositories = new Lazy<IRepository[]>() {
 		@Override
-		public IRepository[] initialize() {
+		protected IRepository[] initialize() {
 			return new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile() };
 		}
 	};
 
 	private final static Lazy<Logger> localLogger = new Lazy<Logger>() {
 		@Override
-		public Logger initialize() {
+		protected Logger initialize() {
 			return LoggerFactory.getLogger(RepositoryAccessHelper.class);
 		}
 	};
 
 	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<SQLiteDatabase>() {
 		@Override
-		public SQLiteDatabase initialize() {
+		protected SQLiteDatabase initialize() {
 			return getWritableDatabase();
 		}
 	};

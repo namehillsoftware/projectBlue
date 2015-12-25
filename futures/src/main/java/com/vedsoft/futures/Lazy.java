@@ -22,5 +22,5 @@ public abstract class Lazy<T> {
 		return object;
 	}
 
-	public abstract T initialize();
+	protected abstract T initialize();
 }

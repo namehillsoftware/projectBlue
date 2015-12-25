@@ -24,7 +24,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<AsyncExceptionTask<Void, TProgress, TResult>>() {
 		@Override
-		public AsyncExceptionTask<Void, TProgress, TResult> initialize() {
+		protected AsyncExceptionTask<Void, TProgress, TResult> initialize() {
 			return new AsyncExceptionTask<Void, TProgress, TResult>(){
 
 				@Override
