@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * Created by david on 7/26/15.
@@ -91,9 +90,9 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
+	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
-		public BroadcastReceiver call() throws Exception {
+		public BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -101,11 +100,11 @@ public class SyncService extends Service {
 				}
 			};
 		}
-	});
+	};
 
-	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<>(new Callable<BroadcastReceiver>() {
+	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
-		public BroadcastReceiver call() throws Exception {
+		public BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -113,7 +112,7 @@ public class SyncService extends Service {
 				}
 			};
 		}
-	});
+	};
 
 	public static boolean isSyncScheduled(Context context) {
 		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
