@@ -8,6 +8,7 @@ import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -22,9 +23,10 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
 	private TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
-	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<AsyncExceptionTask<Void, TProgress, TResult>>() {
+	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<>(new Callable<AsyncExceptionTask<Void, TProgress, TResult>>() {
+
 		@Override
-		public AsyncExceptionTask<Void, TProgress, TResult> initialize() {
+		public AsyncExceptionTask<Void, TProgress, TResult> call() throws Exception {
 			return new AsyncExceptionTask<Void, TProgress, TResult>(){
 
 				@Override
@@ -51,7 +53,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 				}
 			};
 		}
-	};
+	});
 
 	@SafeVarargs
 	public FluentTask(TParams... params) {

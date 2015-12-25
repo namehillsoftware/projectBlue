@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,19 +32,19 @@ import java.util.concurrent.Executors;
  */
 public class StoredFileAccess {
 
-	private static final Lazy<Logger> logger = new Lazy<Logger>() {
+	private static final Lazy<Logger> logger = new Lazy<>(new Callable<Logger>() {
 		@Override
-		public Logger initialize() {
+		public Logger call() throws Exception {
 			return LoggerFactory.getLogger(StoredFileAccess.class);
 		}
-	};
+	});
 
-	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
+	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<>(new Callable<ExecutorService>() {
 		@Override
-		public ExecutorService initialize() {
+		public ExecutorService call() throws Exception {
 			return Executors.newSingleThreadExecutor();
 		}
-	};
+	});
 
 	private final Context context;
 	private final Library library;

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class LibrarySession {
 	
@@ -27,9 +28,9 @@ public class LibrarySession {
 	public static final String libraryChosenEvent = SpecialValueHelpers.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
-	private static final Lazy<String> libraryInsertSql = new Lazy<String>() {
+	private static final Lazy<String> libraryInsertSql = new Lazy<>(new Callable<String>() {
 		@Override
-		public String initialize() {
+		public String call() throws Exception {
 			return
 					InsertBuilder
 							.fromTable(Library.tableName)
@@ -49,11 +50,11 @@ public class LibrarySession {
 							.addColumn(Library.syncedFileLocationColumn)
 							.build();
 		}
-	};
+	});
 
-	private static final Lazy<String> libraryUpdateSql = new Lazy<String>() {
+	private static final Lazy<String> libraryUpdateSql = new Lazy<>(new Callable<String>() {
 		@Override
-		public String initialize() {
+		public String call() throws Exception {
 			return
 					UpdateBuilder
 							.fromTable(Library.tableName)
@@ -74,7 +75,7 @@ public class LibrarySession {
 							.setFilter("WHERE id = @id")
 							.buildQuery();
 		}
-	};
+	});
 
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);

@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -90,9 +91,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
-	private final Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
+	private final Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<>(new Callable<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
 		@Override
-		public TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> initialize() {
+		public TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> call() throws Exception {
 			return new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
 
 				@Override
@@ -114,8 +115,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				}
 			};
 		}
-	};
-
+	});
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
