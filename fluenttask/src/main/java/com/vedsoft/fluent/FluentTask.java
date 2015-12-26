@@ -16,20 +16,32 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private final TParams[] params;
 	private final Executor defaultExecutor;
 
+	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TProgress[]> twoParameterOnProgressListener;
+	private OneParameterRunnable<TProgress[]> oneParameterOnProgressListener;
+
 	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private OneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
 	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
 	private TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
-	private final Lazy<AsyncExceptionTask<Void, TProgress, TResult>> task = new Lazy<AsyncExceptionTask<Void, TProgress, TResult>>() {
+	private final Lazy<AndroidAsyncTask<Void, TProgress, TResult>> task = new Lazy<AndroidAsyncTask<Void, TProgress, TResult>>() {
 		@Override
-		protected AsyncExceptionTask<Void, TProgress, TResult> initialize() {
-			return new AsyncExceptionTask<Void, TProgress, TResult>(){
+		protected AndroidAsyncTask<Void, TProgress, TResult> initialize() {
+			return new AndroidAsyncTask<Void, TProgress, TResult>(){
 
 				@Override
 				protected final TResult doInBackground(Void... params) {
 					return executeInBackground(FluentTask.this.params);
+				}
+
+				@Override
+				protected void onProgressUpdate(TProgress... values) {
+					if (twoParameterOnProgressListener != null)
+						twoParameterOnProgressListener.run(FluentTask.this, values);
+
+					if (oneParameterOnProgressListener != null)
+						oneParameterOnProgressListener.run(values);
 				}
 
 				@Override
@@ -88,6 +100,10 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		return task.getObject().executeOnExecutor(exec);
 	}
 
+	protected void reportProgress(TProgress... progress) {
+		task.getObject().updateProgress(progress);
+	}
+
 	/**
 	 *
 	 * @return True if there is an error and it is handled
@@ -128,6 +144,16 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		return this;
 	}
 
+	public FluentTask<TParams, TProgress, TResult> onProgress(TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TProgress[]> listener) {
+		twoParameterOnProgressListener = listener;
+		return this;
+	}
+
+	public FluentTask<TParams, TProgress, TResult> onProgress(OneParameterRunnable<TProgress[]> listener) {
+		oneParameterOnProgressListener = listener;
+		return this;
+	}
+
 	public FluentTask<TParams, TProgress, TResult> onError(TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
 		twoParameterOnErrorListener = listener;
 		return this;
@@ -136,5 +162,11 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	public FluentTask<TParams, TProgress, TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
 		oneParameterOnErrorListener = listener;
 		return this;
+	}
+
+	private static abstract class AndroidAsyncTask<TParams, TProgress, TResult> extends AsyncExceptionTask<TParams, TProgress, TResult> {
+		public void updateProgress(TProgress[] progress) {
+			publishProgress(progress);
+		}
 	}
 }

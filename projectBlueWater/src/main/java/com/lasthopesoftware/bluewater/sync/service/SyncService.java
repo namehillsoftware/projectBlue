@@ -51,6 +51,7 @@ public class SyncService extends Service {
 	public static final String onSyncStartEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");
 	public static final String onSyncStopEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStopEvent");
 	public static final String onFileQueuedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileQueuedEvent");
+	public static final String onFileDownloadingEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadingEvent");
 	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
 	public static final String storedFileEventKey = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "storedFileEventKey");
 
@@ -80,18 +81,21 @@ public class SyncService extends Service {
 	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = new OneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
-			final Intent fileDownloadedIntent = new Intent(onFileQueuedEvent);
-			fileDownloadedIntent.putExtra(storedFileEventKey, storedFile.getId());
-			localBroadcastManager.sendBroadcast(fileDownloadedIntent);
+			sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
+		}
+	};
+
+	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = new OneParameterRunnable<StoredFile>() {
+		@Override
+		public void run(StoredFile storedFile) {
+			sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 		}
 	};
 
 	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = new OneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(StoredFile storedFile) {
-			final Intent fileDownloadedIntent = new Intent(onFileDownloadedEvent);
-			fileDownloadedIntent.putExtra(storedFileEventKey, storedFile.getId());
-			localBroadcastManager.sendBroadcast(fileDownloadedIntent);
+			sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
 		}
 	};
 
@@ -174,7 +178,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification());
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void,Void,List<Library>>, List<Library>>() {
+		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>>() {
 			@Override
 			public void run(FluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
 				librariesProcessing += libraries.size();
@@ -185,14 +189,14 @@ public class SyncService extends Service {
 				}
 
 				for (final Library library : libraries) {
-					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
+					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
 						@Override
 						public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
 							if (library.isSyncLocalConnectionsOnly())
 								accessConfiguration.setLocalOnly(true);
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							ConnectionTester.doTest(connectionProvider, 5000, new TwoParameterRunnable<FluentTask<Integer,Void,Boolean>, Boolean>() {
+							ConnectionTester.doTest(connectionProvider, 5000, new TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {
 								@Override
 								public void run(FluentTask<Integer, Void, Boolean> owner, Boolean success) {
 									if (!success) {
@@ -202,6 +206,7 @@ public class SyncService extends Service {
 
 									final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
 									librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
+									librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
 									librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 									librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
 									librarySyncHandler.startSync();
@@ -242,9 +247,23 @@ public class SyncService extends Service {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
+
+		// TODO need proper library provider to randomly get back correct library
+//		if (downloadingFile != null) {
+//			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(downloadingFile.getServiceId());
+//
+//
+//		}
+
 //		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsFragment.class), 0));
 
 		return notifyBuilder.build();
+	}
+
+	private void sendStoredFileBroadcast(String action, StoredFile storedFile) {
+		final Intent storedFileNotificationIntent = new Intent(action);
+		storedFileNotificationIntent.putExtra(storedFileEventKey, storedFile.getId());
+		localBroadcastManager.sendBroadcast(storedFileNotificationIntent);
 	}
 
 	private void cancelSync() {
@@ -256,7 +275,7 @@ public class SyncService extends Service {
 
 		// Set an alarm for the next time we run this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(SyncService.this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
+		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 		stopForeground(true);

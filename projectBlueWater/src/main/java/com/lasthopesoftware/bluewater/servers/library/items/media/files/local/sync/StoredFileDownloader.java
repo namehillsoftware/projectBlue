@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
@@ -46,6 +47,7 @@ public class StoredFileDownloader {
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
+	private OneParameterRunnable<StoredFile> onFileDownloading;
 	private OneParameterRunnable<StoredFile> onFileDownloaded;
 	private OneParameterRunnable<StoredFile> onFileQueued;
 	private Runnable onQueueProcessingCompleted;
@@ -84,85 +86,116 @@ public class StoredFileDownloader {
 
 		isProcessing = true;
 
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+		(new FluentTask<Void, StoredFile, Integer>() {
+
 			@Override
-			public void run() {
-				try {
-					QueuedFileHolder queuedFileHolder;
-					while ((queuedFileHolder = queuedFiles.poll()) != null) {
-						if (isCancelled) return;
+			protected Integer executeInBackground(Void[] params) {
+				QueuedFileHolder queuedFileHolder;
+				Integer fileDownloadCount = 0;
+				while ((queuedFileHolder = queuedFiles.poll()) != null) {
+					if (isCancelled) return fileDownloadCount;
 
-						final StoredFile storedFile = queuedFileHolder.storedFile;
-						final IFile serviceFile = queuedFileHolder.file;
+					final StoredFile storedFile = queuedFileHolder.storedFile;
+					final IFile serviceFile = queuedFileHolder.file;
 
-						final java.io.File file = new java.io.File(storedFile.getPath());
-						if (storedFile.isDownloadComplete() && file.exists()) continue;
+					final java.io.File file = new java.io.File(storedFile.getPath());
+					if (storedFile.isDownloadComplete() && file.exists()) continue;
 
-						HttpURLConnection connection;
+					reportProgress(storedFile);
+
+					HttpURLConnection connection;
+					try {
+						connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+					} catch (IOException e) {
+						logger.error("Error getting connection", e);
+						return null;
+					}
+
+					if (isCancelled || connection == null) return fileDownloadCount;
+
+					try {
+						InputStream is;
 						try {
-							connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
-						} catch (IOException e) {
-							logger.error("Error getting connection", e);
+							is = connection.getInputStream();
+						} catch (IOException ioe) {
+							logger.error("Error opening data connection", ioe);
+							return null;
+						}
+
+						if (isCancelled) return null;
+
+						final java.io.File parent = file.getParentFile();
+						if (!parent.exists() && !parent.mkdirs()) return fileDownloadCount;
+
+						try {
+							final FileOutputStream fos = new FileOutputStream(file);
+							try {
+								IOUtils.copy(is, fos);
+								fos.flush();
+							} finally {
+								fos.close();
+							}
+
+							++fileDownloadCount;
+
+							final int storedFileId = storedFile.getId();
+							storedFileAccess.markStoredFileAsDownloaded(storedFileId);
+
+							reportProgress(storedFile);
+
+							context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+						} catch (IOException ioe) {
+							logger.error("Error writing file!", ioe);
+						} finally {
+							if (is != null) {
+								try {
+									is.close();
+								} catch (IOException e) {
+									logger.error("Error closing input stream", e);
+								}
+							}
+						}
+					} finally {
+						connection.disconnect();
+					}
+				}
+
+				return fileDownloadCount;
+			}
+		})
+				.onProgress(new OneParameterRunnable<StoredFile[]>() {
+					@Override
+					public void run(StoredFile[] storedFiles) {
+						if (storedFiles.length == 0) return;
+
+						final StoredFile storedFile = storedFiles[0];
+
+						if (!storedFile.isDownloadComplete()) {
+							if (onFileDownloading != null)
+								onFileDownloading.run(storedFile);
+
 							return;
 						}
 
-						if (isCancelled || connection == null) return;
-
-						try {
-							InputStream is;
-							try {
-								is = connection.getInputStream();
-							} catch (IOException ioe) {
-								logger.error("Error opening data connection", ioe);
-								return;
-							}
-
-							if (isCancelled) return;
-
-							final java.io.File parent = file.getParentFile();
-							if (!parent.exists() && !parent.mkdirs()) return;
-
-							try {
-								final FileOutputStream fos = new FileOutputStream(file);
-								try {
-									IOUtils.copy(is, fos);
-									fos.flush();
-								} finally {
-									fos.close();
-								}
-
-								final int storedFileId = storedFile.getId();
-								storedFileAccess.markStoredFileAsDownloaded(storedFileId);
-
-								if (onFileDownloaded != null)
-									onFileDownloaded.run(storedFile);
-
-								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-							} catch (IOException ioe) {
-								logger.error("Error writing file!", ioe);
-							} finally {
-								if (is != null) {
-									try {
-										is.close();
-									} catch (IOException e) {
-										logger.error("Error closing input stream", e);
-									}
-								}
-							}
-						} finally {
-							connection.disconnect();
-						}
+						if (onFileDownloaded != null)
+							onFileDownloaded.run(storedFile);
 					}
-
-				} finally {
-					if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
-				}
-			}
-		});
+				})
+				.onComplete(new OneParameterRunnable<Integer>() {
+					@Override
+					public void run(Integer integer) {
+						if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
+					}
+				})
+				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
 		this.onFileQueued = onFileQueued;
+	}
+
+	public void setOnFileDownloading(OneParameterRunnable<StoredFile> onFileDownloading) {
+		this.onFileDownloading = onFileDownloading;
 	}
 
 	public void setOnFileDownloaded(OneParameterRunnable<StoredFile> onFileDownloaded) {

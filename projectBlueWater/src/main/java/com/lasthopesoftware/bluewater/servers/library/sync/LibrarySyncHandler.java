@@ -47,6 +47,10 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
+	public void setOnFileDownloading(OneParameterRunnable<StoredFile> onFileDownloading) {
+		storedFileDownloader.setOnFileDownloading(onFileDownloading);
+	}
+
 	public void setOnFileDownloaded(OneParameterRunnable<StoredFile> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
