@@ -33,15 +33,19 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 	public void onLayoutChange(final View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
 		if (!v.isShown()) return;
 
-		final Context context = notifyOnFlipViewAnimator.getContext();
+		final Context context = v.getContext();
 		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
+				if (!v.isShown()) return;
+
 				final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
 				syncListManager.isItemMarkedForSync(item, new TwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
 					@Override
 					public void run(FluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-						syncButton.setImageDrawable(ViewUtils.getDrawable(notifyOnFlipViewAnimator.getContext(), isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
+						if (!v.isShown())return;
+
+						syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
 						syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
 						syncButton.setEnabled(true);
 					}
