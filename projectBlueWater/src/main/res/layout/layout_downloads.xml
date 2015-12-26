@@ -7,10 +7,10 @@
 		layout="@layout/activity_view_items"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-	    android:layout_above="@id/toggleSyncButton" />
+	    android:layout_above="@+id/toggleSyncButton" />
 
     <Button
-	    android:id="@+id/toggleSyncButton"
+	    android:id="@id/toggleSyncButton"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"

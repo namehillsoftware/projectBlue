@@ -93,7 +93,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 			)
 			.execute();
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 
 	private FileProvider getNewFileProvider() {

@@ -129,7 +129,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		final CharSequence startSyncLabel = getActivity().getText(R.string.start_sync_button);
 		final CharSequence stopSyncLabel = getActivity().getText(R.string.stop_sync_button);
 
-		toggleSyncButton.setText(SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
+		toggleSyncButton.setText(!SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
 
 		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
 			@Override
