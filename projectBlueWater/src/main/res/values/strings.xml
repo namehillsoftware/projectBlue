@@ -82,4 +82,5 @@
     <string name="app_only_sync_ext_power">Only sync on external power</string>
     <string name="start_sync_button">Start Sync</string>
     <string name="stop_sync_button">Stop Sync</string>
+	<string name="downloading_status_label">Downloading %1$s</string>
 </resources>

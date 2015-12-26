@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
@@ -40,6 +41,7 @@ import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 
@@ -65,9 +67,11 @@ public class SyncService extends Service {
 	private static volatile boolean isSyncRunning;
 
 	private LocalBroadcastManager localBroadcastManager;
+	private NotificationManager notificationMgr;
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
+
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
 	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new OneParameterRunnable<LibrarySyncHandler>() {
@@ -87,8 +91,40 @@ public class SyncService extends Service {
 
 	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = new OneParameterRunnable<StoredFile>() {
 		@Override
-		public void run(StoredFile storedFile) {
+		public void run(final StoredFile storedFile) {
 			sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
+
+			LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+				@Override
+				public void run(FluentTask<Integer, Void, Library> parameterOne, Library library) {
+					AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
+						@Override
+						public void run(FluentTask<Void, Void, AccessConfiguration> parameterOne, AccessConfiguration accessConfiguration) {
+							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
+							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
+
+							(new FluentTask<Void, Void, String>() {
+
+								@Override
+								protected String executeInBackground(Void[] params) {
+									try {
+										return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
+									} catch (IOException e) {
+										logger.warn("There was an error getting the file properties", e);
+										return null;
+									}
+								}
+							})
+							.onComplete(new OneParameterRunnable<String>() {
+								@Override
+								public void run(String s) {
+									setSyncNotificationText(String.format(SyncService.this.getString(R.string.downloading_status_label), s));
+								}
+							});
+						}
+					});
+				}
+			});
 		}
 	};
 
@@ -110,7 +146,6 @@ public class SyncService extends Service {
 			};
 		}
 	};
-
 	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
 		public BroadcastReceiver initialize() {
@@ -153,6 +188,7 @@ public class SyncService extends Service {
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "wakeLock"));
 		wakeLock.acquire();
+		notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 	}
 
 	@Override
@@ -247,23 +283,29 @@ public class SyncService extends Service {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
-
-		// TODO need proper library provider to randomly get back correct library
-//		if (downloadingFile != null) {
-//			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(downloadingFile.getServiceId());
-//
-//
-//		}
+		notifyBuilder.setOngoing(true);
 
 //		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsFragment.class), 0));
 
 		return notifyBuilder.build();
 	}
 
+	private void setSyncNotificationText(String syncNotification) {
+		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
+		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
+		notifyBuilder.setContentText(syncNotification);
+		notifyBuilder.setOngoing(true);
+
+//		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsFragment.class), 0));
+
+		notificationMgr.notify(notificationId, notifyBuilder.build());
+	}
+
 	private void sendStoredFileBroadcast(String action, StoredFile storedFile) {
-		final Intent storedFileNotificationIntent = new Intent(action);
-		storedFileNotificationIntent.putExtra(storedFileEventKey, storedFile.getId());
-		localBroadcastManager.sendBroadcast(storedFileNotificationIntent);
+		final Intent storedFileBroadcastIntent = new Intent(action);
+		storedFileBroadcastIntent.putExtra(storedFileEventKey, storedFile.getId());
+		localBroadcastManager.sendBroadcast(storedFileBroadcastIntent);
 	}
 
 	private void cancelSync() {
