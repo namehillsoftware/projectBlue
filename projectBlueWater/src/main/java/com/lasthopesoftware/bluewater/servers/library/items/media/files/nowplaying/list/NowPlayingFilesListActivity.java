@@ -43,9 +43,9 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_files);
-        mFileListView = (ListView)findViewById(R.id.lvFilelist);
-        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+        setContentView(R.layout.activity_view_items);
+        mFileListView = (ListView)findViewById(R.id.lvItems);
+        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         this.setTitle(R.string.title_view_now_playing_files);
 		

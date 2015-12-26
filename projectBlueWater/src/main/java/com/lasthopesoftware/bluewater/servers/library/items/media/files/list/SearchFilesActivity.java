@@ -39,9 +39,9 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         super.onCreate(savedInstanceState);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_files);
-        fileListView = (ListView)findViewById(R.id.lvFilelist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+        setContentView(R.layout.activity_view_items);
+        fileListView = (ListView)findViewById(R.id.lvItems);
+        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);

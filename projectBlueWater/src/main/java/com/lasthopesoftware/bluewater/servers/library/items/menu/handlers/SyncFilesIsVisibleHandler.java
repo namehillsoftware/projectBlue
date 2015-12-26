@@ -43,7 +43,7 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 				syncListManager.isItemMarkedForSync(item, new TwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
 					@Override
 					public void run(FluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-						if (!v.isShown())return;
+						if (!v.isShown()) return;
 
 						syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
 						syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));

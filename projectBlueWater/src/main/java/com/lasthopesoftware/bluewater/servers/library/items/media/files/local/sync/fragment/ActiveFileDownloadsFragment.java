@@ -11,6 +11,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -49,10 +50,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_files, container, false);
+		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.layout_downloads, container, false);
 
-		final ProgressBar progressBar = (ProgressBar) viewFileslayout.findViewById(R.id.pbLoadingFileList);
-		final ListView listView = (ListView) viewFileslayout.findViewById(R.id.lvFilelist);
+		final ProgressBar progressBar = (ProgressBar) viewFileslayout.findViewById(R.id.pbLoadingItems);
+		final ListView listView = (ListView) viewFileslayout.findViewById(R.id.lvItems);
 
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
@@ -123,6 +124,38 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				});
 			}
 		});
+
+		final Button toggleSyncButton = (Button) viewFileslayout.findViewById(R.id.toggleSyncButton);
+		final CharSequence startSyncLabel = getActivity().getText(R.string.start_sync_button);
+		final CharSequence stopSyncLabel = getActivity().getText(R.string.stop_sync_button);
+
+		toggleSyncButton.setText(SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
+
+		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				toggleSyncButton.setText(stopSyncLabel);
+			}
+		}, new IntentFilter(SyncService.onSyncStartEvent));
+
+		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				toggleSyncButton.setText(startSyncLabel);
+			}
+		}, new IntentFilter(SyncService.onSyncStopEvent));
+
+		toggleSyncButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (SyncService.isSyncRunning())
+					SyncService.cancelSync(v.getContext());
+				else
+					SyncService.doSync(v.getContext());
+			}
+		});
+
+		toggleSyncButton.setEnabled(true);
 
 		return viewFileslayout;
 	}

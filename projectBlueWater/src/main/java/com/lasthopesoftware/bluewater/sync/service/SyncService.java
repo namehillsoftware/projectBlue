@@ -48,15 +48,20 @@ import java.util.List;
  */
 public class SyncService extends Service {
 
+	public static final String onSyncStartEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");
+	public static final String onSyncStopEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStopEvent");
 	public static final String onFileQueuedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileQueuedEvent");
 	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
 	public static final String storedFileEventKey = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "storedFileEventKey");
 
 	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "doSyncAction");
+	private static final String cancelSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "cancelSyncAction");
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
 	private static final int notificationId = 23;
 
 	private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
+
+	private static volatile boolean isSyncRunning;
 
 	private LocalBroadcastManager localBroadcastManager;
 	private PowerManager.WakeLock wakeLock;
@@ -118,9 +123,20 @@ public class SyncService extends Service {
 		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
 	}
 
+	public static boolean isSyncRunning() {
+		return isSyncRunning;
+	}
+
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, SyncService.class);
 		intent.setAction(doSyncAction);
+
+		context.startService(intent);
+	}
+
+	public static void cancelSync(Context context) {
+		final Intent intent = new Intent(context, SyncService.class);
+		intent.setAction(cancelSyncAction);
 
 		context.startService(intent);
 	}
@@ -137,7 +153,11 @@ public class SyncService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (!intent.getAction().equals(doSyncAction)) return START_REDELIVER_INTENT;
+		final String action = intent.getAction();
+
+		if (cancelSyncAction.equals(action)) cancelSync();
+
+		if (!doSyncAction.equals(action)) return START_REDELIVER_INTENT;
 
 		final int result = START_NOT_STICKY;
 
@@ -149,7 +169,10 @@ public class SyncService extends Service {
 		final Context context = this;
 
 		logger.info("Starting sync.");
+
+		isSyncRunning = true;
 		startForeground(notificationId, buildSyncNotification());
+		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
 		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void,Void,List<Library>>, List<Library>>() {
 			@Override
@@ -239,6 +262,9 @@ public class SyncService extends Service {
 		stopForeground(true);
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
 		stopSelf();
+
+		isSyncRunning = false;
+		localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent));
 	}
 
 	@Override

@@ -48,10 +48,10 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
         super.onCreate(savedInstanceState);
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_files);
+        setContentView(R.layout.activity_view_items);
 
-		fileListView = (ListView)findViewById(R.id.lvFilelist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+		fileListView = (ListView)findViewById(R.id.lvItems);
+        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);

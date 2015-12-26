@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.image;
+package com.lasthopesoftware.bluewater.servers.library.items.media.image;
 
 import android.content.Context;
 import android.graphics.Bitmap;
