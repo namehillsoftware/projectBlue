@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.view.View;
 import android.widget.ImageButton;
 
@@ -12,6 +10,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sy
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -34,8 +33,6 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 	public void onLayoutChange(final View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
 		if (!v.isShown()) return;
 
-		v.removeOnLayoutChangeListener(this);
-
 		final Context context = notifyOnFlipViewAnimator.getContext();
 		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 			@Override
@@ -44,22 +41,12 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 				syncListManager.isItemMarkedForSync(item, new TwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
 					@Override
 					public void run(FluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-						if (isSynced)
-							syncButton.setImageDrawable(getSyncOnDrawable(notifyOnFlipViewAnimator.getContext()));
-
+						syncButton.setImageDrawable(ViewUtils.getDrawable(notifyOnFlipViewAnimator.getContext(), isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
 						syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
 						syncButton.setEnabled(true);
 					}
 				});
 			}
 		});
-	}
-
-	private static Drawable getSyncOnDrawable(Context context) {
-		final int syncOnDrawableId = R.drawable.ic_sync_on;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-			return context.getDrawable(syncOnDrawableId);
-
-		return context.getResources().getDrawable(syncOnDrawableId);
 	}
 }
