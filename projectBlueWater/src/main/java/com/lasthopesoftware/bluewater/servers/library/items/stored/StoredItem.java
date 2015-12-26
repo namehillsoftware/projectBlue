@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.repository;
+package com.lasthopesoftware.bluewater.servers.library.items.stored;
 
 import android.database.sqlite.SQLiteDatabase;
 

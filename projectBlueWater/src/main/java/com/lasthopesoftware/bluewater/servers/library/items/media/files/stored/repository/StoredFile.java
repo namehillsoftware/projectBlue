@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository;
 
 import android.database.sqlite.SQLiteDatabase;
 

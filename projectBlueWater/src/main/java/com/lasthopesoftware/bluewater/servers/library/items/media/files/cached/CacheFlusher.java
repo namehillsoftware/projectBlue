@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.cached;
 
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

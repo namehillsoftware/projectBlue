@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
+import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 

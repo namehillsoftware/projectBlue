@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.sync.LibrarySyncHandler;

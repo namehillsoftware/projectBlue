@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored;
 
 import android.content.Context;
 import android.net.Uri;
@@ -6,9 +6,9 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.Lazy;

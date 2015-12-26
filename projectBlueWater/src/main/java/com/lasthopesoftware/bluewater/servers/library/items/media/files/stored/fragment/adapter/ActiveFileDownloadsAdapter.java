@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.adapter;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -11,9 +11,9 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 
 import java.util.ArrayList;
 import java.util.List;

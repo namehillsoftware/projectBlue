@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync;
+package com.lasthopesoftware.bluewater.servers.library.items.stored;
 
 import android.content.Context;
 
@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.servers.library.items.repository.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;

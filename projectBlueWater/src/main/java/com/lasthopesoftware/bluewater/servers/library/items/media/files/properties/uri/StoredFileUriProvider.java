@@ -4,8 +4,8 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 
 import org.slf4j.LoggerFactory;

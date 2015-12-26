@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +7,7 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
@@ -122,7 +122,7 @@ public class StoredFileDownloader {
 							return null;
 						}
 
-						if (isCancelled) return null;
+						if (isCancelled) return fileDownloadCount;
 
 						final java.io.File parent = file.getParentFile();
 						if (!parent.exists() && !parent.mkdirs()) return fileDownloadCount;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.cached;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -6,7 +6,7 @@ import android.os.Environment;
 
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.cache.repository.CachedFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.objectified.Objectified;

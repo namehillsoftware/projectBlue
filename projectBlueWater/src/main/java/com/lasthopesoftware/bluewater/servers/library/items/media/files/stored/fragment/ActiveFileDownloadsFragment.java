@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment;
 
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
@@ -20,9 +20,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.fragment.adapter.ActiveFileDownloadsAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
