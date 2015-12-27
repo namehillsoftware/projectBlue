@@ -138,8 +138,7 @@ public class StoredFileDownloader {
 
 							++fileDownloadCount;
 
-							final int storedFileId = storedFile.getId();
-							storedFileAccess.markStoredFileAsDownloaded(storedFileId);
+							storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
 							reportProgress(storedFile);
 

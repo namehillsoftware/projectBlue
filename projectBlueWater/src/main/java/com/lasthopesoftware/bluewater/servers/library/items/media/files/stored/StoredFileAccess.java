@@ -124,7 +124,7 @@ public class StoredFileAccess {
 		getDownloadingStoredFilesTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public void markStoredFileAsDownloaded(final int storedFileId) {
+	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
 		storedFileExecutor.getObject().execute(new Runnable() {
 			@Override
 			public void run() {
@@ -135,11 +135,13 @@ public class StoredFileAccess {
 									" UPDATE " + StoredFile.tableName +
 											" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
 											" WHERE id = @id")
-							.addParameter("id", storedFileId)
+							.addParameter("id", storedFile.getId())
 							.execute();
 				} finally {
 					repositoryAccessHelper.close();
 				}
+
+				storedFile.setIsDownloadComplete(true);
 			}
 		});
 	}
