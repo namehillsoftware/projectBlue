@@ -8,8 +8,8 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 2002
-        versionName "1.5.0.0-beta-3"
+        versionCode 2003
+        versionName "1.5.0.0-beta-4"
     }
 
     compileOptions {

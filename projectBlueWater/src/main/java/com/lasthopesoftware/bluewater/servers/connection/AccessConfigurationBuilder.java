@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -114,7 +115,7 @@ public class AccessConfigurationBuilder {
 							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
 							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
 
-							List<String> ipAddresses = Arrays.asList(xml.getUnique("localiplist").getValue().split(","));
+							final List<String> ipAddresses = new ArrayList<>(Arrays.asList(xml.getUnique("localiplist").getValue().split(",")));
 							if (!library.isLocalOnly())
 								ipAddresses.add(xml.getUnique("ip").getValue());
 
