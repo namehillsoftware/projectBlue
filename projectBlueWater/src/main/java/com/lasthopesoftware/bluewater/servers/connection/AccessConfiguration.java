@@ -4,16 +4,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AccessConfiguration {
 	private boolean status;
 	private volatile String activeUrl = "";
-	private String remoteIp;
+	private String ipAddress;
 	private int port;
-	private final List<String> localIps = new ArrayList<>();
-	private final List<String> macAddresses = new ArrayList<>();
 	private boolean isLocalOnly;
 
 	private final String authCode;
@@ -43,15 +39,15 @@ public class AccessConfiguration {
 	/**
 	 * @return the remoteIp
 	 */
-	public String getRemoteIp() {
-		return remoteIp;
+	public String getIpAddress() {
+		return ipAddress;
 	}
 
 	/**
 	 * @param remoteIp the remoteIp to set
 	 */
-	public void setRemoteIp(String remoteIp) {
-		this.remoteIp = remoteIp;
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
 		activeUrl = "";
 	}
 	/**
@@ -67,13 +63,7 @@ public class AccessConfiguration {
 		this.port = port;
 		activeUrl = "";
 	}
-	/**
-	 * @return the localIps
-	 */
-	public List<String> getLocalIps() {
-		return localIps;
-	}
-	
+
 	public boolean isLocalOnly() {
 		return isLocalOnly;
 	}
@@ -83,21 +73,10 @@ public class AccessConfiguration {
 		activeUrl = "";
 	}
 
-	/**
-	 * @return the macAddresses
-	 */
-	public List<String> getMacAddresses() {
-		return macAddresses;
-	}
-	
 	private String getRemoteUrl() {
-		return generateUrl(remoteIp, port);
+		return generateUrl(ipAddress, port);
 	}
 	
-	private String getLocalIpUrl(int index) {
-		return generateUrl(localIps.get(index), port);
-	}
-
 	private static String generateUrl(String ipAddress, int port) {
 		return "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
@@ -112,30 +91,13 @@ public class AccessConfiguration {
 		}
 		
 		try {
-			if (!isLocalOnly) {
-				try {
-					activeUrl = getRemoteUrl();
-			    	/*if (testConnection(getRemoteUrl()))*/ return activeUrl;
-				} catch (Exception e) {
-					activeUrl = "";
-					LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
-				}
-			} else {
-				for (int urlIndex = 0; urlIndex < localIps.size(); urlIndex++) {
-					try {
-						activeUrl = getLocalIpUrl(urlIndex);
-			        	/*if (testConnection(activeUrl))*/ return activeUrl;
-					} catch (Exception e) {
-						activeUrl = "";
-						LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
-					}
-				}
-			}
+			activeUrl = getRemoteUrl();
+	        return activeUrl;
 		} catch (Exception e) {
 			activeUrl = "";
 			LoggerFactory.getLogger(AccessConfiguration.class).error(e.toString(), e);
 		}
-		
+
 		activeUrl = "";
 		return activeUrl;
 	}

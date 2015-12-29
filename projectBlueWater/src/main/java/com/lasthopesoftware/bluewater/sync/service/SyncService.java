@@ -225,11 +225,12 @@ public class SyncService extends Service {
 				}
 
 				for (final Library library : libraries) {
+					if (library.isSyncLocalConnectionsOnly())
+						library.setLocalOnly(true);
+
 					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
 						@Override
 						public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
-							if (library.isSyncLocalConnectionsOnly())
-								accessConfiguration.setLocalOnly(true);
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
 							ConnectionTester.doTest(connectionProvider, 5000, new TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {

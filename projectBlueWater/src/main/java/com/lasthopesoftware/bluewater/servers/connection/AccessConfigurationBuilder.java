@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
@@ -28,18 +30,18 @@ import xmlwise.Xmlwise;
  */
 public class AccessConfigurationBuilder {
 
-	private static final int stdTimeoutTime = 30000;
+	private static final int buildConnectionTimeoutTime = 10000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
 	public static void buildConfiguration(final Context context, final Library library, final TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) {
-		buildConfiguration(context, library, stdTimeoutTime, onBuildComplete);
+		buildConfiguration(context, library, buildConnectionTimeoutTime, onBuildComplete);
 	}
 
 	private static void buildConfiguration(final Context context, final Library library, int timeout, final TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
-		if (timeout <= 0) timeout = stdTimeoutTime;
+		if (timeout <= 0) timeout = buildConnectionTimeoutTime;
 
 		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
 		if (networkInfo == null || !networkInfo.isConnected()) {
@@ -56,13 +58,8 @@ public class AccessConfigurationBuilder {
 					return;
 				}
 
-				ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), new TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {
-					@Override
-					public void run(FluentTask<Integer, Void, Boolean> owner, Boolean isConnected) {
-						if (onBuildComplete != null)
-							onBuildComplete.run(builderOwner, accessConfiguration);
-					}
-				});
+				if (onBuildComplete != null)
+					onBuildComplete.run(builderOwner, accessConfiguration);
 			}
 		});
 	}
@@ -100,7 +97,7 @@ public class AccessConfigurationBuilder {
 
 					if (UrlValidator.getInstance().isValid(localAccessString)) {
 						final Uri jrUrl = Uri.parse(localAccessString);
-						accessDao.setRemoteIp(jrUrl.getHost());
+						accessDao.setIpAddress(jrUrl.getHost());
 						accessDao.setPort(jrUrl.getPort());
 						accessDao.setStatus(true);
 
@@ -116,20 +113,23 @@ public class AccessConfigurationBuilder {
 							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
 							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
 							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
-							accessDao.setRemoteIp(xml.getUnique("ip").getValue());
-							accessDao.setLocalOnly(library.isLocalOnly());
-							for (String localIp : xml.getUnique("localiplist").getValue().split(","))
-								accessDao.getLocalIps().add(localIp);
-							for (String macAddress : xml.getUnique("macaddresslist").getValue().split(","))
-								accessDao.getMacAddresses().add(macAddress);
+
+							List<String> ipAddresses = Arrays.asList(xml.getUnique("localiplist").getValue().split(","));
+							if (!library.isLocalOnly())
+								ipAddresses.add(xml.getUnique("ip").getValue());
+
+							for (String ipAddress : ipAddresses) {
+								accessDao.setIpAddress(ipAddress);
+								if (ConnectionTester.doTest(new ConnectionProvider(accessDao), timeout))
+									return accessDao;
+							}
+
 						} finally {
 							is.close();
 						}
 					} finally {
 						conn.disconnect();
 					}
-
-					return accessDao;
 				} catch (IOException i) {
 					mLogger.error(i.getMessage());
 				} catch (Exception e) {
