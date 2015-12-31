@@ -113,7 +113,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 									public void run(FluentTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
 										if (storedFile == null) return;
 
-
+										storedFiles.add(storedFile);
 										activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
 									}
 								});
