@@ -120,7 +120,8 @@ public class SyncService extends Service {
 								public void run(String s) {
 									setSyncNotificationText(String.format(SyncService.this.getString(R.string.downloading_status_label), s));
 								}
-							});
+							})
+							.execute();
 						}
 					});
 				}

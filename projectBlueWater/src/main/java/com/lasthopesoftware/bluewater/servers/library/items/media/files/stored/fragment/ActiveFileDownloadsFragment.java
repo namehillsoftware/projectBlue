@@ -104,11 +104,17 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
+								for (StoredFile storedFile : storedFiles) {
+									if (storedFile.getId() == storedFileId) return;
+								}
+
 								storedFileAccess.getStoredFile(storedFileId, new TwoParameterRunnable<FluentTask<Void,Void,StoredFile>, StoredFile>() {
 									@Override
 									public void run(FluentTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
-										if (storedFile != null)
-											activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
+										if (storedFile == null) return;
+
+
+										activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
 									}
 								});
 							}
