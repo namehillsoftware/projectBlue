@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +65,8 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
 				storedFileAccess.getDownloadingStoredFiles(new TwoParameterRunnable<FluentTask<Void,Void,List<StoredFile>>, List<StoredFile>>() {
 					@Override
-					public void run(FluentTask<Void, Void, List<StoredFile>> owner, final List<StoredFile> storedFiles) {
+					public void run(FluentTask<Void, Void, List<StoredFile>> owner, List<StoredFile> storedFiles) {
+						final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles);
 						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), storedFiles);
 
 						if (onFileDownloadedReceiver != null)
@@ -75,7 +77,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							public void onReceive(Context context, Intent intent) {
 								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 
-								for (StoredFile storedFile : storedFiles) {
+								for (StoredFile storedFile : localStoredFiles) {
 									if (storedFile.getId() != storedFileId) continue;
 
 									final List<IFile> files = activeFileDownloadsAdapter.getFiles();
@@ -103,7 +105,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
-								for (StoredFile storedFile : storedFiles) {
+								for (StoredFile storedFile : localStoredFiles) {
 									if (storedFile.getId() == storedFileId) return;
 								}
 
@@ -112,7 +114,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 									public void run(FluentTask<Void, Void, StoredFile> owner, StoredFile storedFile) {
 										if (storedFile == null) return;
 
-										storedFiles.add(storedFile);
+										localStoredFiles.add(storedFile);
 										activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
 									}
 								});
