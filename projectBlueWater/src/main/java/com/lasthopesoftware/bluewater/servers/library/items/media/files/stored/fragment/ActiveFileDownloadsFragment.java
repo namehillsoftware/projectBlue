@@ -75,11 +75,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							public void onReceive(Context context, Intent intent) {
 								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 
-								final List<IFile> files = activeFileDownloadsAdapter.getFiles();
-
 								for (StoredFile storedFile : storedFiles) {
 									if (storedFile.getId() != storedFileId) continue;
 
+									final List<IFile> files = activeFileDownloadsAdapter.getFiles();
 									for (IFile file : files) {
 										if (file.getKey() != storedFile.getServiceId()) continue;
 
