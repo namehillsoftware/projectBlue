@@ -68,19 +68,13 @@ public class StoredFileAccess {
 			}
 		};
 
-		if (onStoredFileRetrieved != null)
-			getStoredFileTask.onComplete(onStoredFileRetrieved);
-
-		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public void getStoredFile(final IFile serviceFile, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
-		final FluentTask<Void, Void, StoredFile> getStoredFileTask = getStoredFileTask(serviceFile);
-
-		if (onStoredFileRetrieved != null)
-			getStoredFileTask.onComplete(onStoredFileRetrieved);
-
-		getStoredFileTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getStoredFileTask(serviceFile)
+				.onComplete(onStoredFileRetrieved)
+				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
@@ -118,10 +112,7 @@ public class StoredFileAccess {
 			}
 		};
 
-		if (onGetDownloadingStoredFilesComplete != null)
-			getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete);
-
-		getDownloadingStoredFilesTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
