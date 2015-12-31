@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
@@ -84,109 +83,87 @@ public class StoredFileDownloader {
 		if (isCancelled)
 			throw new IllegalStateException("Processing cannot be started once the stored file downloader has been cancelled.");
 
+		if (isProcessing)
+			throw new IllegalStateException("Processing has already begun");
+
 		isProcessing = true;
 
-		(new FluentTask<Void, StoredFile, Integer>() {
-
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
 			@Override
-			protected Integer executeInBackground(Void[] params) {
-				QueuedFileHolder queuedFileHolder;
-				Integer fileDownloadCount = 0;
-				while ((queuedFileHolder = queuedFiles.poll()) != null) {
-					if (isCancelled) return fileDownloadCount;
+			public void run() {
+				try {
+					QueuedFileHolder queuedFileHolder;
+					while ((queuedFileHolder = queuedFiles.poll()) != null) {
+						if (isCancelled) return;
 
-					final StoredFile storedFile = queuedFileHolder.storedFile;
-					final IFile serviceFile = queuedFileHolder.file;
+						final StoredFile storedFile = queuedFileHolder.storedFile;
+						final IFile serviceFile = queuedFileHolder.file;
 
-					final java.io.File file = new java.io.File(storedFile.getPath());
-					if (storedFile.isDownloadComplete() && file.exists()) continue;
+						final java.io.File file = new java.io.File(storedFile.getPath());
+						if (storedFile.isDownloadComplete() && file.exists()) continue;
 
-					reportProgress(storedFile);
+						if (onFileDownloading != null)
+							onFileDownloading.run(storedFile);
 
-					HttpURLConnection connection;
-					try {
-						connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
-					} catch (IOException e) {
-						logger.error("Error getting connection", e);
-						return null;
-					}
-
-					if (isCancelled || connection == null) return fileDownloadCount;
-
-					try {
-						InputStream is;
+						HttpURLConnection connection;
 						try {
-							is = connection.getInputStream();
-						} catch (IOException ioe) {
-							logger.error("Error opening data connection", ioe);
-							return null;
-						}
-
-						if (isCancelled) return fileDownloadCount;
-
-						final java.io.File parent = file.getParentFile();
-						if (!parent.exists() && !parent.mkdirs()) return fileDownloadCount;
-
-						try {
-							final FileOutputStream fos = new FileOutputStream(file);
-							try {
-								IOUtils.copy(is, fos);
-								fos.flush();
-							} finally {
-								fos.close();
-							}
-
-							++fileDownloadCount;
-
-							storedFileAccess.markStoredFileAsDownloaded(storedFile);
-
-							reportProgress(storedFile);
-
-							context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-						} catch (IOException ioe) {
-							logger.error("Error writing file!", ioe);
-						} finally {
-							if (is != null) {
-								try {
-									is.close();
-								} catch (IOException e) {
-									logger.error("Error closing input stream", e);
-								}
-							}
-						}
-					} finally {
-						connection.disconnect();
-					}
-				}
-
-				return fileDownloadCount;
-			}
-		})
-				.onProgress(new OneParameterRunnable<StoredFile[]>() {
-					@Override
-					public void run(StoredFile[] storedFiles) {
-						if (storedFiles.length == 0) return;
-
-						final StoredFile storedFile = storedFiles[0];
-
-						if (!storedFile.isDownloadComplete()) {
-							if (onFileDownloading != null)
-								onFileDownloading.run(storedFile);
-
+							connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+						} catch (IOException e) {
+							logger.error("Error getting connection", e);
 							return;
 						}
 
-						if (onFileDownloaded != null)
-							onFileDownloaded.run(storedFile);
+						if (isCancelled || connection == null) return;
+
+						try {
+							InputStream is;
+							try {
+								is = connection.getInputStream();
+							} catch (IOException ioe) {
+								logger.error("Error opening data connection", ioe);
+								return;
+							}
+
+							if (isCancelled) return;
+
+							final java.io.File parent = file.getParentFile();
+							if (!parent.exists() && !parent.mkdirs()) return;
+
+							try {
+								final FileOutputStream fos = new FileOutputStream(file);
+								try {
+									IOUtils.copy(is, fos);
+									fos.flush();
+								} finally {
+									fos.close();
+								}
+
+								storedFileAccess.markStoredFileAsDownloaded(storedFile);
+
+								if (onFileDownloaded != null)
+									onFileDownloaded.run(storedFile);
+
+								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+							} catch (IOException ioe) {
+								logger.error("Error writing file!", ioe);
+							} finally {
+								if (is != null) {
+									try {
+										is.close();
+									} catch (IOException e) {
+										logger.error("Error closing input stream", e);
+									}
+								}
+							}
+						} finally {
+							connection.disconnect();
+						}
 					}
-				})
-				.onComplete(new OneParameterRunnable<Integer>() {
-					@Override
-					public void run(Integer integer) {
-						if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
-					}
-				})
-				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+				} finally {
+					if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
+				}
+			}
+		});
 	}
 
 	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
