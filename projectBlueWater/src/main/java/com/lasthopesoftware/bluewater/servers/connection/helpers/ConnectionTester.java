@@ -31,32 +31,7 @@ public class ConnectionTester {
 		final FluentTask<Integer, Void, Boolean> connectionTestTask = new FluentTask<Integer, Void, Boolean>() {
 			@Override
 			protected Boolean executeInBackground(Integer... params) {
-				try {
-					final HttpURLConnection conn = connectionProvider.getConnection("Alive");
-
-					if (conn == null) return Boolean.FALSE;
-
-					try {
-						conn.setConnectTimeout(timeout);
-						final InputStream is = conn.getInputStream();
-						try {
-							final StandardRequest responseDao = StandardRequest.fromInputStream(is);
-
-							return responseDao != null && responseDao.isStatus();
-						} finally {
-							is.close();
-						}
-					} catch (IOException | IllegalArgumentException e) {
-						mLogger.warn(e.getMessage());
-					} finally {
-						conn.disconnect();
-					}
-				} catch (IOException e) {
-					mLogger.error("Error getting connection", e);
-					setException(e);
-				}
-
-				return Boolean.FALSE;
+				return doTest(connectionProvider, timeout);
 			}
 		};
 
@@ -64,5 +39,45 @@ public class ConnectionTester {
 			connectionTestTask.onComplete(onTestComplete);
 
 		connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+
+	public static boolean doTest(final ConnectionProvider connectionProvider) {
+		return doTest(connectionProvider, stdTimeoutTime);
+	}
+
+	public static boolean doTest(final ConnectionProvider connectionProvider, final int timeout) {
+		try {
+
+			final HttpURLConnection conn = connectionProvider.getConnection("Alive");
+
+			if (conn == null) return Boolean.FALSE;
+
+			try {
+				conn.setConnectTimeout(timeout);
+
+				final InputStream is = conn.getInputStream();
+				try {
+					final StandardRequest responseDao = StandardRequest.fromInputStream(is);
+
+					return responseDao != null && responseDao.isStatus();
+				} finally {
+					try {
+						is.close();
+					} catch (IOException e) {
+						mLogger.error("Error closing connection, device failure?", e);
+					}
+				}
+			} catch (IOException e) {
+				mLogger.info("Unable to get input stream, connection does likely not exist", e);
+			} catch (IllegalArgumentException e) {
+				mLogger.warn("Illegal argument passed in", e);
+			} finally {
+				conn.disconnect();
+			}
+		} catch (IOException e) {
+			mLogger.warn("Error getting a connection", e);
+		}
+
+		return false;
 	}
 }
