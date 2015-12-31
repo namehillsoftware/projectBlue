@@ -140,10 +140,10 @@ public class StoredFileDownloader {
 
 								storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
+								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+
 								if (onFileDownloaded != null)
 									onFileDownloaded.run(storedFile);
-
-								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
 							} catch (IOException ioe) {
 								logger.error("Error writing file!", ioe);
 							} finally {
