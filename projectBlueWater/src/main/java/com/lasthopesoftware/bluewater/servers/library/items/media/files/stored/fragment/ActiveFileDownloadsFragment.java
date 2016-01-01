@@ -37,6 +37,8 @@ import java.util.List;
  */
 public class ActiveFileDownloadsFragment extends Fragment {
 
+	private BroadcastReceiver onSyncStartedReceiver;
+	private BroadcastReceiver onSyncStoppedReceiver;
     private BroadcastReceiver onFileQueuedReceiver;
     private BroadcastReceiver onFileDownloadedReceiver;
     private LocalBroadcastManager localBroadcastManager;
@@ -138,19 +140,29 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		toggleSyncButton.setText(!SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
 
-		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+		if (onSyncStartedReceiver != null)
+			localBroadcastManager.unregisterReceiver(onSyncStartedReceiver);
+
+		onSyncStartedReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				toggleSyncButton.setText(stopSyncLabel);
 			}
-		}, new IntentFilter(SyncService.onSyncStartEvent));
+		};
 
-		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+		localBroadcastManager.registerReceiver(onSyncStartedReceiver, new IntentFilter(SyncService.onSyncStartEvent));
+
+		if (onSyncStoppedReceiver != null)
+			localBroadcastManager.unregisterReceiver(onSyncStoppedReceiver);
+
+		onSyncStoppedReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				toggleSyncButton.setText(startSyncLabel);
 			}
-		}, new IntentFilter(SyncService.onSyncStopEvent));
+		};
+
+		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(SyncService.onSyncStopEvent));
 
 		toggleSyncButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -172,6 +184,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
         super.onDestroy();
 
         if (localBroadcastManager == null) return;
+
+		if (onSyncStartedReceiver != null)
+			localBroadcastManager.unregisterReceiver(onSyncStartedReceiver);
+
+		if (onSyncStoppedReceiver != null)
+			localBroadcastManager.unregisterReceiver(onSyncStoppedReceiver);
 
         if (onFileDownloadedReceiver != null)
             localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
