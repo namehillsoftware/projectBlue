@@ -213,7 +213,7 @@ public class SyncService extends Service {
 		logger.info("Starting sync.");
 
 		isSyncRunning = true;
-		startForeground(notificationId, buildSyncNotification());
+		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
 		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>>() {
@@ -282,10 +282,12 @@ public class SyncService extends Service {
 		return true;
 	}
 
-	private Notification buildSyncNotification() {
+	private Notification buildSyncNotification(String syncNotification) {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
+		if (syncNotification != null)
+			notifyBuilder.setContentText(syncNotification);
 		notifyBuilder.setOngoing(true);
 
 		final Intent browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
@@ -296,15 +298,7 @@ public class SyncService extends Service {
 	}
 
 	private void setSyncNotificationText(String syncNotification) {
-		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
-		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
-		notifyBuilder.setContentText(syncNotification);
-		notifyBuilder.setOngoing(true);
-
-//		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsFragment.class), 0));
-
-		notificationMgr.notify(notificationId, notifyBuilder.build());
+		notificationMgr.notify(notificationId, buildSyncNotification(syncNotification));
 	}
 
 	private void sendStoredFileBroadcast(String action, StoredFile storedFile) {
