@@ -59,6 +59,8 @@ import java.util.List;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
+	public static final String showDownloadsAction = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
+
 	private static final String SAVED_TAB_KEY = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_TAB_KEY");
 	private static final String SAVED_SCROLL_POS = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SCROLL_POS");
     private static final String SAVED_SELECTED_VIEW = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SELECTED_VIEW");
@@ -251,6 +253,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					return;
 				}
 
+				final Intent intent = getIntent();
+				if (intent != null && showDownloadsAction.equals(intent.getAction())) {
+					updateSelectedView(Library.ViewType.DownloadView, 0);
+					return;
+				}
+
 				displayLibrary(result);
 			}
 		});
@@ -336,7 +344,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						        }))
 						        .execute();
 			        }
-                })
+				})
 				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
 
 					@Override

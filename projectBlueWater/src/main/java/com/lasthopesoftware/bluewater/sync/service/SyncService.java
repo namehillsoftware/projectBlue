@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -287,7 +288,9 @@ public class SyncService extends Service {
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		notifyBuilder.setOngoing(true);
 
-//		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, ActiveFileDownloadsFragment.class), 0));
+		final Intent browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
+		browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
+		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent, 0));
 
 		return notifyBuilder.build();
 	}
