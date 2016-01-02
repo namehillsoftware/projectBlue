@@ -243,23 +243,25 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 
 			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library result) {
+			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				// No library, must bail out
-				if (result == null) {
+				if (library == null) {
 					finish();
 					return;
 				}
 
 				final Intent intent = getIntent();
 				if (intent != null && showDownloadsAction.equals(intent.getAction())) {
-					updateSelectedView(Library.ViewType.DownloadView, 0);
+					library.setSelectedView(0);
+					library.setSelectedViewType(Library.ViewType.DownloadView);
+					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
 					return;
 				}
 
-				displayLibrary(result);
+				displayLibrary(library);
 			}
 		});
 
