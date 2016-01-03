@@ -86,7 +86,9 @@ public class AccessConfigurationBuilder {
 			@Override
 			protected AccessConfiguration executeInBackground(Void... params) {
 				try {
-					final AccessConfiguration accessDao = new AccessConfiguration(library.getId(), library.getAuthKey());
+					final int libraryId = library.getId();
+					final String authKey = library.getAuthKey();
+
 					String localAccessString = library.getAccessCode();
 					if (localAccessString.contains(".")) {
 						if (!localAccessString.contains(":")) localAccessString += ":80";
@@ -94,12 +96,10 @@ public class AccessConfigurationBuilder {
 					}
 
 					if (UrlValidator.getInstance().isValid(localAccessString)) {
-						final Uri jrUrl = Uri.parse(localAccessString);
-						accessDao.setIpAddress(jrUrl.getHost());
-						accessDao.setPort(jrUrl.getPort());
-						accessDao.setStatus(true);
-
-						return accessDao;
+						final Uri url = Uri.parse(localAccessString);
+						final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, url.getHost(), url.getPort());
+						if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
+							return accessConfiguration;
 					}
 
 					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + localAccessString)).openConnection();
@@ -109,19 +109,18 @@ public class AccessConfigurationBuilder {
 						final InputStream is = conn.getInputStream();
 						try {
 							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-							accessDao.setStatus(xml.getAttribute("Status").equalsIgnoreCase("OK"));
-							accessDao.setPort(Integer.parseInt(xml.getUnique("port").getValue()));
+							final int port = Integer.parseInt(xml.getUnique("port").getValue());
 
 							if (!library.isLocalOnly()) {
-								accessDao.setIpAddress(xml.getUnique("ip").getValue());
-								if (ConnectionTester.doTest(new ConnectionProvider(accessDao), timeout))
-									return accessDao;
+								final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, xml.getUnique("ip").getValue(), port);
+								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
+									return accessConfiguration;
 							}
 
 							for (String ipAddress : xml.getUnique("localiplist").getValue().split(",")) {
-								accessDao.setIpAddress(ipAddress);
-								if (ConnectionTester.doTest(new ConnectionProvider(accessDao), timeout))
-									return accessDao;
+								final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, ipAddress, port);
+								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
+									return accessConfiguration;
 							}
 
 						} finally {
@@ -140,9 +139,8 @@ public class AccessConfigurationBuilder {
 			}
 		};
 
-		if (onGetAccessComplete != null)
-			mediaCenterAccessTask.onComplete(onGetAccessComplete);
-
-		mediaCenterAccessTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		mediaCenterAccessTask
+				.onComplete(onGetAccessComplete)
+				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 }
