@@ -37,6 +37,7 @@ public class LibrarySyncHandler {
 	private final ConnectionProvider connectionProvider;
 	private final Library library;
 	private final StoredFileDownloader storedFileDownloader;
+	private OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
 
@@ -60,12 +61,7 @@ public class LibrarySyncHandler {
 	}
 
 	public void setOnQueueProcessingCompleted(final OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
-		storedFileDownloader.setOnQueueProcessingCompleted(new Runnable() {
-			@Override
-			public void run() {
-				onQueueProcessingCompleted.run(LibrarySyncHandler.this);
-			}
-		});
+		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
 	public void cancel() {
@@ -114,11 +110,19 @@ public class LibrarySyncHandler {
 
 							if (isCancelled) return;
 
+							storedFileDownloader.setOnQueueProcessingCompleted(new Runnable() {
+								@Override
+								public void run() {
+
+									if (!isCancelled)
+										storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+
+									if (onQueueProcessingCompleted != null)
+										onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+								}
+							});
+
 							storedFileDownloader.process();
-
-							if (isCancelled) return;
-
-							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 						}
 					});
 			}
