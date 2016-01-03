@@ -237,6 +237,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) getLibrary();
 	}
 
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+
+		if (intent != null && showDownloadsAction.equals(intent.getAction()))
+			updateSelectedView(Library.ViewType.DownloadView, 0);
+	}
+
 	private void getLibrary() {
 		isStopped = false;
 		if ((selectViewsListView.getAdapter() != null && viewPager.getAdapter() != null)) return;
@@ -250,14 +258,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				// No library, must bail out
 				if (library == null) {
 					finish();
-					return;
-				}
-
-				final Intent intent = getIntent();
-				if (intent != null && showDownloadsAction.equals(intent.getAction())) {
-					library.setSelectedView(0);
-					library.setSelectedViewType(Library.ViewType.DownloadView);
-					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
 					return;
 				}
 
