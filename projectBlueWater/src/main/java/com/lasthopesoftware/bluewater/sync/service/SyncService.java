@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
@@ -148,6 +147,7 @@ public class SyncService extends Service {
 			};
 		}
 	};
+
 	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
 		public BroadcastReceiver initialize() {
@@ -157,6 +157,15 @@ public class SyncService extends Service {
 					cancelSync();
 				}
 			};
+		}
+	};
+
+	private final Lazy<Intent> browseLibraryIntent = new Lazy<Intent>() {
+		@Override
+		protected Intent initialize() {
+			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);
+			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
+			return browseLibraryIntent;
 		}
 	};
 
@@ -235,24 +244,15 @@ public class SyncService extends Service {
 						public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
 
 							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							ConnectionTester.doTest(connectionProvider, 5000, new TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {
-								@Override
-								public void run(FluentTask<Integer, Void, Boolean> owner, Boolean success) {
-									if (!success) {
-										if (--librariesProcessing == 0) finishSync();
-										return;
-									}
 
-									final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
-									librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-									librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
-									librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-									librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-									librarySyncHandler.startSync();
+							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+							librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
+							librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
+							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+							librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
+							librarySyncHandler.startSync();
 
-									librarySyncHandlers.add(librarySyncHandler);
-								}
-							});
+							librarySyncHandlers.add(librarySyncHandler);
 						}
 					});
 				}
@@ -288,12 +288,9 @@ public class SyncService extends Service {
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (syncNotification != null)
 			notifyBuilder.setContentText(syncNotification);
-		notifyBuilder.setOngoing(true);
+		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent.getObject(), 0));
 
-		final Intent browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
-		browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
-		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent, 0));
+		notifyBuilder.setOngoing(true);
 
 		return notifyBuilder.build();
 	}
@@ -321,7 +318,7 @@ public class SyncService extends Service {
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 		stopForeground(true);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(notificationId);
+		notificationMgr.cancel(notificationId);
 		stopSelf();
 
 		isSyncRunning = false;
