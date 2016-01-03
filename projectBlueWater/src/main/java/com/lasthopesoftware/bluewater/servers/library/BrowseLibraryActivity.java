@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
@@ -52,8 +51,6 @@ import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -64,6 +61,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private static final String SAVED_TAB_KEY = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_TAB_KEY");
 	private static final String SAVED_SCROLL_POS = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SCROLL_POS");
     private static final String SAVED_SELECTED_VIEW = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SELECTED_VIEW");
+	private static final String className = BrowseLibraryActivity.class.getName();
 
 	private static final List<String> specialViews = Collections.singletonList("Active Downloads");
 
@@ -131,15 +129,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         // Ensure that this task is only started when it's the task root. A workaround for an Android bug.
         // See http://stackoverflow.com/a/7748416
-        if (!isTaskRoot()) {
-            final Intent intent = getIntent();
-            final String intentAction = intent.getAction();
-            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && intentAction != null && intentAction.equals(Intent.ACTION_MAIN)) {
-                LoggerFactory.getLogger(getClass()).info("Main Activity is not the root.  Finishing Main Activity instead of launching.");
-                finish();
-                return;
-            }
-        }
+//        if (!isTaskRoot()) {
+//            final Intent intent = getIntent();
+//            final String intentAction = intent.getAction();
+//
+//	        if (intentAction != null && intentAction.equals(Intent.ACTION_MAIN) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+//		        LoggerFactory.getLogger(getClass()).info(className + " is not the root.  Finishing " + className + " instead of launching.");
+//		        finish();
+//		        return;
+//	        }
+//        }
 
 		setContentView(R.layout.activity_browse_library);
 
@@ -229,12 +228,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			return;
 		}
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) getLibrary();
+		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) getLibrary();
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) startLibrary();
 	}
 
 	@Override
@@ -245,7 +244,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			updateSelectedView(Library.ViewType.DownloadView, 0);
 	}
 
-	private void getLibrary() {
+	private void startLibrary() {
 		isStopped = false;
 		if ((selectViewsListView.getAdapter() != null && viewPager.getAdapter() != null)) return;
 
@@ -341,11 +340,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 										        .onComplete(onGetVisibleViewsCompleteListener.getObject())
 										        .onError(new HandleViewIoException<String, Void, List<Item>>(BrowseLibraryActivity.this, this))
 										        .execute();
-							        }
-
-						        }))
-						        .execute();
-			        }
+									}
+								}))
+								.execute();
+					}
 				})
 				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
 
@@ -355,7 +353,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 						displayLibrary(library);
 					}
 				}))
-				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+				.execute();
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
