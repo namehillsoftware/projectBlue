@@ -57,14 +57,17 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		
 		lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
 		selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
+
 		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
+		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
 		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		handleBuildStatusChange(SessionConnection.build(this));
 	}
-		
+	
 	private void handleBuildStatusChange(int status) {
 		if (SessionConnection.completeConditions.contains(status))
 			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);

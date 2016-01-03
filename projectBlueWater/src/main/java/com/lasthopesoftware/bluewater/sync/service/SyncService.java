@@ -292,6 +292,7 @@ public class SyncService extends Service {
 
 		final Intent browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
 		browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
+		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent, 0));
 
 		return notifyBuilder.build();
