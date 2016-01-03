@@ -89,6 +89,13 @@ public class SyncService extends Service {
 		}
 	};
 
+	private final Lazy<String> downloadingStatusLabel = new Lazy<String>() {
+		@Override
+		protected String initialize() {
+			return SyncService.this.getString(R.string.downloading_status_label);
+		}
+	};
+
 	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = new OneParameterRunnable<StoredFile>() {
 		@Override
 		public void run(final StoredFile storedFile) {
@@ -99,26 +106,25 @@ public class SyncService extends Service {
 				public void run(FluentTask<Integer, Void, Library> parameterOne, Library library) {
 					AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
 						@Override
-						public void run(FluentTask<Void, Void, AccessConfiguration> parameterOne, AccessConfiguration accessConfiguration) {
-							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
-							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
-
-							(new FluentTask<Void, Void, String>() {
+						public void run(FluentTask<Void, Void, AccessConfiguration> parameterOne, final AccessConfiguration accessConfiguration) {
+							new FluentTask<Void, Void, String>() {
 
 								@Override
 								protected String executeInBackground(Void[] params) {
 									try {
+										final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
+										final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
 										return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
 									} catch (IOException e) {
 										logger.warn("There was an error getting the file properties", e);
 										return null;
 									}
 								}
-							})
+							}
 							.onComplete(new OneParameterRunnable<String>() {
 								@Override
 								public void run(String s) {
-									setSyncNotificationText(String.format(SyncService.this.getString(R.string.downloading_status_label), s));
+									setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), s));
 								}
 							})
 							.execute();
