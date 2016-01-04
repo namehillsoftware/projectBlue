@@ -260,6 +260,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					return;
 				}
 
+				if (showDownloadsAction.equals(getIntent().getAction())) {
+					library.setSelectedView(0);
+					library.setSelectedViewType(Library.ViewType.DownloadView);
+					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				}
+
 				displayLibrary(library);
 			}
 		});
