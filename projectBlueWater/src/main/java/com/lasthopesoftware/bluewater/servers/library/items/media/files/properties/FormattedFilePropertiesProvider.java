@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.vedsoft.futures.Lazy;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -19,35 +20,74 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
-	private static final DateTimeFormatter mYearFormatter = new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
+	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<DateTimeFormatter>() {
+		@Override
+		protected DateTimeFormatter initialize() {
+			return new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
+		}
+	};
 	
-	private static final DateTimeFormatterBuilder mDateFormatterBuilder = new DateTimeFormatterBuilder()
-																	.appendMonthOfYear(1)
-																	.appendLiteral('/')
-																	.appendDayOfMonth(1)
-																	.appendLiteral('/')
-																	.append(mYearFormatter);
+	private static final Lazy<DateTimeFormatterBuilder> dateFormatterBuilder = new Lazy<DateTimeFormatterBuilder>() {
+		@Override
+		protected DateTimeFormatterBuilder initialize() {
+			return new DateTimeFormatterBuilder()
+					.appendMonthOfYear(1)
+					.appendLiteral('/')
+					.appendDayOfMonth(1)
+					.appendLiteral('/')
+					.append(yearFormatter.getObject());
+		}
+	};
 	
-	private static final DateTimeFormatter mDateFormatter = mDateFormatterBuilder.toFormatter();
+	private static final Lazy<DateTimeFormatter> dateFormatter = new Lazy<DateTimeFormatter>() {
+		@Override
+		protected DateTimeFormatter initialize() {
+			return dateFormatterBuilder.getObject().toFormatter();
+		}
+	};
 	
-	private static final DateTimeFormatter mDateTimeFormatter = mDateFormatterBuilder
-																	.appendLiteral(" at ")
-																	.appendClockhourOfHalfday(1)
-																	.appendLiteral(':')
-																	.appendMinuteOfHour(2)
-																	.appendLiteral(' ')
-																	.appendHalfdayOfDayText()
-																	.toFormatter();
+	private static final Lazy<DateTimeFormatter> dateTimeFormatter = new Lazy<DateTimeFormatter>() {
+		@Override
+		protected DateTimeFormatter initialize() {
+			return dateFormatterBuilder.getObject()
+					.appendLiteral(" at ")
+					.appendClockhourOfHalfday(1)
+					.appendLiteral(':')
+					.appendMinuteOfHour(2)
+					.appendLiteral(' ')
+					.appendHalfdayOfDayText()
+					.toFormatter();
+		}
+	};
 	
-	private static final PeriodFormatter mMinutesAndSecondsFormatter = new PeriodFormatterBuilder()
-													    .appendMinutes()
-													    .appendSeparator(":")
-													    .minimumPrintedDigits(2)
-													    .maximumParsedDigits(2)
-													    .appendSeconds()
-													    .toFormatter();
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter = new Lazy<PeriodFormatter>() {
+		@Override
+		protected PeriodFormatter initialize() {
+			return new PeriodFormatterBuilder()
+					.appendMinutes()
+					.appendSeparator(":")
+					.minimumPrintedDigits(2)
+					.maximumParsedDigits(2)
+					.appendSeconds()
+					.toFormatter();
+		}
+	};
 	
-	private static final DateTime mExcelEpoch = new DateTime(1899, 12, 30, 0, 0);
+	private static final Lazy<DateTime> excelEpoch = new Lazy<DateTime>() {
+
+		@Override
+		protected DateTime initialize() {
+			return new DateTime(1899, 12, 30, 0, 0);
+		}
+	};
+
+	private static final Lazy<Set<String>> dateTimeProperties = new Lazy<Set<String>>() {
+
+		@Override
+		protected Set<String> initialize() {
+			return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
+		}
+	};
 	
 	public FormattedFilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		super(connectionProvider, fileKey);
@@ -87,9 +127,9 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static String getFormattedValue(final String name, final String value) {
 		if (value == null || value.isEmpty()) return "";
 		
-		if (DATE_TIME_PROPERTIES.contains(name)) {
+		if (dateTimeProperties.getObject().contains(name)) {
 			final DateTime dateTime = new DateTime(Double.valueOf(value).longValue() * 1000);
-			return dateTime.toString(mDateTimeFormatter);
+			return dateTime.toString(dateTimeFormatter.getObject());
 		}
 		
 		if (DATE.equals(name)) {
@@ -98,9 +138,9 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 			if (periodPos > -1)
 				daysValue = daysValue.substring(0, periodPos);
 			
-			final DateTime returnDate = mExcelEpoch.plusDays(Integer.parseInt(daysValue));
+			final DateTime returnDate = excelEpoch.getObject().plusDays(Integer.parseInt(daysValue));
 			
-			return returnDate.toString(returnDate.getMonthOfYear() == 1 && returnDate.getDayOfMonth() == 1 ? mYearFormatter : mDateFormatter);
+			return returnDate.toString(returnDate.getMonthOfYear() == 1 && returnDate.getDayOfMonth() == 1 ? yearFormatter.getObject() : dateFormatter.getObject());
 		}
 		
 		if (FILE_SIZE.equals(name)) {
@@ -109,13 +149,9 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		}
 		
 		if (DURATION.equals(name)) {
-			return Duration.standardSeconds(Double.valueOf(value).longValue()).toPeriod().toString(mMinutesAndSecondsFormatter);
+			return Duration.standardSeconds(Double.valueOf(value).longValue()).toPeriod().toString(minutesAndSecondsFormatter.getObject());
 		}
 		
 		return value;
 	}
-	
-	private static final Set<String> DATE_TIME_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-			new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
-	
 }
