@@ -58,8 +58,28 @@ public class Objectified {
 	}
 
 	public Objectified addParameters(Map<String, Object> parameters) {
-		for (Map.Entry<String, Object> parameter : parameters.entrySet())
-			addParameter(parameter.getKey(), parameter.getValue());
+		for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
+			final String key = parameter.getKey();
+			final Object value = parameter.getValue();
+			final Class<?> valueClass = value.getClass();
+
+			if (Boolean.TYPE.equals(valueClass)) {
+				addParameter(key, (boolean)value);
+				continue;
+			}
+
+			if (Integer.TYPE.equals(valueClass)) {
+				addParameter(key, (int)value);
+				continue;
+			}
+
+			if (Long.TYPE.equals(valueClass)) {
+				addParameter(key, (long)value);
+				continue;
+			}
+
+			addParameter(key, value);
+		}
 
 		return this;
 	}
@@ -67,48 +87,44 @@ public class Objectified {
 	public <T> List<T> fetch(Class<T> cls) throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
+		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
 		try {
-			final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
-			try {
-				if (!cursor.moveToFirst()) return new ArrayList<>();
+			if (!cursor.moveToFirst()) return new ArrayList<>();
 
-				final ClassReflections reflections = ClassCache.getReflections(cls);
+			final ClassReflections reflections = ClassCache.getReflections(cls);
 
-				final ArrayList<T> returnObjects = new ArrayList<>(cursor.getCount());
-				do {
-					final T newObject;
-					try {
-						newObject = cls.newInstance();
+			final ArrayList<T> returnObjects = new ArrayList<>(cursor.getCount());
+			do {
+				final T newObject;
+				try {
+					newObject = cls.newInstance();
 
-						for (int i = 0; i < cursor.getColumnCount(); i++) {
-							String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
+					for (int i = 0; i < cursor.getColumnCount(); i++) {
+						String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
 
-							if (reflections.setterMap.containsKey(colName)) {
-								reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
-								continue;
-							}
-
-							if (!colName.startsWith("is")) continue;
-
-							colName = colName.substring(2);
-							if (reflections.setterMap.containsKey(colName))
-								reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+						if (reflections.setterMap.containsKey(colName)) {
+							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+							continue;
 						}
 
-						returnObjects.add(newObject);
-					} catch (InstantiationException e) {
-						throw new RuntimeException(e);
-					} catch (IllegalAccessException e) {
-						throw new RuntimeException(e);
-					}
-				} while (cursor.moveToNext());
+						if (!colName.startsWith("is")) continue;
 
-				return returnObjects;
-			} finally {
-				cursor.close();
-			}
-		} catch (SQLException se) {
-			throw se;
+						colName = colName.substring(2);
+						if (reflections.setterMap.containsKey(colName))
+							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+					}
+
+					returnObjects.add(newObject);
+				} catch (InstantiationException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
+				}
+			} while (cursor.moveToNext());
+
+			return returnObjects;
+		} finally {
+			cursor.close();
 		}
 	}
 
@@ -123,20 +139,14 @@ public class Objectified {
 
 		final String sqlQuery = compatibleSqlQuery.getKey();
 
-		try {
-			final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
-			sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
-
-			final String sqlQueryType = sqlQuery.substring(0, 3).toLowerCase(Locale.ROOT);
-			if (sqlQueryType.equals("upd") || sqlQueryType.equals("del"))
-				return sqLiteStatement.executeUpdateDelete();
-			if (sqlQueryType.equals("ins"))
-				return sqLiteStatement.executeInsert();
-
-			return sqLiteStatement.simpleQueryForLong();
-		} catch (SQLException se) {
-			throw se;
-		}
+		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
+		sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
+		final String sqlQueryType = sqlQuery.substring(0, 3).toLowerCase(Locale.ROOT);
+		if (sqlQueryType.equals("upd") || sqlQueryType.equals("del"))
+			return sqLiteStatement.executeUpdateDelete();
+		if (sqlQueryType.equals("ins"))
+			return sqLiteStatement.executeInsert();
+		return sqLiteStatement.simpleQueryForLong();
 	}
 
 	private static class QueryCache {
