@@ -36,7 +36,7 @@ import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazy.Lazy;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

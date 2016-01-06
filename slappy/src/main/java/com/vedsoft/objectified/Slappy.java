@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.lazy.Lazy;
+import com.vedsoft.lazyj.Lazy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

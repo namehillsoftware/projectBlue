@@ -42,7 +42,7 @@ dependencies {
     compile project(':pagerslidingtabstrip')
     compile project(':futures')
     compile project(':fluenttask')
-    compile project(':lazy')
+    compile project(':lazy-j')
     compile project(':slappy')
     compile files('libs/xmlwise-debug-1_2.jar')
     testCompile 'junit:junit:4.12'

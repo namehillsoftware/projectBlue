@@ -6,7 +6,7 @@ import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazy.Lazy;
+import com.vedsoft.lazyj.Lazy;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;

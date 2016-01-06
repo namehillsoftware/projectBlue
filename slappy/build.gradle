@@ -22,6 +22,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile project(':futures')
-    compile project(':lazy')
+    compile project(':lazy-j')
     compile 'com.android.support:appcompat-v7:23.1.1'
 }

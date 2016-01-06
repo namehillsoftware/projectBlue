@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.vedsoft.lazy.Lazy;
+import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objectified.Slappy;
 
 import org.slf4j.Logger;

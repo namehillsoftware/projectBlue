@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazy.Lazy;
+import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objectified.Slappy;
 
 import org.slf4j.Logger;
