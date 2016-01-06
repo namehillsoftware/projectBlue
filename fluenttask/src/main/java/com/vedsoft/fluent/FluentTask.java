@@ -2,11 +2,11 @@ package com.vedsoft.fluent;
 
 import android.os.AsyncTask;
 
-import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.lazy.Lazy;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;

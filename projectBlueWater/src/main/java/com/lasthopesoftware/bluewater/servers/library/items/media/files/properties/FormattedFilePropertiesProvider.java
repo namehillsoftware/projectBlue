@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.vedsoft.futures.Lazy;
+import com.vedsoft.lazy.Lazy;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;

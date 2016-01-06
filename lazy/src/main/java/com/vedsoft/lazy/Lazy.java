@@ -1,4 +1,4 @@
-package com.vedsoft.futures;
+package com.vedsoft.lazy;
 
 /**
  * Created by david on 11/28/15.
