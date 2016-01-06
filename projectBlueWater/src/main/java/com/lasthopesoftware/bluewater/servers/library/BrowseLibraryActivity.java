@@ -87,6 +87,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private boolean isLibraryChanged = false;
 
+	private Intent newIntent;
+
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -192,7 +194,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 
-		setIntent(intent);
+		newIntent = intent;
 	}
 
 	private void startLibrary() {
@@ -211,10 +213,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					return;
 				}
 
-				if (showDownloadsAction.equals(getIntent().getAction())) {
-					library.setSelectedView(0);
-					library.setSelectedViewType(Library.ViewType.DownloadView);
-					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				if (newIntent != null) {
+
+					if (showDownloadsAction.equals(newIntent.getAction())) {
+						library.setSelectedView(0);
+						library.setSelectedViewType(Library.ViewType.DownloadView);
+						LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+					}
+
+					// Now that newIntent has been handled, set it to null
+					newIntent = null;
 				}
 
 				displayLibrary(library);
@@ -288,6 +296,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				final Item selectedItem = items.get(position);
+
+				// The action state can be preserved due to the need to preserve action state
+				getIntent().setAction(null);
+
 				updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
 			}
 		};
