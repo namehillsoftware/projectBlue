@@ -102,7 +102,7 @@ public class StoredFileAccess {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					return repositoryAccessHelper
-							.objectifySql(
+							.mapSql(
 									selectFromStoredFiles + " WHERE " + StoredFile.isDownloadCompleteColumnName + " = @" + StoredFile.isDownloadCompleteColumnName)
 							.addParameter(StoredFile.isDownloadCompleteColumnName, false)
 							.fetch(StoredFile.class);
@@ -122,7 +122,7 @@ public class StoredFileAccess {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-							.objectifySql(
+							.mapSql(
 									" UPDATE " + StoredFile.tableName +
 											" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
 											" WHERE id = @id")
@@ -144,7 +144,7 @@ public class StoredFileAccess {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-						.objectifySql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
+						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
 						.addParameter("id", storedFile.getId())
 						.execute();
 				} finally {
@@ -164,7 +164,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile =
 							repositoryAccessHelper
-								.objectifySql(selectFromStoredFiles + " WHERE " + StoredFile.storedMediaIdColumnName + " = @" + StoredFile.storedMediaIdColumnName)
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.storedMediaIdColumnName + " = @" + StoredFile.storedMediaIdColumnName)
 								.addParameter(StoredFile.storedMediaIdColumnName, mediaFileId)
 								.fetchFirst(StoredFile.class);
 
@@ -174,7 +174,7 @@ public class StoredFileAccess {
 					if (storedFile == null) {
 						storedFile =
 							repositoryAccessHelper
-								.objectifySql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName)
+								.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName)
 									.addParameter(StoredFile.pathColumnName, filePath)
 								.fetchFirst(StoredFile.class);
 					}
@@ -286,7 +286,7 @@ public class StoredFileAccess {
 					// This query is very custom to this scenario, so it's being kept here.
 					final List<StoredFile> allStoredFiles =
 							repositoryAccessHelper
-								.objectifySql(
+								.mapSql(
 										" SELECT id, " + StoredFile.serviceIdColumnName + ", " + StoredFile.pathColumnName +
 												" FROM " + StoredFile.tableName +
 												" WHERE " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName +
@@ -308,7 +308,7 @@ public class StoredFileAccess {
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {
 		return helper
-				.objectifySql(
+				.mapSql(
 						" SELECT * " +
 								" FROM " + StoredFile.tableName + " " +
 								" WHERE " + StoredFile.serviceIdColumnName + " = @" + StoredFile.serviceIdColumnName +
@@ -320,14 +320,14 @@ public class StoredFileAccess {
 
 	private static StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
 		return helper
-				.objectifySql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
+				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
 				.addParameter("id", storedFileId)
 				.fetchFirst(StoredFile.class);
 	}
 
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
 		repositoryAccessHelper
-				.objectifySql(
+				.mapSql(
 						" INSERT INTO " + StoredFile.tableName + " (" +
 								StoredFile.serviceIdColumnName + ", " +
 								StoredFile.libraryIdColumnName + ", " +
@@ -350,7 +350,7 @@ public class StoredFileAccess {
 				" WHERE id = @id";
 
 		repositoryAccessHelper
-				.objectifySql(updateSql)
+				.mapSql(updateSql)
 				.addParameter(StoredFile.storedMediaIdColumnName, storedFile.getStoredMediaId())
 				.addParameter(StoredFile.pathColumnName, storedFile.getPath())
 				.addParameter(StoredFile.isOwnerColumnName, storedFile.isOwner())

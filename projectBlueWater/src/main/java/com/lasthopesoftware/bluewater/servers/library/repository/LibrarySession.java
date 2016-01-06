@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.objectified.Objectified;
+import com.vedsoft.objectified.Slappy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,9 +90,9 @@ public class LibrarySession {
 				try {
 					final boolean isLibraryExists = library.getId() > -1;
 
-					final Objectified objectified =
+					final Slappy slappy =
 						repositoryAccessHelper
-								.objectifySql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
+								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 								.addParameter(Library.accessCodeColumn, library.getAccessCode())
 								.addParameter(Library.authKeyColumn, library.getAuthKey())
 								.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
@@ -109,9 +109,9 @@ public class LibrarySession {
 								.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
 					if (isLibraryExists)
-						objectified.addParameter("id", library.getId());
+						slappy.addParameter("id", library.getId());
 
-					final long result = objectified.execute();
+					final long result = slappy.execute();
 
 					if (!isLibraryExists)
 						library.setId((int)result);
@@ -180,7 +180,7 @@ public class LibrarySession {
 		try {
 			return
 				repositoryAccessHelper
-					.objectifySql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
+					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
 					.addParameter("id", libraryId)
 					.fetchFirst(Library.class);
 		} finally {
@@ -196,7 +196,7 @@ public class LibrarySession {
 				try {
 					return
 						repositoryAccessHelper
-							.objectifySql("SELECT * FROM " + Library.tableName)
+							.mapSql("SELECT * FROM " + Library.tableName)
 							.fetch(Library.class);
 				} finally {
 					repositoryAccessHelper.close();

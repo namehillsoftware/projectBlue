@@ -74,7 +74,7 @@ public class StoredItemAccess {
 		                    .build();
 
                     repositoryAccessHelper
-                            .objectifySql(storedItemInsertSql)
+                            .mapSql(storedItemInsertSql)
 		                    .addParameter(StoredItem.libraryIdColumnName, library.getId())
 		                    .addParameter(StoredItem.serviceIdColumnName, item.getKey())
 		                    .addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -93,11 +93,11 @@ public class StoredItemAccess {
                 final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 	            try {
 		            repositoryAccessHelper
-				            .objectifySql(
+				            .mapSql(
                                     " DELETE FROM " + StoredItem.tableName +
-                                    " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
-                                    " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
-                                    " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
+                                            " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
+                                            " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
+                                            " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
 				            .addParameter(StoredItem.serviceIdColumnName, item.getKey())
 				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
 				            .addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -118,7 +118,7 @@ public class StoredItemAccess {
                 try {
 	                return
 			                repositoryAccessHelper
-					                .objectifySql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
+					                .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
 					                .addParameter(StoredItem.libraryIdColumnName, library.getId())
 					                .fetch(StoredItem.class);
 
@@ -141,7 +141,7 @@ public class StoredItemAccess {
     private  static StoredItem getStoredList(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
             return
                 helper
-                    .objectifySql(
+                    .mapSql(
                             " SELECT * FROM " + StoredItem.tableName +
                                     " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
                                     " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +

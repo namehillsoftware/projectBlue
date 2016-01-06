@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.objectified.Objectified;
+import com.vedsoft.objectified.Slappy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +87,7 @@ public class DiskFileCache {
 					CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
 					if (cachedFile != null) {
 						repositoryAccessHelper
-								.objectifySql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
+								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
 								.addParameter("id", cachedFile.getId())
 								.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
 								.execute();
@@ -107,7 +107,7 @@ public class DiskFileCache {
 							.addColumn(CachedFile.LAST_ACCESSED_TIME)
 							.build();
 
-					final Objectified sqlInsertMapper = repositoryAccessHelper.objectifySql(cachedFileSqlInsert);
+					final Slappy sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
 
 					try {
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
@@ -188,7 +188,7 @@ public class DiskFileCache {
 				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 				try {
 					repositoryAccessHelper
-							.objectifySql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
+							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
 							.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
 							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
@@ -204,7 +204,7 @@ public class DiskFileCache {
 
 	private static CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int libraryId, final String cacheName, final String uniqueKey) {
 		return repositoryAccessHelper
-				.objectifySql(
+				.mapSql(
 						"SELECT * FROM " + CachedFile.tableName +
 								" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
 								" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
@@ -217,7 +217,7 @@ public class DiskFileCache {
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int cachedFileId) {
 		return repositoryAccessHelper
-				.objectifySql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+				.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 				.addParameter("id", cachedFileId)
 				.execute();
 	}

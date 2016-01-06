@@ -22,42 +22,42 @@ import java.util.Map;
 /**
  * Created by david on 12/13/15.
  */
-public class Objectified {
+public class Slappy {
 	private final SQLiteDatabase database;
 	private final String sqlQuery;
 	private final HashMap<String, String> parameters = new HashMap<>();
 
-	public Objectified(SQLiteDatabase database, String sqlQuery) {
+	public Slappy(SQLiteDatabase database, String sqlQuery) {
 		this.database = database;
 		this.sqlQuery = sqlQuery;
 	}
 
-	public Objectified addParameter(String parameter, String value) {
+	public Slappy addParameter(String parameter, String value) {
 		parameters.put(parameter, value);
 		return this;
 	}
 
-	public <E extends Enum<E>> Objectified addParameter(String parameter, Enum<E> value) {
+	public <E extends Enum<E>> Slappy addParameter(String parameter, Enum<E> value) {
 		return addParameter(parameter, value != null ? value.name() : null);
 	}
 
-	public Objectified addParameter(String parameter, int value) {
+	public Slappy addParameter(String parameter, int value) {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
-	public Objectified addParameter(String parameter, long value) {
+	public Slappy addParameter(String parameter, long value) {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
-	public Objectified addParameter(String parameter, boolean value) {
+	public Slappy addParameter(String parameter, boolean value) {
 		return addParameter(parameter, value ? 1 : 0);
 	}
 
-	public Objectified addParameter(String parameter, Object value) {
+	public Slappy addParameter(String parameter, Object value) {
 		return addParameter(parameter, value.toString());
 	}
 
-	public Objectified addParameters(Map<String, Object> parameters) {
+	public Slappy addParameters(Map<String, Object> parameters) {
 		for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
 			final String key = parameter.getKey();
 			final Object value = parameter.getValue();

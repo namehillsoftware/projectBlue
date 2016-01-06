@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.r
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.futures.Lazy;
-import com.vedsoft.objectified.Objectified;
+import com.vedsoft.objectified.Slappy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +48,8 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public Objectified objectifySql(String sqlQuery) {
-		return new Objectified(getWritableDatabase(), sqlQuery);
+	public Slappy mapSql(String sqlQuery) {
+		return new Slappy(getWritableDatabase(), sqlQuery);
 	}
 
 	@Override
