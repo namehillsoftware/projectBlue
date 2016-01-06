@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    compile project(':library')
+    compile project(':pagerslidingtabstrip')
     compile project(':futures')
     compile project(':fluenttask')
     compile project(':slappy')
