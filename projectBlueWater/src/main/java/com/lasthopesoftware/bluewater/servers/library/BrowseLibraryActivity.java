@@ -192,8 +192,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 
-		if (showDownloadsAction.equals(intent.getAction()))
-			updateSelectedView(Library.ViewType.DownloadView, 0);
+		setIntent(intent);
 	}
 
 	private void startLibrary() {
@@ -245,8 +244,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        if (!Library.serverViewTypes.contains(selectedViewType)) {
 					        oldTitle = specialViews.get(0);
 					        getSupportActionBar().setTitle(oldTitle);
-
-
 
 					        final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
 					        swapFragments(activeFileDownloadsFragment);
