@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library;
 
-import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +7,8 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
@@ -24,7 +25,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
-import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
@@ -32,7 +32,6 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
@@ -42,14 +41,15 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistLi
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.views.LibraryViewPagerAdapter;
+import com.lasthopesoftware.bluewater.servers.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.Lazy;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
+
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -73,15 +73,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private ListView selectViewsListView;
 	private ListView specialLibraryItemsListView;
 	private DrawerLayout drawerLayout;
-	private PagerSlidingTabStrip libraryViewsTabs;
-	private RelativeLayout tabbedLibraryViewsRelativeLayout;
 	private ProgressBar loadingViewsProgressBar;
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
-	private PlaylistListFragment playlistListFragment;
-	private ActiveFileDownloadsFragment activeFileDownloadsFragment;
+	private Fragment activeFragment;
 
 	private ActionBarDrawerToggle drawerToggle = null;
 
@@ -89,32 +86,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private boolean isStopped = false;
 
 	private boolean isLibraryChanged = false;
-
-	private final Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>> onGetVisibleViewsCompleteListener = new Lazy<TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>>() {
-		@Override
-		protected TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> initialize() {
-			return new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
-
-				@Override
-				public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
-					if (isStopped || result == null) return;
-
-					final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-					viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-
-					viewChildPagerAdapter.setLibraryViews(result);
-
-					// Set up the ViewPager with the sections adapter.
-					viewPager.setAdapter(viewChildPagerAdapter);
-					libraryViewsTabs.setViewPager(viewPager);
-
-					libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
-
-					showContainerView(tabbedLibraryViewsRelativeLayout);
-				}
-			};
-		}
-	};
 
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
@@ -129,16 +100,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         // Ensure that this task is only started when it's the task root. A workaround for an Android bug.
         // See http://stackoverflow.com/a/7748416
-//        if (!isTaskRoot()) {
-//            final Intent intent = getIntent();
-//            final String intentAction = intent.getAction();
-//
-//	        if (intentAction != null && intentAction.equals(Intent.ACTION_MAIN) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-//		        LoggerFactory.getLogger(getClass()).info(className + " is not the root.  Finishing " + className + " instead of launching.");
-//		        finish();
-//		        return;
-//	        }
-//        }
+        if (!isTaskRoot()) {
+            final Intent intent = getIntent();
+            final String intentAction = intent.getAction();
+
+	        if (intentAction != null && intentAction.equals(Intent.ACTION_MAIN) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+		        LoggerFactory.getLogger(getClass()).info(className + " is not the root.  Finishing " + className + " instead of launching.");
+		        finish();
+		        return;
+	        }
+        }
 
 		setContentView(R.layout.activity_browse_library);
 
@@ -182,28 +153,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.setDrawerListener(drawerToggle);
 		selectViewsListView = (ListView) findViewById(R.id.lvLibraryViewSelection);
 		viewPager = (ViewPager) findViewById(R.id.libraryViewPager);
-		tabbedLibraryViewsRelativeLayout = (RelativeLayout) findViewById(R.id.tabbedLibraryViewsRelativeLayout);
+
 		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
 		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
-
-		libraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
-
-		libraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-			@Override
-			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-			}
-
-			@Override
-			public void onPageSelected(int position) {
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-			}
-
-			@Override
-			public void onPageScrollStateChanged(int state) {
-
-			}
-		});
 
 		if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
 
@@ -240,7 +192,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 
-		if (intent != null && showDownloadsAction.equals(intent.getAction()))
+		if (showDownloadsAction.equals(intent.getAction()))
 			updateSelectedView(Library.ViewType.DownloadView, 0);
 	}
 
@@ -289,22 +241,15 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        selectViewsListView.setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
 				        selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 
+				        hideAllViews();
 				        if (!Library.serverViewTypes.contains(selectedViewType)) {
 					        oldTitle = specialViews.get(0);
 					        getSupportActionBar().setTitle(oldTitle);
 
-					        hideAllViews();
 
-					        final FragmentTransaction ft = getFragmentManager().beginTransaction();
-					        try {
-						        if (activeFileDownloadsFragment != null)
-							        ft.remove(activeFileDownloadsFragment);
 
-						        activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
-						        ft.add(R.id.browseLibraryContainer, activeFileDownloadsFragment);
-					        } finally {
-						        ft.commit();
-					        }
+					        final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+					        swapFragments(activeFileDownloadsFragment);
 
 					        return;
 				        }
@@ -317,38 +262,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				        }
 
 				        if (selectedViewType == Library.ViewType.PlaylistView) {
-					        hideAllViews();
-
-					        final FragmentTransaction ft = getFragmentManager().beginTransaction();
-					        try {
-						        if (playlistListFragment != null)
-							        ft.remove(playlistListFragment);
-
-						        playlistListFragment = new PlaylistListFragment();
-						        playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-						        ft.add(R.id.browseLibraryContainer, playlistListFragment);
-					        } finally {
-						        ft.commit();
-					        }
+					        final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+					        playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+					        swapFragments(playlistListFragment);
 
 					        return;
 				        }
 
-				        ItemProvider
-						        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-						        .onComplete(onGetVisibleViewsCompleteListener.getObject())
-						        .onError(new HandleViewIoException<String, Void, List<Item>>(BrowseLibraryActivity.this, new Runnable() {
-
-							        @Override
-							        public void run() {
-								        ItemProvider
-										        .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-										        .onComplete(onGetVisibleViewsCompleteListener.getObject())
-										        .onError(new HandleViewIoException<String, Void, List<Item>>(BrowseLibraryActivity.this, this))
-										        .execute();
-									}
-								}))
-								.execute();
+				        final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+				        browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+				        swapFragments(browseLibraryViewsFragment);
 					}
 				})
 				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
@@ -423,7 +346,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         savedInstanceState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
 				if (library != null)
@@ -442,7 +365,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     private void restoreScrollPosition(final Bundle savedInstanceState) {
         if (viewPager == null) return;
 
-        LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+        LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 
 	        @Override
 	        public void run(FluentTask<Integer, Void, Library> owner, Library library) {
@@ -472,6 +395,19 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void hideAllViews() {
 		for (int i = 0; i < browseLibraryContainerRelativeLayout.getChildCount(); i++)
 			browseLibraryContainerRelativeLayout.getChildAt(i).setVisibility(View.INVISIBLE);
+	}
+
+	private synchronized void swapFragments(Fragment newFragment) {
+		final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		try {
+			if (activeFragment != null)
+				ft.remove(activeFragment);
+
+			ft.add(R.id.browseLibraryContainer, newFragment);
+		} finally {
+			ft.commit();
+			activeFragment = newFragment;
+		}
 	}
 	
 	@Override

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+    <ProgressBar
+        android:id="@+id/pbLoadingTabbedItems"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="false"
+        android:layout_centerInParent="true"
+        android:visibility="invisible" />
+
+    <RelativeLayout
+        android:id="@+id/tabbedLibraryViewsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
+        <com.astuetz.PagerSlidingTabStrip
+            android:id="@+id/tabsLibraryViews"
+            android:layout_width="match_parent"
+            android:layout_height="48dip" />
+        <android.support.v4.view.ViewPager
+            android:id="@+id/libraryViewPager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tabsLibraryViews" />
+    </RelativeLayout>
+</RelativeLayout>
