@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -31,15 +32,20 @@ import java.util.List;
  */
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
+	private static final String SAVED_TAB_KEY = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_TAB_KEY");
+	private static final String SAVED_SCROLL_POS = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_SCROLL_POS");
+	private static final String SAVED_SELECTED_VIEW = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_SELECTED_VIEW");
+
 	private ViewAnimator viewAnimator;
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
+	private ViewPager viewPager;
 
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final RelativeLayout tabbedItemsLayout = (RelativeLayout) inflater.inflate(R.layout.tabbed_library_items_layout, container, false);
 
-		final ViewPager viewPager = (ViewPager) tabbedItemsLayout.findViewById(R.id.libraryViewPager);
+		viewPager = (ViewPager) tabbedItemsLayout.findViewById(R.id.libraryViewPager);
 		final RelativeLayout tabbedLibraryViewsContainer = (RelativeLayout) tabbedItemsLayout.findViewById(R.id.tabbedLibraryViewsContainer);
 		final PagerSlidingTabStrip libraryViewsTabs = (PagerSlidingTabStrip) tabbedItemsLayout.findViewById(R.id.tabsLibraryViews);
 		libraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -134,5 +140,46 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		if (itemListMenuChangeHandler != null)
 			itemListMenuChangeHandler.onViewChanged(viewAnimator);
+	}
+
+	@Override
+	public void onSaveInstanceState(final Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		if (viewPager == null) return;
+
+		outState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
+		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
+		LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+			@Override
+			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
+				if (library != null)
+					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+			}
+		});
+	}
+
+	@Override
+	public void onViewStateRestored(@Nullable final Bundle savedInstanceState) {
+		super.onViewStateRestored(savedInstanceState);
+
+		if (savedInstanceState == null || viewPager == null) return;
+
+		LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+
+			@Override
+			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
+				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+
+				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+				if (savedTabKey > -1)
+					viewPager.setCurrentItem(savedTabKey);
+
+				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+				if (savedScrollPosition > -1)
+					viewPager.setScrollY(savedScrollPosition);
+			}
+		});
 	}
 }

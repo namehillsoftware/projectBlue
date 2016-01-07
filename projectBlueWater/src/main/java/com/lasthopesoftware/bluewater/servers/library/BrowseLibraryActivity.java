@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
@@ -58,9 +57,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	public static final String showDownloadsAction = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
 
-	private static final String SAVED_TAB_KEY = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_TAB_KEY");
-	private static final String SAVED_SCROLL_POS = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SCROLL_POS");
-    private static final String SAVED_SELECTED_VIEW = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "SAVED_SELECTED_VIEW");
 	private static final String className = BrowseLibraryActivity.class.getName();
 
 	private static final List<String> specialViews = Collections.singletonList("Active Downloads");
@@ -69,7 +65,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	private RelativeLayout browseLibraryContainerRelativeLayout;
-	private ViewPager viewPager;
 	private ListView selectViewsListView;
 	private ListView specialLibraryItemsListView;
 	private DrawerLayout drawerLayout;
@@ -154,12 +149,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		drawerLayout.setDrawerListener(drawerToggle);
 		selectViewsListView = (ListView) findViewById(R.id.lvLibraryViewSelection);
-		viewPager = (ViewPager) findViewById(R.id.libraryViewPager);
 
 		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
 		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
-
-		if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
 
 		LocalBroadcastManager.getInstance(this).registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
@@ -199,7 +191,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private void startLibrary() {
 		isStopped = false;
-		if ((selectViewsListView.getAdapter() != null && viewPager.getAdapter() != null)) return;
+		if (selectViewsListView.getAdapter() != null) return;
 
         showProgressBar();
 
@@ -345,51 +337,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
         if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
-    }
-
-	@Override
-	public void onSaveInstanceState(final Bundle savedInstanceState) {
-		super.onSaveInstanceState(savedInstanceState);
-
-		if (viewPager == null) return;
-
-        savedInstanceState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
-		savedInstanceState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-				if (library != null)
-					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-			}
-		});
-	}
-
-	@Override
-	public void onRestoreInstanceState(@NonNull final Bundle savedInstanceState) {
-		super.onRestoreInstanceState(savedInstanceState);
-
-		restoreScrollPosition(savedInstanceState);
-	}
-
-    private void restoreScrollPosition(final Bundle savedInstanceState) {
-        if (viewPager == null) return;
-
-        LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-
-	        @Override
-	        public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-		        final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-		        if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
-
-		        final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-		        if (savedTabKey > -1)
-			        viewPager.setCurrentItem(savedTabKey);
-
-		        final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-		        if (savedScrollPosition > -1)
-			        viewPager.setScrollY(savedScrollPosition);
-	        }
-        });
     }
 
 	private void showProgressBar() {
