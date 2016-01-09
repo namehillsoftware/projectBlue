@@ -7,11 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -33,12 +33,12 @@ public class ServerListAdapter extends BaseAdapter {
 
 	private static class ViewHolder {
 		public final TextView textView;
-		public final SwitchCompat btnSelectServer;
+		public final Button btnSelectServer;
 		public final ImageButton btnConfigureServer;
 
 		public BroadcastReceiver broadcastReceiver;
 
-		private ViewHolder(TextView textView, SwitchCompat btnSelectServer, ImageButton btnConfigureServer) {
+		private ViewHolder(TextView textView, Button btnSelectServer, ImageButton btnConfigureServer) {
 			this.textView = textView;
 			this.btnSelectServer = btnSelectServer;
 			this.btnConfigureServer = btnConfigureServer;
@@ -72,7 +72,7 @@ public class ServerListAdapter extends BaseAdapter {
 			final RelativeLayout relativeLayout = (RelativeLayout) getInflater(parent.getContext()).inflate(R.layout.layout_server_item, parent, false);
 
 			final TextView textView = (TextView) relativeLayout.findViewById(R.id.tvServerItem);
-			final SwitchCompat btnSelectServer = (SwitchCompat) relativeLayout.findViewById(R.id.btnSelectServer);
+			final Button btnSelectServer = (Button) relativeLayout.findViewById(R.id.btnSelectServer);
 			final ImageButton btnConfigureServer = (ImageButton) relativeLayout.findViewById(R.id.btnConfigureServer);
 
 			relativeLayout.setTag(new ViewHolder(textView, btnSelectServer, btnConfigureServer));
@@ -83,16 +83,13 @@ public class ServerListAdapter extends BaseAdapter {
 		final Library library = mLibraries.get(--position);
 		viewHolder.textView.setText(library.getAccessCode());
 
-		final SwitchCompat btnSelectServer = viewHolder.btnSelectServer;
-		if (mChosenLibrary != null && library.getId() == mChosenLibrary.getId())
-			btnSelectServer.setChecked(true);
+		final Button btnSelectServer = viewHolder.btnSelectServer;
+//		if (mChosenLibrary != null && library.getId() == mChosenLibrary.getId())
+//			btnSelectServer.setChecked(true);
 
-		btnSelectServer.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				final Context context = v.getContext();
-				LibrarySession.ChooseLibrary(context, library.getId(), null);
-			}
+		btnSelectServer.setOnClickListener(v -> {
+			final Context context = v.getContext();
+			LibrarySession.ChooseLibrary(context, library.getId(), null);
 		});
 
 		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener(mActivity, library.getId()));
@@ -104,7 +101,7 @@ public class ServerListAdapter extends BaseAdapter {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				final boolean isChosen = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1) == library.getId();
-				btnSelectServer.setChecked(isChosen);
+//				btnSelectServer.setChecked(isChosen);
 			}
 		};
 
