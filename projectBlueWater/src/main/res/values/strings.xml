@@ -83,4 +83,5 @@
     <string name="start_sync_button">Start Sync</string>
     <string name="stop_sync_button">Stop Sync</string>
 	<string name="downloading_status_label">Downloading %1$s</string>
+    <string name="lbl_connect">Connect</string>
 </resources>

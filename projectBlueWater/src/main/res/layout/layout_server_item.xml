@@ -32,8 +32,7 @@
 		    android:textColor="@color/ics_gray"
 		    android:id="@+id/btnSelectServer"
 		    style="?android:attr/buttonBarButtonStyle"
-		    android:text="Connect"
-		    android:elegantTextHeight="false"
+		    android:text="@string/lbl_connect"
 		    android:textStyle="italic"/>
     </LinearLayout>
 
