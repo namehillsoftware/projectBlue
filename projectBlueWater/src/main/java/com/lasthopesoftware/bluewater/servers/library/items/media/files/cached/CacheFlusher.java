@@ -131,12 +131,6 @@ class CacheFlusher implements Runnable {
 	private static boolean deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final CachedFile cachedFile) {
 		final File fileToDelete = new File(cachedFile.getFileName());
 
-		if (fileToDelete.exists() && fileToDelete.delete())
-			repositoryAccessHelper
-					.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
-					.addParameter("id", cachedFile.getId())
-					.execute();
-
-		return true;
+		return fileToDelete.exists() && fileToDelete.delete() && repositoryAccessHelper.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id").addParameter("id", cachedFile.getId()).execute() > 0;
 	}
 }

@@ -110,11 +110,6 @@ public class FileDetailsActivity extends AppCompatActivity {
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
 	}
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-    }
-
 	private void setView(final int fileKey) {
 		if (fileKey < 0) {
         	finish();
