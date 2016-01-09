@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,12 +33,12 @@ public class ServerListAdapter extends BaseAdapter {
 
 	private static class ViewHolder {
 		public final TextView textView;
-		public final ImageButton btnSelectServer;
+		public final SwitchCompat btnSelectServer;
 		public final ImageButton btnConfigureServer;
 
 		public BroadcastReceiver broadcastReceiver;
 
-		private ViewHolder(TextView textView, ImageButton btnSelectServer, ImageButton btnConfigureServer) {
+		private ViewHolder(TextView textView, SwitchCompat btnSelectServer, ImageButton btnConfigureServer) {
 			this.textView = textView;
 			this.btnSelectServer = btnSelectServer;
 			this.btnConfigureServer = btnConfigureServer;
@@ -71,7 +72,7 @@ public class ServerListAdapter extends BaseAdapter {
 			final RelativeLayout relativeLayout = (RelativeLayout) getInflater(parent.getContext()).inflate(R.layout.layout_server_item, parent, false);
 
 			final TextView textView = (TextView) relativeLayout.findViewById(R.id.tvServerItem);
-			final ImageButton btnSelectServer = (ImageButton) relativeLayout.findViewById(R.id.btnSelectServer);
+			final SwitchCompat btnSelectServer = (SwitchCompat) relativeLayout.findViewById(R.id.btnSelectServer);
 			final ImageButton btnConfigureServer = (ImageButton) relativeLayout.findViewById(R.id.btnConfigureServer);
 
 			relativeLayout.setTag(new ViewHolder(textView, btnSelectServer, btnConfigureServer));
@@ -82,9 +83,9 @@ public class ServerListAdapter extends BaseAdapter {
 		final Library library = mLibraries.get(--position);
 		viewHolder.textView.setText(library.getAccessCode());
 
-		final ImageButton btnSelectServer = viewHolder.btnSelectServer;
+		final SwitchCompat btnSelectServer = viewHolder.btnSelectServer;
 		if (mChosenLibrary != null && library.getId() == mChosenLibrary.getId())
-			btnSelectServer.setImageDrawable(getSelectedServerDrawable(parentContext));
+			btnSelectServer.setChecked(true);
 
 		btnSelectServer.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -103,7 +104,7 @@ public class ServerListAdapter extends BaseAdapter {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				final boolean isChosen = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1) == library.getId();
-				btnSelectServer.setImageDrawable(isChosen ? getSelectedServerDrawable(context) : getNotSelectedServerDrawable(context));
+				btnSelectServer.setChecked(isChosen);
 			}
 		};
 
@@ -128,20 +129,6 @@ public class ServerListAdapter extends BaseAdapter {
 
 	private static LayoutInflater getInflater(Context context) {
 		return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	}
-
-	private static Drawable getNotSelectedServerDrawable(Context context) {
-		if (mNotSelectedServerDrawable == null)
-			mNotSelectedServerDrawable = context.getResources().getDrawable(R.drawable.ic_checkbox_blank_circle_outline_grey600_24dp);
-
-		return mNotSelectedServerDrawable;
-	}
-
-	private static Drawable getSelectedServerDrawable(Context context) {
-		if (mSelectedServerDrawable == null)
-			mSelectedServerDrawable = context.getResources().getDrawable(R.drawable.ic_checkbox_marked_circle_grey600_24dp);
-
-		return mSelectedServerDrawable;
 	}
 
 	@Override

@@ -96,7 +96,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			lblConnectionStatus.setText(R.string.lbl_connected);
-			if (getIntent() == null || getIntent().getAction() == null || !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
+			if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
 				launchActivityDelayed(browseLibraryIntent);
 			else
 				finish();

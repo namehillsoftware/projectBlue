@@ -8,21 +8,32 @@
         android:id="@+id/btnConfigureServer"
         style="?android:attr/buttonBarButtonStyle"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
         android:contentDescription="@string/action_settings"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:src="@drawable/ic_action_settings" />
 
-    <ImageButton
+    <!--<ImageButton-->
+        <!--android:id="@+id/btnSelectServer"-->
+        <!--style="?android:attr/buttonBarButtonStyle"-->
+        <!--android:layout_toLeftOf="@id/btnConfigureServer"-->
+        <!--android:layout_toStartOf="@id/btnConfigureServer"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_centerVertical="true"-->
+        <!--android:contentDescription="@string/btn_select_server"-->
+        <!--android:src="@drawable/ic_checkbox_blank_circle_outline_grey600_24dp"/>-->
+    
+    <android.support.v7.widget.SwitchCompat
         android:id="@+id/btnSelectServer"
         style="?android:attr/buttonBarButtonStyle"
         android:layout_toLeftOf="@id/btnConfigureServer"
         android:layout_toStartOf="@id/btnConfigureServer"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:contentDescription="@string/btn_select_server"
-        android:src="@drawable/ic_checkbox_blank_circle_outline_grey600_24dp"/>
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true" />
 
     <TextView
         android:id="@+id/tvServerItem"

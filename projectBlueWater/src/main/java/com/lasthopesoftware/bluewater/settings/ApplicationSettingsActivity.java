@@ -60,7 +60,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 				LibrarySession.GetActiveLibrary(activity, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 					@Override
 					public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-						((ListView) findViewById(R.id.lvServerList)).setAdapter(new ServerListAdapter(activity, libraries, library));
+						serverListView.setAdapter(new ServerListAdapter(activity, libraries, library));
 
 						progressBar.setVisibility(View.INVISIBLE);
 						serverListView.setVisibility(View.VISIBLE);
