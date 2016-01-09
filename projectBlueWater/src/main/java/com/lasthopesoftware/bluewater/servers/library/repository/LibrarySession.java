@@ -153,13 +153,9 @@ public class LibrarySession {
 
 	private static void ExecuteGetLibrary(FluentTask<Integer, Void, Library> getLibraryTask, final TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onGetLibraryComplete) {
 
-		getLibraryTask.onComplete(new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-				if (onGetLibraryComplete != null)
-					onGetLibraryComplete.run(owner, result);
-			}
+		getLibraryTask.onComplete((owner, result) -> {
+			if (onGetLibraryComplete != null)
+				onGetLibraryComplete.run(owner, result);
 		});
 
 		getLibraryTask.execute(RepositoryAccessHelper.databaseExecutor);
@@ -212,16 +208,13 @@ public class LibrarySession {
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
 		}
 		
-		GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-				final Intent broadcastIntent = new Intent(libraryChosenEvent);
-				broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
-				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+		GetActiveLibrary(context, (owner, library) -> {
+			final Intent broadcastIntent = new Intent(libraryChosenEvent);
+			broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
+			LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 
-				if (onLibraryChangeComplete != null)
-					onLibraryChangeComplete.run(owner, library);
-			}
+			if (onLibraryChangeComplete != null)
+				onLibraryChangeComplete.run(owner, library);
 		});
 	}
 }

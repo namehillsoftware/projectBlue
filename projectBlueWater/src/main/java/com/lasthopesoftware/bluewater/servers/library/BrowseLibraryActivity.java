@@ -1,14 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -45,8 +41,6 @@ import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStati
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
 
@@ -83,13 +77,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private boolean isLibraryChanged = false;
 
 	private Intent newIntent;
-
-	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			isLibraryChanged = true;
-		}
-	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -153,8 +140,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
 		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
 
-		LocalBroadcastManager.getInstance(this).registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
-
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
 		specialLibraryItemsListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
@@ -195,30 +180,26 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-				// No library, must bail out
-				if (library == null) {
-					finish();
-					return;
-				}
-
-				if (newIntent != null) {
-
-					if (showDownloadsAction.equals(newIntent.getAction())) {
-						library.setSelectedView(0);
-						library.setSelectedViewType(Library.ViewType.DownloadView);
-						LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
-					}
-
-					// Now that newIntent has been handled, set it to null
-					newIntent = null;
-				}
-
-				displayLibrary(library);
+		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+			// No library, must bail out
+			if (library == null) {
+				finish();
+				return;
 			}
+
+			if (newIntent != null) {
+
+				if (showDownloadsAction.equals(newIntent.getAction())) {
+					library.setSelectedView(0);
+					library.setSelectedViewType(Library.ViewType.DownloadView);
+					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				}
+
+				// Now that newIntent has been handled, set it to null
+				newIntent = null;
+			}
+
+			displayLibrary(library);
 		});
 
 	}
@@ -229,48 +210,44 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+				.onComplete((owner, items) -> {
+					if (isStopped || items == null) return;
 
-			        @Override
-			        public void run(FluentTask<String, Void, List<Item>> owner, final List<Item> items) {
-				        if (isStopped || items == null) return;
+					LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-				        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+					selectViewsListView.setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
+					selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 
-				        selectViewsListView.setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
-				        selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
+					hideAllViews();
+					if (!Library.serverViewTypes.contains(selectedViewType)) {
+						oldTitle = specialViews.get(0);
+						getSupportActionBar().setTitle(oldTitle);
 
-				        hideAllViews();
-				        if (!Library.serverViewTypes.contains(selectedViewType)) {
-					        oldTitle = specialViews.get(0);
-					        getSupportActionBar().setTitle(oldTitle);
+						final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+						swapFragments(activeFileDownloadsFragment);
 
-					        final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
-					        swapFragments(activeFileDownloadsFragment);
-
-					        return;
-				        }
-
-				        for (IItem item : items) {
-					        if (item.getKey() != library.getSelectedView()) continue;
-					        oldTitle = item.getValue();
-					        getSupportActionBar().setTitle(oldTitle);
-					        break;
-				        }
-
-				        if (selectedViewType == Library.ViewType.PlaylistView) {
-					        final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
-					        playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-					        swapFragments(playlistListFragment);
-
-					        return;
-				        }
-
-				        final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
-				        browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-				        swapFragments(browseLibraryViewsFragment);
+						return;
 					}
-				})
+
+					for (IItem item : items) {
+						if (item.getKey() != library.getSelectedView()) continue;
+						oldTitle = item.getValue();
+						getSupportActionBar().setTitle(oldTitle);
+						break;
+					}
+
+					if (selectedViewType == Library.ViewType.PlaylistView) {
+						final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+						playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+						swapFragments(playlistListFragment);
+
+						return;
+					}
+
+					final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+					browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+					swapFragments(browseLibraryViewsFragment);
+						})
 				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
 
 					@Override
@@ -301,18 +278,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+			if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
+			library.setSelectedView(selectedViewKey);
+			library.setSelectedViewType(selectedViewType);
+			LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
 
-				library.setSelectedView(selectedViewKey);
-				library.setSelectedViewType(selectedViewType);
-				LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
-
-				displayLibrary(library);
-			}
+			displayLibrary(library);
 		});
 	}
 
@@ -370,13 +343,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	public void onStop() {
 		isStopped = true;
 		super.onStop();
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onLibraryChanged);
 	}
 
 	@Override

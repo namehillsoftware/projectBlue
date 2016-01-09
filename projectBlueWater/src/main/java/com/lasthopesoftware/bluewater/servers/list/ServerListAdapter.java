@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.drawable.Drawable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.list.listeners.EditServerClickListener;
@@ -26,9 +25,6 @@ import java.util.List;
 public class ServerListAdapter extends BaseAdapter {
 
 	private final List<Library> mLibraries;
-	private final Library mChosenLibrary;
-	private static Drawable mSelectedServerDrawable;
-	private static Drawable mNotSelectedServerDrawable;
 	private final Activity mActivity;
 
 	private static class ViewHolder {
@@ -45,12 +41,11 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 	}
 
-	public ServerListAdapter(Activity activity, List<Library> libraries, Library chosenLibrary) {
+	public ServerListAdapter(Activity activity, List<Library> libraries) {
 		super();
 
 		mActivity = activity;
 		mLibraries = libraries;
-		mChosenLibrary = chosenLibrary;
 	}
 
 	@Override
@@ -84,42 +79,17 @@ public class ServerListAdapter extends BaseAdapter {
 		viewHolder.textView.setText(library.getAccessCode());
 
 		final Button btnSelectServer = viewHolder.btnSelectServer;
-//		if (mChosenLibrary != null && library.getId() == mChosenLibrary.getId())
-//			btnSelectServer.setChecked(true);
 
 		btnSelectServer.setOnClickListener(v -> {
 			final Context context = v.getContext();
 			LibrarySession.ChooseLibrary(context, library.getId(), null);
+
+			final Intent browseLibraryIntent = new Intent(context, BrowseLibraryActivity.class);
+			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+			context.startActivity(browseLibraryIntent);
 		});
 
 		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener(mActivity, library.getId()));
-
-		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(parentContext);
-		if (viewHolder.broadcastReceiver != null) localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
-
-		viewHolder.broadcastReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				final boolean isChosen = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1) == library.getId();
-//				btnSelectServer.setChecked(isChosen);
-			}
-		};
-
-		localBroadcastManager.registerReceiver(viewHolder.broadcastReceiver, new IntentFilter(LibrarySession.libraryChosenEvent));
-
-		btnSelectServer.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-			@Override
-			public void onViewAttachedToWindow(View v) {
-
-			}
-
-			@Override
-			public void onViewDetachedFromWindow(View v) {
-				if (viewHolder.broadcastReceiver != null)
-					localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
-				btnSelectServer.removeOnAttachStateChangeListener(this);
-			}
-		});
 
 		return convertView;
 	}
@@ -141,9 +111,5 @@ public class ServerListAdapter extends BaseAdapter {
 	@Override
 	public long getItemId(int position) {
 		return position > 0 ? mLibraries.get(--position).getId() : -1;
-	}
-
-	public interface OnServerSelected {
-		void onServerSelected(Context context, Library library);
 	}
 }
