@@ -51,8 +51,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	public static final String showDownloadsAction = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
 
-	private static final String className = BrowseLibraryActivity.class.getName();
-
 	private static final List<String> specialViews = Collections.singletonList("Active Downloads");
 
 	/**
@@ -74,8 +72,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private CharSequence oldTitle;
 	private boolean isStopped = false;
 
-	private boolean isLibraryChanged = false;
-
 	private Intent newIntent;
 
 	@Override
@@ -86,9 +82,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         // See http://stackoverflow.com/a/7748416
         if (!isTaskRoot()) {
             final Intent intent = getIntent();
-            final String intentAction = intent.getAction();
-
-	        if (intentAction != null && intentAction.equals(Intent.ACTION_MAIN) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+	        if (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+		        final String className = BrowseLibraryActivity.class.getName();
 		        LoggerFactory.getLogger(getClass()).info(className + " is not the root.  Finishing " + className + " instead of launching.");
 		        finish();
 		        return;
@@ -141,24 +136,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
 
 		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
-		specialLibraryItemsListView.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				updateSelectedView(Library.ViewType.DownloadView, 0);
-			}
-		});
+		specialLibraryItemsListView.setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-
-		if (isLibraryChanged) {
-			startActivity(new Intent(this, InstantiateSessionConnectionActivity.class));
-			finish();
-			return;
-		}
-
+		
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
 	}
 
