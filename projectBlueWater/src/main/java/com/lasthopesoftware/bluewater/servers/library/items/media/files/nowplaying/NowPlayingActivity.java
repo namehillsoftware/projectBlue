@@ -1,15 +1,18 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -33,9 +36,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -52,12 +52,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.TimerTask;
 
-public class NowPlayingActivity extends AppCompatActivity implements
-	OnNowPlayingChangeListener, 
-	OnNowPlayingPauseListener,
-	OnNowPlayingStopListener,
-	OnNowPlayingStartListener
-{
+public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayingChangeListener {
+
 	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
 	private NowPlayingActivityProgressTrackerTask mTrackerTask;
@@ -76,6 +72,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	private TextView mNowPlayingArtist;
 	private TextView mNowPlayingTitle;
 
+	private LocalBroadcastManager localBroadcastManager;
+
 	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
 	private static ViewStructure mViewStructure;
 
@@ -83,10 +81,35 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private static boolean isScreenKeptOn;
 
-	private final Runnable onConnectionLostListener = new Runnable() {
+	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(NowPlayingActivity.this);
+
+	private final BroadcastReceiver onPlaybackStartedReciever = new BroadcastReceiver() {
 		@Override
-		public void run() {
-			WaitForConnectionDialog.show(NowPlayingActivity.this);
+		public void onReceive(Context context, Intent intent) {
+			showNowPlayingControls();
+
+			mPlay.setVisibility(View.INVISIBLE);
+			mPause.setVisibility(View.VISIBLE);
+
+			updateKeepScreenOnStatus();
+		}
+	};
+
+	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (mTrackerTask != null) mTrackerTask.cancel(false);
+
+			final int fileDuration = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
+			if (fileDuration > -1) mSongProgressBar.setMax(fileDuration);
+
+			final int filePosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
+			if (filePosition > -1) mSongProgressBar.setProgress(filePosition);
+
+			mPlay.setVisibility(View.VISIBLE);
+			mPause.setVisibility(View.INVISIBLE);
+
+			disableKeepScreenOn();
 		}
 	};
 
@@ -115,13 +138,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
 
-		mContentView.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				showNowPlayingControls();
-			}
-		});
+		mContentView.setOnClickListener(v -> showNowPlayingControls());
 
 		mPlay = (ImageButton) findViewById(R.id.btnPlay);
 		mPause = (ImageButton) findViewById(R.id.btnPause);
@@ -135,88 +152,61 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls((LinearLayout) findViewById(R.id.llNpButtons), (LinearLayout) findViewById(R.id.menuControlsLinearLayout), mSongRating);
 		nowPlayingToggledVisibilityControls.toggleVisibility(false);
 
+		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
+		playbackStoppedIntentFilter.addAction(PlaybackService.PlaylistEvents.onPlaylistPause);
+		playbackStoppedIntentFilter.addAction(PlaybackService.PlaylistEvents.onPlaylistStop);
+
+		localBroadcastManager = LocalBroadcastManager.getInstance(this);
+		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
+		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
+
 		PlaybackService.addOnStreamingChangeListener(this);
-		PlaybackService.addOnStreamingPauseListener(this);
-		PlaybackService.addOnStreamingStopListener(this);
-		PlaybackService.addOnStreamingStartListener(this);
+
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
-		mPlay.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-				PlaybackService.play(v.getContext());
-				mPlay.setVisibility(View.INVISIBLE);
-				mPause.setVisibility(View.VISIBLE);
-			}
+		mPlay.setOnClickListener(v -> {
+			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			PlaybackService.play(v.getContext());
+			mPlay.setVisibility(View.INVISIBLE);
+			mPause.setVisibility(View.VISIBLE);
 		});
 		
-		mPause.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-				PlaybackService.pause(v.getContext());
-				mPlay.setVisibility(View.VISIBLE);
-				mPause.setVisibility(View.INVISIBLE);
-			}
+		mPause.setOnClickListener(v -> {
+			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			PlaybackService.pause(v.getContext());
+			mPlay.setVisibility(View.VISIBLE);
+			mPause.setVisibility(View.INVISIBLE);
 		});
 
 		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
-		next.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-				PlaybackService.next(v.getContext());
-			}
+		next.setOnClickListener(v -> {
+			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			PlaybackService.next(v.getContext());
 		});
 
 		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
-		previous.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-				PlaybackService.previous(v.getContext());
-			}
+		previous.setOnClickListener(v -> {
+			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			PlaybackService.previous(v.getContext());
 		});
 
 		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
 		setRepeatingIcon(shuffleButton);
 
-		shuffleButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(final View v) {
-				LibrarySession.GetActiveLibrary(v.getContext(), new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-
-					@Override
-					public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-						if (result == null) return;
-						final boolean isRepeating = !result.isRepeating();
-						PlaybackService.setIsRepeating(v.getContext(), isRepeating);
-						setRepeatingIcon(shuffleButton, isRepeating);
-					}
-				});
-			}
-		});
+		shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), (owner, result) -> {
+			if (result == null) return;
+			final boolean isRepeating = !result.isRepeating();
+			PlaybackService.setIsRepeating(v.getContext(), isRepeating);
+			setRepeatingIcon(shuffleButton, isRepeating);
+		}));
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
-		viewNowPlayingListButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class));
-			}
-		});
+		viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
 
 		isScreenKeptOnButton = (ImageButton) findViewById(R.id.isScreenKeptOnButton);
-		isScreenKeptOnButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				isScreenKeptOn = !isScreenKeptOn;
-				updateKeepScreenOnStatus();
-			}
+		isScreenKeptOnButton.setOnClickListener(v -> {
+			isScreenKeptOn = !isScreenKeptOn;
+			updateKeepScreenOnStatus();
 		});
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
@@ -257,7 +247,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mPause.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
@@ -284,7 +274,7 @@ public class NowPlayingActivity extends AppCompatActivity implements
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -531,13 +521,8 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		mLoadingImg.setVisibility(View.INVISIBLE);
 		mNowPlayingImageView.setVisibility(View.VISIBLE);	
 	}
-	
+
 	private void showNowPlayingControls() {
-		final PlaybackController playlistController = PlaybackService.getPlaylistController();
-		showNowPlayingControls(playlistController != null ? playlistController.getCurrentPlaybackFile() : null);
-	}
-	
-	private void showNowPlayingControls(final IPlaybackFile filePlayer) {
 		nowPlayingToggledVisibilityControls.toggleVisibility(true);
 		mContentView.invalidate();
 
@@ -578,45 +563,6 @@ public class NowPlayingActivity extends AppCompatActivity implements
 	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {
 		setView(filePlayer);
 	}
-	
-	@Override
-	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {		
-		showNowPlayingControls(filePlayer);
-		
-		mPlay.setVisibility(View.INVISIBLE);
-		mPause.setVisibility(View.VISIBLE);
-
-		updateKeepScreenOnStatus();
-	}
-	
-	@Override
-	public void onNowPlayingPause(PlaybackController controller, IPlaybackFile filePlayer) {
-		handleNowPlayingStopping(filePlayer);
-	}
-
-	@Override
-	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
-		handleNowPlayingStopping(filePlayer);
-	}
-	
-	private void handleNowPlayingStopping(IPlaybackFile filePlayer) {
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		
-		int duration = 100;
-		try {
-			duration = filePlayer.getDuration();
-		} catch (IOException e) {
-			mLogger.error(e.getMessage(), e);
-		}
-		
-		mSongProgressBar.setMax(duration);
-		mSongProgressBar.setProgress(filePlayer.getCurrentPosition());
-		
-		mPlay.setVisibility(View.VISIBLE);
-		mPause.setVisibility(View.INVISIBLE);
-
-		disableKeepScreenOn();
-	}
 
 	@Override
 	protected void onStop() {
@@ -632,9 +578,11 @@ public class NowPlayingActivity extends AppCompatActivity implements
 		if (mTimerTask != null) mTimerTask.cancel();
 		if (mTrackerTask != null) mTrackerTask.cancel(false);
 
-		PlaybackService.removeOnStreamingStartListener(this);
 		PlaybackService.removeOnStreamingChangeListener(this);
-		PlaybackService.removeOnStreamingPauseListener(this);
+
+		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
+		localBroadcastManager.unregisterReceiver(onPlaybackStartedReciever);
+
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
 	}
 }

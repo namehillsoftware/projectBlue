@@ -1,18 +1,19 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -75,15 +76,16 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
                 if (isNowPlayingFileSet) return;
 
-                // If now playing shouldn't be visible, detect when it should be
-                PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
+                final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
+
+                localBroadcastManager.registerReceiver(new BroadcastReceiver() {
                     @Override
-                    public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+                    public void onReceive(Context context, Intent intent) {
                         setVisibility(ViewUtils.getVisibility(true));
-                        PlaybackService.removeOnStreamingStartListener(this);
+                        localBroadcastManager.unregisterReceiver(this);
                         isNowPlayingFileSet = true;
                     }
-                });
+                }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
             }
         });
     }

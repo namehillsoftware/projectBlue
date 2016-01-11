@@ -48,10 +48,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImagePro
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
+import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -76,282 +76,248 @@ public class PlaybackService extends Service implements
 	OnNowPlayingPauseListener, 
 	OnPlaylistStateControlErrorListener
 {
-	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackService.class);
-	
-	/* String constant actions */
-	private static final String ACTION_LAUNCH_MUSIC_SERVICE = "com.lasthopesoftware.bluewater.action.LAUNCH_MUSIC_SERVICE";
-	private static final String ACTION_PLAY = "com.lasthopesoftware.bluewater.action.PLAY";
-	private static final String ACTION_PAUSE = "com.lasthopesoftware.bluewater.action.PAUSE";
-	private static final String ACTION_PREVIOUS = "com.lasthopesoftware.bluewater.action.PREVIOUS";
-	private static final String ACTION_NEXT = "com.lasthopesoftware.bluewater.action.NEXT";
-	private static final String ACTION_SEEK_TO = "com.lasthopesoftware.bluewater.action.SEEK_TO";
-	private static final String ACTION_SYSTEM_PAUSE = "com.lasthopesoftware.bluewater.action.SYSTEM_PAUSE";
-	private static final String ACTION_STOP_WAITING_FOR_CONNECTION = "com.lasthopesoftware.bluewater.action.STOP_WAITING_FOR_CONNECTION";
-	private static final String ACTION_INITIALIZE_PLAYLIST = "com.lasthopesoftware.bluewater.action.INITIALIZE_PLAYLIST";
+	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
-	private static final Set<String> validActions = new HashSet<String>(Arrays.asList(new String[] {
-			ACTION_LAUNCH_MUSIC_SERVICE,
-			ACTION_PLAY,
-			ACTION_PAUSE,
-			ACTION_PREVIOUS,
-			ACTION_NEXT,
-			ACTION_SEEK_TO,
-			ACTION_STOP_WAITING_FOR_CONNECTION,
-			ACTION_INITIALIZE_PLAYLIST
-	}));
-	
-	/* Bag constants */
-	private static final String BAG_FILE_KEY = "com.lasthopesoftware.bluewater.bag.FILE_KEY";
-	private static final String BAG_PLAYLIST = "com.lasthopesoftware.bluewater.bag.FILE_PLAYLIST";
-	private static final String BAG_START_POS = "com.lasthopesoftware.bluewater.bag.START_POS";
-	
-	/* Miscellaneous programming related string constants */
-	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
-	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
-	private static final String SCROBBLE_DROID_INTENT = "net.jjc1138.android.scrobbler.action.MUSIC_STATUS";
-		
-	private static final int mId = 42;
-	private static int mStartId;
-	private WifiLock mWifiLock = null;
-	private NotificationManager mNotificationMgr;
-	private PlaybackService mStreamingMusicService;
-	private AudioManager mAudioManager;
-	private ComponentName mRemoteControlReceiver;
-	private RemoteControlClient mRemoteControlClient;
-	private Bitmap mRemoteClientBitmap = null;
-	private volatile boolean hasAudioFocus = true;
-	
-	// State dependent static variables
-	private static volatile String mPlaylistString;
-	// Declare as volatile so that every thread has the same version of the playlist controllers
-	private static volatile PlaybackController mPlaylistController;
-	
-	private static boolean mAreListenersRegistered = false;
-	private static boolean mIsNotificationForeground = false;
-	
-	private static final Object syncHandlersObject = new Object();
-	private static final Object syncPlaylistControllerObject = new Object();
-	
-	private static final HashSet<OnNowPlayingChangeListener> mOnStreamingChangeListeners = new HashSet<>();
-	private static final HashSet<OnNowPlayingStartListener> mOnStreamingStartListeners = new HashSet<>();
-	private static final HashSet<OnNowPlayingStopListener> mOnStreamingStopListeners = new HashSet<>();
-	private static final HashSet<OnNowPlayingPauseListener> mOnStreamingPauseListeners = new HashSet<>();
-		
-	private Runnable mConnectionRegainedListener;
-	
-	private Runnable mOnPollingCancelledListener;
-	
+	private static class Action {
+		/* String constant actions */
+
+		private static final String LAUNCH_MUSIC_SERVICE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "LAUNCH_MUSIC_SERVICE");
+		private static final String PLAY = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PLAY");
+		private static final String PAUSE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PAUSE");
+		private static final String PREVIOUS = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PREVIOUS");
+		private static final String NEXT = SpecialValueHelpers.buildMagicPropertyName(Action.class, "NEXT");
+		private static final String SEEK_TO = SpecialValueHelpers.buildMagicPropertyName(Action.class, "SEEK_TO");
+		private static final String SYSTEM_PAUSE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "SYSTEM_PAUSE");
+		private static final String STOP_WAITING_FOR_CONNECTION = SpecialValueHelpers.buildMagicPropertyName(Action.class, "STOP_WAITING_FOR_CONNECTION");
+		private static final String INITIALIZE_PLAYLIST = SpecialValueHelpers.buildMagicPropertyName(Action.class, "INITIALIZE_PLAYLIST");
+
+		private static final Set<String> validActions = new HashSet<String>(Arrays.asList(new String[] {
+				LAUNCH_MUSIC_SERVICE,
+				PLAY,
+				PAUSE,
+				PREVIOUS,
+				NEXT,
+				SEEK_TO,
+				STOP_WAITING_FOR_CONNECTION,
+				INITIALIZE_PLAYLIST
+		}));
+
+		private static class Bag {
+			/* Bag constants */
+			private static final String FILE_KEY = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "FILE_KEY");
+			private static final String FILE_PLAYLIST = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "FILE_PLAYLIST");
+			private static final String START_POS = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "START_POS");
+		}
+	}
+
+	public static class PlaylistEvents {
+		public static final String onPlaylistChange = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistChange");
+		public static final String onPlaylistStart = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistStart");
+		public static final String onPlaylistStop = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistStop");
+		public static final String onPlaylistPause = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistPause");
+
+		public static class PlaybackFileParameters {
+			public static final String fileKey = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "fileKey");
+			public static final String filePosition = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "filePosition");
+			public static final String fileDuration = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "fileDuration");
+			public static final String isPlaying = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "isPlaying");
+		}
+
+		public static class PlaylistParameters {
+			public static final String playlistPosition = SpecialValueHelpers.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
+		}
+	}
+
+
 	private static Intent getNewSelfIntent(final Context context, String action) {
 		final Intent newIntent = new Intent(context, PlaybackService.class);
 		newIntent.setAction(action);
 		return newIntent;
 	}
-	
+
 	/* Begin streamer intent helpers */
 	public static void initializePlaylist(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);		
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void initializePlaylist(final Context context, int filePos, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void initializePlaylist(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(BAG_START_POS, fileProgress);
+		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void launchMusicService(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void launchMusicService(final Context context, int filePos, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void launchMusicService(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
-		svcIntent.putExtra(BAG_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(BAG_START_POS, fileProgress);
+		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
 		context.startService(svcIntent);
 	}
-	
-	public static void seekTo(final Context context, int filePos) { 
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_SEEK_TO);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
+
+	public static void seekTo(final Context context, int filePos) {
+		final Intent svcIntent = getNewSelfIntent(context, Action.SEEK_TO);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
 		context.startService(svcIntent);
 	}
-	
-	public static void seekTo(final Context context, int filePos, int fileProgress) { 
-		final Intent svcIntent = getNewSelfIntent(context, ACTION_SEEK_TO);
-		svcIntent.putExtra(BAG_FILE_KEY, filePos);
-		svcIntent.putExtra(BAG_START_POS, fileProgress);
+
+	public static void seekTo(final Context context, int filePos, int fileProgress) {
+		final Intent svcIntent = getNewSelfIntent(context, Action.SEEK_TO);
+		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
 		context.startService(svcIntent);
 	}
-	
+
 	public static void play(final Context context) {
-		context.startService(getNewSelfIntent(context, ACTION_PLAY));
+		context.startService(getNewSelfIntent(context, Action.PLAY));
 	}
-	
+
 	public static void pause(final Context context) {
-		context.startService(getNewSelfIntent(context, ACTION_PAUSE));
+		context.startService(getNewSelfIntent(context, Action.PAUSE));
 	}
-	
+
 	public static void next(final Context context) {
-		context.startService(getNewSelfIntent(context, ACTION_NEXT));
+		context.startService(getNewSelfIntent(context, Action.NEXT));
 	}
-	
+
 	public static void previous(final Context context) {
-		context.startService(getNewSelfIntent(context, ACTION_PREVIOUS));
+		context.startService(getNewSelfIntent(context, Action.PREVIOUS));
 	}
-	
+
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-				if (result == null) return;
-				result.setRepeating(isRepeating);
-				LibrarySession.SaveLibrary(context, result);
-				if (mPlaylistController != null) mPlaylistController.setIsRepeating(isRepeating);
-			}
+		LibrarySession.GetActiveLibrary(context, (owner, result) -> {
+			if (result == null) return;
+			result.setRepeating(isRepeating);
+			LibrarySession.SaveLibrary(context, result, (owner1, result1) -> {
+				if (playlistController != null) playlistController.setIsRepeating(isRepeating);
+			});
 		});
 	}
-	
+
 	/* End streamer intent helpers */
+	
+	/* Miscellaneous programming related string constants */
+	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
+	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
+	private static final String SCROBBLE_DROID_INTENT = "net.jjc1138.android.scrobbler.action.MUSIC_STATUS";
+
+	private static final int notificationId = 42;
+	private static int startId;
+	private WifiLock wifiLock = null;
+	private NotificationManager notificationManager;
+	private PlaybackService playbackService;
+	private AudioManager audioManager;
+	private ComponentName remoteControlReceiver;
+	private RemoteControlClient remoteControlClient;
+	private Bitmap remoteClientBitmap = null;
+	private volatile boolean hasAudioFocus = true;
+	
+	// State dependent static variables
+	private static volatile String playlistString;
+	// Declare as volatile so that every thread has the same version of the playlist controllers
+	private static volatile PlaybackController playlistController;
+	
+	private static boolean areListenersRegistered = false;
+	private static boolean isNotificationForeground = false;
+	
+	private static final Object syncHandlersObject = new Object();
+	private static final Object syncPlaylistControllerObject = new Object();
+	
+	private static final HashSet<OnNowPlayingChangeListener> onStreamingChangeListeners = new HashSet<>();
+	private static final HashSet<OnNowPlayingStartListener> onStreamingStartListeners = new HashSet<>();
+
+	private Runnable connectionRegainedListener;
+	
+	private Runnable onPollingCancelledListener;
+
+	private LocalBroadcastManager localBroadcastManager;
 	
 	/* Begin Events */
 	public static void addOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		mOnStreamingChangeListeners.add(listener);
+		onStreamingChangeListeners.add(listener);
 	}
 
-	public static void addOnStreamingStartListener(OnNowPlayingStartListener listener) {
-		mOnStreamingStartListeners.add(listener);
-	}
-	
-	public static void addOnStreamingStopListener(OnNowPlayingStopListener listener) {
-		mOnStreamingStopListeners.add(listener);
-	}
-	
-	public static void addOnStreamingPauseListener(OnNowPlayingPauseListener listener) {
-		mOnStreamingPauseListeners.add(listener);
-	}
-	
 	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
 		synchronized(syncHandlersObject) {
-			if (mOnStreamingChangeListeners.contains(listener))
-				mOnStreamingChangeListeners.remove(listener);
+			if (onStreamingChangeListeners.contains(listener))
+				onStreamingChangeListeners.remove(listener);
 		}
 	}
 
-	public static void removeOnStreamingStartListener(OnNowPlayingStartListener listener) {
-		synchronized(syncHandlersObject) {
-			if (mOnStreamingStartListeners.contains(listener))
-				mOnStreamingStartListeners.remove(listener);
-		}
-	}
-	
-	public static void removeOnStreamingStopListener(OnNowPlayingStopListener listener) {
-		synchronized(syncHandlersObject) {
-			if (mOnStreamingStopListeners.contains(listener))
-				mOnStreamingStopListeners.remove(listener);
-		}
-	}
-	
-	public static void removeOnStreamingPauseListener(OnNowPlayingPauseListener listener) {
-		synchronized(syncHandlersObject) {
-			if (mOnStreamingPauseListeners.contains(listener))
-				mOnStreamingPauseListeners.remove(listener);
-		}
-	}
-	
 	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
 		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingChangeListeners, new OneParameterRunnable<OnNowPlayingChangeListener>() {
-                @Override
-                public void run(OnNowPlayingChangeListener parameter) {
-                    parameter.onNowPlayingChange(controller, filePlayer);
-                }
-            });
+            ListenerThrower.throwListeners(onStreamingChangeListeners, parameter -> parameter.onNowPlayingChange(controller, filePlayer));
 		}
-	}
 
-	private void throwStartEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStartListeners, new OneParameterRunnable<OnNowPlayingStartListener>() {
-                @Override
-                public void run(OnNowPlayingStartListener parameter) {
-                    parameter.onNowPlayingStart(controller, filePlayer);
-                }
-            });
-		}
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, controller, filePlayer);
 	}
 	
-	private void throwStopEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingStopListeners, new OneParameterRunnable<OnNowPlayingStopListener>() {
-                @Override
-                public void run(OnNowPlayingStopListener parameter) {
-                    parameter.onNowPlayingStop(controller, filePlayer);
-                }
-            });
+	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
+		final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
+
+		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition());
+
+		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey());
+		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition());
+
+		int duration = -1;
+		try {
+			duration = playbackFile.getDuration();
+		} catch (IOException io) {
+			logger.warn("There was an error getting the playback file duration", io);
 		}
-	}
-	
-	private void throwPauseEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		synchronized(syncHandlersObject) {
-            ListenerThrower.throwListeners(mOnStreamingPauseListeners, new OneParameterRunnable<OnNowPlayingPauseListener>() {
-                @Override
-                public void run(OnNowPlayingPauseListener parameter) {
-                    parameter.onNowPlayingPause(controller, filePlayer);
-                }
-            });
-		}
+
+		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, duration);
+		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
+
+		localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
 	}
 
 	/* End Events */
 		
 	public static PlaybackController getPlaylistController() {
 		synchronized(syncPlaylistControllerObject) {
-			return mPlaylistController;
+			return playlistController;
 		}
 	}
 	
 	public PlaybackService() {
 		super();
-		mStreamingMusicService = this;
+		playbackService = this;
 	}
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+		LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
 				if (library == null) return;
 
-				final Runnable onPlaylistInitialized = new Runnable() {
-					@Override
-					public void run() {
-						onPlaylistRestored.run(true);
-					}
-				};
-
-				final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mStreamingMusicService);
+				final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
 
 				final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
 					@Override
@@ -387,7 +353,7 @@ public class PlaybackService extends Service implements
 
 				localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
 
-				SessionConnection.refresh(mStreamingMusicService);
+				SessionConnection.refresh(playbackService);
 			}
 
 		});
@@ -403,7 +369,7 @@ public class PlaybackService extends Service implements
 		notifyStartingService();
 
 		// If the playlist has changed, change that
-		if (mPlaylistController == null || !playlistString.equals(mPlaylistString)) {
+		if (playlistController == null || !playlistString.equals(PlaybackService.playlistString)) {
 			initializePlaylist(playlistString, new Runnable() {
 
 				@Override
@@ -415,8 +381,8 @@ public class PlaybackService extends Service implements
 			return;
 		}
         
-		mLogger.info("Starting playback");
-        mPlaylistController.startAt(filePos, fileProgress);
+		logger.info("Starting playback");
+        playlistController.startAt(filePos, fileProgress);
         
         if (onPlaylistStarted != null) onPlaylistStarted.run();
 	}
@@ -431,7 +397,7 @@ public class PlaybackService extends Service implements
 			@Override
 			public void run() {
 				if (!playlistString.isEmpty())
-					mPlaylistController.seekTo(filePos, fileProgress);
+					playlistController.seekTo(filePos, fileProgress);
 
 				if (onPlaylistControllerInitialized != null)
 					onPlaylistControllerInitialized.run();
@@ -440,36 +406,36 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+		LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 			
 			@Override
 			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
 				synchronized (syncPlaylistControllerObject) {
-					mLogger.info("Initializing playlist.");
-					mPlaylistString = playlistString;
+					logger.info("Initializing playlist.");
+					PlaybackService.playlistString = playlistString;
 					
 					// First try to get the playlist string from the database
-					if (mPlaylistString == null || mPlaylistString.isEmpty())
-						mPlaylistString = result.getSavedTracksString();
+					if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
+						PlaybackService.playlistString = result.getSavedTracksString();
 					
-					result.setSavedTracksString(mPlaylistString);
-					LibrarySession.SaveLibrary(mStreamingMusicService, result, new TwoParameterRunnable<FluentTask<Void, Void, Library>, Library>() {
+					result.setSavedTracksString(PlaybackService.playlistString);
+					LibrarySession.SaveLibrary(playbackService, result, new TwoParameterRunnable<FluentTask<Void, Void, Library>, Library>() {
 						
 						@Override
 						public void run(FluentTask<Void, Void, Library> owner, Library result) {
-							if (mPlaylistController != null) {
-								mPlaylistController.pause();
-								mPlaylistController.release();
+							if (playlistController != null) {
+								playlistController.pause();
+								playlistController.release();
 							}
 							
-							mPlaylistController = new PlaybackController(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), mPlaylistString);
+							playlistController = new PlaybackController(playbackService, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
 							
-							mPlaylistController.setIsRepeating(result.isRepeating());
-							mPlaylistController.addOnNowPlayingChangeListener(mStreamingMusicService);
-							mPlaylistController.addOnNowPlayingStopListener(mStreamingMusicService);
-							mPlaylistController.addOnNowPlayingPauseListener(mStreamingMusicService);
-							mPlaylistController.addOnPlaylistStateControlErrorListener(mStreamingMusicService);
-							mPlaylistController.addOnNowPlayingStartListener(mStreamingMusicService);
+							playlistController.setIsRepeating(result.isRepeating());
+							playlistController.addOnNowPlayingChangeListener(playbackService);
+							playlistController.addOnNowPlayingStopListener(playbackService);
+							playlistController.addOnNowPlayingPauseListener(playbackService);
+							playlistController.addOnPlaylistStateControlErrorListener(playbackService);
+							playlistController.addOnNowPlayingStartListener(playbackService);
 							
 							onPlaylistControllerInitialized.run();
 						}
@@ -482,29 +448,29 @@ public class PlaybackService extends Service implements
 	private void pausePlayback(boolean isUserInterrupted) {
 		stopNotification();
 		
-		if (mPlaylistController == null || !mPlaylistController.isPlaying()) return;
+		if (playlistController == null || !playlistController.isPlaying()) return;
 
-		if (isUserInterrupted && mAreListenersRegistered) unregisterListeners();
-		mPlaylistController.pause();
+		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
+		playlistController.pause();
 	}
 	
 	private void notifyForeground(Builder notificationBuilder) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		final Notification notification = notificationBuilder.build();
 
-		if (!mIsNotificationForeground) {
-			startForeground(mId, notification);
-			mIsNotificationForeground = true;
+		if (!isNotificationForeground) {
+			startForeground(notificationId, notification);
+			isNotificationForeground = true;
 			return;
 		}
 		
-		mNotificationMgr.notify(mId, notification);
+		notificationManager.notify(notificationId, notification);
 	}
 	
 	private void stopNotification() {
 		stopForeground(true);
-		mIsNotificationForeground = false;
-		mNotificationMgr.cancel(mId);
+		isNotificationForeground = false;
+		notificationManager.cancel(notificationId);
 	}
 
 	private void notifyStartingService() {
@@ -516,57 +482,57 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void registerListeners() {
-		mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
-		mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
-        mWifiLock.acquire();
+		wifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
+        wifiLock.acquire();
 		
         registerRemoteClientControl();
         
-		mAreListenersRegistered = true;
+		areListenersRegistered = true;
 	}
 	
 	private void registerRemoteClientControl() {
-		if (mAudioManager == null) return;
+		if (audioManager == null) return;
 		
-		if (mRemoteControlReceiver == null)
-			mRemoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
+		if (remoteControlReceiver == null)
+			remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
 		
-		mAudioManager.registerMediaButtonEventReceiver(mRemoteControlReceiver);
+		audioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
         
-		if (mRemoteControlClient == null) {
+		if (remoteControlClient == null) {
 	        // build the PendingIntent for the remote control client
 			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-			mediaButtonIntent.setComponent(mRemoteControlReceiver);
-			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(mStreamingMusicService, 0, mediaButtonIntent, 0);
+			mediaButtonIntent.setComponent(remoteControlReceiver);
+			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(playbackService, 0, mediaButtonIntent, 0);
 			// create and register the remote control client
-			mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
-			mRemoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-			mRemoteControlClient.setTransportControlFlags(
+			remoteControlClient = new RemoteControlClient(mediaPendingIntent);
+			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+			remoteControlClient.setTransportControlFlags(
 					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-	                RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-	                RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-	                RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+							RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+							RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+							RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 		}
 		
-		mAudioManager.registerRemoteControlClient(mRemoteControlClient);
+		audioManager.registerRemoteControlClient(remoteControlClient);
 	}
 	
 	private void unregisterListeners() {
-		mAudioManager.abandonAudioFocus(this);
+		audioManager.abandonAudioFocus(this);
 		
 		// release the wifilock if we still have it
-		if (mWifiLock != null) {
-			if (mWifiLock.isHeld()) mWifiLock.release();
-			mWifiLock = null;
+		if (wifiLock != null) {
+			if (wifiLock.isHeld()) wifiLock.release();
+			wifiLock = null;
 		}
-		final PollConnection pollConnection = PollConnection.Instance.get(mStreamingMusicService);
-		if (mConnectionRegainedListener != null)
-			pollConnection.removeOnConnectionRegainedListener(mConnectionRegainedListener);
-		if (mOnPollingCancelledListener != null)
-			pollConnection.removeOnPollingCancelledListener(mOnPollingCancelledListener);
+		final PollConnection pollConnection = PollConnection.Instance.get(playbackService);
+		if (connectionRegainedListener != null)
+			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener);
+		if (onPollingCancelledListener != null)
+			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener);
 		
-		mAreListenersRegistered = false;
+		areListenersRegistered = false;
 	}
 	
 	/* Begin Event Handlers */
@@ -577,18 +543,18 @@ public class PlaybackService extends Service implements
 	
 	public int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
-		mStartId = startId;
+		PlaybackService.startId = startId;
 
-		if (!validActions.contains(intent.getAction())) {
+		if (!Action.validActions.contains(intent.getAction())) {
 			stopSelf(startId);
 			return START_NOT_STICKY;
 		}
 		
-		mStreamingMusicService = this;
+		playbackService = this;
 		
 		if (!SessionConnection.isBuilt()) {
 			// TODO this should probably be its own service soon
-			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(mStreamingMusicService);
+			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(playbackService);
 
 			final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
 				@Override
@@ -603,7 +569,7 @@ public class PlaybackService extends Service implements
 
 			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-			handleBuildStatusChange(SessionConnection.build(mStreamingMusicService), intent);
+			handleBuildStatusChange(SessionConnection.build(playbackService), intent);
 			
 			return START_NOT_STICKY;
 		}
@@ -614,7 +580,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void handleBuildStatusChange(final int status, final Intent intentToRun) {
-		final Builder notifyBuilder = new Builder(mStreamingMusicService);
+		final Builder notifyBuilder = new Builder(playbackService);
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
@@ -622,7 +588,7 @@ public class PlaybackService extends Service implements
 			break;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 //			notifyBuilder.setContentText(getText(R.string.lbl_please_connect_to_valid_server));
-			stopSelf(mStartId);
+			stopSelf(startId);
 //			launchActivityDelayed(selectServerIntent);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
@@ -631,7 +597,7 @@ public class PlaybackService extends Service implements
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 //			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
 //			launchActivityDelayed(selectServerIntent);
-			stopSelf(mStartId);
+			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
@@ -639,7 +605,7 @@ public class PlaybackService extends Service implements
 		case BuildingSessionConnectionStatus.GettingViewFailed:
 //			lblConnectionStatus.setText(R.string.lbl_library_no_views);
 //			launchActivityDelayed(selectServerIntent);
-			stopSelf(mStartId);
+			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
@@ -656,103 +622,95 @@ public class PlaybackService extends Service implements
 		}
 		
 		final String action = intent.getAction(); 
-		if (action.equals(ACTION_LAUNCH_MUSIC_SERVICE)) {
-			startPlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0), new Runnable() {
+		if (action.equals(Action.LAUNCH_MUSIC_SERVICE)) {
+			startPlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), new Runnable() {
 				
 				@Override
 				public void run() {
-					ViewUtils.CreateNowPlayingView(mStreamingMusicService);
+					ViewUtils.CreateNowPlayingView(playbackService);
 				}
 			});
 			
 			return;
         }
 		
-		if (action.equals(ACTION_INITIALIZE_PLAYLIST)) {
-        	initializePlaylist(intent.getStringExtra(BAG_PLAYLIST), intent.getIntExtra(BAG_FILE_KEY, -1), intent.getIntExtra(BAG_START_POS, 0), null);
+		if (action.equals(Action.INITIALIZE_PLAYLIST)) {
+        	initializePlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), null);
         	return;
         }
 		
-		if (action.equals(ACTION_PLAY)) {
-        	if (mPlaylistController == null) {
+		if (action.equals(Action.PLAY)) {
+        	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	if (mPlaylistController.resume()) return;
+        	if (playlistController.resume()) return;
         	
-        	LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-
-		        @Override
-		        public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-			        startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
-		        }
-	        });
+        	LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
         	
         	return;
         }
 		
-		if (action.equals(ACTION_SEEK_TO)) {
-        	if (mPlaylistController == null) {
+		if (action.equals(Action.SEEK_TO)) {
+        	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	mPlaylistController.seekTo(intent.getIntExtra(BAG_FILE_KEY, 0), intent.getIntExtra(BAG_START_POS, 0));
+        	playlistController.seekTo(intent.getIntExtra(Action.Bag.FILE_KEY, 0), intent.getIntExtra(Action.Bag.START_POS, 0));
         	return;
         }
 		
-		if (action.equals(ACTION_PREVIOUS)) {
-        	if (mPlaylistController == null) {
+		if (action.equals(Action.PREVIOUS)) {
+        	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() > 0 ? mPlaylistController.getCurrentPosition() - 1 : mPlaylistController.getPlaylist().size() - 1);
+        	playlistController.seekTo(playlistController.getCurrentPosition() > 0 ? playlistController.getCurrentPosition() - 1 : playlistController.getPlaylist().size() - 1);
         	return;
         }
 		
-		if (action.equals(ACTION_NEXT)) {
-        	if (mPlaylistController == null) {
+		if (action.equals(Action.NEXT)) {
+        	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	mPlaylistController.seekTo(mPlaylistController.getCurrentPosition() < mPlaylistController.getPlaylist().size() - 1 ? mPlaylistController.getCurrentPosition() + 1 : 0);
+        	playlistController.seekTo(playlistController.getCurrentPosition() < playlistController.getPlaylist().size() - 1 ? playlistController.getCurrentPosition() + 1 : 0);
         	return;
         }
 		
-		if (mPlaylistController != null && action.equals(ACTION_PAUSE)) {
+		if (playlistController != null && action.equals(Action.PAUSE)) {
         	pausePlayback(true);
         	return;
         }
 		
-		if (action.equals(ACTION_STOP_WAITING_FOR_CONNECTION)) {
-        	PollConnection.Instance.get(mStreamingMusicService).stopPolling();
+		if (action.equals(Action.STOP_WAITING_FOR_CONNECTION)) {
+        	PollConnection.Instance.get(playbackService).stopPolling();
 		}
 	}
 	
 	private void restorePlaylistForIntent(final Intent intent) {
 		notifyStartingService();
 
-		restorePlaylistControllerFromStorage(new OneParameterRunnable<Boolean>() {
-			@Override
-			public void run(Boolean result) {
-				if (result) {
-					actOnIntent(intent);
+		restorePlaylistControllerFromStorage(result -> {
+			if (result) {
+				actOnIntent(intent);
 
-					if (mPlaylistController != null && mPlaylistController.isPlaying()) return;
-				}
-
-				stopNotification();
+				if (playlistController != null && playlistController.isPlaying()) return;
 			}
+
+			stopNotification();
 		});
 	}
 	
 	@Override
     public void onCreate() {
-		mNotificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+		notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+		audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		
 		registerRemoteClientControl();
 	}
@@ -764,8 +722,8 @@ public class PlaybackService extends Service implements
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(mStreamingMusicService, PlaybackService.class);
-		intent.setAction(ACTION_STOP_WAITING_FOR_CONNECTION);
+		final Intent intent = new Intent(playbackService, PlaybackService.class);
+		intent.setAction(Action.STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
 
@@ -773,19 +731,19 @@ public class PlaybackService extends Service implements
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyForeground(builder);
 		
-		final PollConnection checkConnection = PollConnection.Instance.get(mStreamingMusicService);
+		final PollConnection checkConnection = PollConnection.Instance.get(playbackService);
 		
-		if (mConnectionRegainedListener == null) {
-			mConnectionRegainedListener = new Runnable() {
+		if (connectionRegainedListener == null) {
+			connectionRegainedListener = new Runnable() {
 				
 				@Override
 				public void run() {
-					if (mPlaylistController != null && !mPlaylistController.isPlaying()) {
-						stopSelf(mStartId);
+					if (playlistController != null && !playlistController.isPlaying()) {
+						stopSelf(startId);
 						return;
 					}
 					
-					LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+					LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
 						
 						@Override
 						public void run(FluentTask<Integer, Void, Library> owner, Library result) {
@@ -797,19 +755,15 @@ public class PlaybackService extends Service implements
 			};
 		}
 		
-		checkConnection.addOnConnectionRegainedListener(mConnectionRegainedListener);
+		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener);
 		
-		if (mOnPollingCancelledListener == null) {
-			mOnPollingCancelledListener = new Runnable() {
-				
-				@Override
-				public void run() {
-					unregisterListeners();
-					stopSelf(mStartId);
-				}
+		if (onPollingCancelledListener == null) {
+			onPollingCancelledListener = () -> {
+				unregisterListeners();
+				stopSelf(startId);
 			};
 		}
-		checkConnection.addOnPollingCancelledListener(mOnPollingCancelledListener);
+		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener);
 		
 		checkConnection.startPolling();
 	}
@@ -820,24 +774,21 @@ public class PlaybackService extends Service implements
 			hasAudioFocus = true;
 
 			// resume playback
-			if (mPlaylistController != null) {
-				mPlaylistController.setVolume(1.0f);
-	    		if (mPlaylistController.isPlaying()) return;
+			if (playlistController != null) {
+				playlistController.setVolume(1.0f);
+	    		if (playlistController.isPlaying()) return;
 
-				if (mPlaylistController.resume()) return;
+				if (playlistController.resume()) return;
 			}
 
-			restorePlaylistControllerFromStorage(new OneParameterRunnable<Boolean>() {
-				@Override
-				public void run(Boolean result) {
-					if (result && hasAudioFocus) mPlaylistController.resume();
-				}
+			restorePlaylistControllerFromStorage(result -> {
+				if (result && hasAudioFocus) playlistController.resume();
 			});
 
 			return;
 		}
 		
-		if (mPlaylistController == null) return;
+		if (playlistController == null) return;
 		
 	    switch (focusChange) {
         	// Lost focus for an unbounded amount of time: stop playback and release media player
@@ -845,12 +796,12 @@ public class PlaybackService extends Service implements
 	        	hasAudioFocus = false;
 	        // Lost focus but it will be regained... cannot release resources
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-	        	if (mPlaylistController.isPlaying()) pausePlayback(false);
+	        	if (playlistController.isPlaying()) pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 	            // Lost focus for a short time, but it's ok to keep playing
 	            // at an attenuated level
-	            if (mPlaylistController.isPlaying()) mPlaylistController.setVolume(0.2f);
+	            if (playlistController.isPlaying()) playlistController.setVolume(0.2f);
 	    }
 	}
 	
@@ -858,10 +809,10 @@ public class PlaybackService extends Service implements
 	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
 		
-		throwStopEvent(controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, controller, filePlayer);
 		
 		stopNotification();
-		if (mAreListenersRegistered) unregisterListeners();
+		if (areListenersRegistered) unregisterListeners();
 		
 		controller.seekTo(0);
 		
@@ -874,11 +825,10 @@ public class PlaybackService extends Service implements
 		
 		stopNotification();
 		
-		throwPauseEvent(controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, controller, filePlayer);
 		
 		sendBroadcast(getScrobbleIntent(false));
 	}
-	
 
 	private static Intent getScrobbleIntent(final boolean isPlaying) {
 		final Intent scrobbleDroidIntent = new Intent(SCROBBLE_DROID_INTENT);
@@ -894,17 +844,13 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetActiveLibrary(mStreamingMusicService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> {
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
+			result.setSavedTracksString(controller.getPlaylistString());
+			result.setNowPlayingId(controller.getCurrentPosition());
+			result.setNowPlayingProgress(filePlayer.getCurrentPosition());
 
-				result.setSavedTracksString(controller.getPlaylistString());
-				result.setNowPlayingId(controller.getCurrentPosition());
-				result.setNowPlayingProgress(filePlayer.getCurrentPosition());
-				
-				LibrarySession.SaveLibrary(mStreamingMusicService, result);
-			}
+			LibrarySession.SaveLibrary(playbackService, result);
 		});
 	}
 	
@@ -912,7 +858,7 @@ public class PlaybackService extends Service implements
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
 		final IFile playingFile = filePlayer.getFile();
 		
-		if (!mAreListenersRegistered) registerListeners();
+		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
 		
 		// Set the notification area
@@ -933,17 +879,13 @@ public class PlaybackService extends Service implements
 			}
 		};
 
-		getNotificationPropertiesTask.onComplete(new OneParameterRunnable<String>() {
-			
-			@Override
-			public void run(String result) {
-				final NotificationCompat.Builder builder = new NotificationCompat.Builder(mStreamingMusicService);
-				builder.setOngoing(true);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
-				builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
-				builder.setContentIntent(pi);
-				notifyForeground(builder);
-			}
+		getNotificationPropertiesTask.onComplete(result -> {
+			final Builder builder = new Builder(playbackService);
+			builder.setOngoing(true);
+			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
+			builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
+			builder.setContentIntent(pi);
+			notifyForeground(builder);
 		});
 		
 		getNotificationPropertiesTask.execute();
@@ -970,107 +912,98 @@ public class PlaybackService extends Service implements
 			}
 		};
 
-		getTrackPropertiesTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,SparseArray<Object>>, SparseArray<Object>>() {
-			
-			@Override
-			public void run(FluentTask<Void, Void, SparseArray<Object>> owner, SparseArray<Object> result) {
-				
-				final String artist = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-				final String album = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-				final String title = (String) result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
-				final Long duration = (Long) result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
-				final Integer trackNumber = (Integer) result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
-				
-				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
-				pebbleIntent.putExtra("artist", artist);
-				pebbleIntent.putExtra("album", album);
-				pebbleIntent.putExtra("track", title);
+		getTrackPropertiesTask.onComplete((owner, result) -> {
 
-				sendBroadcast(pebbleIntent);
+			final String artist = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+			final String album = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+			final String title = (String) result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
+			final Long duration = (Long) result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
+			final Integer trackNumber = (Integer) result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
 
-				final Intent scrobbleDroidIntent = getScrobbleIntent(true);
-				scrobbleDroidIntent.putExtra("artist", artist);
-				scrobbleDroidIntent.putExtra("album", album);
-				scrobbleDroidIntent.putExtra("track", title);
-				scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
-				if (trackNumber != null)
-					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
+			final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
+			pebbleIntent.putExtra("artist", artist);
+			pebbleIntent.putExtra("album", album);
+			pebbleIntent.putExtra("track", title);
 
-				sendBroadcast(scrobbleDroidIntent);
-				
-				if (mRemoteControlClient == null) return;
+			sendBroadcast(pebbleIntent);
 
-				final MetadataEditor metaData = mRemoteControlClient.editMetadata(true);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);
-				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration.longValue());
-				if (trackNumber != null)
-					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
-				metaData.apply();
-				
-				if (android.os.Build.VERSION.SDK_INT < 19) return;
-				
-				ImageProvider
-						.getImage(mStreamingMusicService, SessionConnection.getSessionConnectionProvider(), playingFile)
-						.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+			final Intent scrobbleDroidIntent = getScrobbleIntent(true);
+			scrobbleDroidIntent.putExtra("artist", artist);
+			scrobbleDroidIntent.putExtra("album", album);
+			scrobbleDroidIntent.putExtra("track", title);
+			scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
+			if (trackNumber != null)
+				scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
 
-							@TargetApi(Build.VERSION_CODES.KITKAT)
-							@Override
-							public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
-								// Track the remote client bitmap and recycle it in case the remote control client
-								// does not properly recycle the bitmap
-								if (mRemoteClientBitmap != null) mRemoteClientBitmap.recycle();
-								mRemoteClientBitmap = result;
+			sendBroadcast(scrobbleDroidIntent);
 
-								final MetadataEditor metaData = mRemoteControlClient.editMetadata(false);
-								metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
-							}
-						})
-						.execute();
-				
-			}
+			if (remoteControlClient == null) return;
+
+			final MetadataEditor metaData = remoteControlClient.editMetadata(true);
+			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
+			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
+			metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);
+			metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration.longValue());
+			if (trackNumber != null)
+				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
+			metaData.apply();
+
+			if (Build.VERSION.SDK_INT < 19) return;
+
+			ImageProvider
+					.getImage(playbackService, SessionConnection.getSessionConnectionProvider(), playingFile)
+					.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+
+						@TargetApi(Build.VERSION_CODES.KITKAT)
+						@Override
+						public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
+							// Track the remote client bitmap and recycle it in case the remote control client
+							// does not properly recycle the bitmap
+							if (remoteClientBitmap != null) remoteClientBitmap.recycle();
+							remoteClientBitmap = result;
+
+							final MetadataEditor metaData = remoteControlClient.editMetadata(false);
+							metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
+						}
+					})
+					.execute();
+
 		});
 
-		getTrackPropertiesTask.onError(new OneParameterCallable<Exception, Boolean>() {
-			@Override
-			public Boolean call(Exception e) {
-				return true;
-			}
-		});
+		getTrackPropertiesTask.onError(e -> true);
 
 		getTrackPropertiesTask.execute();
 		
-		throwStartEvent(controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, filePlayer);
 	}
 		
 	@Override
 	public void onDestroy() {
 		stopNotification();
 		
-		if (mPlaylistController != null) {
-			if (mPlaylistController.getCurrentPlaybackFile() != null)
-				saveStateToLibrary(mPlaylistController, mPlaylistController.getCurrentPlaybackFile());
+		if (playlistController != null) {
+			if (playlistController.getCurrentPlaybackFile() != null)
+				saveStateToLibrary(playlistController, playlistController.getCurrentPlaybackFile());
 
-			mPlaylistController.release();
-			mPlaylistController = null;
+			playlistController.release();
+			playlistController = null;
 		}
 		
-		if (mAreListenersRegistered) unregisterListeners();
+		if (areListenersRegistered) unregisterListeners();
 		
-		if (mAudioManager != null) {
-			if (mRemoteControlReceiver != null)
-				mAudioManager.unregisterMediaButtonEventReceiver(mRemoteControlReceiver);
-			if (mRemoteControlClient != null)
-				mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
+		if (audioManager != null) {
+			if (remoteControlReceiver != null)
+				audioManager.unregisterMediaButtonEventReceiver(remoteControlReceiver);
+			if (remoteControlClient != null)
+				audioManager.unregisterRemoteControlClient(remoteControlClient);
 		}
 		
-		if (mRemoteClientBitmap != null) {
-			mRemoteClientBitmap.recycle();
-			mRemoteClientBitmap = null;
+		if (remoteClientBitmap != null) {
+			remoteClientBitmap.recycle();
+			remoteClientBitmap = null;
 		}
 		
-		mPlaylistString = null;
+		playlistString = null;
 	}
 
 	/* End Event Handlers */

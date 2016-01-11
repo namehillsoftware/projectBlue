@@ -1,45 +1,47 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.menu;
 
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 
 /**
  * Created by david on 4/14/15.
  */
-public abstract class AbstractFileListItemNowPlayingHandler implements OnNowPlayingStartListener {
+public abstract class AbstractFileListItemNowPlayingHandler extends BroadcastReceiver {
 
-    private final RelativeLayout mFileTextViewContainer;
+    private final RelativeLayout fileTextViewContainer;
 
     private View.OnAttachStateChangeListener onAttachStateChangeListener;
 
+    private final LocalBroadcastManager localBroadcastManager;
+
     public AbstractFileListItemNowPlayingHandler(FileListItemContainer fileListItem) {
-        mFileTextViewContainer = fileListItem.getTextViewContainer();
-        if (mFileTextViewContainer == null)
-            throw new IllegalArgumentException("fileListItem.getTextView() cannot be null");
+        fileTextViewContainer = fileListItem.getTextViewContainer();
 
-        final OnNowPlayingStartListener onNowPlayingStartListener = this;
+        localBroadcastManager = LocalBroadcastManager.getInstance(fileTextViewContainer.getContext());
 
-        PlaybackService.addOnStreamingStartListener(onNowPlayingStartListener);
+        localBroadcastManager.registerReceiver(this, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
 
         onAttachStateChangeListener = new View.OnAttachStateChangeListener() {
 
             @Override
             public void onViewDetachedFromWindow(View v) {
-                PlaybackService.removeOnStreamingStartListener(onNowPlayingStartListener);
+                localBroadcastManager.unregisterReceiver(AbstractFileListItemNowPlayingHandler.this);
             }
 
             @Override
             public void onViewAttachedToWindow(View v) { }
         };
 
-        mFileTextViewContainer.addOnAttachStateChangeListener(onAttachStateChangeListener);
+        fileTextViewContainer.addOnAttachStateChangeListener(onAttachStateChangeListener);
     }
 
     public void release() {
-        PlaybackService.removeOnStreamingStartListener(this);
-        mFileTextViewContainer.removeOnAttachStateChangeListener(onAttachStateChangeListener);
+        localBroadcastManager.unregisterReceiver(this);
+        fileTextViewContainer.removeOnAttachStateChangeListener(onAttachStateChangeListener);
     }
 }
