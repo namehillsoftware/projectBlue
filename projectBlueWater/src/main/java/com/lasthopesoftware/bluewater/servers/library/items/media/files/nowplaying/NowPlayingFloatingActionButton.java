@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
@@ -24,8 +22,6 @@ import com.vedsoft.futures.runnables.TwoParameterRunnable;
  * Created by david on 10/11/15.
  */
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
-    private static Drawable nowPlayingIconDrawable;
-
     public static NowPlayingFloatingActionButton addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
 
@@ -46,10 +42,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
     private NowPlayingFloatingActionButton(Context context) {
         super(context);
 
-        if (nowPlayingIconDrawable == null)
-            nowPlayingIconDrawable = context.getResources().getDrawable(R.drawable.av_play_dark);
-
-        setImageDrawable(nowPlayingIconDrawable);
+        setImageDrawable(ViewUtils.getDrawable(context, R.drawable.av_play_dark));
 
         initializeNowPlayingFloatingActionButton();
     }
@@ -57,12 +50,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
     @SuppressWarnings("ResourceType")
     private void initializeNowPlayingFloatingActionButton() {
-        setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ViewUtils.CreateNowPlayingView(v.getContext());
-            }
-        });
+        setOnClickListener(v -> ViewUtils.CreateNowPlayingView(v.getContext()));
 
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
