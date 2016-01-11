@@ -22,18 +22,22 @@ import android.media.RemoteControlClient;
 import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -59,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -79,32 +84,36 @@ public class PlaybackService extends Service implements
 	private static class Action {
 		/* String constant actions */
 
-		private static final String LAUNCH_MUSIC_SERVICE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "LAUNCH_MUSIC_SERVICE");
-		private static final String PLAY = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PLAY");
-		private static final String PAUSE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PAUSE");
-		private static final String PREVIOUS = SpecialValueHelpers.buildMagicPropertyName(Action.class, "PREVIOUS");
-		private static final String NEXT = SpecialValueHelpers.buildMagicPropertyName(Action.class, "NEXT");
-		private static final String SEEK_TO = SpecialValueHelpers.buildMagicPropertyName(Action.class, "SEEK_TO");
-		private static final String SYSTEM_PAUSE = SpecialValueHelpers.buildMagicPropertyName(Action.class, "SYSTEM_PAUSE");
-		private static final String STOP_WAITING_FOR_CONNECTION = SpecialValueHelpers.buildMagicPropertyName(Action.class, "STOP_WAITING_FOR_CONNECTION");
-		private static final String INITIALIZE_PLAYLIST = SpecialValueHelpers.buildMagicPropertyName(Action.class, "INITIALIZE_PLAYLIST");
+		private static final String launchMusicService = SpecialValueHelpers.buildMagicPropertyName(Action.class, "launchMusicService");
+		private static final String play = SpecialValueHelpers.buildMagicPropertyName(Action.class, "play");
+		private static final String pause = SpecialValueHelpers.buildMagicPropertyName(Action.class, "pause");
+		private static final String previous = SpecialValueHelpers.buildMagicPropertyName(Action.class, "previous");
+		private static final String next = SpecialValueHelpers.buildMagicPropertyName(Action.class, "next");
+		private static final String seekTo = SpecialValueHelpers.buildMagicPropertyName(Action.class, "seekTo");
+		private static final String stopWaitingForConnection = SpecialValueHelpers.buildMagicPropertyName(Action.class, "stopWaitingForConnection");
+		private static final String initializePlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "initializePlaylist");
+		private static final String addFileToPlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "addFileToPlaylist");
+		private static final String removeFileAtPositionFromPlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "removeFileAtPositionFromPlaylist");
 
 		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
-				LAUNCH_MUSIC_SERVICE,
-				PLAY,
-				PAUSE,
-				PREVIOUS,
-				NEXT,
-				SEEK_TO,
-				STOP_WAITING_FOR_CONNECTION,
-				INITIALIZE_PLAYLIST
+				launchMusicService,
+				play,
+				pause,
+				previous,
+				next,
+				seekTo,
+				stopWaitingForConnection,
+				initializePlaylist,
+				addFileToPlaylist,
+				removeFileAtPositionFromPlaylist
 		}));
 
 		private static class Bag {
 			/* Bag constants */
-			private static final String FILE_KEY = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "FILE_KEY");
-			private static final String FILE_PLAYLIST = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "FILE_PLAYLIST");
-			private static final String START_POS = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "START_POS");
+			private static final String fileKey = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "fileKey");
+			private static final String filePlaylist = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "filePlaylist");
+			private static final String startPos = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "startPos");
+			private static final String filePosition = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "filePosition");
 		}
 	}
 
@@ -135,74 +144,74 @@ public class PlaybackService extends Service implements
 
 	/* Begin streamer intent helpers */
 	public static void initializePlaylist(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
 		context.startService(svcIntent);
 	}
 
 	public static void initializePlaylist(final Context context, int filePos, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
 		context.startService(svcIntent);
 	}
 
 	public static void initializePlaylist(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.INITIALIZE_PLAYLIST);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
+		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
+		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
 		context.startService(svcIntent);
 	}
 
 	public static void launchMusicService(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
 		context.startService(svcIntent);
 	}
 
 	public static void launchMusicService(final Context context, int filePos, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
+		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
 		context.startService(svcIntent);
 	}
 
 	public static void launchMusicService(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.LAUNCH_MUSIC_SERVICE);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
-		svcIntent.putExtra(Action.Bag.FILE_PLAYLIST, serializedFileList);
-		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
+		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
+		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
 		context.startService(svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.SEEK_TO);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
+		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
 		context.startService(svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos, int fileProgress) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.SEEK_TO);
-		svcIntent.putExtra(Action.Bag.FILE_KEY, filePos);
-		svcIntent.putExtra(Action.Bag.START_POS, fileProgress);
+		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
+		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
 		context.startService(svcIntent);
 	}
 
 	public static void play(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.PLAY));
+		context.startService(getNewSelfIntent(context, Action.play));
 	}
 
 	public static void pause(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.PAUSE));
+		context.startService(getNewSelfIntent(context, Action.pause));
 	}
 
 	public static void next(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.NEXT));
+		context.startService(getNewSelfIntent(context, Action.next));
 	}
 
 	public static void previous(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.PREVIOUS));
+		context.startService(getNewSelfIntent(context, Action.previous));
 	}
 
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
@@ -213,6 +222,18 @@ public class PlaybackService extends Service implements
 				if (playlistController != null) playlistController.setIsRepeating(isRepeating);
 			});
 		});
+	}
+
+	public static void addFileToPlaylist(final Context context, int fileKey) {
+		final Intent intent = getNewSelfIntent(context, Action.addFileToPlaylist);
+		intent.putExtra(Action.Bag.fileKey, fileKey);
+		context.startService(intent);
+	}
+
+	public static void removeFileAtPositionFromPlaylist(final Context context, int filePosition) {
+		final Intent intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist);
+		intent.putExtra(Action.Bag.filePosition, filePosition);
+		context.startService(intent);
 	}
 
 	/* End streamer intent helpers */
@@ -610,19 +631,21 @@ public class PlaybackService extends Service implements
 			return;
 		}
 		
-		final String action = intent.getAction(); 
-		if (action.equals(Action.LAUNCH_MUSIC_SERVICE)) {
-			startPlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), () -> ViewUtils.CreateNowPlayingView(PlaybackService.this));
+		final String action = intent.getAction();
+		if (action == null) return;
+
+		if (action.equals(Action.launchMusicService)) {
+			startPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0), () -> ViewUtils.CreateNowPlayingView(PlaybackService.this));
 			
 			return;
         }
 		
-		if (action.equals(Action.INITIALIZE_PLAYLIST)) {
-        	initializePlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), null);
+		if (action.equals(Action.initializePlaylist)) {
+        	initializePlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0), null);
         	return;
         }
 		
-		if (action.equals(Action.PLAY)) {
+		if (action.equals(Action.play)) {
         	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
@@ -635,17 +658,17 @@ public class PlaybackService extends Service implements
         	return;
         }
 		
-		if (action.equals(Action.SEEK_TO)) {
+		if (action.equals(Action.seekTo)) {
         	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	playlistController.seekTo(intent.getIntExtra(Action.Bag.FILE_KEY, 0), intent.getIntExtra(Action.Bag.START_POS, 0));
+        	playlistController.seekTo(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0));
         	return;
         }
 		
-		if (action.equals(Action.PREVIOUS)) {
+		if (action.equals(Action.previous)) {
         	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
@@ -655,7 +678,7 @@ public class PlaybackService extends Service implements
         	return;
         }
 		
-		if (action.equals(Action.NEXT)) {
+		if (action.equals(Action.next)) {
         	if (playlistController == null) {
         		restorePlaylistForIntent(intent);
         		return;
@@ -665,13 +688,68 @@ public class PlaybackService extends Service implements
         	return;
         }
 		
-		if (playlistController != null && action.equals(Action.PAUSE)) {
+		if (playlistController != null && action.equals(Action.pause)) {
         	pausePlayback(true);
         	return;
         }
 		
-		if (action.equals(Action.STOP_WAITING_FOR_CONNECTION)) {
+		if (action.equals(Action.stopWaitingForConnection)) {
         	PollConnection.Instance.get(this).stopPolling();
+			return;
+		}
+
+		if (action.equals(Action.addFileToPlaylist)) {
+			final int fileKey = intent.getIntExtra(Action.Bag.fileKey, -1);
+			if (fileKey < 0) return;
+
+			playlistController.addFile(new File(SessionConnection.getSessionConnectionProvider(), fileKey));
+
+			LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+				if (result == null) return;
+				String newFileString = result.getSavedTracksString();
+				if (!newFileString.endsWith(";")) newFileString += ";";
+				newFileString += fileKey + ";";
+				result.setSavedTracksString(newFileString);
+
+				LibrarySession.SaveLibrary(PlaybackService.this, result, (owner1, result1) -> Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show());
+			});
+
+			return;
+		}
+
+		if (action.equals(Action.removeFileAtPositionFromPlaylist)) {
+			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
+			if (filePosition < -1) return;
+
+			LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+				if (library == null) return;
+
+				// It could take quite a while to split string and put it back together, so let's do it
+				// in a background task
+				(new AsyncTask<Void, Void, String>() {
+					@Override
+					protected String doInBackground(Void... params) {
+						final PlaybackController playbackController = PlaybackService.getPlaylistController();
+						if (playbackController != null) {
+							playbackController.removeFile(filePosition);
+							return playbackController.getPlaylistString();
+						}
+
+						final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+						savedTracks.remove(filePosition);
+						return FileStringListUtilities.serializeFileStringList(savedTracks);
+					}
+
+					@Override
+					protected void onPostExecute(String s) {
+						super.onPostExecute(s);
+
+						library.setSavedTracksString(s);
+
+						LibrarySession.SaveLibrary(PlaybackService.this, library);
+					}
+				}).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			});
 		}
 	}
 	
@@ -706,7 +784,7 @@ public class PlaybackService extends Service implements
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(this, PlaybackService.class);
-		intent.setAction(Action.STOP_WAITING_FOR_CONNECTION);
+		intent.setAction(Action.stopWaitingForConnection);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
 
