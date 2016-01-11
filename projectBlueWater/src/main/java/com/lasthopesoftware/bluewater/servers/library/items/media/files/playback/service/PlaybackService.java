@@ -247,7 +247,6 @@ public class PlaybackService extends Service implements
 	private static final Object syncPlaylistControllerObject = new Object();
 	
 	private static final HashSet<OnNowPlayingChangeListener> onStreamingChangeListeners = new HashSet<>();
-	private static final HashSet<OnNowPlayingStartListener> onStreamingStartListeners = new HashSet<>();
 
 	private Runnable connectionRegainedListener;
 	

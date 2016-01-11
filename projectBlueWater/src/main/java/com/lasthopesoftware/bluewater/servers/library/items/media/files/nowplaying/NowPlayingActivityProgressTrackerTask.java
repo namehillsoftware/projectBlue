@@ -17,7 +17,7 @@ public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void,
 	private static final ExecutorService mTrackerExecutor = Executors.newSingleThreadExecutor();
 	
 	public static NowPlayingActivityProgressTrackerTask trackProgress(IPlaybackFile filePlayer, NowPlayingActivityMessageHandler handler) {
-		NowPlayingActivityProgressTrackerTask newProgressTrackerThread = new NowPlayingActivityProgressTrackerTask(filePlayer, handler);
+		final NowPlayingActivityProgressTrackerTask newProgressTrackerThread = new NowPlayingActivityProgressTrackerTask(filePlayer, handler);
 		newProgressTrackerThread.executeOnExecutor(mTrackerExecutor);
 		return newProgressTrackerThread;
 	}
@@ -29,10 +29,6 @@ public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void,
 	
 	@Override
 	protected Void doInBackground(Void... params) {
-		if (!isCancelled() && mFilePlayer != null) {
-			mHandler.sendMessage(getUpdatePlayingMessage());
-		}
-		
 		while (!isCancelled() && mFilePlayer != null && mFilePlayer.isMediaPlayerCreated()) {
 			try {
 				
