@@ -226,7 +226,6 @@ public class PlaybackService extends Service implements
 	private static int startId;
 	private WifiLock wifiLock = null;
 	private NotificationManager notificationManager;
-	private PlaybackService playbackService;
 	private AudioManager audioManager;
 	private ComponentName remoteControlReceiver;
 	private RemoteControlClient remoteControlClient;
@@ -320,12 +319,11 @@ public class PlaybackService extends Service implements
 	
 	public PlaybackService() {
 		super();
-		playbackService = this;
 	}
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
-		LibrarySession.GetActiveLibrary(playbackService, (owner, library) -> {
+		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
 				if (library == null) return;
 
 				final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
@@ -364,7 +362,7 @@ public class PlaybackService extends Service implements
 
 				localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
 
-				SessionConnection.refresh(playbackService);
+				SessionConnection.refresh(PlaybackService.this);
 			});
 	}
 
@@ -407,7 +405,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
 			synchronized (syncPlaylistControllerObject) {
 				logger.info("Initializing playlist.");
 				PlaybackService.playlistString = playlistString;
@@ -417,20 +415,20 @@ public class PlaybackService extends Service implements
 					PlaybackService.playlistString = result.getSavedTracksString();
 
 				result.setSavedTracksString(PlaybackService.playlistString);
-				LibrarySession.SaveLibrary(playbackService, result, (owner1, result1) -> {
+				LibrarySession.SaveLibrary(PlaybackService.this, result, (owner1, result1) -> {
 					if (playlistController != null) {
 						playlistController.pause();
 						playlistController.release();
 					}
 
-					playlistController = new PlaybackController(playbackService, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
+					playlistController = new PlaybackController(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
 
 					playlistController.setIsRepeating(result1.isRepeating());
-					playlistController.addOnNowPlayingChangeListener(playbackService);
-					playlistController.addOnNowPlayingStopListener(playbackService);
-					playlistController.addOnNowPlayingPauseListener(playbackService);
-					playlistController.addOnPlaylistStateControlErrorListener(playbackService);
-					playlistController.addOnNowPlayingStartListener(playbackService);
+					playlistController.addOnNowPlayingChangeListener(PlaybackService.this);
+					playlistController.addOnNowPlayingStopListener(PlaybackService.this);
+					playlistController.addOnNowPlayingPauseListener(PlaybackService.this);
+					playlistController.addOnPlaylistStateControlErrorListener(PlaybackService.this);
+					playlistController.addOnNowPlayingStartListener(PlaybackService.this);
 
 					onPlaylistControllerInitialized.run();
 				});
@@ -497,7 +495,7 @@ public class PlaybackService extends Service implements
 	        // build the PendingIntent for the remote control client
 			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 			mediaButtonIntent.setComponent(remoteControlReceiver);
-			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(playbackService, 0, mediaButtonIntent, 0);
+			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0);
 			// create and register the remote control client
 			remoteControlClient = new RemoteControlClient(mediaPendingIntent);
 			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
@@ -519,7 +517,7 @@ public class PlaybackService extends Service implements
 			if (wifiLock.isHeld()) wifiLock.release();
 			wifiLock = null;
 		}
-		final PollConnection pollConnection = PollConnection.Instance.get(playbackService);
+		final PollConnection pollConnection = PollConnection.Instance.get(this);
 		if (connectionRegainedListener != null)
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener);
 		if (onPollingCancelledListener != null)
@@ -543,11 +541,9 @@ public class PlaybackService extends Service implements
 			return START_NOT_STICKY;
 		}
 		
-		playbackService = this;
-		
 		if (!SessionConnection.isBuilt()) {
 			// TODO this should probably be its own service soon
-			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(playbackService);
+			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
 			final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
 				@Override
@@ -562,7 +558,7 @@ public class PlaybackService extends Service implements
 
 			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-			handleBuildStatusChange(SessionConnection.build(playbackService), intent);
+			handleBuildStatusChange(SessionConnection.build(this), intent);
 			
 			return START_NOT_STICKY;
 		}
@@ -573,7 +569,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void handleBuildStatusChange(final int status, final Intent intentToRun) {
-		final Builder notifyBuilder = new Builder(playbackService);
+		final Builder notifyBuilder = new Builder(this);
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
@@ -616,13 +612,7 @@ public class PlaybackService extends Service implements
 		
 		final String action = intent.getAction(); 
 		if (action.equals(Action.LAUNCH_MUSIC_SERVICE)) {
-			startPlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), new Runnable() {
-				
-				@Override
-				public void run() {
-					ViewUtils.CreateNowPlayingView(playbackService);
-				}
-			});
+			startPlaylist(intent.getStringExtra(Action.Bag.FILE_PLAYLIST), intent.getIntExtra(Action.Bag.FILE_KEY, -1), intent.getIntExtra(Action.Bag.START_POS, 0), () -> ViewUtils.CreateNowPlayingView(PlaybackService.this));
 			
 			return;
         }
@@ -640,7 +630,7 @@ public class PlaybackService extends Service implements
         	
         	if (playlistController.resume()) return;
         	
-        	LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+        	LibrarySession.GetActiveLibrary(this, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
         	
         	return;
         }
@@ -681,7 +671,7 @@ public class PlaybackService extends Service implements
         }
 		
 		if (action.equals(Action.STOP_WAITING_FOR_CONNECTION)) {
-        	PollConnection.Instance.get(playbackService).stopPolling();
+        	PollConnection.Instance.get(this).stopPolling();
 		}
 	}
 	
@@ -715,7 +705,7 @@ public class PlaybackService extends Service implements
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(playbackService, PlaybackService.class);
+		final Intent intent = new Intent(this, PlaybackService.class);
 		intent.setAction(Action.STOP_WAITING_FOR_CONNECTION);
 		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		builder.setContentIntent(pi);
@@ -724,7 +714,7 @@ public class PlaybackService extends Service implements
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyForeground(builder);
 		
-		final PollConnection checkConnection = PollConnection.Instance.get(playbackService);
+		final PollConnection checkConnection = PollConnection.Instance.get(this);
 		
 		if (connectionRegainedListener == null) {
 			connectionRegainedListener = () -> {
@@ -733,7 +723,7 @@ public class PlaybackService extends Service implements
 					return;
 				}
 
-				LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+				LibrarySession.GetActiveLibrary(this, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
 
 			};
 		}
@@ -827,13 +817,13 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
 
 			result.setSavedTracksString(controller.getPlaylistString());
 			result.setNowPlayingId(controller.getCurrentPosition());
 			result.setNowPlayingProgress(filePlayer.getCurrentPosition());
 
-			LibrarySession.SaveLibrary(playbackService, result);
+			LibrarySession.SaveLibrary(PlaybackService.this, result);
 		});
 	}
 	
@@ -863,7 +853,7 @@ public class PlaybackService extends Service implements
 		};
 
 		getNotificationPropertiesTask.onComplete(result -> {
-			final Builder builder = new Builder(playbackService);
+			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
 			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)).toLowerCase());
 			builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
@@ -934,7 +924,7 @@ public class PlaybackService extends Service implements
 			if (Build.VERSION.SDK_INT < 19) return;
 
 			ImageProvider
-					.getImage(playbackService, SessionConnection.getSessionConnectionProvider(), playingFile)
+					.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), playingFile)
 					.onComplete((owner1, bitmap) -> {
 						// Track the remote client bitmap and recycle it in case the remote control client
 						// does not properly recycle the bitmap
