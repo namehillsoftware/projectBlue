@@ -54,30 +54,30 @@ import java.util.TimerTask;
 
 public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayingChangeListener {
 
-	private static final org.slf4j.Logger mLogger = LoggerFactory.getLogger(NowPlayingActivity.class);
+	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private NowPlayingActivityProgressTrackerTask mTrackerTask;
-	private NowPlayingActivityMessageHandler mHandler;
-	private ImageButton mPlay;
-	private ImageButton mPause;
-	private RatingBar mSongRating;
-	private RelativeLayout mContentView;
+	private NowPlayingActivityProgressTrackerTask nowPlayingActivityProgressTrackerTask;
+	private NowPlayingActivityMessageHandler nowPlayingActivityMessageHandler;
+	private ImageButton playButton;
+	private ImageButton pauseButton;
+	private RatingBar songRating;
+	private RelativeLayout contentView;
 	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 	private ImageButton isScreenKeptOnButton;
 
-	private TimerTask mTimerTask;
-	private ProgressBar mSongProgressBar;
-	private ProgressBar mLoadingImg;
-	private ImageView mNowPlayingImageView;
-	private TextView mNowPlayingArtist;
-	private TextView mNowPlayingTitle;
+	private TimerTask timerTask;
+	private ProgressBar songProgressBar;
+	private ProgressBar loadingImg;
+	private ImageView nowPlayingImageView;
+	private TextView nowPlayingArtist;
+	private TextView nowPlayingTitle;
 
 	private LocalBroadcastManager localBroadcastManager;
 
 	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
-	private static ViewStructure mViewStructure;
+	private static ViewStructure viewStructure;
 
-	private static final String mFileNotFoundError = "The file %1s was not found!";
+	private static final String fileNotFoundError = "The file %1s was not found!";
 
 	private static boolean isScreenKeptOn;
 
@@ -88,8 +88,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		public void onReceive(Context context, Intent intent) {
 			showNowPlayingControls();
 
-			mPlay.setVisibility(View.INVISIBLE);
-			mPause.setVisibility(View.VISIBLE);
+			playButton.setVisibility(View.INVISIBLE);
+			pauseButton.setVisibility(View.VISIBLE);
 
 			updateKeepScreenOnStatus();
 		}
@@ -98,16 +98,16 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (mTrackerTask != null) mTrackerTask.cancel(false);
+			if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
 			final int fileDuration = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
-			if (fileDuration > -1) mSongProgressBar.setMax(fileDuration);
+			if (fileDuration > -1) songProgressBar.setMax(fileDuration);
 
 			final int filePosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
-			if (filePosition > -1) mSongProgressBar.setProgress(filePosition);
+			if (filePosition > -1) songProgressBar.setProgress(filePosition);
 
-			mPlay.setVisibility(View.VISIBLE);
-			mPause.setVisibility(View.INVISIBLE);
+			playButton.setVisibility(View.VISIBLE);
+			pauseButton.setVisibility(View.INVISIBLE);
 
 			disableKeepScreenOn();
 		}
@@ -136,20 +136,20 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 		setContentView(R.layout.activity_view_now_playing);
 
-		mContentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
+		contentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
 
-		mContentView.setOnClickListener(v -> showNowPlayingControls());
+		contentView.setOnClickListener(v -> showNowPlayingControls());
 
-		mPlay = (ImageButton) findViewById(R.id.btnPlay);
-		mPause = (ImageButton) findViewById(R.id.btnPause);
-		mSongRating = (RatingBar) findViewById(R.id.rbSongRating);
-		mSongProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
-		mLoadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
-		mNowPlayingImageView = (ImageView) findViewById(R.id.imgNowPlaying);
-		mNowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
-		mNowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
+		playButton = (ImageButton) findViewById(R.id.btnPlay);
+		pauseButton = (ImageButton) findViewById(R.id.btnPause);
+		songRating = (RatingBar) findViewById(R.id.rbSongRating);
+		songProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
+		loadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
+		nowPlayingImageView = (ImageView) findViewById(R.id.imgNowPlaying);
+		nowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
+		nowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
 
-		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls((LinearLayout) findViewById(R.id.llNpButtons), (LinearLayout) findViewById(R.id.menuControlsLinearLayout), mSongRating);
+		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls((LinearLayout) findViewById(R.id.llNpButtons), (LinearLayout) findViewById(R.id.menuControlsLinearLayout), songRating);
 		nowPlayingToggledVisibilityControls.toggleVisibility(false);
 
 		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
@@ -164,18 +164,18 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
-		mPlay.setOnClickListener(v -> {
+		playButton.setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 			PlaybackService.play(v.getContext());
-			mPlay.setVisibility(View.INVISIBLE);
-			mPause.setVisibility(View.VISIBLE);
+			playButton.setVisibility(View.INVISIBLE);
+			pauseButton.setVisibility(View.VISIBLE);
 		});
 		
-		mPause.setOnClickListener(v -> {
+		pauseButton.setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 			PlaybackService.pause(v.getContext());
-			mPlay.setVisibility(View.VISIBLE);
-			mPause.setVisibility(View.INVISIBLE);
+			playButton.setVisibility(View.VISIBLE);
+			pauseButton.setVisibility(View.INVISIBLE);
 		});
 
 		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
@@ -210,9 +210,9 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		});
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
-			mSongProgressBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
+			songProgressBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
 
-		mHandler = new NowPlayingActivityMessageHandler(this);
+		nowPlayingActivityMessageHandler = new NowPlayingActivityMessageHandler(this);
 	}
 	
 	@Override
@@ -243,8 +243,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			return;
 		}
 
-		mPlay.setVisibility(View.VISIBLE);
-		mPause.setVisibility(View.INVISIBLE);
+		playButton.setVisibility(View.VISIBLE);
+		pauseButton.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
 		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
@@ -303,7 +303,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	public RelativeLayout getContentView() {
-		return mContentView;
+		return contentView;
 	}
 	
 	public NowPlayingToggledVisibilityControls getNowPlayingToggledVisibilityControls() {
@@ -311,30 +311,30 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	public ProgressBar getSongProgressBar() {
-		return mSongProgressBar;
+		return songProgressBar;
 	}
 
 	private void setView(final IPlaybackFile playbackFile) {
 		setView(playbackFile.getFile(), playbackFile.getCurrentPosition());
 
-		mPlay.setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
-		mPause.setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+		playButton.setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
+		pauseButton.setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
-		mTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, mHandler);
+		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
+		nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
 		
-		if (mViewStructure != null && mViewStructure.fileKey != file.getKey()) {
-			mViewStructure.release();
-			mViewStructure = null;
+		if (viewStructure != null && viewStructure.fileKey != file.getKey()) {
+			viewStructure.release();
+			viewStructure = null;
 		}
 		
-		if (mViewStructure == null)
-			mViewStructure = new ViewStructure(file);
+		if (viewStructure == null)
+			viewStructure = new ViewStructure(file);
 		
-		final ViewStructure viewStructure = mViewStructure;
+		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
 		
 		if (viewStructure.nowPlayingImage == null) {
 			try {				
@@ -342,8 +342,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				if (getFileImageTask != null)
 					getFileImageTask.cancel();
 				
-				mNowPlayingImageView.setVisibility(View.INVISIBLE);
-				mLoadingImg.setVisibility(View.VISIBLE);
+				nowPlayingImageView.setVisibility(View.INVISIBLE);
+				loadingImg.setVisibility(View.VISIBLE);
 				
 				getFileImageTask =
 						ImageProvider
@@ -356,7 +356,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 											viewStructure.nowPlayingImage.recycle();
 										viewStructure.nowPlayingImage = result;
 
-										mNowPlayingImageView.setImageBitmap(result);
+										nowPlayingImageView.setImageBitmap(result);
 
 										displayImageBitmap();
 									}
@@ -365,10 +365,10 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				getFileImageTask.execute();
 				
 			} catch (Exception e) {
-				mLogger.error(e.toString(), e);
+				logger.error(e.toString(), e);
 			}
 		} else {
-			mNowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
+			nowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
 			displayImageBitmap();
 		}
 		
@@ -394,7 +394,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
             protected void onPostExecute(String result, Exception exception) {
                 if (handleIoException(file, initialFilePosition, exception)) return;
 
-                mNowPlayingArtist.setText(result);
+                nowPlayingArtist.setText(result);
                 viewStructure.nowPlayingArtist = result;
             }
         };
@@ -414,8 +414,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
             protected void onPostExecute(String result, Exception exception) {
                 if (handleIoException(file, initialFilePosition, exception)) return;
 
-                mNowPlayingTitle.setText(result);
-				mNowPlayingTitle.setSelected(true);
+                nowPlayingTitle.setText(result);
+				nowPlayingTitle.setSelected(true);
                 viewStructure.nowPlayingTitle = result;
             }
         };
@@ -445,26 +445,26 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
             @Override
             protected void onPostExecute(Float result, Exception exception) {
                 if (handleIoException(file, initialFilePosition, exception)) {
-                    mSongRating.setRating(0f);
-                    mSongRating.setOnRatingBarChangeListener(null);
+                    songRating.setRating(0f);
+                    songRating.setOnRatingBarChangeListener(null);
 
                     return;
                 }
 
                 viewStructure.nowPlayingRating = result;
 
-                mSongRating.setRating(result != null ? result : 0f);
+                songRating.setRating(result != null ? result : 0f);
 
-                mSongRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+                songRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
 
-                    @Override
-                    public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-                        if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
-                            return;
-                        file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
+	                @Override
+	                public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+		                if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
+			                return;
+		                file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 
-                        viewStructure.nowPlayingRating = rating;
-                    }
+		                viewStructure.nowPlayingRating = rating;
+	                }
                 });
             }
         };
@@ -484,14 +484,14 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
             @Override
             protected void onPostExecute(Integer result, Exception exception) {
                 if (handleIoException(file, initialFilePosition, exception)) {
-                    mSongProgressBar.setMax(100);
+                    songProgressBar.setMax(100);
                     return;
                 }
 
                 if (result < 0) return;
 
-				mSongProgressBar.setMax(result);
-				mSongProgressBar.setProgress(initialFilePosition);
+				songProgressBar.setMax(result);
+				songProgressBar.setProgress(initialFilePosition);
             }
         };
 
@@ -499,7 +499,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	private void handleFileNotFoundException(IFile file, FileNotFoundException fe) {
-		mLogger.error(String.format(mFileNotFoundError, file), fe);
+		logger.error(String.format(fileNotFoundError, file), fe);
 	}
 	
 	private boolean handleIoException(IFile file, int position, Exception exception) {
@@ -517,17 +517,17 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 	
 	private void displayImageBitmap() {
-		mNowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
-		mLoadingImg.setVisibility(View.INVISIBLE);
-		mNowPlayingImageView.setVisibility(View.VISIBLE);	
+		nowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
+		loadingImg.setVisibility(View.INVISIBLE);
+		nowPlayingImageView.setVisibility(View.VISIBLE);
 	}
 
 	private void showNowPlayingControls() {
 		nowPlayingToggledVisibilityControls.toggleVisibility(true);
-		mContentView.invalidate();
+		contentView.invalidate();
 
-		if (mTimerTask != null) mTimerTask.cancel();
-		mTimerTask = new TimerTask() {
+		if (timerTask != null) timerTask.cancel();
+		timerTask = new TimerTask() {
 			boolean cancelled;
 
 			@Override
@@ -536,7 +536,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 				final Message msg = new Message();
 				msg.what = NowPlayingActivityMessageHandler.HIDE_CONTROLS;
-				mHandler.sendMessage(msg);
+				nowPlayingActivityMessageHandler.sendMessage(msg);
 			}
 
 			@Override
@@ -545,7 +545,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				return super.cancel();
 			}
 		};
-		mHandler.postDelayed(mTimerTask, 5000);
+		nowPlayingActivityMessageHandler.postDelayed(timerTask, 5000);
 	}
 	
 	private void resetViewOnReconnect(final IFile file, final int position) {
@@ -575,8 +575,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	public void onDestroy() {
 		super.onDestroy();
 
-		if (mTimerTask != null) mTimerTask.cancel();
-		if (mTrackerTask != null) mTrackerTask.cancel(false);
+		if (timerTask != null) timerTask.cancel();
+		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
 		PlaybackService.removeOnStreamingChangeListener(this);
 
