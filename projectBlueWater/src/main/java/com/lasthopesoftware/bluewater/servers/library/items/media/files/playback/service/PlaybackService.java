@@ -4,7 +4,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service;
 
 
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -53,7 +52,6 @@ import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -861,7 +859,7 @@ public class PlaybackService extends Service implements
 
 			@Override
 			protected SparseArray<Object> executeInBackground(Void... params) {
-				final SparseArray<Object> result = new SparseArray<>(4);
+				final SparseArray<Object> result = new SparseArray<>(5);
 
 				try {
 					result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
@@ -919,19 +917,14 @@ public class PlaybackService extends Service implements
 
 			ImageProvider
 					.getImage(playbackService, SessionConnection.getSessionConnectionProvider(), playingFile)
-					.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+					.onComplete((owner1, bitmap) -> {
+						// Track the remote client bitmap and recycle it in case the remote control client
+						// does not properly recycle the bitmap
+						if (remoteClientBitmap != null) remoteClientBitmap.recycle();
+						remoteClientBitmap = bitmap;
 
-						@TargetApi(Build.VERSION_CODES.KITKAT)
-						@Override
-						public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
-							// Track the remote client bitmap and recycle it in case the remote control client
-							// does not properly recycle the bitmap
-							if (remoteClientBitmap != null) remoteClientBitmap.recycle();
-							remoteClientBitmap = result;
-
-							final MetadataEditor metaData = remoteControlClient.editMetadata(false);
-							metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, result).apply();
-						}
+						final MetadataEditor metaData1 = remoteControlClient.editMetadata(false);
+						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 					})
 					.execute();
 
