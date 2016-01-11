@@ -13,7 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -142,7 +141,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	@Override
 	public void onStart() {
 		super.onStart();
-		
+
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
 	}
 
@@ -232,29 +231,21 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
 					swapFragments(browseLibraryViewsFragment);
 						})
-				.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
-
-					@Override
-					public void run() {
-						// Get a new instance of the file system as the connection provider may have changed
-						displayLibrary(library);
-					}
+				.onError(new HandleViewIoException<>(this, () -> {
+					// Get a new instance of the file system as the connection provider may have changed
+					displayLibrary(library);
 				}))
 				.execute();
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
-		return new OnItemClickListener() {
+		return (parent, view, position, id) -> {
+			final Item selectedItem = items.get(position);
 
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				final Item selectedItem = items.get(position);
+			// The action state can be preserved due to the need to preserve action state
+			getIntent().setAction(null);
 
-				// The action state can be preserved due to the need to preserve action state
-				getIntent().setAction(null);
-
-				updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
-			}
+			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
 		};
 	}
 
