@@ -80,10 +80,10 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
                 localBroadcastManager.registerReceiver(new BroadcastReceiver() {
                     @Override
-                    public void onReceive(Context context, Intent intent) {
-                        setVisibility(ViewUtils.getVisibility(true));
+                    public synchronized void onReceive(Context context, Intent intent) {
+	                    isNowPlayingFileSet = true;
+	                    setVisibility(ViewUtils.getVisibility(true));
                         localBroadcastManager.unregisterReceiver(this);
-                        isNowPlayingFileSet = true;
                     }
                 }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
             }
