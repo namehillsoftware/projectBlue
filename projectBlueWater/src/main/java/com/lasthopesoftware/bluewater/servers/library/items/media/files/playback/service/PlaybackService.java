@@ -299,6 +299,24 @@ public class PlaybackService extends Service implements
 			return playlistController;
 		}
 	}
+
+	public static boolean isPlaying() {
+		synchronized (syncPlaylistControllerObject) {
+			return playlistController != null && playlistController.isPlaying();
+		}
+	}
+
+	public static int getCurrentPlayingFileKey() {
+		synchronized (syncPlaylistControllerObject) {
+			return playlistController != null && playlistController.getCurrentPlaybackFile() != null ? playlistController.getCurrentPlaybackFile().getFile().getKey() : -1;
+		}
+	}
+
+	public static int getCurrentPlaylistPosition() {
+		synchronized (syncPlaylistControllerObject) {
+			return playlistController != null ? playlistController.getCurrentPosition() : -1;
+		}
+	}
 	
 	public PlaybackService() {
 		super();

@@ -86,9 +86,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         viewHolder.getFileListItemTextTask.execute();
 
         textView.setTypeface(null, Typeface.NORMAL);
-
-        if (PlaybackService.getPlaylistController() != null && PlaybackService.getPlaylistController().getCurrentPlaybackFile() != null)
-            textView.setTypeface(null, file.getKey() == PlaybackService.getPlaylistController().getCurrentPlaybackFile().getFile().getKey() ? Typeface.BOLD : Typeface.NORMAL);
+		textView.setTypeface(null, file.getKey() == PlaybackService.getCurrentPlayingFileKey() ? Typeface.BOLD : Typeface.NORMAL);
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
