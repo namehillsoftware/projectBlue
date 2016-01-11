@@ -91,7 +91,7 @@ public class PlaybackService extends Service implements
 		private static final String STOP_WAITING_FOR_CONNECTION = SpecialValueHelpers.buildMagicPropertyName(Action.class, "STOP_WAITING_FOR_CONNECTION");
 		private static final String INITIALIZE_PLAYLIST = SpecialValueHelpers.buildMagicPropertyName(Action.class, "INITIALIZE_PLAYLIST");
 
-		private static final Set<String> validActions = new HashSet<String>(Arrays.asList(new String[] {
+		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
 				LAUNCH_MUSIC_SERVICE,
 				PLAY,
 				PAUSE,
@@ -277,11 +277,6 @@ public class PlaybackService extends Service implements
 	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
 		final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
-		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition());
-
-		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey());
-		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition());
-
 		int duration = -1;
 		try {
 			duration = playbackFile.getDuration();
@@ -289,8 +284,12 @@ public class PlaybackService extends Service implements
 			logger.warn("There was an error getting the playback file duration", io);
 		}
 
-		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, duration);
-		playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
+		playbackBroadcastIntent
+				.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition())
+				.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey())
+				.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
+				.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, duration)
+				.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
 
 		localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
 	}
@@ -310,10 +309,7 @@ public class PlaybackService extends Service implements
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
-		LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
+		LibrarySession.GetActiveLibrary(playbackService, (owner, library) -> {
 				if (library == null) return;
 
 				final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
@@ -353,9 +349,7 @@ public class PlaybackService extends Service implements
 				localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
 
 				SessionConnection.refresh(playbackService);
-			}
-
-		});
+			});
 	}
 
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress) {
@@ -369,13 +363,9 @@ public class PlaybackService extends Service implements
 
 		// If the playlist has changed, change that
 		if (playlistController == null || !playlistString.equals(PlaybackService.playlistString)) {
-			initializePlaylist(playlistString, new Runnable() {
+			initializePlaylist(playlistString, () -> {
+				startPlaylist(playlistString, filePos, fileProgress, onPlaylistStarted);
 
-				@Override
-				public void run() {
-					startPlaylist(playlistString, filePos, fileProgress, onPlaylistStarted);
-					
-				}
 			});
 			return;
 		}
@@ -391,55 +381,43 @@ public class PlaybackService extends Service implements
 	}
 
 	private void initializePlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistControllerInitialized) {
-		initializePlaylist(playlistString, new Runnable() {
+		initializePlaylist(playlistString, () -> {
+			if (!playlistString.isEmpty())
+				playlistController.seekTo(filePos, fileProgress);
 
-			@Override
-			public void run() {
-				if (!playlistString.isEmpty())
-					playlistController.seekTo(filePos, fileProgress);
-
-				if (onPlaylistControllerInitialized != null)
-					onPlaylistControllerInitialized.run();
-			}
+			if (onPlaylistControllerInitialized != null)
+				onPlaylistControllerInitialized.run();
 		});
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-				synchronized (syncPlaylistControllerObject) {
-					logger.info("Initializing playlist.");
-					PlaybackService.playlistString = playlistString;
-					
-					// First try to get the playlist string from the database
-					if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
-						PlaybackService.playlistString = result.getSavedTracksString();
-					
-					result.setSavedTracksString(PlaybackService.playlistString);
-					LibrarySession.SaveLibrary(playbackService, result, new TwoParameterRunnable<FluentTask<Void, Void, Library>, Library>() {
-						
-						@Override
-						public void run(FluentTask<Void, Void, Library> owner, Library result) {
-							if (playlistController != null) {
-								playlistController.pause();
-								playlistController.release();
-							}
-							
-							playlistController = new PlaybackController(playbackService, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
-							
-							playlistController.setIsRepeating(result.isRepeating());
-							playlistController.addOnNowPlayingChangeListener(playbackService);
-							playlistController.addOnNowPlayingStopListener(playbackService);
-							playlistController.addOnNowPlayingPauseListener(playbackService);
-							playlistController.addOnPlaylistStateControlErrorListener(playbackService);
-							playlistController.addOnNowPlayingStartListener(playbackService);
-							
-							onPlaylistControllerInitialized.run();
-						}
-					});
-				}
+		LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> {
+			synchronized (syncPlaylistControllerObject) {
+				logger.info("Initializing playlist.");
+				PlaybackService.playlistString = playlistString;
+
+				// First try to get the playlist string from the database
+				if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
+					PlaybackService.playlistString = result.getSavedTracksString();
+
+				result.setSavedTracksString(PlaybackService.playlistString);
+				LibrarySession.SaveLibrary(playbackService, result, (owner1, result1) -> {
+					if (playlistController != null) {
+						playlistController.pause();
+						playlistController.release();
+					}
+
+					playlistController = new PlaybackController(playbackService, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
+
+					playlistController.setIsRepeating(result1.isRepeating());
+					playlistController.addOnNowPlayingChangeListener(playbackService);
+					playlistController.addOnNowPlayingStopListener(playbackService);
+					playlistController.addOnNowPlayingPauseListener(playbackService);
+					playlistController.addOnPlaylistStateControlErrorListener(playbackService);
+					playlistController.addOnNowPlayingStartListener(playbackService);
+
+					onPlaylistControllerInitialized.run();
+				});
 			}
 		});
 	}
@@ -733,24 +711,14 @@ public class PlaybackService extends Service implements
 		final PollConnection checkConnection = PollConnection.Instance.get(playbackService);
 		
 		if (connectionRegainedListener == null) {
-			connectionRegainedListener = new Runnable() {
-				
-				@Override
-				public void run() {
-					if (playlistController != null && !playlistController.isPlaying()) {
-						stopSelf(startId);
-						return;
-					}
-					
-					LibrarySession.GetActiveLibrary(playbackService, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-						
-						@Override
-						public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-							startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress());
-						}
-					});
-					
+			connectionRegainedListener = () -> {
+				if (playlistController != null && !playlistController.isPlaying()) {
+					stopSelf(startId);
+					return;
 				}
+
+				LibrarySession.GetActiveLibrary(playbackService, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+
 			};
 		}
 		
