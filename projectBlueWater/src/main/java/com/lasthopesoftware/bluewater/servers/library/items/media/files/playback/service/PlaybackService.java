@@ -260,8 +260,7 @@ public class PlaybackService extends Service implements
 	
 	private static boolean areListenersRegistered = false;
 	private static boolean isNotificationForeground = false;
-	
-	private static final Object syncHandlersObject = new Object();
+
 	private static final Object syncPlaylistControllerObject = new Object();
 	
 	private static final HashSet<OnNowPlayingChangeListener> onStreamingChangeListeners = new HashSet<>();
@@ -278,14 +277,14 @@ public class PlaybackService extends Service implements
 	}
 
 	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		synchronized(syncHandlersObject) {
+		synchronized(onStreamingChangeListeners) {
 			if (onStreamingChangeListeners.contains(listener))
 				onStreamingChangeListeners.remove(listener);
 		}
 	}
 
 	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		synchronized(syncHandlersObject) {
+		synchronized(onStreamingChangeListeners) {
             ListenerThrower.throwListeners(onStreamingChangeListeners, parameter -> parameter.onNowPlayingChange(controller, filePlayer));
 		}
 
