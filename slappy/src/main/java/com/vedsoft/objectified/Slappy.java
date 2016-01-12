@@ -87,7 +87,8 @@ public class Slappy {
 	public <T> List<T> fetch(Class<T> cls) throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
-		try (Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue())) {
+		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
+		try {
 			if (!cursor.moveToFirst()) return new ArrayList<>();
 
 			final ClassReflections reflections = ClassCache.getReflections(cls);
@@ -114,12 +115,16 @@ public class Slappy {
 					}
 
 					returnObjects.add(newObject);
-				} catch (InstantiationException | IllegalAccessException e) {
+				} catch (InstantiationException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
 					throw new RuntimeException(e);
 				}
 			} while (cursor.moveToNext());
 
 			return returnObjects;
+		} finally {
+			cursor.close();
 		}
 	}
 
@@ -370,7 +375,9 @@ public class Slappy {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, parseSqlBoolean(parameterThree));
-							} catch (IllegalAccessException | InvocationTargetException e) {
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
 								throw new RuntimeException(e);
 							}
 						};
@@ -384,7 +391,9 @@ public class Slappy {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
-							} catch (IllegalAccessException | InvocationTargetException e) {
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
 								throw new RuntimeException(e);
 							}
 						};
@@ -398,7 +407,9 @@ public class Slappy {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
-							} catch (IllegalAccessException | InvocationTargetException e) {
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
 								throw new RuntimeException(e);
 							}
 						};
@@ -411,7 +422,9 @@ public class Slappy {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, parameterThree);
-							} catch (IllegalAccessException | InvocationTargetException e) {
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
 								throw new RuntimeException(e);
 							}
 						};
@@ -425,7 +438,9 @@ public class Slappy {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
-							} catch (IllegalAccessException | InvocationTargetException e) {
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
 								throw new RuntimeException(e);
 							}
 						};
