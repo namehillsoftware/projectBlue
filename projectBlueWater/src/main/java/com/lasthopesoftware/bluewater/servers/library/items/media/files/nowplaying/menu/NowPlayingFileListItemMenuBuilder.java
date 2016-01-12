@@ -92,7 +92,9 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         if (position == nowPlayingPosition)
             textView.setTypeface(null, Typeface.BOLD);
 
-        textView.setTypeface(null, position == PlaybackService.getCurrentPlaylistPosition() ? Typeface.BOLD : Typeface.NORMAL);
+        final int currentPlaylistPosition = PlaybackService.getCurrentPlaylistPosition();
+        if (currentPlaylistPosition > -1)
+            textView.setTypeface(null, position == currentPlaylistPosition ? Typeface.BOLD : Typeface.NORMAL);
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {

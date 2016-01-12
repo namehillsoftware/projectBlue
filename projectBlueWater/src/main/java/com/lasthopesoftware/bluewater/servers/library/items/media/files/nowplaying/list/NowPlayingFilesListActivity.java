@@ -115,22 +115,18 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		        }
 	        };
 	        
-	        getFileStringTask.onComplete(new TwoParameterRunnable<FluentTask<Void, Void, ArrayList<IFile>>, ArrayList<IFile>>() {
+	        getFileStringTask.onComplete((owner1, result) -> {
+		        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
+		        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 
-		        @Override
-		        public void run(FluentTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-			        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
-			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
+		        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+		        mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
 
-			        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-			        mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+		        if (library.getNowPlayingId() < result.size())
+			        mFileListView.setSelection(library.getNowPlayingId());
 
-			        if (library.getNowPlayingId() < result.size())
-				        mFileListView.setSelection(library.getNowPlayingId());
-
-			        mFileListView.setVisibility(View.VISIBLE);
-			        mLoadingProgressBar.setVisibility(View.INVISIBLE);
-		        }
+		        mFileListView.setVisibility(View.VISIBLE);
+		        mLoadingProgressBar.setVisibility(View.INVISIBLE);
 	        });
 	        
 	        getFileStringTask.execute();
