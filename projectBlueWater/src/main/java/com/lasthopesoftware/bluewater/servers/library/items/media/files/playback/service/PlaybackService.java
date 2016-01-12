@@ -273,13 +273,14 @@ public class PlaybackService extends Service implements
 	
 	/* Begin Events */
 	public static void addOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		onStreamingChangeListeners.add(listener);
+		synchronized(onStreamingChangeListeners) {
+			onStreamingChangeListeners.add(listener);
+		}
 	}
 
 	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
 		synchronized(onStreamingChangeListeners) {
-			if (onStreamingChangeListeners.contains(listener))
-				onStreamingChangeListeners.remove(listener);
+			onStreamingChangeListeners.remove(listener);
 		}
 	}
 
