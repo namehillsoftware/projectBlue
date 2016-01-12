@@ -20,7 +20,6 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
-import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -38,12 +37,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.AsyncExceptionTask;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
 
@@ -244,41 +241,32 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		pauseButton.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+			final String savedTracksString = library.getSavedTracksString();
+			if (savedTracksString == null || savedTracksString.isEmpty()) return;
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-				final String savedTracksString = library.getSavedTracksString();
-				if (savedTracksString == null || savedTracksString.isEmpty()) return;
+			final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
 
-				final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
+				@Override
+				protected List<IFile> doInBackground(Void... params) {
+					return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), savedTracksString);
+				}
 
-					@Override
-					protected List<IFile> doInBackground(Void... params) {
-						return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), savedTracksString);
-					}
+				@Override
+				protected void onPostExecute(List<IFile> result) {
+					setView(result.get(library.getNowPlayingId()), library.getNowPlayingProgress());
+				}
+			};
 
-					@Override
-					protected void onPostExecute(List<IFile> result) {
-						setView(result.get(library.getNowPlayingId()), library.getNowPlayingProgress());
-					}
-				};
-
-				getNowPlayingListTask.execute();
-			}
+			getNowPlayingListTask.execute();
 		});
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-				if (result != null)
-					setRepeatingIcon(imageButton, result.isRepeating());
-			}
-
+		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+			if (result != null)
+				setRepeatingIcon(imageButton, result.isRepeating());
 		});
 	}
 	
@@ -345,18 +333,14 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				getFileImageTask =
 						ImageProvider
 								.getImage(this, SessionConnection.getSessionConnectionProvider(), file)
-								.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
+								.onComplete((owner, result) -> {
+									if (viewStructure.nowPlayingImage != null)
+										viewStructure.nowPlayingImage.recycle();
+									viewStructure.nowPlayingImage = result;
 
-									@Override
-									public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
-										if (viewStructure.nowPlayingImage != null)
-											viewStructure.nowPlayingImage.recycle();
-										viewStructure.nowPlayingImage = result;
+									nowPlayingImageView.setImageBitmap(result);
 
-										nowPlayingImageView.setImageBitmap(result);
-
-										displayImageBitmap();
-									}
+									displayImageBitmap();
 								});
 
 				getFileImageTask.execute();
@@ -452,16 +436,12 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
                 songRating.setRating(result != null ? result : 0f);
 
-                songRating.setOnRatingBarChangeListener(new OnRatingBarChangeListener() {
+                songRating.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
+	                if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
+		                return;
+	                file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 
-	                @Override
-	                public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-		                if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
-			                return;
-		                file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
-
-		                viewStructure.nowPlayingRating = rating;
-	                }
+	                viewStructure.nowPlayingRating = rating;
                 });
             }
         };
@@ -546,13 +526,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 	
 	private void resetViewOnReconnect(final IFile file, final int position) {
-		PollConnection.Instance.get(this).addOnConnectionRegainedListener(new Runnable() {
-
-			@Override
-			public void run() {
-				setView(file, position);
-			}
-		});
+		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> setView(file, position));
 		WaitForConnectionDialog.show(this);
 	}
 
