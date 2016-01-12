@@ -313,10 +313,10 @@ public class PlaybackService extends Service implements
 	}
 
 	/* End Events */
-		
-	public static PlaybackController getPlaylistController() {
+
+	public static IPlaybackFile getCurrentPlaybackFile() {
 		synchronized(syncPlaylistControllerObject) {
-			return playlistController;
+			return playlistController != null ? playlistController.getCurrentPlaybackFile() : null;
 		}
 	}
 
@@ -336,10 +336,6 @@ public class PlaybackService extends Service implements
 		synchronized (syncPlaylistControllerObject) {
 			return playlistController != null ? playlistController.getCurrentPosition() : -1;
 		}
-	}
-	
-	public PlaybackService() {
-		super();
 	}
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
@@ -702,7 +698,10 @@ public class PlaybackService extends Service implements
 			final int fileKey = intent.getIntExtra(Action.Bag.fileKey, -1);
 			if (fileKey < 0) return;
 
-			playlistController.addFile(new File(SessionConnection.getSessionConnectionProvider(), fileKey));
+			synchronized (syncPlaylistControllerObject) {
+				if (playlistController != null)
+					playlistController.addFile(new File(SessionConnection.getSessionConnectionProvider(), fileKey));
+			}
 
 			LibrarySession.GetActiveLibrary(this, (owner, result) -> {
 				if (result == null) return;
@@ -729,10 +728,11 @@ public class PlaybackService extends Service implements
 				(new AsyncTask<Void, Void, String>() {
 					@Override
 					protected String doInBackground(Void... params) {
-						final PlaybackController playbackController = PlaybackService.getPlaylistController();
-						if (playbackController != null) {
-							playbackController.removeFile(filePosition);
-							return playbackController.getPlaylistString();
+						synchronized (syncPlaylistControllerObject) {
+							if (playlistController != null) {
+								playlistController.removeFile(filePosition);
+								return playlistController.getPlaylistString();
+							}
 						}
 
 						final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());

@@ -234,12 +234,9 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private void initializeView() {
 
 		// Get initial view state from playlist controller if it is active
-		if (PlaybackService.getPlaylistController() != null) {
-			final IPlaybackFile filePlayer = PlaybackService.getPlaylistController().getCurrentPlaybackFile();
-
+		final IPlaybackFile filePlayer = PlaybackService.getCurrentPlaybackFile();
+		if (filePlayer != null) {
 			setView(filePlayer);
-
-
 			return;
 		}
 
