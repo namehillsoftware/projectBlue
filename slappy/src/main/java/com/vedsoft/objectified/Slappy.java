@@ -87,8 +87,7 @@ public class Slappy {
 	public <T> List<T> fetch(Class<T> cls) throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
-		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
-		try {
+		try (Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue())) {
 			if (!cursor.moveToFirst()) return new ArrayList<>();
 
 			final ClassReflections reflections = ClassCache.getReflections(cls);
@@ -115,16 +114,12 @@ public class Slappy {
 					}
 
 					returnObjects.add(newObject);
-				} catch (InstantiationException e) {
-					throw new RuntimeException(e);
-				} catch (IllegalAccessException e) {
+				} catch (InstantiationException | IllegalAccessException e) {
 					throw new RuntimeException(e);
 				}
 			} while (cursor.moveToNext());
 
 			return returnObjects;
-		} finally {
-			cursor.close();
 		}
 	}
 
@@ -272,15 +267,12 @@ public class Slappy {
 				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
-						return new ThreeParameterRunnable<Field, Object, String>() {
-							@Override
-							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.setBoolean(parameterTwo, parseSqlBoolean(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setBoolean(parameterTwo, parseSqlBoolean(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -289,15 +281,12 @@ public class Slappy {
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
-						return new ThreeParameterRunnable<Field, Object, String>() {
-							@Override
-							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -306,15 +295,12 @@ public class Slappy {
 				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
-						return new ThreeParameterRunnable<Field, Object, String>() {
-							@Override
-							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setLong(parameterTwo, Long.parseLong(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -323,14 +309,11 @@ public class Slappy {
 				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
-						return new ThreeParameterRunnable<Field, Object, String>() {
-							@Override
-							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									parameterOne.set(parameterTwo, parameterThree);
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, parameterThree);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -339,15 +322,12 @@ public class Slappy {
 				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
-						return new ThreeParameterRunnable<Field, Object, String>() {
-							@Override
-							public void run(Field parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.set(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getType(), parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -386,17 +366,12 @@ public class Slappy {
 				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
-						return new ThreeParameterRunnable<Method, Object, String>() {
-							@Override
-							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.invoke(parameterTwo, parseSqlBoolean(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								} catch (InvocationTargetException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, parseSqlBoolean(parameterThree));
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -405,17 +380,12 @@ public class Slappy {
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
-						return new ThreeParameterRunnable<Method, Object, String>() {
-							@Override
-							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								} catch (InvocationTargetException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -424,17 +394,12 @@ public class Slappy {
 				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
-						return new ThreeParameterRunnable<Method, Object, String>() {
-							@Override
-							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								} catch (InvocationTargetException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -443,16 +408,11 @@ public class Slappy {
 				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
-						return new ThreeParameterRunnable<Method, Object, String>() {
-							@Override
-							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									parameterOne.invoke(parameterTwo, parameterThree);
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								} catch (InvocationTargetException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, parameterThree);
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
@@ -461,17 +421,12 @@ public class Slappy {
 				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
-						return new ThreeParameterRunnable<Method, Object, String>() {
-							@Override
-							public void run(Method parameterOne, Object parameterTwo, String parameterThree) {
-								try {
-									if (!isSqlValueNull(parameterThree))
-										parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
-								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
-								} catch (InvocationTargetException e) {
-									throw new RuntimeException(e);
-								}
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Enum.valueOf((Class<? extends Enum>) parameterOne.getParameterTypes()[0], parameterThree));
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
 							}
 						};
 					}
