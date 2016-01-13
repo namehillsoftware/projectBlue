@@ -4,15 +4,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 public class AccessConfiguration {
-	private final String activeUrl;
+	private final String baseUrl;
 	private final String authCode;
-	private final int libraryId;
 
-	public AccessConfiguration(int libraryId, String authCode, String ipAddress, int port) {
+	public AccessConfiguration(String authCode, String ipAddress, int port) {
 		this.authCode = authCode;
-		this.libraryId = libraryId;
 
-		activeUrl = "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
+		baseUrl = "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
 	}
 
 	public String getAuthCode() {
@@ -21,9 +19,9 @@ public class AccessConfiguration {
 
 	public String buildMediaCenterUrl(String... params) {
 		// Add base url
-		if (params.length == 0) return activeUrl;
+		if (params.length == 0) return baseUrl;
 		
-		final StringBuilder urlBuilder = new StringBuilder(activeUrl);
+		final StringBuilder urlBuilder = new StringBuilder(baseUrl);
 		
 		// Add action
 		urlBuilder.append(params[0]);
@@ -55,8 +53,8 @@ public class AccessConfiguration {
 			return parameter;
 		}
 	}
-	
-	public int getLibraryId() {
-		return libraryId;
+
+	public String getBaseUrl() {
+		return baseUrl;
 	}
 }
