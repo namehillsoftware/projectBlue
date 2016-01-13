@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -277,15 +278,13 @@ public class StoredFileAccess {
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		storedFileExecutor.getObject().execute(new Runnable() {
-			@Override
-			public void run() {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
-					// Since we could be pulling back a lot of data, only query for what we need.
-					// This query is very custom to this scenario, so it's being kept here.
-					final List<StoredFile> allStoredFiles =
-							repositoryAccessHelper
+		storedFileExecutor.getObject().execute(() -> {
+			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			try {
+				// Since we could be pulling back a lot of data, only query for what we need.
+				// This query is very custom to this scenario, so it's being kept here.
+				final List<StoredFile> allStoredFiles =
+						repositoryAccessHelper
 								.mapSql(
 										" SELECT id, " + StoredFile.serviceIdColumnName + ", " + StoredFile.pathColumnName +
 												" FROM " + StoredFile.tableName +
@@ -295,13 +294,14 @@ public class StoredFileAccess {
 								.addParameter(StoredFile.isOwnerColumnName, true)
 								.fetch(StoredFile.class);
 
-					for (StoredFile storedFile : allStoredFiles) {
-						if (!serviceIdsToKeep.contains(storedFile.getServiceId()))
-							deleteStoredFile(storedFile);
-					}
-				} finally {
-					repositoryAccessHelper.close();
+				for (StoredFile storedFile : allStoredFiles) {
+					if (!serviceIdsToKeep.contains(storedFile.getServiceId()))
+						deleteStoredFile(storedFile);
 				}
+			} catch (SQLException e) {
+				logger.getObject().error("There was an error deleting file " + library.getId(), e);
+			} finally {
+				repositoryAccessHelper.close();
 			}
 		});
 	}
