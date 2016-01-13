@@ -97,7 +97,7 @@ public class AccessConfigurationBuilder {
 
 					if (UrlValidator.getInstance().isValid(localAccessString)) {
 						final Uri url = Uri.parse(localAccessString);
-						final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, url.getHost(), url.getPort());
+						final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, url.getHost(), url.getPort());
 						if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
 							return accessConfiguration;
 					}
@@ -112,13 +112,13 @@ public class AccessConfigurationBuilder {
 							final int port = Integer.parseInt(xml.getUnique("port").getValue());
 
 							if (!library.isLocalOnly()) {
-								final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, xml.getUnique("ip").getValue(), port);
+								final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, xml.getUnique("ip").getValue(), port);
 								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
 									return accessConfiguration;
 							}
 
 							for (String ipAddress : xml.getUnique("localiplist").getValue().split(",")) {
-								final AccessConfiguration accessConfiguration = new AccessConfiguration(libraryId, authKey, ipAddress, port);
+								final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, ipAddress, port);
 								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
 									return accessConfiguration;
 							}
