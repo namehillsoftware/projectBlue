@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
@@ -29,8 +29,8 @@ import java.util.List;
 
 public class PlaylistListActivity extends AppCompatActivity implements IItemListViewContainer {
 
-	public static final String KEY = SpecialValueHelpers.buildMagicPropertyName(PlaylistListActivity.class, "key");
-	public static final String VALUE = SpecialValueHelpers.buildMagicPropertyName(PlaylistListActivity.class, "value");
+	public static final String KEY = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "key");
+	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
 	private int mPlaylistId;
 
 	private ProgressBar pbLoading;

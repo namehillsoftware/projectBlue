@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ import java.util.List;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
-	public static final String showDownloadsAction = SpecialValueHelpers.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
+	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
 
 	private static final List<String> specialViews = Collections.singletonList("Active Downloads");
 

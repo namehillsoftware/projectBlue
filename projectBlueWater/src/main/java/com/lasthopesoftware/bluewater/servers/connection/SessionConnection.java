@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -25,10 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SessionConnection {
 
-	public static final String buildSessionBroadcast = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
-	public static final String buildSessionBroadcastStatus = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
-	public static final String refreshSessionBroadcast = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
-	public static final String isRefreshSuccessfulStatus = SpecialValueHelpers.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
+	public static final String buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
+	public static final String buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
+	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
+	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
 	private static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
 	public static final Set<Integer> completeConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete));

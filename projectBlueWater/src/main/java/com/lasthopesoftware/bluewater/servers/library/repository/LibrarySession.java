@@ -10,7 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
@@ -24,7 +24,7 @@ import java.util.List;
 public class LibrarySession {
 	
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySession.class);
-	public static final String libraryChosenEvent = SpecialValueHelpers.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
+	public static final String libraryChosenEvent = MagicPropertyBuilder.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
 	private static final Lazy<String> libraryInsertSql = new Lazy<String>() {

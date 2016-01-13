@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
@@ -50,15 +50,15 @@ import java.util.List;
  */
 public class SyncService extends Service {
 
-	public static final String onSyncStartEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");
-	public static final String onSyncStopEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onSyncStopEvent");
-	public static final String onFileQueuedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileQueuedEvent");
-	public static final String onFileDownloadingEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadingEvent");
-	public static final String onFileDownloadedEvent = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
-	public static final String storedFileEventKey = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "storedFileEventKey");
+	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");
+	public static final String onSyncStopEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onSyncStopEvent");
+	public static final String onFileQueuedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onFileQueuedEvent");
+	public static final String onFileDownloadingEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onFileDownloadingEvent");
+	public static final String onFileDownloadedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onFileDownloadedEvent");
+	public static final String storedFileEventKey = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "storedFileEventKey");
 
-	private static final String doSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "doSyncAction");
-	private static final String cancelSyncAction = SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "cancelSyncAction");
+	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "doSyncAction");
+	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "cancelSyncAction");
 	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
 	private static final int notificationId = 23;
 
@@ -203,7 +203,7 @@ public class SyncService extends Service {
 
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
-		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SpecialValueHelpers.buildMagicPropertyName(SyncService.class, "wakeLock"));
+		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "wakeLock"));
 		wakeLock.acquire();
 		notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 	}

@@ -10,7 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +23,10 @@ import java.util.ArrayList;
  */
 public class MediaFileUriProvider extends AbstractFileUriProvider {
 
-	public static final String mediaFileFoundEvent = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundEvent");
-	public static final String mediaFileFoundMediaId = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundMediaId");
-	public static final String mediaFileFoundFileKey = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundFileKey");
-	public static final String mediaFileFoundPath = SpecialValueHelpers.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundPath");
+	public static final String mediaFileFoundEvent = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundEvent");
+	public static final String mediaFileFoundMediaId = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundMediaId");
+	public static final String mediaFileFoundFileKey = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundFileKey");
+	public static final String mediaFileFoundPath = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundPath");
 
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 	private static final String mediaDataQuery = MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";

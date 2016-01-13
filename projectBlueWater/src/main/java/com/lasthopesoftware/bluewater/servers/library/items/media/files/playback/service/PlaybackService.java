@@ -51,7 +51,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImagePro
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
-import com.lasthopesoftware.bluewater.shared.SpecialValueHelpers;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
@@ -82,18 +82,19 @@ public class PlaybackService extends Service implements
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
 	private static class Action {
-		/* String constant actions */
+		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Action.class);
 
-		private static final String launchMusicService = SpecialValueHelpers.buildMagicPropertyName(Action.class, "launchMusicService");
-		private static final String play = SpecialValueHelpers.buildMagicPropertyName(Action.class, "play");
-		private static final String pause = SpecialValueHelpers.buildMagicPropertyName(Action.class, "pause");
-		private static final String previous = SpecialValueHelpers.buildMagicPropertyName(Action.class, "previous");
-		private static final String next = SpecialValueHelpers.buildMagicPropertyName(Action.class, "next");
-		private static final String seekTo = SpecialValueHelpers.buildMagicPropertyName(Action.class, "seekTo");
-		private static final String stopWaitingForConnection = SpecialValueHelpers.buildMagicPropertyName(Action.class, "stopWaitingForConnection");
-		private static final String initializePlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "initializePlaylist");
-		private static final String addFileToPlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "addFileToPlaylist");
-		private static final String removeFileAtPositionFromPlaylist = SpecialValueHelpers.buildMagicPropertyName(Action.class, "removeFileAtPositionFromPlaylist");
+		/* String constant actions */
+		private static final String launchMusicService = magicPropertyBuilder.buildProperty("launchMusicService");
+		private static final String play = magicPropertyBuilder.buildProperty("play");
+		private static final String pause = magicPropertyBuilder.buildProperty("pause");
+		private static final String previous = magicPropertyBuilder.buildProperty("previous");
+		private static final String next = magicPropertyBuilder.buildProperty("next");
+		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
+		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
+		private static final String initializePlaylist = magicPropertyBuilder.buildProperty("initializePlaylist");
+		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
+		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 
 		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
 				launchMusicService,
@@ -109,29 +110,35 @@ public class PlaybackService extends Service implements
 		}));
 
 		private static class Bag {
+			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
+
 			/* Bag constants */
-			private static final String fileKey = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "fileKey");
-			private static final String filePlaylist = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "filePlaylist");
-			private static final String startPos = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "startPos");
-			private static final String filePosition = SpecialValueHelpers.buildMagicPropertyName(Bag.class, "filePosition");
+			private static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			private static final String filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist");
+			private static final String startPos = magicPropertyBuilder.buildProperty("startPos");
+			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
 		}
 	}
 
 	public static class PlaylistEvents {
-		public static final String onPlaylistChange = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistChange");
-		public static final String onPlaylistStart = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistStart");
-		public static final String onPlaylistStop = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistStop");
-		public static final String onPlaylistPause = SpecialValueHelpers.buildMagicPropertyName(PlaylistEvents.class, "onPlaylistPause");
+		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);
+
+		public static final String onPlaylistChange = magicPropertyBuilder.buildProperty("onPlaylistChange");
+		public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
+		public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
+		public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
 
 		public static class PlaybackFileParameters {
-			public static final String fileKey = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "fileKey");
-			public static final String filePosition = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "filePosition");
-			public static final String fileDuration = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "fileDuration");
-			public static final String isPlaying = SpecialValueHelpers.buildMagicPropertyName(PlaybackFileParameters.class, "isPlaying");
+			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
+
+			public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			public static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
+			public static final String fileDuration = magicPropertyBuilder.buildProperty("fileDuration");
+			public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
 		}
 
 		public static class PlaylistParameters {
-			public static final String playlistPosition = SpecialValueHelpers.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
+			public static final String playlistPosition = MagicPropertyBuilder.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
 		}
 	}
 
