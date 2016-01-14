@@ -83,13 +83,16 @@ public class StoredFile implements IRepository {
 		this.isOwner = isOwner;
 	}
 
+	private static final String createTableSql = "CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`path`), UNIQUE (`libraryId`,`serviceId`) ) ";
+
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`path`), UNIQUE (`libraryId`,`serviceId`) ) ");
+		db.execSQL(createTableSql);
 	}
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+		if (oldVersion <= 6)
+			db.execSQL(createTableSql);
 	}
 }

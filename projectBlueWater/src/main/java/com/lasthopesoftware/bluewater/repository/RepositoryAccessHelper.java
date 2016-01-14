@@ -11,29 +11,19 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objectified.Slappy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final int DATABASE_VERSION = 5;
+	private static final int DATABASE_VERSION = 6;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Lazy<IRepository[]> repositories = new Lazy<IRepository[]>() {
 		@Override
 		protected IRepository[] initialize() {
 			return new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile() };
-		}
-	};
-
-	private final static Lazy<Logger> localLogger = new Lazy<Logger>() {
-		@Override
-		protected Logger initialize() {
-			return LoggerFactory.getLogger(RepositoryAccessHelper.class);
 		}
 	};
 
