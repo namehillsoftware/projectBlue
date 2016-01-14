@@ -33,7 +33,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
     }
 
     private static Integer getCachedRevision(ConnectionProvider connectionProvider) {
-        final String serverUrl = connectionProvider.getAccessConfiguration().getBaseUrl();
+        final String serverUrl = connectionProvider.getUrlProvider().getBaseUrl();
         if (!cachedRevisions.containsKey(serverUrl))
             cachedRevisions.put(serverUrl, mBadRevision);
 
@@ -63,7 +63,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
 
                     if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
 
-                    cachedRevisions.put(connectionProvider.getAccessConfiguration().getBaseUrl(), Integer.valueOf(revisionValue));
+                    cachedRevisions.put(connectionProvider.getUrlProvider().getBaseUrl(), Integer.valueOf(revisionValue));
                     mLastCheckedTime = System.currentTimeMillis();
                     return getCachedRevision(connectionProvider);
                 } finally {

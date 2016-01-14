@@ -64,7 +64,7 @@ public class File extends AbstractIntKeyStringValue implements IFile {
 	}
 	
 	public String getPlaybackUrl(ConnectionProvider connectionProvider) {
-		return connectionProvider.buildMediaCenterUrl(getPlaybackParams());
+		return connectionProvider.getUrlProvider().getUrl(getPlaybackParams());
 	}
 	
 	public void setProperty(String name, String value) {

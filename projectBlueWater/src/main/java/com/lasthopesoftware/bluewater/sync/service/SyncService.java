@@ -20,9 +20,9 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.connection.AccessConfiguration;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
@@ -104,15 +104,15 @@ public class SyncService extends Service {
 			LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
 				@Override
 				public void run(FluentTask<Integer, Void, Library> parameterOne, Library library) {
-					AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
+					AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, new TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider>() {
 						@Override
-						public void run(FluentTask<Void, Void, AccessConfiguration> parameterOne, final AccessConfiguration accessConfiguration) {
+						public void run(FluentTask<Void, Void, MediaServerUrlProvider> parameterOne, final MediaServerUrlProvider urlProvider) {
 							new FluentTask<Void, Void, String>() {
 
 								@Override
 								protected String executeInBackground(Void[] params) {
 									try {
-										final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
+										final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 										final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
 										return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
 									} catch (IOException e) {
@@ -245,11 +245,11 @@ public class SyncService extends Service {
 					if (library.isSyncLocalConnectionsOnly())
 						library.setLocalOnly(true);
 
-					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
+					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider>() {
 						@Override
-						public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration accessConfiguration) {
+						public void run(FluentTask<Void, Void, MediaServerUrlProvider> owner, MediaServerUrlProvider urlProvider) {
 
-							final ConnectionProvider connectionProvider = new ConnectionProvider(accessConfiguration);
+							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 
 							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
 							librarySyncHandler.setOnFileQueued(storedFileQueuedAction);

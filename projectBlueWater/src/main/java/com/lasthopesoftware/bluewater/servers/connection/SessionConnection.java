@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.servers.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -66,10 +67,10 @@ public class SessionConnection {
 				
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 				
-				AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void,Void,AccessConfiguration>, AccessConfiguration>() {
+				AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void,Void,MediaServerUrlProvider>, MediaServerUrlProvider>() {
 
 					@Override
-					public void run(FluentTask<Void, Void, AccessConfiguration> owner, AccessConfiguration result) {
+					public void run(FluentTask<Void, Void, MediaServerUrlProvider> owner, MediaServerUrlProvider result) {
 						if (result == null) {
 							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 							return;

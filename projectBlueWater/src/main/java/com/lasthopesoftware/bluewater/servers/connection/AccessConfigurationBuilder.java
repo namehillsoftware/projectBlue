@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.servers.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
@@ -31,11 +32,11 @@ public class AccessConfigurationBuilder {
 	private static final int buildConnectionTimeoutTime = 10000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final Library library, final TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) {
+	public static void buildConfiguration(final Context context, final Library library, final TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) {
 		buildConfiguration(context, library, buildConnectionTimeoutTime, onBuildComplete);
 	}
 
-	private static void buildConfiguration(final Context context, final Library library, int timeout, final TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onBuildComplete) throws NullPointerException {
+	private static void buildConfiguration(final Context context, final Library library, int timeout, final TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
@@ -47,25 +48,21 @@ public class AccessConfigurationBuilder {
 			return;
 		}
 
-		buildAccessConfiguration(library, timeout, new TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration>() {
-
-			@Override
-			public void run(final FluentTask<Void, Void, AccessConfiguration> builderOwner, final AccessConfiguration accessConfiguration) {
-				if (accessConfiguration == null) {
-					executeReturnNullTask(onBuildComplete);
-					return;
-				}
-
-				if (onBuildComplete != null)
-					onBuildComplete.run(builderOwner, accessConfiguration);
+		buildAccessConfiguration(library, timeout, (builderOwner, urlProvider) -> {
+			if (urlProvider == null) {
+				executeReturnNullTask(onBuildComplete);
+				return;
 			}
+
+			if (onBuildComplete != null)
+				onBuildComplete.run(builderOwner, urlProvider);
 		});
 	}
 
-	private static void executeReturnNullTask(TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onReturnFalseListener) {
-		final FluentTask<Void, Void, AccessConfiguration> returnFalseTask = new FluentTask<Void, Void, AccessConfiguration>() {
+	private static void executeReturnNullTask(TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onReturnFalseListener) {
+		final FluentTask<Void, Void, MediaServerUrlProvider> returnFalseTask = new FluentTask<Void, Void, MediaServerUrlProvider>() {
 			@Override
-			protected AccessConfiguration executeInBackground(Void... params) {
+			protected MediaServerUrlProvider executeInBackground(Void... params) {
 				return null;
 			}
 		};
@@ -75,16 +72,16 @@ public class AccessConfigurationBuilder {
 			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private static void buildAccessConfiguration(final Library library, final int timeout, TwoParameterRunnable<FluentTask<Void, Void, AccessConfiguration>, AccessConfiguration> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final Library library, final int timeout, TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");
 
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentTask<Void, Void, AccessConfiguration> mediaCenterAccessTask = new FluentTask<Void, Void, AccessConfiguration>() {
+		final FluentTask<Void, Void, MediaServerUrlProvider> mediaCenterAccessTask = new FluentTask<Void, Void, MediaServerUrlProvider>() {
 			@Override
-			protected AccessConfiguration executeInBackground(Void... params) {
+			protected MediaServerUrlProvider executeInBackground(Void... params) {
 				try {
 					final int libraryId = library.getId();
 					final String authKey = library.getAuthKey();
@@ -97,9 +94,9 @@ public class AccessConfigurationBuilder {
 
 					if (UrlValidator.getInstance().isValid(localAccessString)) {
 						final Uri url = Uri.parse(localAccessString);
-						final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, url.getHost(), url.getPort());
-						if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
-							return accessConfiguration;
+						final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, url.getHost(), url.getPort());
+						if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
+							return urlProvider;
 					}
 
 					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + localAccessString)).openConnection();
@@ -112,15 +109,15 @@ public class AccessConfigurationBuilder {
 							final int port = Integer.parseInt(xml.getUnique("port").getValue());
 
 							if (!library.isLocalOnly()) {
-								final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, xml.getUnique("ip").getValue(), port);
-								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
-									return accessConfiguration;
+								final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, xml.getUnique("ip").getValue(), port);
+								if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
+									return urlProvider;
 							}
 
 							for (String ipAddress : xml.getUnique("localiplist").getValue().split(",")) {
-								final AccessConfiguration accessConfiguration = new AccessConfiguration(authKey, ipAddress, port);
-								if (ConnectionTester.doTest(new ConnectionProvider(accessConfiguration), timeout))
-									return accessConfiguration;
+								final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, ipAddress, port);
+								if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
+									return urlProvider;
 							}
 
 						} finally {
