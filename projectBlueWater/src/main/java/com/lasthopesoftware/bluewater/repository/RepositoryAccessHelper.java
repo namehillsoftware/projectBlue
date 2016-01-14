@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 5;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Lazy<IRepository[]> repositories = new Lazy<IRepository[]>() {

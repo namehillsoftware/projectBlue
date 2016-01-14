@@ -92,7 +92,7 @@ public class StoredFile implements IRepository {
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion <= 6)
+		if (oldVersion <= 5)
 			db.execSQL(createTableSql);
 	}
 }
