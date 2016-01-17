@@ -72,12 +72,6 @@ public class StoredFileAccess {
 		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	public void getStoredFile(final IFile serviceFile, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
-		getStoredFileTask(serviceFile)
-				.onComplete(onStoredFileRetrieved)
-				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
 		return getStoredFileTask(serviceFile).get(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -303,7 +297,7 @@ public class StoredFileAccess {
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {
-		final StoredFile storedFile =
+		return
 			helper
 				.mapSql(
 					" SELECT * " +
@@ -313,21 +307,17 @@ public class StoredFileAccess {
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
 				.fetchFirst(StoredFile.class);
-
-		return deleteIfNotExists(storedFile);
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
-		final StoredFile storedFile =
+		return
 			helper
 				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
 				.addParameter("id", storedFileId)
 				.fetchFirst(StoredFile.class);
-
-		return deleteIfNotExists(storedFile);
 	}
 
-	private StoredFile deleteIfNotExists(StoredFile storedFile) {
+	public StoredFile deleteIfNotExists(StoredFile storedFile) {
 		final File systemFile = new File(storedFile.getPath());
 		if (systemFile.exists()) return storedFile;
 
