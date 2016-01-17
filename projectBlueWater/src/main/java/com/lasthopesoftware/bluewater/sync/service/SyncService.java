@@ -171,6 +171,7 @@ public class SyncService extends Service {
 		protected Intent initialize() {
 			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);
 			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
+			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 			return browseLibraryIntent;
 		}
 	};
