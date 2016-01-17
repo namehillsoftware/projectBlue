@@ -167,6 +167,7 @@ public class StoredFileAccess {
 					createStoredFile(repositoryAccessHelper, file);
 					storedFile = getStoredFile(repositoryAccessHelper, file);
 					storedFile.setIsOwner(false);
+					storedFile.setIsDownloadComplete(true);
 				}
 
 				storedFile.setStoredMediaId(mediaFileId);
