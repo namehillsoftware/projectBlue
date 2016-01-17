@@ -11,11 +11,6 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 		this.setValue(value);
 	}
 	
-	public AbstractIntKeyStringValue(String value) {
-		this.setKey(-1);
-		this.setValue(value);
-	}
-	
 	protected AbstractIntKeyStringValue() {
 	}
 	
