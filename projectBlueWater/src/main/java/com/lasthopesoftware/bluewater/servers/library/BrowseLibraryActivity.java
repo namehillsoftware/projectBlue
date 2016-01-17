@@ -149,12 +149,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) startLibrary();
 	}
-
+	
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 
-		newIntent = intent;
+		if (showDownloadsAction.equals(intent.getAction()))
+			updateSelectedView(Library.ViewType.DownloadView, 0);
 	}
 
 	private void startLibrary() {
@@ -170,16 +171,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				return;
 			}
 
-			if (newIntent != null) {
+			if (showDownloadsAction.equals(getIntent().getAction())) {
+				library.setSelectedView(0);
+				library.setSelectedViewType(Library.ViewType.DownloadView);
+				LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
 
-				if (showDownloadsAction.equals(newIntent.getAction())) {
-					library.setSelectedView(0);
-					library.setSelectedViewType(Library.ViewType.DownloadView);
-					LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
-				}
-
-				// Now that newIntent has been handled, set it to null
-				newIntent = null;
+				// Clear the action
+				getIntent().setAction(null);
 			}
 
 			displayLibrary(library);
