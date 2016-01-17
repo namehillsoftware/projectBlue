@@ -129,20 +129,15 @@ public class StoredFileAccess {
 		});
 	}
 
-	private void deleteStoredFile(final StoredFile storedFile) {
-		storedFileExecutor.getObject().execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			try {
-				repositoryAccessHelper
-						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
-						.addParameter("id", storedFile.getId())
-						.execute();
-			} catch (SQLException e) {
-				logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
-			} finally {
-				repositoryAccessHelper.close();
-			}
-		});
+	private static void deleteStoredFile(RepositoryAccessHelper repositoryAccessHelper, final StoredFile storedFile) {
+		try {
+			repositoryAccessHelper
+					.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
+					.addParameter("id", storedFile.getId())
+					.execute();
+		} catch (SQLException e) {
+			logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
+		}
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
@@ -265,7 +260,7 @@ public class StoredFileAccess {
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+		storedFileExecutor.getObject().execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				final List<StoredFile> allStoredFilesQuery =
@@ -276,11 +271,18 @@ public class StoredFileAccess {
 				final int libraryId = library.getId();
 
 				for (StoredFile storedFile : allStoredFilesQuery) {
-					final File systemFile = new File(storedFile.getPath());
+					final String filePath = storedFile.getPath();
+					// It doesn't make sense to create a stored file without a file path
+					if (filePath == null) {
+						deleteStoredFile(repositoryAccessHelper, storedFile);
+						continue;
+					}
+
+					final File systemFile = new File(filePath);
 
 					// Remove files that are marked as downloaded but the file doesn't actually exist
 					if (storedFile.isDownloadComplete() && !systemFile.exists()) {
-						deleteStoredFile(storedFile);
+						deleteStoredFile(repositoryAccessHelper, storedFile);
 						continue;
 					}
 
@@ -288,7 +290,7 @@ public class StoredFileAccess {
 					if (storedFile.getLibraryId() != libraryId) continue;
 					if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
 
-					deleteStoredFile(storedFile);
+					deleteStoredFile(repositoryAccessHelper, storedFile);
 					systemFile.delete();
 				}
 			} catch (SQLException e) {
