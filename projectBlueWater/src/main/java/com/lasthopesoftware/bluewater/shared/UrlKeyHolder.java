@@ -14,13 +14,18 @@ public class UrlKeyHolder<T> {
 
 	@Override
 	public boolean equals(Object o) {
-		UrlKeyHolder<T> otherUrlKeyHolder;
-		try {
-			otherUrlKeyHolder = (UrlKeyHolder<T>) o;
-		} catch (ClassCastException e) {
-			return false;
-		}
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
-		return otherUrlKeyHolder != null && key.equals(otherUrlKeyHolder.key) && url.equals(otherUrlKeyHolder.url);
+		UrlKeyHolder<?> that = (UrlKeyHolder<?>) o;
+
+		return !(url != null ? !url.equals(that.url) : that.url != null) && !(key != null ? !key.equals(that.key) : that.key != null);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = url != null ? url.hashCode() : 0;
+		result = 31 * result + (key != null ? key.hashCode() : 0);
+		return result;
 	}
 }
