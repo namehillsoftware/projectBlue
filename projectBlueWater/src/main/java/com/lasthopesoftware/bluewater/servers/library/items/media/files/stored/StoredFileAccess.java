@@ -137,9 +137,6 @@ public class StoredFileAccess {
 
 	private void deleteStoredFile(final StoredFile storedFile) {
 		storedFileExecutor.getObject().execute(() -> {
-			final File systemFile = new File(storedFile.getPath());
-			systemFile.delete();
-
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				repositoryAccessHelper
@@ -272,22 +269,33 @@ public class StoredFileAccess {
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		storedFileExecutor.getObject().execute(() -> {
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
-				final List<StoredFile> allLibraryStoredFilesQuery =
+				final List<StoredFile> allStoredFilesQuery =
 						repositoryAccessHelper
 								.mapSql(" SELECT * FROM " + StoredFile.tableName)
 								.fetch(StoredFile.class);
 
 				final int libraryId = library.getId();
 
-				for (StoredFile storedFile : allLibraryStoredFilesQuery) {
-					if (storedFile.isOwner() && storedFile.getLibraryId() == libraryId && !serviceIdsToKeep.contains(storedFile.getServiceId()))
+				for (StoredFile storedFile : allStoredFilesQuery) {
+					if (deleteIfNotExists(storedFile) == null) continue;
+					if (!storedFile.isOwner()) continue;
+					if (storedFile.getLibraryId() != libraryId) continue;
+					if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
+
+					try {
 						deleteStoredFile(storedFile);
+					} catch (SQLException e) {
+						logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
+					}
+
+					final File systemFile = new File(storedFile.getPath());
+					systemFile.delete();
 				}
 			} catch (SQLException e) {
-				logger.getObject().error("There was an error deleting file " + library.getId(), e);
+				logger.getObject().error("There was an error getting the stored files", e);
 			} finally {
 				repositoryAccessHelper.close();
 			}
