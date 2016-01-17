@@ -149,7 +149,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) startLibrary();
 	}
-	
+
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
@@ -239,10 +239,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
 		return (parent, view, position, id) -> {
 			final Item selectedItem = items.get(position);
-
-			// The action state can be preserved due to the need to preserve action state
-			getIntent().setAction(null);
-
 			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
 		};
 	}
