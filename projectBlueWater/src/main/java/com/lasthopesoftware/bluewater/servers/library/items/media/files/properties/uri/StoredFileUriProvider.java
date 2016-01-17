@@ -29,7 +29,7 @@ public class StoredFileUriProvider extends AbstractFileUriProvider {
 	@Override
 	public Uri getFileUri() throws IOException {
 		try {
-			final StoredFile storedFile = storedFileAccess.deleteIfNotExists(storedFileAccess.getStoredFile(getFile()));
+			final StoredFile storedFile = storedFileAccess.getStoredFile(getFile());
 			if (storedFile == null || !storedFile.isDownloadComplete()) return null;
 
 			final File file = new File(storedFile.getPath());

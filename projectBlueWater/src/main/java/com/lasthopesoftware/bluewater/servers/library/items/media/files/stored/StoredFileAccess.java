@@ -134,9 +134,11 @@ public class StoredFileAccess {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				repositoryAccessHelper
-					.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
-					.addParameter("id", storedFile.getId())
-					.execute();
+						.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
+						.addParameter("id", storedFile.getId())
+						.execute();
+			} catch (SQLException e) {
+				logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
 			} finally {
 				repositoryAccessHelper.close();
 			}
@@ -274,18 +276,19 @@ public class StoredFileAccess {
 				final int libraryId = library.getId();
 
 				for (StoredFile storedFile : allStoredFilesQuery) {
-					if (deleteIfNotExists(storedFile) == null) continue;
+					final File systemFile = new File(storedFile.getPath());
+
+					// Remove files that are marked as downloaded but the file doesn't actually exist
+					if (storedFile.isDownloadComplete() && !systemFile.exists()) {
+						deleteStoredFile(storedFile);
+						continue;
+					}
+
 					if (!storedFile.isOwner()) continue;
 					if (storedFile.getLibraryId() != libraryId) continue;
 					if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
 
-					try {
-						deleteStoredFile(storedFile);
-					} catch (SQLException e) {
-						logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
-					}
-
-					final File systemFile = new File(storedFile.getPath());
+					deleteStoredFile(storedFile);
 					systemFile.delete();
 				}
 			} catch (SQLException e) {
@@ -315,14 +318,6 @@ public class StoredFileAccess {
 				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
 				.addParameter("id", storedFileId)
 				.fetchFirst(StoredFile.class);
-	}
-
-	public StoredFile deleteIfNotExists(StoredFile storedFile) {
-		final File systemFile = new File(storedFile.getPath());
-		if (systemFile.exists()) return storedFile;
-
-		deleteStoredFile(storedFile);
-		return null;
 	}
 
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {

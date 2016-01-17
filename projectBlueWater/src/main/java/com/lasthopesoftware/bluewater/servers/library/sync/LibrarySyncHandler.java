@@ -14,9 +14,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,60 +70,48 @@ public class LibrarySyncHandler {
 
 	public void startSync() {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-		storedItemAccess.getStoredItems(new TwoParameterRunnable<FluentTask<Void,Void,List<StoredItem>>, List<StoredItem>>() {
+		storedItemAccess.getStoredItems((owner, storedItems) -> AsyncTask
+			.THREAD_POOL_EXECUTOR
+			.execute(() -> {
+				if (isCancelled) return;
 
-			@Override
-			public void run(FluentTask<Void, Void, List<StoredItem>> owner, final List<StoredItem> storedItems) {
-				AsyncTask
-					.THREAD_POOL_EXECUTOR
-					.execute(new Runnable() {
-						@Override
-						public void run() {
-							if (isCancelled) return;
+				final Set<Integer> allSyncedFileKeys = new HashSet<>();
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-							final Set<Integer> allSyncedFileKeys = new HashSet<>();
-							final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+				for (StoredItem storedItem : storedItems) {
+					if (isCancelled) return;
 
-							for (StoredItem storedItem : storedItems) {
-								if (isCancelled) return;
+					final int serviceId = storedItem.getServiceId();
+					final FileProvider fileProvider = new FileProvider(connectionProvider, storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId));
 
-								final int serviceId = storedItem.getServiceId();
-								final FileProvider fileProvider = new FileProvider(connectionProvider, storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId));
-
-								try {
-									final List<IFile> files = fileProvider.get();
-									for (final IFile file : files) {
-										allSyncedFileKeys.add(file.getKey());
-
-										if (isCancelled) return;
-
-										final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
-										if (!storedFile.isDownloadComplete())
-											storedFileDownloader.queueFileForDownload(file, storedFile);
-									}
-								} catch (ExecutionException | InterruptedException e) {
-									logger.warn("There was an error retrieving the files", e);
-								}
-							}
+					try {
+						final List<IFile> files = fileProvider.get();
+						for (final IFile file : files) {
+							allSyncedFileKeys.add(file.getKey());
 
 							if (isCancelled) return;
 
-							storedFileDownloader.setOnQueueProcessingCompleted(new Runnable() {
-								@Override
-								public void run() {
-
-									if (!isCancelled)
-										storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
-
-									if (onQueueProcessingCompleted != null)
-										onQueueProcessingCompleted.run(LibrarySyncHandler.this);
-								}
-							});
-
-							storedFileDownloader.process();
+							final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
+							if (!storedFile.isDownloadComplete())
+								storedFileDownloader.queueFileForDownload(file, storedFile);
 						}
-					});
-			}
-		});
+					} catch (ExecutionException | InterruptedException e) {
+						logger.warn("There was an error retrieving the files", e);
+					}
+				}
+
+				if (isCancelled) return;
+
+				storedFileDownloader.setOnQueueProcessingCompleted(() -> {
+
+					if (!isCancelled)
+						storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+
+					if (onQueueProcessingCompleted != null)
+						onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+				});
+
+				storedFileDownloader.process();
+			}));
 	}
 }
