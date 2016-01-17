@@ -36,10 +36,10 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	}
 
 	/**
-	 * @param mValue the mValue to set
+	 * @param value the mValue to set
 	 */
-	public void setValue(String mValue) {
-		this.mValue = mValue;
+	public void setValue(String value) {
+		this.mValue = value;
 	}
 	
 	@Override
