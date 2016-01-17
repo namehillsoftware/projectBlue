@@ -4,6 +4,7 @@ import android.util.LruCache;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.vedsoft.fluent.FluentTask;
 
 import org.apache.commons.io.IOUtils;
@@ -49,19 +50,20 @@ public class FilePropertiesProvider {
 	private final ConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static final LruCache<Integer, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
+	private static final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		this.connectionProvider = connectionProvider;
 		fileKeyString = String.valueOf(fileKey);
 
+		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
 		synchronized (propertiesCache) {
-			FilePropertiesContainer cachedFilePropertiesContainer = propertiesCache.get(fileKey);
+			FilePropertiesContainer cachedFilePropertiesContainer = propertiesCache.get(urlKeyHolder);
 			if (cachedFilePropertiesContainer == null) {
 				cachedFilePropertiesContainer = new FilePropertiesContainer();
-				propertiesCache.put(fileKey, cachedFilePropertiesContainer);
+				propertiesCache.put(urlKeyHolder, cachedFilePropertiesContainer);
 			}
 
 			filePropertiesContainer = cachedFilePropertiesContainer;
@@ -71,20 +73,16 @@ public class FilePropertiesProvider {
 	public void setProperty(final String name, final String value) {
 		if (filePropertiesContainer.getProperties().containsKey(name) && filePropertiesContainer.getProperties().get(name).equals(value)) return;
 
-		filePropertiesExecutor.execute(new Runnable() {
-			
-			@Override
-			public void run() {
+		filePropertiesExecutor.execute(() -> {
+			try {
+				final HttpURLConnection conn = connectionProvider.getConnection("File/SetInfo", "File=" + fileKeyString, "Field=" + name, "Value=" + value);
 				try {
-					final HttpURLConnection conn = connectionProvider.getConnection("File/SetInfo", "File=" + fileKeyString, "Field=" + name, "Value=" + value);
-					try {
-						conn.setReadTimeout(5000);
-						conn.getInputStream().close();
-					} finally {
-						conn.disconnect();
-					}
-				} catch (Exception ignored) {
+					conn.setReadTimeout(5000);
+					conn.getInputStream().close();
+				} finally {
+					conn.disconnect();
 				}
+			} catch (Exception ignored) {
 			}
 		});
 

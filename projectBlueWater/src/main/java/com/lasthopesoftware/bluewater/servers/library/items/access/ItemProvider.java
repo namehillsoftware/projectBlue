@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
 import java.io.InputStream;
@@ -26,7 +27,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     }
 
     private static final int maxSize = 50;
-    private static final LruCache<Integer, ItemHolder> itemsCache = new LruCache<>(maxSize);
+    private static final LruCache<UrlKeyHolder<Integer>, ItemHolder> itemsCache = new LruCache<>(maxSize);
 
     private final int itemKey;
 
@@ -46,7 +47,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     @Override
     protected List<Item> getData(HttpURLConnection connection) throws Exception {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
-        final Integer boxedItemKey = itemKey;
+        final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
         ItemHolder itemHolder;
         synchronized (itemsCache) {

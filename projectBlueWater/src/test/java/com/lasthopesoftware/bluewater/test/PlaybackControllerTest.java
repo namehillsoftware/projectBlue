@@ -202,7 +202,7 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public void setValue(String mValue) {
+		public void setValue(String value) {
 			// TODO Auto-generated method stub
 			
 		}

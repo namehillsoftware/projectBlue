@@ -5,6 +5,7 @@ import android.util.SparseArray;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
 import java.io.InputStream;
@@ -18,7 +19,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
     private static List<Playlist> cachedPlaylists;
     private static SparseArray<Playlist> mappedPlaylists;
-    private static Integer revision;
+    private static UrlKeyHolder<Integer> urlKeyHolder;
 
     private final int playlistId;
 
@@ -38,8 +39,8 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
     @Override
     protected List<Playlist> getData(final HttpURLConnection connection) throws Exception {
 
-        final Integer revision = RevisionChecker.getRevision(connectionProvider);
-        if (cachedPlaylists != null && revision.equals(PlaylistsProvider.revision))
+        final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), RevisionChecker.getRevision(connectionProvider));
+        if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
             return getPlaylists(playlistId);
 
         if (isCancelled()) return new ArrayList<>();
@@ -54,7 +55,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
                 else i++;
             }
 
-            PlaylistsProvider.revision = revision;
+            PlaylistsProvider.urlKeyHolder = urlKeyHolder;
             cachedPlaylists = streamResult;
             mappedPlaylists = null;
             return getPlaylists(playlistId);
