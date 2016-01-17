@@ -21,6 +21,6 @@ public class UrlKeyHolder<T> {
 			return false;
 		}
 
-		return otherUrlKeyHolder != null && url.equals(otherUrlKeyHolder.url) && key.equals(otherUrlKeyHolder.key);
+		return otherUrlKeyHolder != null && key.equals(otherUrlKeyHolder.key) && url.equals(otherUrlKeyHolder.url);
 	}
 }
