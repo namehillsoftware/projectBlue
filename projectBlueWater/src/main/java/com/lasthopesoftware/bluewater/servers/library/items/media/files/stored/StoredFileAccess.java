@@ -117,29 +117,29 @@ public class StoredFileAccess {
 	}
 
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
-		storedFileExecutor.getObject().execute(new Runnable() {
-			@Override
-			public void run() {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
-					repositoryAccessHelper
-							.mapSql(
-									" UPDATE " + StoredFile.tableName +
-											" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
-											" WHERE id = @id")
-							.addParameter("id", storedFile.getId())
-							.execute();
-				} finally {
-					repositoryAccessHelper.close();
-				}
-
-				storedFile.setIsDownloadComplete(true);
+		storedFileExecutor.getObject().execute(() -> {
+			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			try {
+				repositoryAccessHelper
+						.mapSql(
+								" UPDATE " + StoredFile.tableName +
+										" SET " + StoredFile.isDownloadCompleteColumnName + " = 1" +
+										" WHERE id = @id")
+						.addParameter("id", storedFile.getId())
+						.execute();
+			} finally {
+				repositoryAccessHelper.close();
 			}
+
+			storedFile.setIsDownloadComplete(true);
 		});
 	}
 
 	private void deleteStoredFile(final StoredFile storedFile) {
 		storedFileExecutor.getObject().execute(() -> {
+			final File systemFile = new File(storedFile.getPath());
+			systemFile.delete();
+
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				repositoryAccessHelper
@@ -275,21 +275,15 @@ public class StoredFileAccess {
 		storedFileExecutor.getObject().execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
-				// Since we could be pulling back a lot of data, only query for what we need.
-				// This query is very custom to this scenario, so it's being kept here.
 				final List<StoredFile> allLibraryStoredFilesQuery =
 						repositoryAccessHelper
-								.mapSql(
-								" SELECT id, " + StoredFile.serviceIdColumnName + ", " + StoredFile.pathColumnName +
-								" FROM " + StoredFile.tableName +
-								" WHERE " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName +
-								" AND " + StoredFile.isOwnerColumnName + " = @" + StoredFile.isOwnerColumnName)
-								.addParameter(StoredFile.libraryIdColumnName, library.getId())
-								.addParameter(StoredFile.isOwnerColumnName, true)
+								.mapSql(" SELECT * FROM " + StoredFile.tableName)
 								.fetch(StoredFile.class);
 
+				final int libraryId = library.getId();
+
 				for (StoredFile storedFile : allLibraryStoredFilesQuery) {
-					if (!serviceIdsToKeep.contains(storedFile.getServiceId()))
+					if (storedFile.isOwner() && storedFile.getLibraryId() == libraryId && !serviceIdsToKeep.contains(storedFile.getServiceId()))
 						deleteStoredFile(storedFile);
 				}
 			} catch (SQLException e) {
@@ -315,7 +309,7 @@ public class StoredFileAccess {
 		return deleteIfNotExists(storedFile);
 	}
 
-	private static StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
+	private StoredFile getStoredFile(RepositoryAccessHelper helper, int storedFileId) {
 		final StoredFile storedFile =
 			helper
 				.mapSql("SELECT * FROM " + StoredFile.tableName + " WHERE id = @id")
@@ -325,11 +319,11 @@ public class StoredFileAccess {
 		return deleteIfNotExists(storedFile);
 	}
 
-	private static StoredFile deleteIfNotExists(StoredFile storedFile) {
+	private StoredFile deleteIfNotExists(StoredFile storedFile) {
 		final File systemFile = new File(storedFile.getPath());
 		if (systemFile.exists()) return storedFile;
 
-		systemFile.delete();
+		deleteStoredFile(storedFile);
 		return null;
 	}
 
