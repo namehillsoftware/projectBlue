@@ -4,9 +4,11 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
@@ -19,6 +21,7 @@ import com.vedsoft.futures.runnables.OneParameterRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,7 +85,8 @@ public class LibrarySyncHandler {
 					if (isCancelled) return;
 
 					final int serviceId = storedItem.getServiceId();
-					final FileProvider fileProvider = new FileProvider(connectionProvider, storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId));
+					final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+					final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider)item);
 
 					try {
 						final List<IFile> files = fileProvider.get();
@@ -97,6 +101,11 @@ public class LibrarySyncHandler {
 						}
 					} catch (ExecutionException | InterruptedException e) {
 						logger.warn("There was an error retrieving the files", e);
+
+						if (e.getCause() instanceof FileNotFoundException) {
+							logger.info("The item was not found, disabling sync for item");
+							storedItemAccess.toggleSync(item, false);
+						}
 					}
 				}
 
