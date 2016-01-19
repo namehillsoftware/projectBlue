@@ -5,7 +5,9 @@ import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
 
+import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
@@ -32,12 +34,7 @@ import java.util.concurrent.Executors;
  */
 public class StoredFileAccess {
 
-	private static final Lazy<Logger> logger = new Lazy<Logger>() {
-		@Override
-		protected Logger initialize() {
-			return LoggerFactory.getLogger(StoredFileAccess.class);
-		}
-	};
+	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
 	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
 		@Override
@@ -50,6 +47,33 @@ public class StoredFileAccess {
 	private final Library library;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFile.tableName;
+
+	private static final Lazy<String> insertSql = new Lazy<String>() {
+		@Override
+		protected String initialize() {
+			return
+				InsertBuilder.fromTable(StoredFile.tableName)
+					.addColumn(StoredFile.serviceIdColumnName)
+					.addColumn(StoredFile.libraryIdColumnName)
+					.addColumn(StoredFile.isOwnerColumnName)
+					.build();
+		}
+	};
+
+	private static final Lazy<String> updateSql = new Lazy<String>() {
+		@Override
+		protected String initialize() {
+			return
+				UpdateBuilder.fromTable(StoredFile.tableName)
+					.addSetter(StoredFile.serviceIdColumnName)
+					.addSetter(StoredFile.storedMediaIdColumnName)
+					.addSetter(StoredFile.pathColumnName)
+					.addSetter(StoredFile.isOwnerColumnName)
+					.addSetter(StoredFile.isDownloadCompleteColumnName)
+					.setFilter("WHERE id = @id")
+					.buildQuery();
+		}
+	};
 
 	public StoredFileAccess(Context context, Library library) {
 		this.context = context;
@@ -136,7 +160,7 @@ public class StoredFileAccess {
 					.addParameter("id", storedFile.getId())
 					.execute();
 		} catch (SQLException e) {
-			logger.getObject().error("There was an error deleting file " + storedFile.getId(), e);
+			logger.error("There was an error deleting file " + storedFile.getId(), e);
 		}
 	}
 
@@ -159,7 +183,7 @@ public class StoredFileAccess {
 					storedFile =
 						repositoryAccessHelper
 							.mapSql(selectFromStoredFiles + " WHERE " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName)
-								.addParameter(StoredFile.pathColumnName, filePath)
+							.addParameter(StoredFile.pathColumnName, filePath)
 							.fetchFirst(StoredFile.class);
 				}
 
@@ -201,11 +225,11 @@ public class StoredFileAccess {
 								try {
 									storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
 								} catch (IOException e) {
-									logger.getObject().error("Error retrieving media file ID", e);
+									logger.error("Error retrieving media file ID", e);
 								}
 							}
 						} catch (IOException e) {
-							logger.getObject().error("Error retrieving media file URI", e);
+							logger.error("Error retrieving media file URI", e);
 						}
 					}
 
@@ -235,7 +259,7 @@ public class StoredFileAccess {
 							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
 							storedFile.setPath(fullPath);
 						} catch (IOException e) {
-							logger.getObject().error("Error getting filename for file " + file.getValue(), e);
+							logger.error("Error getting filename for file " + file.getValue(), e);
 						}
 					}
 
@@ -255,7 +279,7 @@ public class StoredFileAccess {
 		try {
 			return createOrUpdateStoredFileTask.get(storedFileExecutor.getObject());
 		} catch (ExecutionException | InterruptedException e) {
-			logger.getObject().error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
+			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
 		}
 	}
@@ -266,7 +290,7 @@ public class StoredFileAccess {
 			try {
 				final List<StoredFile> allStoredFilesQuery =
 						repositoryAccessHelper
-								.mapSql(" SELECT * FROM " + StoredFile.tableName)
+								.mapSql(selectFromStoredFiles)
 								.fetch(StoredFile.class);
 
 				final int libraryId = library.getId();
@@ -295,7 +319,7 @@ public class StoredFileAccess {
 					systemFile.delete();
 				}
 			} catch (SQLException e) {
-				logger.getObject().error("There was an error getting the stored files", e);
+				logger.error("There was an error getting the stored files", e);
 			} finally {
 				repositoryAccessHelper.close();
 			}
@@ -325,30 +349,17 @@ public class StoredFileAccess {
 
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
 		repositoryAccessHelper
-				.mapSql(
-						" INSERT INTO " + StoredFile.tableName + " (" +
-								StoredFile.serviceIdColumnName + ", " +
-								StoredFile.libraryIdColumnName + ", " +
-								StoredFile.isOwnerColumnName + ") VALUES (" +
-								"@" + StoredFile.serviceIdColumnName + ", " +
-								"@" + StoredFile.libraryIdColumnName + ", " +
-								"1)")
+				.mapSql(insertSql.getObject())
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
+				.addParameter(StoredFile.isOwnerColumnName, true)
 				.execute();
 	}
 
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
-		final String updateSql =
-				" UPDATE " + StoredFile.tableName +
-				" SET " + StoredFile.pathColumnName + " = @" + StoredFile.pathColumnName +
-				", " + StoredFile.storedMediaIdColumnName + " = @" + StoredFile.storedMediaIdColumnName +
-				", " + StoredFile.isOwnerColumnName + " = @" + StoredFile.isOwnerColumnName +
-				", " + StoredFile.isDownloadCompleteColumnName + " = @" + StoredFile.isDownloadCompleteColumnName +
-				" WHERE id = @id";
-
 		repositoryAccessHelper
-				.mapSql(updateSql)
+				.mapSql(updateSql.getObject())
+				.addParameter(StoredFile.serviceIdColumnName, storedFile.getServiceId())
 				.addParameter(StoredFile.storedMediaIdColumnName, storedFile.getStoredMediaId())
 				.addParameter(StoredFile.pathColumnName, storedFile.getPath())
 				.addParameter(StoredFile.isOwnerColumnName, storedFile.isOwner())
