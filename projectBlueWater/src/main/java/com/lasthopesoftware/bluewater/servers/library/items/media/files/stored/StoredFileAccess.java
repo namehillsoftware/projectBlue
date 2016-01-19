@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored;
 
 import android.content.Context;
-import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
 
@@ -36,7 +35,7 @@ public class StoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
-	private static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
+	public static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
 		@Override
 		protected ExecutorService initialize() {
 			return Executors.newSingleThreadExecutor();
@@ -151,17 +150,6 @@ public class StoredFileAccess {
 
 			storedFile.setIsDownloadComplete(true);
 		});
-	}
-
-	private static void deleteStoredFile(RepositoryAccessHelper repositoryAccessHelper, final StoredFile storedFile) {
-		try {
-			repositoryAccessHelper
-					.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
-					.addParameter("id", storedFile.getId())
-					.execute();
-		} catch (SQLException e) {
-			logger.error("There was an error deleting file " + storedFile.getId(), e);
-		}
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
@@ -286,51 +274,7 @@ public class StoredFileAccess {
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
 		try {
-			new FluentTask<Void, Void, Void>() {
-
-				@Override
-				protected Void executeInBackground(Void[] params) {
-					final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-					try {
-						final List<StoredFile> allStoredFilesQuery =
-								repositoryAccessHelper
-										.mapSql(selectFromStoredFiles)
-										.fetch(StoredFile.class);
-
-						final int libraryId = library.getId();
-
-						for (StoredFile storedFile : allStoredFilesQuery) {
-							final String filePath = storedFile.getPath();
-							// It doesn't make sense to create a stored file without a file path
-							if (filePath == null) {
-								deleteStoredFile(repositoryAccessHelper, storedFile);
-								continue;
-							}
-
-							final File systemFile = new File(filePath);
-
-							// Remove files that are marked as downloaded but the file doesn't actually exist
-							if (storedFile.isDownloadComplete() && !systemFile.exists()) {
-								deleteStoredFile(repositoryAccessHelper, storedFile);
-								continue;
-							}
-
-							if (!storedFile.isOwner()) continue;
-							if (storedFile.getLibraryId() != libraryId) continue;
-							if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
-
-							deleteStoredFile(repositoryAccessHelper, storedFile);
-							systemFile.delete();
-						}
-					} catch (SQLException e) {
-						logger.error("There was an error getting the stored files", e);
-					} finally {
-						repositoryAccessHelper.close();
-					}
-
-					return null;
-				}
-			}.get(storedFileExecutor.getObject());
+			new PruneFilesTask(context, library.getId(), serviceIdsToKeep).get(storedFileExecutor.getObject());
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an exception while pruning the files", e);
 		}
