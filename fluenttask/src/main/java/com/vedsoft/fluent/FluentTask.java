@@ -85,11 +85,25 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public TResult get() throws ExecutionException, InterruptedException {
-		return executeTask().get();
+		final TResult result = executeTask().get();
+
+		throwOnTaskException(task.getObject());
+
+		return result;
 	}
 
 	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
-		return executeTask(executor).get();
+		final TResult result = executeTask(executor).get();
+
+		throwOnTaskException(task.getObject());
+
+		return result;
+	}
+
+	private static <TParams, TProgress, TResult> void throwOnTaskException(AndroidAsyncTask<TParams, TProgress, TResult> task) throws ExecutionException {
+		final Exception exception = task.getException();
+		if (exception != null)
+			throw new ExecutionException(exception);
 	}
 
 	private AsyncTask<Void, TProgress, TResult> executeTask() {
