@@ -5,6 +5,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemResponse;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -14,6 +18,8 @@ import java.util.List;
  * Created by david on 3/17/15.
  */
 public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
+
+    private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 
     public final static String browseLibraryParameter = "Browse/Children";
 
@@ -33,7 +39,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
     }
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection) throws Exception {
+    protected List<Item> getData(HttpURLConnection connection) {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {
@@ -43,18 +49,29 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
 
         if (isCancelled()) return new ArrayList<>();
 
-        final InputStream is = connection.getInputStream();
         try {
-            final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+            final InputStream is = connection.getInputStream();
+            try {
+                final List<Item> items = getData(is);
 
-            synchronized(browseLibraryParameter) {
-                revision = serverRevision;
-                cachedFileSystemItems = items;
+                synchronized (browseLibraryParameter) {
+                    revision = serverRevision;
+                    cachedFileSystemItems = items;
+                }
+
+                return items;
+            } finally {
+                is.close();
             }
-
-            return items;
-        } finally {
-            is.close();
+        } catch (IOException e) {
+            logger.error("There was an error getting the inputstream", e);
+            setException(e);
+            return new ArrayList<>();
         }
+    }
+
+    @Override
+    protected List<Item> getData(InputStream inputStream) {
+        return ItemResponse.GetItems(connectionProvider, inputStream);
     }
 }

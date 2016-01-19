@@ -88,80 +88,77 @@ public class StoredFileDownloader {
 
 		isProcessing = true;
 
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					QueuedFileHolder queuedFileHolder;
-					while ((queuedFileHolder = queuedFiles.poll()) != null) {
-						if (isCancelled) return;
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			try {
+				QueuedFileHolder queuedFileHolder;
+				while ((queuedFileHolder = queuedFiles.poll()) != null) {
+					if (isCancelled) return;
 
-						final StoredFile storedFile = queuedFileHolder.storedFile;
-						final IFile serviceFile = queuedFileHolder.file;
+					final StoredFile storedFile = queuedFileHolder.storedFile;
+					final IFile serviceFile = queuedFileHolder.file;
 
-						final java.io.File file = new java.io.File(storedFile.getPath());
-						if (storedFile.isDownloadComplete() && file.exists()) continue;
+					final java.io.File file = new java.io.File(storedFile.getPath());
+					if (storedFile.isDownloadComplete() && file.exists()) continue;
 
-						if (onFileDownloading != null)
-							onFileDownloading.run(storedFile);
+					if (onFileDownloading != null)
+						onFileDownloading.run(storedFile);
 
-						HttpURLConnection connection;
+					HttpURLConnection connection;
+					try {
+						connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+					} catch (IOException e) {
+						logger.error("Error getting connection", e);
+						return;
+					}
+
+					if (isCancelled || connection == null) return;
+
+					try {
+						InputStream is;
 						try {
-							connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
-						} catch (IOException e) {
-							logger.error("Error getting connection", e);
+							is = connection.getInputStream();
+						} catch (IOException ioe) {
+							logger.error("Error opening data connection", ioe);
 							return;
 						}
 
-						if (isCancelled || connection == null) return;
+						if (isCancelled) return;
+
+						final java.io.File parent = file.getParentFile();
+						if (!parent.exists() && !parent.mkdirs()) return;
 
 						try {
-							InputStream is;
+							final FileOutputStream fos = new FileOutputStream(file);
 							try {
-								is = connection.getInputStream();
-							} catch (IOException ioe) {
-								logger.error("Error opening data connection", ioe);
-								return;
-							}
-
-							if (isCancelled) return;
-
-							final java.io.File parent = file.getParentFile();
-							if (!parent.exists() && !parent.mkdirs()) return;
-
-							try {
-								final FileOutputStream fos = new FileOutputStream(file);
-								try {
-									IOUtils.copy(is, fos);
-									fos.flush();
-								} finally {
-									fos.close();
-								}
-
-								storedFileAccess.markStoredFileAsDownloaded(storedFile);
-
-								context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-
-								if (onFileDownloaded != null)
-									onFileDownloaded.run(storedFile);
-							} catch (IOException ioe) {
-								logger.error("Error writing file!", ioe);
+								IOUtils.copy(is, fos);
+								fos.flush();
 							} finally {
-								if (is != null) {
-									try {
-										is.close();
-									} catch (IOException e) {
-										logger.error("Error closing input stream", e);
-									}
+								fos.close();
+							}
+
+							storedFileAccess.markStoredFileAsDownloaded(storedFile);
+
+							context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
+
+							if (onFileDownloaded != null)
+								onFileDownloaded.run(storedFile);
+						} catch (IOException ioe) {
+							logger.error("Error writing file!", ioe);
+						} finally {
+							if (is != null) {
+								try {
+									is.close();
+								} catch (IOException e) {
+									logger.error("Error closing input stream", e);
 								}
 							}
-						} finally {
-							connection.disconnect();
 						}
+					} finally {
+						connection.disconnect();
 					}
-				} finally {
-					if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 				}
+			} finally {
+				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 			}
 		});
 	}

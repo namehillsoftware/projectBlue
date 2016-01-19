@@ -285,45 +285,43 @@ public class StoredFileAccess {
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		storedFileExecutor.getObject().execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			try {
-				final List<StoredFile> allStoredFilesQuery =
-						repositoryAccessHelper
-								.mapSql(selectFromStoredFiles)
-								.fetch(StoredFile.class);
+		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+		try {
+			final List<StoredFile> allStoredFilesQuery =
+					repositoryAccessHelper
+							.mapSql(selectFromStoredFiles)
+							.fetch(StoredFile.class);
 
-				final int libraryId = library.getId();
+			final int libraryId = library.getId();
 
-				for (StoredFile storedFile : allStoredFilesQuery) {
-					final String filePath = storedFile.getPath();
-					// It doesn't make sense to create a stored file without a file path
-					if (filePath == null) {
-						deleteStoredFile(repositoryAccessHelper, storedFile);
-						continue;
-					}
-
-					final File systemFile = new File(filePath);
-
-					// Remove files that are marked as downloaded but the file doesn't actually exist
-					if (storedFile.isDownloadComplete() && !systemFile.exists()) {
-						deleteStoredFile(repositoryAccessHelper, storedFile);
-						continue;
-					}
-
-					if (!storedFile.isOwner()) continue;
-					if (storedFile.getLibraryId() != libraryId) continue;
-					if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
-
+			for (StoredFile storedFile : allStoredFilesQuery) {
+				final String filePath = storedFile.getPath();
+				// It doesn't make sense to create a stored file without a file path
+				if (filePath == null) {
 					deleteStoredFile(repositoryAccessHelper, storedFile);
-					systemFile.delete();
+					continue;
 				}
-			} catch (SQLException e) {
-				logger.error("There was an error getting the stored files", e);
-			} finally {
-				repositoryAccessHelper.close();
+
+				final File systemFile = new File(filePath);
+
+				// Remove files that are marked as downloaded but the file doesn't actually exist
+				if (storedFile.isDownloadComplete() && !systemFile.exists()) {
+					deleteStoredFile(repositoryAccessHelper, storedFile);
+					continue;
+				}
+
+				if (!storedFile.isOwner()) continue;
+				if (storedFile.getLibraryId() != libraryId) continue;
+				if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
+
+				deleteStoredFile(repositoryAccessHelper, storedFile);
+				systemFile.delete();
 			}
-		});
+		} catch (SQLException e) {
+			logger.error("There was an error getting the stored files", e);
+		} finally {
+			repositoryAccessHelper.close();
+		}
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {

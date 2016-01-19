@@ -8,12 +8,18 @@ import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
+
+	private static Logger logger = LoggerFactory.getLogger(PlaylistsProvider.class);
 
     public static final String PlaylistsItemKey = "Playlists";
 
@@ -37,7 +43,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	}
 
     @Override
-    protected List<Playlist> getData(final HttpURLConnection connection) throws Exception {
+    protected List<Playlist> getData(final HttpURLConnection connection) {
 
         final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), RevisionChecker.getRevision(connectionProvider));
         if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
@@ -45,26 +51,37 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
         if (isCancelled()) return new ArrayList<>();
 
-        final InputStream is = connection.getInputStream();
-        try {
-            final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+	    try {
+		    final InputStream is = connection.getInputStream();
+		    try {
+			    final List<Playlist> streamResult = getData(is);
 
-            int i = 0;
-            while (i < streamResult.size()) {
-                if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-                else i++;
-            }
+			    int i = 0;
+			    while (i < streamResult.size()) {
+				    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+				    else i++;
+			    }
 
-            PlaylistsProvider.urlKeyHolder = urlKeyHolder;
-            cachedPlaylists = streamResult;
-            mappedPlaylists = null;
-            return getPlaylists(playlistId);
-        } finally {
-            is.close();
-        }
+			    PlaylistsProvider.urlKeyHolder = urlKeyHolder;
+			    cachedPlaylists = streamResult;
+			    mappedPlaylists = null;
+			    return getPlaylists(playlistId);
+		    } finally {
+			    is.close();
+		    }
+	    } catch (IOException e) {
+		    logger.error("There was an error getting the inputstream", e);
+		    setException(e);
+		    return new ArrayList<>();
+	    }
     }
 
-    private static List<Playlist> getPlaylists(int playlistId) {
+	@Override
+	protected List<Playlist> getData(InputStream inputStream) {
+		return PlaylistRequest.GetItems(inputStream);
+	}
+
+	private static List<Playlist> getPlaylists(int playlistId) {
         if (playlistId == -1) return cachedPlaylists;
 
         if (mappedPlaylists == null) {

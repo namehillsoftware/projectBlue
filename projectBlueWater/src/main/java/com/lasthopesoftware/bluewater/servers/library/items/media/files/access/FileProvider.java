@@ -6,15 +6,19 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.s
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by david on 11/25/15.
  */
 public class FileProvider extends AbstractCollectionProvider<IFile> {
+	private static final Logger logger = LoggerFactory.getLogger(FileProvider.class);
 	private final ConnectionProvider connectionProvider;
 
 	public FileProvider(ConnectionProvider connectionProvider, IFileListParameterProvider item) {
@@ -32,12 +36,14 @@ public class FileProvider extends AbstractCollectionProvider<IFile> {
 	}
 
 	@Override
-	protected List<IFile> getData(HttpURLConnection connection) throws Exception {
-		final InputStream is = connection.getInputStream();
+	protected List<IFile> getData(InputStream is) {
 		try {
 			return FileStringListUtilities.parseFileStringList(connectionProvider, IOUtils.toString(is));
-		} finally {
-			is.close();
+		} catch (IOException e) {
+			logger.warn("There was an error getting the file list", e);
+			setException(e);
 		}
+
+		return new ArrayList<>();
 	}
 }

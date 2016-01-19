@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,12 +35,7 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 		try {
 			final HttpURLConnection connection = connectionProvider.getConnection(params);
 			try {
-				try {
-					return getData(connection);
-				} catch (Exception e) {
-					logger.error("There was an exception getting data", e);
-					setException(e);
-				}
+				return getData(connection);
 			} finally {
 				connection.disconnect();
 			}
@@ -51,5 +47,21 @@ public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
 		return null;
 	}
 
-	protected abstract T getData(HttpURLConnection connection) throws Exception;
+	protected T getData(HttpURLConnection connection) {
+		try {
+			final InputStream is = connection.getInputStream();
+			try {
+				return getData(is);
+			} finally {
+				is.close();
+			}
+		} catch (IOException e) {
+			logger.error("There was an error opening the input stream", e);
+			setException(e);
+		}
+
+		return null;
+	}
+
+	protected abstract T getData(InputStream inputStream);
 }

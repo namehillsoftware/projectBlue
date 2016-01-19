@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 
 /**
  * Created by david on 11/26/15.
@@ -28,15 +27,12 @@ public class FileStringListProvider extends AbstractProvider<String> {
 	}
 
 	@Override
-	protected String getData(HttpURLConnection connection) throws Exception {
-		final InputStream inputStream = connection.getInputStream();
+	protected String getData(InputStream inputStream) {
 		try {
 			return IOUtils.toString(inputStream);
 		} catch (IOException e) {
 			logger.error("Error reading string from stream", e);
 			return null;
-		} finally {
-			inputStream.close();
 		}
 	}
 }

@@ -9,12 +9,18 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemProvider extends AbstractCollectionProvider<Item> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
     private static class ItemHolder {
         public ItemHolder(Integer revision, List<Item> items) {
@@ -45,7 +51,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 	}
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection) throws Exception {
+    protected List<Item> getData(HttpURLConnection connection) {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
@@ -59,19 +65,30 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
 
         if (isCancelled()) return new ArrayList<>();
 
-        final InputStream is = connection.getInputStream();
         try {
-            final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+            final InputStream is = connection.getInputStream();
+            try {
+                final List<Item> items = getData(is);
 
-            itemHolder = new ItemHolder(serverRevision, items);
+                itemHolder = new ItemHolder(serverRevision, items);
 
-            synchronized (itemsCache) {
-                itemsCache.put(boxedItemKey, itemHolder);
+                synchronized (itemsCache) {
+                    itemsCache.put(boxedItemKey, itemHolder);
+                }
+
+                return items;
+            } finally {
+                is.close();
             }
-
-            return items;
-        } finally {
-            is.close();
+        } catch (IOException e) {
+            logger.error("There was an error getting the inputstream", e);
+            setException(e);
+            return new ArrayList<>();
         }
 	}
+
+    @Override
+    protected List<Item> getData(InputStream inputStream) {
+        return ItemResponse.GetItems(connectionProvider, inputStream);
+    }
 }
