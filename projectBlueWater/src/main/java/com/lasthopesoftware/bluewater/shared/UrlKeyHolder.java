@@ -4,6 +4,8 @@ package com.lasthopesoftware.bluewater.shared;
  * Created by david on 1/17/16.
  */
 public class UrlKeyHolder<T> {
+	private int hashCode = -1;
+
 	private final String url;
 	private final T key;
 
@@ -17,15 +19,16 @@ public class UrlKeyHolder<T> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		UrlKeyHolder<?> that = (UrlKeyHolder<?>) o;
-
+		final UrlKeyHolder<?> that = (UrlKeyHolder<?>) o;
 		return !(url != null ? !url.equals(that.url) : that.url != null) && !(key != null ? !key.equals(that.key) : that.key != null);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = url != null ? url.hashCode() : 0;
-		result = 31 * result + (key != null ? key.hashCode() : 0);
-		return result;
+		if (hashCode != -1) return hashCode;
+
+		hashCode = url != null ? url.hashCode() : 0;
+		hashCode = 31 * hashCode + (key != null ? key.hashCode() : 0);
+		return hashCode;
 	}
 }
