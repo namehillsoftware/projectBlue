@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
@@ -35,7 +34,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -73,20 +71,13 @@ public class SyncService extends Service {
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
-	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = new OneParameterRunnable<LibrarySyncHandler>() {
-		@Override
-		public void run(LibrarySyncHandler librarySyncHandler) {
-			librarySyncHandlers.remove(librarySyncHandler);
-			if (--librariesProcessing == 0) finishSync();
-		}
+	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
+		librarySyncHandlers.remove(librarySyncHandler);
+
+		if (--librariesProcessing == 0) finishSync();
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = new OneParameterRunnable<StoredFile>() {
-		@Override
-		public void run(StoredFile storedFile) {
-			sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
-		}
-	};
+	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<String>() {
 		@Override
@@ -95,51 +86,35 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = new OneParameterRunnable<StoredFile>() {
-		@Override
-		public void run(final StoredFile storedFile) {
-			sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
+	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = storedFile -> {
+		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-			LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-				@Override
-				public void run(FluentTask<Integer, Void, Library> parameterOne, Library library) {
-					AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, new TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider>() {
-						@Override
-						public void run(FluentTask<Void, Void, MediaServerUrlProvider> parameterOne, final MediaServerUrlProvider urlProvider) {
-							new FluentTask<Void, Void, String>() {
+		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
+			(parameterOne, library) ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (parameterOne1, urlProvider) -> {
+				if (urlProvider == null) return;
 
-								@Override
-								protected String executeInBackground(Void[] params) {
-									try {
-										final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-										final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
-										return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
-									} catch (IOException e) {
-										logger.warn("There was an error getting the file properties", e);
-										return null;
-									}
-								}
-							}
-							.onComplete(new OneParameterRunnable<String>() {
-								@Override
-								public void run(String s) {
-									setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), s));
-								}
-							})
-							.execute();
+				new FluentTask<Void, Void, String>() {
+
+					@Override
+					protected String executeInBackground(Void[] params) {
+						try {
+							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
+							return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
+						} catch (IOException e) {
+							logger.warn("There was an error getting the file properties", e);
+							return null;
 						}
-					});
+					}
 				}
-			});
-		}
+				.onComplete(s -> {
+					setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), s));
+				})
+				.execute();
+			}));
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = new OneParameterRunnable<StoredFile>() {
-		@Override
-		public void run(StoredFile storedFile) {
-			sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
-		}
-	};
+	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = storedFile -> sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
 
 	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<BroadcastReceiver>() {
 		@Override
@@ -244,7 +219,10 @@ public class SyncService extends Service {
 					library.setLocalOnly(true);
 
 				AccessConfigurationBuilder.buildConfiguration(context, library, (owner1, urlProvider) -> {
-					if (urlProvider == null) return;
+					if (urlProvider == null) {
+						if (--librariesProcessing == 0) finishSync();
+						return;
+					}
 
 					final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 
