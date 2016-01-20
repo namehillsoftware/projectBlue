@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * Created by david on 7/26/15.
@@ -232,37 +231,32 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.GetLibraries(context, new TwoParameterRunnable<FluentTask<Void, Void, List<Library>>, List<Library>>() {
-			@Override
-			public void run(FluentTask<Void, Void, List<Library>> owner, final List<Library> libraries) {
-				librariesProcessing += libraries.size();
+		LibrarySession.GetLibraries(context, (owner, libraries) -> {
+			librariesProcessing += libraries.size();
 
-				if (librariesProcessing == 0) {
-					finishSync();
-					return;
-				}
+			if (librariesProcessing == 0) {
+				finishSync();
+				return;
+			}
 
-				for (final Library library : libraries) {
-					if (library.isSyncLocalConnectionsOnly())
-						library.setLocalOnly(true);
+			for (final Library library : libraries) {
+				if (library.isSyncLocalConnectionsOnly())
+					library.setLocalOnly(true);
 
-					AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider>() {
-						@Override
-						public void run(FluentTask<Void, Void, MediaServerUrlProvider> owner, MediaServerUrlProvider urlProvider) {
+				AccessConfigurationBuilder.buildConfiguration(context, library, (owner1, urlProvider) -> {
+					if (urlProvider == null) return;
 
-							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+					final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 
-							final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
-							librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-							librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
-							librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-							librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-							librarySyncHandler.startSync();
+					final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+					librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
+					librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
+					librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+					librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
+					librarySyncHandler.startSync();
 
-							librarySyncHandlers.add(librarySyncHandler);
-						}
-					});
-				}
+					librarySyncHandlers.add(librarySyncHandler);
+				});
 			}
 		});
 
