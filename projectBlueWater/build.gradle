@@ -9,7 +9,7 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 2007
+        versionCode 2008
         versionName "1.5.0.0-beta-6"
     }
 
