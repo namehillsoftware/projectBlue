@@ -100,12 +100,16 @@ public class LibrarySyncHandler {
 								storedFileDownloader.queueFileForDownload(file, storedFile);
 						}
 					} catch (ExecutionException | InterruptedException e) {
-						logger.warn("There was an error retrieving the files", e);
 
 						if (e.getCause() instanceof FileNotFoundException) {
-							logger.info("The item was not found, disabling sync for item");
+							logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 							storedItemAccess.toggleSync(item, false);
+							continue;
 						}
+
+						logger.warn("There was an error retrieving the files", e);
+
+						return;
 					}
 				}
 
