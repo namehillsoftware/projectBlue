@@ -41,6 +41,7 @@ public class LibrarySyncHandler {
 	private OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
+	private volatile boolean isFaulted;
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
@@ -107,22 +108,23 @@ public class LibrarySyncHandler {
 							continue;
 						}
 
+						isFaulted = true;
 						logger.warn("There was an error retrieving the files", e);
 
 						return;
 					}
 				}
 
-				if (isCancelled) return;
-
 				storedFileDownloader.setOnQueueProcessingCompleted(() -> {
 
-					if (!isCancelled)
+					if (!isCancelled && !isFaulted)
 						storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 
 					if (onQueueProcessingCompleted != null)
 						onQueueProcessingCompleted.run(LibrarySyncHandler.this);
 				});
+
+				if (isCancelled) return;
 
 				storedFileDownloader.process();
 			}));
