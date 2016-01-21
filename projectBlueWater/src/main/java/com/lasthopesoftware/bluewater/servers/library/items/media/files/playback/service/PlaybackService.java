@@ -271,12 +271,6 @@ public class PlaybackService extends Service implements
 	private static final Object syncPlaylistControllerObject = new Object();
 	
 	private static final HashSet<OnNowPlayingChangeListener> onStreamingChangeListeners = new HashSet<>();
-
-	private Runnable connectionRegainedListener;
-	
-	private Runnable onPollingCancelledListener;
-
-	private LocalBroadcastManager localBroadcastManager;
 	
 	/* Begin Events */
 	public static void addOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
@@ -344,6 +338,20 @@ public class PlaybackService extends Service implements
 			return playlistController != null ? playlistController.getCurrentPosition() : -1;
 		}
 	}
+
+	private LocalBroadcastManager localBroadcastManager;
+
+	private Runnable connectionRegainedListener;
+
+	private Runnable onPollingCancelledListener;
+
+	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			pausePlayback(true);
+			stopSelf(startId);
+		}
+	};
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
@@ -779,7 +787,9 @@ public class PlaybackService extends Service implements
 		notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 		audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
-		
+
+		localBroadcastManager.registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
+
 		registerRemoteClientControl();
 	}
 
@@ -1033,7 +1043,9 @@ public class PlaybackService extends Service implements
 	@Override
 	public void onDestroy() {
 		stopNotification();
-		
+
+		localBroadcastManager.unregisterReceiver(onLibraryChanged);
+
 		if (playlistController != null) {
 			if (playlistController.getCurrentPlaybackFile() != null)
 				saveStateToLibrary(playlistController, playlistController.getCurrentPlaybackFile());

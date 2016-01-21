@@ -204,9 +204,8 @@ public class LibrarySession {
 	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1)) {
+		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1))
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
-		}
 		
 		GetActiveLibrary(context, (owner, library) -> {
 			final Intent broadcastIntent = new Intent(libraryChosenEvent);
