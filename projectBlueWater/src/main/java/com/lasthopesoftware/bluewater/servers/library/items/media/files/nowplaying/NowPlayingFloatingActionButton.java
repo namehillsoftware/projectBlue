@@ -47,7 +47,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
     @SuppressWarnings("ResourceType")
     private void initializeNowPlayingFloatingActionButton() {
-        setOnClickListener(v -> ViewUtils.CreateNowPlayingView(v.getContext()));
+        setOnClickListener(v -> NowPlayingActivity.startNowPlayingActivity(v.getContext()));
 
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the

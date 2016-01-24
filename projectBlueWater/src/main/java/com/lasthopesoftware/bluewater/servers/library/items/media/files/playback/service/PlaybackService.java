@@ -53,7 +53,6 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
@@ -646,7 +645,7 @@ public class PlaybackService extends Service implements
 		if (action == null) return;
 
 		if (action.equals(Action.launchMusicService)) {
-			startPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0), () -> ViewUtils.CreateNowPlayingView(PlaybackService.this));
+			startPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0), () -> NowPlayingActivity.startNowPlayingActivity(PlaybackService.this));
 			
 			return;
         }

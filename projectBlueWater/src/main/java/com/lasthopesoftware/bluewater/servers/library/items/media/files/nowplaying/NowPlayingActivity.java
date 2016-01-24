@@ -53,6 +53,14 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
+	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
+
+	public static void startNowPlayingActivity(final Context context) {
+		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		context.startActivity(viewIntent);
+	}
+
 	private NowPlayingActivityProgressTrackerTask nowPlayingActivityProgressTrackerTask;
 	private NowPlayingActivityMessageHandler nowPlayingActivityMessageHandler;
 	private ImageButton playButton;
@@ -60,18 +68,18 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private RatingBar songRating;
 	private RelativeLayout contentView;
 	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
-	private ImageButton isScreenKeptOnButton;
 
+	private ImageButton isScreenKeptOnButton;
 	private TimerTask timerTask;
 	private ProgressBar songProgressBar;
 	private ProgressBar loadingImg;
 	private ImageView nowPlayingImageView;
 	private TextView nowPlayingArtist;
+
 	private TextView nowPlayingTitle;
 
 	private LocalBroadcastManager localBroadcastManager;
 
-	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
 	private static ViewStructure viewStructure;
 
 	private static final String fileNotFoundError = "The file %1s was not found!";

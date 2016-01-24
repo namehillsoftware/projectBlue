@@ -16,7 +16,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
 import java.lang.annotation.Retention;
@@ -64,12 +63,6 @@ public class ViewUtils {
 		return ViewUtils.handleMenuClicks(activity, item);
 		
 	}
-		
-	public static void CreateNowPlayingView(final Context context) {
-    	final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		context.startActivity(viewIntent);
-    }
 
 	@IntDef({View.VISIBLE, View.INVISIBLE, View.GONE})
 	@Retention(RetentionPolicy.SOURCE)
