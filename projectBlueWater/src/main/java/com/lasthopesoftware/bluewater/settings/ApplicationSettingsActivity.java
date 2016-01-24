@@ -50,7 +50,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		progressBar.setVisibility(View.VISIBLE);
 
 		LibrarySession.GetLibraries(activity, libraries -> LibrarySession.GetActiveLibrary(activity, library -> {
-			serverListView.setAdapter(new ServerListAdapter(activity, libraries));
+			serverListView.setAdapter(new ServerListAdapter(activity, libraries, library));
 
 			progressBar.setVisibility(View.INVISIBLE);
 			serverListView.setVisibility(View.VISIBLE);

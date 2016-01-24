@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.servers.list;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,14 +17,17 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.list.listeners.EditServerClickListener;
 import com.lasthopesoftware.bluewater.servers.list.listeners.SelectServerOnClickListener;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import java.util.List;
 
 public class ServerListAdapter extends BaseAdapter {
 
 	private final List<Library> libraries;
+	private final Library activeLibrary;
 	private final Activity activity;
 
 	private static class ViewHolder {
@@ -32,6 +37,8 @@ public class ServerListAdapter extends BaseAdapter {
 
 		public BroadcastReceiver broadcastReceiver;
 
+		public View.OnAttachStateChangeListener onAttachStateChangeListener;
+
 		private ViewHolder(TextView textView, Button btnSelectServer, ImageButton btnConfigureServer) {
 			this.textView = textView;
 			this.btnSelectServer = btnSelectServer;
@@ -39,16 +46,18 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 	}
 
-	public ServerListAdapter(Activity activity, List<Library> libraries) {
+	public ServerListAdapter(Activity activity, List<Library> libraries, Library activeLibrary) {
 		super();
 
 		this.activity = activity;
 		this.libraries = libraries;
+		this.activeLibrary = activeLibrary;
 	}
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final Context parentContext = parent.getContext();
+		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(parentContext);
 		if (position == 0) {
 			final RelativeLayout returnView = (RelativeLayout) getInflater(parentContext).inflate(R.layout.layout_standard_text, parent, false);
 			final TextView textView = (TextView) returnView.findViewById(R.id.tvStandard);
@@ -56,7 +65,7 @@ public class ServerListAdapter extends BaseAdapter {
 			returnView.setOnClickListener(new EditServerClickListener(activity, -1));
 
 			if (convertView != null && convertView.getTag() != null && ((ViewHolder)convertView.getTag()).broadcastReceiver != null)
-				LocalBroadcastManager.getInstance(parentContext).unregisterReceiver(((ViewHolder)convertView.getTag()).broadcastReceiver);
+				localBroadcastManager.unregisterReceiver(((ViewHolder) convertView.getTag()).broadcastReceiver);
 
 			return returnView;
 		}
@@ -77,6 +86,37 @@ public class ServerListAdapter extends BaseAdapter {
 		viewHolder.textView.setText(library.getAccessCode());
 
 		final Button btnSelectServer = viewHolder.btnSelectServer;
+
+		viewHolder.textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.getId() == activeLibrary.getId()));
+
+		if (viewHolder.broadcastReceiver != null)
+			localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
+
+		viewHolder.broadcastReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				viewHolder.textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.getId() == intent.getIntExtra(LibrarySession.chosenLibraryInt, -1)));
+			}
+		};
+
+		localBroadcastManager.registerReceiver(viewHolder.broadcastReceiver, new IntentFilter(LibrarySession.libraryChosenEvent));
+
+		if (viewHolder.onAttachStateChangeListener != null)
+			parent.removeOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
+
+		viewHolder.onAttachStateChangeListener = new View.OnAttachStateChangeListener() {
+			@Override
+			public void onViewAttachedToWindow(View v) {
+
+			}
+
+			@Override
+			public void onViewDetachedFromWindow(View v) {
+				localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
+			}
+		};
+
+		parent.addOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
 
 		btnSelectServer.setOnClickListener(new SelectServerOnClickListener(library));
 
