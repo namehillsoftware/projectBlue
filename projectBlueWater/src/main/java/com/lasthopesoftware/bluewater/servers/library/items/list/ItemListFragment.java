@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.vedsoft.fluent.FluentTask;
@@ -52,38 +51,31 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-		    @Override
-		    public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-			    final TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+    	LibrarySession.GetActiveLibrary(activity, activeLibrary -> {
+		    final TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner1, result) -> {
+			    if (result == null || result.size() == 0) return;
 
-				    @Override
-				    public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
-					    if (result == null || result.size() == 0) return;
-					
-					    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
-					    final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
+			    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
+			    final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					    layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
-				    }
-			    };
-			
-			    ItemProvider
-					    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-					    .onComplete(onGetVisibleViewsCompleteListener)
-					    .onError(new HandleViewIoException<String, Void, List<Item>>(activity, new Runnable() {
+			    layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
+		    };
 
-							    @Override
-							    public void run() {
-								    ItemProvider
-										    .provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-										    .onComplete(onGetVisibleViewsCompleteListener)
-										    .onError(new HandleViewIoException<String, Void, List<Item>>(activity, this))
-										    .execute();
-							    }
-				        }))
-					    .execute();
-		    }
+		    ItemProvider
+				    .provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+				    .onComplete(onGetVisibleViewsCompleteListener)
+				    .onError(new HandleViewIoException<>(activity, new Runnable() {
+
+					    @Override
+					    public void run() {
+						    ItemProvider
+								    .provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+								    .onComplete(onGetVisibleViewsCompleteListener)
+								    .onError(new HandleViewIoException<>(activity, this))
+								    .execute();
+					    }
+				    }))
+				    .execute();
 	    });
 
         return layout;

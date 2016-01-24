@@ -13,12 +13,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,23 +54,20 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
-				LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-					@Override
-					public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-						if (library == null) return;
+				LibrarySession.GetActiveLibrary(context, library -> {
+					if (library == null) return;
 
-						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
-						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-						if (fileKey == -1) return;
+					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+					final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+					if (fileKey == -1) return;
 
-						final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
-						if (mediaFileId == -1) return;
+					final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
+					if (mediaFileId == -1) return;
 
-						final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
-						if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+					final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
+					if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-						storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(SessionConnection.getSessionConnectionProvider(), fileKey), mediaFileId, mediaFilePath);
-					}
+					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(SessionConnection.getSessionConnectionProvider(), fileKey), mediaFileId, mediaFilePath);
 				});
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));

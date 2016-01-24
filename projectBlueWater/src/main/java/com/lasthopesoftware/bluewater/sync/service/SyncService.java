@@ -90,7 +90,7 @@ public class SyncService extends Service {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
 		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
-			(parameterOne, library) ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (parameterOne1, urlProvider) -> {
+			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (parameterOne1, urlProvider) -> {
 				if (urlProvider == null) return;
 
 				new FluentTask<Void, Void, String>() {
@@ -206,7 +206,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.GetLibraries(context, (owner, libraries) -> {
+		LibrarySession.GetLibraries(context, libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {

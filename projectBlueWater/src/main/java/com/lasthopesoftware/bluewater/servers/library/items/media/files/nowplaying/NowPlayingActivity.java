@@ -190,7 +190,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
 		setRepeatingIcon(shuffleButton);
 
-		shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), (owner, result) -> {
+		shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), result -> {
 			if (result == null) return;
 			final boolean isRepeating = !result.isRepeating();
 			PlaybackService.setIsRepeating(v.getContext(), isRepeating);
@@ -241,7 +241,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		pauseButton.setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+		LibrarySession.GetActiveLibrary(this, library -> {
 			final String savedTracksString = library.getSavedTracksString();
 			if (savedTracksString == null || savedTracksString.isEmpty()) return;
 
@@ -264,7 +264,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(this, result -> {
 			if (result != null)
 				setRepeatingIcon(imageButton, result.isRepeating());
 		});

@@ -222,10 +222,10 @@ public class PlaybackService extends Service implements
 	}
 
 	public static void setIsRepeating(final Context context, final boolean isRepeating) {
-		LibrarySession.GetActiveLibrary(context, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(context, result -> {
 			if (result == null) return;
 			result.setRepeating(isRepeating);
-			LibrarySession.SaveLibrary(context, result, (owner1, result1) -> {
+			LibrarySession.SaveLibrary(context, result, result1 -> {
 				if (playlistController != null) playlistController.setIsRepeating(isRepeating);
 			});
 		});
@@ -355,7 +355,7 @@ public class PlaybackService extends Service implements
 		
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
-		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+		LibrarySession.GetActiveLibrary(this, library -> {
 				if (library == null) return;
 
 				final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
@@ -437,7 +437,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(this, result -> {
 			synchronized (syncPlaylistControllerObject) {
 				logger.info("Initializing playlist.");
 				PlaybackService.playlistString = playlistString;
@@ -447,7 +447,7 @@ public class PlaybackService extends Service implements
 					PlaybackService.playlistString = result.getSavedTracksString();
 
 				result.setSavedTracksString(PlaybackService.playlistString);
-				LibrarySession.SaveLibrary(PlaybackService.this, result, (owner1, result1) -> {
+				LibrarySession.SaveLibrary(PlaybackService.this, result, savedLibrary -> {
 					if (playlistController != null) {
 						playlistController.pause();
 						playlistController.release();
@@ -455,7 +455,7 @@ public class PlaybackService extends Service implements
 
 					playlistController = new PlaybackController(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
 
-					playlistController.setIsRepeating(result1.isRepeating());
+					playlistController.setIsRepeating(savedLibrary.isRepeating());
 					playlistController.addOnNowPlayingChangeListener(PlaybackService.this);
 					playlistController.addOnNowPlayingStopListener(PlaybackService.this);
 					playlistController.addOnNowPlayingPauseListener(PlaybackService.this);
@@ -664,7 +664,7 @@ public class PlaybackService extends Service implements
         	
         	if (playlistController.resume()) return;
         	
-        	LibrarySession.GetActiveLibrary(this, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+        	LibrarySession.GetActiveLibrary(this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
         	
         	return;
         }
@@ -718,14 +718,14 @@ public class PlaybackService extends Service implements
 					playlistController.addFile(new File(SessionConnection.getSessionConnectionProvider(), fileKey));
 			}
 
-			LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+			LibrarySession.GetActiveLibrary(this, result -> {
 				if (result == null) return;
 				String newFileString = result.getSavedTracksString();
 				if (!newFileString.endsWith(";")) newFileString += ";";
 				newFileString += fileKey + ";";
 				result.setSavedTracksString(newFileString);
 
-				LibrarySession.SaveLibrary(PlaybackService.this, result, (owner1, result1) -> Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show());
+				LibrarySession.SaveLibrary(PlaybackService.this, result, result1 -> Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show());
 			});
 
 			return;
@@ -735,7 +735,7 @@ public class PlaybackService extends Service implements
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+			LibrarySession.GetActiveLibrary(this, library -> {
 				if (library == null) return;
 
 				// It could take quite a while to split string and put it back together, so let's do it
@@ -818,7 +818,7 @@ public class PlaybackService extends Service implements
 					return;
 				}
 
-				LibrarySession.GetActiveLibrary(this, (owner, result) -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+				LibrarySession.GetActiveLibrary(this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
 
 			};
 		}
@@ -912,7 +912,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
-		LibrarySession.GetActiveLibrary(this, (owner, result) -> {
+		LibrarySession.GetActiveLibrary(this, result -> {
 
 			result.setSavedTracksString(controller.getPlaylistString());
 			result.setNowPlayingId(controller.getCurrentPosition());

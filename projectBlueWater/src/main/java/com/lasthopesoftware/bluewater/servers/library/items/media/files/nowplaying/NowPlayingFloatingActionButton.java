@@ -12,11 +12,8 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 10/11/15.
@@ -55,26 +52,22 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+        LibrarySession.GetActiveLibrary(getContext(), result -> {
+            isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
+            setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
-            @Override
-            public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-                isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
-                setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
+            if (isNowPlayingFileSet) return;
 
-                if (isNowPlayingFileSet) return;
+            final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
 
-                final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
-
-                localBroadcastManager.registerReceiver(new BroadcastReceiver() {
-                    @Override
-                    public synchronized void onReceive(Context context, Intent intent) {
-	                    isNowPlayingFileSet = true;
-	                    setVisibility(ViewUtils.getVisibility(true));
-                        localBroadcastManager.unregisterReceiver(this);
-                    }
-                }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
-            }
+            localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public synchronized void onReceive(Context context, Intent intent) {
+                    isNowPlayingFileSet = true;
+                    setVisibility(ViewUtils.getVisibility(true));
+                    localBroadcastManager.unregisterReceiver(this);
+                }
+            }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
         });
     }
 

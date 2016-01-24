@@ -164,7 +164,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+		LibrarySession.GetActiveLibrary(this, library -> {
 			// No library, must bail out
 			if (library == null) {
 				finish();
@@ -247,7 +247,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, (owner, library) -> {
+		LibrarySession.GetActiveLibrary(this, library -> {
 			if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 			library.setSelectedView(selectedViewKey);

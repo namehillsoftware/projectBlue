@@ -19,7 +19,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentTask;
@@ -92,26 +91,23 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}
 		};
 
-		LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			@Override
-			public void run(FluentTask<Integer, Void, Library> parameterOne, final Library library) {
+		LibrarySession.GetActiveLibrary(getContext(), activeLibrary ->
 				ItemProvider
-						.provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-						.onComplete(onGetVisibleViewsCompleteListener)
-						.onError(new HandleViewIoException<String, Void, List<Item>>(getContext(), new Runnable() {
+					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+					.onComplete(onGetVisibleViewsCompleteListener)
+					.onError(new HandleViewIoException<>(getContext(), new Runnable() {
 
-							@Override
-							public void run() {
-								ItemProvider
-										.provide(SessionConnection.getSessionConnectionProvider(), library.getSelectedView())
-										.onComplete(onGetVisibleViewsCompleteListener)
-										.onError(new HandleViewIoException<String, Void, List<Item>>(getContext(), this))
-										.execute();
-							}
-						}))
-						.execute();
-			}
-		});
+						@Override
+						public void run() {
+							ItemProvider
+									.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+									.onComplete(onGetVisibleViewsCompleteListener)
+									.onError(new HandleViewIoException<>(getContext(), this))
+									.execute();
+						}
+					}))
+					.execute()
+		);
 
 
 		return tabbedItemsLayout;
@@ -150,12 +146,9 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		outState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-				if (library != null)
-					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-			}
+		LibrarySession.GetActiveLibrary(getContext(), library -> {
+			if (library != null)
+				outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 		});
 	}
 
@@ -165,21 +158,17 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		if (savedInstanceState == null || viewPager == null) return;
 
-		LibrarySession.GetActiveLibrary(getContext(), new TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library>() {
+		LibrarySession.GetActiveLibrary(getContext(), library -> {
+			final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+			if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library library) {
-				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+			final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+			if (savedTabKey > -1)
+				viewPager.setCurrentItem(savedTabKey);
 
-				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-				if (savedTabKey > -1)
-					viewPager.setCurrentItem(savedTabKey);
-
-				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-				if (savedScrollPosition > -1)
-					viewPager.setScrollY(savedScrollPosition);
-			}
+			final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+			if (savedScrollPosition > -1)
+				viewPager.setScrollY(savedScrollPosition);
 		});
 	}
 }

@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.ArrayList;
 
@@ -91,7 +91,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements TwoParameterRunnable<FluentTask<Integer, Void, Library>, Library> {
+	private static class OnGetLibraryNowComplete implements OneParameterRunnable<Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -104,7 +104,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
+		public void run(final Library library) {
 			if (library == null) return;
 
 	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<Void, Void, ArrayList<IFile>>() {

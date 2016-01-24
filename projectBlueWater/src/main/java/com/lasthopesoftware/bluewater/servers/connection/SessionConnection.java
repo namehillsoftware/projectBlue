@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.servers.connection.helpers.ConnectionTester;
-import com.lasthopesoftware.bluewater.servers.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -20,7 +18,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,66 +52,47 @@ public class SessionConnection {
 		if (isRunning.get()) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetActiveLibrary(context, library -> {
+			if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
+				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+				isRunning.set(false);
+				return;
+			}
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
-				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
-					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
-					isRunning.set(false);
+			doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
+
+			AccessConfigurationBuilder.buildConfiguration(context, library, (owner, result) -> {
+				if (result == null) {
+					doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 					return;
 				}
-				
-				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
-				
-				AccessConfigurationBuilder.buildConfiguration(context, library, new TwoParameterRunnable<FluentTask<Void,Void,MediaServerUrlProvider>, MediaServerUrlProvider>() {
 
-					@Override
-					public void run(FluentTask<Void, Void, MediaServerUrlProvider> owner, MediaServerUrlProvider result) {
-						if (result == null) {
-							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
-							return;
-						}
+				sessionConnectionProvider = new ConnectionProvider(result);
 
-						sessionConnectionProvider = new ConnectionProvider(result);
-						
-						if (library.getSelectedView() >= 0) {
-							doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-							return;
-						}
+				if (library.getSelectedView() >= 0) {
+					doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+					return;
+				}
 
-						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+				doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
-						LibraryViewsProvider.provide(sessionConnectionProvider)
-								.onComplete(new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
+				LibraryViewsProvider.provide(sessionConnectionProvider)
+						.onComplete((owner1, result1) -> {
 
-									@Override
-									public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
+							if (result1 == null || result1.size() == 0) {
+								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+								return;
+							}
 
-										if (result == null || result.size() == 0) {
-											doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-											return;
-										}
+							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+							final int selectedView = result1.get(0).getKey();
+							library.setSelectedView(selectedView);
+							library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-										doStateChange(context, BuildingSessionConnectionStatus.GettingView);
-										final int selectedView = result.get(0).getKey();
-										library.setSelectedView(selectedView);
-										library.setSelectedViewType(Library.ViewType.StandardServerView);
-
-										LibrarySession.SaveLibrary(context, library, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
-
-											@Override
-											public void run(FluentTask<Void, Void, Library> owner, Library result) {
-												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-											}
-										});
-									}
-								})
-								.execute();
-					}
-				});
-			}
-			
+							LibrarySession.SaveLibrary(context, library, (savedLibrary) -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete));
+						})
+						.execute();
+			});
 		});
 		
 		return buildingStatus;
@@ -128,17 +106,12 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = new TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean>() {
+		final TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
+			if (!result) build(context);
 
-			@Override
-			public void run(FluentTask<Integer, Void, Boolean> owner, Boolean result) {
-				if (!result) build(context);
-
-				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
-				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
-				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
-			}
-
+			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
+			refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
+			LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
 		};
 
 		if (timeout > 0)

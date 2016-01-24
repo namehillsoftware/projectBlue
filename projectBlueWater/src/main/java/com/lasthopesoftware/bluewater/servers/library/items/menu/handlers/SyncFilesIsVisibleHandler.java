@@ -8,11 +8,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItemAccess;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 8/16/15.
@@ -34,23 +31,17 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 		if (!v.isShown()) return;
 
 		final Context context = v.getContext();
-		LibrarySession.GetActiveLibrary(context, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, final Library library) {
+		LibrarySession.GetActiveLibrary(context, library -> {
+			if (!v.isShown()) return;
+
+			final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
+			syncListManager.isItemMarkedForSync(item, (owner, isSynced) -> {
 				if (!v.isShown()) return;
 
-				final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
-				syncListManager.isItemMarkedForSync(item, new TwoParameterRunnable<FluentTask<Void,Void,Boolean>, Boolean>() {
-					@Override
-					public void run(FluentTask<Void, Void, Boolean> owner, final Boolean isSynced) {
-						if (!v.isShown()) return;
-
-						syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
-						syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
-						syncButton.setEnabled(true);
-					}
-				});
-			}
+				syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
+				syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
+				syncButton.setEnabled(true);
+			});
 		});
 	}
 }

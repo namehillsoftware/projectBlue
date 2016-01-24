@@ -14,8 +14,6 @@ import android.widget.RadioGroup;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 public class EditServerSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditServerSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -60,13 +58,9 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
         	saveButton.setEnabled(false);
 
-        	LibrarySession.SaveLibrary(v.getContext(), library, new TwoParameterRunnable<FluentTask<Void,Void,Library>, Library>() {
-
-		        @Override
-		        public void run(FluentTask<Void, Void, Library> owner, Library result) {
-			        saveButton.setText(getText(R.string.btn_saved));
-			        finish();
-		        }
+        	LibrarySession.SaveLibrary(v.getContext(), library, result -> {
+		        saveButton.setText(getText(R.string.btn_saved));
+		        finish();
 	        });
         }
     };
@@ -94,52 +88,43 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 		rgSyncFileOptions.check(R.id.rbPrivateToApp);
 
-		rgSyncFileOptions.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(RadioGroup group, int checkedId) {
-				txtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation);
-			}
-		});
+		rgSyncFileOptions.setOnCheckedChangeListener((group, checkedId) -> txtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation));
 
 		final int libraryId = getIntent().getIntExtra(serverIdExtra, -1);
-		LibrarySession.GetLibrary(this, libraryId, new TwoParameterRunnable<FluentTask<Integer,Void,Library>, Library>() {
+		LibrarySession.GetLibrary(this, libraryId, result -> {
+			if (result == null) return;
 
-			@Override
-			public void run(FluentTask<Integer, Void, Library> owner, Library result) {
-				if (result == null) return;
+			library = result;
 
-				library = result;
+			chkLocalOnly.setChecked(library.isLocalOnly());
+			chkIsUsingExistingFiles.setChecked(library.isUsingExistingFiles());
+			chkIsUsingLocalConnectionForSync.setChecked(library.isSyncLocalConnectionsOnly());
 
-				chkLocalOnly.setChecked(library.isLocalOnly());
-				chkIsUsingExistingFiles.setChecked(library.isUsingExistingFiles());
-				chkIsUsingLocalConnectionForSync.setChecked(library.isSyncLocalConnectionsOnly());
+			final String customSyncPath = library.getCustomSyncedFilesPath();
+			if (customSyncPath != null && !customSyncPath.isEmpty())
+				txtSyncPath.setText(customSyncPath);
 
-				final String customSyncPath = library.getCustomSyncedFilesPath();
-				if (customSyncPath != null && !customSyncPath.isEmpty())
-					txtSyncPath.setText(customSyncPath);
-
-				switch (library.getSyncedFileLocation()) {
-					case EXTERNAL:
-						rgSyncFileOptions.check(R.id.rbPublicLocation);
-						break;
-					case INTERNAL:
-						rgSyncFileOptions.check(R.id.rbPrivateToApp);
-						break;
-					case CUSTOM:
-						rgSyncFileOptions.check(R.id.rbCustomLocation);
-						break;
-				}
-
-				txtAccessCode.setText(library.getAccessCode());
-				if (library.getAuthKey() == null) return;
-
-				final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
-				if (decryptedUserAuth.isEmpty()) return;
-
-				final String[] userDetails = decryptedUserAuth.split(":", 2);
-				txtUserName.setText(userDetails[0]);
-				txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
+			switch (library.getSyncedFileLocation()) {
+				case EXTERNAL:
+					rgSyncFileOptions.check(R.id.rbPublicLocation);
+					break;
+				case INTERNAL:
+					rgSyncFileOptions.check(R.id.rbPrivateToApp);
+					break;
+				case CUSTOM:
+					rgSyncFileOptions.check(R.id.rbCustomLocation);
+					break;
 			}
+
+			txtAccessCode.setText(library.getAccessCode());
+			if (library.getAuthKey() == null) return;
+
+			final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
+			if (decryptedUserAuth.isEmpty()) return;
+
+			final String[] userDetails = decryptedUserAuth.split(":", 2);
+			txtUserName.setText(userDetails[0]);
+			txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
 		});
 
 	}
