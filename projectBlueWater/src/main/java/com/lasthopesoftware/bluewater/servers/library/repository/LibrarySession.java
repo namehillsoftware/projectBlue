@@ -198,7 +198,7 @@ public class LibrarySession {
 		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public synchronized static void ChooseLibrary(final Context context, final int libraryKey, final OneParameterRunnable<Library> onLibraryChangeComplete) {
+	public synchronized static void ChangeActiveLibrary(final Context context, final int libraryKey, final OneParameterRunnable<Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1))

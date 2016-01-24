@@ -82,7 +82,7 @@ public class ServerListAdapter extends BaseAdapter {
 
 		btnSelectServer.setOnClickListener(v -> {
 			final Context context = v.getContext();
-			LibrarySession.ChooseLibrary(context, library.getId(), null);
+			LibrarySession.ChangeActiveLibrary(context, library.getId(), null);
 
 			final Intent browseLibraryIntent = new Intent(context, BrowseLibraryActivity.class);
 			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
