@@ -5,10 +5,10 @@
       <module fileurl="file://$PROJECT_DIR$/fluenttask/fluenttask.iml" filepath="$PROJECT_DIR$/fluenttask/fluenttask.iml" />
       <module fileurl="file://$PROJECT_DIR$/futures/futures.iml" filepath="$PROJECT_DIR$/futures/futures.iml" />
       <module fileurl="file://$PROJECT_DIR$/lazy-j/lazy-j.iml" filepath="$PROJECT_DIR$/lazy-j/lazy-j.iml" />
+      <module fileurl="file://$PROJECT_DIR$/objective-droid/objective-droid.iml" filepath="$PROJECT_DIR$/objective-droid/objective-droid.iml" />
       <module fileurl="file://$PROJECT_DIR$/pagerslidingtabstrip/pagerslidingtabstrip.iml" filepath="$PROJECT_DIR$/pagerslidingtabstrip/pagerslidingtabstrip.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlue.iml" filepath="$PROJECT_DIR$/projectBlue.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" filepath="$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" />
-      <module fileurl="file://$PROJECT_DIR$/slappy/slappy.iml" filepath="$PROJECT_DIR$/slappy/slappy.iml" />
     </modules>
   </component>
 </project>

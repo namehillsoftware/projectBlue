@@ -13,9 +13,9 @@
             <option value="$PROJECT_DIR$/fluenttask" />
             <option value="$PROJECT_DIR$/futures" />
             <option value="$PROJECT_DIR$/lazy-j" />
+            <option value="$PROJECT_DIR$/objective-droid" />
             <option value="$PROJECT_DIR$/pagerslidingtabstrip" />
             <option value="$PROJECT_DIR$/projectBlueWater" />
-            <option value="$PROJECT_DIR$/slappy" />
           </set>
         </option>
       </GradleProjectSettings>

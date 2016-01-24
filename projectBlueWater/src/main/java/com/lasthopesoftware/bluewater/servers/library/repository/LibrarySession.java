@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
-import com.vedsoft.objectified.Slappy;
+import com.vedsoft.objectified.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +90,7 @@ public class LibrarySession {
 				try {
 					final boolean isLibraryExists = library.getId() > -1;
 
-					final Slappy slappy =
+					final ObjectiveDroid objectiveDroid =
 						repositoryAccessHelper
 								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 								.addParameter(Library.accessCodeColumn, library.getAccessCode())
@@ -109,9 +109,9 @@ public class LibrarySession {
 								.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
 					if (isLibraryExists)
-						slappy.addParameter("id", library.getId());
+						objectiveDroid.addParameter("id", library.getId());
 
-					final long result = slappy.execute();
+					final long result = objectiveDroid.execute();
 
 					if (!isLibraryExists)
 						library.setId((int)result);

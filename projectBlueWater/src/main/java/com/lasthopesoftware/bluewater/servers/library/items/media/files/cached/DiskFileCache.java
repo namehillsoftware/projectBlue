@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.objectified.Slappy;
+import com.vedsoft.objectified.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +107,7 @@ public class DiskFileCache {
 							.addColumn(CachedFile.LAST_ACCESSED_TIME)
 							.build();
 
-					final Slappy sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+					final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
 
 					try {
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());

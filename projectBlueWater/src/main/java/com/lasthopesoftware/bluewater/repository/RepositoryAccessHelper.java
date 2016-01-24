@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.r
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
-import com.vedsoft.objectified.Slappy;
+import com.vedsoft.objectified.ObjectiveDroid;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,8 +38,8 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public Slappy mapSql(String sqlQuery) {
-		return new Slappy(getWritableDatabase(), sqlQuery);
+	public ObjectiveDroid mapSql(String sqlQuery) {
+		return new ObjectiveDroid(getWritableDatabase(), sqlQuery);
 	}
 
 	@Override
