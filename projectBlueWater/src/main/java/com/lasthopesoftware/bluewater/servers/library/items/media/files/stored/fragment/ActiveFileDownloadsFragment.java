@@ -61,8 +61,13 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		LibrarySession.GetActiveLibrary(getActivity(), library -> {
 			final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
 			storedFileAccess.getDownloadingStoredFiles((owner1, storedFiles) -> {
-				final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles);
-				final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), storedFiles);
+				final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles.size());
+				for (StoredFile storedFile : storedFiles) {
+					if (storedFile.getLibraryId() == library.getId())
+						localStoredFiles.add(storedFile);
+				}
+
+				final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), localStoredFiles);
 
 				if (onFileDownloadedReceiver != null)
 					localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
@@ -105,7 +110,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						}
 
 						storedFileAccess.getStoredFile(storedFileId, (owner2, storedFile) -> {
-							if (storedFile == null) return;
+							if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
 
 							localStoredFiles.add(storedFile);
 							activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
