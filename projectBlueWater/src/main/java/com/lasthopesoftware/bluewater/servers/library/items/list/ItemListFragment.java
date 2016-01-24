@@ -90,14 +90,14 @@ public class ItemListFragment extends Fragment {
 		ItemProvider
 				.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException<String, Void, List<Item>>(activity, new Runnable() {
+				.onError(new HandleViewIoException<>(activity, new Runnable() {
 
 					@Override
 					public void run() {
-							ItemProvider
+						ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
-								.onError(new HandleViewIoException<String, Void, List<Item>>(activity, this))
+								.onError(new HandleViewIoException<>(activity, this))
 								.execute();
 					}
 				}))
