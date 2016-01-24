@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListIte
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import java.util.List;
 
@@ -81,14 +82,14 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         viewHolder.getFileListItemTextTask.execute();
 
         textView.setTypeface(null, Typeface.NORMAL);
-		textView.setTypeface(null, file.getKey() == PlaybackService.getCurrentPlayingFileKey() ? Typeface.BOLD : Typeface.NORMAL);
+		textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == PlaybackService.getCurrentPlayingFileKey()));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-                textView.setTypeface(null, file.getKey() == fileKey ? Typeface.BOLD : Typeface.NORMAL);
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == fileKey));
             }
         };
 

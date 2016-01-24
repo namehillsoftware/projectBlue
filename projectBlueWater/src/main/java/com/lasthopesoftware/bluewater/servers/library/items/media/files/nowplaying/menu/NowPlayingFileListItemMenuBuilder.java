@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
@@ -87,21 +87,18 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
         viewHolder.getFileListItemTextTask.execute();
 
-        textView.setTypeface(null, Typeface.NORMAL);
-
-        if (position == nowPlayingPosition)
-            textView.setTypeface(null, Typeface.BOLD);
+        textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
 
         final int currentPlaylistPosition = PlaybackService.getCurrentPlaylistPosition();
         if (currentPlaylistPosition > -1)
-            textView.setTypeface(null, position == currentPlaylistPosition ? Typeface.BOLD : Typeface.NORMAL);
+            textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == currentPlaylistPosition));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final int playlistPosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
-                textView.setTypeface(null, position == playlistPosition ? Typeface.BOLD : Typeface.NORMAL);
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition));
             }
         };
 

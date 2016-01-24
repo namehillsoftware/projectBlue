@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.IntDef;
@@ -82,5 +83,9 @@ public class ViewUtils {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) return context.getDrawable(id);
 
 		return context.getResources().getDrawable(id);
+	}
+
+	public static int getActiveListItemTextViewStyle(boolean isActive) {
+		return isActive ? Typeface.BOLD : Typeface.NORMAL;
 	}
 }
