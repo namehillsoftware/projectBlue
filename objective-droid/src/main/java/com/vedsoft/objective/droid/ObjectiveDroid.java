@@ -49,6 +49,14 @@ public class ObjectiveDroid {
 		return addParameter(parameter, String.valueOf(value));
 	}
 
+	public ObjectiveDroid addParameter(String parameter, float value) {
+		return addParameter(parameter, String.valueOf(value));
+	}
+
+	public ObjectiveDroid addParameter(String parameter, double value) {
+		return addParameter(parameter, String.valueOf(value));
+	}
+
 	public ObjectiveDroid addParameter(String parameter, boolean value) {
 		return addParameter(parameter, value ? 1 : 0);
 	}
@@ -311,6 +319,34 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setFloat(parameterTwo, Float.parseFloat(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setDouble(parameterTwo, Double.parseDouble(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
@@ -407,6 +443,38 @@ public class ObjectiveDroid {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Long.parseLong(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Float.parseFloat(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Double.parseDouble(parameterThree));
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							} catch (InvocationTargetException e) {
