@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.r
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
-import com.vedsoft.objective.ObjectiveDroid;
+import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
