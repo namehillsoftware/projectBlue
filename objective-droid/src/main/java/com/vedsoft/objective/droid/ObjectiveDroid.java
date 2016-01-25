@@ -1,4 +1,4 @@
-package com.vedsoft.objectified;
+package com.vedsoft.objective.droid;
 
 import android.database.Cursor;
 import android.database.SQLException;
