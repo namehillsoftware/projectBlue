@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
-import com.vedsoft.objective.ObjectiveDroid;
+import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
