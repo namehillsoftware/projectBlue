@@ -291,6 +291,19 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Boolean.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? parseSqlBoolean(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
@@ -298,6 +311,19 @@ public class ObjectiveDroid {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.setInt(parameterTwo, Integer.parseInt(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Integer.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Integer.parseInt(parameterThree) : null);
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							}
@@ -319,6 +345,19 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Long.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Long.parseLong(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
@@ -333,6 +372,19 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Float.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Float.parseFloat(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
@@ -340,6 +392,19 @@ public class ObjectiveDroid {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.setDouble(parameterTwo, Double.parseDouble(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Double.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Double.parseDouble(parameterThree) : null);
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							}
@@ -420,6 +485,21 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Boolean.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? parseSqlBoolean(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
@@ -427,6 +507,21 @@ public class ObjectiveDroid {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Integer.parseInt(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Integer.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Integer.parseInt(parameterThree) : null);
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							} catch (InvocationTargetException e) {
@@ -452,6 +547,21 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Long.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Long.parseLong(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
@@ -468,6 +578,21 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Float.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Float.parseFloat(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Method, Object, String> initialize() {
@@ -475,6 +600,21 @@ public class ObjectiveDroid {
 							try {
 								if (!isSqlValueNull(parameterThree))
 									parameterOne.invoke(parameterTwo, Double.parseDouble(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Double.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Double.parseDouble(parameterThree) : null);
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							} catch (InvocationTargetException e) {
