@@ -86,6 +86,16 @@ public class ObjectiveDroid {
 				continue;
 			}
 
+			if (Float.TYPE.equals(valueClass)) {
+				addParameter(key, (float)value);
+				continue;
+			}
+
+			if (Double.TYPE.equals(valueClass)) {
+				addParameter(key, (double)value);
+				continue;
+			}
+
 			addParameter(key, value);
 		}
 
