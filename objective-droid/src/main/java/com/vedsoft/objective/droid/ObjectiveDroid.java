@@ -41,6 +41,10 @@ public class ObjectiveDroid {
 		return addParameter(parameter, value != null ? value.name() : null);
 	}
 
+	public ObjectiveDroid addParameter(String parameter, short value) {
+		return addParameter(parameter, String.valueOf(value));
+	}
+
 	public ObjectiveDroid addParameter(String parameter, int value) {
 		return addParameter(parameter, String.valueOf(value));
 	}
@@ -73,6 +77,11 @@ public class ObjectiveDroid {
 
 			if (Boolean.TYPE.equals(valueClass)) {
 				addParameter(key, (boolean)value);
+				continue;
+			}
+
+			if (Short.TYPE.equals(valueClass)) {
+				addParameter(key, (short)value);
 				continue;
 			}
 
@@ -314,6 +323,33 @@ public class ObjectiveDroid {
 					}
 				});
 
+				newHashMap.put(Short.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.setShort(parameterTwo, Short.parseShort(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Short.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Short.parseShort(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
 				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected ThreeParameterRunnable<Field, Object, String> initialize() {
@@ -501,6 +537,37 @@ public class ObjectiveDroid {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? parseSqlBoolean(parameterThree) : null);
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Short.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								if (!isSqlValueNull(parameterThree))
+									parameterOne.invoke(parameterTwo, Short.parseShort(parameterThree));
+							} catch (IllegalAccessException e) {
+								throw new RuntimeException(e);
+							} catch (InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
+						};
+					}
+				});
+
+				newHashMap.put(Short.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+					@Override
+					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+						return (parameterOne, parameterTwo, parameterThree) -> {
+							try {
+								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Short.parseShort(parameterThree) : null);
 							} catch (IllegalAccessException e) {
 								throw new RuntimeException(e);
 							} catch (InvocationTargetException e) {
