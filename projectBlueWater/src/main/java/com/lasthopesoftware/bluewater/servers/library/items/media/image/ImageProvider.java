@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v4.util.LruCache;
+import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
@@ -42,6 +43,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	private static final String IMAGES_CACHE_NAME = "images";
 
 	private static Bitmap fillerBitmap;
+	private static final Object fillerBitmapSyncObj = new Object();
 	private static final LruCache<String, Byte[]> imageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 
 	private final Context context;
@@ -66,7 +68,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 	@Override
 	protected Bitmap executeInBackground(Void[] params) {
-		if (isCancelled()) return getFillerBitmap(context);
+		if (isCancelled()) return getFillerBitmap();
 
 		String uniqueKey;
 		try {
@@ -79,14 +81,14 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			uniqueKey = artist + ":" + file.getProperty(FilePropertiesProvider.ALBUM);
 		} catch (IOException ioE) {
 			logger.error("Error getting file properties.");
-			return getFillerBitmap(context);
+			return getFillerBitmap();
 		}
 
 		byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 		if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
         final Library library = LibrarySession.GetActiveLibrary(context);
-		if (library == null) return getFillerBitmap(context);
+		if (library == null) return getFillerBitmap();
 
 
         final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
@@ -102,11 +104,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(file.getKey()), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 			try {
 				// Connection failed to build
-				if (connection == null) return getFillerBitmap(context);
+				if (connection == null) return getFillerBitmap();
 
 				try {
 					//isCancelled was called, return an empty bitmap but do not put it into the cache
-					if (isCancelled()) return getFillerBitmap(context);
+					if (isCancelled()) return getFillerBitmap();
 
 					final InputStream is = connection.getInputStream();
 					try {
@@ -116,15 +118,15 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 					}
 
 					if (imageBytes.length == 0)
-						return getFillerBitmap(context);
+						return getFillerBitmap();
 				} catch (FileNotFoundException fe) {
 					logger.warn("Image not found!");
-					return getFillerBitmap(context);
+					return getFillerBitmap();
 				}
 
 				try {
 					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
-					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap(context);
+					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap();
 
 					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 					imageDiskCache.put(uniqueKey, file, imageBytes);
@@ -201,10 +203,18 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 		return src.copy(src.getConfig(), false);
 	}
 
-	private static synchronized Bitmap getFillerBitmap(Context context) {
-		if (fillerBitmap == null)
+	private Bitmap getFillerBitmap() {
+		synchronized (fillerBitmapSyncObj) {
+			if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
+
 			fillerBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wave_background);
 
-		return getBitmapCopy(fillerBitmap);
+			final DisplayMetrics dm = context.getResources().getDisplayMetrics();
+			int maxSize = Math.max(dm.heightPixels, dm.widthPixels);
+
+			fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false);
+
+			return getBitmapCopy(fillerBitmap);
+		}
 	}
 }
