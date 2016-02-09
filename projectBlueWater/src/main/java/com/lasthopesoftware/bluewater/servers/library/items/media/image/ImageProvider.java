@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.support.v4.util.LruCache;
 
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -66,7 +66,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 	@Override
 	protected Bitmap executeInBackground(Void[] params) {
-		if (isCancelled()) return getFillerBitmap();
+		if (isCancelled()) return getFillerBitmap(context);
 
 		String uniqueKey;
 		try {
@@ -79,14 +79,14 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			uniqueKey = artist + ":" + file.getProperty(FilePropertiesProvider.ALBUM);
 		} catch (IOException ioE) {
 			logger.error("Error getting file properties.");
-			return getFillerBitmap();
+			return getFillerBitmap(context);
 		}
 
 		byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 		if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
         final Library library = LibrarySession.GetActiveLibrary(context);
-		if (library == null) return getFillerBitmap();
+		if (library == null) return getFillerBitmap(context);
 
 
         final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
@@ -102,11 +102,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(file.getKey()), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 			try {
 				// Connection failed to build
-				if (connection == null) return getFillerBitmap();
+				if (connection == null) return getFillerBitmap(context);
 
 				try {
 					//isCancelled was called, return an empty bitmap but do not put it into the cache
-					if (isCancelled()) return getFillerBitmap();
+					if (isCancelled()) return getFillerBitmap(context);
 
 					final InputStream is = connection.getInputStream();
 					try {
@@ -116,15 +116,15 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 					}
 
 					if (imageBytes.length == 0)
-						return getFillerBitmap();
+						return getFillerBitmap(context);
 				} catch (FileNotFoundException fe) {
 					logger.warn("Image not found!");
-					return getFillerBitmap();
+					return getFillerBitmap(context);
 				}
 
 				try {
 					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
-					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap();
+					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap(context);
 
 					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
 					imageDiskCache.put(uniqueKey, file, imageBytes);
@@ -201,15 +201,10 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 		return src.copy(src.getConfig(), false);
 	}
 
-	private static Bitmap getFillerBitmap() {
-		if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
+	private static synchronized Bitmap getFillerBitmap(Context context) {
+		if (fillerBitmap == null)
+			fillerBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wave_background);
 
-		fillerBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-		// Make a canvas with which we can draw to the bitmap
-		final Canvas canvas = new Canvas(fillerBitmap);
-
-		// Fill with white
-		canvas.drawColor(0xffffffff);
 		return getBitmapCopy(fillerBitmap);
 	}
 }
