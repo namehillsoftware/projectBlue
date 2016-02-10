@@ -12,20 +12,19 @@ import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.ArrayList;
 
@@ -44,15 +43,15 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_files);
-        mFileListView = (ListView)findViewById(R.id.lvFilelist);
-        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+        setContentView(R.layout.activity_view_items);
+        mFileListView = (ListView)findViewById(R.id.lvItems);
+        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
-        this.setTitle(R.string.title_view_now_playing_files);     
-        
-        LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
-
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+        this.setTitle(R.string.title_view_now_playing_files);
+		
+		LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 	
 	@Override
@@ -74,7 +73,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
 		
-		LibrarySession.GetLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override
@@ -92,7 +91,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements OnCompleteListener<Integer, Void, Library> {
+	private static class OnGetLibraryNowComplete implements OneParameterRunnable<Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -105,34 +104,30 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
+		public void run(final Library library) {
 			if (library == null) return;
 
-	        final SimpleTask<Void, Void, ArrayList<IFile>> getFileStringTask = new SimpleTask<>(new OnExecuteListener<Void, Void, ArrayList<IFile>>() {
-				
-				@Override
-				public ArrayList<IFile> onExecute(ISimpleTask<Void, Void, ArrayList<IFile>> owner, Void... params) throws Exception {
-					return Files.parseFileStringList(library.getSavedTracksString());
-				}
-			});
-	        
-	        getFileStringTask.addOnCompleteListener(new OnCompleteListener<Void, Void, ArrayList<IFile>>() {
-				
-				@Override
-				public void onComplete(ISimpleTask<Void, Void, ArrayList<IFile>> owner, final ArrayList<IFile> result) {
-					final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
-			        mFileListView.setAdapter(nowPlayingFilesListAdapter);
+	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<Void, Void, ArrayList<IFile>>() {
 
-                    final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-                    mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-			        
-			        if (library.getNowPlayingId() < result.size())
-			        	mFileListView.setSelection(library.getNowPlayingId());
-			        
-			        mFileListView.setVisibility(View.VISIBLE);
-			        mLoadingProgressBar.setVisibility(View.INVISIBLE);
-				}
-			});
+		        @Override
+		        protected ArrayList<IFile> executeInBackground(Void... params) {
+			        return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+		        }
+	        };
+	        
+	        getFileStringTask.onComplete((owner1, result) -> {
+		        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
+		        mFileListView.setAdapter(nowPlayingFilesListAdapter);
+
+		        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+		        mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+
+		        if (library.getNowPlayingId() < result.size())
+			        mFileListView.setSelection(library.getNowPlayingId());
+
+		        mFileListView.setVisibility(View.VISIBLE);
+		        mLoadingProgressBar.setVisibility(View.INVISIBLE);
+	        });
 	        
 	        getFileStringTask.execute();
 		}

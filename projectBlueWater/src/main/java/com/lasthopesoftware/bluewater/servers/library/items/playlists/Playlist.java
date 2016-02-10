@@ -3,23 +3,17 @@ package com.lasthopesoftware.bluewater.servers.library.items.playlists;
 import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IItemFiles;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
-import com.lasthopesoftware.threading.IDataTask.OnCompleteListener;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class Playlist extends AbstractIntKeyStringValue implements IItem, IFilesContainer {
+public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileListParameterProvider {
+
 	private SparseArray<Playlist> mSubItems;
 	private Playlist mParent = null;
 	private String mPath;
 	private String mGroup;
-	private Files mFiles;
-	
-	private ArrayList<OnCompleteListener<List<Playlist>>> mOnCompleteListeners;
 
 	public Playlist() {
 		super();
@@ -34,7 +28,7 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 		mParent = parent;
 	}
 
-	public void setParent(Playlist parent) {
+	private void setParent(Playlist parent) {
 		mParent = parent;
 	}
 	
@@ -86,20 +80,15 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFiles
 		this.mGroup = mGroup;
 	}
 
-	public String[] getSubItemParams() {
-		return new String[] { "Playlist/Files", "Playlist=" + String.valueOf(this.getKey()) };
-	}
-
-	@Override
-	public IItemFiles getFiles() {
-		if (mFiles == null) mFiles = new Files(getSubItemParams());
-		return mFiles;
-	}
-
 	@Override
 	public int compareTo(IItem another) {
 		int result = this.getValue().compareTo(another.getValue());
 		if (result == 0) result = this.getKey() - another.getKey();
 		return result;
+	}
+
+	@Override
+	public String[] getFileListParameters() {
+		return new String[] {"Playlist/Files", "Playlist=" + String.valueOf(getKey())};
 	}
 }

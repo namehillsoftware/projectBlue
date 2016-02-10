@@ -2,9 +2,13 @@ package com.lasthopesoftware.bluewater.servers.library.access;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.servers.library.items.access.ItemResponse;
+import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -15,51 +19,59 @@ import java.util.List;
  */
 public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
 
+    private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
+
     public final static String browseLibraryParameter = "Browse/Children";
 
-    private static List<Item> mCachedFileSystemItems;
-    private static Integer mRevision;
+    private static List<Item> cachedFileSystemItems;
+    private static Integer revision;
 
-    public static LibraryViewsProvider provide() {
-        return new LibraryViewsProvider();
+    private final ConnectionProvider connectionProvider;
+
+    public static LibraryViewsProvider provide(ConnectionProvider connectionProvider) {
+        return new LibraryViewsProvider(connectionProvider);
     }
 
-    public LibraryViewsProvider() {
-        this(null);
-    }
+    public LibraryViewsProvider(ConnectionProvider connectionProvider) {
+        super(connectionProvider, browseLibraryParameter);
 
-    public LibraryViewsProvider(HttpURLConnection connection) {
-        super(connection, browseLibraryParameter);
+        this.connectionProvider = connectionProvider;
     }
 
     @Override
-    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
-        final Integer serverRevision = RevisionChecker.getRevision();
+    protected List<Item> getData(HttpURLConnection connection) {
+        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {
-            if (mCachedFileSystemItems != null && mRevision.equals(serverRevision))
-                return mCachedFileSystemItems;
+            if (cachedFileSystemItems != null && revision.equals(serverRevision))
+                return cachedFileSystemItems;
         }
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
+        if (isCancelled()) return new ArrayList<>();
+
         try {
-            if (task.isCancelled()) return new ArrayList<>();
-
-            final InputStream is = conn.getInputStream();
+            final InputStream is = connection.getInputStream();
             try {
-                final List<Item> items = FilesystemResponse.GetItems(is);
+                final List<Item> items = getData(is);
 
-                synchronized(browseLibraryParameter) {
-                    mRevision = serverRevision;
-                    mCachedFileSystemItems = items;
+                synchronized (browseLibraryParameter) {
+                    revision = serverRevision;
+                    cachedFileSystemItems = items;
                 }
 
                 return items;
             } finally {
                 is.close();
             }
-        } finally {
-            if (connection == null) conn.disconnect();
+        } catch (IOException e) {
+            logger.error("There was an error getting the inputstream", e);
+            setException(e);
+            return new ArrayList<>();
         }
+    }
+
+    @Override
+    protected List<Item> getData(InputStream inputStream) {
+        return ItemResponse.GetItems(connectionProvider, inputStream);
     }
 }

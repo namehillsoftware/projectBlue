@@ -11,28 +11,32 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
+import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesIsVisibleHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
 
-public final class ListItemMenuBuilder extends AbstractListItemMenuBuilder<IItem> {
+public final class ListItemMenuBuilder<T extends IFileListParameterProvider & IItem> extends AbstractListItemMenuBuilder<T> {
 	private static class ViewHolder {
-		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton) {
+		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton, ImageButton syncButton) {
 			this.textView = textView;
 			this.shuffleButton = shuffleButton;
 			this.playButton = playButton;
 			this.viewButton = viewButton;
+			this.syncButton = syncButton;
 		}
 
         public final TextView textView;
         public final ImageButton shuffleButton;
         public final ImageButton playButton;
         public final ImageButton viewButton;
+		public final ImageButton syncButton;
+		public View.OnLayoutChangeListener onSyncButtonLayoutChangeListener;
 	}
 
 	@Override
-	public View getView(int position, IItem item, View convertView, ViewGroup parent) {
+	public View getView(int position, T item, View convertView, ViewGroup parent) {
 		NotifyOnFlipViewAnimator parentView = (NotifyOnFlipViewAnimator)convertView;
 		if (parentView == null) {
 		
@@ -51,10 +55,11 @@ public final class ListItemMenuBuilder extends AbstractListItemMenuBuilder<IItem
 	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
 	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
 	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
+			final ImageButton syncButton = (ImageButton)fileMenu.findViewById(R.id.btnSyncItem);
 
 			parentView.addView(fileMenu);
-
-			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton));
+			
+			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton, syncButton));
 		}
 
 		parentView.setViewChangedListener(getOnViewChangedListener());
@@ -63,9 +68,18 @@ public final class ListItemMenuBuilder extends AbstractListItemMenuBuilder<IItem
 		
 		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
 		viewHolder.textView.setText(item.getValue());
-		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, (IFilesContainer)item));
-		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, (IFilesContainer)item));
+		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, item));
+		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, item));
 		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
+
+		viewHolder.syncButton.setEnabled(false);
+
+		if (viewHolder.onSyncButtonLayoutChangeListener != null)
+			viewHolder.syncButton.removeOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
+
+		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(parentView, viewHolder.syncButton, item);
+
+		viewHolder.syncButton.addOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
 		return parentView;
 	}

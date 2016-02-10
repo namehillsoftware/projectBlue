@@ -8,9 +8,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.TreeMap;
 
-public class FilePropertiesHandler extends DefaultHandler {
+class FilePropertiesHandler extends DefaultHandler {
 	
-	private TreeMap<String, String> properties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private final TreeMap<String, String> properties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private StringBuilder currentSb = null;
 	private String currentKey;
 	

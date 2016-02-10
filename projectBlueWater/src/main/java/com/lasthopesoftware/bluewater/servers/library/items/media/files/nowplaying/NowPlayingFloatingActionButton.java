@@ -1,29 +1,24 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
-import android.view.View;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
+import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
 
 /**
  * Created by david on 10/11/15.
  */
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
-    private static Drawable nowPlayingIconDrawable;
-
     public static NowPlayingFloatingActionButton addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
 
@@ -44,10 +39,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
     private NowPlayingFloatingActionButton(Context context) {
         super(context);
 
-        if (nowPlayingIconDrawable == null)
-            nowPlayingIconDrawable = context.getResources().getDrawable(R.drawable.av_play_dark);
-
-        setImageDrawable(nowPlayingIconDrawable);
+        setImageDrawable(ViewUtils.getDrawable(context, R.drawable.av_play_dark));
 
         initializeNowPlayingFloatingActionButton();
     }
@@ -55,35 +47,27 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
     @SuppressWarnings("ResourceType")
     private void initializeNowPlayingFloatingActionButton() {
-        setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ViewUtils.CreateNowPlayingView(v.getContext());
-            }
-        });
+        setOnClickListener(v -> NowPlayingActivity.startNowPlayingActivity(v.getContext()));
 
-        setVisibility(ViewUtils.GetVisibility(false));
+        setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetLibrary(getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
+        LibrarySession.GetActiveLibrary(getContext(), result -> {
+            isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
+            setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
-            @Override
-            public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
-                setVisibility(ViewUtils.GetVisibility(isNowPlayingFileSet));
+            if (isNowPlayingFileSet) return;
 
-                if (isNowPlayingFileSet) return;
+            final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
 
-                // If now playing shouldn't be visible, detect when it should be
-                PlaybackService.addOnStreamingStartListener(new OnNowPlayingStartListener() {
-                    @Override
-                    public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                        setVisibility(ViewUtils.GetVisibility(true));
-                        PlaybackService.removeOnStreamingStartListener(this);
-                        isNowPlayingFileSet = true;
-                    }
-                });
-            }
+            localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public synchronized void onReceive(Context context, Intent intent) {
+                    isNowPlayingFileSet = true;
+                    setVisibility(ViewUtils.getVisibility(true));
+                    localBroadcastManager.unregisterReceiver(this);
+                }
+            }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
         });
     }
 

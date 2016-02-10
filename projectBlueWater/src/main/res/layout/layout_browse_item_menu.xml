@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     style="?android:attr/buttonBarStyle"
     android:id="@+id/linItemMenu"
@@ -29,6 +29,14 @@
 	    android:contentDescription="@string/btn_view_files"
 	    android:src="@drawable/ic_list" />
 
+    <ImageButton
+        android:id="@+id/btnSyncItem"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:contentDescription="@string/btn_sync_item"
+        android:src="@drawable/ic_sync_off" />
 
     <ImageButton
         android:id="@+id/btnShuffle"

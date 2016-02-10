@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.IntDef;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.MenuItemCompat;
@@ -15,8 +17,10 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.ServerListActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 public class ViewUtils {
 
@@ -31,13 +35,10 @@ public class ViewUtils {
 	}
 	
 	public static boolean handleMenuClicks(final Context context, final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.menu_connection_settings:
-				context.startActivity(new Intent(context, ServerListActivity.class));
-				return true;
-			default:
-				return false;
-		}
+		if (item.getItemId() != R.id.menu_connection_settings) return false;
+
+		context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
+		return true;
 	}
 	
 	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
@@ -63,14 +64,13 @@ public class ViewUtils {
 		return ViewUtils.handleMenuClicks(activity, item);
 		
 	}
-		
-	public static void CreateNowPlayingView(final Context context) {
-    	final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		context.startActivity(viewIntent);
-    }
 
-	public static int GetVisibility(boolean isVisible) {
+	@IntDef({View.VISIBLE, View.INVISIBLE, View.GONE})
+	@Retention(RetentionPolicy.SOURCE)
+	public @interface Visibility {}
+
+	@Visibility
+	public static int getVisibility(boolean isVisible) {
 		return isVisible ? View.VISIBLE : View.INVISIBLE;
 	}
 
@@ -83,5 +83,9 @@ public class ViewUtils {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) return context.getDrawable(id);
 
 		return context.getResources().getDrawable(id);
+	}
+
+	public static int getActiveListItemTextViewStyle(boolean isActive) {
+		return isActive ? Typeface.BOLD : Typeface.NORMAL;
 	}
 }

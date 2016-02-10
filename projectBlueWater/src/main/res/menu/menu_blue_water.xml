@@ -5,11 +5,11 @@
         android:title="@string/title_activity_set_up_connection"
         android:orderInCategory="100"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_action_settings" />
-    
+        android:icon="@drawable/ic_action_settings_dark" />
+
     <item android:id="@+id/search"
           android:title="@string/lbl_search"
-          android:orderInCategory="300"
+          android:orderInCategory="400"
           android:icon="@drawable/ic_search"
           app:showAsAction="collapseActionView|ifRoom"
           app:actionViewClass="android.support.v7.widget.SearchView" />

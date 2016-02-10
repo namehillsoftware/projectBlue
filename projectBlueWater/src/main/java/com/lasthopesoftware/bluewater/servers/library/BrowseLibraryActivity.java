@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.servers.library;
 
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -12,63 +13,65 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
-import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.library.FileSystem.OnGetFileSystemCompleteListener;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.servers.library.view.LibraryViewPagerAdapter;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.PlaylistListFragment;
+import com.lasthopesoftware.bluewater.servers.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
+import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
 
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
-	private static final String SAVED_TAB_KEY = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_TAB_KEY";
-	private static final String SAVED_SCROLL_POS = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SCROLL_POS";
-    private static final String SAVED_SELECTED_VIEW = "com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity.SAVED_SELECTED_VIEW";
+	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
+
+	private static final List<String> specialViews = Collections.singletonList("Active Downloads");
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	private ViewPager mViewPager;
-	private ListView mLvSelectViews;
-	private DrawerLayout mDrawerLayout;
-    private PagerSlidingTabStrip mLibraryViewsTabs;
-    private ProgressBar mPbLoadingViews;
-    private ViewAnimator viewAnimator;
+	private RelativeLayout browseLibraryContainerRelativeLayout;
+	private ListView selectViewsListView;
+	private ListView specialLibraryItemsListView;
+	private DrawerLayout drawerLayout;
+	private ProgressBar loadingViewsProgressBar;
+
+	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
-	private ActionBarDrawerToggle mDrawerToggle = null;
+	private Fragment activeFragment;
 
-	private BrowseLibraryActivity mBrowseLibrary = this;
+	private ActionBarDrawerToggle drawerToggle = null;
 
-	private CharSequence mOldTitle;
+	private CharSequence oldTitle;
+	private boolean isStopped = false;
 
-	private boolean mIsStopped = false;
-
-	private OnCompleteListener<String, Void, ArrayList<IItem>> mOnGetVisibleViewsCompleteListener;
+	private Intent newIntent;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -78,12 +81,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         // See http://stackoverflow.com/a/7748416
         if (!isTaskRoot()) {
             final Intent intent = getIntent();
-            final String intentAction = intent.getAction();
-            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && intentAction != null && intentAction.equals(Intent.ACTION_MAIN)) {
-                LoggerFactory.getLogger(getClass()).info("Main Activity is not the root.  Finishing Main Activity instead of launching.");
-                finish();
-                return;
-            }
+	        if (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+		        final String className = BrowseLibraryActivity.class.getName();
+		        LoggerFactory.getLogger(getClass()).info(className + " is not the root.  Finishing " + className + " instead of launching.");
+		        finish();
+		        return;
+	        }
         }
 
 		setContentView(R.layout.activity_browse_library);
@@ -95,14 +98,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
 
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+		drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
-		mOldTitle = getTitle();
+		oldTitle = getTitle();
 		final CharSequence selectViewTitle = getText(R.string.select_view_title);
-		mDrawerToggle = new ActionBarDrawerToggle(
+		drawerToggle = new ActionBarDrawerToggle(
                 this,                  /* host Activity */
-                mDrawerLayout,         /* DrawerLayout object */
+				drawerLayout,         /* DrawerLayout object */
                 R.string.drawer_open,  /* "open drawer" description */
                 R.string.drawer_close  /* "close drawer" description */
 		) {
@@ -110,7 +113,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
-				getSupportActionBar().setTitle(mOldTitle);
+				getSupportActionBar().setTitle(oldTitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
@@ -118,180 +121,141 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                mOldTitle = getSupportActionBar().getTitle();
+                oldTitle = getSupportActionBar().getTitle();
 				getSupportActionBar().setTitle(selectViewTitle);
                 invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
 
 		};
 
-		mDrawerLayout.setDrawerListener(mDrawerToggle);
-		mLvSelectViews = (ListView) findViewById(R.id.lvLibraryViewSelection);
-		mViewPager = (ViewPager) findViewById(R.id.libraryViewPager);
-        mLibraryViewsTabs = (PagerSlidingTabStrip) findViewById(R.id.tabsLibraryViews);
-        mPbLoadingViews = (ProgressBar) findViewById(R.id.pbLoadingViews);
+		drawerLayout.setDrawerListener(drawerToggle);
+		selectViewsListView = (ListView) findViewById(R.id.lvLibraryViewSelection);
 
-        if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
+		loadingViewsProgressBar = (ProgressBar) findViewById(R.id.pbLoadingViews);
+		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
+
+		specialLibraryItemsListView = (ListView) findViewById(R.id.specialLibraryItemsListView);
+		specialLibraryItemsListView.setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) getLibrary();
+		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) getLibrary();
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) startLibrary();
 	}
 
-	private void getLibrary() {
-		mIsStopped = false;
-		if ((mLvSelectViews.getAdapter() != null && mViewPager.getAdapter() != null)) return;
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
 
-        toggleViewsVisibility(false);
+		if (showDownloadsAction.equals(intent.getAction()))
+			updateSelectedView(Library.ViewType.DownloadView, 0);
+	}
 
-		LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
+	private void startLibrary() {
+		isStopped = false;
+		if (selectViewsListView.getAdapter() != null) return;
 
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library result) {
-				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
+        showProgressBar();
 
-					@Override
-					public void onGetFileSystemComplete(FileSystem fileSystem) {
-						displayLibrary(result, fileSystem);
-					}
-				});
+		LibrarySession.GetActiveLibrary(this, library -> {
+			// No library, must bail out
+			if (library == null) {
+				finish();
+				return;
 			}
+
+			if (showDownloadsAction.equals(getIntent().getAction())) {
+				library.setSelectedView(0);
+				library.setSelectedViewType(Library.ViewType.DownloadView);
+				LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+
+				// Clear the action
+				getIntent().setAction(null);
+			}
+
+			displayLibrary(library);
 		});
 
 	}
 
-	@SuppressWarnings("unchecked")
-	public void displayLibrary(final Library library, final FileSystem fileSystem) {
-		final LibraryViewsProvider libraryViewsProvider = new LibraryViewsProvider();
+	private void displayLibrary(final Library library) {
+		final Library.ViewType selectedViewType = library.getSelectedViewType();
 
-        libraryViewsProvider.onComplete(new OnCompleteListener<Void, Void, List<Item>>() {
+		specialLibraryItemsListView.setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, final List<Item> items) {
-				if (mIsStopped || items == null) return;
+		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
+				.onComplete((owner, items) -> {
+					if (isStopped || items == null) return;
 
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+					LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-				for (IItem item : items) {
-					if (item.getKey() != library.getSelectedView()) continue;
-					mOldTitle = item.getValue();
-					getSupportActionBar().setTitle(mOldTitle);
-					break;
-				}
+					selectViewsListView.setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
+					selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 
-				mLvSelectViews.setAdapter(new SelectViewAdapter(mLvSelectViews.getContext(), R.layout.layout_select_views, items, library.getSelectedView()));
+					hideAllViews();
+					if (!Library.serverViewTypes.contains(selectedViewType)) {
+						oldTitle = specialViews.get(0);
+						getSupportActionBar().setTitle(oldTitle);
 
-				fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener(),
-					new HandleViewIoException(mBrowseLibrary, new Runnable() {
+						final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+						swapFragments(activeFileDownloadsFragment);
 
-						@Override
-						public void run() {
-							FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
-
-								@Override
-								public void onGetFileSystemComplete(FileSystem fileSystem) {
-									fileSystem.getVisibleViewsAsync(getOnVisibleViewsCompleteListener());
-								}
-							});
-						}
-
-				}));
-
-				mLvSelectViews.setOnItemClickListener(new OnItemClickListener() {
-
-					@Override
-					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-						mDrawerLayout.closeDrawer(GravityCompat.START);
-						mDrawerToggle.syncState();
-
-						final int selectedViewKey = items.get(position).getKey();
-
-						LibrarySession.GetLibrary(mBrowseLibrary, new OnCompleteListener<Integer, Void, Library>() {
-
-							@Override
-							public void onComplete(ISimpleTask<Integer, Void, Library> owner, final Library library) {
-								if (library.getSelectedView() == selectedViewKey) return;
-
-								library.setSelectedView(selectedViewKey);
-								LibrarySession.SaveLibrary(mBrowseLibrary, library);
-
-								FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
-
-									@Override
-									public void onGetFileSystemComplete(FileSystem fileSystem) {
-										displayLibrary(library, fileSystem);
-									}
-								});
-							}
-						});
+						return;
 					}
-				});
-			}
-		}).onError(new HandleViewIoException(mBrowseLibrary, new Runnable() {
 
-			@Override
-			public void run() {
-				FileSystem.Instance.get(mBrowseLibrary, new OnGetFileSystemCompleteListener() {
-
-					@Override
-					public void onGetFileSystemComplete(FileSystem fileSystem) {
-                        libraryViewsProvider.execute();
+					for (IItem item : items) {
+						if (item.getKey() != library.getSelectedView()) continue;
+						oldTitle = item.getValue();
+						getSupportActionBar().setTitle(oldTitle);
+						break;
 					}
-				});
-			}
-		}));
 
-        libraryViewsProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+					if (selectedViewType == Library.ViewType.PlaylistView) {
+						final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+						playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+						swapFragments(playlistListFragment);
+
+						return;
+					}
+
+					final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+					browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+					swapFragments(browseLibraryViewsFragment);
+						})
+				.onError(new HandleViewIoException<>(this, () -> {
+					// Get a new instance of the file system as the connection provider may have changed
+					displayLibrary(library);
+				}))
+				.execute();
 	}
 
-	private OnCompleteListener<String, Void, ArrayList<IItem>> getOnVisibleViewsCompleteListener() {
-		if (mOnGetVisibleViewsCompleteListener != null) return mOnGetVisibleViewsCompleteListener;
+	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
+		return (parent, view, position, id) -> {
+			final Item selectedItem = items.get(position);
+			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
+		};
+	}
 
-        mOnGetVisibleViewsCompleteListener = new OnCompleteListener<String, Void, ArrayList<IItem>>() {
+	private void updateSelectedView(final Library.ViewType selectedViewType, final int selectedViewKey) {
+		drawerLayout.closeDrawer(GravityCompat.START);
+		drawerToggle.syncState();
 
-            @Override
-            public void onComplete(ISimpleTask<String, Void, ArrayList<IItem>> owner, ArrayList<IItem> result) {
-                if (mIsStopped || result == null) return;
+		LibrarySession.GetActiveLibrary(this, library -> {
+			if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
-                final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getSupportFragmentManager());
-				viewChildPagerAdapter.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+			library.setSelectedView(selectedViewKey);
+			library.setSelectedViewType(selectedViewType);
+			LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
 
-                viewChildPagerAdapter.setLibraryViews(result);
-
-                // Set up the ViewPager with the sections adapter.
-                mViewPager.setAdapter(viewChildPagerAdapter);
-                mLibraryViewsTabs.setViewPager(mViewPager);
-
-                mLibraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                    @Override
-                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-                    }
-
-                    @Override
-                    public void onPageSelected(int position) {
-                        LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-                    }
-
-                    @Override
-                    public void onPageScrollStateChanged(int state) {
-
-                    }
-                });
-
-                toggleViewsVisibility(true);
-            }
-        };
-
-        return mOnGetVisibleViewsCompleteListener;
+			displayLibrary(library);
+		});
 	}
 
 	@Override
@@ -301,80 +265,56 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		return mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
+		return drawerToggle != null && drawerToggle.onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
 	}
 
 	@Override
     protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+		super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        if (mDrawerToggle != null) mDrawerToggle.syncState();
+        if (drawerToggle != null) drawerToggle.syncState();
     }
 
 	@Override
     public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (mDrawerToggle != null) mDrawerToggle.onConfigurationChanged(newConfig);
+		super.onConfigurationChanged(newConfig);
+        if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
     }
 
-	@Override
-	public void onSaveInstanceState(final Bundle savedInstanceState) {
-		super.onSaveInstanceState(savedInstanceState);
-
-		if (mViewPager == null) return;
-
-        savedInstanceState.putInt(SAVED_TAB_KEY, mViewPager.getCurrentItem());
-        savedInstanceState.putInt(SAVED_SCROLL_POS, mViewPager.getScrollY());
-        LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-				if (library != null)
-					savedInstanceState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-			}
-		});
+	private void showProgressBar() {
+		showContainerView(loadingViewsProgressBar);
 	}
 
-	@Override
-	public void onRestoreInstanceState(final Bundle savedInstanceState) {
-		super.onRestoreInstanceState(savedInstanceState);
-
-        if (savedInstanceState != null) restoreScrollPosition(savedInstanceState);
+	private void showContainerView(View view) {
+		hideAllViews();
+		view.setVisibility(View.VISIBLE);
 	}
 
-    private void restoreScrollPosition(final Bundle savedInstanceState) {
-        if (mViewPager == null) return;
+	private void hideAllViews() {
+		for (int i = 0; i < browseLibraryContainerRelativeLayout.getChildCount(); i++)
+			browseLibraryContainerRelativeLayout.getChildAt(i).setVisibility(View.INVISIBLE);
+	}
 
-        LibrarySession.GetLibrary(this, new OnCompleteListener<Integer, Void, Library>() {
+	private synchronized void swapFragments(Fragment newFragment) {
+		final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		try {
+			if (activeFragment != null)
+				ft.remove(activeFragment);
 
-			@Override
-			public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library library) {
-				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
-
-				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-				if (savedTabKey > -1)
-					mViewPager.setCurrentItem(savedTabKey);
-
-				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-				if (savedScrollPosition > -1)
-					mViewPager.setScrollY(savedScrollPosition);
-			}
-		});
-    }
-
-    private void toggleViewsVisibility(boolean isVisible) {
-        mLibraryViewsTabs.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-        mViewPager.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
-        mPbLoadingViews.setVisibility(isVisible ? View.INVISIBLE : View.VISIBLE);
-    }
+			ft.add(R.id.browseLibraryContainer, newFragment);
+		} finally {
+			ft.commit();
+			activeFragment = newFragment;
+		}
+	}
 	
 	@Override
 	public void onStop() {
-		mIsStopped = true;
+		isStopped = true;
 		super.onStop();
 	}
 
-    @Override
+	@Override
     public void onBackPressed() {
         if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
 

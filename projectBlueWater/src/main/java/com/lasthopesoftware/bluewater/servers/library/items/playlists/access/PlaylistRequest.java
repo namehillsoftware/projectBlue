@@ -7,14 +7,13 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-public class PlaylistRequest {
+class PlaylistRequest {
 
 	public static ArrayList<Playlist> GetItems(InputStream is) {
 	
@@ -24,13 +23,7 @@ public class PlaylistRequest {
 	    	sp.parse(is, jrPlaylistXml);
 	    	
 	    	return jrPlaylistXml.getPlaylists();
-		} catch (MalformedURLException e) {
-			LoggerFactory.getLogger(PlaylistRequest.class).error(e.toString(), e);
-		} catch (IOException e) {
-			LoggerFactory.getLogger(PlaylistRequest.class).error(e.toString(), e);
-		} catch (SAXException e) {
-			LoggerFactory.getLogger(PlaylistRequest.class).error(e.toString(), e);
-		} catch (ParserConfigurationException e) {
+		} catch (IOException | SAXException | ParserConfigurationException e) {
 			LoggerFactory.getLogger(PlaylistRequest.class).error(e.toString(), e);
 		}
 		

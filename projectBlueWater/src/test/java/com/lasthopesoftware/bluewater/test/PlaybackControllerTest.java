@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.test;
 
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -144,7 +145,7 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testAddFile() {
-		final File testFile = new File(5);
+		final File testFile = new File(null, 5);
 		final int originalSize = mPlaybackFileProvider.size();
 		mPlaybackController.addFile(testFile);
 		
@@ -201,7 +202,7 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public void setValue(String mValue) {
+		public void setValue(String value) {
 			// TODO Auto-generated method stub
 			
 		}
@@ -219,6 +220,11 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
+		public String tryGetProperty(String name) {
+			return null;
+		}
+
+		@Override
 		public String getRefreshedProperty(String name) throws IOException {
 			// TODO Auto-generated method stub
 			return null;
@@ -227,6 +233,16 @@ public class PlaybackControllerTest extends TestCase {
 		@Override
 		public int getDuration() throws IOException {
 			return 100;
+		}
+
+		@Override
+		public String getPlaybackUrl(ConnectionProvider connectionProvider) {
+			return null;
+		}
+
+		@Override
+		public String[] getPlaybackParams() {
+			return new String[0];
 		}
 
 		@Override

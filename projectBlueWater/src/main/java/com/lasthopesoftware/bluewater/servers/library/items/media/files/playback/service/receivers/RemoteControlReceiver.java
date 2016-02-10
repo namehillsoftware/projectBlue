@@ -11,7 +11,7 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final KeyEvent event = (KeyEvent) intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+		final KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 	    if (event.getAction() != KeyEvent.ACTION_UP) return;
 	    
 	    switch (event.getKeyCode()) {
@@ -26,7 +26,7 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	        	break;
 	        case KeyEvent.KEYCODE_HEADSETHOOK:
 	        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-	            if (PlaybackService.getPlaylistController() != null && PlaybackService.getPlaylistController().isPlaying())
+	            if (PlaybackService.isPlaying())
 	            	PlaybackService.pause(context);
 	            else
 	            	PlaybackService.play(context);

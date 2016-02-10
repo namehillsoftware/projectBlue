@@ -6,17 +6,12 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	private int mKey;
 	private String mValue;
 	
-	public AbstractIntKeyStringValue(int key, String value) {
+	protected AbstractIntKeyStringValue(int key, String value) {
 		this.setKey(key);
 		this.setValue(value);
 	}
 	
-	public AbstractIntKeyStringValue(String value) {
-		this.setKey(-1);
-		this.setValue(value);
-	}
-	
-	public AbstractIntKeyStringValue() {
+	protected AbstractIntKeyStringValue() {
 	}
 	
 	/**
@@ -41,10 +36,10 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	}
 
 	/**
-	 * @param mValue the mValue to set
+	 * @param value the mValue to set
 	 */
-	public void setValue(String mValue) {
-		this.mValue = mValue;
+	public void setValue(String value) {
+		this.mValue = value;
 	}
 	
 	@Override

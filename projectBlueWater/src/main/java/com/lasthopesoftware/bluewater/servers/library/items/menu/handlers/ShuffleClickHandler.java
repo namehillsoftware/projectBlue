@@ -2,8 +2,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.menu.handlers;
 
 import android.view.View;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileListParameters;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
@@ -12,16 +14,21 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.access
  * Created by david on 4/3/15.
  */
 public final class ShuffleClickHandler extends AbstractMenuClickHandler {
-    private final IFilesContainer mItem;
 
-    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFilesContainer item) {
+    private final IFileListParameterProvider item;
+
+    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider item) {
         super(menuContainer);
-        mItem = item;
+	    this.item = item;
     }
 
     @Override
     public void onClick(View v) {
-        mItem.getFiles().getFileStringList(Files.GET_SHUFFLED, new OnGetFileStringListForClickCompleteListener(v.getContext()), new OnGetFileStringListForClickErrorListener(v, this));
+	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider(), item, FileListParameters.Options.Shuffled))
+			    .onComplete(new OnGetFileStringListForClickCompleteListener(v.getContext()))
+			    .onError(new OnGetFileStringListForClickErrorListener(v, this))
+	            .execute();
+
         super.onClick(v);
     }
 }

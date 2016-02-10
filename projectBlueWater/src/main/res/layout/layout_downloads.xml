@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+	<include
+		layout="@layout/activity_view_items"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+	    android:layout_above="@+id/toggleSyncButton" />
+
+    <Button
+	    android:id="@id/toggleSyncButton"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentBottom="true"
+	    android:background="@drawable/borderless_button"
+	    android:enabled="false"
+	    android:text="@string/start_sync_button"/>
+</RelativeLayout>

@@ -21,7 +21,7 @@ public final class ViewFilesClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(v.getContext(), FileListActivity.class);
+        final Intent intent = new Intent(v.getContext(), FileListActivity.class);
         intent.setAction(mItem instanceof Playlist ? FileListActivity.VIEW_PLAYLIST_FILES : FileListActivity.VIEW_ITEM_FILES);
         intent.putExtra(FileListActivity.KEY, mItem.getKey());
         v.getContext().startActivity(intent);

@@ -2,20 +2,19 @@ package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.threading.IDataTask;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;
 
-@SuppressWarnings("rawtypes")
-public class HandleViewIoException implements ISimpleTask.OnErrorListener, IDataTask.OnErrorListener {
+public class HandleViewIoException<TParams, TProgress, TResult> implements TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> {
 	
 	private final Context mContext;
 	private final Runnable mOnConnectionRegainedListener;
 	
 	@Override
-	public boolean onError(ISimpleTask owner, boolean isHandled, Exception innerException) {
-		if (isHandled || !(innerException instanceof IOException)) return false;
+	public Boolean call(FluentTask<TParams, TProgress, TResult> owner, Exception innerException) {
+		if (!(innerException instanceof IOException)) return false;
 		
 		WaitForConnectionActivity.beginWaiting(mContext, mOnConnectionRegainedListener);
 

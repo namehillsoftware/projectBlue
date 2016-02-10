@@ -1,18 +1,19 @@
 package com.lasthopesoftware.bluewater.servers.connection;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.ServerListActivity;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.servers.connection.helpers.BuildSessionConnection.OnBuildSessionStateChangeListener;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -25,6 +26,14 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	private TextView lblConnectionStatus;		
 	private Intent selectServerIntent;
 	private Intent browseLibraryIntent;
+	private LocalBroadcastManager localBroadcastManager;
+
+	private final BroadcastReceiver buildSessionConnectionReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			handleBuildStatusChange(intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1));
+		}
+	};
 	
 	/*
 	 * Returns true if the session needs to be restored,
@@ -32,7 +41,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	 */
 	public static boolean restoreSessionConnection(final Activity activity) {
 		// Check to see that a URL can still be built
-		if (ConnectionProvider.getFormattedUrl() != null) return false;
+		if (SessionConnection.isBuilt()) return false;
 		
 		final Intent intent = new Intent(activity, InstantiateSessionConnectionActivity.class);
 		intent.setAction(START_ACTIVITY_FOR_RETURN);
@@ -47,48 +56,50 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		setContentView(R.layout.layout_status);
 		
 		lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
-		selectServerIntent = new Intent(this, ServerListActivity.class);
+		selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
+
 		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
-		
-		handleBuildStatusChange(BuildSessionConnection.build(this, new OnBuildSessionStateChangeListener() {
-			
-			@Override
-			public void onBuildSessionStatusChange(BuildingSessionConnectionStatus status) {
-				handleBuildStatusChange(status);
-			}
-		}));
+		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+
+		localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
+		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+		handleBuildStatusChange(SessionConnection.build(this));
 	}
-		
-	private void handleBuildStatusChange(BuildingSessionConnectionStatus status) {
+	
+	private void handleBuildStatusChange(int status) {
+		if (SessionConnection.completeConditions.contains(status))
+			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
+
 		switch (status) {
-		case GETTING_LIBRARY:
+		case BuildingSessionConnectionStatus.GettingLibrary:
 			lblConnectionStatus.setText(R.string.lbl_getting_library_details);
 			return;
-		case GETTING_LIBRARY_FAILED:
+		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 			lblConnectionStatus.setText(R.string.lbl_please_connect_to_valid_server);
 			launchActivityDelayed(selectServerIntent);
 			return;
-		case BUILDING_CONNECTION:
+		case BuildingSessionConnectionStatus.BuildingConnection:
 			lblConnectionStatus.setText(R.string.lbl_connecting_to_server_library);
 			return;
-		case BUILDING_CONNECTION_FAILED:
+		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
 			launchActivityDelayed(selectServerIntent);
 			return;
-		case GETTING_VIEW:
+		case BuildingSessionConnectionStatus.GettingView:
 			lblConnectionStatus.setText(R.string.lbl_getting_library_views);
 			return;
-		case GETTING_VIEW_FAILED:
+		case BuildingSessionConnectionStatus.GettingViewFailed:
 			lblConnectionStatus.setText(R.string.lbl_library_no_views);
 			launchActivityDelayed(selectServerIntent);
 			return;
-		case BUILDING_SESSION_COMPLETE:
+		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			lblConnectionStatus.setText(R.string.lbl_connected);
-			if (getIntent() == null || getIntent().getAction() == null || !getIntent().getAction().equals(START_ACTIVITY_FOR_RETURN))
+			if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
 				launchActivityDelayed(browseLibraryIntent);
 			else
 				finish();
-			return;
 		}
 	}
 	

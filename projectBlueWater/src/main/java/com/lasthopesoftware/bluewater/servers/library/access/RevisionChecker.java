@@ -2,58 +2,78 @@ package com.lasthopesoftware.bluewater.servers.library.access;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.vedsoft.fluent.FluentTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker implements OnExecuteListener<Void, Void, Integer> {
+public class RevisionChecker extends FluentTask<Void, Void, Integer> {
 	
 	private final static Integer mBadRevision = -1;
-	private static Integer mCachedRevision = mBadRevision;
+    private static final Map<String, Integer> cachedRevisions = new HashMap<>();
 
     private static long mLastCheckedTime = -1;
     private final static long mCheckedExpirationTime = 30000;
 
-    private static final ExecutorService mRevisionExecutor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService revisionExecutor = Executors.newSingleThreadExecutor();
 
-	public static Integer getRevision() {
+	private final ConnectionProvider connectionProvider;
+
+	public static Integer getRevision(ConnectionProvider connectionProvider) {
         try {
-            return (new SimpleTask<>(new RevisionChecker())).execute(mRevisionExecutor).get();
+            return (new RevisionChecker(connectionProvider)).get(revisionExecutor);
         } catch (ExecutionException | InterruptedException e) {
-            return mCachedRevision;
+            return getCachedRevision(connectionProvider);
         }
     }
 
-	@Override
-	public Integer onExecute(ISimpleTask<Void, Void, Integer> owner, Void... params) throws Exception {
-        if (!mCachedRevision.equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
-            return mCachedRevision;
+    private static Integer getCachedRevision(ConnectionProvider connectionProvider) {
+        final String serverUrl = connectionProvider.getUrlProvider().getBaseUrl();
+        if (!cachedRevisions.containsKey(serverUrl))
+            cachedRevisions.put(serverUrl, mBadRevision);
+
+        return cachedRevisions.get(serverUrl);
+    }
+
+    private RevisionChecker(ConnectionProvider connectionProvider) {
+	    this.connectionProvider = connectionProvider;
+    }
+
+    @Override
+    protected Integer executeInBackground(Void... params) {
+        if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
+            return getCachedRevision(connectionProvider);
         }
 
-        final HttpURLConnection conn = ConnectionProvider.getConnection("Library/GetRevision");
         try {
-            final InputStream is = conn.getInputStream();
+            final HttpURLConnection conn = connectionProvider.getConnection("Library/GetRevision");
             try {
-                final String revisionValue = StandardRequest.fromInputStream(is).items.get("Sync");
+                final InputStream is = conn.getInputStream();
+                try {
+                    final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
+                    if (standardRequest == null)
+                        return getCachedRevision(connectionProvider);
 
-                if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
+                    final String revisionValue = standardRequest.items.get("Sync");
 
-                mCachedRevision = Integer.valueOf(revisionValue);
-                mLastCheckedTime = System.currentTimeMillis();
-                return mCachedRevision;
+                    if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
+
+                    cachedRevisions.put(connectionProvider.getUrlProvider().getBaseUrl(), Integer.valueOf(revisionValue));
+                    mLastCheckedTime = System.currentTimeMillis();
+                    return getCachedRevision(connectionProvider);
+                } finally {
+                    is.close();
+                }
             } finally {
-                is.close();
+                conn.disconnect();
             }
         } catch (Exception e) {
-            return mCachedRevision;
-        } finally {
-            conn.disconnect();
+            return getCachedRevision(connectionProvider);
         }
-	}
+    }
 }

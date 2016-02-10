@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.playbac
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -12,26 +11,24 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.IoCommon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,210 +52,137 @@ public class PlaybackFile implements
 		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
 	}))); 
 	
-	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackFile.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlaybackFile.class);
 	
-	private volatile MediaPlayer mMediaPlayer;
+	private volatile MediaPlayer mediaPlayer;
 	
 	// FilePlayer State Variables
-	private volatile boolean mIsPrepared = false;
-	private volatile boolean mIsPreparing = false;
-	private volatile boolean mIsInErrorState = false;
-	private volatile int mPosition = 0;
-	private volatile int mBufferPercentage = 0;
-	private volatile int mLastBufferPercentage = 0;
-	private volatile float mVolume = 1.0f;
-	
-	private final Context mMpContext;
-	private final IFile mFile;
+	private volatile boolean isPrepared = false;
+	private volatile boolean isPreparing = false;
+	private volatile boolean isInErrorState = false;
+	private volatile int position = 0;
+	private volatile int bufferPercentage = 0;
+	private volatile int lastBufferPercentage = 0;
+	private volatile float volume = 1.0f;
+
+	private final Context mpContext;
+	private final IFile file;
+	private final ConnectionProvider connectionProvider;
 	
 	private static final int mBufferMin = 0, mBufferMax = 100;
-	
-	private static final String FILE_URI_SCHEME = "file";
-	private static final String MEDIA_DATA_QUERY = 	MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
-	
-	private static final String[] MEDIA_QUERY_PROJECTION = { MediaStore.Audio.Media.DATA };
-	
+
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
 	
-	public PlaybackFile(Context context, IFile file) {
-		mMpContext = context;
-		mFile = file;
+	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
+		mpContext = context;
+		this.connectionProvider = connectionProvider;
+		this.file = file;
 	}
 	
 	public IFile getFile() {
-		return mFile;
+		return file;
 	}
 	
 	public void initMediaPlayer() {
-		if (mMediaPlayer != null) return;
+		if (mediaPlayer != null) return;
 		
-		mIsPrepared = false;
-		mIsPreparing = false;
-		mIsInErrorState = false;
-		mBufferPercentage = mBufferMin;
+		isPrepared = false;
+		isPreparing = false;
+		isInErrorState = false;
+		bufferPercentage = mBufferMin;
 		
-		mMediaPlayer = new MediaPlayer(); // initialize it here
-		mMediaPlayer.setOnPreparedListener(this);
-		mMediaPlayer.setOnErrorListener(this);
-		mMediaPlayer.setOnCompletionListener(this);
-		mMediaPlayer.setOnBufferingUpdateListener(this);
-		mMediaPlayer.setWakeMode(mMpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mediaPlayer = new MediaPlayer(); // initialize it here
+		mediaPlayer.setOnPreparedListener(this);
+		mediaPlayer.setOnErrorListener(this);
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setOnBufferingUpdateListener(this);
+		mediaPlayer.setWakeMode(mpContext, PowerManager.PARTIAL_WAKE_LOCK);
+		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
 	public boolean isMediaPlayerCreated() {
-		return mMediaPlayer != null;
+		return mediaPlayer != null;
 	}
 	
 	public boolean isPrepared() {
-		return mIsPrepared;
+		return isPrepared;
 	}
-	
-	@SuppressLint("InlinedApi")
-	private Uri getMpUri() throws IOException {
-		if (mMpContext == null)
-			throw new NullPointerException("The file player's context cannot be null");
-				
-		final String originalFilename = mFile.getProperty(FilePropertiesProvider.FILENAME);
-		if (originalFilename == null)
-			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
-		
-		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
-		
-		final StringBuilder querySb = new StringBuilder(MEDIA_DATA_QUERY);
-		appendAnd(querySb);
-		
-		final ArrayList<String> params = new ArrayList<>(5);
-		params.add(filename);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, mFile.getProperty(FilePropertiesProvider.ARTIST));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, mFile.getProperty(FilePropertiesProvider.ALBUM));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, mFile.getProperty(FilePropertiesProvider.NAME));
-		appendAnd(querySb);
-		
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, mFile.getProperty(FilePropertiesProvider.TRACK));
-		
-		final Cursor cursor = mMpContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MEDIA_QUERY_PROJECTION, querySb.toString(), params.toArray(new String[params.size()]), null);
-	    try {
-		    if (cursor.moveToFirst()) {
-		    	final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-		    	if (fileUriString != null && !fileUriString.isEmpty()) {
-		    		// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
-		    		final java.io.File file = new java.io.File(fileUriString.replaceFirst(FILE_URI_SCHEME + "://", ""));
-		    		
-		    		if (file != null && file.exists()) {
-		    			mLogger.info("Returning file URI from local disk.");
-		    			return Uri.fromFile(file);
-		    		}
-		    	}
-		    }
-	    } catch (IllegalArgumentException ie) {
-	    	mLogger.info("Illegal column name.", ie);
-	    } finally {
-	    	cursor.close();
-	    }
-	    
-	    mLogger.info("Returning file URL from server.");
-	    if (mFile instanceof File) {
-		    final String itemUrl = ((File)mFile).getSubItemUrl();
-		    if (itemUrl != null && !itemUrl.isEmpty())
-		    	return Uri.parse(itemUrl);
-	    }
-	    
-	    return null;
+
+	private Uri getFileUri() throws IOException {
+		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mpContext, connectionProvider, LibrarySession.GetActiveLibrary(mpContext), file);
+		return bestMatchUriProvider.getFileUri();
 	}
-	
-	private static StringBuilder appendPropertyFilter(final StringBuilder querySb, final ArrayList<String> params, final String key, final String value) {
-		querySb.append(' ').append(key).append(' ');
-		
-		if (value != null) {
-			querySb.append(" = ? ");
-			params.add(value);
-		} else {
-			querySb.append(" IS NULL ");
-		}
-		
-		return querySb;
-	}
-	
-	private final static StringBuilder appendAnd(final StringBuilder querySb) {
-		return querySb.append(" AND ");
-	}
-	
+
 	public void prepareMediaPlayer() {
-		if (mIsPreparing || mIsPrepared) return;
+		if (isPreparing || isPrepared) return;
 		
 		try {
-			final Uri uri = getMpUri();
+			final Uri uri = getFileUri();
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
 			initializeBufferPercentage(uri);
 			
-			mIsPreparing = true;
+			isPreparing = true;
 			
-			mLogger.info("Preparing " + mFile.getValue() + " asynchronously.");
-			mMediaPlayer.prepareAsync();
+			logger.info("Preparing " + file.getValue() + " asynchronously.");
+			mediaPlayer.prepareAsync();
 		} catch (FileNotFoundException fe) {
-			mLogger.error(fe.toString(), fe);
+			logger.error(fe.toString(), fe);
 			resetMediaPlayer();
-			mIsPreparing = false;
+			isPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			mIsPreparing = false;
+			isPreparing = false;
 		} catch (Exception e) {
-			mLogger.error(e.toString(), e);
+			logger.error(e.toString(), e);
 			resetMediaPlayer();
-			mIsPreparing = false;
+			isPreparing = false;
 		}
 	}
 	
 	public void prepareMpSynchronously() {
-		if (mIsPreparing || mIsPrepared) return;
+		if (isPreparing || isPrepared) return;
 		
 		try {
-			final Uri uri = getMpUri();
+			final Uri uri = getFileUri();
 			if (uri == null) return;
 			
 			setMpDataSource(uri);
 			initializeBufferPercentage(uri);
 			
-			mIsPreparing = true;
+			isPreparing = true;
 			
-			mLogger.info("Preparing " + mFile.getValue() + " synchronously.");
-			mMediaPlayer.prepare();
+			logger.info("Preparing " + file.getValue() + " synchronously.");
+			mediaPlayer.prepare();
 			
-			mIsPrepared = true;
-			mIsPreparing = false;
+			isPrepared = true;
+			isPreparing = false;
 		} catch (FileNotFoundException fe) {
-			mLogger.error(fe.toString(), fe);
+			logger.error(fe.toString(), fe);
 			resetMediaPlayer();
-			mIsPreparing = false;
+			isPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			mIsPreparing = false;
+			isPreparing = false;
 		} catch (Exception e) {
-			mLogger.error(e.toString(), e);
+			logger.error(e.toString(), e);
 			resetMediaPlayer();
-			mIsPreparing = false;
+			isPreparing = false;
 		}
 	}
 	
 	private void initializeBufferPercentage(Uri uri) {
 		final String scheme = uri.getScheme();
-		mBufferPercentage = FILE_URI_SCHEME.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
-		mLogger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(mBufferPercentage));
+		bufferPercentage = IoCommon.FileUriScheme.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
+		logger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(bufferPercentage));
 	}
 	
 	private void throwIoErrorEvent() {
-		mIsInErrorState = true;
+		isInErrorState = true;
 		resetMediaPlayer();
 		
 		for (OnFileErrorListener listener : onFileErrorListeners)
@@ -267,16 +191,20 @@ public class PlaybackFile implements
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
 		final Map<String, String> headers = new HashMap<>();
-		if (mMpContext == null)
+		if (mpContext == null)
 			throw new NullPointerException("The file player's context cannot be null");
-		
-		if (!uri.getScheme().equalsIgnoreCase(FILE_URI_SCHEME)) {
-			final String authKey = LibrarySession.GetLibrary(mMpContext).getAuthKey();
-			
-			if (authKey != null && !authKey.isEmpty()) headers.put("Authorization", "basic " + authKey);
+
+		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
+			final Library library = LibrarySession.GetActiveLibrary(mpContext);
+			if (library != null) {
+				final String authKey = library.getAuthKey();
+
+				if (authKey != null && !authKey.isEmpty())
+					headers.put("Authorization", "basic " + authKey);
+			}
 		}
 		
-		mMediaPlayer.setDataSource(mMpContext, uri, headers);
+		mediaPlayer.setDataSource(mpContext, uri, headers);
 	}
 	
 	private void resetMediaPlayer() {
@@ -289,16 +217,16 @@ public class PlaybackFile implements
 	}
 	
 	public void releaseMediaPlayer() {
-		if (mMediaPlayer != null) mMediaPlayer.release();
-		mMediaPlayer = null;
-		mIsPrepared = false;
+		if (mediaPlayer != null) mediaPlayer.release();
+		mediaPlayer = null;
+		isPrepared = false;
 	}
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		mIsPrepared = true;
-		mIsPreparing = false;
-		mLogger.info(mFile.getValue() + " prepared!");
+		isPrepared = true;
+		isPreparing = false;
+		logger.info(file.getValue() + " prepared!");
 		
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
@@ -310,14 +238,14 @@ public class PlaybackFile implements
 			@Override
 			public void run() {
 				try {
-					final String lastPlayedString = mFile.getProperty(FilePropertiesProvider.LAST_PLAYED);
+					final String lastPlayedString = file.getProperty(FilePropertiesProvider.LAST_PLAYED);
 					// Only update the last played data if the song could have actually played again
 					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
-						SimpleTask.executeNew(AsyncTask.THREAD_POOL_EXECUTOR, new UpdatePlayStatsOnExecute(mFile));
+						AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(file));
 				} catch (NumberFormatException e) {
-					mLogger.error("There was an error parsing the last played time.");
+					logger.error("There was an error parsing the last played time.");
 				} catch (IOException e) {
-					mLogger.warn("There was an error retrieving the duration or last played time data.");
+					logger.warn("There was an error retrieving the duration or last played time data.");
 				}
 			}
 		});
@@ -329,29 +257,29 @@ public class PlaybackFile implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mp.setOnErrorListener(null);
-		mIsInErrorState = true;
-		mLogger.error("Media Player error.");
-		mLogger.error("What: ");
-		mLogger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
-		mLogger.error("Extra: ");
+		isInErrorState = true;
+		logger.error("Media Player error.");
+		logger.error("What: ");
+		logger.error(what == MediaPlayer.MEDIA_ERROR_UNKNOWN ? "MEDIA_ERROR_UNKNOWN" : "MEDIA_ERROR_SERVER_DIED");
+		logger.error("Extra: ");
 		switch (extra) {
 			case MediaPlayer.MEDIA_ERROR_IO:
-				mLogger.error("MEDIA_ERROR_IO");
+				logger.error("MEDIA_ERROR_IO");
 				break;
 			case MediaPlayer.MEDIA_ERROR_MALFORMED:
-				mLogger.error("MEDIA_ERROR_MALFORMED");
+				logger.error("MEDIA_ERROR_MALFORMED");
 				break;
 			case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-				mLogger.error("MEDIA_ERROR_UNSUPPORTED");
+				logger.error("MEDIA_ERROR_UNSUPPORTED");
 				break;
 			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-				mLogger.error("MEDIA_ERROR_TIMED_OUT");
+				logger.error("MEDIA_ERROR_TIMED_OUT");
 				break;
 			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-				mLogger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
+				logger.error("MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK");
 				break;
 			default:
-				mLogger.error("Unknown");
+				logger.error("Unknown");
 				break;
 		}
 		resetMediaPlayer();
@@ -364,11 +292,11 @@ public class PlaybackFile implements
 	public void onBufferingUpdate(MediaPlayer mp, int percent) {
 		// Handle weird exceptional behavior seen online http://stackoverflow.com/questions/21925454/android-mediaplayer-onbufferingupdatelistener-percentage-of-buffered-content-i
         if (percent < 0 || percent > 100) {
-            mLogger.warn("Buffering percentage was bad: " + String.valueOf(percent));
+            logger.warn("Buffering percentage was bad: " + String.valueOf(percent));
             percent = (int) Math.round((((Math.abs(percent)-1)*100.0/Integer.MAX_VALUE)));
         }
         
-		mBufferPercentage = percent;
+		bufferPercentage = percent;
 		
 		if (!isBuffered()) return;
 		
@@ -381,40 +309,40 @@ public class PlaybackFile implements
 	
 	public int getCurrentPosition() {
 		try {
-			if (mMediaPlayer != null && isPrepared()) mPosition = mMediaPlayer.getCurrentPosition();
+			if (isPlaying()) position = mediaPlayer.getCurrentPosition();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
-		return mPosition;
+		return position;
 	}
 	
 	public boolean isBuffered() {
-		if (mLastBufferPercentage != mBufferPercentage) {
-			mLastBufferPercentage = mBufferPercentage;
-			mLogger.info("Buffer percentage: " + String.valueOf(mBufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
+		if (lastBufferPercentage != bufferPercentage) {
+			lastBufferPercentage = bufferPercentage;
+			logger.info("Buffer percentage: " + String.valueOf(bufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
 		}
-		return mBufferPercentage >= mBufferMax;
+		return bufferPercentage >= mBufferMax;
 	}
 	
 	public int getBufferPercentage() {
-		return mBufferPercentage;
+		return bufferPercentage;
 	}
 	
 	public int getDuration() throws IOException {
-		if (mMediaPlayer == null || mIsInErrorState || !isPlaying())
-			return mFile.getDuration();
+		if (mediaPlayer == null || isInErrorState || !isPlaying())
+			return file.getDuration();
 		
 		try {
-			return mMediaPlayer.getDuration();
+			return mediaPlayer.getDuration();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
-			return mFile.getDuration();
+			return file.getDuration();
 		}
 	}
 
 	public boolean isPlaying() {
 		try {
-			return mMediaPlayer != null && mMediaPlayer.isPlaying();
+			return mediaPlayer != null && mediaPlayer.isPlaying();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 			return false;
@@ -422,9 +350,10 @@ public class PlaybackFile implements
 	}
 
 	public void pause() {
-		if (mIsPreparing) {
+		if (isPreparing) {
 			try {
-				mMediaPlayer.reset();
+				mediaPlayer.reset();
+				return;
 			} catch (IllegalStateException e) {
 				handleIllegalStateException(e);
 				resetMediaPlayer();
@@ -433,49 +362,49 @@ public class PlaybackFile implements
 		}
 		
 		try {
-			mPosition = mMediaPlayer.getCurrentPosition();
-			mMediaPlayer.pause();
+			position = mediaPlayer.getCurrentPosition();
+			mediaPlayer.pause();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
 	}
 
 	public void seekTo(int pos) {
-		mPosition = pos;
+		position = pos;
 		try {
-			if (mMediaPlayer != null && !mIsInErrorState && isPrepared() && isPlaying()) mMediaPlayer.seekTo(mPosition);
+			if (mediaPlayer != null && !isInErrorState && isPrepared() && isPlaying()) mediaPlayer.seekTo(position);
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
 	}
 
 	public void start() throws IllegalStateException {
-		mLogger.info("Playback started on " + mFile.getValue());
-		mMediaPlayer.seekTo(mPosition);
-		mMediaPlayer.start();
+		logger.info("Playback started on " + file.getValue());
+		mediaPlayer.seekTo(position);
+		mediaPlayer.start();
 	}
 	
 	public void stop() throws IllegalStateException {
-		mPosition = 0;
-		mMediaPlayer.stop();
+		position = 0;
+		mediaPlayer.stop();
 	}
 	
 	public float getVolume() {
-		return mVolume;
+		return volume;
 	}
 	
 	public void setVolume(float volume) {
-		mVolume = volume;
+		this.volume = volume;
 		
-		if (mMediaPlayer != null)
-			mMediaPlayer.setVolume(mVolume, mVolume);
+		if (mediaPlayer != null)
+			mediaPlayer.setVolume(this.volume, this.volume);
 	}
 	
 	private static void handleIllegalStateException(IllegalStateException ise) {
-		mLogger.warn("The media player was in an incorrect state.", ise);
+		logger.warn("The media player was in an incorrect state.", ise);
 	}
 	
-	private static class UpdatePlayStatsOnExecute implements OnExecuteListener<Void, Void, Void> {
+	private static class UpdatePlayStatsOnExecute implements Runnable {
 		private final IFile mFile;
 		
 		public UpdatePlayStatsOnExecute(IFile file) {
@@ -483,7 +412,7 @@ public class PlaybackFile implements
 		}
 		
 		@Override
-		public Void onExecute(ISimpleTask<Void, Void, Void> owner, Void... params) throws Exception {
+		public void run() {
 			try {
 				final String numberPlaysString = mFile.getRefreshedProperty(FilePropertiesProvider.NUMBER_PLAYS);
 				
@@ -495,12 +424,10 @@ public class PlaybackFile implements
 				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
 				mFile.setProperty(FilePropertiesProvider.LAST_PLAYED, lastPlayed);
 			} catch (IOException e) {
-				mLogger.warn(e.toString(), e);
+				logger.warn(e.toString(), e);
 			} catch (NumberFormatException ne) {
-				mLogger.error(ne.toString(), ne);
+				logger.error(ne.toString(), ne);
 			}
-			
-			return null;
 		}
 	}
 	

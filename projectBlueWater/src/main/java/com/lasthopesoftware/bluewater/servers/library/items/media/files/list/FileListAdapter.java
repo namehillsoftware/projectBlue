@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewCh
 
 import java.util.List;
 
-public class FileListAdapter extends AbstractFileListAdapter {
+class FileListAdapter extends AbstractFileListAdapter {
 
     private final FileListItemMenuBuilder fileListItemMenuBuilder;
 

@@ -9,8 +9,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.ServerListActivity;
 import com.lasthopesoftware.bluewater.servers.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
 public class WaitForConnectionActivity extends Activity {
 	
@@ -26,7 +26,7 @@ public class WaitForConnectionActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_wait_for_connection);
 		
-		final Intent selectServerIntent = new Intent(this, ServerListActivity.class);
+		final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 		final WaitForConnectionActivity _this = this;
 		
 		PollConnection.Instance.get(_this).addOnConnectionRegainedListener(new Runnable() {

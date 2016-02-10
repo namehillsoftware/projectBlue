@@ -13,12 +13,10 @@
         <item name="attr/navigation_expand">@drawable/navigation_expand</item>
         <item name="attr/navigation_collapse">@drawable/navigation_collapse</item>
         <item name="attr/navigation_refresh">@drawable/navigation_refresh</item>
-        <item name="attr/navigation_shownotes">@drawable/navigation_shownotes</item>
         <item name="attr/non_transparent_background">@color/white</item>
         <item name="attr/borderless_button">@drawable/borderless_button</item>
         <item name="attr/overlay_background">@color/overlay_light</item>
         <item name="attr/dragview_float_background">@color/white</item>
-        <!--<item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>-->
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->

@@ -8,12 +8,12 @@ import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewChangedHandler;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements RemovePlaylistFileClickListener.OnPlaylistFileRemoved {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterRunnable<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
@@ -30,12 +30,13 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter implement
         nowPlayingFileListItemMenuBuilder.setOnPlaylistFileRemovedListener(this);
 	}
 
+    @Override
     public final View getView(final int position, View convertView, final ViewGroup parent) {
         return nowPlayingFileListItemMenuBuilder.getView(position, getItem(position), convertView, parent);
     }
 
     @Override
-    public void onPlaylistFileRemoved(int position) {
+    public void run(Integer position) {
         remove(getItem(position));
     }
 }

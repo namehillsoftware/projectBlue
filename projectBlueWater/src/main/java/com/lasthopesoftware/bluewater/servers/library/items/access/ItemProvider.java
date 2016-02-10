@@ -1,19 +1,26 @@
 package com.lasthopesoftware.bluewater.servers.library.items.access;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import android.util.LruCache;
+
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.access.FilesystemResponse;
 import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemProvider extends AbstractCollectionProvider<Item> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
     private static class ItemHolder {
         public ItemHolder(Integer revision, List<Item> items) {
@@ -26,51 +33,62 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
     }
 
     private static final int maxSize = 50;
-    private static final ConcurrentLinkedHashMap<Integer, ItemHolder> mItemsCache = new ConcurrentLinkedHashMap
-                                                                                            .Builder<Integer, ItemHolder>()
-                                                                                            .maximumWeightedCapacity(maxSize)
-                                                                                            .build();
+    private static final LruCache<UrlKeyHolder<Integer>, ItemHolder> itemsCache = new LruCache<>(maxSize);
 
-    private final int mItemKey;
+    private final int itemKey;
 
-	public static ItemProvider provide(int itemKey) {
-		return new ItemProvider(itemKey);
-	}
+	private final ConnectionProvider connectionProvider;
 
-	public ItemProvider(int itemKey) {
-		this(null, itemKey);
+	public static ItemProvider provide(ConnectionProvider connectionProvider, int itemKey) {
+		return new ItemProvider(connectionProvider, itemKey);
 	}
 	
-	public ItemProvider(HttpURLConnection connection, int itemKey) {
-		super(connection, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
+	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
+		super(connectionProvider, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
 
-        mItemKey = itemKey;
+		this.connectionProvider = connectionProvider;
+        this.itemKey = itemKey;
 	}
 
-    protected List<Item> getItems(ISimpleTask<Void, Void, List<Item>> task, HttpURLConnection connection, String... params) throws Exception {
-        final Integer serverRevision = RevisionChecker.getRevision();
-        final Integer boxedItemKey = mItemKey;
-        ItemHolder itemHolder = mItemsCache.get(boxedItemKey);
+    @Override
+    protected List<Item> getData(HttpURLConnection connection) {
+        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
+        final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
+
+        ItemHolder itemHolder;
+        synchronized (itemsCache) {
+            itemHolder = itemsCache.get(boxedItemKey);
+        }
+
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
-        try {
-            if (task.isCancelled()) return new ArrayList<>();
+        if (isCancelled()) return new ArrayList<>();
 
-            final InputStream is = conn.getInputStream();
+        try {
+            final InputStream is = connection.getInputStream();
             try {
-                final List<Item> items = FilesystemResponse.GetItems(is);
+                final List<Item> items = getData(is);
 
                 itemHolder = new ItemHolder(serverRevision, items);
-                mItemsCache.put(boxedItemKey, itemHolder);
+
+                synchronized (itemsCache) {
+                    itemsCache.put(boxedItemKey, itemHolder);
+                }
 
                 return items;
             } finally {
                 is.close();
             }
-        } finally {
-            if (connection == null) conn.disconnect();
+        } catch (IOException e) {
+            logger.error("There was an error getting the inputstream", e);
+            setException(e);
+            return new ArrayList<>();
         }
 	}
+
+    @Override
+    protected List<Item> getData(InputStream inputStream) {
+        return ItemResponse.GetItems(connectionProvider, inputStream);
+    }
 }

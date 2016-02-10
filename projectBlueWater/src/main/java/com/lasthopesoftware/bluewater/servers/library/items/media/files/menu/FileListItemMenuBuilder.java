@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.menu;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,23 +9,18 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.disk.sqlite.access.LibrarySession;
-import com.lasthopesoftware.bluewater.disk.sqlite.objects.Library;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.AbstractMenuClickHandler;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import java.util.List;
 
@@ -86,15 +82,14 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         viewHolder.getFileListItemTextTask.execute();
 
         textView.setTypeface(null, Typeface.NORMAL);
-
-        if (PlaybackService.getPlaylistController() != null && PlaybackService.getPlaylistController().getCurrentPlaybackFile() != null)
-            textView.setTypeface(null, file.getKey() == PlaybackService.getPlaylistController().getCurrentPlaybackFile().getFile().getKey() ? Typeface.BOLD : Typeface.NORMAL);
+		textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == PlaybackService.getCurrentPlayingFileKey()));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
-            public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-                textView.setTypeface(null, file.getKey() == filePlayer.getFile().getKey() ? Typeface.BOLD : Typeface.NORMAL);
+            public void onReceive(Context context, Intent intent) {
+                final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == fileKey));
             }
         };
 
@@ -108,7 +103,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
     }
 
     private static class AddClickListener extends AbstractMenuClickHandler {
-        private IFile mFile;
+        private final IFile mFile;
 
         public AddClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
             super(viewFlipper);
@@ -117,29 +112,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
 
         @Override
         public void onClick(final View view) {
-            if (PlaybackService.getPlaylistController() != null)
-                PlaybackService.getPlaylistController().addFile(mFile);
-
-            LibrarySession.GetLibrary(view.getContext(), new ISimpleTask.OnCompleteListener<Integer, Void, Library>() {
-
-                @Override
-                public void onComplete(ISimpleTask<Integer, Void, Library> owner, Library result) {
-                    if (result == null) return;
-                    String newFileString = result.getSavedTracksString();
-                    if (!newFileString.endsWith(";")) newFileString += ";";
-                    newFileString += mFile.getKey() + ";";
-                    result.setSavedTracksString(newFileString);
-
-                    LibrarySession.SaveLibrary(view.getContext(), result, new ISimpleTask.OnCompleteListener<Void, Void, Library>() {
-
-                        @Override
-                        public void onComplete(ISimpleTask<Void, Void, Library> owner, Library result) {
-                            Toast.makeText(view.getContext(), view.getContext().getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-
-            });
+	        PlaybackService.addFileToPlaylist(view.getContext(), mFile.getKey());
 
             super.onClick(view);
         }

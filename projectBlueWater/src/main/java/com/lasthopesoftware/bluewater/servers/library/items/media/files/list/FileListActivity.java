@@ -13,19 +13,18 @@ import android.widget.ViewAnimator;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.Files;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFilesContainer;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.threading.IDataTask;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
 
@@ -37,64 +36,68 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	public static final String VIEW_PLAYLIST_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_playlist_files";
 	
 	private int mItemId;
-	private IItem mItem;
-	
+
 	private ProgressBar pbLoading;
 	private ListView fileListView;
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
-	@SuppressWarnings("unchecked")
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setContentView(R.layout.activity_view_files);
+        setContentView(R.layout.activity_view_items);
 
-		fileListView = (ListView)findViewById(R.id.lvFilelist);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingFileList);
+		fileListView = (ListView)findViewById(R.id.lvItems);
+        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         fileListView.setVisibility(View.INVISIBLE);
         pbLoading.setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
-        mItem = getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId);
-        
+
         setTitle(getIntent().getStringExtra(VALUE));
-        final Files filesContainer = (Files)((IFilesContainer)mItem).getFiles();
-        final FileListActivity _this = this;
-        filesContainer.setOnFilesCompleteListener(new IDataTask.OnCompleteListener<List<IFile>>() {
+
+		final TwoParameterRunnable<FluentTask<String, Void, List<IFile>>, List<IFile>> onFileProviderComplete = new TwoParameterRunnable<FluentTask<String,Void,List<IFile>>, List<IFile>>() {
 
 			@Override
-			public void onComplete(ISimpleTask<String, Void, List<IFile>> owner, List<IFile> result) {
+			public void run(FluentTask<String, Void, List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
 
 				fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-				final FileListAdapter fileListAdapter = new FileListAdapter(_this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
+				final FileListAdapter fileListAdapter = new FileListAdapter(FileListActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
 
 				fileListView.setAdapter(fileListAdapter);
 
 				fileListView.setVisibility(View.VISIBLE);
 				pbLoading.setVisibility(View.INVISIBLE);
 			}
-		});
-        
-        filesContainer.setOnFilesErrorListener(new HandleViewIoException(_this, new Runnable() {
+		};
 
-					@Override
-					public void run() {
-						filesContainer.getFilesAsync();
-					}
-				})
-		);
-        
-        filesContainer.getFilesAsync();
+		getNewFileProvider()
+			.onComplete(onFileProviderComplete)
+			.onError(new HandleViewIoException<String, Void, List<IFile>>(this, new Runnable() {
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewFiles));
+						@Override
+						public void run() {
+							getNewFileProvider()
+									.onComplete(onFileProviderComplete)
+									.onError(new HandleViewIoException<String, Void, List<IFile>>(FileListActivity.this, this))
+									.execute();
+						}
+					})
+			)
+			.execute();
+
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+	}
+
+	private FileProvider getNewFileProvider() {
+		return new FileProvider(SessionConnection.getSessionConnectionProvider(), getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId));
 	}
 	
 	@Override
@@ -123,8 +126,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if (ViewUtils.handleNavMenuClicks(this, item)) return true;
-		return super.onOptionsItemSelected(item);
+		return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item);
 	}
 
     @Override

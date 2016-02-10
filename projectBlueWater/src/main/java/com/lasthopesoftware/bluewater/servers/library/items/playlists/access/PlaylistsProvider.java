@@ -4,10 +4,14 @@ import android.util.SparseArray;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
-import com.lasthopesoftware.bluewater.servers.library.items.access.AbstractCollectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
-import com.lasthopesoftware.threading.ISimpleTask;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.providers.AbstractCollectionProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -15,73 +19,82 @@ import java.util.List;
 
 public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 
-    private static List<Playlist> mCachedPlaylists;
-    private static SparseArray<Playlist> mMappedPlaylists;
-    private static Integer mRevision;
+	private static Logger logger = LoggerFactory.getLogger(PlaylistsProvider.class);
 
-    private final int mPlaylistId;
+    public static final String PlaylistsItemKey = "Playlists";
 
-    public PlaylistsProvider() {
-        this(-1);
-    }
+    private static List<Playlist> cachedPlaylists;
+    private static SparseArray<Playlist> mappedPlaylists;
+    private static UrlKeyHolder<Integer> urlKeyHolder;
 
-	public PlaylistsProvider(int playlistId) {
-		this(null, playlistId);
+    private final int playlistId;
+
+    private final ConnectionProvider connectionProvider;
+
+	public PlaylistsProvider(ConnectionProvider connectionProvider) {
+		this(connectionProvider, -1);
 	}
 	
-	public PlaylistsProvider(HttpURLConnection connection, int playlistId) {
-		super(connection, "Playlists/List");
+	public PlaylistsProvider(ConnectionProvider connectionProvider, int playlistId) {
+		super(connectionProvider, PlaylistsItemKey + "/List");
 
-        mPlaylistId = playlistId;
+		this.connectionProvider = connectionProvider;
+        this.playlistId = playlistId;
 	}
 
     @Override
-    protected List<Playlist> getItems(ISimpleTask<Void, Void, List<Playlist>> task, final HttpURLConnection connection, final String... params) throws Exception {
+    protected List<Playlist> getData(final HttpURLConnection connection) {
 
-        final Integer revision = RevisionChecker.getRevision();
-        if (mCachedPlaylists != null && revision.equals(mRevision))
-            return getPlaylists(mPlaylistId);
+        final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), RevisionChecker.getRevision(connectionProvider));
+        if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
+            return getPlaylists(playlistId);
 
-        final HttpURLConnection conn = connection == null ? ConnectionProvider.getConnection(params) : connection;
-        try {
-            if (task.isCancelled()) return new ArrayList<>();
+        if (isCancelled()) return new ArrayList<>();
 
-            final InputStream is = conn.getInputStream();
-            try {
-                final ArrayList<Playlist> streamResult = PlaylistRequest.GetItems(is);
+	    try {
+		    final InputStream is = connection.getInputStream();
+		    try {
+			    final List<Playlist> streamResult = getData(is);
 
-                int i = 0;
-                while (i < streamResult.size()) {
-                    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-                    else i++;
-                }
+			    int i = 0;
+			    while (i < streamResult.size()) {
+				    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+				    else i++;
+			    }
 
-                mRevision = revision;
-                mCachedPlaylists = streamResult;
-                mMappedPlaylists = null;
-                return getPlaylists(mPlaylistId);
-            } finally {
-                is.close();
-            }
-        } finally {
-            if (connection == null) conn.disconnect();
-        }
+			    PlaylistsProvider.urlKeyHolder = urlKeyHolder;
+			    cachedPlaylists = streamResult;
+			    mappedPlaylists = null;
+			    return getPlaylists(playlistId);
+		    } finally {
+			    is.close();
+		    }
+	    } catch (IOException e) {
+		    logger.error("There was an error getting the inputstream", e);
+		    setException(e);
+		    return new ArrayList<>();
+	    }
     }
 
-    private static List<Playlist> getPlaylists(int playlistId) {
-        if (playlistId == -1) return mCachedPlaylists;
+	@Override
+	protected List<Playlist> getData(InputStream inputStream) {
+		return PlaylistRequest.GetItems(inputStream);
+	}
 
-        if (mMappedPlaylists == null) {
-            mMappedPlaylists = new SparseArray<>(mCachedPlaylists.size());
-            denormalizeAndMap(mCachedPlaylists);
+	private static List<Playlist> getPlaylists(int playlistId) {
+        if (playlistId == -1) return cachedPlaylists;
+
+        if (mappedPlaylists == null) {
+            mappedPlaylists = new SparseArray<>(cachedPlaylists.size());
+            denormalizeAndMap(cachedPlaylists);
         }
 
-        return mMappedPlaylists.get(playlistId).getChildren();
+        return mappedPlaylists.get(playlistId).getChildren();
     }
 
     private static void denormalizeAndMap(List<Playlist> items) {
         for (Playlist playlist : items) {
-            mMappedPlaylists.append(playlist.getKey(), playlist);
+            mappedPlaylists.append(playlist.getKey(), playlist);
             if (playlist.getChildren().size() > 0) denormalizeAndMap(playlist.getChildren());
         }
     }

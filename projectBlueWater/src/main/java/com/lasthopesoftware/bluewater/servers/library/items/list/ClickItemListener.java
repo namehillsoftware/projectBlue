@@ -6,11 +6,12 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.SimpleTaskState;
+import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +30,11 @@ public class ClickItemListener implements OnItemClickListener {
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         final Item item = mItems.get(position);
 
-        ItemProvider.provide(item.getKey())
-            .onComplete(new ISimpleTask.OnCompleteListener<Void, Void, List<Item>>() {
+        ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
+            .onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
                 @Override
-                public void onComplete(ISimpleTask<Void, Void, List<Item>> owner, List<Item> items) {
-                    if (owner.getState() == SimpleTaskState.ERROR || items == null) return;
+                public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
+                    if (items == null) return;
 
                     if (items.size() > 0) {
                         final Intent itemlistIntent = new Intent(mContext, ItemListActivity.class);

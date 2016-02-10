@@ -19,16 +19,19 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.image.ImageAccess;
+import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
-import com.lasthopesoftware.threading.ISimpleTask;
-import com.lasthopesoftware.threading.ISimpleTask.OnCompleteListener;
-import com.lasthopesoftware.threading.ISimpleTask.OnExecuteListener;
-import com.lasthopesoftware.threading.SimpleTask;
+import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +43,7 @@ import java.util.Set;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
+	private static final Logger logger = LoggerFactory.getLogger(FileDetailsActivity.class);
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
     private static final int trackNameMarqueeDelay = 1500;
 	
@@ -57,7 +61,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	
 	private int mFileKey = -1;
 
-    private FileDetailsActivity _this = this;
+    private final FileDetailsActivity _this = this;
     private ListView lvFileDetails;
     private ProgressBar pbLoadingFileDetails;
     private ScaledWrapImageView imgFileThumbnail;
@@ -106,12 +110,6 @@ public class FileDetailsActivity extends AppCompatActivity {
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
 	}
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-    }
-
-    @SuppressWarnings("unchecked")
 	private void setView(final int fileKey) {
 		if (fileKey < 0) {
         	finish();
@@ -124,37 +122,43 @@ public class FileDetailsActivity extends AppCompatActivity {
         imgFileThumbnail.setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
-        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(fileKey);
+        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
         
         tvFileName.setText(getText(R.string.lbl_loading));
-        final SimpleTask<Void, Void, String> getFileNameTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
-			
-			@Override
-			public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-				return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
-			}
-		});
-        getFileNameTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-				if (result == null) return;
-				tvFileName.setText(result);
+        final FluentTask<Void, Void, String> getFileNameTask = new FluentTask<Void, Void, String>() {
 
-                tvFileName.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        tvFileName.setSelected(true);
-                    }
-                }, trackNameMarqueeDelay);
+	        @Override
+	        protected String executeInBackground(Void... params) {
+		        try {
+			        return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
+		        } catch (IOException e) {
+			        setException(e);
+			        return null;
+		        }
+	        }
+        };
 
-                final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), result));
-                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        getFileNameTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
-                setTitle(spannableString);
-			}
-		});
-        getFileNameTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+	        @Override
+	        public void run(FluentTask<Void, Void, String> owner, String result) {
+		        if (result == null) return;
+		        tvFileName.setText(result);
+
+		        tvFileName.postDelayed(new Runnable() {
+			        @Override
+			        public void run() {
+				        tvFileName.setSelected(true);
+			        }
+		        }, trackNameMarqueeDelay);
+
+		        final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), result));
+		        spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+		        setTitle(spannableString);
+	        }
+        });
+        getFileNameTask.onError(new HandleViewIoException<Void, Void, String>(this, mOnConnectionRegainedListener));
         getFileNameTask.execute();
         
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -169,7 +173,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 //			}
 //		});
 //
-//		getRatingsTask.addOnCompleteListener(new OnCompleteListener<Void, Void, Float>() {
+//		getRatingsTask.onComplete(new OnCompleteListener<Void, Void, Float>() {
 //
 //			@Override
 //			public void onComplete(ISimpleTask<Void, Void, Float> owner, Float result) {
@@ -186,76 +190,89 @@ public class FileDetailsActivity extends AppCompatActivity {
 //				});
 //			}
 //		});
-//		getRatingsTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+//		getRatingsTask.onError(new HandleViewIoException(this, mOnConnectionRegainedListener));
 //		getRatingsTask.execute();
         
-        final SimpleTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new SimpleTask<>(new OnExecuteListener<Void, Void, List<Entry<String, String>>>() {
-			
-			@Override
-			public List<Entry<String, String>> onExecute(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, Void... params) throws Exception {
-				final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(mFileKey);
-				final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
-				final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
-				
-				for (Entry<String, String> entry : fileProperties.entrySet()) {
-					if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
-					results.add(entry);
-				}
-				
-				return results;
-			}
-		});
-        
-        getFilePropertiesTask.addOnCompleteListener(new OnCompleteListener<Void, Void, List<Entry<String, String>>>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
+        final FluentTask<Void, Void, List<Entry<String, String>>> getFilePropertiesTask = new FluentTask<Void, Void, List<Entry<String, String>>>() {
+	        @Override
+	        protected List<Entry<String, String>> executeInBackground(Void... params) {
+		        final FormattedFilePropertiesProvider formattedFileProperties = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), mFileKey);
+		        try {
+			        final Map<String, String> fileProperties = formattedFileProperties.getRefreshedProperties();
+			        final ArrayList<Entry<String, String>> results = new ArrayList<>(fileProperties.size());
 
-				lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
-				pbLoadingFileDetails.setVisibility(View.INVISIBLE);
-				lvFileDetails.setVisibility(View.VISIBLE);
-			}
-		});
-        getFilePropertiesTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+			        for (Entry<String, String> entry : fileProperties.entrySet()) {
+				        if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
+				        results.add(entry);
+			        }
+
+			        return results;
+		        } catch (IOException e) {
+			        logger.error("There was an error getting the refreshed file properties", e);
+		        }
+
+		        return new ArrayList<>();
+	        }
+        };
+        
+        getFilePropertiesTask.onComplete(new TwoParameterRunnable<FluentTask<Void, Void, List<Entry<String, String>>>, List<Entry<String, String>>>() {
+
+	        @Override
+	        public void run(FluentTask<Void, Void, List<Entry<String, String>>> owner, List<Entry<String, String>> result) {
+
+		        lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, result));
+		        pbLoadingFileDetails.setVisibility(View.INVISIBLE);
+		        lvFileDetails.setVisibility(View.VISIBLE);
+	        }
+        });
+        getFilePropertiesTask.onError(new HandleViewIoException<Void, Void, List<Entry<String, String>>>(this, mOnConnectionRegainedListener));
         getFilePropertiesTask.execute();
                 
-        ImageAccess.getImage(this, fileKey, new OnCompleteListener<Void, Void, Bitmap>() {
-			
-			@Override
-			public void onComplete(ISimpleTask<Void, Void, Bitmap> owner, Bitmap result) {
-				if (mFileImage != null) mFileImage.recycle();
+        ImageProvider
+		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
+		        .onComplete(new TwoParameterRunnable<FluentTask<Void,Void,Bitmap>, Bitmap>() {
 
-				if (mIsDestroyed) {
-					if (result != null) result.recycle();
-					return;
-				}
+			        @Override
+			        public void run(FluentTask<Void, Void, Bitmap> owner, Bitmap result) {
+				        if (mFileImage != null) mFileImage.recycle();
 
-				mFileImage = result;
+				        if (mIsDestroyed) {
+					        if (result != null) result.recycle();
+					        return;
+				        }
 
-				imgFileThumbnail.setImageBitmap(result);
+				        mFileImage = result;
 
-				pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-				imgFileThumbnail.setVisibility(View.VISIBLE);
-			}
-		});
+				        imgFileThumbnail.setImageBitmap(result);
+
+				        pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+				        imgFileThumbnail.setVisibility(View.VISIBLE);
+			        }
+		        })
+		        .execute();
 
         tvArtist.setText(getText(R.string.lbl_loading));
-        final SimpleTask<Void, Void, String> getFileArtistTask = new SimpleTask<>(new OnExecuteListener<Void, Void, String>() {
+        final FluentTask<Void, Void, String> getFileArtistTask = new FluentTask<Void, Void, String>() {
 
-            @Override
-            public String onExecute(ISimpleTask<Void, Void, String> owner, Void... params) throws Exception {
-                return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
-            }
-        });
-        getFileArtistTask.addOnCompleteListener(new OnCompleteListener<Void, Void, String>() {
+	        @Override
+	        protected String executeInBackground(Void... params) {
+		        try {
+			        return filePropertiesProvider.getProperty(FilePropertiesProvider.ARTIST);
+		        } catch (IOException e) {
+			        setException(e);
+			        return null;
+		        }
+	        }
+        };
+        getFileArtistTask.onComplete(new TwoParameterRunnable<FluentTask<Void,Void,String>, String>() {
 
-            @Override
-            public void onComplete(ISimpleTask<Void, Void, String> owner, String result) {
-                if (result == null || tvArtist == null) return;
-                tvArtist.setText(result);
-            }
+	        @Override
+	        public void run(FluentTask<Void, Void, String> owner, String result) {
+		        if (result == null || tvArtist == null) return;
+		        tvArtist.setText(result);
+	        }
         });
-        getFileArtistTask.addOnErrorListener(new HandleViewIoException(this, mOnConnectionRegainedListener));
+        getFileArtistTask.onError(new HandleViewIoException<Void, Void, String>(this, mOnConnectionRegainedListener));
         getFileArtistTask.execute();
 	}
 
