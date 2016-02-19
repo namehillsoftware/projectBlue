@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
@@ -11,22 +12,22 @@ import java.io.IOException;
 
 public class File extends AbstractIntKeyStringValue implements IFile {
 	private FilePropertiesProvider mFilePropertiesProvider;
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 
 	private static final Logger mLogger = LoggerFactory.getLogger(File.class);
 
-	public File(ConnectionProvider connectionProvider, int key) {
+	public File(IConnectionProvider connectionProvider, int key) {
 		this(connectionProvider);
 		this.setKey(key);
 	}
 	
-	private File(ConnectionProvider connectionProvider, int key, String value) {
+	private File(IConnectionProvider connectionProvider, int key, String value) {
 		this(connectionProvider);
 		this.setKey(key);
 		this.setValue(value);
 	}
 	
-	private File(ConnectionProvider connectionProvider) {
+	private File(IConnectionProvider connectionProvider) {
 		super();
 
 		this.connectionProvider = connectionProvider;

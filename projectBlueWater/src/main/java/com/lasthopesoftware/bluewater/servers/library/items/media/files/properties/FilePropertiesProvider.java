@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.propert
 
 import android.util.LruCache;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.vedsoft.fluent.FluentTask;
@@ -47,13 +47,13 @@ public class FilePropertiesProvider {
 	private static final int maxSize = 500;
 	private final String fileKeyString;
 	private final FilePropertiesContainer filePropertiesContainer;
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesProvider.class);
 
-	public FilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
+	public FilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
 		this.connectionProvider = connectionProvider;
 		fileKeyString = String.valueOf(fileKey);
 

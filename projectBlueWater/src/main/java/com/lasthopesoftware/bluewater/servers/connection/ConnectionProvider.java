@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class ConnectionProvider {
+public class ConnectionProvider implements IConnectionProvider {
 
 	private final MediaServerUrlProvider urlProvider;
 

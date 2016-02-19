@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.access;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.vedsoft.fluent.FluentTask;
 
@@ -22,9 +22,9 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
 
     private static final ExecutorService revisionExecutor = Executors.newSingleThreadExecutor();
 
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 
-	public static Integer getRevision(ConnectionProvider connectionProvider) {
+	public static Integer getRevision(IConnectionProvider connectionProvider) {
         try {
             return (new RevisionChecker(connectionProvider)).get(revisionExecutor);
         } catch (ExecutionException | InterruptedException e) {
@@ -32,7 +32,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
         }
     }
 
-    private static Integer getCachedRevision(ConnectionProvider connectionProvider) {
+    private static Integer getCachedRevision(IConnectionProvider connectionProvider) {
         final String serverUrl = connectionProvider.getUrlProvider().getBaseUrl();
         if (!cachedRevisions.containsKey(serverUrl))
             cachedRevisions.put(serverUrl, mBadRevision);
@@ -40,7 +40,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
         return cachedRevisions.get(serverUrl);
     }
 
-    private RevisionChecker(ConnectionProvider connectionProvider) {
+    private RevisionChecker(IConnectionProvider connectionProvider) {
 	    this.connectionProvider = connectionProvider;
     }
 

@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
+import com.lasthopesoftware.bluewater.test.mock.MockConnectionProvider;
 import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
 import junit.framework.Assert;
@@ -145,7 +146,7 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testAddFile() {
-		final File testFile = new File(null, 5);
+		final File testFile = new File(new MockConnectionProvider(), 5);
 		final int originalSize = mPlaybackFileProvider.size();
 		mPlaybackController.addFile(testFile);
 		
