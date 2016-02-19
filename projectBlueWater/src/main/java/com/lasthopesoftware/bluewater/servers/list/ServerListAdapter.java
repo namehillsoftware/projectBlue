@@ -87,7 +87,7 @@ public class ServerListAdapter extends BaseAdapter {
 
 		final Button btnSelectServer = viewHolder.btnSelectServer;
 
-		viewHolder.textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.getId() == activeLibrary.getId()));
+		viewHolder.textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(activeLibrary != null && library.getId() == activeLibrary.getId()));
 
 		if (viewHolder.broadcastReceiver != null)
 			localBroadcastManager.unregisterReceiver(viewHolder.broadcastReceiver);
