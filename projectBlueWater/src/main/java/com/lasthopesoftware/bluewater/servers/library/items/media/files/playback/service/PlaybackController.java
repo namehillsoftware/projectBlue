@@ -51,7 +51,7 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(connectionProvider, playlistString) : new ArrayList<IFile>());
+		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<IFile>());
 	}
 	
 	private PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
@@ -328,7 +328,7 @@ public class PlaybackController implements
 		mCurrentPlaybackFile.addOnFileCompleteListener(this);
 		mCurrentPlaybackFile.addOnFileErrorListener(this);
 		if (!mCurrentPlaybackFile.isPrepared()) {
-			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getValue() + " was not prepared. Preparing now.");
+			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getKey() + " was not prepared. Preparing now.");
 			if (!mCurrentPlaybackFile.isMediaPlayerCreated())
 				mCurrentPlaybackFile.initMediaPlayer();
 			

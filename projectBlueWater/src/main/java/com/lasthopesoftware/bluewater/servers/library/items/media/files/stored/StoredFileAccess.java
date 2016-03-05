@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -190,7 +192,7 @@ public class StoredFileAccess {
 		});
 	}
 
-	public StoredFile createOrUpdateFile(final IFile file) {
+	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
 		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
@@ -204,7 +206,7 @@ public class StoredFileAccess {
 
 					if (storedFile.getPath() == null) {
 						try {
-							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, file, true);
+							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, file, true);
 							final Uri localUri = mediaFileUriProvider.getFileUri();
 							if (localUri != null) {
 								storedFile.setPath(localUri.getPath());
@@ -225,18 +227,21 @@ public class StoredFileAccess {
 						try {
 							String fullPath = library.getSyncDir(context).getPath();
 
-							String artist = file.tryGetProperty(FilePropertiesProvider.ALBUM_ARTIST);
+							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, file.getKey());
+							final Map<String, String> fileProperties = filePropertiesProvider.get();
+
+							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
 							if (artist == null)
-								artist = file.tryGetProperty(FilePropertiesProvider.ARTIST);
+								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
 							if (artist != null)
 								fullPath = FilenameUtils.concat(fullPath, artist);
 
-							final String album = file.tryGetProperty(FilePropertiesProvider.ALBUM);
+							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
 							if (album != null)
 								fullPath = FilenameUtils.concat(fullPath, album);
 
-							String fileName = file.getProperty(FilePropertiesProvider.FILENAME);
+							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
 							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
 							final int extensionIndex = fileName.lastIndexOf('.');
@@ -246,8 +251,8 @@ public class StoredFileAccess {
 							// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
 							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
 							storedFile.setPath(fullPath);
-						} catch (IOException e) {
-							logger.error("Error getting filename for file " + file.getValue(), e);
+						} catch (InterruptedException | ExecutionException e) {
+							logger.error("Error getting file properties for file " + file.getKey(), e);
 						}
 					}
 

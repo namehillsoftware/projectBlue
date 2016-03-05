@@ -13,7 +13,6 @@ import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -111,7 +110,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 
 		        @Override
 		        protected ArrayList<IFile> executeInBackground(Void... params) {
-			        return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+			        return FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
 		        }
 	        };
 	        

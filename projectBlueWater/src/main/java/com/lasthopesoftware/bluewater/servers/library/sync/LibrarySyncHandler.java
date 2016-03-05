@@ -96,7 +96,7 @@ public class LibrarySyncHandler {
 
 							if (isCancelled) return;
 
-							final StoredFile storedFile = storedFileAccess.createOrUpdateFile(file);
+							final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
 							if (!storedFile.isDownloadComplete())
 								storedFileDownloader.queueFileForDownload(file, storedFile);
 						}

@@ -33,7 +33,7 @@ public class BestMatchUriProvider extends AbstractFileUriProvider {
 		if (fileUri != null)
 			return fileUri;
 
-		final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, getFile());
+		final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, getFile());
 		fileUri = mediaFileUriProvider.getFileUri();
 		if (fileUri != null)
 			return fileUri;

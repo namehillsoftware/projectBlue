@@ -28,7 +28,6 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
@@ -47,13 +46,13 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
-import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.slf4j.Logger;
@@ -295,7 +294,7 @@ public class PlaybackService extends Service implements
 	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
 		final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
-		int duration = -1;
+		long duration = -1;
 		try {
 			duration = playbackFile.getDuration();
 		} catch (IOException io) {
@@ -714,7 +713,7 @@ public class PlaybackService extends Service implements
 
 			synchronized (syncPlaylistControllerObject) {
 				if (playlistController != null)
-					playlistController.addFile(new File(SessionConnection.getSessionConnectionProvider(), fileKey));
+					playlistController.addFile(new File(fileKey));
 			}
 
 			LibrarySession.GetActiveLibrary(this, result -> {
@@ -749,7 +748,7 @@ public class PlaybackService extends Service implements
 							}
 						}
 
-						final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), library.getSavedTracksString());
+						final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
 						savedTracks.remove(filePosition);
 						return FileStringListUtilities.serializeFileStringList(savedTracks);
 					}
@@ -932,72 +931,32 @@ public class PlaybackService extends Service implements
 		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
-		
-		final FluentTask<Void, Void, String> getNotificationPropertiesTask = new FluentTask<Void, Void, String>() {
 
-			@Override
-			protected String executeInBackground(Void... params) {
-				try {
-					return playingFile.getProperty(FilePropertiesProvider.ARTIST) + " - " + playingFile.getValue();
-				} catch (IOException e) {
-					setException(e);
-					return null;
-				}
-			}
-		};
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
+		filePropertiesProvider.onComplete(fileProperties -> {
+			final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+			final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-		getNotificationPropertiesTask.onComplete(result -> {
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
 			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-			builder.setContentText(result == null ? getText(R.string.lbl_error_getting_file_properties) : result);
-			builder.setContentIntent(pi);
-			notifyForeground(builder);
-		});
-		
-		getNotificationPropertiesTask.execute();
-		
-		final FluentTask<Void, Void, SparseArray<Object>> getTrackPropertiesTask = new FluentTask<Void, Void, SparseArray<Object>>() {
 
-			@Override
-			protected SparseArray<Object> executeInBackground(Void... params) {
-				final SparseArray<Object> result = new SparseArray<>(5);
-
-				try {
-					result.put(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingFile.getProperty(FilePropertiesProvider.ARTIST));
-					result.put(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingFile.getProperty(FilePropertiesProvider.ALBUM));
-					result.put(MediaMetadataRetriever.METADATA_KEY_TITLE, playingFile.getValue());
-					result.put(MediaMetadataRetriever.METADATA_KEY_DURATION, (long) playingFile.getDuration());
-					final String trackNumber = playingFile.getProperty(FilePropertiesProvider.TRACK);
-					if (trackNumber != null && !trackNumber.isEmpty())
-						result.put(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, Integer.valueOf(trackNumber));
-					return result;
-				} catch (IOException e) {
-					setException(e);
-					return new SparseArray<>();
-				}
-			}
-		};
-
-		getTrackPropertiesTask.onComplete((owner, result) -> {
-
-			final String artist = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-			final String album = (String) result.get(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-			final String title = (String) result.get(MediaMetadataRetriever.METADATA_KEY_TITLE);
-			final Long duration = (Long) result.get(MediaMetadataRetriever.METADATA_KEY_DURATION);
-			final Integer trackNumber = (Integer) result.get(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER);
+			final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+			final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+			final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
+			final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
 			final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 			pebbleIntent.putExtra("artist", artist);
 			pebbleIntent.putExtra("album", album);
-			pebbleIntent.putExtra("track", title);
+			pebbleIntent.putExtra("track", name);
 
 			sendBroadcast(pebbleIntent);
 
 			final Intent scrobbleDroidIntent = getScrobbleIntent(true);
 			scrobbleDroidIntent.putExtra("artist", artist);
 			scrobbleDroidIntent.putExtra("album", album);
-			scrobbleDroidIntent.putExtra("track", title);
+			scrobbleDroidIntent.putExtra("track", name);
 			scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
 			if (trackNumber != null)
 				scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
@@ -1009,8 +968,8 @@ public class PlaybackService extends Service implements
 			final MetadataEditor metaData = remoteControlClient.editMetadata(true);
 			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
 			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-			metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, title);
-			metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration.longValue());
+			metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
+			metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
 			if (trackNumber != null)
 				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 			metaData.apply();
@@ -1018,7 +977,7 @@ public class PlaybackService extends Service implements
 			if (Build.VERSION.SDK_INT < 19) return;
 
 			ImageProvider
-					.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), playingFile)
+					.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), playingFile.getKey())
 					.onComplete((owner1, bitmap) -> {
 						// Track the remote client bitmap and recycle it in case the remote control client
 						// does not properly recycle the bitmap
@@ -1029,13 +988,17 @@ public class PlaybackService extends Service implements
 						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 					})
 					.execute();
+		}).onError(exception -> {
+			final Builder builder = new Builder(this);
+			builder.setOngoing(true);
+			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
+			builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
+			builder.setContentIntent(pi);
+			notifyForeground(builder);
 
+			return true;
 		});
 
-		getTrackPropertiesTask.onError(e -> true);
-
-		getTrackPropertiesTask.execute();
-		
 		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, filePlayer);
 	}
 		

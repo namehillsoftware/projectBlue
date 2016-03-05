@@ -81,13 +81,6 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileL
 	}
 
 	@Override
-	public int compareTo(IItem another) {
-		int result = this.getValue().compareTo(another.getValue());
-		if (result == 0) result = this.getKey() - another.getKey();
-		return result;
-	}
-
-	@Override
 	public String[] getFileListParameters() {
 		return new String[] {"Playlist/Files", "Playlist=" + String.valueOf(getKey())};
 	}

@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.shared;
 
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-
-public interface IIntKeyStringValue extends Comparable<IItem> {
-	int getKey();
-	void setKey(int key);
+public interface IIntKeyStringValue extends IIntKey<IIntKeyStringValue> {
 	String getValue();
 	void setValue(String value);
 }

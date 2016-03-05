@@ -38,7 +38,7 @@ public class FileProvider extends AbstractCollectionProvider<IFile> {
 	@Override
 	protected List<IFile> getData(InputStream is) {
 		try {
-			return FileStringListUtilities.parseFileStringList(connectionProvider, IOUtils.toString(is));
+			return FileStringListUtilities.parseFileStringList(IOUtils.toString(is));
 		} catch (IOException e) {
 			logger.warn("There was an error getting the file list", e);
 			setException(e);

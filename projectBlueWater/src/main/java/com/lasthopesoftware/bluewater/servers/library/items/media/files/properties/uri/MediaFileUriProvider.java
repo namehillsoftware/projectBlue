@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by david on 7/24/15.
@@ -32,13 +35,14 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	private static final String mediaDataQuery = MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	private static final String[] mediaQueryProjection = { MediaStore.Audio.Media.DATA };
 
-	private static final Logger mLogger = LoggerFactory.getLogger(MediaFileUriProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(MediaFileUriProvider.class);
 
-	private final Context mContext;
-	private final boolean mIsSilent;
+	private final Context context;
+	private final boolean isSilent;
+	private final IConnectionProvider connectionProvider;
 
-	public MediaFileUriProvider(Context context, IFile file) {
-		this (context, file, false);
+	public MediaFileUriProvider(Context context, IConnectionProvider connectionProvider, IFile file) {
+		this (context, connectionProvider, file, false);
 	}
 
 	/**
@@ -47,11 +51,12 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	 * @param file the file to provide a URI for
 	 * @param isSilent if true, will not emit broadcast events when media files are found
 	 */
-	public MediaFileUriProvider(Context context, IFile file, boolean isSilent) {
+	public MediaFileUriProvider(Context context, IConnectionProvider connectionProvider, IFile file, boolean isSilent) {
 		super(file);
 
-		mContext = context;
-		mIsSilent = isSilent;
+		this.context = context;
+		this.isSilent = isSilent;
+		this.connectionProvider = connectionProvider;
 	}
 
 	@Override
@@ -68,19 +73,19 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 			if (!file.exists()) return null;
 
-			if (!mIsSilent) {
+			if (!isSilent) {
 				final Intent broadcastIntent = new Intent(mediaFileFoundEvent);
 				broadcastIntent.putExtra(mediaFileFoundPath, file.getPath());
 				try {
 					broadcastIntent.putExtra(mediaFileFoundMediaId, cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey)));
 				} catch (IllegalArgumentException ie) {
-					mLogger.info("Illegal column name.", ie);
+					logger.info("Illegal column name.", ie);
 				}
 				broadcastIntent.putExtra(mediaFileFoundFileKey, getFile().getKey());
-				LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcastIntent);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 			}
 
-			mLogger.info("Returning file URI from local disk.");
+			logger.info("Returning file URI from local disk.");
 			return Uri.fromFile(file);
 		} finally {
 			cursor.close();
@@ -93,7 +98,7 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 			if (cursor.moveToFirst())
 				return cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey));
 		} catch (IllegalArgumentException ie) {
-			mLogger.info("Illegal column name.", ie);
+			logger.info("Illegal column name.", ie);
 		} finally {
 			cursor.close();
 		}
@@ -102,33 +107,46 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	}
 
 	private Cursor getMediaQueryCursor() throws IOException {
-		if (mContext == null)
+		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
 
-		final String originalFilename = getFile().getProperty(FilePropertiesProvider.FILENAME);
-		if (originalFilename == null)
-			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, getFile().getKey());
 
-		final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
+		try {
+			final Map<String, String> fileProperties = filePropertiesProvider.get();
 
-		final StringBuilder querySb = new StringBuilder(mediaDataQuery);
-		appendAnd(querySb);
+			final String originalFilename = fileProperties.get(FilePropertiesProvider.FILENAME);
+			if (originalFilename == null)
+				throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");
 
-		final ArrayList<String> params = new ArrayList<>(5);
-		params.add(filename);
+			final String filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'));
 
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, getFile().getProperty(FilePropertiesProvider.ARTIST));
-		appendAnd(querySb);
+			final StringBuilder querySb = new StringBuilder(mediaDataQuery);
+			appendAnd(querySb);
 
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, getFile().getProperty(FilePropertiesProvider.ALBUM));
-		appendAnd(querySb);
+			final ArrayList<String> params = new ArrayList<>(5);
+			params.add(filename);
 
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, getFile().getProperty(FilePropertiesProvider.NAME));
-		appendAnd(querySb);
+			appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ARTIST, fileProperties.get(FilePropertiesProvider.ARTIST));
+			appendAnd(querySb);
 
-		appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, getFile().getProperty(FilePropertiesProvider.TRACK));
+			appendPropertyFilter(querySb, params, MediaStore.Audio.Media.ALBUM, fileProperties.get(FilePropertiesProvider.ALBUM));
+			appendAnd(querySb);
 
-		return mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toArray(new String[params.size()]), null);
+			appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TITLE, fileProperties.get(FilePropertiesProvider.NAME));
+			appendAnd(querySb);
+
+			appendPropertyFilter(querySb, params, MediaStore.Audio.Media.TRACK, fileProperties.get(FilePropertiesProvider.TRACK));
+
+			return context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toArray(new String[params.size()]), null);
+		} catch (InterruptedException e) {
+			if (e.getCause() instanceof IOException)
+				throw new IOException("The filename property was not retrieved. A connection needs to be re-established.", e.getCause());
+
+			return null;
+		} catch (ExecutionException e) {
+			return null;
+		}
 	}
 
 	private static StringBuilder appendPropertyFilter(final StringBuilder querySb, final ArrayList<String> params, final String key, final String value) {

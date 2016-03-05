@@ -6,7 +6,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractCollectionProvider<T> extends AbstractProvider<List<T>> {
+public abstract class AbstractCollectionProvider<T> extends AbstractInputStreamProvider<List<T>> {
 	protected AbstractCollectionProvider(ConnectionProvider connectionProvider, String... params) {
         super(connectionProvider, params);
 	}

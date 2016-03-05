@@ -32,14 +32,12 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashSet;
 
 /**
@@ -93,24 +91,12 @@ public class SyncService extends Service {
 			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (parameterOne1, urlProvider) -> {
 				if (urlProvider == null) return;
 
-				new FluentTask<Void, Void, String>() {
+				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
 
-					@Override
-					protected String executeInBackground(Void[] params) {
-						try {
-							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, storedFile.getServiceId());
-							return filePropertiesProvider.getProperty(FilePropertiesProvider.NAME);
-						} catch (IOException e) {
-							logger.warn("There was an error getting the file properties", e);
-							return null;
-						}
-					}
-				}
-				.onComplete(s -> {
-					setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), s));
-				})
-				.execute();
+				filePropertiesProvider
+						.onComplete(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME))))
+						.execute();
 			}));
 	};
 

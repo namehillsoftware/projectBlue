@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 
@@ -12,7 +11,7 @@ import java.util.List;
  */
 public class FileStringListUtilities {
 
-	public static ArrayList<IFile> parseFileStringList(ConnectionProvider connectionProvider, String fileList) {
+	public static ArrayList<IFile> parseFileStringList(String fileList) {
 		final String[] keys = fileList.split(";");
 
 		final int offset = Integer.parseInt(keys[0]) + 1;
@@ -21,7 +20,7 @@ public class FileStringListUtilities {
 		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;
 
-			files.add(new File(connectionProvider, Integer.parseInt(keys[i])));
+			files.add(new File(Integer.parseInt(keys[i])));
 		}
 
 		return files;

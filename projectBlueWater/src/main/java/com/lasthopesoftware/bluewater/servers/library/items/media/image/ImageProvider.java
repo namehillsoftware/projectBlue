@@ -8,8 +8,6 @@ import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
@@ -26,6 +24,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,22 +48,18 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
-	private final IFile file;
+	private final int fileKey;
 
 	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey) {
-		return getImage(context, connectionProvider, new File(connectionProvider, fileKey));
+		return new ImageProvider(context, connectionProvider, fileKey);
 	}
 
-	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final IFile file) {
-		return new ImageProvider(context, connectionProvider, file);
-	}
-
-	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final IFile file) {
+	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final int fileKey) {
 		super(imageAccessExecutor);
 
 		this.context = context;
 		this.connectionProvider = connectionProvider;
-		this.file = file;
+		this.fileKey = fileKey;
 	}
 
 	@Override
@@ -72,15 +68,17 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 		String uniqueKey;
 		try {
+			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, fileKey);
+			final Map<String, String> fileProperties = filePropertiesProvider.get();
 			// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 			// artists), and then by artist if that field is empty
-			String artist = file.getProperty(FilePropertiesProvider.ALBUM_ARTIST);
+			String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
 			if (artist == null || artist.isEmpty())
-				artist = file.getProperty(FilePropertiesProvider.ARTIST);
+				artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-			uniqueKey = artist + ":" + file.getProperty(FilePropertiesProvider.ALBUM);
-		} catch (IOException ioE) {
-			logger.error("Error getting file properties.");
+			uniqueKey = artist + ":" + fileProperties.get(FilePropertiesProvider.ALBUM);
+		} catch (InterruptedException | ExecutionException e) {
+			logger.error("Error getting file properties.", e);
 			return getFillerBitmap();
 		}
 
@@ -101,7 +99,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 		}
 
 		try {
-			final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(file.getKey()), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
+			final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 			try {
 				// Connection failed to build
 				if (connection == null) return getFillerBitmap();

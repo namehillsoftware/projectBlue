@@ -82,7 +82,7 @@ public class MockFilePlayer implements IPlaybackFile {
 
 	@Override
 	public int getDuration() throws IOException {
-		return mFile.getDuration();
+		return 100;
 	}
 
 	@Override

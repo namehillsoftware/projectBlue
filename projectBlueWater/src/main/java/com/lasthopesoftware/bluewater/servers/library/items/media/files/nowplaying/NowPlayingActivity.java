@@ -36,10 +36,11 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.AsyncExceptionTask;
 import com.vedsoft.fluent.FluentTask;
 
 import org.slf4j.LoggerFactory;
@@ -124,6 +125,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		public String nowPlayingArtist;
 		public String nowPlayingTitle;
 		public Float nowPlayingRating;
+		public long nowPlayingDuration;
 		
 		public ViewStructure(final IFile file) {
 			this.fileKey = file.getKey();
@@ -257,7 +259,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 				@Override
 				protected List<IFile> doInBackground(Void... params) {
-					return FileStringListUtilities.parseFileStringList(SessionConnection.getSessionConnectionProvider(), savedTracksString);
+					return FileStringListUtilities.parseFileStringList(savedTracksString);
 				}
 
 				@Override
@@ -340,7 +342,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				
 				getFileImageTask =
 						ImageProvider
-								.getImage(this, SessionConnection.getSessionConnectionProvider(), file)
+								.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey())
 								.onComplete((owner, result) -> {
 									if (viewStructure.nowPlayingImage != null)
 										viewStructure.nowPlayingImage.recycle();
@@ -360,127 +362,56 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			nowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
 			displayImageBitmap();
 		}
-		
-		final AsyncTask<Void, Void, String> getArtistTask = new AsyncExceptionTask<Void, Void, String>() {
 
-            @Override
-            protected String doInBackground(Void... params) {
-                if (viewStructure.nowPlayingArtist != null)
-                    return viewStructure.nowPlayingArtist;
+		if (viewStructure.nowPlayingArtist != null)
+			nowPlayingArtist.setText(viewStructure.nowPlayingArtist);
 
-                try {
-                    return file.getProperty(FilePropertiesProvider.ARTIST);
-                } catch (FileNotFoundException e) {
-                    handleFileNotFoundException(file, e);
-                    return null;
-                } catch (IOException e) {
-                    setException(e);
-                    return null;
-                }
-            }
+		if (viewStructure.nowPlayingTitle != null)
+			nowPlayingTitle.setText(viewStructure.nowPlayingTitle);
 
-            @Override
-            protected void onPostExecute(String result, Exception exception) {
-                if (handleIoException(file, initialFilePosition, exception)) return;
+		if (viewStructure.nowPlayingRating != null)
+			setFileRating(file, viewStructure.nowPlayingRating);
 
-                nowPlayingArtist.setText(result);
-                viewStructure.nowPlayingArtist = result;
-            }
-        };
-		getArtistTask.execute();
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
+		filePropertiesProvider
+				.onComplete(fileProperties -> {
+					viewStructure.nowPlayingArtist = fileProperties.get(FilePropertiesProvider.ARTIST);
+					nowPlayingArtist.setText(viewStructure.nowPlayingArtist);
 
-		final AsyncExceptionTask<Void, Void, String> getTitleTask = new AsyncExceptionTask<Void, Void, String>() {
+					viewStructure.nowPlayingTitle = fileProperties.get(FilePropertiesProvider.NAME);
+					nowPlayingTitle.setText(viewStructure.nowPlayingTitle);
+					nowPlayingTitle.setSelected(true);
 
-            @Override
-            protected String doInBackground(Void... params) {
-                if (viewStructure.nowPlayingTitle != null)
-                    return viewStructure.nowPlayingTitle;
+					viewStructure.nowPlayingRating = null;
+					final String stringRating = fileProperties.get(FilePropertiesProvider.RATING);
+					try {
+						if (stringRating != null && !stringRating.isEmpty())
+							viewStructure.nowPlayingRating = Float.valueOf(stringRating);
+					} catch (NumberFormatException e) {
+						logger.info("Failed to parse rating", e);
+					}
 
-                return file.getValue();
-            }
+					setFileRating(file, viewStructure.nowPlayingRating);
 
-            @Override
-            protected void onPostExecute(String result, Exception exception) {
-                if (handleIoException(file, initialFilePosition, exception)) return;
+					viewStructure.nowPlayingDuration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-                nowPlayingTitle.setText(result);
-				nowPlayingTitle.setSelected(true);
-                viewStructure.nowPlayingTitle = result;
-            }
-        };
-		getTitleTask.execute();
+					songProgressBar.setMax(viewStructure.nowPlayingDuration > 0 ? (int)viewStructure.nowPlayingDuration : 100);
+					songProgressBar.setProgress(initialFilePosition);
+				})
+				.onError(exception -> handleIoException(file, initialFilePosition, exception))
+				.execute();
+	}
 
-		final AsyncExceptionTask<Void, Void, Float> getRatingsTask = new AsyncExceptionTask<Void, Void, Float>() {
+	private void setFileRating(IFile file, Float rating) {
+		songRating.setRating(rating != null ? rating : 0f);
 
-            @Override
-            protected Float doInBackground(Void... params) {
-                if (viewStructure.nowPlayingRating != null)
-                    return viewStructure.nowPlayingRating;
+		songRating.setOnRatingBarChangeListener((ratingBar, newRating, fromUser) -> {
+			if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
+				return;
 
-                try {
-                    if (file.getProperty(FilePropertiesProvider.RATING) != null && !file.getProperty(FilePropertiesProvider.RATING).isEmpty())
-                        return Float.valueOf(file.getProperty(FilePropertiesProvider.RATING));
-                } catch (FileNotFoundException e) {
-                    handleFileNotFoundException(file, e);
-                } catch (NumberFormatException | IOException e) {
-                    setException(e);
-
-                    return null;
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Float result, Exception exception) {
-                if (handleIoException(file, initialFilePosition, exception)) {
-                    songRating.setRating(0f);
-                    songRating.setOnRatingBarChangeListener(null);
-
-                    return;
-                }
-
-                viewStructure.nowPlayingRating = result;
-
-                songRating.setRating(result != null ? result : 0f);
-
-                songRating.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
-	                if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
-		                return;
-	                file.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
-
-	                viewStructure.nowPlayingRating = rating;
-                });
-            }
-        };
-		getRatingsTask.execute();
-
-		final AsyncExceptionTask<Void, Void, Integer> getNowPlayingDuration = new AsyncExceptionTask<Void, Void, Integer>() {
-            @Override
-            protected Integer doInBackground(Void... params) {
-                try {
-                    return file.getDuration();
-                } catch (IOException e) {
-                    setException(e);
-                    return -1;
-                }
-            }
-
-            @Override
-            protected void onPostExecute(Integer result, Exception exception) {
-                if (handleIoException(file, initialFilePosition, exception)) {
-                    songProgressBar.setMax(100);
-                    return;
-                }
-
-                if (result < 0) return;
-
-				songProgressBar.setMax(result);
-				songProgressBar.setProgress(initialFilePosition);
-            }
-        };
-
-		getNowPlayingDuration.execute();
+			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), file.getKey(), FilePropertiesProvider.RATING, String.valueOf(Math.round(newRating)));
+			viewStructure.nowPlayingRating = rating;
+		});
 	}
 
 	private void handleFileNotFoundException(IFile file, FileNotFoundException fe) {

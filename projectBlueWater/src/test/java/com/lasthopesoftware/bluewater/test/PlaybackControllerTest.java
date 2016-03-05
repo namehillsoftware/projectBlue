@@ -1,19 +1,16 @@
 package com.lasthopesoftware.bluewater.test;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackController;
-import com.lasthopesoftware.bluewater.test.mock.MockConnectionProvider;
 import com.lasthopesoftware.bluewater.test.mock.MockFilePlayer;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -146,7 +143,7 @@ public class PlaybackControllerTest extends TestCase {
 	}
 
 	public final void testAddFile() {
-		final File testFile = new File(new MockConnectionProvider(), 5);
+		final File testFile = new File(5);
 		final int originalSize = mPlaybackFileProvider.size();
 		mPlaybackController.addFile(testFile);
 		
@@ -197,46 +194,6 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public String getValue() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public void setValue(String value) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void setProperty(String name, String value) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public String getProperty(String name) throws IOException {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public String tryGetProperty(String name) {
-			return null;
-		}
-
-		@Override
-		public String getRefreshedProperty(String name) throws IOException {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public int getDuration() throws IOException {
-			return 100;
-		}
-
-		@Override
 		public String getPlaybackUrl(ConnectionProvider connectionProvider) {
 			return null;
 		}
@@ -247,7 +204,7 @@ public class PlaybackControllerTest extends TestCase {
 		}
 
 		@Override
-		public int compareTo(IItem another) {
+		public int compareTo(IFile another) {
 			// TODO Auto-generated method stub
 			return 0;
 		}

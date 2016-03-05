@@ -10,14 +10,13 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<DateTimeFormatter>() {
@@ -94,34 +93,19 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	}
 
 	@Override
-	public String getProperty(String name) throws IOException {
-		return getFormattedValue(name, super.getProperty(name));
+	protected Map<String, String> executeInBackground(Integer[] params) {
+		return buildFormattedReadonlyProperties(super.executeInBackground(params));
 	}
-	
-	@Override
-	public String getRefreshedProperty(String name) throws IOException {
-		return getFormattedValue(name, super.getRefreshedProperty(name));
-	}
-	
-	@Override
-	public SortedMap<String, String> getProperties() throws IOException {
-		return buildFormattedReadonlyProperties(super.getProperties());
-	}
-	
-	@Override
-	public SortedMap<String, String> getRefreshedProperties() throws IOException {
-		return buildFormattedReadonlyProperties(super.getRefreshedProperties());
-	}
-	
+
 	/* Formatted properties helpers */
 	
-	private static SortedMap<String, String> buildFormattedReadonlyProperties(final SortedMap<String, String> unformattedProperties) {
-		final SortedMap<String, String> formattedProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private static Map<String, String> buildFormattedReadonlyProperties(final Map<String, String> unformattedProperties) {
+		final HashMap<String, String> formattedProperties = new HashMap<>(unformattedProperties.size());
 		
 		for (Entry<String, String> property : unformattedProperties.entrySet())
 			formattedProperties.put(property.getKey(), getFormattedValue(property.getKey(), property.getValue()));
 		
-		return Collections.unmodifiableSortedMap(formattedProperties);
+		return new HashMap<>(formattedProperties);
 	}
 	
 	private static String getFormattedValue(final String name, final String value) {

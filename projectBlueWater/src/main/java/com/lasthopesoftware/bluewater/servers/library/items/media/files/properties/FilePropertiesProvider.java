@@ -13,11 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.Collections;
-import java.util.SortedMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,12 +24,13 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-public class FilePropertiesProvider {
-    private static class FilePropertiesContainer {
-        private Integer revision = -1;
-        private final ConcurrentSkipListMap<String, String> properties = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
+public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
 
-        public void updateProperties(Integer revision, SortedMap<String, String> properties) {
+	private static class FilePropertiesContainer {
+        private Integer revision = -1;
+        private final ConcurrentHashMap<String, String> properties = new ConcurrentHashMap<>();
+
+        public void updateProperties(Integer revision, Map<String, String> properties) {
             this.revision = revision;
             this.properties.putAll(properties);
         }
@@ -39,7 +39,7 @@ public class FilePropertiesProvider {
             return revision;
         }
 
-        public ConcurrentSkipListMap<String, String> getProperties() {
+        public Map<String, String> getProperties() {
             return properties;
         }
     }
@@ -54,6 +54,8 @@ public class FilePropertiesProvider {
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
+		super(filePropertiesExecutor);
+
 		this.connectionProvider = connectionProvider;
 		fileKeyString = String.valueOf(fileKey);
 
@@ -70,99 +72,43 @@ public class FilePropertiesProvider {
 		}
 	}
 
-	public void setProperty(final String name, final String value) {
-		if (filePropertiesContainer.getProperties().containsKey(name) && filePropertiesContainer.getProperties().get(name).equals(value)) return;
+	@Override
+	protected Map<String, String> executeInBackground(Integer[] params) {
+		final Integer revision = RevisionChecker.getRevision(connectionProvider);
+		if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
+			return new HashMap<>(filePropertiesContainer.getProperties());
 
-		filePropertiesExecutor.execute(() -> {
-			try {
-				final HttpURLConnection conn = connectionProvider.getConnection("File/SetInfo", "File=" + fileKeyString, "Field=" + name, "Value=" + value);
-				try {
-					conn.setReadTimeout(5000);
-					conn.getInputStream().close();
-				} finally {
-					conn.disconnect();
-				}
-			} catch (Exception ignored) {
-			}
-		});
+		final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-        filePropertiesContainer.getProperties().put(name, value);
-	}
+		// Seed with old properties first
+		returnProperties.putAll(filePropertiesContainer.getProperties());
 
-	public String getProperty(String name) throws IOException {
-		
-		if (!filePropertiesContainer.getProperties().containsKey(name))
-			return getRefreshedProperty(name);
-		
-		return filePropertiesContainer.getProperties().get(name);
-	}
-	
-	public String getRefreshedProperty(String name) throws IOException {
-		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
-		return getRefreshedProperties().get(name);
-	}
-	
-	SortedMap<String, String> getProperties() throws IOException {
-		if (filePropertiesContainer.getProperties().size() == 0)
-			return getRefreshedProperties();
-		
-		return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
-	}
-
-	SortedMap<String, String> getRefreshedProperties() throws IOException {
-	
-		// Much simpler to just refresh all properties, and shouldn't be very costly (compared to just getting the basic property)
 		try {
-			final SortedMap<String, String> filePropertiesResult = new FluentTask<String, Void, SortedMap<String, String>>() {
-				
-				@Override
-				public SortedMap<String, String> executeInBackground(String... params) {
-					final Integer revision = RevisionChecker.getRevision(connectionProvider);
-					if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
-						return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
+			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKeyString);
+			conn.setReadTimeout(45000);
+			try {
+				final InputStream is = conn.getInputStream();
+				try {
+					final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
 
-					final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-
-					// Seed with old properties first
-					returnProperties.putAll(filePropertiesContainer.getProperties());
-					
-					try {
-						final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKeyString);
-						conn.setReadTimeout(45000);
-						try {
-							final InputStream is = conn.getInputStream();
-							try {
-								final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-
-								for (XmlElement el : xml.get(0))
-									returnProperties.put(el.getAttribute("Name"), el.getValue());
-							} finally {
-								is.close();
-							}
-						} finally {
-							conn.disconnect();
-						}
-					} catch (IOException | XmlParseException e) {
-						LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-					}
-
-					filePropertiesContainer.updateProperties(revision, returnProperties);
-
-					return filePropertiesContainer.getProperties();
+					for (XmlElement el : xml.get(0))
+						returnProperties.put(el.getAttribute("Name"), el.getValue());
+				} finally {
+					is.close();
 				}
-			}.get(filePropertiesExecutor);
-
-			return Collections.unmodifiableSortedMap(filePropertiesResult);
-		} catch (ExecutionException ee) {
-			if (ee.getCause() instanceof IOException)
-				throw new IOException(ee.getCause());
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
+			} finally {
+				conn.disconnect();
+			}
+		} catch (IOException | XmlParseException e) {
+			LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
+			setException(e);
 		}
-		
-		return Collections.unmodifiableSortedMap(filePropertiesContainer.getProperties());
+
+		filePropertiesContainer.updateProperties(revision, returnProperties);
+
+		return new HashMap<>(filePropertiesContainer.getProperties());
 	}
-	
+
 	/* Utility string constants */
 	public static final String ARTIST = "Artist";
 	public static final String ALBUM_ARTIST = "Album Artist";

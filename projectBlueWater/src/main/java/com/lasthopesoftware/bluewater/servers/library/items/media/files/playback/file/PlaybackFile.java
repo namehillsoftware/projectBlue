@@ -19,10 +19,12 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +77,20 @@ public class PlaybackFile implements
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
+
+	private final Lazy<Map<String, String>> fileProperties = new Lazy<Map<String, String>>() {
+		@Override
+		protected Map<String, String> initialize() throws Exception {
+			return new FilePropertiesProvider(connectionProvider, file.getKey()).get();
+		}
+	};
+
+	private final Lazy<String> fileName = new Lazy<String>() {
+		@Override
+		protected String initialize() throws Exception {
+			return fileProperties.getObject().get(FilePropertiesProvider.NAME);
+		}
+	};
 	
 	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
 		mpContext = context;
@@ -128,7 +144,7 @@ public class PlaybackFile implements
 			
 			isPreparing = true;
 			
-			logger.info("Preparing " + file.getValue() + " asynchronously.");
+			logger.info("Preparing " + fileName.getObject() + " asynchronously.");
 			mediaPlayer.prepareAsync();
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.toString(), fe);
@@ -156,7 +172,7 @@ public class PlaybackFile implements
 			
 			isPreparing = true;
 			
-			logger.info("Preparing " + file.getValue() + " synchronously.");
+			logger.info("Preparing " + fileName.getObject() + " synchronously.");
 			mediaPlayer.prepare();
 			
 			isPrepared = true;
@@ -226,27 +242,23 @@ public class PlaybackFile implements
 	public void onPrepared(MediaPlayer mp) {
 		isPrepared = true;
 		isPreparing = false;
-		logger.info(file.getValue() + " prepared!");
+		logger.info(fileName.getObject() + " prepared!");
 		
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					final String lastPlayedString = file.getProperty(FilePropertiesProvider.LAST_PLAYED);
-					// Only update the last played data if the song could have actually played again
-					if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
-						AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(file));
-				} catch (NumberFormatException e) {
-					logger.error("There was an error parsing the last played time.");
-				} catch (IOException e) {
-					logger.warn("There was an error retrieving the duration or last played time data.");
-				}
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			try {
+				final String lastPlayedString = fileProperties.getObject().get(FilePropertiesProvider.LAST_PLAYED);
+				// Only update the last played data if the song could have actually played again
+				if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
+					AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
+			} catch (NumberFormatException e) {
+				logger.error("There was an error parsing the last played time.");
+			} catch (IOException e) {
+				logger.warn("There was an error retrieving the duration or last played time data.");
 			}
 		});
 		
@@ -330,13 +342,13 @@ public class PlaybackFile implements
 	
 	public int getDuration() throws IOException {
 		if (mediaPlayer == null || isInErrorState || !isPlaying())
-			return file.getDuration();
+			return FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
 		
 		try {
 			return mediaPlayer.getDuration();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
-			return file.getDuration();
+			return FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
 		}
 	}
 
@@ -379,7 +391,7 @@ public class PlaybackFile implements
 	}
 
 	public void start() throws IllegalStateException {
-		logger.info("Playback started on " + file.getValue());
+		logger.info("Playback started on " + fileName.getObject());
 		mediaPlayer.seekTo(position);
 		mediaPlayer.start();
 	}
@@ -402,33 +414,6 @@ public class PlaybackFile implements
 	
 	private static void handleIllegalStateException(IllegalStateException ise) {
 		logger.warn("The media player was in an incorrect state.", ise);
-	}
-	
-	private static class UpdatePlayStatsOnExecute implements Runnable {
-		private final IFile mFile;
-		
-		public UpdatePlayStatsOnExecute(IFile file) {
-			mFile = file;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				final String numberPlaysString = mFile.getRefreshedProperty(FilePropertiesProvider.NUMBER_PLAYS);
-				
-				int numberPlays = 0;
-				if (numberPlaysString != null && !numberPlaysString.isEmpty()) numberPlays = Integer.parseInt(numberPlaysString);
-				
-				mFile.setProperty(FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays));
-				
-				final String lastPlayed = String.valueOf(System.currentTimeMillis()/1000);
-				mFile.setProperty(FilePropertiesProvider.LAST_PLAYED, lastPlayed);
-			} catch (IOException e) {
-				logger.warn(e.toString(), e);
-			} catch (NumberFormatException ne) {
-				logger.error(ne.toString(), ne);
-			}
-		}
 	}
 	
 	/* Listener methods */

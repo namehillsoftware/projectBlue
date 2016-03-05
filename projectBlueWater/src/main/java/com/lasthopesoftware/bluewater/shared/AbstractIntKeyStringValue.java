@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.shared;
 
-import com.lasthopesoftware.bluewater.servers.library.items.IItem;
-
 public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	private int mKey;
 	private String mValue;
@@ -43,7 +41,7 @@ public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
 	}
 	
 	@Override
-	public int compareTo(IItem another) {
+	public int compareTo(IIntKeyStringValue another) {
 		int result = this.getValue().compareTo(another.getValue());
 		if (result == 0) result = this.getKey() - another.getKey();
 		return result;

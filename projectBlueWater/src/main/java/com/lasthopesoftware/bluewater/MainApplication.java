@@ -10,7 +10,6 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
@@ -67,7 +66,7 @@ public class MainApplication extends Application {
 					final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 					if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(SessionConnection.getSessionConnectionProvider(), fileKey), mediaFileId, mediaFilePath);
+					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
 				});
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));

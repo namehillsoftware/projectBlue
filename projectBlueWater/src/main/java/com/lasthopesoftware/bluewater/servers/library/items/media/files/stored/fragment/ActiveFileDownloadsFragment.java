@@ -113,7 +113,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
 
 							localStoredFiles.add(storedFile);
-							activeFileDownloadsAdapter.add(new File(SessionConnection.getSessionConnectionProvider(), storedFile.getServiceId()));
+							activeFileDownloadsAdapter.add(new File(storedFile.getServiceId()));
 						});
 					}
 				};
