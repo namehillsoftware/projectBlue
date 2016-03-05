@@ -997,7 +997,7 @@ public class PlaybackService extends Service implements
 			notifyForeground(builder);
 
 			return true;
-		});
+		}).execute();
 
 		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, filePlayer);
 	}
