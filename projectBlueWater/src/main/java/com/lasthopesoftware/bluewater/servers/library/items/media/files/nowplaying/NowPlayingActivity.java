@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
 
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.TimerTask;
 
 public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayingChangeListener {
@@ -120,15 +122,12 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	};
 
 	private static class ViewStructure {
-		public final int fileKey;
+		public final UrlKeyHolder<Integer> urlKeyHolder;
+		public Map<String, String> fileProperties;
 		public Bitmap nowPlayingImage;
-		public String nowPlayingArtist;
-		public String nowPlayingTitle;
-		public Float nowPlayingRating;
-		public long nowPlayingDuration;
 		
-		public ViewStructure(final IFile file) {
-			this.fileKey = file.getKey();
+		public ViewStructure(UrlKeyHolder<Integer> urlKeyHolder) {
+			this.urlKeyHolder = urlKeyHolder;
 		}
 		
 		public void release() {
@@ -320,14 +319,15 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
-		
-		if (viewStructure != null && viewStructure.fileKey != file.getKey()) {
+		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey());
+
+		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
 			viewStructure.release();
 			viewStructure = null;
 		}
 		
 		if (viewStructure == null)
-			viewStructure = new ViewStructure(file);
+			viewStructure = new ViewStructure(urlKeyHolder);
 		
 		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
 		
@@ -363,43 +363,44 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			displayImageBitmap();
 		}
 
-		if (viewStructure.nowPlayingArtist != null)
-			nowPlayingArtist.setText(viewStructure.nowPlayingArtist);
-
-		if (viewStructure.nowPlayingTitle != null)
-			nowPlayingTitle.setText(viewStructure.nowPlayingTitle);
-
-		if (viewStructure.nowPlayingRating != null)
-			setFileRating(file, viewStructure.nowPlayingRating);
+		if (viewStructure.fileProperties != null) {
+			setFileProperties(file, initialFilePosition, viewStructure.fileProperties);
+			return;
+		}
 
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
 		filePropertiesProvider
 				.onComplete(fileProperties -> {
-					viewStructure.nowPlayingArtist = fileProperties.get(FilePropertiesProvider.ARTIST);
-					nowPlayingArtist.setText(viewStructure.nowPlayingArtist);
-
-					viewStructure.nowPlayingTitle = fileProperties.get(FilePropertiesProvider.NAME);
-					nowPlayingTitle.setText(viewStructure.nowPlayingTitle);
-					nowPlayingTitle.setSelected(true);
-
-					viewStructure.nowPlayingRating = null;
-					final String stringRating = fileProperties.get(FilePropertiesProvider.RATING);
-					try {
-						if (stringRating != null && !stringRating.isEmpty())
-							viewStructure.nowPlayingRating = Float.valueOf(stringRating);
-					} catch (NumberFormatException e) {
-						logger.info("Failed to parse rating", e);
-					}
-
-					setFileRating(file, viewStructure.nowPlayingRating);
-
-					viewStructure.nowPlayingDuration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-
-					songProgressBar.setMax(viewStructure.nowPlayingDuration > 0 ? (int)viewStructure.nowPlayingDuration : 100);
-					songProgressBar.setProgress(initialFilePosition);
+					viewStructure.fileProperties = fileProperties;
+					setFileProperties(file, initialFilePosition, fileProperties);
 				})
 				.onError(exception -> handleIoException(file, initialFilePosition, exception))
 				.execute();
+	}
+
+	private void setFileProperties(final IFile file, final int initialFilePosition, Map<String, String> fileProperties) {
+		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+		nowPlayingArtist.setText(artist);
+
+		final String title = fileProperties.get(FilePropertiesProvider.NAME);
+		nowPlayingTitle.setText(title);
+		nowPlayingTitle.setSelected(true);
+
+		Float fileRating = null;
+		final String stringRating = fileProperties.get(FilePropertiesProvider.RATING);
+		try {
+			if (stringRating != null && !stringRating.isEmpty())
+				fileRating = Float.valueOf(stringRating);
+		} catch (NumberFormatException e) {
+			logger.info("Failed to parse rating", e);
+		}
+
+		setFileRating(file, fileRating);
+
+		final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+
+		songProgressBar.setMax(duration > 0 ? duration : 100);
+		songProgressBar.setProgress(initialFilePosition);
 	}
 
 	private void setFileRating(IFile file, Float rating) {
@@ -409,8 +410,9 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
 				return;
 
-			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), file.getKey(), FilePropertiesProvider.RATING, String.valueOf(Math.round(newRating)));
-			viewStructure.nowPlayingRating = rating;
+			final String stringRating = String.valueOf(Math.round(newRating));
+			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), file.getKey(), FilePropertiesProvider.RATING, stringRating);
+			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 	}
 
