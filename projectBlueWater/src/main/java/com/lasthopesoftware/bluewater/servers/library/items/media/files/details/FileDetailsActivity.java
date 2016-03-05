@@ -133,9 +133,11 @@ public class FileDetailsActivity extends AppCompatActivity {
 					final ArrayList<Entry<String, String>> filePropertyList = new ArrayList<>(fileProperties.size());
 
 					for (Entry<String, String> entry : fileProperties.entrySet()) {
-						if (PROPERTIES_TO_SKIP.contains(entry.getKey())) continue;
-						filePropertyList.add(entry);
+						if (!PROPERTIES_TO_SKIP.contains(entry.getKey()))
+							filePropertyList.add(entry);
 					}
+
+					Collections.sort(filePropertyList, (lhs, rhs) -> lhs.getKey().compareTo(rhs.getKey()));
 
 					lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, filePropertyList));
 					pbLoadingFileDetails.setVisibility(View.INVISIBLE);
