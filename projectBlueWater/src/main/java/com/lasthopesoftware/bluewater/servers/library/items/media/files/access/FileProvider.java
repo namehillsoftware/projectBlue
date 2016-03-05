@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.access;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.providers.AbstractCollectionProvider;
+import com.lasthopesoftware.providers.AbstractInputStreamProvider;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -17,9 +17,8 @@ import java.util.List;
 /**
  * Created by david on 11/25/15.
  */
-public class FileProvider extends AbstractCollectionProvider<IFile> {
+public class FileProvider extends AbstractInputStreamProvider<List<IFile>> {
 	private static final Logger logger = LoggerFactory.getLogger(FileProvider.class);
-	private final ConnectionProvider connectionProvider;
 
 	public FileProvider(ConnectionProvider connectionProvider, IFileListParameterProvider item) {
 		this(connectionProvider, item, FileListParameters.Options.None);
@@ -31,8 +30,6 @@ public class FileProvider extends AbstractCollectionProvider<IFile> {
 
 	FileProvider(ConnectionProvider connectionProvider, FileListParameters.Options option, String... parameters) {
 		super(connectionProvider, FileListParameters.Helpers.processParams(option, parameters));
-
-		this.connectionProvider = connectionProvider;
 	}
 
 	@Override

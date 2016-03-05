@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.servers.library.access.LibraryViewsProvide
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractCollectionProvider;
+import com.lasthopesoftware.providers.AbstractConnectionProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemProvider extends AbstractCollectionProvider<Item> {
+public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
@@ -68,7 +68,7 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
         try {
             final InputStream is = connection.getInputStream();
             try {
-                final List<Item> items = getData(is);
+                final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
                 itemHolder = new ItemHolder(serverRevision, items);
 
@@ -86,9 +86,4 @@ public class ItemProvider extends AbstractCollectionProvider<Item> {
             return new ArrayList<>();
         }
 	}
-
-    @Override
-    protected List<Item> getData(InputStream inputStream) {
-        return ItemResponse.GetItems(connectionProvider, inputStream);
-    }
 }

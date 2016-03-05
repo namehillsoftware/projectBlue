@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.servers.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractCollectionProvider;
+import com.lasthopesoftware.providers.AbstractConnectionProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
+public class PlaylistsProvider extends AbstractConnectionProvider<List<Playlist>> {
 
 	private static Logger logger = LoggerFactory.getLogger(PlaylistsProvider.class);
 
@@ -54,7 +54,7 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 	    try {
 		    final InputStream is = connection.getInputStream();
 		    try {
-			    final List<Playlist> streamResult = getData(is);
+			    final List<Playlist> streamResult = PlaylistRequest.GetItems(is);
 
 			    int i = 0;
 			    while (i < streamResult.size()) {
@@ -75,11 +75,6 @@ public class PlaylistsProvider extends AbstractCollectionProvider<Playlist> {
 		    return new ArrayList<>();
 	    }
     }
-
-	@Override
-	protected List<Playlist> getData(InputStream inputStream) {
-		return PlaylistRequest.GetItems(inputStream);
-	}
 
 	private static List<Playlist> getPlaylists(int playlistId) {
         if (playlistId == -1) return cachedPlaylists;

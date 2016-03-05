@@ -20,7 +20,7 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 		super(connectionProvider, params);
 	}
 
-	protected T getData(HttpURLConnection connection) {
+	protected final T getData(HttpURLConnection connection) {
 		try {
 			final InputStream is = connection.getInputStream();
 			try {

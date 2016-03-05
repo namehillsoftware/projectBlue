@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.servers.library.access;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.Item;
 import com.lasthopesoftware.bluewater.servers.library.items.access.ItemResponse;
-import com.lasthopesoftware.providers.AbstractCollectionProvider;
+import com.lasthopesoftware.providers.AbstractConnectionProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by david on 3/17/15.
  */
-public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
+public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 
@@ -52,7 +52,7 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
         try {
             final InputStream is = connection.getInputStream();
             try {
-                final List<Item> items = getData(is);
+                final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
                 synchronized (browseLibraryParameter) {
                     revision = serverRevision;
@@ -68,10 +68,5 @@ public class LibraryViewsProvider extends AbstractCollectionProvider<Item> {
             setException(e);
             return new ArrayList<>();
         }
-    }
-
-    @Override
-    protected List<Item> getData(InputStream inputStream) {
-        return ItemResponse.GetItems(connectionProvider, inputStream);
     }
 }
