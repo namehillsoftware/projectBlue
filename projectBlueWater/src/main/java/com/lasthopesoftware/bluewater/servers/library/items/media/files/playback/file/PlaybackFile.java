@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class PlaybackFile implements
 	IPlaybackFile,
@@ -234,21 +235,23 @@ public class PlaybackFile implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, file.getKey());
-		filePropertiesProvider
-				.onComplete(fileProperties -> {
-					try {
-						final String lastPlayedString = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
-						final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-						// Only update the last played data if the song could have actually played again
-						if (lastPlayedString == null || (System.currentTimeMillis() - duration) > Long.valueOf(lastPlayedString))
-							AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
-					} catch (NumberFormatException e) {
-						logger.error("There was an error parsing the last played time.");
-					}
-				})
-				.execute();
-		
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			try {
+				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, file.getKey());
+				final Map<String, String> fileProperties = filePropertiesProvider.get();
+
+				final String lastPlayedString = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
+				final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+				// Only update the last played data if the song could have actually played again
+				if (lastPlayedString == null || (System.currentTimeMillis() - duration) > Long.valueOf(lastPlayedString))
+					AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
+			} catch (ExecutionException | InterruptedException e) {
+				logger.error("There was an error getting file properties back.", e);
+			} catch (NumberFormatException e) {
+				logger.error("There was an error parsing the last played time.");
+			}
+		});
+
 		releaseMediaPlayer();
 		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
 	}
