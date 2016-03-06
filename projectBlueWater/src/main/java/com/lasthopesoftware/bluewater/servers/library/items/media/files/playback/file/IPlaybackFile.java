@@ -6,8 +6,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
-import java.io.IOException;
-
 public interface IPlaybackFile {
 	IFile getFile();
 	void initMediaPlayer();
@@ -19,7 +17,7 @@ public interface IPlaybackFile {
 	int getCurrentPosition();
 	boolean isBuffered();
 	int getBufferPercentage();
-	int getDuration() throws IOException;
+	int getDuration();
 	boolean isPlaying();
 	void pause();
 	void seekTo(int pos);

@@ -6,16 +6,11 @@ import android.os.Message;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
 import com.vedsoft.lazyj.Lazy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void, Void> {
-	private static final Logger logger = LoggerFactory.getLogger(NowPlayingActivityProgressTrackerTask.class);
 	private static final ExecutorService trackerExecutor = Executors.newSingleThreadExecutor();
 
 	private final IPlaybackFile filePlayer;
@@ -25,12 +20,7 @@ public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void,
 	private final Lazy<Integer> fileDuration = new Lazy<Integer>() {
 		@Override
 		protected Integer initialize() {
-			try {
-				return filePlayer.getDuration();
-			} catch (IOException e) {
-				logger.error("There was an error getting file duration");
-				return -1;
-			}
+			return filePlayer.getDuration();
 		}
 	};
 

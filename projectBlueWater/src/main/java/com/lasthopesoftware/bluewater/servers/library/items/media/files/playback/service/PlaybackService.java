@@ -58,7 +58,6 @@ import com.vedsoft.futures.runnables.OneParameterRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -294,21 +293,25 @@ public class PlaybackService extends Service implements
 	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
 		final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
-		long duration = -1;
-		try {
-			duration = playbackFile.getDuration();
-		} catch (IOException io) {
-			logger.warn("There was an error getting the playback file duration", io);
-		}
-
 		playbackBroadcastIntent
 				.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition())
 				.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey())
 				.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
-				.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, duration)
 				.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
 
-		localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
+		filePropertiesProvider.onComplete(fileProperties -> {
+			playbackBroadcastIntent
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
+
+			localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+		}).onError(error -> {
+			playbackBroadcastIntent
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
+
+			localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+			return true;
+		}).execute();
 	}
 
 	/* End Events */

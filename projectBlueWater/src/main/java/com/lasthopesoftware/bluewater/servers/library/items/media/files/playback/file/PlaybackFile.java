@@ -133,31 +133,33 @@ public class PlaybackFile implements
 	}
 
 	public void prepareMediaPlayer() {
-		if (isPreparing || isPrepared) return;
-		
-		try {
-			final Uri uri = getFileUri();
-			if (uri == null) return;
-			
-			setMpDataSource(uri);
-			initializeBufferPercentage(uri);
-			
-			isPreparing = true;
-			
-			logger.info("Preparing " + fileName.getObject() + " asynchronously.");
-			mediaPlayer.prepareAsync();
-		} catch (FileNotFoundException fe) {
-			logger.error(fe.toString(), fe);
-			resetMediaPlayer();
-			isPreparing = false;
-		} catch (IOException io) {
-			throwIoErrorEvent();
-			isPreparing = false;
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			resetMediaPlayer();
-			isPreparing = false;
-		}
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			if (isPreparing || isPrepared) return;
+
+			try {
+				final Uri uri = getFileUri();
+				if (uri == null) return;
+
+				setMpDataSource(uri);
+				initializeBufferPercentage(uri);
+
+				isPreparing = true;
+
+				logger.info("Preparing " + fileName.getObject() + " asynchronously.");
+				mediaPlayer.prepareAsync();
+			} catch (FileNotFoundException fe) {
+				logger.error(fe.toString(), fe);
+				resetMediaPlayer();
+				isPreparing = false;
+			} catch (IOException io) {
+				throwIoErrorEvent();
+				isPreparing = false;
+			} catch (Exception e) {
+				logger.error(e.toString(), e);
+				resetMediaPlayer();
+				isPreparing = false;
+			}
+		});
 	}
 	
 	public void prepareMpSynchronously() {
@@ -252,13 +254,12 @@ public class PlaybackFile implements
 		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
 			try {
 				final String lastPlayedString = fileProperties.getObject().get(FilePropertiesProvider.LAST_PLAYED);
+				final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
 				// Only update the last played data if the song could have actually played again
-				if (lastPlayedString == null || (System.currentTimeMillis() - getDuration()) > Long.valueOf(lastPlayedString))
+				if (lastPlayedString == null || (System.currentTimeMillis() - duration) > Long.valueOf(lastPlayedString))
 					AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
 			} catch (NumberFormatException e) {
 				logger.error("There was an error parsing the last played time.");
-			} catch (IOException e) {
-				logger.warn("There was an error retrieving the duration or last played time data.");
 			}
 		});
 		
@@ -340,15 +341,15 @@ public class PlaybackFile implements
 		return bufferPercentage;
 	}
 	
-	public int getDuration() throws IOException {
+	public int getDuration() {
 		if (mediaPlayer == null || isInErrorState || !isPlaying())
-			return FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
+			return -1;
 		
 		try {
 			return mediaPlayer.getDuration();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
-			return FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
+			return -1;
 		}
 	}
 
