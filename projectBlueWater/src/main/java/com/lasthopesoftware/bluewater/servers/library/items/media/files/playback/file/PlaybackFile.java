@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
-import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,12 +45,12 @@ public class PlaybackFile implements
 	OnBufferingUpdateListener
 {
 	@SuppressLint("InlinedApi")
-	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[] {
-		MediaPlayer.MEDIA_ERROR_IO,
-		MediaPlayer.MEDIA_ERROR_MALFORMED,
-		MediaPlayer.MEDIA_ERROR_UNSUPPORTED, 
-		MediaPlayer.MEDIA_ERROR_TIMED_OUT, 
-		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
+	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
+			MediaPlayer.MEDIA_ERROR_IO,
+			MediaPlayer.MEDIA_ERROR_MALFORMED,
+			MediaPlayer.MEDIA_ERROR_UNSUPPORTED,
+			MediaPlayer.MEDIA_ERROR_TIMED_OUT,
+			MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
 	}))); 
 	
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackFile.class);
@@ -78,20 +77,6 @@ public class PlaybackFile implements
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
 
-	private final Lazy<Map<String, String>> fileProperties = new Lazy<Map<String, String>>() {
-		@Override
-		protected Map<String, String> initialize() throws Exception {
-			return new FilePropertiesProvider(connectionProvider, file.getKey()).get();
-		}
-	};
-
-	private final Lazy<String> fileName = new Lazy<String>() {
-		@Override
-		protected String initialize() throws Exception {
-			return fileProperties.getObject().get(FilePropertiesProvider.NAME);
-		}
-	};
-	
 	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
 		mpContext = context;
 		this.connectionProvider = connectionProvider;
@@ -133,33 +118,31 @@ public class PlaybackFile implements
 	}
 
 	public void prepareMediaPlayer() {
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-			if (isPreparing || isPrepared) return;
+		if (isPreparing || isPrepared) return;
 
-			try {
-				final Uri uri = getFileUri();
-				if (uri == null) return;
+		try {
+			final Uri uri = getFileUri();
+			if (uri == null) return;
 
-				setMpDataSource(uri);
-				initializeBufferPercentage(uri);
+			setMpDataSource(uri);
+			initializeBufferPercentage(uri);
 
-				isPreparing = true;
+			isPreparing = true;
 
-				logger.info("Preparing " + fileName.getObject() + " asynchronously.");
-				mediaPlayer.prepareAsync();
-			} catch (FileNotFoundException fe) {
-				logger.error(fe.toString(), fe);
-				resetMediaPlayer();
-				isPreparing = false;
-			} catch (IOException io) {
-				throwIoErrorEvent();
-				isPreparing = false;
-			} catch (Exception e) {
-				logger.error(e.toString(), e);
-				resetMediaPlayer();
-				isPreparing = false;
-			}
-		});
+			logger.info("Preparing " + file.getKey() + " asynchronously.");
+			mediaPlayer.prepareAsync();
+		} catch (FileNotFoundException fe) {
+			logger.error(fe.toString(), fe);
+			resetMediaPlayer();
+			isPreparing = false;
+		} catch (IOException io) {
+			throwIoErrorEvent();
+			isPreparing = false;
+		} catch (Exception e) {
+			logger.error(e.toString(), e);
+			resetMediaPlayer();
+			isPreparing = false;
+		}
 	}
 	
 	public void prepareMpSynchronously() {
@@ -174,7 +157,7 @@ public class PlaybackFile implements
 			
 			isPreparing = true;
 			
-			logger.info("Preparing " + fileName.getObject() + " synchronously.");
+			logger.info("Preparing " + file.getKey() + " synchronously.");
 			mediaPlayer.prepare();
 			
 			isPrepared = true;
@@ -244,24 +227,27 @@ public class PlaybackFile implements
 	public void onPrepared(MediaPlayer mp) {
 		isPrepared = true;
 		isPreparing = false;
-		logger.info(fileName.getObject() + " prepared!");
+		logger.info(file.getKey() + " prepared!");
 		
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-			try {
-				final String lastPlayedString = fileProperties.getObject().get(FilePropertiesProvider.LAST_PLAYED);
-				final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties.getObject());
-				// Only update the last played data if the song could have actually played again
-				if (lastPlayedString == null || (System.currentTimeMillis() - duration) > Long.valueOf(lastPlayedString))
-					AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
-			} catch (NumberFormatException e) {
-				logger.error("There was an error parsing the last played time.");
-			}
-		});
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, file.getKey());
+		filePropertiesProvider
+				.onComplete(fileProperties -> {
+					try {
+						final String lastPlayedString = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
+						final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+						// Only update the last played data if the song could have actually played again
+						if (lastPlayedString == null || (System.currentTimeMillis() - duration) > Long.valueOf(lastPlayedString))
+							AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
+					} catch (NumberFormatException e) {
+						logger.error("There was an error parsing the last played time.");
+					}
+				})
+				.execute();
 		
 		releaseMediaPlayer();
 		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
@@ -392,7 +378,7 @@ public class PlaybackFile implements
 	}
 
 	public void start() throws IllegalStateException {
-		logger.info("Playback started on " + fileName.getObject());
+		logger.info("Playback started on " + file.getKey());
 		mediaPlayer.seekTo(position);
 		mediaPlayer.start();
 	}

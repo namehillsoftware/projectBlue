@@ -943,6 +943,9 @@ public class PlaybackService extends Service implements
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
 			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
+			builder.setContentText(artist + " - " + name);
+			builder.setContentIntent(pi);
+			notifyForeground(builder);
 
 			final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
 			final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
