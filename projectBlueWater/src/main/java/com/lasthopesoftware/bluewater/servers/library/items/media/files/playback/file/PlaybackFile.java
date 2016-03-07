@@ -119,31 +119,7 @@ public class PlaybackFile implements
 	}
 
 	public void prepareMediaPlayer() {
-		if (isPreparing || isPrepared) return;
-
-		try {
-			final Uri uri = getFileUri();
-			if (uri == null) return;
-
-			setMpDataSource(uri);
-			initializeBufferPercentage(uri);
-
-			isPreparing = true;
-
-			logger.info("Preparing " + file.getKey() + " asynchronously.");
-			mediaPlayer.prepareAsync();
-		} catch (FileNotFoundException fe) {
-			logger.error(fe.toString(), fe);
-			resetMediaPlayer();
-			isPreparing = false;
-		} catch (IOException io) {
-			throwIoErrorEvent();
-			isPreparing = false;
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			resetMediaPlayer();
-			isPreparing = false;
-		}
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(this::prepareMpSynchronously);
 	}
 	
 	public void prepareMpSynchronously() {
@@ -162,19 +138,17 @@ public class PlaybackFile implements
 			mediaPlayer.prepare();
 			
 			isPrepared = true;
-			isPreparing = false;
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.toString(), fe);
 			resetMediaPlayer();
-			isPreparing = false;
 		} catch (IOException io) {
 			throwIoErrorEvent();
-			isPreparing = false;
 		} catch (Exception e) {
 			logger.error(e.toString(), e);
 			resetMediaPlayer();
-			isPreparing = false;
 		}
+
+		isPreparing = false;
 	}
 	
 	private void initializeBufferPercentage(Uri uri) {
