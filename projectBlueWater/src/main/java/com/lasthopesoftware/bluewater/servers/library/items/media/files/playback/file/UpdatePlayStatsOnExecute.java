@@ -34,7 +34,8 @@ public class UpdatePlayStatsOnExecute implements Runnable {
 			final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
 			final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-			if (lastPlayedServer != null && (System.currentTimeMillis() - duration) <= Long.valueOf(lastPlayedServer) * 1000) return;
+			final long currentTime = System.currentTimeMillis();
+			if (lastPlayedServer != null && (currentTime - duration) <= Long.valueOf(lastPlayedServer) * 1000) return;
 
 			final String numberPlaysString = fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS);
 
@@ -44,8 +45,8 @@ public class UpdatePlayStatsOnExecute implements Runnable {
 
 			FilePropertiesStorage.storeFileProperty(connectionProvider, file.getKey(), FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays));
 
-			final String lastPlayed = String.valueOf(System.currentTimeMillis() / 1000);
-			FilePropertiesStorage.storeFileProperty(connectionProvider, file.getKey(), FilePropertiesProvider.LAST_PLAYED, lastPlayed);
+			final String newLastPlayed = String.valueOf(currentTime / 1000);
+			FilePropertiesStorage.storeFileProperty(connectionProvider, file.getKey(), FilePropertiesProvider.LAST_PLAYED, newLastPlayed);
 		} catch (InterruptedException | ExecutionException e) {
 			logger.warn("Updating play stats for file " + file.getKey() + " was interrupted or encountered an error.", e);
 		} catch (NumberFormatException ne) {
