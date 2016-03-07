@@ -51,7 +51,6 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 	private static final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
-	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesProvider.class);
 
 	public FilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
 		super(filePropertiesExecutor);

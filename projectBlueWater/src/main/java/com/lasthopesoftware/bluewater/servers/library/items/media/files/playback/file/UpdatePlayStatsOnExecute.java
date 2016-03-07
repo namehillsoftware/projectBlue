@@ -4,10 +4,12 @@ import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -28,7 +30,13 @@ public class UpdatePlayStatsOnExecute implements Runnable {
 	public void run() {
 		try {
 			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, file.getKey());
-			final String numberPlaysString = filePropertiesProvider.get().get(FilePropertiesProvider.NUMBER_PLAYS);
+			final Map<String, String> fileProperties = filePropertiesProvider.get();
+			final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
+			final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+
+			if (lastPlayedServer != null && (System.currentTimeMillis() - duration) <= Long.valueOf(lastPlayedServer) * 1000) return;
+
+			final String numberPlaysString = fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS);
 
 			int numberPlays = 0;
 			if (numberPlaysString != null && !numberPlaysString.isEmpty())
