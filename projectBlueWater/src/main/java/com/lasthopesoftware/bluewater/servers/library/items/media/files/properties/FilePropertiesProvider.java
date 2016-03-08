@@ -15,8 +15,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,26 +25,17 @@ import xmlwise.Xmlwise;
 public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
 
 	private static class FilePropertiesContainer {
-        private Integer revision = -1;
-        private final ConcurrentHashMap<String, String> properties = new ConcurrentHashMap<>();
+        public final int revision;
+        public final HashMap<String, String> properties;
 
-        public void updateProperties(Integer revision, Map<String, String> properties) {
+        public FilePropertiesContainer(Integer revision, HashMap<String, String> properties) {
             this.revision = revision;
-            this.properties.putAll(properties);
+            this.properties = properties;
         }
-
-        public Integer getRevision() {
-            return revision;
-        }
-
-        public Map<String, String> getProperties() {
-            return properties;
-        }
-    }
+	}
 
 	private static final int maxSize = 500;
-	private final String fileKeyString;
-	private final FilePropertiesContainer filePropertiesContainer;
+	private final int fileKey;
 	private final IConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
@@ -56,42 +45,38 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 		super(filePropertiesExecutor);
 
 		this.connectionProvider = connectionProvider;
-		fileKeyString = String.valueOf(fileKey);
-
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-
-		synchronized (propertiesCache) {
-			FilePropertiesContainer cachedFilePropertiesContainer = propertiesCache.get(urlKeyHolder);
-			if (cachedFilePropertiesContainer == null) {
-				cachedFilePropertiesContainer = new FilePropertiesContainer();
-				propertiesCache.put(urlKeyHolder, cachedFilePropertiesContainer);
-			}
-
-			filePropertiesContainer = cachedFilePropertiesContainer;
-		}
+		this.fileKey = fileKey;
 	}
 
 	@Override
 	protected Map<String, String> executeInBackground(Integer[] params) {
 		final Integer revision = RevisionChecker.getRevision(connectionProvider);
-		if (filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.getRevision()))
-			return new HashMap<>(filePropertiesContainer.getProperties());
+		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
-		final TreeMap<String, String> returnProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-
-		// Seed with old properties first
-		returnProperties.putAll(filePropertiesContainer.getProperties());
+		synchronized (propertiesCache) {
+			final FilePropertiesContainer filePropertiesContainer = propertiesCache.get(urlKeyHolder);
+			if (filePropertiesContainer != null && filePropertiesContainer.properties.size() > 0 && revision.equals(filePropertiesContainer.revision))
+				return new HashMap<>(filePropertiesContainer.properties);
+		}
 
 		try {
-			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKeyString);
+			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
 			conn.setReadTimeout(45000);
 			try {
 				final InputStream is = conn.getInputStream();
 				try {
 					final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+					final XmlElement parent = xml.get(0);
 
-					for (XmlElement el : xml.get(0))
+					final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
+					for (XmlElement el : parent)
 						returnProperties.put(el.getAttribute("Name"), el.getValue());
+
+					synchronized (propertiesCache) {
+						propertiesCache.put(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
+					}
+
+					return returnProperties;
 				} finally {
 					is.close();
 				}
@@ -103,9 +88,7 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 			setException(e);
 		}
 
-		filePropertiesContainer.updateProperties(revision, returnProperties);
-
-		return new HashMap<>(filePropertiesContainer.getProperties());
+		return new HashMap<>();
 	}
 
 	/* Utility string constants */
