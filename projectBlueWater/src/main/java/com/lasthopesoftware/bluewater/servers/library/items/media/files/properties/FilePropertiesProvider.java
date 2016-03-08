@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties;
 
-import android.util.LruCache;
-
 import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -24,22 +22,11 @@ import xmlwise.Xmlwise;
 
 public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
 
-	private static class FilePropertiesContainer {
-        public final int revision;
-        public final HashMap<String, String> properties;
-
-        public FilePropertiesContainer(Integer revision, HashMap<String, String> properties) {
-            this.revision = revision;
-            this.properties = properties;
-        }
-	}
-
-	private static final int maxSize = 500;
 	private final int fileKey;
 	private final IConnectionProvider connectionProvider;
 	
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-	private static final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
+
 
 	public FilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
 		super(filePropertiesExecutor);
@@ -53,11 +40,9 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 		final Integer revision = RevisionChecker.getRevision(connectionProvider);
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
-		synchronized (propertiesCache) {
-			final FilePropertiesContainer filePropertiesContainer = propertiesCache.get(urlKeyHolder);
-			if (filePropertiesContainer != null && filePropertiesContainer.properties.size() > 0 && revision.equals(filePropertiesContainer.revision))
-				return new HashMap<>(filePropertiesContainer.properties);
-		}
+		final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
+		if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
+			return new HashMap<>(filePropertiesContainer.getProperties());
 
 		try {
 			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
@@ -72,9 +57,7 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 					for (XmlElement el : parent)
 						returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-					synchronized (propertiesCache) {
-						propertiesCache.put(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
-					}
+					FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertyCache.FilePropertiesContainer(revision, returnProperties));
 
 					return returnProperties;
 				} finally {

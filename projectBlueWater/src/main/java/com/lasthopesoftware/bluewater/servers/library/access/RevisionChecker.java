@@ -40,7 +40,7 @@ public class RevisionChecker extends FluentTask<Void, Void, Integer> {
         return cachedRevisions.get(serverUrl);
     }
 
-    private RevisionChecker(IConnectionProvider connectionProvider) {
+    public RevisionChecker(IConnectionProvider connectionProvider) {
 	    this.connectionProvider = connectionProvider;
     }
 
