@@ -7,7 +7,7 @@ public class LazyNewInstance<T> extends Lazy<T> {
 
 	private final Class<T> cls;
 
-	LazyNewInstance(Class<T> cls) {
+	public LazyNewInstance(Class<T> cls) {
 		this.cls = cls;
 	}
 
