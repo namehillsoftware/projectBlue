@@ -22,8 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
+import java.util.AbstractMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -75,58 +79,69 @@ public class LibrarySyncHandler {
 	public void startSync() {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess.getStoredItems((owner, storedItems) -> AsyncTask
-			.THREAD_POOL_EXECUTOR
-			.execute(() -> {
-				if (isCancelled) return;
-
-				final Set<Integer> allSyncedFileKeys = new HashSet<>();
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
-
-				for (StoredItem storedItem : storedItems) {
+				.THREAD_POOL_EXECUTOR
+				.execute(() -> {
 					if (isCancelled) return;
 
-					final int serviceId = storedItem.getServiceId();
-					final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-					final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider)item);
+					final Set<Integer> allSyncedFileKeys = new HashSet<>();
+					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-					try {
-						final List<IFile> files = fileProvider.get();
-						for (final IFile file : files) {
-							allSyncedFileKeys.add(file.getKey());
+					final Queue<Map.Entry<IItem, FileProvider>> fileProviders = new LinkedList<>();
+					for (StoredItem storedItem : storedItems) {
+						if (isCancelled) return;
 
-							if (isCancelled) return;
-
-							final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
-							if (!storedFile.isDownloadComplete())
-								storedFileDownloader.queueFileForDownload(file, storedFile);
-						}
-					} catch (ExecutionException | InterruptedException e) {
-
-						if (e.getCause() instanceof FileNotFoundException) {
-							logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-							storedItemAccess.toggleSync(item, false);
-							continue;
-						}
-
-						isFaulted = true;
-						logger.warn("There was an error retrieving the files", e);
-
-						return;
+						final int serviceId = storedItem.getServiceId();
+						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
+						fileProvider.execute();
+						fileProviders.offer(new AbstractMap.SimpleImmutableEntry<>(item, fileProvider));
 					}
-				}
 
-				storedFileDownloader.setOnQueueProcessingCompleted(() -> {
+					Map.Entry<IItem, FileProvider> fileProviderEntry;
+					while ((fileProviderEntry = fileProviders.poll()) != null) {
+						if (isCancelled) return;
 
-					if (!isCancelled && !isFaulted)
-						storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+						final IItem item = fileProviderEntry.getKey();
+						final FileProvider fileProvider = fileProviderEntry.getValue();
 
-					if (onQueueProcessingCompleted != null)
-						onQueueProcessingCompleted.run(LibrarySyncHandler.this);
-				});
+						try {
+							final List<IFile> files = fileProvider.get();
+							for (final IFile file : files) {
+								allSyncedFileKeys.add(file.getKey());
 
-				if (isCancelled) return;
+								if (isCancelled) return;
 
-				storedFileDownloader.process();
-			}));
+								final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
+								if (!storedFile.isDownloadComplete())
+									storedFileDownloader.queueFileForDownload(file, storedFile);
+							}
+						} catch (ExecutionException | InterruptedException e) {
+
+							if (e.getCause() instanceof FileNotFoundException) {
+								logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+								storedItemAccess.toggleSync(item, false);
+								continue;
+							}
+
+							isFaulted = true;
+							logger.warn("There was an error retrieving the files", e);
+
+							return;
+						}
+					}
+
+					storedFileDownloader.setOnQueueProcessingCompleted(() -> {
+
+						if (!isCancelled && !isFaulted)
+							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+
+						if (onQueueProcessingCompleted != null)
+							onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+					});
+
+					if (isCancelled) return;
+
+					storedFileDownloader.process();
+				}));
 	}
 }
