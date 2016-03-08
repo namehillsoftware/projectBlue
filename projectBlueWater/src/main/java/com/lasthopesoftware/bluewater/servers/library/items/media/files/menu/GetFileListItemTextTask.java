@@ -6,6 +6,7 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 
 import java.util.concurrent.ExecutionException;
@@ -34,7 +35,7 @@ public class GetFileListItemTextTask extends AsyncTask<Void, Void, String> {
     protected String doInBackground(Void... params) {
         if (isCancelled()) return null;
 
-        final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
+        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
         try {
             return !isCancelled() ? filePropertiesProvider.get().get(FilePropertiesProvider.NAME) : null;
         } catch (ExecutionException | InterruptedException e) {

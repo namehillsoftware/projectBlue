@@ -9,6 +9,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -110,7 +111,7 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, getFile().getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, getFile().getKey());
 
 		try {
 			final Map<String, String> fileProperties = filePropertiesProvider.get();

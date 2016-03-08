@@ -9,6 +9,7 @@ import android.util.DisplayMetrics;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.DiskFileCache;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
@@ -68,7 +69,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
 		String uniqueKey;
 		try {
-			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, fileKey);
+			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, fileKey);
 			final Map<String, String> fileProperties = filePropertiesProvider.get();
 			// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 			// artists), and then by artist if that field is empty
