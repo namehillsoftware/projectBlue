@@ -25,6 +25,8 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
 	private TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
+	private volatile boolean isExecuting = false;
+
 	private final Lazy<AndroidAsyncTask<Void, TProgress, TResult>> task = new Lazy<AndroidAsyncTask<Void, TProgress, TResult>>() {
 		@Override
 		protected AndroidAsyncTask<Void, TProgress, TResult> initialize() {
@@ -77,7 +79,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public void execute() {
-		executeTask();
+		execute(null);
 	}
 
 	public void execute(Executor exec) {
@@ -85,15 +87,14 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	}
 
 	public TResult get() throws ExecutionException, InterruptedException {
-		final TResult result = executeTask().get();
-
-		throwOnTaskException(task.getObject());
-
-		return result;
+		return get(null);
 	}
 
 	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
-		final TResult result = executeTask(executor).get();
+		if (!isExecuting)
+			executeTask(executor);
+
+		final TResult result = task.getObject().get();
 
 		throwOnTaskException(task.getObject());
 
@@ -106,12 +107,9 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 			throw new ExecutionException(exception);
 	}
 
-	private AsyncTask<Void, TProgress, TResult> executeTask() {
-		return executeTask(defaultExecutor);
-	}
-
-	private AsyncTask<Void, TProgress, TResult> executeTask(Executor exec) {
-		return task.getObject().executeOnExecutor(exec);
+	private synchronized AsyncTask<Void, TProgress, TResult> executeTask(Executor exec) {
+		isExecuting = true;
+		return task.getObject().executeOnExecutor(exec != null ? exec : defaultExecutor);
 	}
 
 	protected void reportProgress(TProgress... progress) {
