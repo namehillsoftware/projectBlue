@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +80,7 @@ public class MockFilePlayer implements IPlaybackFile {
 	}
 
 	@Override
-	public int getDuration() throws IOException {
+	public int getDuration() {
 		return 100;
 	}
 
