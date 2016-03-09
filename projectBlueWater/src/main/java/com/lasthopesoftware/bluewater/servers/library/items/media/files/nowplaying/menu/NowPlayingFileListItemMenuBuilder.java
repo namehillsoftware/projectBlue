@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,7 +86,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
         viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
-        viewHolder.getFileListItemTextTask.execute();
+        viewHolder.getFileListItemTextTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
 

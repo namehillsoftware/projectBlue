@@ -17,7 +17,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
@@ -67,7 +66,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						localStoredFiles.add(storedFile);
 				}
 
-				final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), SessionConnection.getSessionConnectionProvider(), localStoredFiles);
+				final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), localStoredFiles);
 
 				if (onFileDownloadedReceiver != null)
 					localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);

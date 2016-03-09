@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
@@ -23,8 +23,8 @@ import java.util.List;
  */
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
-	public ActiveFileDownloadsAdapter(Context context, ConnectionProvider connectionProvider, List<StoredFile> storedFiles) {
-		super(context, R.id.tvStandard, getFilesFromStoredFiles(connectionProvider, storedFiles));
+	public ActiveFileDownloadsAdapter(Context context, List<StoredFile> storedFiles) {
+		super(context, R.id.tvStandard, getFilesFromStoredFiles(storedFiles));
 	}
 
 	@Override
@@ -40,12 +40,12 @@ public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
 		if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
 		viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(getItem(position), viewHolder.textView);
-		viewHolder.getFileListItemTextTask.execute();
+		viewHolder.getFileListItemTextTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		return convertView;
 	}
 
-	private static List<IFile> getFilesFromStoredFiles(ConnectionProvider connectionProvider, List<StoredFile> storedFiles) {
+	private static List<IFile> getFilesFromStoredFiles(List<StoredFile> storedFiles) {
 		final ArrayList<IFile> files = new ArrayList<>(storedFiles.size());
 
 		for (StoredFile storedFile : storedFiles)
