@@ -38,7 +38,8 @@ public class GetFileListItemTextTask extends AsyncExceptionTask<Void, Void, Stri
         final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
         filePropertiesProvider.execute();
         try {
-            return !isCancelled() ? filePropertiesProvider.get().get(FilePropertiesProvider.NAME) : null;
+            if (!isCancelled())
+                return filePropertiesProvider.get().get(FilePropertiesProvider.NAME);
         } catch (ExecutionException | InterruptedException e) {
 	        setException(e);
         }
