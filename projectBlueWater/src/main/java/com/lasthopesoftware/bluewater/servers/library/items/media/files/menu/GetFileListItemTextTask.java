@@ -27,8 +27,6 @@ public class GetFileListItemTextTask extends AsyncExceptionTask<Void, Void, Stri
 
     @Override
     protected void onPreExecute() {
-        super.onPreExecute();
-
 	    if (!isCancelled())
             textView.setText(R.string.lbl_loading);
     }
@@ -49,8 +47,6 @@ public class GetFileListItemTextTask extends AsyncExceptionTask<Void, Void, Stri
 
     @Override
     protected void onPostExecute(String s, Exception exception) {
-        super.onPostExecute(s);
-
 	    if (exception instanceof FileNotFoundException) {
 		    textView.setText(R.string.file_not_found);
 		    return;
