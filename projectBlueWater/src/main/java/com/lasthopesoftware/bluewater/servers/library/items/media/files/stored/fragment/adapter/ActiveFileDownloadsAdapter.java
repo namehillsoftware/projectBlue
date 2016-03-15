@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +10,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.list.AbstractFileListAdapter;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 
@@ -38,9 +37,8 @@ public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
 		final ActiveFileDownloadsViewHolder viewHolder = (ActiveFileDownloadsViewHolder)convertView.getTag();
 
-		if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
-		viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(getItem(position), viewHolder.textView);
-		viewHolder.getFileListItemTextTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
+		viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(getItem(position), viewHolder.textView);
 
 		return convertView;
 	}

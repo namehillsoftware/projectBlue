@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.menu;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +16,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.FilePlay
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
@@ -44,7 +44,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         public final ImageButton addButton;
         public final FileListItemContainer fileListItemContainer;
         public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public GetFileListItemTextTask getFileListItemTextTask;
+        public CachedFilePropertiesProvider filePropertiesProvider;
     }
 
     public FileListItemMenuBuilder(final List<IFile> files) {
@@ -78,9 +78,8 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
 
         final TextView textView = fileListItem.getTextView();
 
-        if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
-        viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
-        viewHolder.getFileListItemTextTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
+        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
 
         textView.setTypeface(null, Typeface.NORMAL);
 		textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == PlaybackService.getCurrentPlayingFileKey()));

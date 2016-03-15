@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplay
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +16,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileListItemContainer;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
@@ -45,7 +45,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         public final ImageButton removeButton;
         public final FileListItemContainer fileListItemContainer;
         public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public GetFileListItemTextTask getFileListItemTextTask;
+        public CachedFilePropertiesProvider filePropertiesProvider;
     }
 
     private final List<IFile> files;
@@ -84,9 +84,8 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final TextView textView = fileListItem.getTextView();
 
-        if (viewHolder.getFileListItemTextTask != null) viewHolder.getFileListItemTextTask.cancel(false);
-        viewHolder.getFileListItemTextTask = new GetFileListItemTextTask(file, textView);
-        viewHolder.getFileListItemTextTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
+        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
 

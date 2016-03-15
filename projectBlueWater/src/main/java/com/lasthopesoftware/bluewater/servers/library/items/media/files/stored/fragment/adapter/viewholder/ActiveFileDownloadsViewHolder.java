@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.
 
 import android.widget.TextView;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.GetFileListItemTextTask;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 
 /**
  * Created by david on 8/23/15.
@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.menu.Get
 public class ActiveFileDownloadsViewHolder {
 
 	public final TextView textView;
-	public GetFileListItemTextTask getFileListItemTextTask;
+	public CachedFilePropertiesProvider filePropertiesProvider;
 
 	public ActiveFileDownloadsViewHolder(TextView textView) {
 
