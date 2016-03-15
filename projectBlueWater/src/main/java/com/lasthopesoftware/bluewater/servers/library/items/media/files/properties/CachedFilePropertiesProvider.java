@@ -28,6 +28,8 @@ public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<
 
 	@Override
 	protected Map<String, String> executeInBackground(Integer[] params) {
+		if (isCancelled()) return new HashMap<>();
+
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
 		final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
@@ -35,7 +37,10 @@ public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<
 			return filePropertiesContainer.getProperties();
 
 		try {
-			return new FilePropertiesProvider(connectionProvider, fileKey).get();
+			if (isCancelled()) return new HashMap<>();
+
+			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, fileKey);
+			return filePropertiesProvider.get();
 		} catch (ExecutionException | InterruptedException e) {
 			setException(e);
 		}

@@ -71,9 +71,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 				@Override
 				protected final void onCancelled(TResult result, Exception exception) {
-					if (handleError(exception)) return;
-
-					super.onCancelled(result, exception);
+					handleError(exception);
 				}
 			};
 		}
@@ -136,7 +134,6 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		return exception != null &&
 					(twoParameterOnErrorListener != null && twoParameterOnErrorListener.call(this, exception)) |
 					(oneParameterOnErrorListener != null && oneParameterOnErrorListener.call(exception));
-
 	}
 
 	public FluentTask<TParams, TProgress, TResult> cancel() {
