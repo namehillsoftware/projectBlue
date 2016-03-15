@@ -37,19 +37,29 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 
 	@Override
 	protected Map<String, String> executeInBackground(Integer[] params) {
+		if (isCancelled()) return new HashMap<>();
+
 		final Integer revision = RevisionChecker.getRevision(connectionProvider);
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+
+		if (isCancelled()) return new HashMap<>();
 
 		final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
 		if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
 			return new HashMap<>(filePropertiesContainer.getProperties());
 
 		try {
+			if (isCancelled()) return new HashMap<>();
+
 			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
 			conn.setReadTimeout(45000);
 			try {
+				if (isCancelled()) return new HashMap<>();
+
 				final InputStream is = conn.getInputStream();
 				try {
+					if (isCancelled()) return new HashMap<>();
+
 					final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
 					final XmlElement parent = xml.get(0);
 

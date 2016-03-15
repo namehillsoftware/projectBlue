@@ -16,6 +16,9 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	private final TParams[] params;
 	private final Executor defaultExecutor;
 
+	private OneParameterRunnable<FluentTask<TParams, TProgress, TResult>> oneParameterBeforeStartListener;
+	private Runnable beforeStartListener;
+
 	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TProgress[]> twoParameterOnProgressListener;
 	private OneParameterRunnable<TProgress[]> oneParameterOnProgressListener;
 
@@ -33,12 +36,21 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 			return new AndroidAsyncTask<Void, TProgress, TResult>(){
 
 				@Override
+				protected final void onPreExecute() {
+					if (oneParameterBeforeStartListener != null)
+						oneParameterBeforeStartListener.run(FluentTask.this);
+
+					if (beforeStartListener != null)
+						beforeStartListener.run();
+				}
+
+				@Override
 				protected final TResult doInBackground(Void... params) {
 					return executeInBackground(FluentTask.this.params);
 				}
 
 				@Override
-				protected void onProgressUpdate(TProgress... values) {
+				protected final void onProgressUpdate(TProgress... values) {
 					if (twoParameterOnProgressListener != null)
 						twoParameterOnProgressListener.run(FluentTask.this, values);
 
@@ -144,6 +156,16 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	protected void setException(Exception exception) {
 		task.getObject().setException(exception);
+	}
+
+	public FluentTask<TParams, TProgress, TResult> beforeStart(OneParameterRunnable<FluentTask<TParams, TProgress, TResult>> listener) {
+		oneParameterBeforeStartListener = listener;
+		return this;
+	}
+
+	public FluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener) {
+		beforeStartListener = listener;
+		return this;
 	}
 
 	public FluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {

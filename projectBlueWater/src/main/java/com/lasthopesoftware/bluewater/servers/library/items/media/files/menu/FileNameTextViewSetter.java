@@ -16,10 +16,9 @@ import java.io.FileNotFoundException;
 public class FileNameTextViewSetter {
 
 	public static CachedFilePropertiesProvider startNew(IFile file, TextView textView) {
-		textView.setText(R.string.lbl_loading);
-
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
 		cachedFilePropertiesProvider
+				.beforeStart(() -> textView.setText(R.string.lbl_loading))
 				.onComplete(properties -> {
 					if (cachedFilePropertiesProvider.isCancelled()) return;
 
