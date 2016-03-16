@@ -14,10 +14,10 @@ import java.util.concurrent.Executors;
  * Created by david on 3/7/16.
  */
 public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
-	private static final Executor cachedFilePropertyExecutor = Executors.newCachedThreadPool();
+	private static final Executor cachedFilePropertyExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2 + 1);
 
-	private IConnectionProvider connectionProvider;
-	private int fileKey;
+	private final IConnectionProvider connectionProvider;
+	private final int fileKey;
 	private FilePropertiesProvider filePropertiesProvider;
 
 	public CachedFilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
