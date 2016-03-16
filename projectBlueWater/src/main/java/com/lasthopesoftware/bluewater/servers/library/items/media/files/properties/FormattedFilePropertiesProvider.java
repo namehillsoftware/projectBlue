@@ -112,7 +112,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		if (value == null || value.isEmpty()) return "";
 		
 		if (dateTimeProperties.getObject().contains(name)) {
-			final DateTime dateTime = new DateTime(Double.valueOf(value).longValue() * 1000);
+			final DateTime dateTime = new DateTime((long)(Double.valueOf(value) * 1000));
 			return dateTime.toString(dateTimeFormatter.getObject());
 		}
 		
