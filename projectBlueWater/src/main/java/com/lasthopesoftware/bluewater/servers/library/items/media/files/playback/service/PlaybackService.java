@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,9 +350,30 @@ public class PlaybackService extends Service implements
 
 	private LocalBroadcastManager localBroadcastManager;
 
-	private Runnable connectionRegainedListener;
+	private final Lazy<Runnable> connectionRegainedListener = new Lazy<Runnable>() {
+		@Override
+		protected Runnable initialize() throws Exception {
+			return () -> {
+				if (playlistController != null && !playlistController.isPlaying()) {
+					stopSelf(startId);
+					return;
+				}
 
-	private Runnable onPollingCancelledListener;
+				LibrarySession.GetActiveLibrary(PlaybackService.this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+
+			};
+		}
+	};
+
+	private final Lazy<Runnable> onPollingCancelledListener = new Lazy<Runnable>() {
+		@Override
+		protected Runnable initialize() throws Exception {
+			return () -> {
+				unregisterListeners();
+				stopSelf(startId);
+			};
+		}
+	};
 
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
@@ -558,10 +580,10 @@ public class PlaybackService extends Service implements
 			wifiLock = null;
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener != null)
-			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener);
-		if (onPollingCancelledListener != null)
-			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener);
+		if (connectionRegainedListener.isInitialized())
+			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
+		if (onPollingCancelledListener.isInitialized())
+			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		areListenersRegistered = false;
 	}
@@ -815,7 +837,7 @@ public class PlaybackService extends Service implements
 			// reset the error count if enough time has elapsed to reset the error count
 			numberOfErrors = 1;
 		}
-		
+
 		lastErrorTime = currentErrorTime;
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -831,28 +853,9 @@ public class PlaybackService extends Service implements
 		notifyForeground(builder);
 		
 		final PollConnection checkConnection = PollConnection.Instance.get(this);
-		
-		if (connectionRegainedListener == null) {
-			connectionRegainedListener = () -> {
-				if (playlistController != null && !playlistController.isPlaying()) {
-					stopSelf(startId);
-					return;
-				}
 
-				LibrarySession.GetActiveLibrary(this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
-
-			};
-		}
-		
-		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener);
-		
-		if (onPollingCancelledListener == null) {
-			onPollingCancelledListener = () -> {
-				unregisterListeners();
-				stopSelf(startId);
-			};
-		}
-		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener);
+		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
+		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		checkConnection.startPolling();
 	}
