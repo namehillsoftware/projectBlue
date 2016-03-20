@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -141,6 +142,9 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 			return context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toArray(new String[params.size()]), null);
 		} catch (InterruptedException e) {
+			if (e.getCause() instanceof FileNotFoundException)
+				throw (FileNotFoundException)e.getCause();
+
 			if (e.getCause() instanceof IOException)
 				throw new IOException("The filename property was not retrieved. A connection needs to be re-established.", e.getCause());
 
