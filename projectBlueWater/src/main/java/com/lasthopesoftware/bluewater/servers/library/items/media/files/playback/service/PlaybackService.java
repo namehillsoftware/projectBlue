@@ -250,6 +250,10 @@ public class PlaybackService extends Service implements
 
 	private static final int notificationId = 42;
 	private static int startId;
+
+	private static final int maxErrors = 3;
+	private static final int errorCountResetDuration = 1000;
+
 	private WifiLock wifiLock = null;
 	private NotificationManager notificationManager;
 	private AudioManager audioManager;
@@ -257,6 +261,8 @@ public class PlaybackService extends Service implements
 	private RemoteControlClient remoteControlClient;
 	private Bitmap remoteClientBitmap = null;
 	private volatile boolean hasAudioFocus = true;
+	private int numberOfErrors = 0;
+	private long lastErrorTime = 0;
 	
 	// State dependent static variables
 	private static volatile String playlistString;
@@ -798,6 +804,19 @@ public class PlaybackService extends Service implements
 	@Override
 	public void onPlaylistStateControlError(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
+
+		final long currentErrorTime = System.currentTimeMillis();
+		// Stop handling errors if more than the max errors has occurred
+		if (++numberOfErrors > maxErrors) {
+			// and the last error time is less than the error count reset duration
+			if (currentErrorTime <= lastErrorTime + errorCountResetDuration)
+				return;
+
+			// reset the error count if enough time has elapsed to reset the error count
+			numberOfErrors = 1;
+		}
+		
+		lastErrorTime = currentErrorTime;
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setOngoing(true);
