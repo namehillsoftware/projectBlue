@@ -142,14 +142,14 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 			return context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toArray(new String[params.size()]), null);
 		} catch (InterruptedException e) {
+			return null;
+		} catch (ExecutionException e) {
 			if (e.getCause() instanceof FileNotFoundException)
 				throw (FileNotFoundException)e.getCause();
 
 			if (e.getCause() instanceof IOException)
 				throw new IOException("The filename property was not retrieved. A connection needs to be re-established.", e.getCause());
 
-			return null;
-		} catch (ExecutionException e) {
 			return null;
 		}
 	}
