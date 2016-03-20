@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.annotation.StringRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -368,6 +369,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			return;
 		}
 
+		disableViewWithMessage(R.string.lbl_loading);
+
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
 		filePropertiesProvider
 				.onComplete(fileProperties -> {
@@ -414,17 +417,19 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), file.getKey(), FilePropertiesProvider.RATING, stringRating);
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
+
+		songRating.setEnabled(true);
 	}
 
-	private void handleFileNotFoundException(IFile file, FileNotFoundException fe) {
+	private boolean handleFileNotFoundException(IFile file, FileNotFoundException fe) {
 		logger.error(String.format(fileNotFoundError, file), fe);
+		disableViewWithMessage(R.string.file_not_found);
+		return true;
 	}
 	
 	private boolean handleIoException(IFile file, int position, Exception exception) {
-		if (exception instanceof FileNotFoundException) {
-			handleFileNotFoundException(file, (FileNotFoundException)exception);
-			return false;
-		}
+		if (exception instanceof FileNotFoundException)
+			return handleFileNotFoundException(file, (FileNotFoundException)exception);
 
 		if (exception instanceof IOException) {
 			resetViewOnReconnect(file, position);
@@ -469,6 +474,13 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private void resetViewOnReconnect(final IFile file, final int position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> setView(file, position));
 		WaitForConnectionDialog.show(this);
+	}
+
+	private void disableViewWithMessage(@StringRes int messageId) {
+		nowPlayingTitle.setText(messageId);
+		nowPlayingArtist.setText("");
+		songRating.setRating(0);
+		songRating.setEnabled(false);
 	}
 
 	@Override
