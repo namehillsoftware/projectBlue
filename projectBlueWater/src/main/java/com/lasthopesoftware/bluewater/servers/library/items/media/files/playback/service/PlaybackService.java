@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
@@ -299,7 +300,7 @@ public class PlaybackService extends Service implements
 				.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
 				.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
 		filePropertiesProvider.onComplete(fileProperties -> {
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
@@ -935,7 +936,7 @@ public class PlaybackService extends Service implements
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
 		filePropertiesProvider.onComplete(fileProperties -> {
 			final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 			final String name = fileProperties.get(FilePropertiesProvider.NAME);
