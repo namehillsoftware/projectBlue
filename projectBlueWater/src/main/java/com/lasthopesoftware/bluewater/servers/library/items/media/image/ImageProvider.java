@@ -38,7 +38,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ImageProvider.class);
 
-	private static final int MAX_DISK_CACHE_SIZE = 35 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
+	private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 	private static final int MAX_MEMORY_CACHE_SIZE = 10;
 	private static final int MAX_DAYS_IN_CACHE = 30;
 	private static final String IMAGES_CACHE_NAME = "images";
