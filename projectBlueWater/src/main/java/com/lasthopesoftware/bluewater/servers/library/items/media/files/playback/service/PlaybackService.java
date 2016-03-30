@@ -255,8 +255,7 @@ public class PlaybackService extends Service implements
 	private ComponentName remoteControlReceiver;
 	private RemoteControlClient remoteControlClient;
 	private Bitmap remoteClientBitmap = null;
-	private volatile boolean hasAudioFocus = true;
-	
+
 	// State dependent static variables
 	private static volatile String playlistString;
 	// Declare as volatile so that every thread has the same version of the playlist controllers
@@ -404,8 +403,6 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress, final Runnable onPlaylistStarted) {
-		hasAudioFocus = false;
-
 		notifyStartingService();
 
 		// If the playlist has changed, change that
@@ -840,8 +837,6 @@ public class PlaybackService extends Service implements
 	@Override
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-			hasAudioFocus = true;
-
 			// resume playback
 			if (playlistController != null) {
 				playlistController.setVolume(1.0f);
@@ -851,26 +846,25 @@ public class PlaybackService extends Service implements
 			}
 
 			restorePlaylistControllerFromStorage(result -> {
-				if (result && hasAudioFocus) playlistController.resume();
+				if (result) playlistController.resume();
 			});
 
 			return;
 		}
 		
-		if (playlistController == null) return;
+		if (playlistController == null || !playlistController.isPlaying()) return;
 		
 	    switch (focusChange) {
-        	// Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS:
-	        	hasAudioFocus = false;
-	        // Lost focus but it will be regained... cannot release resources
+		        // Lost focus for an unbounded amount of time: stop playback and release media player
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-	        	if (playlistController.isPlaying()) pausePlayback(false);
+		        // Lost focus but it will be regained... cannot release resources
+		        pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-	            // Lost focus for a short time, but it's ok to keep playing
-	            // at an attenuated level
-	            if (playlistController.isPlaying()) playlistController.setVolume(0.2f);
+            // Lost focus for a short time, but it's ok to keep playing
+            // at an attenuated level
+	            playlistController.setVolume(0.2f);
 	    }
 	}
 	
