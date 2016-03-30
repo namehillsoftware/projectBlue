@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
@@ -54,6 +55,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -249,13 +251,19 @@ public class PlaybackService extends Service implements
 
 	private static final int notificationId = 42;
 	private static int startId;
+
+	private static final int maxErrors = 3;
+	private static final int errorCountResetDuration = 1000;
+
 	private WifiLock wifiLock = null;
 	private NotificationManager notificationManager;
 	private AudioManager audioManager;
 	private ComponentName remoteControlReceiver;
 	private RemoteControlClient remoteControlClient;
 	private Bitmap remoteClientBitmap = null;
-
+	private int numberOfErrors = 0;
+	private long lastErrorTime = 0;
+	
 	// State dependent static variables
 	private static volatile String playlistString;
 	// Declare as volatile so that every thread has the same version of the playlist controllers
@@ -298,7 +306,7 @@ public class PlaybackService extends Service implements
 				.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
 				.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
 		filePropertiesProvider.onComplete(fileProperties -> {
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
@@ -341,9 +349,30 @@ public class PlaybackService extends Service implements
 
 	private LocalBroadcastManager localBroadcastManager;
 
-	private Runnable connectionRegainedListener;
+	private final Lazy<Runnable> connectionRegainedListener = new Lazy<Runnable>() {
+		@Override
+		protected Runnable initialize() throws Exception {
+			return () -> {
+				if (playlistController != null && !playlistController.isPlaying()) {
+					stopSelf(startId);
+					return;
+				}
 
-	private Runnable onPollingCancelledListener;
+				LibrarySession.GetActiveLibrary(PlaybackService.this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
+
+			};
+		}
+	};
+
+	private final Lazy<Runnable> onPollingCancelledListener = new Lazy<Runnable>() {
+		@Override
+		protected Runnable initialize() throws Exception {
+			return () -> {
+				unregisterListeners();
+				stopSelf(startId);
+			};
+		}
+	};
 
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
@@ -548,10 +577,10 @@ public class PlaybackService extends Service implements
 			wifiLock = null;
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener != null)
-			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener);
-		if (onPollingCancelledListener != null)
-			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener);
+		if (connectionRegainedListener.isInitialized())
+			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
+		if (onPollingCancelledListener.isInitialized())
+			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		areListenersRegistered = false;
 	}
@@ -794,6 +823,19 @@ public class PlaybackService extends Service implements
 	@Override
 	public void onPlaylistStateControlError(PlaybackController controller, IPlaybackFile filePlayer) {
 		saveStateToLibrary(controller, filePlayer);
+
+		final long currentErrorTime = System.currentTimeMillis();
+		// Stop handling errors if more than the max errors has occurred
+		if (++numberOfErrors > maxErrors) {
+			// and the last error time is less than the error count reset duration
+			if (currentErrorTime <= lastErrorTime + errorCountResetDuration)
+				return;
+
+			// reset the error count if enough time has elapsed to reset the error count
+			numberOfErrors = 1;
+		}
+
+		lastErrorTime = currentErrorTime;
 		
 		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setOngoing(true);
@@ -808,28 +850,9 @@ public class PlaybackService extends Service implements
 		notifyForeground(builder);
 		
 		final PollConnection checkConnection = PollConnection.Instance.get(this);
-		
-		if (connectionRegainedListener == null) {
-			connectionRegainedListener = () -> {
-				if (playlistController != null && !playlistController.isPlaying()) {
-					stopSelf(startId);
-					return;
-				}
 
-				LibrarySession.GetActiveLibrary(this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
-
-			};
-		}
-		
-		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener);
-		
-		if (onPollingCancelledListener == null) {
-			onPollingCancelledListener = () -> {
-				unregisterListeners();
-				stopSelf(startId);
-			};
-		}
-		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener);
+		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
+		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		checkConnection.startPolling();
 	}
@@ -929,7 +952,7 @@ public class PlaybackService extends Service implements
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
 		filePropertiesProvider.onComplete(fileProperties -> {
 			final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 			final String name = fileProperties.get(FilePropertiesProvider.NAME);
