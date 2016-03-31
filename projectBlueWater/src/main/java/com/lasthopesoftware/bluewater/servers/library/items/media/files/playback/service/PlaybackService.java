@@ -863,9 +863,7 @@ public class PlaybackService extends Service implements
 			// resume playback
 			if (playlistController != null) {
 				playlistController.setVolume(1.0f);
-	    		if (playlistController.isPlaying()) return;
-
-				if (playlistController.resume()) return;
+	    		if (playlistController.isPlaying() || playlistController.resume()) return;
 			}
 
 			restorePlaylistControllerFromStorage(result -> {
