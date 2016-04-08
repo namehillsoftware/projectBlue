@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public class DiskFileCache {
 	
@@ -46,89 +47,86 @@ public class DiskFileCache {
 	public void put(final String uniqueKey, final File file, final byte[] fileData) {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			try {
 
-			@Override
-			public final void run() {
+				final FileOutputStream fos = new FileOutputStream(file);
 				try {
-
-					final FileOutputStream fos = new FileOutputStream(file);
-					try {
-						fos.write(fileData);
-						fos.flush();
-					} finally {
-						fos.close();
-					}
-
-					put(uniqueKey, file);
-				} catch (IOException e) {
-					logger.error("Unable to write to file!", e);
-
-					// Check if free space is too low and then attempt to free up enough space
-					// to store image
-					final long freeSpace = getFreeDiskSpace(context);
-					if (freeSpace > maxSize) return;
-
-					CacheFlusher.doFlushSynchronously(context, cacheName, maxSize - file.length());
-					put(uniqueKey, file, fileData);
+					fos.write(fileData);
+					fos.flush();
+				} finally {
+					fos.close();
 				}
+
+				put(uniqueKey, file);
+			} catch (IOException e) {
+				logger.error("Unable to write to file!", e);
+
+				// Check if free space is too low and then attempt to free up enough space
+				// to store image
+				final long freeSpace = getFreeDiskSpace(context);
+				if (freeSpace > maxSize) return;
+
+				try {
+					new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
+				} catch (ExecutionException | InterruptedException ignored) {
+					return;
+				}
+
+				put(uniqueKey, file, fileData);
 			}
 		});
 	}
 
 	private void put(final String uniqueKey, final File file) {
-		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			try {
 
-			@Override
-			public void run() {
-				RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+				if (cachedFile != null) {
+					repositoryAccessHelper
+							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
+							.addParameter("id", cachedFile.getId())
+							.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
+							.execute();
 
-					CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
-					if (cachedFile != null) {
-						repositoryAccessHelper
-								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
-								.addParameter("id", cachedFile.getId())
-								.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
-								.execute();
-
-						return;
-					}
-
-					final String cachedFileSqlInsert =
-						InsertBuilder
-							.fromTable(CachedFile.tableName)
-							.addColumn(CachedFile.CACHE_NAME)
-							.addColumn(CachedFile.FILE_NAME)
-							.addColumn(CachedFile.FILE_SIZE)
-							.addColumn(CachedFile.LIBRARY_ID)
-							.addColumn(CachedFile.UNIQUE_KEY)
-							.addColumn(CachedFile.CREATED_TIME)
-							.addColumn(CachedFile.LAST_ACCESSED_TIME)
-							.build();
-
-					final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
-
-					try {
-						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
-					} catch (IOException e) {
-						logger.error("There was an error getting the canonical path for " + file, e);
-						return;
-					}
-
-					sqlInsertMapper
-						.addParameter(CachedFile.CACHE_NAME, cacheName)
-						.addParameter(CachedFile.FILE_SIZE, file.length())
-						.addParameter(CachedFile.LIBRARY_ID, library.getId())
-						.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-						.addParameter(CachedFile.CREATED_TIME, System.currentTimeMillis())
-						.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
-						.execute();
-
-				} finally {
-					repositoryAccessHelper.close();
-					CacheFlusher.doFlush(context, cacheName, maxSize);
+					return;
 				}
+
+				final String cachedFileSqlInsert =
+					InsertBuilder
+						.fromTable(CachedFile.tableName)
+						.addColumn(CachedFile.CACHE_NAME)
+						.addColumn(CachedFile.FILE_NAME)
+						.addColumn(CachedFile.FILE_SIZE)
+						.addColumn(CachedFile.LIBRARY_ID)
+						.addColumn(CachedFile.UNIQUE_KEY)
+						.addColumn(CachedFile.CREATED_TIME)
+						.addColumn(CachedFile.LAST_ACCESSED_TIME)
+						.build();
+
+				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+
+				try {
+					sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
+				} catch (IOException e) {
+					logger.error("There was an error getting the canonical path for " + file, e);
+					return;
+				}
+
+				sqlInsertMapper
+					.addParameter(CachedFile.CACHE_NAME, cacheName)
+					.addParameter(CachedFile.FILE_SIZE, file.length())
+					.addParameter(CachedFile.LIBRARY_ID, library.getId())
+					.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
+					.addParameter(CachedFile.CREATED_TIME, System.currentTimeMillis())
+					.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
+					.execute();
+
+			} finally {
+				repositoryAccessHelper.close();
+				new CacheFlusherTask(context, cacheName, maxSize).execute();
 			}
 		});
 	}
@@ -181,23 +179,19 @@ public class DiskFileCache {
 
 	private void doFileAccessedUpdate(final String uniqueKey) {
 		final long updateTime = System.currentTimeMillis();
-		RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			try {
+				repositoryAccessHelper
+						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
+						.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
+						.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
+						.addParameter(CachedFile.CACHE_NAME, cacheName)
+						.addParameter(CachedFile.LIBRARY_ID, library.getId())
+						.execute();
 
-			@Override
-			public void run() {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
-					repositoryAccessHelper
-							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + cachedFileFilter)
-							.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
-							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-							.addParameter(CachedFile.CACHE_NAME, cacheName)
-							.addParameter(CachedFile.LIBRARY_ID, library.getId())
-							.execute();
-
-				} finally {
-					repositoryAccessHelper.close();
-				}
+			} finally {
+				repositoryAccessHelper.close();
 			}
 		});
 	}

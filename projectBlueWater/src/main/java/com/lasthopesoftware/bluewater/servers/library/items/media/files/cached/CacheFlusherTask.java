@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
+import com.vedsoft.fluent.FluentTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +17,9 @@ import java.io.IOException;
  * @author david
  *
  */
-class CacheFlusher implements Runnable {
+class CacheFlusherTask extends FluentTask<Void, Void, Void> {
 
-	private final static Logger logger = LoggerFactory.getLogger(CacheFlusher.class);
+	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
 	private final Context context;
 	private final String cacheName;
@@ -27,45 +28,39 @@ class CacheFlusher implements Runnable {
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	public static void doFlush(final Context context, final String cacheName, final long targetSize) {
-		RepositoryAccessHelper.databaseExecutor.execute(new CacheFlusher(context, cacheName, targetSize));
-	}
-
-	public static void doFlushSynchronously(final Context context, final String cacheName, final long targetSize) {
-		(new CacheFlusher(context, cacheName, targetSize)).run();
-	}
-	
-	private CacheFlusher(final Context context, final String cacheName, final long targetSize) {
+	public CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
+		super(RepositoryAccessHelper.databaseExecutor);
+		
 		this.context = context;
 		this.cacheName = cacheName;
 		this.targetSize = targetSize;
 	}
-	
+
 	@Override
-	public final void run() {
+	protected Void executeInBackground(Void[] params) {
 		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 		try {
-			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
-			
-			while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize) {
+			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return null;
+
+			do {
 				final CachedFile cachedFile = getOldestCachedFile(repositoryAccessHelper);
 				if (cachedFile != null)
 					deleteCachedFile(repositoryAccessHelper, cachedFile);
-			}
-			
+			} while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize);
+
 			// Remove any files in the cache dir but not in the database
 			final File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
-			
-			if (cacheDir == null || !cacheDir.exists()) return;
-			
+
+			if (cacheDir == null || !cacheDir.exists()) return null;
+
 			final File[] filesInCacheDir = cacheDir.listFiles();
-			
+
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
-				return;
-			
+				return null;
+
 			for (File fileInCacheDir : filesInCacheDir) {
 				try {
 					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null) continue;
@@ -77,6 +72,8 @@ class CacheFlusher implements Runnable {
 		} finally {
 			repositoryAccessHelper.close();
 		}
+
+		return null;
 	}
 
 	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
