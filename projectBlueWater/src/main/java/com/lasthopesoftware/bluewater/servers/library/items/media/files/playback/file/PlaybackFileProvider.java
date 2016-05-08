@@ -17,7 +17,7 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
 	
-	private String mPlaylistString = null; 
+	private String playlistString = null;
 	
 	public PlaybackFileProvider(Context context, ConnectionProvider connectionProvider, List<IFile> files) {
 		this.context = context;
@@ -62,23 +62,23 @@ public class PlaybackFileProvider implements IPlaybackFileProvider {
 	@Override
 	public boolean add(IFile file) {
 		final boolean isAdded = files.add(file);
-		mPlaylistString = null;
+		playlistString = null;
 		return isAdded;
 	}
 
 	@Override
 	public IFile remove(int filePos) {
 		final IFile removedFile = files.remove(filePos);
-		mPlaylistString = null;
+		playlistString = null;
 		
 		return removedFile;
 	}
 	
 	@Override
 	public String toPlaylistString() {
-		if (mPlaylistString == null)
-			mPlaylistString = FileStringListUtilities.serializeFileStringList(files);
-		
-		return mPlaylistString;
+		if (playlistString == null)
+			playlistString = FileStringListUtilities.serializeFileStringList(files);
+
+		return playlistString;
 	}
 }

@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class PlaybackFile implements
 	IPlaybackFile,
@@ -63,6 +64,7 @@ public class PlaybackFile implements
 	private volatile int bufferPercentage = 0;
 	private volatile int lastBufferPercentage = 0;
 	private volatile float volume = 1.0f;
+	private float maxVolume = 1.0f;
 
 	private final Context mpContext;
 	private final IFile file;
@@ -92,6 +94,7 @@ public class PlaybackFile implements
 		isPreparing = false;
 		isInErrorState = false;
 		bufferPercentage = mBufferMin;
+		maxVolume = 1.0f;
 		
 		mediaPlayer = new MediaPlayer(); // initialize it here
 		mediaPlayer.setOnPreparedListener(this);
@@ -125,7 +128,11 @@ public class PlaybackFile implements
 		try {
 			final Uri uri = getFileUri();
 			if (uri == null) return;
-			
+
+			maxVolume = 1.0f;
+			final MaxFileVolumeProvider maxFileVolumeProvider = new MaxFileVolumeProvider(mpContext, connectionProvider, file);
+			maxFileVolumeProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+
 			setMpDataSource(uri);
 			initializeBufferPercentage(uri);
 			
@@ -133,6 +140,14 @@ public class PlaybackFile implements
 			
 			logger.info("Preparing " + file.getKey() + " synchronously.");
 			mediaPlayer.prepare();
+
+			try {
+				maxVolume = maxFileVolumeProvider.get();
+			} catch (ExecutionException | InterruptedException e) {
+				logger.warn("There was an error getting the max file volume", e);
+			}
+
+			updateMediaPlayerVolume();
 			
 			isPrepared = true;
 		} catch (FileNotFoundException fe) {
@@ -354,8 +369,14 @@ public class PlaybackFile implements
 	public void setVolume(float volume) {
 		this.volume = volume;
 		
-		if (mediaPlayer != null)
-			mediaPlayer.setVolume(this.volume, this.volume);
+		updateMediaPlayerVolume();
+	}
+
+	private synchronized void updateMediaPlayerVolume() {
+		if (mediaPlayer == null) return;
+
+		final float leveledVolume = volume * maxVolume;
+		mediaPlayer.setVolume(leveledVolume, leveledVolume);
 	}
 	
 	private static void handleIllegalStateException(IllegalStateException ise) {

@@ -32,6 +32,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, (CheckBox) findViewById(R.id.syncOnPowerCheckbox));
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, (CheckBox) findViewById(R.id.syncOnWifiCheckbox));
+		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled, (CheckBox) findViewById(R.id.isVolumeLevelingEnabled));
 
 		updateServerList();
 	}

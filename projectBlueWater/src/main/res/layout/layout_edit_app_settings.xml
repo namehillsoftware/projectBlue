@@ -36,6 +36,17 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/app_only_sync_ext_power" />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:layout_marginBottom="10dp"
+                android:text="@string/app_audio_settings"/>
+            <CheckBox
+                android:id="@+id/isVolumeLevelingEnabled"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_use_volume_leveling" />
         </LinearLayout>
 
     </LinearLayout>

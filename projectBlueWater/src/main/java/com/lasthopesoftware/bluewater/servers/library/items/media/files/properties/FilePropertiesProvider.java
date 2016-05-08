@@ -108,4 +108,5 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 	public static final String STACK_VIEW = "Stack View";
 	static final String DATE = "Date";
 	public static final String RATING = "Rating";
+	public static final String VolumeLevelR128 = "Volume Level (R128)";
 }
