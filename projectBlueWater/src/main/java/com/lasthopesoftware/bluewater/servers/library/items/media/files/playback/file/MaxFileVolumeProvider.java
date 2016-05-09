@@ -60,11 +60,18 @@ public class MaxFileVolumeProvider extends FluentTask<Void, Void, Float> {
 			if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
 				return UnityVolume;
 
-			final float r128VolumeLevel = Float.parseFloat(fileProperties.get(FilePropertiesProvider.VolumeLevelR128));
+			final String r128VolumeLevelString = fileProperties.get(FilePropertiesProvider.VolumeLevelR128);
+			try {
+				final float r128VolumeLevel = Float.parseFloat(r128VolumeLevelString);
 
-			return Math.min(1 + (r128VolumeLevel / MaxComputedVolumeInDecibels), UnityVolume);
+				final float normalizedVolumeLevel = MaxRelativeVolumeInDecibels - r128VolumeLevel;
+
+				return Math.min(1 - (normalizedVolumeLevel / MaxComputedVolumeInDecibels), UnityVolume);
+			} catch (NumberFormatException e) {
+				logger.info("There was an error attempting to parse the given R128 level of " + r128VolumeLevelString + ".", e);
+			}
 		} catch (ExecutionException | InterruptedException e) {
-			logger.warn("There was an error getting the max file volume", e);
+			logger.info("There was an error getting the max file volume", e);
 		}
 
 		return UnityVolume;
