@@ -54,7 +54,6 @@ public class MaxFileVolumeProvider extends FluentTask<Void, Void, Float> {
 
 		try {
 			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(this.connectionProvider, file.getKey());
-			filePropertiesProvider.execute();
 
 			final Map<String, String> fileProperties = filePropertiesProvider.get();
 			if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
