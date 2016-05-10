@@ -70,7 +70,7 @@ public class PlaybackFile implements
 	private final IFile file;
 	private final ConnectionProvider connectionProvider;
 	
-	private static final int mBufferMin = 0, mBufferMax = 100;
+	private static final int bufferMin = 0, bufferMax = 100;
 
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
@@ -93,7 +93,7 @@ public class PlaybackFile implements
 		isPrepared = false;
 		isPreparing = false;
 		isInErrorState = false;
-		bufferPercentage = mBufferMin;
+		bufferPercentage = bufferMin;
 		maxVolume = 1.0f;
 		
 		mediaPlayer = new MediaPlayer(); // initialize it here
@@ -165,7 +165,7 @@ public class PlaybackFile implements
 	
 	private void initializeBufferPercentage(Uri uri) {
 		final String scheme = uri.getScheme();
-		bufferPercentage = IoCommon.FileUriScheme.equalsIgnoreCase(scheme) ? mBufferMax : mBufferMin;
+		bufferPercentage = IoCommon.FileUriScheme.equalsIgnoreCase(scheme) ? bufferMax : bufferMin;
 		logger.info("Initialized " + scheme + " type URI buffer percentage to " + String.valueOf(bufferPercentage));
 	}
 	
@@ -292,9 +292,9 @@ public class PlaybackFile implements
 	public boolean isBuffered() {
 		if (lastBufferPercentage != bufferPercentage) {
 			lastBufferPercentage = bufferPercentage;
-			logger.info("Buffer percentage: " + String.valueOf(bufferPercentage) + "% Buffer Threshold: " + String.valueOf(mBufferMax) + "%");
+			logger.info("Buffer percentage: " + String.valueOf(bufferPercentage) + "% Buffer Threshold: " + String.valueOf(bufferMax) + "%");
 		}
-		return bufferPercentage >= mBufferMax;
+		return bufferPercentage >= bufferMax;
 	}
 	
 	public int getBufferPercentage() {
