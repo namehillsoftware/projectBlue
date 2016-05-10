@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.vedsoft.fluent.FluentTask;
 
@@ -20,7 +21,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class MaxFileVolumeProvider extends FluentTask<Void, Void, Float> {
 
-	private static Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);
 
 	private static final float MaxRelativeVolumeInDecibels = 23;
 
@@ -53,7 +54,7 @@ public class MaxFileVolumeProvider extends FluentTask<Void, Void, Float> {
 			return UnityVolume;
 
 		try {
-			final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(this.connectionProvider, file.getKey());
+			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
 
 			final Map<String, String> fileProperties = filePropertiesProvider.get();
 			if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
