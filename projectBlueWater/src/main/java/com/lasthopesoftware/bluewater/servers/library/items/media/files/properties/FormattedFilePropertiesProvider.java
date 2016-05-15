@@ -19,74 +19,51 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
-	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<DateTimeFormatter>() {
-		@Override
-		protected DateTimeFormatter initialize() {
-			return new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter();
-		}
-	};
+	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<>(() -> new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter());
 	
-	private static final Lazy<DateTimeFormatterBuilder> dateFormatterBuilder = new Lazy<DateTimeFormatterBuilder>() {
-		@Override
-		protected DateTimeFormatterBuilder initialize() {
-			return new DateTimeFormatterBuilder()
-					.appendMonthOfYear(1)
-					.appendLiteral('/')
-					.appendDayOfMonth(1)
-					.appendLiteral('/')
-					.append(yearFormatter.getObject());
-		}
-	};
+	private static final Lazy<DateTimeFormatterBuilder> dateFormatterBuilder =
+			new Lazy<>(() ->
+					new DateTimeFormatterBuilder()
+							.appendMonthOfYear(1)
+							.appendLiteral('/')
+							.appendDayOfMonth(1)
+							.appendLiteral('/')
+							.append(yearFormatter.getObject()));
 	
-	private static final Lazy<DateTimeFormatter> dateFormatter = new Lazy<DateTimeFormatter>() {
-		@Override
-		protected DateTimeFormatter initialize() {
-			return dateFormatterBuilder.getObject().toFormatter();
-		}
-	};
+	private static final Lazy<DateTimeFormatter> dateFormatter = new Lazy<>(() -> dateFormatterBuilder.getObject().toFormatter());
 	
-	private static final Lazy<DateTimeFormatter> dateTimeFormatter = new Lazy<DateTimeFormatter>() {
-		@Override
-		protected DateTimeFormatter initialize() {
-			return dateFormatterBuilder.getObject()
-					.appendLiteral(" at ")
-					.appendClockhourOfHalfday(1)
-					.appendLiteral(':')
-					.appendMinuteOfHour(2)
-					.appendLiteral(' ')
-					.appendHalfdayOfDayText()
-					.toFormatter();
-		}
-	};
+	private static final Lazy<DateTimeFormatter> dateTimeFormatter =
+			new Lazy<>(() ->
+					dateFormatterBuilder.getObject()
+							.appendLiteral(" at ")
+							.appendClockhourOfHalfday(1)
+							.appendLiteral(':')
+							.appendMinuteOfHour(2)
+							.appendLiteral(' ')
+							.appendHalfdayOfDayText()
+							.toFormatter());
 	
-	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter = new Lazy<PeriodFormatter>() {
-		@Override
-		protected PeriodFormatter initialize() {
-			return new PeriodFormatterBuilder()
-					.appendMinutes()
-					.appendSeparator(":")
-					.minimumPrintedDigits(2)
-					.maximumParsedDigits(2)
-					.appendSeconds()
-					.toFormatter();
-		}
-	};
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
+			new Lazy<>(() ->
+					new PeriodFormatterBuilder()
+							.appendMinutes()
+							.appendSeparator(":")
+							.minimumPrintedDigits(2)
+							.maximumParsedDigits(2)
+							.appendSeconds()
+							.toFormatter());
 	
-	private static final Lazy<DateTime> excelEpoch = new Lazy<DateTime>() {
+	private static final Lazy<DateTime> excelEpoch = new Lazy<>(() -> new DateTime(1899, 12, 30, 0, 0));
 
-		@Override
-		protected DateTime initialize() {
-			return new DateTime(1899, 12, 30, 0, 0);
-		}
-	};
-
-	private static final Lazy<Set<String>> dateTimeProperties = new Lazy<Set<String>>() {
-
-		@Override
-		protected Set<String> initialize() {
-			return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[] { LAST_PLAYED, LAST_SKIPPED, DATE_CREATED, DATE_IMPORTED, DATE_MODIFIED })));
-		}
-	};
+	private static final Lazy<Set<String>> dateTimeProperties =
+			new Lazy<>(() -> Collections.unmodifiableSet(
+					new HashSet<>(
+							Arrays.asList(new String[] {
+									LAST_PLAYED,
+									LAST_SKIPPED,
+									DATE_CREATED,
+									DATE_IMPORTED,
+									DATE_MODIFIED}))));
 	
 	public FormattedFilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
 		super(connectionProvider, fileKey);

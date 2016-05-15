@@ -55,7 +55,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.lazyj.Lazy;
+import com.vedsoft.lazyj.AbstractLazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,9 +349,9 @@ public class PlaybackService extends Service implements
 
 	private LocalBroadcastManager localBroadcastManager;
 
-	private final Lazy<Runnable> connectionRegainedListener = new Lazy<Runnable>() {
+	private final AbstractLazy<Runnable> connectionRegainedListener = new AbstractLazy<Runnable>() {
 		@Override
-		protected Runnable initialize() throws Exception {
+		protected final Runnable initialize() throws Exception {
 			return () -> {
 				if (playlistController != null && !playlistController.isPlaying()) {
 					stopSelf(startId);
@@ -364,9 +364,9 @@ public class PlaybackService extends Service implements
 		}
 	};
 
-	private final Lazy<Runnable> onPollingCancelledListener = new Lazy<Runnable>() {
+	private final AbstractLazy<Runnable> onPollingCancelledListener = new AbstractLazy<Runnable>() {
 		@Override
-		protected Runnable initialize() throws Exception {
+		protected final Runnable initialize() throws Exception {
 			return () -> {
 				unregisterListeners();
 				stopSelf(startId);

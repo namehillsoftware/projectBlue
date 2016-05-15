@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.lazyj.Lazy;
+import com.vedsoft.lazyj.AbstractLazy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -291,14 +291,14 @@ public class ObjectiveDroid {
 			}
 		}
 
-		private static final Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new Lazy<HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>>>() {
+		private static final AbstractLazy<HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new AbstractLazy<HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>>>() {
 			@Override
-			protected HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
-				final HashMap<Type, Lazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
+			protected final HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
+				final HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -310,9 +310,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Boolean.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? parseSqlBoolean(parameterThree) : null);
@@ -323,9 +323,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Short.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -337,9 +337,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Short.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Short.parseShort(parameterThree) : null);
@@ -350,9 +350,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -364,9 +364,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Integer.parseInt(parameterThree) : null);
@@ -377,9 +377,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -391,9 +391,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Long.parseLong(parameterThree) : null);
@@ -404,9 +404,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Float.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -418,9 +418,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Float.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Float.parseFloat(parameterThree) : null);
@@ -431,9 +431,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Double.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -445,9 +445,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Double.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, !isSqlValueNull(parameterThree) ? Double.parseDouble(parameterThree) : null);
@@ -458,9 +458,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(String.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.set(parameterTwo, parameterThree);
@@ -471,9 +471,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Enum.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Field, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -510,14 +510,14 @@ public class ObjectiveDroid {
 			}
 		}
 
-		private static final Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new Lazy<HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>>>() {
+		private static final AbstractLazy<HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new AbstractLazy<HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>>>() {
 			@Override
-			protected HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
-				final HashMap<Class<?>, Lazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
+			protected final HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
+				final HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -531,9 +531,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Boolean.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? parseSqlBoolean(parameterThree) : null);
@@ -546,9 +546,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Short.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -562,9 +562,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Short.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Short.parseShort(parameterThree) : null);
@@ -577,9 +577,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -593,9 +593,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Integer.parseInt(parameterThree) : null);
@@ -608,9 +608,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -624,9 +624,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Long.parseLong(parameterThree) : null);
@@ -639,9 +639,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Float.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -655,9 +655,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Float.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Float.parseFloat(parameterThree) : null);
@@ -670,9 +670,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.TYPE, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Double.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))
@@ -686,9 +686,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Double.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, !isSqlValueNull(parameterThree) ? Double.parseDouble(parameterThree) : null);
@@ -701,9 +701,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(String.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(String.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								parameterOne.invoke(parameterTwo, parameterThree);
@@ -716,9 +716,9 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Enum.class, new Lazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Enum.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
-					protected ThreeParameterRunnable<Method, Object, String> initialize() {
+					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
 							try {
 								if (!isSqlValueNull(parameterThree))

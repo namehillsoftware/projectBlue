@@ -38,44 +38,33 @@ public class StoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
-	public static final Lazy<ExecutorService> storedFileExecutor = new Lazy<ExecutorService>() {
-		@Override
-		protected ExecutorService initialize() {
-			return Executors.newSingleThreadExecutor();
-		}
-	};
+	public static final Lazy<ExecutorService> storedFileExecutor = new Lazy<>(Executors::newSingleThreadExecutor);
 
 	private final Context context;
 	private final Library library;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFile.tableName;
 
-	private static final Lazy<String> insertSql = new Lazy<String>() {
-		@Override
-		protected String initialize() {
-			return
-				InsertBuilder.fromTable(StoredFile.tableName)
-					.addColumn(StoredFile.serviceIdColumnName)
-					.addColumn(StoredFile.libraryIdColumnName)
-					.addColumn(StoredFile.isOwnerColumnName)
-					.build();
-		}
-	};
+	private static final Lazy<String> insertSql
+			= new Lazy<>(() ->
+				InsertBuilder
+						.fromTable(StoredFile.tableName)
+						.addColumn(StoredFile.serviceIdColumnName)
+						.addColumn(StoredFile.libraryIdColumnName)
+						.addColumn(StoredFile.isOwnerColumnName)
+						.build());
 
-	private static final Lazy<String> updateSql = new Lazy<String>() {
-		@Override
-		protected String initialize() {
-			return
-				UpdateBuilder.fromTable(StoredFile.tableName)
-					.addSetter(StoredFile.serviceIdColumnName)
-					.addSetter(StoredFile.storedMediaIdColumnName)
-					.addSetter(StoredFile.pathColumnName)
-					.addSetter(StoredFile.isOwnerColumnName)
-					.addSetter(StoredFile.isDownloadCompleteColumnName)
-					.setFilter("WHERE id = @id")
-					.buildQuery();
-		}
-	};
+	private static final Lazy<String> updateSql =
+			new Lazy<>(() ->
+					UpdateBuilder
+							.fromTable(StoredFile.tableName)
+							.addSetter(StoredFile.serviceIdColumnName)
+							.addSetter(StoredFile.storedMediaIdColumnName)
+							.addSetter(StoredFile.pathColumnName)
+							.addSetter(StoredFile.isOwnerColumnName)
+							.addSetter(StoredFile.isDownloadCompleteColumnName)
+							.setFilter("WHERE id = @id")
+							.buildQuery());
 
 	public StoredFileAccess(Context context, Library library) {
 		this.context = context;

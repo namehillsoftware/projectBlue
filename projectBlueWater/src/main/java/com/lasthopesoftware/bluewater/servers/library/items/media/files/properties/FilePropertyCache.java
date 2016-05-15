@@ -52,13 +52,7 @@ class FilePropertyCache {
 
 	private FilePropertyCache() {}
 
-	private static final Lazy<FilePropertyCache> filePropertyCacheInstance = new Lazy<FilePropertyCache>() {
-
-		@Override
-		protected FilePropertyCache initialize() throws Exception {
-			return new FilePropertyCache();
-		}
-	};
+	private static final Lazy<FilePropertyCache> filePropertyCacheInstance = new Lazy<>(FilePropertyCache::new);
 
 	public static FilePropertyCache getInstance() {
 		return filePropertyCacheInstance.getObject();

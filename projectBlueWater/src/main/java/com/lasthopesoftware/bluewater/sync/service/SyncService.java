@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.lazyj.AbstractLazy;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -78,12 +79,7 @@ public class SyncService extends Service {
 
 	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
-	private final Lazy<String> downloadingStatusLabel = new Lazy<String>() {
-		@Override
-		protected String initialize() {
-			return SyncService.this.getString(R.string.downloading_status_label);
-		}
-	};
+	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
 	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
@@ -107,9 +103,9 @@ public class SyncService extends Service {
 
 	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = storedFile -> sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
 
-	private final Lazy<BroadcastReceiver> onWifiStateChangedReceiver = new Lazy<BroadcastReceiver>() {
+	private final AbstractLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractLazy<BroadcastReceiver>() {
 		@Override
-		protected BroadcastReceiver initialize() {
+		protected final BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -119,9 +115,9 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final Lazy<BroadcastReceiver> onPowerDisconnectedReceiver = new Lazy<BroadcastReceiver>() {
+	private final AbstractLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractLazy<BroadcastReceiver>() {
 		@Override
-		public BroadcastReceiver initialize() {
+		public final BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -131,9 +127,9 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final Lazy<Intent> browseLibraryIntent = new Lazy<Intent>() {
+	private final AbstractLazy<Intent> browseLibraryIntent = new AbstractLazy<Intent>() {
 		@Override
-		protected Intent initialize() {
+		protected final Intent initialize() {
 			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);
 			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
 			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

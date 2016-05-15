@@ -20,19 +20,9 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	private static final int DATABASE_VERSION = 5;
 	private static final String DATABASE_NAME = "sessions_db";
 
-	private final static Lazy<IRepository[]> repositories = new Lazy<IRepository[]>() {
-		@Override
-		protected IRepository[] initialize() {
-			return new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile() };
-		}
-	};
+	private final static Lazy<IRepository[]> repositories = new Lazy<>(() -> new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile()});
 
-	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<SQLiteDatabase>() {
-		@Override
-		protected SQLiteDatabase initialize() {
-			return getWritableDatabase();
-		}
-	};
+	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<>(this::getWritableDatabase);
 
 	public RepositoryAccessHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);

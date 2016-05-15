@@ -27,54 +27,46 @@ public class LibrarySession {
 	public static final String libraryChosenEvent = MagicPropertyBuilder.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
-	private static final Lazy<String> libraryInsertSql = new Lazy<String>() {
-		@Override
-		protected String initialize() {
-			return
-					InsertBuilder
-							.fromTable(Library.tableName)
-							.addColumn(Library.accessCodeColumn)
-							.addColumn(Library.authKeyColumn)
-							.addColumn(Library.isLocalOnlyColumn)
-							.addColumn(Library.libraryNameColumn)
-							.addColumn(Library.isRepeatingColumn)
-							.addColumn(Library.customSyncedFilesPathColumn)
-							.addColumn(Library.isSyncLocalConnectionsOnlyColumn)
-							.addColumn(Library.isUsingExistingFilesColumn)
-							.addColumn(Library.nowPlayingIdColumn)
-							.addColumn(Library.nowPlayingProgressColumn)
-							.addColumn(Library.savedTracksStringColumn)
-							.addColumn(Library.selectedViewColumn)
-							.addColumn(Library.selectedViewTypeColumn)
-							.addColumn(Library.syncedFileLocationColumn)
-							.build();
-		}
-	};
+	private static final Lazy<String> libraryInsertSql
+			= new Lazy<>(() ->
+				InsertBuilder
+						.fromTable(Library.tableName)
+						.addColumn(Library.accessCodeColumn)
+						.addColumn(Library.authKeyColumn)
+						.addColumn(Library.isLocalOnlyColumn)
+						.addColumn(Library.libraryNameColumn)
+						.addColumn(Library.isRepeatingColumn)
+						.addColumn(Library.customSyncedFilesPathColumn)
+						.addColumn(Library.isSyncLocalConnectionsOnlyColumn)
+						.addColumn(Library.isUsingExistingFilesColumn)
+						.addColumn(Library.nowPlayingIdColumn)
+						.addColumn(Library.nowPlayingProgressColumn)
+						.addColumn(Library.savedTracksStringColumn)
+						.addColumn(Library.selectedViewColumn)
+						.addColumn(Library.selectedViewTypeColumn)
+						.addColumn(Library.syncedFileLocationColumn)
+						.build());
 
-	private static final Lazy<String> libraryUpdateSql = new Lazy<String>() {
-		@Override
-		public String initialize() {
-			return
-					UpdateBuilder
-							.fromTable(Library.tableName)
-							.addSetter(Library.accessCodeColumn)
-							.addSetter(Library.authKeyColumn)
-							.addSetter(Library.isLocalOnlyColumn)
-							.addSetter(Library.libraryNameColumn)
-							.addSetter(Library.isRepeatingColumn)
-							.addSetter(Library.customSyncedFilesPathColumn)
-							.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
-							.addSetter(Library.isUsingExistingFilesColumn)
-							.addSetter(Library.nowPlayingIdColumn)
-							.addSetter(Library.nowPlayingProgressColumn)
-							.addSetter(Library.savedTracksStringColumn)
-							.addSetter(Library.selectedViewColumn)
-							.addSetter(Library.selectedViewTypeColumn)
-							.addSetter(Library.syncedFileLocationColumn)
-							.setFilter("WHERE id = @id")
-							.buildQuery();
-		}
-	};
+	private static final Lazy<String> libraryUpdateSql
+			= new Lazy<>(() ->
+				UpdateBuilder
+						.fromTable(Library.tableName)
+						.addSetter(Library.accessCodeColumn)
+						.addSetter(Library.authKeyColumn)
+						.addSetter(Library.isLocalOnlyColumn)
+						.addSetter(Library.libraryNameColumn)
+						.addSetter(Library.isRepeatingColumn)
+						.addSetter(Library.customSyncedFilesPathColumn)
+						.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
+						.addSetter(Library.isUsingExistingFilesColumn)
+						.addSetter(Library.nowPlayingIdColumn)
+						.addSetter(Library.nowPlayingProgressColumn)
+						.addSetter(Library.savedTracksStringColumn)
+						.addSetter(Library.selectedViewColumn)
+						.addSetter(Library.selectedViewTypeColumn)
+						.addSetter(Library.syncedFileLocationColumn)
+						.setFilter("WHERE id = @id")
+						.buildQuery());
 
 	public static void SaveLibrary(final Context context, final Library library) {
 		SaveLibrary(context, library, null);

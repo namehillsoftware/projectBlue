@@ -4,7 +4,7 @@ import android.os.AsyncTask;
 import android.os.Message;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
-import com.vedsoft.lazyj.Lazy;
+import com.vedsoft.lazyj.AbstractLazy;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,9 +17,9 @@ public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void,
 
 	private final NowPlayingActivityMessageHandler handler;
 
-	private final Lazy<Integer> fileDuration = new Lazy<Integer>() {
+	private final AbstractLazy<Integer> fileDuration = new AbstractLazy<Integer>() {
 		@Override
-		protected Integer initialize() {
+		protected final Integer initialize() {
 			return filePlayer.getDuration();
 		}
 	};
