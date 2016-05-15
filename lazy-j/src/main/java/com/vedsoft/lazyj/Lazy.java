@@ -10,12 +10,7 @@ public final class Lazy<T> extends AbstractLazy<T> {
 	private final Callable<T> initialization;
 
 	public Lazy(final Class<T> cls) {
-		this(new Callable<T>() {
-			@Override
-			public T call() throws Exception {
-				return cls.newInstance();
-			}
-		});
+		this(cls::newInstance);
 	}
 
 	public Lazy(Callable<T> initialization) {
