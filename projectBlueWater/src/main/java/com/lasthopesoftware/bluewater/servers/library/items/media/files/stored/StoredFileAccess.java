@@ -194,7 +194,7 @@ public class StoredFileAccess {
 						storedFile = getStoredFile(repositoryAccessHelper, file);
 					}
 
-					if (storedFile.getPath() == null) {
+					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
 						try {
 							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, file, true);
 							final Uri localUri = mediaFileUriProvider.getFileUri();

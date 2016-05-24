@@ -88,4 +88,5 @@
     <string name="lbl_connect">Connect</string>
     <string name="app_audio_settings">Audio Settings:</string>
     <string name="app_use_volume_leveling">Use Volume Leveling (R128)</string>
+    <string name="permissions_must_be_granted_for_settings">In order for the library settings to be changed, the requested permissions must be granted!</string>
 </resources>

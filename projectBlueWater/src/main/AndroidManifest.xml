@@ -38,8 +38,7 @@
         </activity>
         <activity
             android:name=".servers.settings.EditServerSettingsActivity"
-            android:label="@string/title_activity_set_up_connection"
-            android:noHistory="true" >
+            android:label="@string/title_activity_set_up_connection">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".settings.ApplicationSettingsActivity" />

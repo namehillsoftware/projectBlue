@@ -200,7 +200,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					selectViewsListView.setOnItemClickListener(getOnSelectViewClickListener(items));
 
 					hideAllViews();
-					if (!Library.serverViewTypes.contains(selectedViewType)) {
+					if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
 						oldTitle = specialViews.get(0);
 						getSupportActionBar().setTitle(oldTitle);
 

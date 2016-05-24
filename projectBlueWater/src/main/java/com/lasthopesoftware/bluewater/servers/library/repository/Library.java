@@ -10,8 +10,10 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.s
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Library implements IRepository {
 
@@ -229,6 +231,14 @@ public class Library implements IRepository {
 		this.id = id;
 	}
 
+	public boolean isExternalReadAccessNeeded() {
+		return isUsingExistingFiles || SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(syncedFileLocation);
+	}
+
+	public boolean isExternalWriteAccessNeeded() {
+		return SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(syncedFileLocation);
+	}
+
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `authKey` VARCHAR(100) , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
@@ -248,14 +258,20 @@ public class Library implements IRepository {
 	public enum SyncedFileLocation {
 		EXTERNAL,
 		INTERNAL,
-		CUSTOM
+		CUSTOM;
+
+		public static final Set<SyncedFileLocation> ExternalDiskAccessSyncLocations = Collections.unmodifiableSet(
+				new HashSet<>(
+						Arrays.asList(new SyncedFileLocation[] {
+								SyncedFileLocation.EXTERNAL,
+								SyncedFileLocation.CUSTOM })));
 	}
 
 	public enum ViewType {
 		StandardServerView,
 		PlaylistView,
-		DownloadView
-	}
+		DownloadView;
 
-	public static final HashSet<ViewType> serverViewTypes = new HashSet<>(Arrays.asList(Library.ViewType.StandardServerView, Library.ViewType.PlaylistView));
+		public static final HashSet<ViewType> serverViewTypes = new HashSet<>(Arrays.asList(Library.ViewType.StandardServerView, Library.ViewType.PlaylistView));
+	}
 }

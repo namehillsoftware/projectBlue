@@ -56,6 +56,5 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 			progressBar.setVisibility(View.INVISIBLE);
 			serverListView.setVisibility(View.VISIBLE);
 		}));
-
 	}
 }
