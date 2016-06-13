@@ -272,6 +272,7 @@ public class Library implements IRepository {
 		PlaylistView,
 		DownloadView;
 
-		public static final HashSet<ViewType> serverViewTypes = new HashSet<>(Arrays.asList(Library.ViewType.StandardServerView, Library.ViewType.PlaylistView));
+		public static final Set<ViewType> serverViewTypes = Collections.unmodifiableSet(
+				new HashSet<>(Arrays.asList(Library.ViewType.StandardServerView, Library.ViewType.PlaylistView)));
 	}
 }
