@@ -66,6 +66,9 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 	@Override
 	public Uri getFileUri() throws IOException {
+		if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
+			return null;
+
 		final Cursor cursor = getMediaQueryCursor();
 		if (cursor == null) return null;
 
@@ -118,9 +121,6 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	private Cursor getMediaQueryCursor() throws IOException {
 		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
-
-		if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
-			return null;
 
 		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, getFile().getKey());
 
