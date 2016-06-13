@@ -276,13 +276,18 @@ public class StoredFileAccess {
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {
+		String sql =
+				" SELECT * " +
+				" FROM " + StoredFile.tableName + " " +
+				" WHERE " + StoredFile.serviceIdColumnName + " = @" + StoredFile.serviceIdColumnName +
+				" AND " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName;
+
+		if (!library.isUsingExistingFiles())
+			sql += " AND " + StoredFile.isOwnerColumnName + " = 1";
+
 		return
 			helper
-				.mapSql(
-					" SELECT * " +
-					" FROM " + StoredFile.tableName + " " +
-					" WHERE " + StoredFile.serviceIdColumnName + " = @" + StoredFile.serviceIdColumnName +
-					" AND " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName)
+				.mapSql(sql)
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
 				.fetchFirst(StoredFile.class);
