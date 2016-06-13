@@ -282,8 +282,7 @@ public class StoredFileAccess {
 					" SELECT * " +
 					" FROM " + StoredFile.tableName + " " +
 					" WHERE " + StoredFile.serviceIdColumnName + " = @" + StoredFile.serviceIdColumnName +
-					" AND " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName +
-					(library.isUsingExistingFiles() ? " AND " + StoredFile.isOwnerColumnName + " = 1" : ""))
+					" AND " + StoredFile.libraryIdColumnName + " = @" + StoredFile.libraryIdColumnName)
 				.addParameter(StoredFile.serviceIdColumnName, file.getKey())
 				.addParameter(StoredFile.libraryIdColumnName, library.getId())
 				.fetchFirst(StoredFile.class);
