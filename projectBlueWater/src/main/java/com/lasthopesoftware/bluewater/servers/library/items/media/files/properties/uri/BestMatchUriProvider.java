@@ -36,7 +36,7 @@ public class BestMatchUriProvider extends AbstractFileUriProvider {
 		if (fileUri != null)
 			return fileUri;
 
-		if (library.isUsingExistingFiles() && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+		if (library.isUsingExistingFiles() && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, getFile());
 			fileUri = mediaFileUriProvider.getFileUri();
 			if (fileUri != null)
