@@ -1,7 +1,10 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 
 import com.lasthopesoftware.bluewater.servers.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
@@ -33,10 +36,12 @@ public class BestMatchUriProvider extends AbstractFileUriProvider {
 		if (fileUri != null)
 			return fileUri;
 
-		final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, getFile());
-		fileUri = mediaFileUriProvider.getFileUri();
-		if (fileUri != null)
-			return fileUri;
+		if (library.isUsingExistingFiles() && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, getFile());
+			fileUri = mediaFileUriProvider.getFileUri();
+			if (fileUri != null)
+				return fileUri;
+		}
 
 		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider, getFile());
 		return remoteFileUriProvider.getFileUri();
