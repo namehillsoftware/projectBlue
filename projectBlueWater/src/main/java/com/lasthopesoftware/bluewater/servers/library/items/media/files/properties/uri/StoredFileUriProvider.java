@@ -1,7 +1,11 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Environment;
+import android.support.v4.content.ContextCompat;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
@@ -19,11 +23,13 @@ import java.util.concurrent.ExecutionException;
  */
 public class StoredFileUriProvider extends AbstractFileUriProvider {
 	private final StoredFileAccess storedFileAccess;
+	private final Context context;
 
 	public StoredFileUriProvider(Context context, Library library, IFile file) {
 		super(file);
 
 		storedFileAccess = new StoredFileAccess(context, library);
+		this.context = context;
 	}
 
 	@Override
@@ -33,6 +39,9 @@ public class StoredFileUriProvider extends AbstractFileUriProvider {
 			if (storedFile == null || !storedFile.isDownloadComplete()) return null;
 
 			final File file = new File(storedFile.getPath());
+			if (file.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
+				return null;
+
 			if (file.exists())
 				return Uri.fromFile(file);
 		} catch (ExecutionException | InterruptedException e) {

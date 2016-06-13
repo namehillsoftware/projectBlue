@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
@@ -64,6 +67,8 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	@Override
 	public Uri getFileUri() throws IOException {
 		final Cursor cursor = getMediaQueryCursor();
+		if (cursor == null) return null;
+
 		try {
 			if (!cursor.moveToFirst()) return null;
 
@@ -96,6 +101,8 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 	public int getMediaId() throws IOException {
 		final Cursor cursor = getMediaQueryCursor();
+		if (cursor == null) return -1;
+
 		try {
 			if (cursor.moveToFirst())
 				return cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey));
@@ -111,6 +118,9 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	private Cursor getMediaQueryCursor() throws IOException {
 		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
+
+		if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
+			return null;
 
 		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, getFile().getKey());
 
