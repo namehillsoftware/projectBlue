@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * Created by david on 1/19/16.
  */
-public class PruneFilesTask extends FluentTask<Void, Void, Void> {
+public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 	private static final Logger logger = LoggerFactory.getLogger(PruneFilesTask.class);
 
 	private final Context context;
