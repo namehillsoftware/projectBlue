@@ -10,8 +10,8 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;

@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;

@@ -11,9 +11,14 @@ import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.IMediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.MediaFileIdProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.IExternalStorageReadPermissionsArbitrator;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
@@ -196,14 +201,20 @@ public class StoredFileAccess {
 
 					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
 						try {
-							final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, connectionProvider, file, true);
+							final IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(context);
+							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, connectionProvider);
+
+							final MediaFileUriProvider mediaFileUriProvider =
+									new MediaFileUriProvider(context, mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator, true);
+
 							final Uri localUri = mediaFileUriProvider.getFileUri();
 							if (localUri != null) {
 								storedFile.setPath(localUri.getPath());
 								storedFile.setIsDownloadComplete(true);
 								storedFile.setIsOwner(false);
 								try {
-									storedFile.setStoredMediaId(mediaFileUriProvider.getMediaId());
+									final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator);
+									storedFile.setStoredMediaId(mediaFileIdProvider.getMediaId());
 								} catch (IOException e) {
 									logger.error("Error retrieving media file ID", e);
 								}

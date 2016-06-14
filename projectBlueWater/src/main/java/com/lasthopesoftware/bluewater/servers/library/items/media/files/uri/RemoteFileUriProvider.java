@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri;
+package com.lasthopesoftware.bluewater.servers.library.items.media.files.uri;
 
 import android.net.Uri;
 
@@ -20,10 +20,10 @@ public class RemoteFileUriProvider extends AbstractFileUriProvider {
 	}
 
 	@Override
-	public Uri getFileUri() {
+	public Uri getFileUri(IFile file) {
 		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning file URL from server.");
 
-		final String itemUrl = getFile().getPlaybackUrl(connectionProvider);
+		final String itemUrl = file.getPlaybackUrl(connectionProvider);
 		if (itemUrl != null && !itemUrl.isEmpty())
 			return Uri.parse(itemUrl);
 
