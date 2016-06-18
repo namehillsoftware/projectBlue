@@ -77,8 +77,8 @@ public class MainApplication extends Application {
 
 		builder.setCancelable(false);
 		builder
-			.setTitle("Permissions needed")
-			.setMessage("Permissions are needed to read or write from the disk. Please set these permissions from the settings page");
+			.setTitle(getString(R.string.permissions_needed))
+			.setMessage(getString(R.string.permissions_needed_launch_settings));
 
 		builder.show();
 	}
