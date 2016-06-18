@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.LazyView;
 
 import java.util.ArrayList;
 
@@ -29,31 +30,31 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 	private Library library;
 
-	private Button saveButton;
-	private EditText txtAccessCode;
-	private EditText txtUserName;
-	private EditText txtPassword;
-	private EditText txtSyncPath;
-	private CheckBox chkLocalOnly;
-	private RadioGroup rgSyncFileOptions;
-	private CheckBox chkIsUsingExistingFiles;
-	private CheckBox chkIsUsingLocalConnectionForSync;
+	private final LazyView<Button> saveButton = new LazyView<>(this, R.id.btnConnect);
+	private final LazyView<EditText> txtAccessCode = new LazyView<>(this, R.id.txtAccessCode);
+	private final LazyView<EditText> txtUserName = new LazyView<>(this, R.id.txtUserName);
+	private final LazyView<EditText> txtPassword = new LazyView<>(this, R.id.txtPassword);
+	private final LazyView<EditText> txtSyncPath = new LazyView<>(this, R.id.txtSyncPath);
+	private final LazyView<CheckBox> chkLocalOnly = new LazyView<>(this, R.id.chkLocalOnly);
+	private final LazyView<RadioGroup> rgSyncFileOptions = new LazyView<>(this, R.id.rgSyncFileOptions);
+	private final LazyView<CheckBox> chkIsUsingExistingFiles = new LazyView<>(this, R.id.chkIsUsingExistingFiles);
+	private final LazyView<CheckBox> chkIsUsingLocalConnectionForSync = new LazyView<>(this, R.id.chkIsUsingLocalConnectionForSync);
 
 	private static final int permissionsRequestInteger = 1;
 
 	private final OnClickListener connectionButtonListener = v -> {
-        saveButton.setEnabled(false);
+        saveButton.getObject().setEnabled(false);
 
         if (library == null) {
             library = new Library();
             library.setNowPlayingId(-1);
         }
 
-        library.setAccessCode(txtAccessCode.getText().toString());
-        library.setAuthKey(Base64.encodeToString((txtUserName.getText().toString() + ":" + txtPassword.getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        library.setLocalOnly(chkLocalOnly.isChecked());
-        library.setCustomSyncedFilesPath(txtSyncPath.getText().toString());
-        switch (rgSyncFileOptions.getCheckedRadioButtonId()) {
+        library.setAccessCode(txtAccessCode.getObject().getText().toString());
+        library.setAuthKey(Base64.encodeToString((txtUserName.getObject().getText().toString() + ":" + txtPassword.getObject().getText().toString()).getBytes(), Base64.DEFAULT).trim());
+        library.setLocalOnly(chkLocalOnly.getObject().isChecked());
+        library.setCustomSyncedFilesPath(txtSyncPath.getObject().getText().toString());
+        switch (rgSyncFileOptions.getObject().getCheckedRadioButtonId()) {
 	        case R.id.rbPublicLocation:
 		        library.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL);
 		        break;
@@ -64,8 +65,8 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 		        library.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
 		        break;
         }
-        library.setIsUsingExistingFiles(chkIsUsingExistingFiles.isChecked());
-        library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.isChecked());
+        library.setIsUsingExistingFiles(chkIsUsingExistingFiles.getObject().isChecked());
+        library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.getObject().isChecked());
 
         final ArrayList<String> permissionsToRequest = new ArrayList<>();
 
@@ -93,16 +94,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_server_settings);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		saveButton = (Button)findViewById(R.id.btnConnect);
-        saveButton.setOnClickListener(connectionButtonListener);
-		txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
-		txtUserName = (EditText)findViewById(R.id.txtUserName);
-		txtPassword = (EditText)findViewById(R.id.txtPassword);
-		txtSyncPath = (EditText) findViewById(R.id.txtSyncPath);
-		chkLocalOnly = (CheckBox) findViewById(R.id.chkLocalOnly);
-		rgSyncFileOptions = (RadioGroup) findViewById(R.id.rgSyncFileOptions);
-		chkIsUsingExistingFiles = (CheckBox) findViewById(R.id.chkIsUsingExistingFiles);
-		chkIsUsingLocalConnectionForSync = (CheckBox) findViewById(R.id.chkIsUsingLocalConnectionForSync);
+        saveButton.getObject().setOnClickListener(connectionButtonListener);
 	}
 
 	@Override
@@ -122,11 +114,12 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 	private void initializeLibrary(Intent intent) {
 		final java.io.File externalFilesDir = Environment.getExternalStorageDirectory();
 		if (externalFilesDir != null)
-			txtSyncPath.setText(externalFilesDir.getPath());
+			txtSyncPath.getObject().setText(externalFilesDir.getPath());
 
-		rgSyncFileOptions.check(R.id.rbPrivateToApp);
+		final RadioGroup localSyncFileOptions = rgSyncFileOptions.getObject();
+		localSyncFileOptions.check(R.id.rbPrivateToApp);
 
-		rgSyncFileOptions.setOnCheckedChangeListener((group, checkedId) -> txtSyncPath.setEnabled(checkedId == R.id.rbCustomLocation));
+		localSyncFileOptions.setOnCheckedChangeListener((group, checkedId) -> txtSyncPath.getObject().setEnabled(checkedId == R.id.rbCustomLocation));
 
 		final int libraryId = intent.getIntExtra(serverIdExtra, -1);
 		LibrarySession.GetLibrary(this, libraryId, result -> {
@@ -134,35 +127,35 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 			library = result;
 
-			chkLocalOnly.setChecked(library.isLocalOnly());
-			chkIsUsingExistingFiles.setChecked(library.isUsingExistingFiles());
-			chkIsUsingLocalConnectionForSync.setChecked(library.isSyncLocalConnectionsOnly());
+			chkLocalOnly.getObject().setChecked(library.isLocalOnly());
+			chkIsUsingExistingFiles.getObject().setChecked(library.isUsingExistingFiles());
+			chkIsUsingLocalConnectionForSync.getObject().setChecked(library.isSyncLocalConnectionsOnly());
 
 			final String customSyncPath = library.getCustomSyncedFilesPath();
 			if (customSyncPath != null && !customSyncPath.isEmpty())
-				txtSyncPath.setText(customSyncPath);
+				txtSyncPath.getObject().setText(customSyncPath);
 
 			switch (library.getSyncedFileLocation()) {
 				case EXTERNAL:
-					rgSyncFileOptions.check(R.id.rbPublicLocation);
+					localSyncFileOptions.check(R.id.rbPublicLocation);
 					break;
 				case INTERNAL:
-					rgSyncFileOptions.check(R.id.rbPrivateToApp);
+					localSyncFileOptions.check(R.id.rbPrivateToApp);
 					break;
 				case CUSTOM:
-					rgSyncFileOptions.check(R.id.rbCustomLocation);
+					localSyncFileOptions.check(R.id.rbCustomLocation);
 					break;
 			}
 
-			txtAccessCode.setText(library.getAccessCode());
+			txtAccessCode.getObject().setText(library.getAccessCode());
 			if (library.getAuthKey() == null) return;
 
 			final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
 			if (decryptedUserAuth.isEmpty()) return;
 
 			final String[] userDetails = decryptedUserAuth.split(":", 2);
-			txtUserName.setText(userDetails[0]);
-			txtPassword.setText(userDetails[1] != null ? userDetails[1] : "");
+			txtUserName.getObject().setText(userDetails[0]);
+			txtPassword.getObject().setText(userDetails[1] != null ? userDetails[1] : "");
 		});
 	}
 
@@ -174,7 +167,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 			if (grantResult == PackageManager.PERMISSION_GRANTED) continue;
 
 			Toast.makeText(this, R.string.permissions_must_be_granted_for_settings, Toast.LENGTH_LONG).show();
-			saveButton.setEnabled(true);
+			saveButton.getObject().setEnabled(true);
 			return;
 		}
 
@@ -183,7 +176,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 	private void saveLibraryAndFinish() {
 		LibrarySession.SaveLibrary(this, library, result -> {
-			saveButton.setText(getText(R.string.btn_saved));
+			saveButton.getObject().setText(getText(R.string.btn_saved));
 			finish();
 		});
 	}
