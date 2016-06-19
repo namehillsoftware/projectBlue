@@ -12,7 +12,6 @@ import android.os.StrictMode;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.content.PermissionChecker;
-import android.support.v7.app.AlertDialog;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
@@ -60,27 +59,16 @@ public class MainApplication extends Application {
 			if (library == null) return;
 
 			if (
-				(library.isExternalReadAccessNeeded() && ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PermissionChecker.PERMISSION_GRANTED) ||
-				(library.isExternalWriteAccessNeeded()  && ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PermissionChecker.PERMISSION_GRANTED)) {
-				showPermissionsAlertDialog();
-
-				final Intent settingsIntent = new Intent(MainApplication.this, EditServerSettingsActivity.class);
-				settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, library.getId());
-
-				startActivity(settingsIntent);
+					(!library.isExternalReadAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED) &&
+					(!library.isExternalWriteAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED)) {
+				return;
 			}
+
+			final Intent settingsIntent = new Intent(MainApplication.this, EditServerSettingsActivity.class);
+			settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, library.getId());
+
+			startActivity(settingsIntent);
 		});
-	}
-
-	private void showPermissionsAlertDialog() {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-		builder.setCancelable(false);
-		builder
-			.setTitle(getString(R.string.permissions_needed))
-			.setMessage(getString(R.string.permissions_needed_launch_settings));
-
-		builder.show();
 	}
 	
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

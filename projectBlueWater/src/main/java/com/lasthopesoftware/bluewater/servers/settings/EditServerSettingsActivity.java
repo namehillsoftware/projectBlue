@@ -9,6 +9,8 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.view.View.OnClickListener;
@@ -127,6 +129,13 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 			library = result;
 
+			if (
+					(library.isExternalReadAccessNeeded() && ContextCompat.checkSelfPermission(EditServerSettingsActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PermissionChecker.PERMISSION_GRANTED) ||
+							(library.isExternalWriteAccessNeeded() && ContextCompat.checkSelfPermission(EditServerSettingsActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PermissionChecker.PERMISSION_GRANTED)) {
+
+				showPermissionsAlertDialog();
+			}
+
 			chkLocalOnly.getObject().setChecked(library.isLocalOnly());
 			chkIsUsingExistingFiles.getObject().setChecked(library.isUsingExistingFiles());
 			chkIsUsingLocalConnectionForSync.getObject().setChecked(library.isSyncLocalConnectionsOnly());
@@ -157,6 +166,17 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 			txtUserName.getObject().setText(userDetails[0]);
 			txtPassword.getObject().setText(userDetails[1] != null ? userDetails[1] : "");
 		});
+	}
+
+	private void showPermissionsAlertDialog() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+		builder.setCancelable(false);
+		builder
+			.setTitle(getString(R.string.permissions_needed))
+			.setMessage(getString(R.string.permissions_needed_launch_settings));
+
+		builder.show();
 	}
 
 	@Override
