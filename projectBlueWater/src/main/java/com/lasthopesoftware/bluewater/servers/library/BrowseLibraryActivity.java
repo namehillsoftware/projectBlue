@@ -56,7 +56,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	private RelativeLayout browseLibraryContainerRelativeLayout;
+	private final LazyView<RelativeLayout> browseLibraryContainerRelativeLayout = new LazyView<>(this, R.id.browseLibraryContainer);
 	private final LazyView<ListView> selectViewsListView = new LazyView<>(this, R.id.lvLibraryViewSelection);
 	private final LazyView<ListView> specialLibraryItemsListView = new LazyView<>(this, R.id.specialLibraryItemsListView);
 	private final LazyView<DrawerLayout> drawerLayout = new LazyView<>(this, R.id.drawer_layout);
@@ -128,8 +128,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		};
 
 		drawerLayout.setDrawerListener(drawerToggle);
-
-		browseLibraryContainerRelativeLayout = (RelativeLayout) findViewById(R.id.browseLibraryContainer);
 
 		specialLibraryItemsListView.getObject().setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
 	}
@@ -286,8 +284,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void hideAllViews() {
-		for (int i = 0; i < browseLibraryContainerRelativeLayout.getChildCount(); i++)
-			browseLibraryContainerRelativeLayout.getChildAt(i).setVisibility(View.INVISIBLE);
+		for (int i = 0; i < browseLibraryContainerRelativeLayout.getObject().getChildCount(); i++)
+			browseLibraryContainerRelativeLayout.getObject().getChildAt(i).setVisibility(View.INVISIBLE);
 	}
 
 	private synchronized void swapFragments(Fragment newFragment) {

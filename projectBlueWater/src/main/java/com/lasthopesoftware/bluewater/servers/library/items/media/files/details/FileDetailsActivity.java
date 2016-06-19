@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.shared.LazyView;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
 
 import org.slf4j.Logger;
@@ -58,9 +59,23 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private int mFileKey = -1;
 
     private final FileDetailsActivity _this = this;
-    private ListView lvFileDetails;
-    private ProgressBar pbLoadingFileDetails;
-    private ScaledWrapImageView imgFileThumbnail;
+    private final LazyView<ListView> lvFileDetails = new LazyView<>(this, R.id.lvFileDetails);
+    private final LazyView<ProgressBar> pbLoadingFileDetails = new LazyView<>(this, R.id.pbLoadingFileDetails);
+    private final LazyView<ScaledWrapImageView> imgFileThumbnail = new LazyView<>(() -> {
+	    final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
+	    if (rlFileThumbnailContainer == null) return null;
+
+	    final ScaledWrapImageView imageView = new ScaledWrapImageView(this);
+	    imageView.setBackgroundResource(R.drawable.drop_shadow);
+	    final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+	    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+	    imageView.setLayoutParams(layoutParams);
+
+	    rlFileThumbnailContainer.addView(imageView);
+
+	    return imageView;
+    });
+
     private ProgressBar pbLoadingFileThumbnail;
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
     private TextView tvFileName;
@@ -68,13 +83,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 	private boolean mIsDestroyed;
 
-	private final Runnable onConnectionRegainedListener = new Runnable() {
-		
-		@Override
-		public void run() {
-			setView(mFileKey);
-		}
-	};
+	private final Runnable onConnectionRegainedListener = () -> setView(mFileKey);
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -88,19 +97,9 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
 
-        lvFileDetails = (ListView) findViewById(R.id.lvFileDetails);
-        pbLoadingFileDetails = (ProgressBar) findViewById(R.id.pbLoadingFileDetails);
         pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
         tvFileName = (TextView) findViewById(R.id.tvFileName);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
-
-		imgFileThumbnail = new ScaledWrapImageView(this);
-		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow);
-		final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-		layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-		imgFileThumbnail.setLayoutParams(layoutParams);
-		final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
-		rlFileThumbnailContainer.addView(imgFileThumbnail);
 
         setView(mFileKey);
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
@@ -112,10 +111,10 @@ public class FileDetailsActivity extends AppCompatActivity {
         	return;
         }
 
-        lvFileDetails.setVisibility(View.INVISIBLE);
-        pbLoadingFileDetails.setVisibility(View.VISIBLE);
+        lvFileDetails.getObject().setVisibility(View.INVISIBLE);
+        pbLoadingFileDetails.getObject().setVisibility(View.VISIBLE);
         
-        imgFileThumbnail.setVisibility(View.INVISIBLE);
+        imgFileThumbnail.getObject().setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
         final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
@@ -139,9 +138,9 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 					Collections.sort(filePropertyList, (lhs, rhs) -> lhs.getKey().compareTo(rhs.getKey()));
 
-					lvFileDetails.setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, filePropertyList));
-					pbLoadingFileDetails.setVisibility(View.INVISIBLE);
-					lvFileDetails.setVisibility(View.VISIBLE);
+					lvFileDetails.getObject().setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, filePropertyList));
+					pbLoadingFileDetails.getObject().setVisibility(View.INVISIBLE);
+					lvFileDetails.getObject().setVisibility(View.VISIBLE);
 				})
 				.onError(new HandleViewIoException<>(this, onConnectionRegainedListener))
 				.execute();
@@ -190,10 +189,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 			        mFileImage = result;
 
-			        imgFileThumbnail.setImageBitmap(result);
+			        imgFileThumbnail.getObject().setImageBitmap(result);
 
 			        pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-			        imgFileThumbnail.setVisibility(View.VISIBLE);
+			        imgFileThumbnail.getObject().setVisibility(View.VISIBLE);
 		        })
 		        .execute();
 	}

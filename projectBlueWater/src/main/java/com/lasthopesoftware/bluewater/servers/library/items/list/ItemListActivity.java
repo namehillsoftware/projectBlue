@@ -19,9 +19,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.shared.LazyView;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +33,8 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
     public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
 
-    private ListView itemListView;
-    private ProgressBar pbLoading;
+    private final LazyView<ListView> itemListView = new LazyView<>(this, R.id.lvItems);
+    private final LazyView<ProgressBar> pbLoading = new LazyView<>(this, R.id.pbLoadingItems);
     private ViewAnimator viewAnimator;
     private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
@@ -47,36 +46,29 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setContentView(R.layout.activity_view_items);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        itemListView = (ListView) findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar) findViewById(R.id.pbLoadingItems);
 
         mItemId = 0;
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = getIntent().getIntExtra(KEY, 0);
 
-        itemListView.setVisibility(View.INVISIBLE);
-        pbLoading.setVisibility(View.VISIBLE);
+	    final ListView localItemListView = itemListView.getObject();
+	    localItemListView.setVisibility(View.INVISIBLE);
+
+	    final ProgressBar localLoadingProgressBar = pbLoading.getObject();
+	    localLoadingProgressBar.setVisibility(View.VISIBLE);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
-            @Override
-            public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
-                if (items == null) return;
+        itemProvider.onComplete((owner, items) -> {
+            if (items == null) return;
 
-                BuildItemListView(items);
+            BuildItemListView(items);
 
-                itemListView.setVisibility(View.VISIBLE);
-                pbLoading.setVisibility(View.INVISIBLE);
-            }
+	        localItemListView.setVisibility(View.VISIBLE);
+	        localLoadingProgressBar.setVisibility(View.INVISIBLE);
         });
-        itemProvider.onError(new HandleViewIoException<String, Void, List<Item>>(this, new Runnable() {
-            @Override
-            public void run() {
-                itemProvider.execute();
-            }
-        }));
+        itemProvider.onError(new HandleViewIoException<>(this, itemProvider::execute));
         itemProvider.execute();
 
         nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
@@ -84,9 +76,11 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
     private void BuildItemListView(final List<Item> items) {
         final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this));
-        itemListView.setAdapter(itemListAdapter);
-        itemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
-        itemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+
+	    final ListView localItemListView = this.itemListView.getObject();
+        localItemListView.setAdapter(itemListAdapter);
+        localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+        localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
     }
 
     @Override

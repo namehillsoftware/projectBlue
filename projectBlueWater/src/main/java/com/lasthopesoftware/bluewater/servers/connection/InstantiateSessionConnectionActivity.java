@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
+import com.lasthopesoftware.bluewater.shared.LazyView;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -23,8 +24,8 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
 	
-	private TextView lblConnectionStatus;		
-	private Intent selectServerIntent;
+	private LazyView<TextView> lblConnectionStatus = new LazyView<>(this, R.id.lblConnectionStatus);
+	private final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 	private Intent browseLibraryIntent;
 	private LocalBroadcastManager localBroadcastManager;
 
@@ -54,9 +55,6 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_status);
-		
-		lblConnectionStatus = (TextView)findViewById(R.id.lblConnectionStatus);		
-		selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 
 		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
 		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -72,30 +70,31 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		if (SessionConnection.completeConditions.contains(status))
 			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
 
+		final TextView lblConnectionStatusView = lblConnectionStatus.getObject();
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
-			lblConnectionStatus.setText(R.string.lbl_getting_library_details);
+			lblConnectionStatusView.setText(R.string.lbl_getting_library_details);
 			return;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
-			lblConnectionStatus.setText(R.string.lbl_please_connect_to_valid_server);
+			lblConnectionStatusView.setText(R.string.lbl_please_connect_to_valid_server);
 			launchActivityDelayed(selectServerIntent);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
-			lblConnectionStatus.setText(R.string.lbl_connecting_to_server_library);
+			lblConnectionStatusView.setText(R.string.lbl_connecting_to_server_library);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
-			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
+			lblConnectionStatusView.setText(R.string.lbl_error_connecting_try_again);
 			launchActivityDelayed(selectServerIntent);
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
-			lblConnectionStatus.setText(R.string.lbl_getting_library_views);
+			lblConnectionStatusView.setText(R.string.lbl_getting_library_views);
 			return;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
-			lblConnectionStatus.setText(R.string.lbl_library_no_views);
+			lblConnectionStatusView.setText(R.string.lbl_library_no_views);
 			launchActivityDelayed(selectServerIntent);
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
-			lblConnectionStatus.setText(R.string.lbl_connected);
+			lblConnectionStatusView.setText(R.string.lbl_connected);
 			if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
 				launchActivityDelayed(browseLibraryIntent);
 			else
@@ -109,17 +108,17 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	}
 	
 	private static class LaunchRunnable implements Runnable {
-		private final Intent mIntent;
-		private final Context mContext;
+		private final Intent intent;
+		private final Context context;
 		
 		public LaunchRunnable(final Context context, final Intent intent) {
-			mIntent = intent;
-			mContext = context;
+			this.intent = intent;
+			this.context = context;
 		}
 		
 		@Override
 		public void run() {
-			mContext.startActivity(mIntent);
+			context.startActivity(intent);
 		}
 		
 	}
