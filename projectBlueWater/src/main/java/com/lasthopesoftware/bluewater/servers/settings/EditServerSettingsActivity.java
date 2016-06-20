@@ -21,6 +21,8 @@ import android.widget.Toast;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.IExternalStorageReadPermissionsArbitrator;
 
 import java.util.ArrayList;
 
@@ -38,6 +40,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 	private RadioGroup rgSyncFileOptions;
 	private CheckBox chkIsUsingExistingFiles;
 	private CheckBox chkIsUsingLocalConnectionForSync;
+	private IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator;
 
 	private static final int permissionsRequestInteger = 1;
 
@@ -70,7 +73,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         final ArrayList<String> permissionsToRequest = new ArrayList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (library.isExternalReadAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            if (library.isExternalReadAccessNeeded() && !externalStorageReadPermissionsArbitrator.isExternalStorageReadPermissionsGranted())
 		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
 	        if (library.isExternalWriteAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
@@ -103,6 +106,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 		rgSyncFileOptions = (RadioGroup) findViewById(R.id.rgSyncFileOptions);
 		chkIsUsingExistingFiles = (CheckBox) findViewById(R.id.chkIsUsingExistingFiles);
 		chkIsUsingLocalConnectionForSync = (CheckBox) findViewById(R.id.chkIsUsingLocalConnectionForSync);
+		externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(this);
 	}
 
 	@Override
