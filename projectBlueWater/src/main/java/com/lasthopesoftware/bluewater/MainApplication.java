@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -8,11 +9,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.content.PermissionChecker;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 
@@ -40,12 +44,31 @@ public class MainApplication extends Application {
 	public void onCreate() {
 		super.onCreate();
 
+		initializeLogging();
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
-		initializeLogging();
 
 		// Kick off a file sync if one isn't scheduled on start-up
 		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
+
+		checkPermissions();
+	}
+
+	private void checkPermissions() {
+		LibrarySession.GetActiveLibrary(this, library -> {
+			if (library == null) return;
+
+			if (
+					(!library.isExternalReadAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED) &&
+					(!library.isExternalWriteAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED)) {
+				return;
+			}
+
+			final Intent settingsIntent = new Intent(MainApplication.this, EditServerSettingsActivity.class);
+			settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, library.getId());
+
+			startActivity(settingsIntent);
+		});
 	}
 	
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
@@ -94,34 +117,39 @@ public class MainApplication extends Application {
 		rootLogger.addAppender(logcatAppender);
 
 		if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) && getExternalFilesDir(null) != null) {
-			final File logDir = new File(getExternalFilesDir(null).getPath() + File.separator + "logs");
-			if (!logDir.exists())
-				logDir.mkdirs();
-
-			final PatternLayoutEncoder filePle = new PatternLayoutEncoder();
-			filePle.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
-			filePle.setContext(lc);
-			filePle.start();
-
-			final RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
-			rollingFileAppender.setLazy(true);
-			rollingFileAppender.setAppend(true);
-			rollingFileAppender.setContext(lc);
-			rollingFileAppender.setEncoder(filePle);
-
-			final TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
-			rollingPolicy.setFileNamePattern(new File(logDir, "%d{yyyy-MM-dd}.log").getAbsolutePath());
-			rollingPolicy.setMaxHistory(30);
-			rollingPolicy.setParent(rollingFileAppender);  // parent and context required!
-			rollingPolicy.setContext(lc);
-			rollingPolicy.start();
-
-			rollingFileAppender.setRollingPolicy(rollingPolicy);
-			rollingFileAppender.start();
-
 			final AsyncAppender asyncAppender = new AsyncAppender();
 			asyncAppender.setContext(lc);
 			asyncAppender.setName("ASYNC");
+
+			final File externalFilesDir = getExternalFilesDir(null);
+			if (externalFilesDir != null) {
+				final File logDir = new File(externalFilesDir.getPath() + File.separator + "logs");
+				if (!logDir.exists())
+					logDir.mkdirs();
+
+				final PatternLayoutEncoder filePle = new PatternLayoutEncoder();
+				filePle.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+				filePle.setContext(lc);
+				filePle.start();
+
+				final RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
+				rollingFileAppender.setLazy(true);
+				rollingFileAppender.setAppend(true);
+				rollingFileAppender.setContext(lc);
+				rollingFileAppender.setEncoder(filePle);
+
+				final TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
+				rollingPolicy.setFileNamePattern(new File(logDir, "%d{yyyy-MM-dd}.log").getAbsolutePath());
+				rollingPolicy.setMaxHistory(30);
+				rollingPolicy.setParent(rollingFileAppender);  // parent and context required!
+				rollingPolicy.setContext(lc);
+				rollingPolicy.start();
+
+				rollingFileAppender.setRollingPolicy(rollingPolicy);
+				rollingFileAppender.start();
+
+				asyncAppender.addAppender(rollingFileAppender);
+			}
 
 			// UNCOMMENT TO TWEAK OPTIONAL SETTINGS
 //		    // excluding caller data (used for stack traces) improves appender's performance
@@ -130,7 +158,6 @@ public class MainApplication extends Application {
 //		    asyncAppender.setDiscardingThreshold(0);
 //		    asyncAppender.setQueueSize(256);
 
-			asyncAppender.addAppender(rollingFileAppender);
 			asyncAppender.start();
 
 			rootLogger.addAppender(asyncAppender);

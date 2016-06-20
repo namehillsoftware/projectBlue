@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.LazyView;
 import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
 import com.lasthopesoftware.permissions.IExternalStorageReadPermissionsArbitrator;
 
@@ -31,16 +32,15 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 	private Library library;
 
-	private Button saveButton;
-	private EditText txtAccessCode;
-	private EditText txtUserName;
-	private EditText txtPassword;
-	private EditText txtSyncPath;
-	private CheckBox chkLocalOnly;
-	private RadioGroup rgSyncFileOptions;
-	private CheckBox chkIsUsingExistingFiles;
-	private CheckBox chkIsUsingLocalConnectionForSync;
-	private IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator;
+	private final LazyView<Button> saveButton = new LazyView<>(this, R.id.btnConnect);
+	private final LazyView<EditText> txtAccessCode = new LazyView<>(this, R.id.txtAccessCode);
+	private final LazyView<EditText> txtUserName = new LazyView<>(this, R.id.txtUserName);
+	private final LazyView<EditText> txtPassword = new LazyView<>(this, R.id.txtPassword);
+	private final LazyView<EditText> txtSyncPath = new LazyView<>(this, R.id.txtSyncPath);
+	private final LazyView<CheckBox> chkLocalOnly = new LazyView<>(this, R.id.chkLocalOnly);
+	private final LazyView<RadioGroup> rgSyncFileOptions = new LazyView<>(this, R.id.rgSyncFileOptions);
+	private final LazyView<CheckBox> chkIsUsingExistingFiles = new LazyView<>(this, R.id.chkIsUsingExistingFiles);
+	private final LazyView<CheckBox> chkIsUsingLocalConnectionForSync = new LazyView<>(this, R.id.chkIsUsingLocalConnectionForSync);
 
 	private static final int permissionsRequestInteger = 1;
 
@@ -73,7 +73,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         final ArrayList<String> permissionsToRequest = new ArrayList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (library.isExternalReadAccessNeeded() && !externalStorageReadPermissionsArbitrator.isExternalStorageReadPermissionsGranted())
+            if (library.isExternalReadAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
 		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
 	        if (library.isExternalWriteAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
@@ -96,17 +96,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_server_settings);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		saveButton = (Button)findViewById(R.id.btnConnect);
-        saveButton.setOnClickListener(connectionButtonListener);
-		txtAccessCode = (EditText)findViewById(R.id.txtAccessCode);
-		txtUserName = (EditText)findViewById(R.id.txtUserName);
-		txtPassword = (EditText)findViewById(R.id.txtPassword);
-		txtSyncPath = (EditText) findViewById(R.id.txtSyncPath);
-		chkLocalOnly = (CheckBox) findViewById(R.id.chkLocalOnly);
-		rgSyncFileOptions = (RadioGroup) findViewById(R.id.rgSyncFileOptions);
-		chkIsUsingExistingFiles = (CheckBox) findViewById(R.id.chkIsUsingExistingFiles);
-		chkIsUsingLocalConnectionForSync = (CheckBox) findViewById(R.id.chkIsUsingLocalConnectionForSync);
-		externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(this);
+        saveButton.getObject().setOnClickListener(connectionButtonListener);
 	}
 
 	@Override
