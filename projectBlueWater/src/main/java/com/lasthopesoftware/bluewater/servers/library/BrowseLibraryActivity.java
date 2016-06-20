@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.servers.library.views.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.shared.LazyView;
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
@@ -56,11 +56,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	private final LazyView<RelativeLayout> browseLibraryContainerRelativeLayout = new LazyView<>(this, R.id.browseLibraryContainer);
-	private final LazyView<ListView> selectViewsListView = new LazyView<>(this, R.id.lvLibraryViewSelection);
-	private final LazyView<ListView> specialLibraryItemsListView = new LazyView<>(this, R.id.specialLibraryItemsListView);
-	private final LazyView<DrawerLayout> drawerLayout = new LazyView<>(this, R.id.drawer_layout);
-	private final LazyView<ProgressBar> loadingViewsProgressBar = new LazyView<>(this, R.id.pbLoadingViews);
+	private final LazyViewFinder<RelativeLayout> browseLibraryContainerRelativeLayout = new LazyViewFinder<>(this, R.id.browseLibraryContainer);
+	private final LazyViewFinder<ListView> selectViewsListView = new LazyViewFinder<>(this, R.id.lvLibraryViewSelection);
+	private final LazyViewFinder<ListView> specialLibraryItemsListView = new LazyViewFinder<>(this, R.id.specialLibraryItemsListView);
+	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.drawer_layout);
+	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -97,7 +97,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
 
-		final DrawerLayout drawerLayout = this.drawerLayout.getObject();
+		final DrawerLayout drawerLayout = this.drawerLayout.findView();
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 		oldTitle = getTitle();
@@ -129,7 +129,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		drawerLayout.setDrawerListener(drawerToggle);
 
-		specialLibraryItemsListView.getObject().setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
+		specialLibraryItemsListView.findView().setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
 	}
 
 	@Override
@@ -154,7 +154,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private void startLibrary() {
 		isStopped = false;
-		if (selectViewsListView.getObject().getAdapter() != null) return;
+		if (selectViewsListView.findView().getAdapter() != null) return;
 
         showProgressBar();
 
@@ -182,7 +182,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void displayLibrary(final Library library) {
 		final Library.ViewType selectedViewType = library.getSelectedViewType();
 
-		specialLibraryItemsListView.getObject().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
+		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
 				.onComplete((owner, items) -> {
@@ -190,8 +190,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 					LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-					selectViewsListView.getObject().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
-					selectViewsListView.getObject().setOnItemClickListener(getOnSelectViewClickListener(items));
+					selectViewsListView.findView().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
+					selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
 
 					hideAllViews();
 					if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
@@ -237,7 +237,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void updateSelectedView(final Library.ViewType selectedViewType, final int selectedViewKey) {
-		drawerLayout.getObject().closeDrawer(GravityCompat.START);
+		drawerLayout.findView().closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
 		LibrarySession.GetActiveLibrary(this, library -> {
@@ -275,7 +275,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
     }
 
 	private void showProgressBar() {
-		showContainerView(loadingViewsProgressBar.getObject());
+		showContainerView(loadingViewsProgressBar.findView());
 	}
 
 	private void showContainerView(View view) {
@@ -284,8 +284,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void hideAllViews() {
-		for (int i = 0; i < browseLibraryContainerRelativeLayout.getObject().getChildCount(); i++)
-			browseLibraryContainerRelativeLayout.getObject().getChildAt(i).setVisibility(View.INVISIBLE);
+		for (int i = 0; i < browseLibraryContainerRelativeLayout.findView().getChildCount(); i++)
+			browseLibraryContainerRelativeLayout.findView().getChildAt(i).setVisibility(View.INVISIBLE);
 	}
 
 	private synchronized void swapFragments(Fragment newFragment) {

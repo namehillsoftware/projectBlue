@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
-import com.lasthopesoftware.bluewater.shared.LazyView;
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -24,7 +24,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
 	
-	private LazyView<TextView> lblConnectionStatus = new LazyView<>(this, R.id.lblConnectionStatus);
+	private LazyViewFinder<TextView> lblConnectionStatus = new LazyViewFinder<>(this, R.id.lblConnectionStatus);
 	private final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 	private Intent browseLibraryIntent;
 	private LocalBroadcastManager localBroadcastManager;
@@ -70,7 +70,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		if (SessionConnection.completeConditions.contains(status))
 			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
 
-		final TextView lblConnectionStatusView = lblConnectionStatus.getObject();
+		final TextView lblConnectionStatusView = lblConnectionStatus.findView();
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
 			lblConnectionStatusView.setText(R.string.lbl_getting_library_details);

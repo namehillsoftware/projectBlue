@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by david on 1/5/16.
  */
-public class Lazy<T> extends AbstractLazy<T> {
+public final class Lazy<T> extends AbstractLazy<T> {
 
 	private final Callable<T> initialization;
 
