@@ -15,6 +15,8 @@ import com.lasthopesoftware.bluewater.servers.connection.SessionConnection.Build
 import com.lasthopesoftware.bluewater.servers.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.Lazy;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -25,8 +27,16 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
 	
 	private LazyViewFinder<TextView> lblConnectionStatus = new LazyViewFinder<>(this, R.id.lblConnectionStatus);
-	private final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
-	private Intent browseLibraryIntent;
+	private final Lazy<Intent> selectServerIntent = new Lazy<Intent>(() -> new Intent(this, ApplicationSettingsActivity.class));
+	private final AbstractLazy<Intent> browseLibraryIntent = new AbstractLazy<Intent>() {
+		@Override
+		protected Intent initialize() throws Exception {
+			final Intent browseLibraryIntent = new Intent(InstantiateSessionConnectionActivity.this, BrowseLibraryActivity.class);
+			browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+			return browseLibraryIntent;
+		}
+	};
+
 	private LocalBroadcastManager localBroadcastManager;
 
 	private final BroadcastReceiver buildSessionConnectionReceiver = new BroadcastReceiver() {
@@ -56,9 +66,6 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_status);
 
-		browseLibraryIntent = new Intent(this, BrowseLibraryActivity.class);
-		browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
 		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
@@ -77,26 +84,26 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			return;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 			lblConnectionStatusView.setText(R.string.lbl_please_connect_to_valid_server);
-			launchActivityDelayed(selectServerIntent);
+			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
 			lblConnectionStatusView.setText(R.string.lbl_connecting_to_server_library);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 			lblConnectionStatusView.setText(R.string.lbl_error_connecting_try_again);
-			launchActivityDelayed(selectServerIntent);
+			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			lblConnectionStatusView.setText(R.string.lbl_getting_library_views);
 			return;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
 			lblConnectionStatusView.setText(R.string.lbl_library_no_views);
-			launchActivityDelayed(selectServerIntent);
+			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			lblConnectionStatusView.setText(R.string.lbl_connected);
 			if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
-				launchActivityDelayed(browseLibraryIntent);
+				launchActivityDelayed(browseLibraryIntent.getObject());
 			else
 				finish();
 		}

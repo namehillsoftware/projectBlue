@@ -29,7 +29,7 @@ public class LazyViewFinder<T extends View> {
 		return lazyViewInitializer.getObject();
 	}
 
-	private static class LazyActivityViewFinder<T extends View> extends AbstractLazy<T> {
+	private static final class LazyActivityViewFinder<T extends View> extends AbstractLazy<T> {
 
 		private final Activity activity;
 		private final int viewId;
@@ -45,7 +45,7 @@ public class LazyViewFinder<T extends View> {
 		}
 	}
 
-	private static class LazyViewBasedViewFinder<T extends View> extends AbstractLazy<T> {
+	private static final class LazyViewBasedViewFinder<T extends View> extends AbstractLazy<T> {
 
 		private final View view;
 		private final int viewId;
