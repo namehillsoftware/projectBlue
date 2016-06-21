@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
+import com.vedsoft.lazyj.AbstractLazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,21 +57,34 @@ public class FileDetailsActivity extends AppCompatActivity {
 																FilePropertiesProvider.STACK_TOP,
 																FilePropertiesProvider.STACK_VIEW })));
 	
-	private int mFileKey = -1;
+	private int fileKey = -1;
 
-    private final FileDetailsActivity _this = this;
     private final LazyViewFinder<ListView> lvFileDetails = new LazyViewFinder<>(this, R.id.lvFileDetails);
     private final LazyViewFinder<ProgressBar> pbLoadingFileDetails = new LazyViewFinder<>(this, R.id.pbLoadingFileDetails);
-    private ScaledWrapImageView imgFileThumbnail;
+    private final AbstractLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractLazy<ScaledWrapImageView>() {
+	    @Override
+	    protected final ScaledWrapImageView initialize() throws Exception {
+		    final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
+		    if (rlFileThumbnailContainer == null) return null;
+
+		    final ScaledWrapImageView imgFileThumbnail = new ScaledWrapImageView(FileDetailsActivity.this);
+		    imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow);
+		    final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+		    imgFileThumbnail.setLayoutParams(layoutParams);
+
+		    rlFileThumbnailContainer.addView(imgFileThumbnail);
+
+		    return imgFileThumbnail;
+	    }
+    };
 
     private ProgressBar pbLoadingFileThumbnail;
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
     private TextView tvFileName;
     private TextView tvArtist;
 
-	private boolean mIsDestroyed;
-
-	private final Runnable onConnectionRegainedListener = () -> setView(mFileKey);
+	private boolean isDestroyed;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -82,25 +96,14 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_view_file_details);
 
-        mFileKey = getIntent().getIntExtra(FILE_KEY, -1);
+        fileKey = getIntent().getIntExtra(FILE_KEY, -1);
 
         pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
         tvFileName = (TextView) findViewById(R.id.tvFileName);
         tvArtist = (TextView) findViewById(R.id.tvArtist);
 
-        setView(mFileKey);
+        setView(fileKey);
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
-
-		final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
-		if (rlFileThumbnailContainer == null) return;
-
-		imgFileThumbnail = new ScaledWrapImageView(this);
-		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow);
-		final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-		layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-		imgFileThumbnail.setLayoutParams(layoutParams);
-
-		rlFileThumbnailContainer.addView(imgFileThumbnail);
 	}
 
 	private void setView(final int fileKey) {
@@ -112,7 +115,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         lvFileDetails.findView().setVisibility(View.INVISIBLE);
         pbLoadingFileDetails.findView().setVisibility(View.VISIBLE);
         
-        imgFileThumbnail.setVisibility(View.INVISIBLE);
+        imgFileThumbnailBuilder.getObject().setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
         
         final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
@@ -136,11 +139,11 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 					Collections.sort(filePropertyList, (lhs, rhs) -> lhs.getKey().compareTo(rhs.getKey()));
 
-					lvFileDetails.findView().setAdapter(new FileDetailsAdapter(_this, R.id.linFileDetailsRow, filePropertyList));
+					lvFileDetails.findView().setAdapter(new FileDetailsAdapter(FileDetailsActivity.this, R.id.linFileDetailsRow, filePropertyList));
 					pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
 					lvFileDetails.findView().setVisibility(View.VISIBLE);
 				})
-				.onError(new HandleViewIoException<>(this, onConnectionRegainedListener))
+				.onError(new HandleViewIoException<>(this, () -> setView(fileKey)))
 				.execute();
         
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
@@ -180,17 +183,17 @@ public class FileDetailsActivity extends AppCompatActivity {
 		        .onComplete((owner, result) -> {
 			        if (mFileImage != null) mFileImage.recycle();
 
-			        if (mIsDestroyed) {
+			        if (isDestroyed) {
 				        if (result != null) result.recycle();
 				        return;
 			        }
 
 			        mFileImage = result;
 
-			        imgFileThumbnail.setImageBitmap(result);
+			        imgFileThumbnailBuilder.getObject().setImageBitmap(result);
 
 			        pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
-			        imgFileThumbnail.setVisibility(View.VISIBLE);
+			        imgFileThumbnailBuilder.getObject().setVisibility(View.VISIBLE);
 		        })
 		        .execute();
 	}
@@ -215,8 +218,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		// Update the intent
 		setIntent(intent);
-		mFileKey = intent.getIntExtra(FILE_KEY, -1);
-		setView(mFileKey);
+		fileKey = intent.getIntExtra(FILE_KEY, -1);
+		setView(fileKey);
 	}
 
 	@Override
@@ -238,7 +241,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	
 	@Override
 	public void onDestroy() {
-		mIsDestroyed = true;
+		isDestroyed = true;
 		if (mFileImage != null) mFileImage.recycle();
 		
 		super.onDestroy();
