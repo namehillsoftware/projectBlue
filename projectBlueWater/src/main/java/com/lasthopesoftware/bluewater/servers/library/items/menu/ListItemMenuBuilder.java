@@ -16,23 +16,47 @@ import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.PlayCl
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.SyncFilesIsVisibleHandler;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.handlers.ViewFilesClickHandler;
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 
 public final class ListItemMenuBuilder<T extends IFileListParameterProvider & IItem> extends AbstractListItemMenuBuilder<T> {
 	private static class ViewHolder {
-		public ViewHolder(TextView textView, ImageButton shuffleButton, ImageButton playButton, ImageButton viewButton, ImageButton syncButton) {
-			this.textView = textView;
-			this.shuffleButton = shuffleButton;
-			this.playButton = playButton;
-			this.viewButton = viewButton;
-			this.syncButton = syncButton;
+		private final LazyViewFinder<TextView> textViewFinder;
+		private final LazyViewFinder<ImageButton> shuffleButtonFinder;
+		private final LazyViewFinder<ImageButton> playButtonFinder;
+		private final LazyViewFinder<ImageButton> viewButtonFinder;
+		private final LazyViewFinder<ImageButton> syncButtonFinder;
+
+
+		public ViewHolder(View listItemLayout, View fileMenu) {
+			textViewFinder = new LazyViewFinder<>(listItemLayout, R.id.tvListItem);
+
+			shuffleButtonFinder = new LazyViewFinder<>(fileMenu, R.id.btnShuffle);
+			playButtonFinder = new LazyViewFinder<>(fileMenu, R.id.btnPlayAll);
+			viewButtonFinder = new LazyViewFinder<>(fileMenu, R.id.btnViewFiles);
+			syncButtonFinder = new LazyViewFinder<>(fileMenu, R.id.btnSyncItem);
 		}
 
-        public final TextView textView;
-        public final ImageButton shuffleButton;
-        public final ImageButton playButton;
-        public final ImageButton viewButton;
-		public final ImageButton syncButton;
 		public View.OnLayoutChangeListener onSyncButtonLayoutChangeListener;
+
+		public TextView getTextView() {
+			return textViewFinder.findView();
+		}
+
+		public ImageButton getShuffleButton() {
+			return shuffleButtonFinder.findView();
+		}
+
+		public ImageButton getPlayButton() {
+			return playButtonFinder.findView();
+		}
+
+		public ImageButton getViewButton() {
+			return viewButtonFinder.findView();
+		}
+
+		public ImageButton getSyncButton() {
+			return syncButtonFinder.findView();
+		}
 	}
 
 	@Override
@@ -45,21 +69,16 @@ public final class ListItemMenuBuilder<T extends IFileListParameterProvider & II
 
             parentView = new NotifyOnFlipViewAnimator(parent.getContext());
             parentView.setLayoutParams(lp);
-			
-	        final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	        final LinearLayout rl = (LinearLayout)inflater.inflate(R.layout.layout_list_item, parentView, false);
-	        final TextView textView = (TextView)rl.findViewById(R.id.tvListItem);
-	        parentView.addView(rl);
-	        
-	        final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
-	        final ImageButton shuffleButton = (ImageButton)fileMenu.findViewById(R.id.btnShuffle);
-	        final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlayAll);
-	        final ImageButton viewButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFiles);
-			final ImageButton syncButton = (ImageButton)fileMenu.findViewById(R.id.btnSyncItem);
 
+			final LayoutInflater inflater = (LayoutInflater) parentView.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+			final LinearLayout listItemLayout = (LinearLayout) inflater.inflate(R.layout.layout_list_item, parentView, false);
+			parentView.addView(listItemLayout);
+
+			final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_browse_item_menu, parentView, false);
 			parentView.addView(fileMenu);
-			
-			parentView.setTag(new ViewHolder(textView, shuffleButton, playButton, viewButton, syncButton));
+
+			parentView.setTag(new ViewHolder(listItemLayout, fileMenu));
 		}
 
 		parentView.setViewChangedListener(getOnViewChangedListener());
@@ -67,19 +86,19 @@ public final class ListItemMenuBuilder<T extends IFileListParameterProvider & II
 		if (parentView.getDisplayedChild() != 0) parentView.showPrevious();
 		
 		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
-		viewHolder.textView.setText(item.getValue());
-		viewHolder.shuffleButton.setOnClickListener(new ShuffleClickHandler(parentView, item));
-		viewHolder.playButton.setOnClickListener(new PlayClickHandler(parentView, item));
-		viewHolder.viewButton.setOnClickListener(new ViewFilesClickHandler(parentView, item));
+		viewHolder.getTextView().setText(item.getValue());
+		viewHolder.getShuffleButton().setOnClickListener(new ShuffleClickHandler(parentView, item));
+		viewHolder.getPlayButton().setOnClickListener(new PlayClickHandler(parentView, item));
+		viewHolder.getViewButton().setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
-		viewHolder.syncButton.setEnabled(false);
+		viewHolder.getSyncButton().setEnabled(false);
 
 		if (viewHolder.onSyncButtonLayoutChangeListener != null)
-			viewHolder.syncButton.removeOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
+			viewHolder.getSyncButton().removeOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
-		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(parentView, viewHolder.syncButton, item);
+		viewHolder.onSyncButtonLayoutChangeListener = new SyncFilesIsVisibleHandler(parentView, viewHolder.getSyncButton(), item);
 
-		viewHolder.syncButton.addOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
+		viewHolder.getSyncButton().addOnLayoutChangeListener(viewHolder.onSyncButtonLayoutChangeListener);
 
 		return parentView;
 	}
