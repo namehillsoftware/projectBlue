@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 
 /**
  * Created by david on 11/14/15.
@@ -36,15 +35,12 @@ class HandleCheckboxPreference extends AsyncTask<Void, Void, Boolean> {
 		super.onPostExecute(result);
 
 		settingCheckbox.setChecked(result);
-		settingCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		settingCheckbox.setOnCheckedChangeListener(
+			(buttonView, isChecked) ->
 				sharedPreferences
-						.edit()
-						.putBoolean(settingKey, isChecked)
-						.apply();
-			}
-		});
+					.edit()
+					.putBoolean(settingKey, isChecked)
+					.apply());
 		settingCheckbox.setEnabled(true);
 	}
 }

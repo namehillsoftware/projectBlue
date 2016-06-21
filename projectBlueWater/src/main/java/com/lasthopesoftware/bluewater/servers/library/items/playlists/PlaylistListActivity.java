@@ -71,13 +71,13 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
 		        .onComplete(onPlaylistProviderComplete)
-		        .onError(new HandleViewIoException<String, Void, List<Playlist>>(PlaylistListActivity.this, new Runnable() {
+		        .onError(new HandleViewIoException<>(PlaylistListActivity.this, new Runnable() {
 
 			        @Override
 			        public void run() {
 				        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
 						        .onComplete(onPlaylistProviderComplete)
-						        .onError(new HandleViewIoException<String, Void, List<Playlist>>(PlaylistListActivity.this, this))
+						        .onError(new HandleViewIoException<>(PlaylistListActivity.this, this))
 						        .execute();
 			        }
 		        }))

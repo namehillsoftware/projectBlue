@@ -4,17 +4,19 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
 
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+
 /**
  * Created by david on 10/16/15.
  */
 public class NowPlayingToggledVisibilityControls {
-    private final LinearLayout playerControlsLinearLayout;
-    private final LinearLayout menuControlsLinearLayout;
-    private final RatingBar ratingBar;
+    private final LazyViewFinder<LinearLayout> playerControlsLinearLayout;
+    private final LazyViewFinder<LinearLayout> menuControlsLinearLayout;
+    private final LazyViewFinder<RatingBar> ratingBar;
 
     private boolean isVisible = true;
 
-    public NowPlayingToggledVisibilityControls(LinearLayout playerControlsLinearLayout, LinearLayout menuControlsLinearLayout, RatingBar ratingBar) {
+    public NowPlayingToggledVisibilityControls(LazyViewFinder<LinearLayout> playerControlsLinearLayout, LazyViewFinder<LinearLayout> menuControlsLinearLayout, LazyViewFinder<RatingBar> ratingBar) {
         this.playerControlsLinearLayout = playerControlsLinearLayout;
         this.menuControlsLinearLayout = menuControlsLinearLayout;
         this.ratingBar = ratingBar;
@@ -25,9 +27,9 @@ public class NowPlayingToggledVisibilityControls {
 
         final int normalVisibility = isVisible ? View.VISIBLE : View.INVISIBLE;
 
-        playerControlsLinearLayout.setVisibility(normalVisibility);
-        ratingBar.setVisibility(normalVisibility);
-        menuControlsLinearLayout.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        playerControlsLinearLayout.findView().setVisibility(normalVisibility);
+        ratingBar.findView().setVisibility(normalVisibility);
+        menuControlsLinearLayout.findView().setVisibility(isVisible ? View.VISIBLE : View.GONE);
     }
 
     public boolean isVisible() {

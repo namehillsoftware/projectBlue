@@ -1,8 +1,10 @@
 package com.lasthopesoftware.permissions;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.content.ContextCompat;
 
 /**
@@ -15,8 +17,9 @@ public class ExternalStorageReadPermissionsArbitrator implements IExternalStorag
 		this.context = context;
 	}
 
+	@SuppressLint("InlinedApi") // Suppressed because `or` condition below handles API version checking logic
 	@Override
 	public boolean isExternalStorageReadPermissionsGranted() {
-		return ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+		return Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN || ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
 	}
 }

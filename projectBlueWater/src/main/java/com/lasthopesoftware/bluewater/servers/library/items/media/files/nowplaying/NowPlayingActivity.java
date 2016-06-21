@@ -18,7 +18,6 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
@@ -41,6 +40,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.servers.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentTask;
@@ -67,20 +67,20 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private NowPlayingActivityProgressTrackerTask nowPlayingActivityProgressTrackerTask;
 	private NowPlayingActivityMessageHandler nowPlayingActivityMessageHandler;
-	private ImageButton playButton;
-	private ImageButton pauseButton;
-	private RatingBar songRating;
-	private RelativeLayout contentView;
-	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 
-	private ImageButton isScreenKeptOnButton;
+	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
+	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
+	private final LazyViewFinder<RatingBar> songRating = new LazyViewFinder<>(this, R.id.rbSongRating);
+	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.viewNowPlayingRelativeLayout);
+	private final LazyViewFinder<ProgressBar> songProgressBar = new LazyViewFinder<>(this, R.id.pbNowPlaying);
+	private final LazyViewFinder<ProgressBar> loadingImg = new LazyViewFinder<>(this, R.id.pbLoadingImg);
+	private final LazyViewFinder<ImageView> nowPlayingImageViewFinder = new LazyViewFinder<>(this, R.id.imgNowPlaying);
+	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
+	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
+	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
+
 	private TimerTask timerTask;
-	private ProgressBar songProgressBar;
-	private ProgressBar loadingImg;
-	private ImageView nowPlayingImageView;
-	private TextView nowPlayingArtist;
-
-	private TextView nowPlayingTitle;
+	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 
 	private LocalBroadcastManager localBroadcastManager;
 
@@ -97,8 +97,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		public void onReceive(Context context, Intent intent) {
 			showNowPlayingControls();
 
-			playButton.setVisibility(View.INVISIBLE);
-			pauseButton.setVisibility(View.VISIBLE);
+			playButton.findView().setVisibility(View.INVISIBLE);
+			pauseButton.findView().setVisibility(View.VISIBLE);
 
 			updateKeepScreenOnStatus();
 		}
@@ -110,13 +110,13 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
 			final int fileDuration = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
-			if (fileDuration > -1) songProgressBar.setMax(fileDuration);
+			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
 
 			final int filePosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
-			if (filePosition > -1) songProgressBar.setProgress(filePosition);
+			if (filePosition > -1) songProgressBar.findView().setProgress(filePosition);
 
-			playButton.setVisibility(View.VISIBLE);
-			pauseButton.setVisibility(View.INVISIBLE);
+			playButton.findView().setVisibility(View.VISIBLE);
+			pauseButton.findView().setVisibility(View.INVISIBLE);
 
 			disableKeepScreenOn();
 		}
@@ -143,20 +143,9 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 		setContentView(R.layout.activity_view_now_playing);
 
-		contentView = (RelativeLayout)findViewById(R.id.viewNowPlayingRelativeLayout);
+		contentView.findView().setOnClickListener(v -> showNowPlayingControls());
 
-		contentView.setOnClickListener(v -> showNowPlayingControls());
-
-		playButton = (ImageButton) findViewById(R.id.btnPlay);
-		pauseButton = (ImageButton) findViewById(R.id.btnPause);
-		songRating = (RatingBar) findViewById(R.id.rbSongRating);
-		songProgressBar = (ProgressBar) findViewById(R.id.pbNowPlaying);
-		loadingImg = (ProgressBar) findViewById(R.id.pbLoadingImg);
-		nowPlayingImageView = (ImageView) findViewById(R.id.imgNowPlaying);
-		nowPlayingArtist = (TextView) findViewById(R.id.tvSongArtist);
-		nowPlayingTitle = (TextView) findViewById(R.id.tvSongTitle);
-
-		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls((LinearLayout) findViewById(R.id.llNpButtons), (LinearLayout) findViewById(R.id.menuControlsLinearLayout), songRating);
+		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(this, R.id.llNpButtons), new LazyViewFinder<>(this, R.id.menuControlsLinearLayout), songRating);
 		nowPlayingToggledVisibilityControls.toggleVisibility(false);
 
 		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
@@ -171,53 +160,59 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
-		playButton.setOnClickListener(v -> {
+		playButton.findView().setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 			PlaybackService.play(v.getContext());
-			playButton.setVisibility(View.INVISIBLE);
-			pauseButton.setVisibility(View.VISIBLE);
+			playButton.findView().setVisibility(View.INVISIBLE);
+			pauseButton.findView().setVisibility(View.VISIBLE);
 		});
 		
-		pauseButton.setOnClickListener(v -> {
+		pauseButton.findView().setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
 			PlaybackService.pause(v.getContext());
-			playButton.setVisibility(View.VISIBLE);
-			pauseButton.setVisibility(View.INVISIBLE);
+			playButton.findView().setVisibility(View.VISIBLE);
+			pauseButton.findView().setVisibility(View.INVISIBLE);
 		});
 
 		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
-		next.setOnClickListener(v -> {
-			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-			PlaybackService.next(v.getContext());
-		});
+		if (next != null) {
+			next.setOnClickListener(v -> {
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+				PlaybackService.next(v.getContext());
+			});
+		}
 
 		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
-		previous.setOnClickListener(v -> {
-			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
-			PlaybackService.previous(v.getContext());
-		});
+		if (previous != null) {
+			previous.setOnClickListener(v -> {
+				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+				PlaybackService.previous(v.getContext());
+			});
+		}
 
 		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
 		setRepeatingIcon(shuffleButton);
 
-		shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), result -> {
-			if (result == null) return;
-			final boolean isRepeating = !result.isRepeating();
-			PlaybackService.setIsRepeating(v.getContext(), isRepeating);
-			setRepeatingIcon(shuffleButton, isRepeating);
-		}));
+		if (shuffleButton != null) {
+			shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), result -> {
+				if (result == null) return;
+				final boolean isRepeating = !result.isRepeating();
+				PlaybackService.setIsRepeating(v.getContext(), isRepeating);
+				setRepeatingIcon(shuffleButton, isRepeating);
+			}));
+		}
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
-		viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
+		if (viewNowPlayingListButton != null)
+			viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
 
-		isScreenKeptOnButton = (ImageButton) findViewById(R.id.isScreenKeptOnButton);
-		isScreenKeptOnButton.setOnClickListener(v -> {
+		isScreenKeptOnButton.findView().setOnClickListener(v -> {
 			isScreenKeptOn = !isScreenKeptOn;
 			updateKeepScreenOnStatus();
 		});
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
-			songProgressBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
+			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
 
 		nowPlayingActivityMessageHandler = new NowPlayingActivityMessageHandler(this);
 	}
@@ -247,8 +242,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			return;
 		}
 
-		playButton.setVisibility(View.VISIBLE);
-		pauseButton.setVisibility(View.INVISIBLE);
+		playButton.findView().setVisibility(View.VISIBLE);
+		pauseButton.findView().setVisibility(View.INVISIBLE);
 
 		// Otherwise set the view using the library persisted in the database
 		LibrarySession.GetActiveLibrary(this, library -> {
@@ -285,7 +280,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	private void updateKeepScreenOnStatus() {
-		isScreenKeptOnButton.setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
+		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
 
 		if (isScreenKeptOn)
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -298,7 +293,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	public RelativeLayout getContentView() {
-		return contentView;
+		return contentView.findView();
 	}
 	
 	public NowPlayingToggledVisibilityControls getNowPlayingToggledVisibilityControls() {
@@ -306,14 +301,14 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	public ProgressBar getSongProgressBar() {
-		return songProgressBar;
+		return songProgressBar.findView();
 	}
 
 	private void setView(final IPlaybackFile playbackFile) {
 		setView(playbackFile.getFile(), playbackFile.getCurrentPosition());
 
-		playButton.setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
-		pauseButton.setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+		playButton.findView().setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
+		pauseButton.findView().setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 
 		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 		nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
@@ -331,15 +326,16 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			viewStructure = new ViewStructure(urlKeyHolder);
 		
 		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
-		
+
+		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 		if (viewStructure.nowPlayingImage == null) {
 			try {				
 				// Cancel the getFileImageTask if it is already in progress
 				if (getFileImageTask != null)
 					getFileImageTask.cancel();
 				
-				nowPlayingImageView.setVisibility(View.INVISIBLE);
-				loadingImg.setVisibility(View.VISIBLE);
+				nowPlayingImage.setVisibility(View.INVISIBLE);
+				loadingImg.findView().setVisibility(View.VISIBLE);
 				
 				getFileImageTask =
 						ImageProvider
@@ -349,7 +345,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 										viewStructure.nowPlayingImage.recycle();
 									viewStructure.nowPlayingImage = result;
 
-									nowPlayingImageView.setImageBitmap(result);
+									nowPlayingImage.setImageBitmap(result);
 
 									displayImageBitmap();
 								});
@@ -360,7 +356,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				logger.error(e.toString(), e);
 			}
 		} else {
-			nowPlayingImageView.setImageBitmap(viewStructure.nowPlayingImage);
+			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImage);
 			displayImageBitmap();
 		}
 
@@ -383,11 +379,11 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private void setFileProperties(final IFile file, final int initialFilePosition, Map<String, String> fileProperties) {
 		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-		nowPlayingArtist.setText(artist);
+		nowPlayingArtist.findView().setText(artist);
 
 		final String title = fileProperties.get(FilePropertiesProvider.NAME);
-		nowPlayingTitle.setText(title);
-		nowPlayingTitle.setSelected(true);
+		nowPlayingTitle.findView().setText(title);
+		nowPlayingTitle.findView().setSelected(true);
 
 		Float fileRating = null;
 		final String stringRating = fileProperties.get(FilePropertiesProvider.RATING);
@@ -402,14 +398,15 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 		final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-		songProgressBar.setMax(duration > 0 ? duration : 100);
-		songProgressBar.setProgress(initialFilePosition);
+		songProgressBar.findView().setMax(duration > 0 ? duration : 100);
+		songProgressBar.findView().setProgress(initialFilePosition);
 	}
 
 	private void setFileRating(IFile file, Float rating) {
-		songRating.setRating(rating != null ? rating : 0f);
+		final RatingBar songRatingBar = songRating.findView();
+		songRatingBar.setRating(rating != null ? rating : 0f);
 
-		songRating.setOnRatingBarChangeListener((ratingBar, newRating, fromUser) -> {
+		songRatingBar.setOnRatingBarChangeListener((ratingBar, newRating, fromUser) -> {
 			if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
 				return;
 
@@ -418,7 +415,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 
-		songRating.setEnabled(true);
+		songRatingBar.setEnabled(true);
 	}
 
 	private boolean handleFileNotFoundException(IFile file, FileNotFoundException fe) {
@@ -440,14 +437,14 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 	
 	private void displayImageBitmap() {
-		nowPlayingImageView.setScaleType(ScaleType.CENTER_CROP);
-		loadingImg.setVisibility(View.INVISIBLE);
-		nowPlayingImageView.setVisibility(View.VISIBLE);
+		nowPlayingImageViewFinder.findView().setScaleType(ScaleType.CENTER_CROP);
+		loadingImg.findView().setVisibility(View.INVISIBLE);
+		nowPlayingImageViewFinder.findView().setVisibility(View.VISIBLE);
 	}
 
 	private void showNowPlayingControls() {
 		nowPlayingToggledVisibilityControls.toggleVisibility(true);
-		contentView.invalidate();
+		contentView.findView().invalidate();
 
 		if (timerTask != null) timerTask.cancel();
 		timerTask = new TimerTask() {
@@ -477,10 +474,10 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	private void disableViewWithMessage(@StringRes int messageId) {
-		nowPlayingTitle.setText(messageId);
-		nowPlayingArtist.setText("");
-		songRating.setRating(0);
-		songRating.setEnabled(false);
+		nowPlayingTitle.findView().setText(messageId);
+		nowPlayingArtist.findView().setText("");
+		songRating.findView().setRating(0);
+		songRating.findView().setEnabled(false);
 	}
 
 	@Override
