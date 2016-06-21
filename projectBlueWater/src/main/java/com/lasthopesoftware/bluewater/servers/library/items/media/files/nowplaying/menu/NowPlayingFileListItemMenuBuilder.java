@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.servers.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.servers.library.items.menu.NotifyOnFlipViewAnimator;
+import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
@@ -35,17 +36,22 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
     private static class ViewHolder extends BaseMenuViewHolder {
 
-        public ViewHolder(final FileListItemContainer fileListItemContainer, final ImageButton viewFileDetailsButton, final ImageButton playButton, final ImageButton removeButton) {
-            super(viewFileDetailsButton, playButton);
+        private final LazyViewFinder<ImageButton> removeButtonFinder;
 
-            this.removeButton = removeButton;
+        public ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
+            super(viewFileDetailsButtonFinder, playButtonFinder);
+
+            this.removeButtonFinder = removeButtonFinder;
             this.fileListItemContainer = fileListItemContainer;
         }
 
-        public final ImageButton removeButton;
         public final FileListItemContainer fileListItemContainer;
         public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public CachedFilePropertiesProvider filePropertiesProvider;
+
+	    public ImageButton getRemoveButton() {
+		    return removeButtonFinder.findView();
+	    }
     }
 
     private final List<IFile> files;
@@ -68,13 +74,15 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
             final LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
             final LinearLayout fileMenu = (LinearLayout)inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false);
-            final ImageButton removeButton = (ImageButton)fileMenu.findViewById(R.id.btnRemoveFromPlaylist);
-            final ImageButton playButton = (ImageButton)fileMenu.findViewById(R.id.btnPlaySong);
-            final ImageButton viewFileDetailsButton = (ImageButton)fileMenu.findViewById(R.id.btnViewFileDetails);
 
             viewFlipper.addView(fileMenu);
 
-            viewFlipper.setTag(new ViewHolder(fileItemMenu, viewFileDetailsButton, playButton, removeButton));
+            viewFlipper.setTag(
+		            new ViewHolder(
+				            fileItemMenu,
+				            new LazyViewFinder<>(fileMenu, R.id.btnViewFileDetails),
+				            new LazyViewFinder<>(fileMenu, R.id.btnPlaySong),
+				            new LazyViewFinder<>(fileMenu, R.id.btnRemoveFromPlaylist)));
             viewFlipper.setViewChangedListener(getOnViewChangedListener());
         }
 
@@ -82,7 +90,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final FileListItemContainer fileListItem = viewHolder.fileListItemContainer;
 
-        final TextView textView = fileListItem.getTextView();
+        final TextView textView = fileListItem.getTextViewFinder();
 
         if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
         viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
@@ -104,9 +112,9 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final NotifyOnFlipViewAnimator viewFlipper = fileListItem.getViewAnimator();
         LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper);
-        viewHolder.playButton.setOnClickListener(new FilePlayClickListener(viewFlipper, position, files));
-        viewHolder.viewFileDetailsButton.setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
-        viewHolder.removeButton.setOnClickListener(new RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener));
+        viewHolder.getPlayButton().setOnClickListener(new FilePlayClickListener(viewFlipper, position, files));
+        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
+        viewHolder.getRemoveButton().setOnClickListener(new RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener));
 
         return viewFlipper;
     }
