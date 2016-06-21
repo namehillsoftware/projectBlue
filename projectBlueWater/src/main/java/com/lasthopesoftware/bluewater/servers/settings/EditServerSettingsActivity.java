@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.view.View.OnClickListener;
@@ -23,6 +22,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.ExternalStorageWritePermissionsArbitrator;
 
 import java.util.ArrayList;
 
@@ -71,10 +72,12 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         final ArrayList<String> permissionsToRequest = new ArrayList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (library.isExternalReadAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+	        final ExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(v.getContext());
+	        if (library.isExternalReadAccessNeeded() && !externalStorageReadPermissionsArbitrator.isPermissionGranted())
 		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-	        if (library.isExternalWriteAccessNeeded() && ContextCompat.checkSelfPermission(v.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+	        final ExternalStorageWritePermissionsArbitrator externalStorageWritePermissionsArbitrator = new ExternalStorageWritePermissionsArbitrator(v.getContext());
+	        if (library.isExternalWriteAccessNeeded() && !externalStorageWritePermissionsArbitrator.isPermissionGranted())
 		        permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 	        if (permissionsToRequest.size() > 0) {

@@ -4,7 +4,7 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.permissions.IExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.IPermissionArbitrator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +21,16 @@ public class MediaFileIdProvider {
 
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
 	private final IFile file;
-	private final IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator;
+	private final IPermissionArbitrator externalStorageReadPermissionsArbitrator;
 
-	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator) {
+	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IPermissionArbitrator externalStorageReadPermissionsArbitrator) {
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
 		this.file = file;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
 	public int getMediaId() throws IOException {
-		if (!externalStorageReadPermissionsArbitrator.isExternalStorageReadPermissionsGranted())
+		if (!externalStorageReadPermissionsArbitrator.isPermissionGranted())
 			return -1;
 
 		final Cursor cursor = mediaQueryCursorProvider.getMediaQueryCursor(file);

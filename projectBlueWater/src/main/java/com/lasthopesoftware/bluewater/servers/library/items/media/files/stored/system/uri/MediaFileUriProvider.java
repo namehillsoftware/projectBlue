@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.uri.AbstractFileUriProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.permissions.IExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.IPermissionArbitrator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,10 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 	private final Context context;
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
-	private final IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator;
+	private final IPermissionArbitrator externalStorageReadPermissionsArbitrator;
 	private final boolean isSilent;
 
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator) {
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IPermissionArbitrator externalStorageReadPermissionsArbitrator) {
 		this (context, mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator, false);
 	}
 
@@ -48,7 +48,7 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	 * @param file the file to provide a URI for
 	 * @param isSilent if true, will not emit broadcast events when media files are found
 	 */
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator, boolean isSilent) {
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IPermissionArbitrator externalStorageReadPermissionsArbitrator, boolean isSilent) {
 		super(file);
 
 		this.context = context;
@@ -59,7 +59,7 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 
 	@Override
 	public Uri getFileUri(IFile file) throws IOException {
-		if (!externalStorageReadPermissionsArbitrator.isExternalStorageReadPermissionsGranted())
+		if (!externalStorageReadPermissionsArbitrator.isPermissionGranted())
 			return null;
 
 		final Cursor cursor = this.mediaQueryCursorProvider.getMediaQueryCursor(file);

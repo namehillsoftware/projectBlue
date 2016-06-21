@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -9,9 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.content.PermissionChecker;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
@@ -19,6 +16,8 @@ import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
+import com.lasthopesoftware.permissions.ExternalStorageWritePermissionsArbitrator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,9 +57,11 @@ public class MainApplication extends Application {
 		LibrarySession.GetActiveLibrary(this, library -> {
 			if (library == null) return;
 
+			final ExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(MainApplication.this);
+			final ExternalStorageWritePermissionsArbitrator externalStorageWritePermissionsArbitrator = new ExternalStorageWritePermissionsArbitrator(MainApplication.this);
 			if (
-					(!library.isExternalReadAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED) &&
-					(!library.isExternalWriteAccessNeeded() || ContextCompat.checkSelfPermission(MainApplication.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PermissionChecker.PERMISSION_GRANTED)) {
+					(!library.isExternalReadAccessNeeded() || externalStorageReadPermissionsArbitrator.isPermissionGranted()) &&
+					(!library.isExternalWriteAccessNeeded() || externalStorageWritePermissionsArbitrator.isPermissionGranted())) {
 				return;
 			}
 
