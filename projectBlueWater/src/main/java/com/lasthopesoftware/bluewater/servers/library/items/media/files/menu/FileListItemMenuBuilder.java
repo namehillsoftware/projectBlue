@@ -33,7 +33,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
 
     private final List<IFile> files;
 
-    private static class ViewHolder extends BaseMenuViewHolder {
+    private static final class ViewHolder extends BaseMenuViewHolder {
         public final LazyViewFinder<ImageButton> addButtonFinder;
 
         public ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
@@ -47,7 +47,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public CachedFilePropertiesProvider filePropertiesProvider;
 
-        public ImageButton getAddButton() {
+        public final ImageButton getAddButton() {
             return addButtonFinder.findView();
         }
     }

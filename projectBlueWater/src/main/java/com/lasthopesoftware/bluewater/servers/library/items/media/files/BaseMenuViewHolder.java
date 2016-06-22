@@ -13,11 +13,11 @@ public class BaseMenuViewHolder {
 		this.playButtonFinder = playButtonFinder;
 	}
 
-	public ImageButton getViewFileDetailsButton() {
+	public final ImageButton getViewFileDetailsButton() {
 		return viewFileDetailsButtonFinder.findView();
 	}
 
-	public ImageButton getPlayButton() {
+	public final ImageButton getPlayButton() {
 		return playButtonFinder.findView();
 	}
 }

@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> {
 
-    private static class ViewHolder extends BaseMenuViewHolder {
+    private static final class ViewHolder extends BaseMenuViewHolder {
 
         private final LazyViewFinder<ImageButton> removeButtonFinder;
 
@@ -49,7 +49,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public CachedFilePropertiesProvider filePropertiesProvider;
 
-	    public ImageButton getRemoveButton() {
+	    public final ImageButton getRemoveButton() {
 		    return removeButtonFinder.findView();
 	    }
     }
