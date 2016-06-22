@@ -15,7 +15,7 @@ public abstract class AbstractFileListItemNowPlayingHandler extends BroadcastRec
 
     private final RelativeLayout fileTextViewContainer;
 
-    private View.OnAttachStateChangeListener onAttachStateChangeListener;
+    private final View.OnAttachStateChangeListener onAttachStateChangeListener;
 
     private final LocalBroadcastManager localBroadcastManager;
 
