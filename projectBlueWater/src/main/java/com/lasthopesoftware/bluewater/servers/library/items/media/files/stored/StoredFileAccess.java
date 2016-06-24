@@ -195,6 +195,7 @@ public class StoredFileAccess {
 				try {
 					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 					if (storedFile == null) {
+						logger.info("Stored file was not found for " + file.getKey() + ", creating file");
 						createStoredFile(repositoryAccessHelper, file);
 						storedFile = getStoredFile(repositoryAccessHelper, file);
 					}

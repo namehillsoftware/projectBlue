@@ -112,7 +112,7 @@ public class LibrarySyncHandler {
 								if (isCancelled) return;
 
 								final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
-								if (!storedFile.isDownloadComplete())
+								if (storedFile != null && !storedFile.isDownloadComplete())
 									storedFileDownloader.queueFileForDownload(file, storedFile);
 							}
 						} catch (ExecutionException | InterruptedException e) {

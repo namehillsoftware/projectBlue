@@ -83,7 +83,9 @@ public class StoredFile implements IRepository {
 		this.isOwner = isOwner;
 	}
 
-	private static final String createTableSql = "CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`path`), UNIQUE (`libraryId`,`serviceId`) ) ";
+	private static final String createTableSql = "CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`libraryId`,`serviceId`) ) ";
+
+
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
@@ -92,7 +94,19 @@ public class StoredFile implements IRepository {
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion <= 5)
+		if (oldVersion < 6) {
 			db.execSQL(createTableSql);
+			return;
+		}
+
+		final String createTempTableSql = createTableSql.replaceFirst("`StoredFiles`", "`StoredFilesTemp`");
+		db.execSQL(createTempTableSql);
+		final String insertIntoTempTable =
+				"INSERT INTO `StoredFilesTemp` (`id`, `isDownloadComplete`, `isOwner`, `libraryId`, `path`, `serviceId`, `storedMediaId`) " +
+				"SELECT `id`, `isDownloadComplete`, `isOwner`, `libraryId`, `path`, `serviceId`, `storedMediaId` FROM CHILD";
+
+		db.execSQL(insertIntoTempTable);
+		db.execSQL("DROP TABLE `StoredFiles`");
+		db.execSQL("ALTER TABLE `StoredFilesTemp` RENAME TO `StoredFiles`");
 	}
 }
