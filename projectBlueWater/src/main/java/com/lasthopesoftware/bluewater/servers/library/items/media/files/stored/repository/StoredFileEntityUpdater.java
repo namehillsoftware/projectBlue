@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -12,31 +13,59 @@ import org.slf4j.LoggerFactory;
  */
 public class StoredFileEntityUpdater implements IEntityUpdater {
 
+	private static final Logger logger = LoggerFactory.getLogger(StoredFileEntityUpdater.class);
+
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion < 6) {
+		if (oldVersion < 5) {
 			db.execSQL(StoredFileEntityInformation.createTableSql);
 			return;
 		}
 
-		final String createTempTableSql =
-				StoredFileEntityInformation
-						.createTableSql
-						.replaceFirst("`StoredFiles`", "`StoredFilesTemp`");
+		if (oldVersion < 6) {
+			final String storedFilesTempTableName = StoredFileEntityInformation.tableName + "Temp";
 
-		db.execSQL(createTempTableSql);
-		final String insertIntoTempTable =
-				"INSERT INTO `StoredFilesTemp` (`id`, `isDownloadComplete`, `isOwner`, `libraryId`, `path`, `serviceId`, `storedMediaId`) " +
-				"SELECT `id`, `isDownloadComplete`, `isOwner`, `libraryId`, `path`, `serviceId`, `storedMediaId` FROM StoredFilesTemp";
+			try {
+				db.execSQL("DROP TABLE `" + storedFilesTempTableName + "`");
+			} catch (SQLException se) {
+				logger.warn("There was an error while dropping the temp table", se);
+			}
 
-		try {
-			db.execSQL(insertIntoTempTable);
-		} catch (SQLException sqlException) {
-			LoggerFactory.getLogger(StoredFile.class).error("There was an error moving the data! Rolling back.", sqlException);
-			throw sqlException;
+			final String createTempTableSql =
+					StoredFileEntityInformation
+							.createTableSql
+							.replaceFirst(StoredFileEntityInformation.tableName, storedFilesTempTableName);
+			logger.warn("Creating temp table with SQL: " + createTempTableSql);
+			db.execSQL(createTempTableSql);
+
+			try {
+				final String insertIntoTempTable =
+						"INSERT INTO `" + storedFilesTempTableName + "` " +
+								"(`id`, " +
+								"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
+								"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
+								"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
+								"`" + StoredFileEntityInformation.pathColumnName + "`, " +
+								"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
+								"`" + StoredFileEntityInformation.storedMediaIdColumnName + "`) " +
+								"SELECT " +
+								"`id`, " +
+								"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
+								"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
+								"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
+								"`" + StoredFileEntityInformation.pathColumnName + "`, " +
+								"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
+								"`" + StoredFileEntityInformation.storedMediaIdColumnName + "` " +
+								"FROM " + StoredFileEntityInformation.tableName;
+
+				db.execSQL(insertIntoTempTable);
+			} catch (SQLException sqlException) {
+				logger.error("There was an error moving the data!", sqlException);
+				throw sqlException;
+			}
+
+			db.execSQL("DROP TABLE `" + StoredFileEntityInformation.tableName + "`");
+			db.execSQL("ALTER TABLE `" + storedFilesTempTableName + "` RENAME TO `" + StoredFileEntityInformation.tableName + "`");
 		}
-
-		db.execSQL("DROP TABLE `StoredFiles`");
-		db.execSQL("ALTER TABLE `StoredFilesTemp` RENAME TO `StoredFiles`");
 	}
 }
