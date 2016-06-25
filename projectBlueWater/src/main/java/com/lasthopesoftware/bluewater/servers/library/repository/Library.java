@@ -4,7 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
-import com.lasthopesoftware.bluewater.repository.IRepository;
+import com.lasthopesoftware.bluewater.repository.IEntityCreator;
+import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.access.stringlist.FileStringListUtilities;
 
@@ -15,7 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Library implements IRepository {
+public class Library implements IEntityCreator, IEntityUpdater {
 
 	public static final String tableName = "LIBRARIES";
 	public static final String libraryNameColumn = "libraryName";

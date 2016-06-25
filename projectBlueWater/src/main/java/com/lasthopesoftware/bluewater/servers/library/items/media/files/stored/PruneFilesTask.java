@@ -5,6 +5,7 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.vedsoft.fluent.FluentTask;
 
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 		try {
 			final List<StoredFile> allStoredFilesQuery =
 					repositoryAccessHelper
-							.mapSql("SELECT * FROM " + StoredFile.tableName)
+							.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName)
 							.fetch(StoredFile.class);
 
 			for (StoredFile storedFile : allStoredFilesQuery) {
@@ -74,7 +75,7 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 	private static void deleteStoredFile(RepositoryAccessHelper repositoryAccessHelper, final StoredFile storedFile) {
 		try {
 			repositoryAccessHelper
-					.mapSql("DELETE FROM " + StoredFile.tableName + " WHERE id = @id")
+					.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
 					.addParameter("id", storedFile.getId())
 					.execute();
 		} catch (SQLException e) {
