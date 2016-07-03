@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 /**
  * Created by david on 12/17/15.
  */
-public interface IRepository {
+public interface IEntityCreator {
 	void onCreate(SQLiteDatabase db);
-	void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion);
 }

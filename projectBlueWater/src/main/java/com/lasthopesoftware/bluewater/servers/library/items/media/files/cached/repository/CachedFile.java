@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.
 
 import android.database.sqlite.SQLiteDatabase;
 
-import com.lasthopesoftware.bluewater.repository.IRepository;
+import com.lasthopesoftware.bluewater.repository.IEntityCreator;
+import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-public class CachedFile implements IRepository {
+public class CachedFile implements IEntityCreator, IEntityUpdater {
 
 	public static final String LIBRARY_ID = "libraryId";
 	public static final String LAST_ACCESSED_TIME = "lastAccessedTime";

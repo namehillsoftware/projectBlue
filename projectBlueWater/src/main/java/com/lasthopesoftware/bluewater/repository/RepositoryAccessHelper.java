@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFileEntityCreator;
+import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFileEntityUpdater;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
@@ -17,10 +19,11 @@ import java.util.concurrent.Executors;
 public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final int DATABASE_VERSION = 5;
+	private static final int DATABASE_VERSION = 6;
 	private static final String DATABASE_NAME = "sessions_db";
 
-	private final static Lazy<IRepository[]> repositories = new Lazy<>(() -> new IRepository[]{new Library(), new StoredFile(), new StoredItem(), new CachedFile()});
+	private final static Lazy<IEntityCreator[]> entityCreators = new Lazy<>(() -> new IEntityCreator[]{new Library(), new StoredFileEntityCreator(), new StoredItem(), new CachedFile()});
+	private final static Lazy<IEntityUpdater[]> entityUpdaters = new Lazy<>(() -> new IEntityUpdater[]{new Library(), new StoredFileEntityUpdater(), new StoredItem(), new CachedFile()});
 
 	private final Lazy<SQLiteDatabase> sqliteDb = new Lazy<>(this::getWritableDatabase);
 
@@ -34,14 +37,14 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		for (IRepository repository : repositories.getObject())
-			repository.onCreate(db);
+		for (IEntityCreator entityCreator : entityCreators.getObject())
+			entityCreator.onCreate(db);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		for (IRepository repository : repositories.getObject())
-			repository.onUpdate(db, oldVersion, newVersion);
+		for (IEntityUpdater entityUpdater : entityUpdaters.getObject())
+			entityUpdater.onUpdate(db, oldVersion, newVersion);
 	}
 
 	@Override

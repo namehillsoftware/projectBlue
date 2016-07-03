@@ -44,9 +44,9 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private static final Logger logger = LoggerFactory.getLogger(FileDetailsActivity.class);
 	public static final String FILE_KEY = "com.lasthopesoftware.bluewater.activities.ViewFiles.FILE_KEY";
     private static final int trackNameMarqueeDelay = 1500;
-	
+
 	private Bitmap mFileImage;
-	
+
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 															new String[] {
 																FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
@@ -56,7 +56,18 @@ public class FileDetailsActivity extends AppCompatActivity {
 																FilePropertiesProvider.STACK_FILES,
 																FilePropertiesProvider.STACK_TOP,
 																FilePropertiesProvider.STACK_VIEW })));
-	
+
+	private static final AbstractLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
+			new AbstractLazy<RelativeLayout.LayoutParams>() {
+				@Override
+				protected RelativeLayout.LayoutParams initialize() throws Exception {
+					final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+					layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+
+					return layoutParams;
+				}
+			};
+
 	private int fileKey = -1;
 
     private final LazyViewFinder<ListView> lvFileDetails = new LazyViewFinder<>(this, R.id.lvFileDetails);
@@ -69,9 +80,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		    final ScaledWrapImageView imgFileThumbnail = new ScaledWrapImageView(FileDetailsActivity.this);
 		    imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow);
-		    final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-		    layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-		    imgFileThumbnail.setLayoutParams(layoutParams);
+
+		    imgFileThumbnail.setLayoutParams(imgFileThumbnailLayoutParams.getObject());
 
 		    rlFileThumbnailContainer.addView(imgFileThumbnail);
 
@@ -79,13 +89,13 @@ public class FileDetailsActivity extends AppCompatActivity {
 	    }
     };
 
-    private ProgressBar pbLoadingFileThumbnail;
+    private LazyViewFinder<ProgressBar> pbLoadingFileThumbnail = new LazyViewFinder<>(this, R.id.pbLoadingFileThumbnail);
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
-    private TextView tvFileName;
-    private TextView tvArtist;
+    private LazyViewFinder<TextView> fileNameTextViewFinder = new LazyViewFinder<>(this, R.id.tvFileName);
+    private LazyViewFinder<TextView> artistTextViewFinder = new LazyViewFinder<>(this, R.id.tvArtist);
 
 	private boolean isDestroyed;
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -97,10 +107,6 @@ public class FileDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_file_details);
 
         fileKey = getIntent().getIntExtra(FILE_KEY, -1);
-
-        pbLoadingFileThumbnail = (ProgressBar) findViewById(R.id.pbLoadingFileThumbnail);
-        tvFileName = (TextView) findViewById(R.id.tvFileName);
-        tvArtist = (TextView) findViewById(R.id.tvArtist);
 
         setView(fileKey);
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
@@ -114,21 +120,22 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         lvFileDetails.findView().setVisibility(View.INVISIBLE);
         pbLoadingFileDetails.findView().setVisibility(View.VISIBLE);
-        
+
         imgFileThumbnailBuilder.getObject().setVisibility(View.INVISIBLE);
-        pbLoadingFileThumbnail.setVisibility(View.VISIBLE);
-        
+        pbLoadingFileThumbnail.findView().setVisibility(View.VISIBLE);
+
         final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
-        
-        tvFileName.setText(getText(R.string.lbl_loading));
-		tvArtist.setText(getText(R.string.lbl_loading));
+
+        fileNameTextViewFinder.findView().setText(getText(R.string.lbl_loading));
+		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		formattedFilePropertiesProvider
 				.onComplete(fileProperties -> {
 					setFileNameFromProperties(fileProperties);
 
 					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-					if (artist != null || tvArtist != null)	tvArtist.setText(artist);
+					if (artist != null)
+						this.artistTextViewFinder.findView().setText(artist);
 
 					final ArrayList<Entry<String, String>> filePropertyList = new ArrayList<>(fileProperties.size());
 
@@ -145,7 +152,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				})
 				.onError(new HandleViewIoException<>(this, () -> setView(fileKey)))
 				.execute();
-        
+
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //
 //			@Override
@@ -192,7 +199,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 			        imgFileThumbnailBuilder.getObject().setImageBitmap(result);
 
-			        pbLoadingFileThumbnail.setVisibility(View.INVISIBLE);
+			        pbLoadingFileThumbnail.findView().setVisibility(View.INVISIBLE);
 			        imgFileThumbnailBuilder.getObject().setVisibility(View.VISIBLE);
 		        })
 		        .execute();
@@ -202,9 +209,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 		final String fileName = fileProperties.get(FilePropertiesProvider.NAME);
 		if (fileName == null) return;
 
-		tvFileName.setText(fileName);
+		final TextView fileNameTextView = fileNameTextViewFinder.findView();
+		fileNameTextView.setText(fileName);
 
-		tvFileName.postDelayed(() -> tvFileName.setSelected(true), trackNameMarqueeDelay);
+		fileNameTextView.postDelayed(() -> fileNameTextView.setSelected(true), trackNameMarqueeDelay);
 
 		final SpannableString spannableString = new SpannableString(String.format(getString(R.string.lbl_details), fileName));
 		spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, fileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -238,12 +246,12 @@ public class FileDetailsActivity extends AppCompatActivity {
 	    }
 	    return super.onOptionsItemSelected(item);
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		isDestroyed = true;
 		if (mFileImage != null) mFileImage.recycle();
-		
+
 		super.onDestroy();
 	}
 }

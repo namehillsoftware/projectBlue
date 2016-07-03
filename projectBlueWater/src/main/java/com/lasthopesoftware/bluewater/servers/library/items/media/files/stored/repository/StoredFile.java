@@ -1,19 +1,13 @@
 package com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository;
 
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.lasthopesoftware.bluewater.repository.IRepository;
+import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 
-public class StoredFile implements IRepository {
+import org.slf4j.LoggerFactory;
 
-	public static final String tableName = "StoredFiles";
-
-	public static final String serviceIdColumnName = "serviceId";
-	public static final String libraryIdColumnName = "libraryId";
-	public static final String pathColumnName = "path";
-	public static final String isOwnerColumnName = "isOwner";
-	public static final String storedMediaIdColumnName = "storedMediaId";
-	public static final String isDownloadCompleteColumnName = "isDownloadComplete";
+public class StoredFile {
 
 	private int id;
 	
@@ -81,18 +75,5 @@ public class StoredFile implements IRepository {
 
 	public void setIsOwner(boolean isOwner) {
 		this.isOwner = isOwner;
-	}
-
-	private static final String createTableSql = "CREATE TABLE `StoredFiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `isDownloadComplete` SMALLINT , `isOwner` SMALLINT , `libraryId` INTEGER , `path` VARCHAR , `serviceId` INTEGER , `storedMediaId` INTEGER ,  UNIQUE (`path`), UNIQUE (`libraryId`,`serviceId`) ) ";
-
-	@Override
-	public void onCreate(SQLiteDatabase db) {
-		db.execSQL(createTableSql);
-	}
-
-	@Override
-	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion <= 5)
-			db.execSQL(createTableSql);
 	}
 }

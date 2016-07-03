@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.servers.library.items.stored;
 
 import android.database.sqlite.SQLiteDatabase;
 
-import com.lasthopesoftware.bluewater.repository.IRepository;
+import com.lasthopesoftware.bluewater.repository.IEntityCreator;
+import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-public class StoredItem implements IRepository {
+public class StoredItem implements IEntityCreator, IEntityUpdater {
 
 	public static final String tableName = "StoredItems";
 	public static final String serviceIdColumnName = "serviceId";
