@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
-import com.lasthopesoftware.permissions.IPermissionArbitrator;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
 
 import java.io.IOException;
 
@@ -33,7 +33,7 @@ public class BestMatchUriProvider extends AbstractFileUriProvider {
 
 	@Override
 	public Uri getFileUri(IFile file) throws IOException {
-		final IPermissionArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(context);
+		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
 
 		final StoredFileUriProvider storedFileUriProvider = new StoredFileUriProvider(context, library, file, externalStorageReadPermissionsArbitrator);
 		Uri fileUri = storedFileUriProvider.getFileUri();

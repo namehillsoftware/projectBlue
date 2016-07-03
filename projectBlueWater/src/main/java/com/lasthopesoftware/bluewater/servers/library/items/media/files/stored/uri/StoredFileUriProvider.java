@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.S
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.uri.AbstractFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.permissions.IPermissionArbitrator;
+import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 public class StoredFileUriProvider extends AbstractFileUriProvider {
 	private final StoredFileAccess storedFileAccess;
 	private final Context context;
-	private final IPermissionArbitrator externalStorageReadPermissionsArbitrator;
+	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public StoredFileUriProvider(Context context, Library library, IFile file, IPermissionArbitrator externalStorageReadPermissionsArbitrator) {
+	public StoredFileUriProvider(Context context, Library library, IFile file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		super(file);
 
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
@@ -40,7 +40,7 @@ public class StoredFileUriProvider extends AbstractFileUriProvider {
 			if (storedFile == null || !storedFile.isDownloadComplete()) return null;
 
 			final File systemFile = new File(storedFile.getPath());
-			if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isPermissionGranted())
+			if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 				return null;
 
 			if (systemFile.exists())

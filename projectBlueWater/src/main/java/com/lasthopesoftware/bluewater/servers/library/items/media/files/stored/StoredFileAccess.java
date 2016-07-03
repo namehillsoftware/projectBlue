@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
-import com.lasthopesoftware.permissions.IPermissionArbitrator;
+import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
@@ -203,7 +203,7 @@ public class StoredFileAccess {
 
 					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
 						try {
-							final IPermissionArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(context);
+							final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
 							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, connectionProvider);
 
 							final MediaFileUriProvider mediaFileUriProvider =

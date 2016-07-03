@@ -232,14 +232,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		this.id = id;
 	}
 
-	public boolean isExternalReadAccessNeeded() {
-		return isUsingExistingFiles || SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(syncedFileLocation);
-	}
-
-	public boolean isExternalWriteAccessNeeded() {
-		return SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(syncedFileLocation);
-	}
-
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `authKey` VARCHAR(100) , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");

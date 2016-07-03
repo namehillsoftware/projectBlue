@@ -19,11 +19,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.permissions.ApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.ApplicationWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.IApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.IApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
-import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitrator;
-import com.lasthopesoftware.permissions.ExternalStorageWritePermissionsArbitrator;
 
 import java.util.ArrayList;
 
@@ -39,6 +41,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<RadioGroup> rgSyncFileOptions = new LazyViewFinder<>(this, R.id.rgSyncFileOptions);
 	private final LazyViewFinder<CheckBox> chkIsUsingExistingFiles = new LazyViewFinder<>(this, R.id.chkIsUsingExistingFiles);
 	private final LazyViewFinder<CheckBox> chkIsUsingLocalConnectionForSync = new LazyViewFinder<>(this, R.id.chkIsUsingLocalConnectionForSync);
+
 	private static final int permissionsRequestInteger = 1;
 
 	private Library library;
@@ -72,12 +75,12 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         final ArrayList<String> permissionsToRequest = new ArrayList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-	        final ExternalStorageReadPermissionsArbitrator externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitrator(v.getContext());
-	        if (library.isExternalReadAccessNeeded() && !externalStorageReadPermissionsArbitrator.isPermissionGranted())
+	        final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider = new ApplicationReadPermissionsRequirementsProvider(this, library);
+	        if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired())
 		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-	        final ExternalStorageWritePermissionsArbitrator externalStorageWritePermissionsArbitrator = new ExternalStorageWritePermissionsArbitrator(v.getContext());
-	        if (library.isExternalWriteAccessNeeded() && !externalStorageWritePermissionsArbitrator.isPermissionGranted())
+	        final IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider = new ApplicationWritePermissionsRequirementsProvider(this, library);
+	        if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired())
 		        permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 	        if (permissionsToRequest.size() > 0) {
