@@ -66,6 +66,7 @@ public class MainApplication extends Application {
 			}
 
 			final Intent settingsIntent = new Intent(MainApplication.this, EditServerSettingsActivity.class);
+			settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, library.getId());
 
 			startActivity(settingsIntent);
