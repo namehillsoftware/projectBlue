@@ -81,14 +81,20 @@ public class LibrarySyncHandler {
 		storedItemAccess.getStoredItems((owner, storedItems) -> AsyncTask
 				.THREAD_POOL_EXECUTOR
 				.execute(() -> {
-					if (isCancelled) return;
+					if (isCancelled) {
+						handleQueueProcessingCompleted();
+						return;
+					}
 
 					final Set<Integer> allSyncedFileKeys = new HashSet<>();
 					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
 					final Queue<Map.Entry<IItem, FileProvider>> fileProviders = new LinkedList<>();
 					for (StoredItem storedItem : storedItems) {
-						if (isCancelled) return;
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return;
+						}
 
 						final int serviceId = storedItem.getServiceId();
 						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
@@ -99,7 +105,10 @@ public class LibrarySyncHandler {
 
 					Map.Entry<IItem, FileProvider> fileProviderEntry;
 					while ((fileProviderEntry = fileProviders.poll()) != null) {
-						if (isCancelled) return;
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return;
+						}
 
 						final IItem item = fileProviderEntry.getKey();
 						final FileProvider fileProvider = fileProviderEntry.getValue();
@@ -109,7 +118,10 @@ public class LibrarySyncHandler {
 							for (final IFile file : files) {
 								allSyncedFileKeys.add(file.getKey());
 
-								if (isCancelled) return;
+								if (isCancelled) {
+									handleQueueProcessingCompleted();
+									return;
+								}
 
 								final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
 								if (storedFile != null && !storedFile.isDownloadComplete())
@@ -126,22 +138,33 @@ public class LibrarySyncHandler {
 							isFaulted = true;
 							logger.warn("There was an error retrieving the files", e);
 
-							return;
+							if (isCancelled) {
+								handleQueueProcessingCompleted();
+								return;
+							}
 						}
 					}
 
 					storedFileDownloader.setOnQueueProcessingCompleted(() -> {
-
 						if (!isCancelled && !isFaulted)
 							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
 
-						if (onQueueProcessingCompleted != null)
-							onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+						handleQueueProcessingCompleted();
 					});
 
-					if (isCancelled) return;
+					if (isCancelled) {
+						handleQueueProcessingCompleted();
+						return;
+					}
 
 					storedFileDownloader.process();
 				}));
+	}
+
+
+
+	private void handleQueueProcessingCompleted() {
+		if (onQueueProcessingCompleted != null)
+			onQueueProcessingCompleted.run(LibrarySyncHandler.this);
 	}
 }
