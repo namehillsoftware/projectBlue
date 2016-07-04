@@ -5,8 +5,8 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.permissions.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.permissions.LibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.permissions.ExternalStorageWritePermissionsArbitratorForOs;
-import com.lasthopesoftware.permissions.IStorageWritePermissionArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.write.ExternalStorageWritePermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionArbitratorForOs;
 
 /**
  * Created by david on 7/3/16.

@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +17,9 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.permissions.storage.read.request.IStorageReadPermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +75,24 @@ public class MainApplication extends Application {
 				});
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));
+
+		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				final int libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1);
+				if (libraryId < 0) return;
+
+				final IStorageReadPermissionsRequestNotificationBuilder storageReadPermissionsRequestNotificationBuilder
+						= new StorageReadPermissionsRequestNotificationBuilder(context);
+
+				final Notification notification =
+						storageReadPermissionsRequestNotificationBuilder
+								.buildReadPermissionsRequestNotification(libraryId);
+
+				final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+				notificationManager.notify(336, notification);
+			}
+		}, new IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded));
 	}
 
 	private void initializeLogging() {

@@ -4,7 +4,7 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.IFile;
-import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

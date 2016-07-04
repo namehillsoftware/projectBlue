@@ -18,8 +18,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
-import com.lasthopesoftware.permissions.ExternalStorageReadPermissionsArbitratorForOs;
-import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.read.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.servers.list.listeners;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsActivity;
@@ -11,18 +10,16 @@ import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsActivit
  */
 public class EditServerClickListener implements View.OnClickListener {
 
-	private final Activity mActivity;
-	private final int mServerId;
+	private final Activity activity;
+	private final int libraryId;
 
-	public EditServerClickListener(Activity activity, int serverId) {
-		mActivity = activity;
-		mServerId = serverId;
+	public EditServerClickListener(Activity activity, int libraryId) {
+		this.activity = activity;
+		this.libraryId = libraryId;
 	}
 
 	@Override
 	public void onClick(View v) {
-		final Intent intent = new Intent(v.getContext(), EditServerSettingsActivity.class);
-		intent.putExtra(EditServerSettingsActivity.serverIdExtra, mServerId);
-		mActivity.startActivityForResult(intent, 5388);
+		activity.startActivityForResult(EditServerSettingsActivity.getEditServerSettingsActivityLaunchIntent(v.getContext(), libraryId), 5388);
 	}
 }

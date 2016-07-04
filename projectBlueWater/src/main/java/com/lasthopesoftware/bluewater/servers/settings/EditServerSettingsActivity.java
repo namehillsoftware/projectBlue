@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.servers.settings;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -26,11 +27,24 @@ import com.lasthopesoftware.bluewater.permissions.IApplicationWritePermissionsRe
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.resources.intents.IIntentFactory;
+import com.lasthopesoftware.resources.intents.IntentFactory;
 
 import java.util.ArrayList;
 
 public class EditServerSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditServerSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
+
+	public static Intent getEditServerSettingsActivityLaunchIntent(Context context, int libraryId) {
+		return getEditServerSettingsActivityLaunchIntent(new IntentFactory(context), libraryId);
+	}
+
+	public static Intent getEditServerSettingsActivityLaunchIntent(IIntentFactory intentFactory, int libraryId) {
+		final Intent settingsIntent = intentFactory.getIntent(EditServerSettingsActivity.class);
+		settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, libraryId);
+
+		return settingsIntent;
+	}
 
 	private final LazyViewFinder<Button> saveButton = new LazyViewFinder<>(this, R.id.btnConnect);
 	private final LazyViewFinder<EditText> txtAccessCode = new LazyViewFinder<>(this, R.id.txtAccessCode);
@@ -72,7 +86,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
         library.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked());
         library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked());
 
-        final ArrayList<String> permissionsToRequest = new ArrayList<>();
+        final ArrayList<String> permissionsToRequest = new ArrayList<>(2);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 	        final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider = new ApplicationReadPermissionsRequirementsProvider(this, library);

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.servers.library.items.media.files.uri.AbstractFileUriProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

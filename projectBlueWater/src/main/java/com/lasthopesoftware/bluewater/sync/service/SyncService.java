@@ -63,8 +63,9 @@ public class SyncService extends Service {
 
 	private static volatile boolean isSyncRunning;
 
-	private LocalBroadcastManager localBroadcastManager;
-	private NotificationManager notificationMgr;
+	private final Lazy<LocalBroadcastManager> localBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+	private final Lazy<NotificationManager> notificationMgr = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
@@ -163,11 +164,9 @@ public class SyncService extends Service {
 	public void onCreate() {
 		super.onCreate();
 
-		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "wakeLock"));
 		wakeLock.acquire();
-		notificationMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 	}
 
 	@Override
@@ -191,7 +190,7 @@ public class SyncService extends Service {
 
 		isSyncRunning = true;
 		startForeground(notificationId, buildSyncNotification(null));
-		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
+		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
 		LibrarySession.GetLibraries(context, libraries -> {
 			librariesProcessing += libraries.size();
@@ -262,13 +261,13 @@ public class SyncService extends Service {
 	}
 
 	private void setSyncNotificationText(String syncNotification) {
-		notificationMgr.notify(notificationId, buildSyncNotification(syncNotification));
+		notificationMgr.getObject().notify(notificationId, buildSyncNotification(syncNotification));
 	}
 
 	private void sendStoredFileBroadcast(String action, StoredFile storedFile) {
 		final Intent storedFileBroadcastIntent = new Intent(action);
 		storedFileBroadcastIntent.putExtra(storedFileEventKey, storedFile.getId());
-		localBroadcastManager.sendBroadcast(storedFileBroadcastIntent);
+		localBroadcastManager.getObject().sendBroadcast(storedFileBroadcastIntent);
 	}
 
 	private void cancelSync() {
@@ -284,11 +283,11 @@ public class SyncService extends Service {
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 		stopForeground(true);
-		notificationMgr.cancel(notificationId);
+		notificationMgr.getObject().cancel(notificationId);
 		stopSelf();
 
 		isSyncRunning = false;
-		localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent));
+		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStopEvent));
 	}
 
 	@Override
@@ -306,8 +305,8 @@ public class SyncService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		return mBinder;
+		return binder;
 	}
 
-	private final IBinder mBinder = new GenericBinder<>(this);
+	private final IBinder binder = new GenericBinder<>(this);
 }

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.permissions;
+package com.lasthopesoftware.permissions.storage.write;
 
 /**
  * Created by david on 7/3/16.
