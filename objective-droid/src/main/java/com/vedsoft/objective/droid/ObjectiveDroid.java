@@ -168,7 +168,7 @@ public class ObjectiveDroid {
 
 		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
 		sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
-		final String sqlQueryType = sqlQuery.substring(0, 3).toLowerCase(Locale.ROOT);
+		final String sqlQueryType = sqlQuery.trim().substring(0, 3).toLowerCase(Locale.ROOT);
 		if (sqlQueryType.equals("upd") || sqlQueryType.equals("del"))
 			return sqLiteStatement.executeUpdateDelete();
 		if (sqlQueryType.equals("ins"))
