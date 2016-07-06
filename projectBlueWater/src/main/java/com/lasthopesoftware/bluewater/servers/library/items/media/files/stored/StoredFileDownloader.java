@@ -54,7 +54,7 @@ public class StoredFileDownloader {
 	private final ConnectionProvider connectionProvider;
 	private final IScanMediaFileBroadcaster scanMediaFileBroadcaster;
 	private final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider;
-	private final IStorageReadPermissionsRequestedBroadcast storageReadPermissionsNeededBroadcast;
+	private final IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast;
 	private final IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider;
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
@@ -77,11 +77,11 @@ public class StoredFileDownloader {
 				new StorageWritePermissionsNeededBroadcast(LocalBroadcastManager.getInstance(context)));
 	}
 
-	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster, IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider, IStorageReadPermissionsRequestedBroadcast storageReadPermissionsNeededBroadcast, IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider, IStorageWritePermissionsNeededBroadcast storageWritePermissionsNeededBroadcast) {
+	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster, IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider, IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast, IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider, IStorageWritePermissionsNeededBroadcast storageWritePermissionsNeededBroadcast) {
 		this.connectionProvider = connectionProvider;
 		this.scanMediaFileBroadcaster = scanMediaFileBroadcaster;
 		this.applicationReadPermissionsRequirementsProvider = applicationReadPermissionsRequirementsProvider;
-		this.storageReadPermissionsNeededBroadcast = storageReadPermissionsNeededBroadcast;
+		this.storageReadPermissionsRequestedBroadcast = storageReadPermissionsRequestedBroadcast;
 		this.applicationWritePermissionsRequirementsProvider = applicationWritePermissionsRequirementsProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.storageWritePermissionsNeededBroadcast = storageWritePermissionsNeededBroadcast;
@@ -127,7 +127,7 @@ public class StoredFileDownloader {
 
 					final java.io.File file = new java.io.File(storedFile.getPath());
 					if (!file.canRead() && !applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired()) {
-						storageReadPermissionsNeededBroadcast.sendReadPermissionsRequestedBroadcast();
+						storageReadPermissionsRequestedBroadcast.sendReadPermissionsRequestedBroadcast(storedFile.getLibraryId());
 						continue;
 					}
 
