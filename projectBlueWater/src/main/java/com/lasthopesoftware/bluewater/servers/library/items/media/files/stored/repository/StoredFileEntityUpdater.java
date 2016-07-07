@@ -20,9 +20,11 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion > 6)
-			return;
+		if (oldVersion <= 5)
+			recreateTableSchema(db);
+	}
 
+	private static void recreateTableSchema(SQLiteDatabase db) {
 		final ObjectiveDroid objectiveDroid = new ObjectiveDroid(db, checkIfStoredFilesExists);
 		final long storedFileCheckResults = objectiveDroid.execute();
 
