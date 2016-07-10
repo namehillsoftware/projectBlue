@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.r
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.lasthopesoftware.permissions.storage.read.request.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
-import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionsNeededBroadcast;
-import com.lasthopesoftware.permissions.storage.write.StorageWritePermissionsNeededBroadcast;
+import com.lasthopesoftware.permissions.storage.write.request.IStorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
@@ -50,7 +50,7 @@ public class StoredFileDownloader {
 	private boolean isProcessing;
 
 	private final StoredFileAccess storedFileAccess;
-	private final IStorageWritePermissionsNeededBroadcast storageWritePermissionsNeededBroadcast;
+	private final IStorageWritePermissionsRequestedBroadcaster storageWritePermissionsNeededBroadcast;
 	private final ConnectionProvider connectionProvider;
 	private final IScanMediaFileBroadcaster scanMediaFileBroadcaster;
 	private final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider;
@@ -62,6 +62,8 @@ public class StoredFileDownloader {
 	private OneParameterRunnable<StoredFile> onFileDownloading;
 	private OneParameterRunnable<StoredFile> onFileDownloaded;
 	private OneParameterRunnable<StoredFile> onFileQueued;
+	private OneParameterRunnable<StoredFile> onFileReadError;
+	private OneParameterRunnable<StoredFile> onFileWriteError;
 	private Runnable onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
@@ -74,10 +76,10 @@ public class StoredFileDownloader {
 				new ApplicationReadPermissionsRequirementsProvider(context, library),
 				new StorageReadPermissionsRequestedBroadcaster(LocalBroadcastManager.getInstance(context)),
 				new ApplicationWritePermissionsRequirementsProvider(context, library),
-				new StorageWritePermissionsNeededBroadcast(LocalBroadcastManager.getInstance(context)));
+				new StorageWritePermissionsRequestedBroadcaster(LocalBroadcastManager.getInstance(context)));
 	}
 
-	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster, IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider, IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast, IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider, IStorageWritePermissionsNeededBroadcast storageWritePermissionsNeededBroadcast) {
+	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster, IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider, IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast, IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider, IStorageWritePermissionsRequestedBroadcaster storageWritePermissionsNeededBroadcast) {
 		this.connectionProvider = connectionProvider;
 		this.scanMediaFileBroadcaster = scanMediaFileBroadcaster;
 		this.applicationReadPermissionsRequirementsProvider = applicationReadPermissionsRequirementsProvider;
@@ -127,14 +129,18 @@ public class StoredFileDownloader {
 
 					final java.io.File file = new java.io.File(storedFile.getPath());
 					if (!file.canRead() && !applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired()) {
-						storageReadPermissionsRequestedBroadcast.sendReadPermissionsRequestedBroadcast(storedFile.getLibraryId());
+						if (onFileReadError != null)
+							onFileReadError.run(storedFile);
+
 						continue;
 					}
 
 					if (storedFile.isDownloadComplete() && file.exists()) continue;
 
 					if (!file.canWrite() && !applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired()) {
-						storageWritePermissionsNeededBroadcast.sendWritePermissionsNeededBroadcast();
+						if (onFileWriteError != null)
+							onFileWriteError.run(storedFile);
+
 						continue;
 					}
 
@@ -215,5 +221,13 @@ public class StoredFileDownloader {
 
 	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
+	}
+
+	public void setOnFileReadError(OneParameterRunnable<StoredFile> onFileReadError) {
+		this.onFileReadError = onFileReadError;
+	}
+
+	public void setOnFileWriteError(OneParameterRunnable<StoredFile> onFileWriteError) {
+		this.onFileWriteError = onFileWriteError;
 	}
 }

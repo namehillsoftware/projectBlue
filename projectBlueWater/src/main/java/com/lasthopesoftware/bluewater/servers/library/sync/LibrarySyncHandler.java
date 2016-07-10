@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.servers.library.repository.Library;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,14 @@ public class LibrarySyncHandler {
 
 	public void setOnQueueProcessingCompleted(final OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
+	}
+
+	public void setOnFileReadError(TwoParameterRunnable<Library, StoredFile> onFileReadError) {
+		storedFileDownloader.setOnFileReadError(storedFile -> onFileReadError.run(library, storedFile));
+	}
+
+	public void setOnFileWriteError(TwoParameterRunnable<Library, StoredFile> onFileWriteError) {
+		storedFileDownloader.setOnFileWriteError(storedFile -> onFileWriteError.run(library, storedFile));
 	}
 
 	public void cancel() {

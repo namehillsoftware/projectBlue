@@ -245,5 +245,6 @@
       </value>
     </option>
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Named Scheme for Android Studio's silly-ness" />
   </component>
 </project>

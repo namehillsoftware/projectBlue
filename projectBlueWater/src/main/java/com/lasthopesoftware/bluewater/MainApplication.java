@@ -20,6 +20,10 @@ import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.permissions.storage.read.request.IStorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
+import com.lasthopesoftware.permissions.storage.write.request.IStorageWritePermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.permissions.storage.write.request.StorageWritePermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +43,10 @@ import ch.qos.logback.core.util.StatusPrinter;
 public class MainApplication extends Application {
 	
 	private static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
+
+	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
+	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
+	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
 	
 	@SuppressLint("DefaultLocale")
 	@Override
@@ -82,17 +90,27 @@ public class MainApplication extends Application {
 				final int libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1);
 				if (libraryId < 0) return;
 
-				final IStorageReadPermissionsRequestNotificationBuilder storageReadPermissionsRequestNotificationBuilder
-						= new StorageReadPermissionsRequestNotificationBuilder(context);
-
-				final Notification notification =
-						storageReadPermissionsRequestNotificationBuilder
-								.buildReadPermissionsRequestNotification(libraryId);
-
-				final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-				notificationManager.notify(336, notification);
+				notificationManagerLazy.getObject().notify(
+						336,
+						storageReadPermissionsRequestNotificationBuilderLazy
+								.getObject()
+								.buildReadPermissionsRequestNotification(libraryId));
 			}
 		}, new IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded));
+
+		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				final int libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.WritePermissionsLibraryId, -1);
+				if (libraryId < 0) return;
+
+				notificationManagerLazy.getObject().notify(
+						396,
+						storageReadPermissionsRequestNotificationBuilderLazy
+								.getObject()
+								.buildReadPermissionsRequestNotification(libraryId));
+			}
+		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 	}
 
 	private void initializeLogging() {
