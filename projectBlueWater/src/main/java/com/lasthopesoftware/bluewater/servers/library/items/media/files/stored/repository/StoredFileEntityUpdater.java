@@ -28,7 +28,7 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 		final ObjectiveDroid objectiveDroid = new ObjectiveDroid(db, checkIfStoredFilesExists);
 		final long storedFileCheckResults = objectiveDroid.execute();
 
-		if (storedFileCheckResults > 0) {
+		if (storedFileCheckResults == 0) {
 			db.execSQL(StoredFileEntityInformation.createTableSql);
 			return;
 		}
