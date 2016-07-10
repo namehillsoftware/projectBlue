@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.write.request;
+package com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 
 /**
