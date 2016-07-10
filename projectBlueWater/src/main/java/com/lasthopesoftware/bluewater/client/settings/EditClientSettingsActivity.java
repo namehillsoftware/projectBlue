@@ -32,16 +32,16 @@ import com.lasthopesoftware.resources.intents.IntentFactory;
 
 import java.util.ArrayList;
 
-public class EditServerSettingsActivity extends AppCompatActivity {
-	public static final String serverIdExtra = EditServerSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
+public class EditClientSettingsActivity extends AppCompatActivity {
+	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
 
 	public static Intent getEditServerSettingsActivityLaunchIntent(Context context, int libraryId) {
 		return getEditServerSettingsActivityLaunchIntent(new IntentFactory(context), libraryId);
 	}
 
 	public static Intent getEditServerSettingsActivityLaunchIntent(IIntentFactory intentFactory, int libraryId) {
-		final Intent settingsIntent = intentFactory.getIntent(EditServerSettingsActivity.class);
-		settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, libraryId);
+		final Intent settingsIntent = intentFactory.getIntent(EditClientSettingsActivity.class);
+		settingsIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
 
 		return settingsIntent;
 	}
@@ -99,7 +99,7 @@ public class EditServerSettingsActivity extends AppCompatActivity {
 
 	        if (permissionsToRequest.size() > 0) {
 		        final String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[permissionsToRequest.size()]);
-		        ActivityCompat.requestPermissions(EditServerSettingsActivity.this, permissionsToRequestArray, permissionsRequestInteger);
+		        ActivityCompat.requestPermissions(EditClientSettingsActivity.this, permissionsToRequestArray, permissionsRequestInteger);
 
 		        return;
 	        }

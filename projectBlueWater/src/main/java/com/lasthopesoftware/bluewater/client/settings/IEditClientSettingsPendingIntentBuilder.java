@@ -5,6 +5,6 @@ import android.app.PendingIntent;
 /**
  * Created by david on 7/3/16.
  */
-public interface IEditServerSettingsPendingIntentBuilder {
+public interface IEditClientSettingsPendingIntentBuilder {
 	PendingIntent buildEditServerSettingsPendingIntent(int libraryId);
 }

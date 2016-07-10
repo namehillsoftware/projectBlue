@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.repository.permissions;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.write;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 

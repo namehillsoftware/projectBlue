@@ -13,7 +13,7 @@ import android.widget.RelativeLayout;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.list.ServerListAdapter;
+import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
 	private ProgressBar progressBar;

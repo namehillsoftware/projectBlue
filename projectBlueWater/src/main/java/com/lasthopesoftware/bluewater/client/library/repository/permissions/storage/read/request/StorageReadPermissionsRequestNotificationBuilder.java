@@ -1,10 +1,10 @@
-package com.lasthopesoftware.permissions.storage.read.request;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.read.request;
 
 import android.app.Notification;
 import android.content.Context;
 
-import com.lasthopesoftware.permissions.storage.request.IStoragePermissionsRequestNotificationBuilder;
-import com.lasthopesoftware.permissions.storage.request.StoragePermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.request.IStoragePermissionsRequestNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.request.StoragePermissionsRequestNotificationBuilder;
 
 /**
  * Created by david on 7/3/16.

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.permissions.storage.write.request;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.write.request;
 
 import android.app.Notification;
 

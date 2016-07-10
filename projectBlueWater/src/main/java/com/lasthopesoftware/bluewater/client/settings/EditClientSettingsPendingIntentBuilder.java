@@ -7,19 +7,19 @@ import android.content.Intent;
 /**
  * Created by david on 7/3/16.
  */
-public class EditServerSettingsPendingIntentBuilder implements IEditServerSettingsPendingIntentBuilder {
+public class EditClientSettingsPendingIntentBuilder implements IEditClientSettingsPendingIntentBuilder {
 
 	private final Context context;
 
-	public EditServerSettingsPendingIntentBuilder(Context context) {
+	public EditClientSettingsPendingIntentBuilder(Context context) {
 		this.context = context;
 	}
 
 	@Override
 	public PendingIntent buildEditServerSettingsPendingIntent(int libraryId) {
-		final Intent settingsIntent = EditServerSettingsActivity.getEditServerSettingsActivityLaunchIntent(context, libraryId);
+		final Intent settingsIntent = EditClientSettingsActivity.getEditServerSettingsActivityLaunchIntent(context, libraryId);
 		settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		settingsIntent.putExtra(EditServerSettingsActivity.serverIdExtra, libraryId);
+		settingsIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
 
 		return PendingIntent.getActivity(context, 0, settingsIntent, 0);
 	}

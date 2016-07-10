@@ -10,14 +10,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcast
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.read.request.IStorageReadPermissionsRequestedBroadcast;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.write.request.IStorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.permissions.ApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.IApplicationWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.permissions.storage.read.request.IStorageReadPermissionsRequestedBroadcast;
-import com.lasthopesoftware.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
-import com.lasthopesoftware.permissions.storage.write.request.IStorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;

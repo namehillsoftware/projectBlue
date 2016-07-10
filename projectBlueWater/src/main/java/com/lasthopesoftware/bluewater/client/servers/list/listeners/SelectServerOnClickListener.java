@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.list.listeners;
+package com.lasthopesoftware.bluewater.client.servers.list.listeners;
 
 import android.content.Context;
 import android.content.Intent;

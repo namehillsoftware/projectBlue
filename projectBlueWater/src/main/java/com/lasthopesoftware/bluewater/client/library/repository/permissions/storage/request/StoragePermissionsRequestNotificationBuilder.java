@@ -1,12 +1,12 @@
-package com.lasthopesoftware.permissions.storage.request;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.storage.request;
 
 import android.app.Notification;
 import android.content.Context;
 import android.support.v4.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.settings.EditServerSettingsPendingIntentBuilder;
-import com.lasthopesoftware.bluewater.client.settings.IEditServerSettingsPendingIntentBuilder;
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsPendingIntentBuilder;
+import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsPendingIntentBuilder;
 import com.lasthopesoftware.resources.strings.IStringResourceProvider;
 import com.lasthopesoftware.resources.strings.StringResourceProvider;
 
@@ -17,13 +17,13 @@ public class StoragePermissionsRequestNotificationBuilder implements IStoragePer
 
 	private final NotificationCompat.Builder notificationBuilder;
 	private final IStringResourceProvider stringResourceProvider;
-	private final IEditServerSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder;
+	private final IEditClientSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder;
 
 	public StoragePermissionsRequestNotificationBuilder(Context context) {
-		this(new NotificationCompat.Builder(context), new StringResourceProvider(context), new EditServerSettingsPendingIntentBuilder(context));
+		this(new NotificationCompat.Builder(context), new StringResourceProvider(context), new EditClientSettingsPendingIntentBuilder(context));
 	}
 
-	public StoragePermissionsRequestNotificationBuilder(NotificationCompat.Builder notificationBuilder, IStringResourceProvider stringResourceProvider, IEditServerSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder) {
+	public StoragePermissionsRequestNotificationBuilder(NotificationCompat.Builder notificationBuilder, IStringResourceProvider stringResourceProvider, IEditClientSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder) {
 		this.notificationBuilder = notificationBuilder;
 		this.stringResourceProvider = stringResourceProvider;
 		this.editServerSettingsPendingIntentBuilder = editServerSettingsPendingIntentBuilder;
