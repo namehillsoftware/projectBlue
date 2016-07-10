@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.permissions;
+package com.lasthopesoftware.bluewater.permissions.read;
 
 import android.content.Context;
 

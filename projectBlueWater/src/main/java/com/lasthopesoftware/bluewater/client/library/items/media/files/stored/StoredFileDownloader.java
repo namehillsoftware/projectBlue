@@ -14,10 +14,10 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.re
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.permissions.ApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.ApplicationWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.IApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.IApplicationWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;

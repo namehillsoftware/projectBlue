@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.permissions;
+package com.lasthopesoftware.bluewater.permissions.write;
 
 import android.content.Context;
 
@@ -21,7 +21,8 @@ public class ApplicationWritePermissionsRequirementsProvider implements IApplica
 	}
 
 	public ApplicationWritePermissionsRequirementsProvider(
-			ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider, IStorageWritePermissionArbitratorForOs storageWritePermissionArbitratorForOs) {
+			ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider,
+			IStorageWritePermissionArbitratorForOs storageWritePermissionArbitratorForOs) {
 
 		this.storageWritePermissionsRequirementsProvider = storageWritePermissionsRequirementsProvider;
 		this.storageWritePermissionArbitratorForOs = storageWritePermissionArbitratorForOs;
