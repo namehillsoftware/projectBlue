@@ -106,9 +106,9 @@ public class MainApplication extends Application {
 
 				notificationManagerLazy.getObject().notify(
 						396,
-						storageReadPermissionsRequestNotificationBuilderLazy
+						storageWritePermissionsRequestNotificationBuilderLazy
 								.getObject()
-								.buildReadPermissionsRequestNotification(libraryId));
+								.buildWritePermissionsRequestNotification(libraryId));
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 	}
