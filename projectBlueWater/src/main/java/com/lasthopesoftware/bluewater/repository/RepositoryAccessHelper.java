@@ -4,12 +4,11 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFileEntityCreator;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.repository.StoredFileEntityUpdater;
-import com.lasthopesoftware.bluewater.servers.library.items.stored.StoredItem;
-import com.lasthopesoftware.bluewater.servers.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityCreator;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityUpdater;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 

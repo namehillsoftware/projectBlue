@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.shared.audio.playback;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 /**

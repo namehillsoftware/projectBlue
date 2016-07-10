@@ -1,6 +1,6 @@
 package com.lasthopesoftware.providers;
 
-import com.lasthopesoftware.bluewater.servers.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

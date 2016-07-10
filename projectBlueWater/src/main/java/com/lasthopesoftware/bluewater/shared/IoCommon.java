@@ -6,7 +6,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.BatteryManager;
 
-import com.lasthopesoftware.bluewater.servers.connection.ConnectionInfo;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionInfo;
 
 /**
  * Created by david on 7/24/15.

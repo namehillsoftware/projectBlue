@@ -5,8 +5,8 @@ import android.content.Context;
 import android.support.v4.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.servers.settings.EditServerSettingsPendingIntentBuilder;
-import com.lasthopesoftware.bluewater.servers.settings.IEditServerSettingsPendingIntentBuilder;
+import com.lasthopesoftware.bluewater.client.settings.EditServerSettingsPendingIntentBuilder;
+import com.lasthopesoftware.bluewater.client.settings.IEditServerSettingsPendingIntentBuilder;
 import com.lasthopesoftware.resources.strings.IStringResourceProvider;
 import com.lasthopesoftware.resources.strings.StringResourceProvider;
 

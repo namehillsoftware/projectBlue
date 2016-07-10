@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,9 +11,9 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.servers.library.items.media.files.stored.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.servers.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.permissions.storage.read.request.IStorageReadPermissionsRequestNotificationBuilder;
@@ -79,7 +78,7 @@ public class MainApplication extends Application {
 					final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 					if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.servers.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
+					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.client.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
 				});
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));
