@@ -37,6 +37,8 @@ public class StoragePermissionsRequestNotificationBuilder implements IStoragePer
 
 		notificationBuilder.setContentIntent(editServerSettingsPendingIntentBuilder.buildEditServerSettingsPendingIntent(libraryId));
 
+		notificationBuilder.setAutoCancel(true);
+
 		return notificationBuilder.build();
 	}
 }
