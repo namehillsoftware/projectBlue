@@ -10,16 +10,21 @@ import android.content.Intent;
 public class EditClientSettingsPendingIntentBuilder implements IEditClientSettingsPendingIntentBuilder {
 
 	private final Context context;
+	private final IEditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder;
 
 	public EditClientSettingsPendingIntentBuilder(Context context) {
+		this(context, new EditClientSettingsActivityIntentBuilder(context));
+	}
+
+	public EditClientSettingsPendingIntentBuilder(Context context, IEditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder) {
 		this.context = context;
+		this.editClientSettingsActivityIntentBuilder = editClientSettingsActivityIntentBuilder;
 	}
 
 	@Override
 	public PendingIntent buildEditServerSettingsPendingIntent(int libraryId) {
-		final Intent settingsIntent = EditClientSettingsActivity.getEditServerSettingsActivityLaunchIntent(context, libraryId);
+		final Intent settingsIntent = editClientSettingsActivityIntentBuilder.buildIntent(libraryId);
 		settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		settingsIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
 
 		return PendingIntent.getActivity(context, 0, settingsIntent, 0);
 	}

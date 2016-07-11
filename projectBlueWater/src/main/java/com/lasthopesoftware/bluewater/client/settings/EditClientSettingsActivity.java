@@ -35,17 +35,6 @@ import java.util.ArrayList;
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
 
-	public static Intent getEditServerSettingsActivityLaunchIntent(Context context, int libraryId) {
-		return getEditServerSettingsActivityLaunchIntent(new IntentFactory(context), libraryId);
-	}
-
-	public static Intent getEditServerSettingsActivityLaunchIntent(IIntentFactory intentFactory, int libraryId) {
-		final Intent settingsIntent = intentFactory.getIntent(EditClientSettingsActivity.class);
-		settingsIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
-
-		return settingsIntent;
-	}
-
 	private final LazyViewFinder<Button> saveButton = new LazyViewFinder<>(this, R.id.btnConnect);
 	private final LazyViewFinder<EditText> txtAccessCode = new LazyViewFinder<>(this, R.id.txtAccessCode);
 	private final LazyViewFinder<EditText> txtUserName = new LazyViewFinder<>(this, R.id.txtUserName);
