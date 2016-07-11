@@ -71,7 +71,7 @@
     <string name="rbPrivateToApp">Private to App</string>
     <string name="rbPublicLocation">Public Music Location</string>
     <string name="rbCustomLocation">Custom:</string>
-    <string name="lbl_use_existing_music">Use existing music on device</string>
+    <string name="lbl_use_existing_music">Use existing music on device for playback and sync</string>
     <string name="title_sync_files">Syncing files</string>
     <string name="lbl_sync_local_connection">Sync only on local connections</string>
     <string name="title_view_active_downloads">View Active Downloads</string>

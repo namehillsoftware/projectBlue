@@ -131,11 +131,6 @@
                 android:inputType="textUri"
                 android:hint="@string/lbl_sync_path"/>
             <CheckBox
-                android:id="@+id/chkIsUsingExistingFiles"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/lbl_use_existing_music"/>
-            <CheckBox
                 android:id="@+id/chkIsUsingLocalConnectionForSync"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -143,11 +138,27 @@
         </LinearLayout>
     </LinearLayout>
 
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:gravity="center_horizontal"
+		android:weightSum="1.0"
+		android:id="@+id/useExistingFilesLinearLayout"
+		android:layout_below="@id/llSyncFileOptions">
+		<CheckBox
+			android:id="@+id/chkIsUsingExistingFiles"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight=".75"
+			android:text="@string/lbl_use_existing_music"/>
+	</LinearLayout>
+
     <Button
         android:id="@+id/btnConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/llSyncFileOptions"
+        android:layout_below="@id/useExistingFilesLinearLayout"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         android:text="@string/btn_save" />
