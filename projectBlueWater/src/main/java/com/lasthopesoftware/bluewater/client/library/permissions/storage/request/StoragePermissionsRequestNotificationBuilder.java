@@ -39,6 +39,8 @@ public class StoragePermissionsRequestNotificationBuilder implements IStoragePer
 
 		notificationBuilder.setAutoCancel(true);
 
+		notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
 		return notificationBuilder.build();
 	}
 }

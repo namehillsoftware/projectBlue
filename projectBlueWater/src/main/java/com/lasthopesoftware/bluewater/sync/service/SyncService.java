@@ -271,6 +271,8 @@ public class SyncService extends Service {
 
 		notifyBuilder.setOngoing(true);
 
+		notifyBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
 		return notifyBuilder.build();
 	}
 

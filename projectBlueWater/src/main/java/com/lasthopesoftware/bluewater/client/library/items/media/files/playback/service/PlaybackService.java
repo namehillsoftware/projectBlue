@@ -507,6 +507,7 @@ public class PlaybackService extends Service implements
 	
 	private void notifyForeground(Builder notificationBuilder) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
+		notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 		final Notification notification = notificationBuilder.build();
 
 		if (!isNotificationForeground) {
