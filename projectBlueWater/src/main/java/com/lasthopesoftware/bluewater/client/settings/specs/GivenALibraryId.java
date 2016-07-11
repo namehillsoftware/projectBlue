@@ -19,7 +19,7 @@ public class GivenALibraryId {
 		@Before
 		public void setUp() {
 			final EditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder =
-				new EditClientSettingsActivityIntentBuilder(cls -> new Intent(cls.toString()));
+				new EditClientSettingsActivityIntentBuilder(cls -> new Intent());
 
 			final Intent intent = editClientSettingsActivityIntentBuilder.buildIntent(13);
 			this.libraryId = intent.getIntExtra(EditClientSettingsActivity.serverIdExtra, -1);

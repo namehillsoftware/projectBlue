@@ -230,6 +230,7 @@ public class SyncService extends Service {
 					librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 					librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
 					librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
+					librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
 					librarySyncHandler.startSync();
 
 					librarySyncHandlers.add(librarySyncHandler);

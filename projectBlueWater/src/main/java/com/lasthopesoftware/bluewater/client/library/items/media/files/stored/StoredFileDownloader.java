@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.r
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
@@ -128,7 +128,7 @@ public class StoredFileDownloader {
 					final IFile serviceFile = queuedFileHolder.file;
 
 					final java.io.File file = new java.io.File(storedFile.getPath());
-					if (!file.canRead() && !applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired()) {
+					if (!file.canRead() && applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired()) {
 						if (onFileReadError != null)
 							onFileReadError.run(storedFile);
 
@@ -137,7 +137,7 @@ public class StoredFileDownloader {
 
 					if (storedFile.isDownloadComplete() && file.exists()) continue;
 
-					if (!file.canWrite() && !applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired()) {
+					if (!file.canWrite() && applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired()) {
 						if (onFileWriteError != null)
 							onFileWriteError.run(storedFile);
 
