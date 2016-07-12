@@ -2,22 +2,13 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.IStorageReadPermissionsRequestedBroadcast;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request.IStorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
@@ -50,12 +41,8 @@ public class StoredFileDownloader {
 	private boolean isProcessing;
 
 	private final StoredFileAccess storedFileAccess;
-	private final IStorageWritePermissionsRequestedBroadcaster storageWritePermissionsNeededBroadcast;
 	private final ConnectionProvider connectionProvider;
 	private final IScanMediaFileBroadcaster scanMediaFileBroadcaster;
-	private final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider;
-	private final IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast;
-	private final IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider;
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<QueuedFileHolder> queuedFiles = new LinkedList<>();
 
@@ -72,21 +59,13 @@ public class StoredFileDownloader {
 		this(
 				connectionProvider,
 				new StoredFileAccess(context, library),
-				new ScanMediaFileBroadcaster(context),
-				new ApplicationReadPermissionsRequirementsProvider(context, library),
-				new StorageReadPermissionsRequestedBroadcaster(LocalBroadcastManager.getInstance(context)),
-				new ApplicationWritePermissionsRequirementsProvider(context, library),
-				new StorageWritePermissionsRequestedBroadcaster(LocalBroadcastManager.getInstance(context)));
+				new ScanMediaFileBroadcaster(context));
 	}
 
-	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster, IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider, IStorageReadPermissionsRequestedBroadcast storageReadPermissionsRequestedBroadcast, IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider, IStorageWritePermissionsRequestedBroadcaster storageWritePermissionsNeededBroadcast) {
+	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IScanMediaFileBroadcaster scanMediaFileBroadcaster) {
 		this.connectionProvider = connectionProvider;
 		this.scanMediaFileBroadcaster = scanMediaFileBroadcaster;
-		this.applicationReadPermissionsRequirementsProvider = applicationReadPermissionsRequirementsProvider;
-		this.storageReadPermissionsRequestedBroadcast = storageReadPermissionsRequestedBroadcast;
-		this.applicationWritePermissionsRequirementsProvider = applicationWritePermissionsRequirementsProvider;
 		this.storedFileAccess = storedFileAccess;
-		this.storageWritePermissionsNeededBroadcast = storageWritePermissionsNeededBroadcast;
 	}
 
 	public void queueFileForDownload(final IFile serviceFile, final StoredFile storedFile) {
@@ -128,7 +107,7 @@ public class StoredFileDownloader {
 					final IFile serviceFile = queuedFileHolder.file;
 
 					final java.io.File file = new java.io.File(storedFile.getPath());
-					if (!file.canRead() && applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired()) {
+					if (!file.canRead()) {
 						if (onFileReadError != null)
 							onFileReadError.run(storedFile);
 
@@ -137,7 +116,7 @@ public class StoredFileDownloader {
 
 					if (storedFile.isDownloadComplete() && file.exists()) continue;
 
-					if (!file.canWrite() && applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired()) {
+					if (!file.canWrite()) {
 						if (onFileWriteError != null)
 							onFileWriteError.run(storedFile);
 

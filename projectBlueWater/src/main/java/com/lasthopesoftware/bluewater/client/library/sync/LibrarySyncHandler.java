@@ -16,6 +16,10 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -42,6 +46,8 @@ public class LibrarySyncHandler {
 	private final Context context;
 	private final ConnectionProvider connectionProvider;
 	private final Library library;
+	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
+	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final StoredFileDownloader storedFileDownloader;
 	private OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted;
 
@@ -49,9 +55,20 @@ public class LibrarySyncHandler {
 	private volatile boolean isFaulted;
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
+		this(
+				context,
+				connectionProvider,
+				library,
+				new LibraryStorageReadPermissionsRequirementsProvider(library),
+				new LibraryStorageWritePermissionsRequirementsProvider(library));
+	}
+
+	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.library = library;
+		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
+		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
@@ -72,11 +89,17 @@ public class LibrarySyncHandler {
 	}
 
 	public void setOnFileReadError(TwoParameterRunnable<Library, StoredFile> onFileReadError) {
-		storedFileDownloader.setOnFileReadError(storedFile -> onFileReadError.run(library, storedFile));
+		storedFileDownloader.setOnFileReadError(storedFile -> {
+			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequired())
+				onFileReadError.run(library, storedFile);
+		});
 	}
 
 	public void setOnFileWriteError(TwoParameterRunnable<Library, StoredFile> onFileWriteError) {
-		storedFileDownloader.setOnFileWriteError(storedFile -> onFileWriteError.run(library, storedFile));
+		storedFileDownloader.setOnFileWriteError(storedFile -> {
+			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequired())
+				onFileWriteError.run(library, storedFile);
+		});
 	}
 
 	public void cancel() {

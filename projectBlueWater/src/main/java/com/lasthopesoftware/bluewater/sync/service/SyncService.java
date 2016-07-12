@@ -39,6 +39,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
+import com.lasthopesoftware.permissions.storage.read.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.write.ExternalStorageWritePermissionsArbitratorForOs;
+import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionArbitratorForOs;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.AbstractLazy;
@@ -75,6 +79,9 @@ public class SyncService extends Service {
 
 	private final Lazy<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new Lazy<>(() -> new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
 	private final Lazy<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new Lazy<>(() -> new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
+
+	private final Lazy<IStorageReadPermissionArbitratorForOs> storageReadPermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
+	private final Lazy<IStorageWritePermissionArbitratorForOs> storageWritePermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageWritePermissionsArbitratorForOs(this));
 
 	private PowerManager.WakeLock wakeLock;
 
@@ -114,9 +121,15 @@ public class SyncService extends Service {
 
 	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = storedFile -> sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
+	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
+		if (storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
+			storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
+	};
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
+	private final TwoParameterRunnable<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
+		if (storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
+			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
+	};
 
 	private final AbstractLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractLazy<BroadcastReceiver>() {
 		@Override
