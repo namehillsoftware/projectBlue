@@ -29,9 +29,9 @@ public class GivenALibraryUsingExistingFiles {
 				when(libraryRequiringExistingFiles.isUsingExistingFiles()).thenReturn(true);
 				when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.INTERNAL);
 				final LibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider =
-						new LibraryStorageReadPermissionsRequirementsProvider(libraryRequiringExistingFiles);
+						new LibraryStorageReadPermissionsRequirementsProvider();
 
-				isReadPermissionsRequired = libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequired();
+				isReadPermissionsRequired = libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(libraryRequiringExistingFiles);
 			}
 
 			@Test
@@ -53,9 +53,9 @@ public class GivenALibraryUsingExistingFiles {
 				when(libraryRequiringExistingFiles.isUsingExistingFiles()).thenReturn(true);
 				when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.EXTERNAL);
 				final LibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider =
-						new LibraryStorageReadPermissionsRequirementsProvider(libraryRequiringExistingFiles);
+						new LibraryStorageReadPermissionsRequirementsProvider();
 
-				isReadPermissionsRequired = libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequired();
+				isReadPermissionsRequired = libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(libraryRequiringExistingFiles);
 			}
 
 			@Test

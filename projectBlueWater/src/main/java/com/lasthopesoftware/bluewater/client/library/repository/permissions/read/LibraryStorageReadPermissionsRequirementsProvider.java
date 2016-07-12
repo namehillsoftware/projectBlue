@@ -9,14 +9,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
  */
 public class LibraryStorageReadPermissionsRequirementsProvider implements ILibraryStorageReadPermissionsRequirementsProvider {
 
-	private final Library library;
-
-	public LibraryStorageReadPermissionsRequirementsProvider(@NonNull Library library) {
-		this.library = library;
-	}
-
-	@Override
-	public boolean isReadPermissionsRequired() {
+		@Override
+	public boolean isReadPermissionsRequiredForLibrary(@NonNull Library library) {
 		return library.isUsingExistingFiles() || Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(library.getSyncedFileLocation());
 	}
 }

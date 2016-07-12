@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,12 +22,11 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
-import com.lasthopesoftware.resources.intents.IIntentFactory;
-import com.lasthopesoftware.resources.intents.IntentFactory;
+import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
 
@@ -44,6 +42,9 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<RadioGroup> rgSyncFileOptions = new LazyViewFinder<>(this, R.id.rgSyncFileOptions);
 	private final LazyViewFinder<CheckBox> chkIsUsingExistingFiles = new LazyViewFinder<>(this, R.id.chkIsUsingExistingFiles);
 	private final LazyViewFinder<CheckBox> chkIsUsingLocalConnectionForSync = new LazyViewFinder<>(this, R.id.chkIsUsingLocalConnectionForSync);
+
+	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
+	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
 
 	private static final int permissionsRequestInteger = 1;
 
@@ -78,12 +79,10 @@ public class EditClientSettingsActivity extends AppCompatActivity {
         final ArrayList<String> permissionsToRequest = new ArrayList<>(2);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-	        final IApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider = new ApplicationReadPermissionsRequirementsProvider(this, library);
-	        if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired())
+	        if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(library))
 		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-	        final IApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider = new ApplicationWritePermissionsRequirementsProvider(this, library);
-	        if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired())
+	        if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(library))
 		        permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 	        if (permissionsToRequest.size() > 0) {

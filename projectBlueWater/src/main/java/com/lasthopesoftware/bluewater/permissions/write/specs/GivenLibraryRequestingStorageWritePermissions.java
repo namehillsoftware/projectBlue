@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.permissions.write.specs;
 
-import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 
 import junit.framework.TestCase;
@@ -17,9 +17,9 @@ public class GivenLibraryRequestingStorageWritePermissions {
 			super.setUp();
 
 			final ApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider
-					= new ApplicationWritePermissionsRequirementsProvider(() -> true, () -> true);
+					= new ApplicationWritePermissionsRequirementsProvider(library -> true, () -> true);
 
-			this.isPermissionRequired = applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired();
+			this.isPermissionRequired = applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(new Library());
 		}
 
 		public final void testThatPermissionIsNotRequired() {
@@ -35,9 +35,9 @@ public class GivenLibraryRequestingStorageWritePermissions {
 			super.setUp();
 
 			final ApplicationWritePermissionsRequirementsProvider applicationWritePermissionsRequirementsProvider
-					= new ApplicationWritePermissionsRequirementsProvider(() -> true, () -> false);
+					= new ApplicationWritePermissionsRequirementsProvider(library -> true, () -> false);
 
-			this.isPermissionRequired = applicationWritePermissionsRequirementsProvider.isWritePermissionsRequired();
+			this.isPermissionRequired = applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(new Library());
 		}
 
 		public final void testThatPermissionIsRequired() {

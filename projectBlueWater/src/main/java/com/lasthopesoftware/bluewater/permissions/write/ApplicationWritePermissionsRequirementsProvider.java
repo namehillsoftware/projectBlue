@@ -16,8 +16,8 @@ public class ApplicationWritePermissionsRequirementsProvider implements IApplica
 	private final ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider;
 	private final IStorageWritePermissionArbitratorForOs storageWritePermissionArbitratorForOs;
 
-	public ApplicationWritePermissionsRequirementsProvider(Context context, Library library) {
-		this(new LibraryStorageWritePermissionsRequirementsProvider(library), new ExternalStorageWritePermissionsArbitratorForOs(context));
+	public ApplicationWritePermissionsRequirementsProvider(Context context) {
+		this(new LibraryStorageWritePermissionsRequirementsProvider(), new ExternalStorageWritePermissionsArbitratorForOs(context));
 	}
 
 	public ApplicationWritePermissionsRequirementsProvider(
@@ -29,7 +29,7 @@ public class ApplicationWritePermissionsRequirementsProvider implements IApplica
 	}
 
 	@Override
-	public boolean isWritePermissionsRequired() {
-		return storageWritePermissionsRequirementsProvider.isWritePermissionsRequired() && !storageWritePermissionArbitratorForOs.isWritePermissionGranted();
+	public boolean isWritePermissionsRequiredForLibrary(Library library) {
+		return storageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library) && !storageWritePermissionArbitratorForOs.isWritePermissionGranted();
 	}
 }

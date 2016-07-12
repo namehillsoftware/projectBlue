@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.permissions.read.specs;
 
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
 
 import junit.framework.TestCase;
@@ -16,9 +17,9 @@ public class GivenLibraryRequestingStorageReadPermissions {
 			super.setUp();
 
 			final ApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider
-					= new ApplicationReadPermissionsRequirementsProvider(() -> true, () -> true);
+					= new ApplicationReadPermissionsRequirementsProvider(library -> true, () -> true);
 
-			this.isPermissionRequired = applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired();
+			this.isPermissionRequired = applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(new Library());
 		}
 
 		public final void testThatThePermissionIsNotRequired() {
@@ -34,9 +35,9 @@ public class GivenLibraryRequestingStorageReadPermissions {
 			super.setUp();
 
 			final ApplicationReadPermissionsRequirementsProvider applicationReadPermissionsRequirementsProvider
-					= new ApplicationReadPermissionsRequirementsProvider(() -> true, () -> false);
+					= new ApplicationReadPermissionsRequirementsProvider(library -> true, () -> false);
 
-			this.isPermissionRequired = applicationReadPermissionsRequirementsProvider.isReadPermissionsRequired();
+			this.isPermissionRequired = applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(new Library());
 		}
 
 		public final void testThatThePermissionIsRequired() {

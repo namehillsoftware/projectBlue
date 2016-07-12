@@ -59,8 +59,8 @@ public class LibrarySyncHandler {
 				context,
 				connectionProvider,
 				library,
-				new LibraryStorageReadPermissionsRequirementsProvider(library),
-				new LibraryStorageWritePermissionsRequirementsProvider(library));
+				new LibraryStorageReadPermissionsRequirementsProvider(),
+				new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
@@ -90,14 +90,14 @@ public class LibrarySyncHandler {
 
 	public void setOnFileReadError(TwoParameterRunnable<Library, StoredFile> onFileReadError) {
 		storedFileDownloader.setOnFileReadError(storedFile -> {
-			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequired())
+			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
 				onFileReadError.run(library, storedFile);
 		});
 	}
 
 	public void setOnFileWriteError(TwoParameterRunnable<Library, StoredFile> onFileWriteError) {
 		storedFileDownloader.setOnFileWriteError(storedFile -> {
-			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequired())
+			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
 				onFileWriteError.run(library, storedFile);
 		});
 	}

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.permissions.read;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
@@ -16,11 +17,11 @@ public class ApplicationReadPermissionsRequirementsProvider implements IApplicat
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final IStorageReadPermissionArbitratorForOs storageReadPermissionArbitratorForOs;
 
-	public ApplicationReadPermissionsRequirementsProvider(Context context, Library library) {
-		this(new LibraryStorageReadPermissionsRequirementsProvider(library), new ExternalStorageReadPermissionsArbitratorForOs(context));
+	public ApplicationReadPermissionsRequirementsProvider(@NonNull Context context) {
+		this(new LibraryStorageReadPermissionsRequirementsProvider(), new ExternalStorageReadPermissionsArbitratorForOs(context));
 	}
 
-	public ApplicationReadPermissionsRequirementsProvider(ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,
+	public ApplicationReadPermissionsRequirementsProvider(@NonNull ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,
 	                                                      IStorageReadPermissionArbitratorForOs storageReadPermissionArbitratorForOs) {
 
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
@@ -28,7 +29,7 @@ public class ApplicationReadPermissionsRequirementsProvider implements IApplicat
 	}
 
 	@Override
-	public boolean isReadPermissionsRequired() {
-		return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequired() && !storageReadPermissionArbitratorForOs.isReadPermissionGranted();
+	public boolean isReadPermissionsRequiredForLibrary(@NonNull Library library) {
+		return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library) && !storageReadPermissionArbitratorForOs.isReadPermissionGranted();
 	}
 }
