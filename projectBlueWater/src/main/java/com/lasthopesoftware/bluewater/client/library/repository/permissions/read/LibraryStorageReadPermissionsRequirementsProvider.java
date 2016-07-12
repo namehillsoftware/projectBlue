@@ -1,4 +1,6 @@
-package com.lasthopesoftware.bluewater.client.library.repository.permissions;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.read;
+
+import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
@@ -9,7 +11,7 @@ public class LibraryStorageReadPermissionsRequirementsProvider implements ILibra
 
 	private final Library library;
 
-	public LibraryStorageReadPermissionsRequirementsProvider(Library library) {
+	public LibraryStorageReadPermissionsRequirementsProvider(@NonNull Library library) {
 		this.library = library;
 	}
 

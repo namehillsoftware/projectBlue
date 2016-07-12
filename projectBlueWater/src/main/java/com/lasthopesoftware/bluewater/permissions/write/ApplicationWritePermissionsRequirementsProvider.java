@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.permissions.write;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.ILibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.LibraryStorageWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.permissions.storage.write.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionArbitratorForOs;
 

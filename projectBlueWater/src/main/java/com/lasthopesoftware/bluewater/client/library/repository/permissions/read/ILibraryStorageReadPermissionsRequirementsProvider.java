@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.repository.permissions;
+package com.lasthopesoftware.bluewater.client.library.repository.permissions.read;
 
 /**
  * Created by david on 7/3/16.
