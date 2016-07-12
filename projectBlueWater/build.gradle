@@ -3,7 +3,7 @@ apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "23.0.2"
+    buildToolsVersion '24.0.0'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
@@ -37,6 +37,10 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
+
+    defaultConfig {
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
 }
 
 repositories {
@@ -51,7 +55,7 @@ dependencies {
     compile project(':objective-droid')
     compile files('libs/xmlwise-debug-1_2.jar')
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:1.9.5'
+    testCompile 'org.mockito:mockito-core:1.+'
     compile 'com.android.support:appcompat-v7:24.0.0'
     compile 'com.android.support:design:24.0.0'
     compile 'joda-time:joda-time:2.4'
@@ -63,4 +67,5 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.6'
     compile 'com.android.support:support-v4:24.0.0'
     compile 'junit:junit:4.12'
+    compile 'org.mockito:mockito-core:1.+'
 }

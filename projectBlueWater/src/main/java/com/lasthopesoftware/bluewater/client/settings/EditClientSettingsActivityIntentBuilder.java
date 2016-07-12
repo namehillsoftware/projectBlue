@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.settings;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.resources.intents.IIntentFactory;
 import com.lasthopesoftware.resources.intents.IntentFactory;
@@ -12,19 +13,19 @@ import com.lasthopesoftware.resources.intents.IntentFactory;
 public class EditClientSettingsActivityIntentBuilder implements IEditClientSettingsActivityIntentBuilder {
 	private IIntentFactory intentFactory;
 
-	public EditClientSettingsActivityIntentBuilder(Context context) {
+	public EditClientSettingsActivityIntentBuilder(@NonNull Context context) {
 		this(new IntentFactory(context));
 	}
 
-	public EditClientSettingsActivityIntentBuilder(IIntentFactory intentFactory) {
+	public EditClientSettingsActivityIntentBuilder(@NonNull IIntentFactory intentFactory) {
 		this.intentFactory = intentFactory;
 	}
 
 	@Override
 	public Intent buildIntent(int libraryId) {
-		final Intent settingsIntent = intentFactory.getIntent(EditClientSettingsActivity.class);
-		settingsIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
+		final Intent returnIntent = intentFactory.getIntent(EditClientSettingsActivity.class);
+		returnIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
 
-		return settingsIntent;
+		return returnIntent;
 	}
 }

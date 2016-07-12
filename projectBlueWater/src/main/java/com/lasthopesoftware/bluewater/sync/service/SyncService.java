@@ -15,6 +15,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -261,7 +263,8 @@ public class SyncService extends Service {
 		return true;
 	}
 
-	private Notification buildSyncNotification(String syncNotification) {
+	@NonNull
+	private Notification buildSyncNotification(@Nullable String syncNotification) {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
@@ -276,11 +279,11 @@ public class SyncService extends Service {
 		return notifyBuilder.build();
 	}
 
-	private void setSyncNotificationText(String syncNotification) {
+	private void setSyncNotificationText(@Nullable String syncNotification) {
 		notificationMgr.getObject().notify(notificationId, buildSyncNotification(syncNotification));
 	}
 
-	private void sendStoredFileBroadcast(String action, StoredFile storedFile) {
+	private void sendStoredFileBroadcast(@NonNull String action, @NonNull StoredFile storedFile) {
 		final Intent storedFileBroadcastIntent = new Intent(action);
 		storedFileBroadcastIntent.putExtra(storedFileEventKey, storedFile.getId());
 		localBroadcastManager.getObject().sendBroadcast(storedFileBroadcastIntent);

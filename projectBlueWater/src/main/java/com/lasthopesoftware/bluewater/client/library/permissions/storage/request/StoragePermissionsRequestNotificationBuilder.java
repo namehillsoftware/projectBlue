@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.permissions.storage.reques
 
 import android.app.Notification;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.R;
@@ -23,12 +24,13 @@ public class StoragePermissionsRequestNotificationBuilder implements IStoragePer
 		this(new NotificationCompat.Builder(context), new StringResourceProvider(context), new EditClientSettingsPendingIntentBuilder(context));
 	}
 
-	public StoragePermissionsRequestNotificationBuilder(NotificationCompat.Builder notificationBuilder, IStringResourceProvider stringResourceProvider, IEditClientSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder) {
+	public StoragePermissionsRequestNotificationBuilder(@NonNull NotificationCompat.Builder notificationBuilder, @NonNull IStringResourceProvider stringResourceProvider, @NonNull IEditClientSettingsPendingIntentBuilder editServerSettingsPendingIntentBuilder) {
 		this.notificationBuilder = notificationBuilder;
 		this.stringResourceProvider = stringResourceProvider;
 		this.editServerSettingsPendingIntentBuilder = editServerSettingsPendingIntentBuilder;
 	}
 
+	@NonNull
 	@Override
 	public Notification buildStoragePermissionsRequestNotification(int libraryId) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
