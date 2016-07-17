@@ -69,26 +69,22 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
-		final TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> onGetVisibleViewsCompleteListener =  new TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>>() {
+		final TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner, result) -> {
+			if (result == null) return;
 
-			@Override
-			public void run(FluentTask<String, Void, List<Item>> owner, List<Item> result) {
-				if (result == null) return;
+			final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
+			viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
 
-				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
-				viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
+			viewChildPagerAdapter.setLibraryViews(result);
 
-				viewChildPagerAdapter.setLibraryViews(result);
+			// Set up the ViewPager with the sections adapter.
+			viewPager.setAdapter(viewChildPagerAdapter);
+			libraryViewsTabs.setViewPager(viewPager);
 
-				// Set up the ViewPager with the sections adapter.
-				viewPager.setAdapter(viewChildPagerAdapter);
-				libraryViewsTabs.setViewPager(viewPager);
+			libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-				libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
-
-				loadingView.setVisibility(View.INVISIBLE);
-				tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
-			}
+			loadingView.setVisibility(View.INVISIBLE);
+			tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
 		};
 
 		LibrarySession.GetActiveLibrary(getContext(), activeLibrary ->
@@ -106,8 +102,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 									.execute();
 						}
 					}))
-					.execute()
-		);
+					.execute());
 
 
 		return tabbedItemsLayout;
