@@ -1,26 +1,21 @@
 package com.vedsoft.lazyj;
 
 /**
- * Created by david on 11/28/15.
+ * Created by david on 7/17/16.
  */
-public abstract class AbstractLazy<T> {
-
-	private T object;
+public abstract class AbstractThreadLocalLazy<T> implements ILazy<T> {
+	private final ThreadLocal<T> threadLocalObjectContainer = new ThreadLocal<>();
 
 	private RuntimeException exception;
 
 	public boolean isInitialized() {
-		return object != null || exception != null;
+		return exception != null || threadLocalObjectContainer.get() != null;
 	}
 
 	public T getObject() {
-		return isInitialized() ? object : getValueSynchronized();
-	}
-
-	private synchronized T getValueSynchronized() {
 		if (!isInitialized()) {
 			try {
-				object = initialize();
+				threadLocalObjectContainer.set(initialize());
 			} catch (Exception e) {
 				exception = new RuntimeException(e);
 			}
@@ -29,7 +24,7 @@ public abstract class AbstractLazy<T> {
 		if (exception != null)
 			throw exception;
 
-		return object;
+		return threadLocalObjectContainer.get();
 	}
 
 	protected abstract T initialize() throws Exception;

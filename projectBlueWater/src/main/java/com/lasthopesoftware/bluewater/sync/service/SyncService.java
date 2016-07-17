@@ -45,7 +45,7 @@ import com.lasthopesoftware.permissions.storage.write.ExternalStorageWritePermis
 import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionArbitratorForOs;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -131,7 +131,7 @@ public class SyncService extends Service {
 			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
 
-	private final AbstractLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractLazy<BroadcastReceiver>() {
+	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
 		protected final BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
@@ -143,7 +143,7 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final AbstractLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractLazy<BroadcastReceiver>() {
+	private final AbstractSynchronousLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
 		public final BroadcastReceiver initialize() {
 			return new BroadcastReceiver() {
@@ -155,7 +155,7 @@ public class SyncService extends Service {
 		}
 	};
 
-	private final AbstractLazy<Intent> browseLibraryIntent = new AbstractLazy<Intent>() {
+	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected final Intent initialize() {
 			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);

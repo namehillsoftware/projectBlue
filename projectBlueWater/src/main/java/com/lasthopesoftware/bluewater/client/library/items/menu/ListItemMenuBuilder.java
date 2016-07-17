@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.PlayCli
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.SyncFilesIsVisibleHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewFilesClickHandler;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 
 public final class ListItemMenuBuilder<T extends IFileListParameterProvider & IItem> extends AbstractListItemMenuBuilder<T> {
 	private static class ViewHolder {

@@ -3,17 +3,17 @@ package com.vedsoft.lazyj;
 import java.util.concurrent.Callable;
 
 /**
- * Created by david on 1/5/16.
+ * Created by david on 7/17/16.
  */
-public final class Lazy<T> extends AbstractSynchronousLazy<T> {
+public class ThreadLocalLazy<T> extends AbstractThreadLocalLazy<T> {
 
 	private final Callable<T> initialization;
 
-	public Lazy(final Class<T> cls) {
+	public ThreadLocalLazy(final Class<T> cls) {
 		this(cls::newInstance);
 	}
 
-	public Lazy(Callable<T> initialization) {
+	public ThreadLocalLazy(Callable<T> initialization) {
 		this.initialization = initialization;
 	}
 

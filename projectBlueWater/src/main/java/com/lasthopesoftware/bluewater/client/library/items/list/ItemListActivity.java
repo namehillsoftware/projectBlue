@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import java.util.ArrayList;

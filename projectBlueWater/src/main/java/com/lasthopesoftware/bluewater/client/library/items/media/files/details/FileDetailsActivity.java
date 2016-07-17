@@ -24,9 +24,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
-import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +57,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 																FilePropertiesProvider.STACK_TOP,
 																FilePropertiesProvider.STACK_VIEW })));
 
-	private static final AbstractLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
-			new AbstractLazy<RelativeLayout.LayoutParams>() {
+	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
+			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
 				@Override
 				protected RelativeLayout.LayoutParams initialize() throws Exception {
 					final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -72,7 +72,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
     private final LazyViewFinder<ListView> lvFileDetails = new LazyViewFinder<>(this, R.id.lvFileDetails);
     private final LazyViewFinder<ProgressBar> pbLoadingFileDetails = new LazyViewFinder<>(this, R.id.pbLoadingFileDetails);
-    private final AbstractLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractLazy<ScaledWrapImageView>() {
+    private final AbstractSynchronousLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractSynchronousLazy<ScaledWrapImageView>() {
 	    @Override
 	    protected final ScaledWrapImageView initialize() throws Exception {
 		    final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);

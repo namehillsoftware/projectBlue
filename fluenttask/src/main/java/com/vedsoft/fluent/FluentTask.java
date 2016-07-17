@@ -6,7 +6,7 @@ import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -30,7 +30,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 	private volatile boolean isExecuting = false;
 
-	private final AbstractLazy<AndroidAsyncTask<Void, TProgress, TResult>> task = new AbstractLazy<AndroidAsyncTask<Void, TProgress, TResult>>() {
+	private final AbstractSynchronousLazy<AndroidAsyncTask<Void, TProgress, TResult>> task = new AbstractSynchronousLazy<AndroidAsyncTask<Void, TProgress, TResult>>() {
 		@Override
 		protected final AndroidAsyncTask<Void, TProgress, TResult> initialize() {
 			return new AndroidAsyncTask<Void, TProgress, TResult>(){

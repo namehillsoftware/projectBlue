@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -291,12 +291,12 @@ public class ObjectiveDroid {
 			}
 		}
 
-		private static final AbstractLazy<HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new AbstractLazy<HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>>>() {
+		private static final AbstractSynchronousLazy<HashMap<Type, AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>>> setters = new AbstractSynchronousLazy<HashMap<Type, AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>>>() {
 			@Override
-			protected final HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
-				final HashMap<Type, AbstractLazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
+			protected final HashMap<Type, AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>> initialize() {
+				final HashMap<Type, AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -310,7 +310,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Boolean.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Boolean.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -323,7 +323,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Short.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -337,7 +337,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Short.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -350,7 +350,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -364,7 +364,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Integer.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -377,7 +377,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -391,7 +391,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Long.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -404,7 +404,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Float.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -418,7 +418,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Float.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -431,7 +431,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.TYPE, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Double.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -445,7 +445,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Double.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -458,7 +458,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(String.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(String.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -471,7 +471,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Enum.class, new AbstractLazy<ThreeParameterRunnable<Field, Object, String>>() {
+				newHashMap.put(Enum.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Field, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Field, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -510,12 +510,12 @@ public class ObjectiveDroid {
 			}
 		}
 
-		private static final AbstractLazy<HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new AbstractLazy<HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>>>() {
+		private static final AbstractSynchronousLazy<HashMap<Class<?>, AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>>> setters = new AbstractSynchronousLazy<HashMap<Class<?>, AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>>>() {
 			@Override
-			protected final HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
-				final HashMap<Class<?>, AbstractLazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
+			protected final HashMap<Class<?>, AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>> initialize() {
+				final HashMap<Class<?>, AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>> newHashMap = new HashMap<>();
 
-				newHashMap.put(Boolean.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -531,7 +531,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Boolean.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Boolean.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -546,7 +546,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Short.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -562,7 +562,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Short.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Short.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -577,7 +577,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -593,7 +593,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Integer.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Integer.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -608,7 +608,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -624,7 +624,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Long.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Long.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -639,7 +639,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Float.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -655,7 +655,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Float.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Float.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -670,7 +670,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.TYPE, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Double.TYPE, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -686,7 +686,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Double.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Double.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -701,7 +701,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(String.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(String.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {
@@ -716,7 +716,7 @@ public class ObjectiveDroid {
 					}
 				});
 
-				newHashMap.put(Enum.class, new AbstractLazy<ThreeParameterRunnable<Method, Object, String>>() {
+				newHashMap.put(Enum.class, new AbstractSynchronousLazy<ThreeParameterRunnable<Method, Object, String>>() {
 					@Override
 					protected final ThreeParameterRunnable<Method, Object, String> initialize() {
 						return (parameterOne, parameterTwo, parameterThree) -> {

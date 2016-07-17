@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;

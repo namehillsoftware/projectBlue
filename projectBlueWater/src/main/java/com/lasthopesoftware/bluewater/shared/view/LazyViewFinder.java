@@ -1,17 +1,18 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared.view;
 
 import android.app.Activity;
 import android.support.annotation.IdRes;
 import android.view.View;
 
-import com.vedsoft.lazyj.AbstractLazy;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 
 /**
  * Created by david on 6/18/16.
  */
-public class LazyViewFinder<T extends View> {
+public class LazyViewFinder<TView extends View> {
 
-	private final AbstractLazy<T> lazyViewInitializer;
+	private final ILazy<TView> lazyViewInitializer;
 
 	public LazyViewFinder(Activity activity, @IdRes int viewId) {
 		this(new LazyActivityViewFinder<>(activity, viewId));
@@ -21,15 +22,15 @@ public class LazyViewFinder<T extends View> {
 		this(new LazyViewBasedViewFinder<>(view, viewId));
 	}
 
-	private LazyViewFinder(AbstractLazy<T> lazyViewInitializer) {
+	private LazyViewFinder(ILazy<TView> lazyViewInitializer) {
 		this.lazyViewInitializer = lazyViewInitializer;
 	}
 
-	public T findView() {
+	public TView findView() {
 		return lazyViewInitializer.getObject();
 	}
 
-	private static final class LazyActivityViewFinder<T extends View> extends AbstractLazy<T> {
+	private static final class LazyActivityViewFinder<T extends View> extends AbstractThreadLocalLazy<T> {
 
 		private final Activity activity;
 		private final int viewId;
@@ -45,7 +46,7 @@ public class LazyViewFinder<T extends View> {
 		}
 	}
 
-	private static final class LazyViewBasedViewFinder<T extends View> extends AbstractLazy<T> {
+	private static final class LazyViewBasedViewFinder<T extends View> extends AbstractThreadLocalLazy<T> {
 
 		private final View view;
 		private final int viewId;

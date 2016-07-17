@@ -14,8 +14,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
-import com.vedsoft.lazyj.AbstractLazy;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
 
 public class InstantiateSessionConnectionActivity extends Activity {
@@ -28,7 +28,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	
 	private LazyViewFinder<TextView> lblConnectionStatus = new LazyViewFinder<>(this, R.id.lblConnectionStatus);
 	private final Lazy<Intent> selectServerIntent = new Lazy<Intent>(() -> new Intent(this, ApplicationSettingsActivity.class));
-	private final AbstractLazy<Intent> browseLibraryIntent = new AbstractLazy<Intent>() {
+	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected Intent initialize() throws Exception {
 			final Intent browseLibraryIntent = new Intent(InstantiateSessionConnectionActivity.this, BrowseLibraryActivity.class);

@@ -38,8 +38,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import org.slf4j.LoggerFactory;

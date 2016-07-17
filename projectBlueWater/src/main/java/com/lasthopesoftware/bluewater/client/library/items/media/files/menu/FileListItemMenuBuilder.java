@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItem
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
-import com.lasthopesoftware.bluewater.shared.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
 import java.util.List;
