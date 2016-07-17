@@ -122,12 +122,12 @@ public class SyncService extends Service {
 	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = storedFile -> sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
 
 	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
-		if (storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
+		if (!storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
 			storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
 	};
 
 	private final TwoParameterRunnable<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
-		if (storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
+		if (!storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
 			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
 
