@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
@@ -49,7 +51,7 @@ public class StoredFileDownloader {
 
 	private volatile boolean isCancelled;
 
-	public StoredFileDownloader(Context context, ConnectionProvider connectionProvider, Library library) {
+	public StoredFileDownloader(@NonNull Context context, @NonNull ConnectionProvider connectionProvider, @NonNull Library library) {
 		this(
 				connectionProvider,
 				new StoredFileAccess(context, library),
@@ -57,14 +59,14 @@ public class StoredFileDownloader {
 				new FileWritePossibleArbitrator());
 	}
 
-	public StoredFileDownloader(ConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IFileReadPossibleArbitrator fileReadPossibleArbitrator, IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
+	public StoredFileDownloader(@NonNull ConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 	}
 
-	public void queueFileForDownload(final IFile serviceFile, final StoredFile storedFile) {
+	public void queueFileForDownload(@NonNull final IFile serviceFile, @NonNull final StoredFile storedFile) {
 		if (isProcessing || isCancelled)
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
@@ -129,15 +131,15 @@ public class StoredFileDownloader {
 		});
 	}
 
-	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
+	public void setOnFileQueued(@Nullable OneParameterRunnable<StoredFile> onFileQueued) {
 		this.onFileQueued = onFileQueued;
 	}
 
-	public void setOnFileDownloading(OneParameterRunnable<StoredFile> onFileDownloading) {
+	public void setOnFileDownloading(@Nullable OneParameterRunnable<StoredFile> onFileDownloading) {
 		this.onFileDownloading = onFileDownloading;
 	}
 
-	public void setOnFileDownloaded(OneParameterRunnable<StoredFileJobResult> onFileDownloaded) {
+	public void setOnFileDownloaded(@Nullable OneParameterRunnable<StoredFileJobResult> onFileDownloaded) {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 
@@ -145,11 +147,11 @@ public class StoredFileDownloader {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
-	public void setOnFileReadError(OneParameterRunnable<StoredFile> onFileReadError) {
+	public void setOnFileReadError(@Nullable OneParameterRunnable<StoredFile> onFileReadError) {
 		this.onFileReadError = onFileReadError;
 	}
 
-	public void setOnFileWriteError(OneParameterRunnable<StoredFile> onFileWriteError) {
+	public void setOnFileWriteError(@Nullable OneParameterRunnable<StoredFile> onFileWriteError) {
 		this.onFileWriteError = onFileWriteError;
 	}
 }

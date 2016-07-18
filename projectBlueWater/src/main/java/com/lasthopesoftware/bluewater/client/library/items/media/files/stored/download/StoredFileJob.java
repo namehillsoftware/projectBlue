@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download;
 
+import android.support.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
@@ -36,7 +38,7 @@ public class StoredFileJob {
 	private IConnectionProvider connectionProvider;
 	private StoredFileAccess storedFileAccess;
 
-	StoredFileJob(IConnectionProvider connectionProvider, StoredFileAccess storedFileAccess, IFileReadPossibleArbitrator fileReadPossibleArbitrator, IFileWritePossibleArbitrator fileWritePossibleArbitrator, IFile serviceFile, StoredFile storedFile) {
+	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
