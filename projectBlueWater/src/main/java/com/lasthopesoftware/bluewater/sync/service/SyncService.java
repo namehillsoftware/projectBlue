@@ -348,9 +348,7 @@ public class SyncService extends Service {
 	}
 
 	@Override
-	public IBinder onBind(Intent intent) {
-		return binder;
-	}
+	public IBinder onBind(Intent intent) { return lazyBinder.getObject(); }
 
-	private final IBinder binder = new GenericBinder<>(this);
+	private final Lazy<IBinder> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 }

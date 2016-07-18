@@ -57,6 +57,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -257,8 +258,9 @@ public class PlaybackService extends Service implements
 	private static final int errorCountResetDuration = 1000;
 
 	private WifiLock wifiLock = null;
-	private NotificationManager notificationManager;
-	private AudioManager audioManager;
+	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+	private final Lazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
+	private final Lazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private ComponentName remoteControlReceiver;
 	private RemoteControlClient remoteControlClient;
 	private Bitmap remoteClientBitmap = null;
@@ -312,12 +314,12 @@ public class PlaybackService extends Service implements
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
 
-			localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+			localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
 		}).onError(error -> {
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
 
-			localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+			localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
 			return true;
 		}).execute();
 	}
@@ -347,8 +349,6 @@ public class PlaybackService extends Service implements
 			return playlistController != null ? playlistController.getCurrentPosition() : -1;
 		}
 	}
-
-	private LocalBroadcastManager localBroadcastManager;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -386,46 +386,47 @@ public class PlaybackService extends Service implements
 	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
 
 		LibrarySession.GetActiveLibrary(this, library -> {
-				if (library == null) return;
+			if (library == null) return;
 
-				final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
+			final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
 
-				final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						final int result = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-						if (!SessionConnection.completeConditions.contains(result)) return;
+			final LocalBroadcastManager localBroadcastManager = this.localBroadcastManagerLazy.getObject();
+			final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					final int result = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+					if (!SessionConnection.completeConditions.contains(result)) return;
 
-						localBroadcastManager.unregisterReceiver(this);
+					localBroadcastManager.unregisterReceiver(this);
 
-						if (result != BuildingSessionConnectionStatus.BuildingSessionComplete) {
-							onPlaylistRestored.run(false);
-							return;
-						}
-
-						initializePlaylist(library, onPlaylistInitialized);
+					if (result != BuildingSessionConnectionStatus.BuildingSessionComplete) {
+						onPlaylistRestored.run(false);
+						return;
 					}
-				};
 
-				localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+					initializePlaylist(library, onPlaylistInitialized);
+				}
+			};
 
-				final BroadcastReceiver refreshBroadcastReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						localBroadcastManager.unregisterReceiver(this);
+			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-						if (!intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false))
-							return;
+			final BroadcastReceiver refreshBroadcastReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					localBroadcastManager.unregisterReceiver(this);
 
-						localBroadcastManager.unregisterReceiver(buildSessionReceiver);
-						initializePlaylist(library, onPlaylistInitialized);
-					}
-				};
+					if (!intent.getBooleanExtra(SessionConnection.isRefreshSuccessfulStatus, false))
+						return;
 
-				localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
+					localBroadcastManager.unregisterReceiver(buildSessionReceiver);
+					initializePlaylist(library, onPlaylistInitialized);
+				}
+			};
 
-				SessionConnection.refresh(PlaybackService.this);
-			});
+			localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
+
+			SessionConnection.refresh(PlaybackService.this);
+		});
 	}
 
 	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress) {
@@ -516,13 +517,13 @@ public class PlaybackService extends Service implements
 			return;
 		}
 		
-		notificationManager.notify(notificationId, notification);
+		notificationManagerLazy.getObject().notify(notificationId, notification);
 	}
 	
 	private void stopNotification() {
 		stopForeground(true);
 		isNotificationForeground = false;
-		notificationManager.cancel(notificationId);
+		notificationManagerLazy.getObject().cancel(notificationId);
 	}
 
 	private void notifyStartingService() {
@@ -534,7 +535,7 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void registerListeners() {
-		audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
 		wifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
         wifiLock.acquire();
@@ -545,12 +546,10 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void registerRemoteClientControl() {
-		if (audioManager == null) return;
-		
-		if (remoteControlReceiver == null)
+		if (remoteControlReceiver == null) {
 			remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-		
-		audioManager.registerMediaButtonEventReceiver(remoteControlReceiver);
+			audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver);
+		}
         
 		if (remoteControlClient == null) {
 	        // build the PendingIntent for the remote control client
@@ -567,11 +566,11 @@ public class PlaybackService extends Service implements
 							RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 		}
 		
-		audioManager.registerRemoteControlClient(remoteControlClient);
+		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient);
 	}
 	
 	private void unregisterListeners() {
-		audioManager.abandonAudioFocus(this);
+		audioManagerLazy.getObject().abandonAudioFocus(this);
 		
 		// release the wifilock if we still have it
 		if (wifiLock != null) {
@@ -813,11 +812,7 @@ public class PlaybackService extends Service implements
 	
 	@Override
     public void onCreate() {
-		notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-		audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-		localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-		localBroadcastManager.registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
+		localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
 		registerRemoteClientControl();
 	}
@@ -1029,7 +1024,7 @@ public class PlaybackService extends Service implements
 	public void onDestroy() {
 		stopNotification();
 
-		localBroadcastManager.unregisterReceiver(onLibraryChanged);
+		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 
 		if (playlistController != null) {
 			if (playlistController.getCurrentPlaybackFile() != null)
@@ -1041,12 +1036,10 @@ public class PlaybackService extends Service implements
 		
 		if (areListenersRegistered) unregisterListeners();
 		
-		if (audioManager != null) {
-			if (remoteControlReceiver != null)
-				audioManager.unregisterMediaButtonEventReceiver(remoteControlReceiver);
-			if (remoteControlClient != null)
-				audioManager.unregisterRemoteControlClient(remoteControlClient);
-		}
+		if (remoteControlReceiver != null)
+			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver);
+		if (remoteControlClient != null)
+			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient);
 		
 		if (remoteClientBitmap != null) {
 			remoteClientBitmap.recycle();
@@ -1062,10 +1055,10 @@ public class PlaybackService extends Service implements
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		return mBinder;
+		return lazyBinder.getObject();
 	}
 
-	private final IBinder mBinder = new GenericBinder<>(this);
+	private final Lazy<IBinder> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 	/* End Binder Code */
 
 }
