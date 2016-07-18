@@ -68,4 +68,5 @@ dependencies {
     compile 'com.android.support:support-v4:24.0.0'
     compile 'junit:junit:4.12'
     compile 'org.mockito:mockito-core:1.+'
+    compile 'com.annimon:stream:1.1.0'
 }

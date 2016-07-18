@@ -20,13 +20,18 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.StorageReadPermissionsRequestedBroadcaster;
@@ -39,10 +44,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.permissions.storage.read.ExternalStorageReadPermissionsArbitratorForOs;
-import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
-import com.lasthopesoftware.permissions.storage.write.ExternalStorageWritePermissionsArbitratorForOs;
-import com.lasthopesoftware.permissions.storage.write.IStorageWritePermissionArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
+import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -74,6 +79,28 @@ public class SyncService extends Service {
 
 	private static volatile boolean isSyncRunning;
 
+	public static boolean isSyncScheduled(Context context) {
+		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
+	}
+
+	public static boolean isSyncRunning() {
+		return isSyncRunning;
+	}
+
+	public static void doSync(Context context) {
+		final Intent intent = new Intent(context, SyncService.class);
+		intent.setAction(doSyncAction);
+
+		context.startService(intent);
+	}
+
+	public static void cancelSync(Context context) {
+		final Intent intent = new Intent(context, SyncService.class);
+		intent.setAction(cancelSyncAction);
+
+		context.startService(intent);
+	}
+
 	private final Lazy<LocalBroadcastManager> localBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private final Lazy<NotificationManager> notificationMgr = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
 
@@ -82,6 +109,8 @@ public class SyncService extends Service {
 
 	private final Lazy<IStorageReadPermissionArbitratorForOs> storageReadPermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
 	private final Lazy<IStorageWritePermissionArbitratorForOs> storageWritePermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageWritePermissionsArbitratorForOs(this));
+
+	private final Lazy<IScanMediaFileBroadcaster> scanMediaFileBroadcasterLazy = new Lazy<>(() -> new ScanMediaFileBroadcaster(this));
 
 	private PowerManager.WakeLock wakeLock;
 
@@ -119,7 +148,12 @@ public class SyncService extends Service {
 			}));
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileDownloadedAction = storedFile -> sendStoredFileBroadcast(onFileDownloadedEvent, storedFile);
+	private final OneParameterRunnable<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
+		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
+
+		if (storedFileJobResult.storedFileJobResult == StoredFileJobResultOptions.Downloaded)
+			scanMediaFileBroadcasterLazy.getObject().sendScanMediaFileBroadcastForFile(storedFileJobResult.downloadedFile);
+	};
 
 	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
 		if (!storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
@@ -164,28 +198,6 @@ public class SyncService extends Service {
 			return browseLibraryIntent;
 		}
 	};
-
-	public static boolean isSyncScheduled(Context context) {
-		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
-	}
-
-	public static boolean isSyncRunning() {
-		return isSyncRunning;
-	}
-
-	public static void doSync(Context context) {
-		final Intent intent = new Intent(context, SyncService.class);
-		intent.setAction(doSyncAction);
-
-		context.startService(intent);
-	}
-
-	public static void cancelSync(Context context) {
-		final Intent intent = new Intent(context, SyncService.class);
-		intent.setAction(cancelSyncAction);
-
-		context.startService(intent);
-	}
 
 	@Override
 	public void onCreate() {
@@ -303,7 +315,7 @@ public class SyncService extends Service {
 	}
 
 	private void cancelSync() {
-		for (LibrarySyncHandler librarySyncHandler : librarySyncHandlers) librarySyncHandler.cancel();
+		Stream.of(librarySyncHandlers).forEach(LibrarySyncHandler::cancel);
 	}
 
 	private void finishSync() {

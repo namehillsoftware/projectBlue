@@ -1,4 +1,4 @@
-package com.lasthopesoftware.permissions.storage.write;
+package com.lasthopesoftware.storage.write.permissions;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

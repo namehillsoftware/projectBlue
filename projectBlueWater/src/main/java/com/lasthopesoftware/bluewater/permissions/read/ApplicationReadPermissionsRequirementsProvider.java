@@ -6,8 +6,8 @@ import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.permissions.storage.read.ExternalStorageReadPermissionsArbitratorForOs;
-import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
 /**
  * Created by david on 7/3/16.

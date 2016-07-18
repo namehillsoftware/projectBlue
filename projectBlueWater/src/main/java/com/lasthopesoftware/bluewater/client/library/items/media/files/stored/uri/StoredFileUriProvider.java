@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.AbstractFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.permissions.storage.read.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.LoggerFactory;
 

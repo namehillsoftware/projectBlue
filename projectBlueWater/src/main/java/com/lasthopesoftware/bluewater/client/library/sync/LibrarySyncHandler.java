@@ -10,7 +10,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
@@ -76,7 +77,7 @@ public class LibrarySyncHandler {
 		storedFileDownloader.setOnFileDownloading(onFileDownloading);
 	}
 
-	public void setOnFileDownloaded(OneParameterRunnable<StoredFile> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterRunnable<StoredFileJobResult> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.permissions.storage.read;
+package com.lasthopesoftware.storage.read.permissions;
 
 /**
  * Created by david on 6/13/16.
