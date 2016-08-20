@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
@@ -27,6 +28,19 @@ public class DiskFileCache {
 			" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
 			" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
 			" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY;
+
+	private static final Lazy<String> cachedFileSqlInsert =
+			new Lazy<>(() ->
+					InsertBuilder
+						.fromTable(CachedFile.tableName)
+						.addColumn(CachedFile.CACHE_NAME)
+						.addColumn(CachedFile.FILE_NAME)
+						.addColumn(CachedFile.FILE_SIZE)
+						.addColumn(CachedFile.LIBRARY_ID)
+						.addColumn(CachedFile.UNIQUE_KEY)
+						.addColumn(CachedFile.CREATED_TIME)
+						.addColumn(CachedFile.LAST_ACCESSED_TIME)
+						.build());
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCache.class);
 	private final Context context;
@@ -64,7 +78,7 @@ public class DiskFileCache {
 
 				// Check if free space is too low and then attempt to free up enough space
 				// to store image
-				final long freeSpace = getFreeDiskSpace(context);
+				long freeSpace = getFreeDiskSpace(context);
 				if (freeSpace > maxSize) return;
 
 				try {
@@ -72,6 +86,9 @@ public class DiskFileCache {
 				} catch (ExecutionException | InterruptedException ignored) {
 					return;
 				}
+
+				freeSpace = getFreeDiskSpace(context);
+				if (freeSpace < file.length()) return;
 
 				put(uniqueKey, file, fileData);
 			}
@@ -83,7 +100,7 @@ public class DiskFileCache {
 			RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 
-				CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+				final CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
 				if (cachedFile != null) {
 					repositoryAccessHelper
 							.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
@@ -94,19 +111,7 @@ public class DiskFileCache {
 					return;
 				}
 
-				final String cachedFileSqlInsert =
-					InsertBuilder
-						.fromTable(CachedFile.tableName)
-						.addColumn(CachedFile.CACHE_NAME)
-						.addColumn(CachedFile.FILE_NAME)
-						.addColumn(CachedFile.FILE_SIZE)
-						.addColumn(CachedFile.LIBRARY_ID)
-						.addColumn(CachedFile.UNIQUE_KEY)
-						.addColumn(CachedFile.CREATED_TIME)
-						.addColumn(CachedFile.LAST_ACCESSED_TIME)
-						.build();
-
-				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert);
+				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
 				try {
 					sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());

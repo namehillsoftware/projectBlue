@@ -31,7 +31,7 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	}
 
 	public ObjectiveDroid mapSql(String sqlQuery) {
-		return new ObjectiveDroid(getWritableDatabase(), sqlQuery);
+		return new ObjectiveDroid(sqliteDb.getObject(), sqlQuery);
 	}
 
 	@Override
