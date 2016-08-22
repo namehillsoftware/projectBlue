@@ -11,6 +11,8 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnPlaybackCompleteReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.read.request.IStorageReadPermissionsRequestNotificationBuilder;
@@ -110,6 +112,8 @@ public class MainApplication extends Application {
 								.buildWritePermissionsRequestNotification(libraryId));
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
+
+		localBroadcastManager.registerReceiver(new UpdatePlayStatsOnPlaybackCompleteReceiver(), new IntentFilter(PlaybackService.PlaylistEvents.onFileComplete));
 	}
 
 	private void initializeLogging() {

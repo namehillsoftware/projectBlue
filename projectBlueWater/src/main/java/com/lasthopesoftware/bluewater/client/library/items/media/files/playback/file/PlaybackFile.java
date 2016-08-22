@@ -221,8 +221,6 @@ public class PlaybackFile implements
 	
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(new UpdatePlayStatsOnExecute(connectionProvider, file));
-
 		releaseMediaPlayer();
 		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
 	}

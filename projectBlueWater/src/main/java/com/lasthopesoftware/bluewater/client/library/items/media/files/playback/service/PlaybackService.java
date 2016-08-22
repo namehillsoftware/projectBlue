@@ -128,11 +128,13 @@ public class PlaybackService extends Service implements
 		public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
 		public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
 		public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
+		public static final String onFileComplete = magicPropertyBuilder.buildProperty("onFileComplete");
 
 		public static class PlaybackFileParameters {
 			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
 
 			public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			public static final String fileLibraryId = magicPropertyBuilder.buildProperty("fileLibraryId");
 			public static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
 			public static final String fileDuration = magicPropertyBuilder.buildProperty("fileDuration");
 			public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
@@ -301,27 +303,30 @@ public class PlaybackService extends Service implements
 	}
 	
 	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
-		final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
+		LibrarySession.GetActiveLibrary(this, (library) -> {
+			final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
-		playbackBroadcastIntent
-				.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition())
-				.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey())
-				.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
-				.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
-
-		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
-		filePropertiesProvider.onComplete(fileProperties -> {
 			playbackBroadcastIntent
-					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
+					.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
 
-			localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
-		}).onError(error -> {
-			playbackBroadcastIntent
-					.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
+			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
+			filePropertiesProvider.onComplete(fileProperties -> {
+				playbackBroadcastIntent
+						.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
 
-			localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
-			return true;
-		}).execute();
+				localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
+			}).onError(error -> {
+				playbackBroadcastIntent
+						.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
+
+				localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
+				return true;
+			}).execute();
+		});
 	}
 
 	/* End Events */
@@ -937,6 +942,7 @@ public class PlaybackService extends Service implements
 	
 	@Override
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+		filePlayer.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, filePlayer));
 		final IFile playingFile = filePlayer.getFile();
 		
 		if (!areListenersRegistered) registerListeners();
