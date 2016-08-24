@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -77,7 +78,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			if (artist == null || artist.isEmpty())
 				artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-			uniqueKey = artist + ":" + fileProperties.get(FilePropertiesProvider.ALBUM);
+			String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
+			if (albumOrTrackName == null)
+				albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
+
+			uniqueKey = artist + ":" + albumOrTrackName;
 		} catch (InterruptedException | ExecutionException e) {
 			logger.error("Error getting file properties.", e);
 			return getFillerBitmap();
@@ -112,6 +117,9 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 					final InputStream is = connection.getInputStream();
 					try {
 						imageBytes = IOUtils.toByteArray(is);
+					} catch (InterruptedIOException interruptedIoException) {
+						logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
+						return getFillerBitmap();
 					} finally {
 						is.close();
 					}

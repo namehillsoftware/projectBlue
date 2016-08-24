@@ -47,7 +47,7 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 	}
 
 	@Override
-	public synchronized void close() {
+	public void close() {
 		super.close();
 
 		if (sqliteDb.isInitialized())

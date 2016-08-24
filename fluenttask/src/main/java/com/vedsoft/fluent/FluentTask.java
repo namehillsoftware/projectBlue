@@ -10,6 +10,8 @@ import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class FluentTask<TParams, TProgress, TResult>  {
 
@@ -100,11 +102,26 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		return get(null);
 	}
 
+	public TResult get(long timeout, TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
+		return get(null, timeout, timeUnit);
+	}
+
 	public TResult get(Executor executor) throws ExecutionException, InterruptedException {
 		if (!isExecuting)
 			executeTask(executor);
 
 		final TResult result = task.getObject().get();
+
+		throwOnTaskException(task.getObject());
+
+		return result;
+	}
+
+	public TResult get(Executor executor, long timeout, TimeUnit timeUnit) throws TimeoutException, ExecutionException, InterruptedException {
+		if (!isExecuting)
+			executeTask(executor);
+
+		final TResult result = task.getObject().get(timeout, timeUnit);
 
 		throwOnTaskException(task.getObject());
 
