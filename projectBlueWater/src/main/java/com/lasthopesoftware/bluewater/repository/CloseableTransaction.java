@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * Created by david on 8/24/16.
  */
-public class CloseableTransaction implements Closeable {
+public class CloseableTransaction implements Closeable, ITransactionSuccessSetter {
 
     private final SQLiteDatabase sqLiteDatabase;
 
@@ -20,7 +20,12 @@ public class CloseableTransaction implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.sqLiteDatabase.endTransaction();
+    }
+
+    @Override
+    public void setTransactionSuccessful() {
+        this.sqLiteDatabase.setTransactionSuccessful();
     }
 }

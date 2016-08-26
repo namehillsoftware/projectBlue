@@ -46,6 +46,14 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 			entityUpdater.onUpdate(db, oldVersion, newVersion);
 	}
 
+	public CloseableTransaction beginTransaction() {
+		return new CloseableTransaction(sqliteDb.getObject());
+	}
+
+	public CloseableNonExclusiveTransaction beginNonExclusiveTransaction() {
+		return new CloseableNonExclusiveTransaction(sqliteDb.getObject());
+	}
+
 	@Override
 	public void close() {
 		super.close();

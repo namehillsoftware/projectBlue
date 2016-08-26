@@ -8,13 +8,17 @@ import java.io.IOException;
 /**
  * Created by david on 8/24/16.
  */
-public class CloseableNonExclusiveTransaction implements Closeable {
+public class CloseableNonExclusiveTransaction implements Closeable, ITransactionSuccessSetter {
 
     private final SQLiteDatabase sqLiteDatabase;
 
     public CloseableNonExclusiveTransaction(SQLiteDatabase sqLiteDatabase) {
         this.sqLiteDatabase = sqLiteDatabase;
         this.sqLiteDatabase.beginTransactionNonExclusive();
+    }
+
+    public void setTransactionSuccessful() {
+        this.sqLiteDatabase.setTransactionSuccessful();
     }
 
     @Override

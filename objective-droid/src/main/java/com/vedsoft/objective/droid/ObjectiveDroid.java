@@ -114,13 +114,9 @@ public class ObjectiveDroid {
 	public <T> List<T> fetch(Class<T> cls) throws SQLException {
 		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
 
-		database.beginTransactionNonExclusive();
 		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
 		try {
-			if (!cursor.moveToFirst()) {
-				database.setTransactionSuccessful();
-				return new ArrayList<>();
-			}
+			if (!cursor.moveToFirst()) return new ArrayList<>();
 
 			final ClassReflections reflections = ClassCache.getReflections(cls);
 
@@ -152,11 +148,10 @@ public class ObjectiveDroid {
 					throw new RuntimeException(e);
 				}
 			} while (cursor.moveToNext());
-			database.setTransactionSuccessful();
+
 			return returnObjects;
 		} finally {
 			cursor.close();
-			database.endTransaction();
 		}
 	}
 
@@ -171,14 +166,10 @@ public class ObjectiveDroid {
 
 		final String sqlQuery = compatibleSqlQuery.getKey();
 
-		database.beginTransaction();
 		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
 		try {
 			sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
-			final long returnValue = executeSpecial(sqLiteStatement, sqlQuery);
-
-			database.setTransactionSuccessful();
-			return returnValue;
+			return executeSpecial(sqLiteStatement, sqlQuery);
 		} finally {
 			sqLiteStatement.close();
 			database.endTransaction();
