@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
@@ -90,11 +91,11 @@ public class StoredFileAccess {
 			}
 		};
 
-		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return getStoredFileTask(serviceFile).get(AsyncTask.THREAD_POOL_EXECUTOR);
+		return getStoredFileTask(serviceFile).get(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
@@ -128,11 +129,11 @@ public class StoredFileAccess {
 			}
 		};
 
-		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
-		storedFileExecutor.execute(() -> {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				repositoryAccessHelper
@@ -151,7 +152,7 @@ public class StoredFileAccess {
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
-		storedFileExecutor.execute(() -> {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			try {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
@@ -273,7 +274,7 @@ public class StoredFileAccess {
 		};
 
 		try {
-			return createOrUpdateStoredFileTask.get(storedFileExecutor);
+			return createOrUpdateStoredFileTask.get(RepositoryAccessHelper.databaseExecutor);
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
@@ -310,23 +311,37 @@ public class StoredFileAccess {
 	}
 
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
-		repositoryAccessHelper
-				.mapSql(insertSql.getObject())
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
-				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-				.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-				.execute();
+		final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
+		try {
+			repositoryAccessHelper
+					.mapSql(insertSql.getObject())
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
+		} finally {
+			closeableTransaction.close();
+		}
 	}
 
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
-		repositoryAccessHelper
-				.mapSql(updateSql.getObject())
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.getServiceId())
-				.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.getStoredMediaId())
-				.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.getPath())
-				.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner())
-				.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
-				.addParameter("id", storedFile.getId())
-				.execute();
+		final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
+		try {
+			repositoryAccessHelper
+					.mapSql(updateSql.getObject())
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.getServiceId())
+					.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.getStoredMediaId())
+					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.getPath())
+					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner())
+					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
+					.addParameter("id", storedFile.getId())
+					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
+		} finally {
+			closeableTransaction.close();
+		}
 	}
 }

@@ -234,14 +234,20 @@ public class DiskFileCache {
 	}
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final long cachedFileId) {
+		final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
 		try {
 			logger.info("Deleting cached file with id " + cachedFileId);
-			return repositoryAccessHelper
-					.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
-					.addParameter("id", cachedFileId)
-					.execute();
+			final long executionResult =
+					repositoryAccessHelper
+						.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+						.addParameter("id", cachedFileId)
+						.execute();
+			closeableTransaction.setTransactionSuccessful();
+			return executionResult;
 		} catch (SQLException sqlException) {
 			logger.warn("There was an error trying to delete the cached file with id " + cachedFileId);
+		} finally {
+			closeableTransaction.close();
 		}
 
 		return -1;

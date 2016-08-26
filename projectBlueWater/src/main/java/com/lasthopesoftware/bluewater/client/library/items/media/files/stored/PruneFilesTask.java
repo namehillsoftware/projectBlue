@@ -5,6 +5,7 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
+import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
 
@@ -44,7 +45,7 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 				final String filePath = storedFile.getPath();
 				// It doesn't make sense to create a stored file without a file path
 				if (filePath == null) {
-					deleteStoredFile(repositoryAccessHelper, storedFile);
+					deleteStoredFile(storedFile);
 					continue;
 				}
 
@@ -52,7 +53,7 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 
 				// Remove files that are marked as downloaded but the file doesn't actually exist
 				if (storedFile.isDownloadComplete() && !systemFile.exists()) {
-					deleteStoredFile(repositoryAccessHelper, storedFile);
+					deleteStoredFile(storedFile);
 					continue;
 				}
 
@@ -60,7 +61,7 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 				if (storedFile.getLibraryId() != libraryId) continue;
 				if (serviceIdsToKeep.contains(storedFile.getServiceId())) continue;
 
-				deleteStoredFile(repositoryAccessHelper, storedFile);
+				deleteStoredFile(storedFile);
 				systemFile.delete();
 			}
 		} catch (SQLException e) {
@@ -72,14 +73,23 @@ public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
 		return null;
 	}
 
-	private static void deleteStoredFile(RepositoryAccessHelper repositoryAccessHelper, final StoredFile storedFile) {
-		try {
-			repositoryAccessHelper
-					.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
-					.addParameter("id", storedFile.getId())
-					.execute();
-		} catch (SQLException e) {
-			logger.error("There was an error deleting file " + storedFile.getId(), e);
-		}
+	private void deleteStoredFile(final StoredFile storedFile) {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
+			try {
+				repositoryAccessHelper
+						.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
+						.addParameter("id", storedFile.getId())
+						.execute();
+
+				closeableTransaction.setTransactionSuccessful();
+			} catch (SQLException e) {
+				logger.error("There was an error deleting file " + storedFile.getId(), e);
+			} finally {
+				closeableTransaction.close();
+				repositoryAccessHelper.close();
+			}
+		});
 	}
 }
