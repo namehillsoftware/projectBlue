@@ -7,7 +7,6 @@ import android.os.Environment;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -211,16 +210,16 @@ public class DiskFileCache {
 		final long updateTime = System.currentTimeMillis();
 		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
 
-		try {
+		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
 					.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
 					.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
 					.addParameter("id", cachedFileId)
 					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
 		} catch (SQLException sqlException) {
 			logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
-		} finally {
-			repositoryAccessHelper.close();
 		}
 	}
 
@@ -234,20 +233,17 @@ public class DiskFileCache {
 	}
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final long cachedFileId) {
-		final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
-		try {
+		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			logger.info("Deleting cached file with id " + cachedFileId);
 			final long executionResult =
 					repositoryAccessHelper
-						.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
-						.addParameter("id", cachedFileId)
-						.execute();
+							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+							.addParameter("id", cachedFileId)
+							.execute();
 			closeableTransaction.setTransactionSuccessful();
 			return executionResult;
 		} catch (SQLException sqlException) {
 			logger.warn("There was an error trying to delete the cached file with id " + cachedFileId);
-		} finally {
-			closeableTransaction.close();
 		}
 
 		return -1;
