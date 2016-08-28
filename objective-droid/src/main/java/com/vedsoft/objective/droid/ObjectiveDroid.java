@@ -112,36 +112,14 @@ public class ObjectiveDroid {
 	}
 
 	public <T> List<T> fetch(Class<T> cls) throws SQLException {
-		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
-
-		final Cursor cursor = database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
+		final Cursor cursor = getCursorForQuery();
 		try {
 			if (!cursor.moveToFirst()) return new ArrayList<>();
 
-			final ClassReflections reflections = ClassCache.getReflections(cls);
-
 			final ArrayList<T> returnObjects = new ArrayList<>(cursor.getCount());
 			do {
-				final T newObject;
 				try {
-					newObject = cls.newInstance();
-
-					for (int i = 0; i < cursor.getColumnCount(); i++) {
-						String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
-
-						if (reflections.setterMap.containsKey(colName)) {
-							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
-							continue;
-						}
-
-						if (!colName.startsWith("is")) continue;
-
-						colName = colName.substring(2);
-						if (reflections.setterMap.containsKey(colName))
-							reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
-					}
-
-					returnObjects.add(newObject);
+					returnObjects.add(mapDataFromCursorToClass(cursor, cls));
 				} catch (InstantiationException e) {
 					throw new RuntimeException(e);
 				} catch (IllegalAccessException e) {
@@ -156,9 +134,48 @@ public class ObjectiveDroid {
 	}
 
 	public <T> T fetchFirst(Class<T> cls) {
-		final List<T> results = fetch(cls);
+		final Cursor cursor = getCursorForQuery();
+		try {
+			if (!cursor.moveToFirst() || cursor.getCount() == 0) return null;
 
-		return results.size() > 0 ? results.get(0) : null;
+			return mapDataFromCursorToClass(cursor, cls);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} finally {
+			cursor.close();
+		}
+	}
+
+	private Cursor getCursorForQuery() {
+		final Map.Entry<String, String[]> compatibleSqlQuery = QueryCache.getSqlQuery(sqlQuery, parameters);
+
+		return database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
+	}
+
+	private static <T> T mapDataFromCursorToClass(Cursor cursor, Class<T> cls) throws IllegalAccessException, InstantiationException {
+		final ClassReflections reflections = ClassCache.getReflections(cls);
+
+		final T newObject;
+		newObject = cls.newInstance();
+
+		for (int i = 0; i < cursor.getColumnCount(); i++) {
+			String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
+
+			if (reflections.setterMap.containsKey(colName)) {
+				reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+				continue;
+			}
+
+			if (!colName.startsWith("is")) continue;
+
+			colName = colName.substring(2);
+			if (reflections.setterMap.containsKey(colName))
+				reflections.setterMap.get(colName).set(newObject, cursor.getString(i));
+		}
+
+		return newObject;
 	}
 
 	public long execute() throws SQLException {
@@ -172,7 +189,6 @@ public class ObjectiveDroid {
 			return executeSpecial(sqLiteStatement, sqlQuery);
 		} finally {
 			sqLiteStatement.close();
-			database.endTransaction();
 		}
 	}
 
