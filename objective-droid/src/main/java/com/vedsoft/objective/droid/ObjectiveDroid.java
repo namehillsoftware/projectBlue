@@ -118,13 +118,7 @@ public class ObjectiveDroid {
 
 			final ArrayList<T> returnObjects = new ArrayList<>(cursor.getCount());
 			do {
-				try {
-					returnObjects.add(mapDataFromCursorToClass(cursor, cls));
-				} catch (InstantiationException e) {
-					throw new RuntimeException(e);
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException(e);
-				}
+				returnObjects.add(mapDataFromCursorToClass(cursor, cls));
 			} while (cursor.moveToNext());
 
 			return returnObjects;
@@ -139,10 +133,6 @@ public class ObjectiveDroid {
 			if (!cursor.moveToFirst() || cursor.getCount() == 0) return null;
 
 			return mapDataFromCursorToClass(cursor, cls);
-		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
 		} finally {
 			cursor.close();
 		}
@@ -154,11 +144,17 @@ public class ObjectiveDroid {
 		return database.rawQuery(compatibleSqlQuery.getKey(), compatibleSqlQuery.getValue());
 	}
 
-	private static <T> T mapDataFromCursorToClass(Cursor cursor, Class<T> cls) throws IllegalAccessException, InstantiationException {
+	private static <T> T mapDataFromCursorToClass(Cursor cursor, Class<T> cls) {
 		final ClassReflections reflections = ClassCache.getReflections(cls);
 
 		final T newObject;
-		newObject = cls.newInstance();
+		try {
+			newObject = cls.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
 
 		for (int i = 0; i < cursor.getColumnCount(); i++) {
 			String colName = cursor.getColumnName(i).toLowerCase(Locale.ROOT);
