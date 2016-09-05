@@ -97,11 +97,15 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
         final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
-		final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
-		if (imageCacheFile != null) {
-			imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
-			if (imageBytes.length > 0)
-				return getBitmapFromBytes(imageBytes);
+		try {
+			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
+			if (imageCacheFile != null) {
+				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
+				if (imageBytes.length > 0)
+					return getBitmapFromBytes(imageBytes);
+			}
+		} catch (IOException e) {
+			logger.error("There was an error getting the cached file", e);
 		}
 
 		try {

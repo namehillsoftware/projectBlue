@@ -7,6 +7,7 @@ import android.os.Environment;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -69,12 +70,9 @@ public class DiskFileCache {
 		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
 			try {
 
-				final FileOutputStream fos = new FileOutputStream(file);
-				try {
+				try (FileOutputStream fos = new FileOutputStream(file)) {
 					fos.write(fileData);
 					fos.flush();
-				} finally {
-					fos.close();
 				}
 
 				put(uniqueKey, file);
@@ -102,10 +100,15 @@ public class DiskFileCache {
 
 	private void put(final String uniqueKey, final File file) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
-			RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			try {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 
-				final CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+				final CachedFile cachedFile;
+				try {
+					cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+				} catch (IOException e) {
+					return;
+				}
+
 				if (cachedFile != null) {
 					doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
 					return;
@@ -133,22 +136,26 @@ public class DiskFileCache {
 					logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
 				}
 			} finally {
-				repositoryAccessHelper.close();
 				new CacheFlusherTask(context, cacheName, maxSize).execute();
 			}
 		});
 	}
 
-	public File get(final String uniqueKey) {
+	public File get(final String uniqueKey) throws IOException {
 		final FluentTask<Void, Void, File> getFileTask = new FluentTask<Void, Void, File>() {
 
 			@Override
 			protected File executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					logger.info("Getting cached file " + uniqueKey);
 					try {
-						final CachedFile cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+						final CachedFile cachedFile;
+						try {
+							cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+						} catch (IOException e) {
+							setException(e);
+							return null;
+						}
 
 						if (cachedFile == null) return null;
 
@@ -166,9 +173,10 @@ public class DiskFileCache {
 							logger.info("Cached file " + uniqueKey + " expired. Deleting.");
 							if (returnFile.delete()) {
 								deleteCachedFile(repositoryAccessHelper, cachedFile.getId());
+								return null;
 							}
 
-							return null;
+							setException(new IOException("Unable to delete file " + returnFile.getAbsolutePath()));
 						}
 
 						doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
@@ -179,8 +187,6 @@ public class DiskFileCache {
 						logger.error("There was an error attempting to get the cached file " + uniqueKey, sqlException);
 						return null;
 					}
-				} finally {
-					repositoryAccessHelper.close();
 				}
 			}
 		};
@@ -197,12 +203,15 @@ public class DiskFileCache {
 
 			if (!getFileTask.isCancelled())
 				getFileTask.cancel(true);
+
+			if (e.getCause() instanceof IOException)
+				throw (IOException)e.getCause();
 		}
 
 		return null;
 	}
 
-	public boolean containsKey(final String uniqueKey) {
+	public boolean containsKey(final String uniqueKey) throws IOException {
 		return get(uniqueKey) != null;
 	}
 
@@ -223,24 +232,46 @@ public class DiskFileCache {
 		}
 	}
 
-	private static CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int libraryId, final String cacheName, final String uniqueKey) {
-		return repositoryAccessHelper
-				.mapSql("SELECT * FROM " + CachedFile.tableName + cachedFileFilter)
-				.addParameter(CachedFile.LIBRARY_ID, libraryId)
-				.addParameter(CachedFile.CACHE_NAME, cacheName)
-				.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-				.fetchFirst(CachedFile.class);
+	private static CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int libraryId, final String cacheName, final String uniqueKey) throws IOException {
+		try (final CloseableNonExclusiveTransaction closeableNonExclusiveTransaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
+			final CachedFile cachedFile = repositoryAccessHelper
+					.mapSql("SELECT * FROM " + CachedFile.tableName + cachedFileFilter)
+					.addParameter(CachedFile.LIBRARY_ID, libraryId)
+					.addParameter(CachedFile.CACHE_NAME, cacheName)
+					.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
+					.fetchFirst(CachedFile.class);
+
+			closeableNonExclusiveTransaction.setTransactionSuccessful();
+			return cachedFile;
+		} catch (IOException e) {
+			logger.error("There was an error opening the non exclusive transaction", e);
+			throw e;
+		}
 	}
 
 	private static long deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final long cachedFileId) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			logger.info("Deleting cached file with id " + cachedFileId);
+
+			if (logger.isDebugEnabled()) {
+				final long cachedFileCount = repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
+
+				logger.debug("Cached file count: " + cachedFileCount);
+			}
+
 			final long executionResult =
 					repositoryAccessHelper
 							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 							.addParameter("id", cachedFileId)
 							.execute();
 			closeableTransaction.setTransactionSuccessful();
+
+			if (logger.isDebugEnabled()) {
+				final long cachedFileCount = repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
+
+				logger.debug("Cached file count: " + cachedFileCount);
+			}
+
 			return executionResult;
 		} catch (SQLException sqlException) {
 			logger.warn("There was an error trying to delete the cached file with id " + cachedFileId);
