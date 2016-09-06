@@ -76,40 +76,40 @@ public class DiskFileCache {
 				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
 				if (!cacheDir.exists() && !cacheDir.mkdirs() || isCancelled()) return null;
 
-				try {
-					final File file = File.createTempFile(String.valueOf(library.getId()) + "-" + cacheName + "-" + uniqueKey.hashCode(), ".cache", cacheDir);
+				final File file = new File(cacheDir, (String.valueOf(library.getId()) + "-" + cacheName + "-" + uniqueKey).hashCode() + ".cache");
 
-					do {
-						if (isCancelled()) return null;
+				do {
+					if (isCancelled()) return null;
 
-						try {
+					try {
 
-							try (FileOutputStream fos = new FileOutputStream(file)) {
-								fos.write(fileData);
-								fos.flush();
-							}
-
-							put(uniqueKey, file);
-							return null;
-						} catch (IOException e) {
-							logger.error("Unable to write to file!", e);
-
-							// Check if free space is too low and then attempt to free up enough space
-							// to store image
-							if (getFreeDiskSpace(context) > maxSize) return null;
-
-							try {
-								new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
-							} catch (ExecutionException | InterruptedException ignored) {
-								return null;
-							}
+						try (FileOutputStream fos = new FileOutputStream(file)) {
+							fos.write(fileData);
+							fos.flush();
 						}
 
-						if (isCancelled()) return null;
-					} while (getFreeDiskSpace(context) >= file.length());
-				} catch (IOException e) {
-					setException(e);
-				}
+						putIntoDatabase(uniqueKey, file);
+						return null;
+					} catch (IOException e) {
+						logger.error("Unable to write to file!", e);
+
+						// Check if free space is too low and then attempt to free up enough space
+						// to store image
+						if (getFreeDiskSpace(context) > maxSize) {
+							setException(e);
+							return null;
+						}
+
+						try {
+							new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
+						} catch (ExecutionException | InterruptedException ignored) {
+							setException(e);
+							return null;
+						}
+					}
+
+					if (isCancelled()) return null;
+				} while (getFreeDiskSpace(context) >= file.length());
 
 				return null;
 			}
@@ -124,11 +124,11 @@ public class DiskFileCache {
 
 			logger.error("There was an error putting the file with the unique key " + uniqueKey + " into the cache.", e);
 		} catch (InterruptedException e) {
-			logger.error("Putting the file with the unique key " + uniqueKey + " into the cache was interrupted.", e);
+			logger.warn("Putting the file with the unique key " + uniqueKey + " into the cache was interrupted.", e);
 		}
 	}
 
-	private void put(final String uniqueKey, final File file) {
+	private void putIntoDatabase(final String uniqueKey, final File file) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 

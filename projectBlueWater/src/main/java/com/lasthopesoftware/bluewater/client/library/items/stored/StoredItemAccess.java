@@ -112,11 +112,10 @@ public class StoredItemAccess {
             protected List<StoredItem> executeInBackground(Void... params) {
 	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 		            return
-				            repositoryAccessHelper
-						            .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
-						            .addParameter(StoredItem.libraryIdColumnName, library.getId())
-						            .fetch(StoredItem.class);
-
+			            repositoryAccessHelper
+				            .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
+				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
+				            .fetch(StoredItem.class);
 	            }
             }
         };
