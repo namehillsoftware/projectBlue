@@ -118,14 +118,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 					//isCancelled was called, return an empty bitmap but do not put it into the cache
 					if (isCancelled()) return getFillerBitmap();
 
-					final InputStream is = connection.getInputStream();
-					try {
+					try (InputStream is = connection.getInputStream()) {
 						imageBytes = IOUtils.toByteArray(is);
 					} catch (InterruptedIOException interruptedIoException) {
 						logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
 						return getFillerBitmap();
-					} finally {
-						is.close();
 					}
 
 					if (imageBytes.length == 0)
@@ -136,11 +133,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 				}
 
 				try {
-					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
-					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap();
-
-					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
-					imageDiskCache.put(uniqueKey, file, imageBytes);
+					imageDiskCache.put(uniqueKey, imageBytes);
 				} catch (IOException ioe) {
 					logger.error("Error writing file!", ioe);
 				}

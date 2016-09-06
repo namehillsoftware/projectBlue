@@ -64,38 +64,68 @@ public class DiskFileCache {
 		expirationTime = expirationDays * msInDay;
 	}
 
-	public void put(final String uniqueKey, final File file, final byte[] fileData) {
+	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-			try {
+		final FluentTask<Void, Void, Void> putTask = new FluentTask<Void, Void, Void>() {
 
-				try (FileOutputStream fos = new FileOutputStream(file)) {
-					fos.write(fileData);
-					fos.flush();
-				}
+			@Override
+			protected Void executeInBackground(Void[] params) {
+				if (isCancelled()) return null;
 
-				put(uniqueKey, file);
-			} catch (IOException e) {
-				logger.error("Unable to write to file!", e);
-
-				// Check if free space is too low and then attempt to free up enough space
-				// to store image
-				long freeSpace = getFreeDiskSpace(context);
-				if (freeSpace > maxSize) return;
+				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
+				if (!cacheDir.exists() && !cacheDir.mkdirs() || isCancelled()) return null;
 
 				try {
-					new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
-				} catch (ExecutionException | InterruptedException ignored) {
-					return;
+					final File file = File.createTempFile(String.valueOf(library.getId()) + "-" + cacheName + "-" + uniqueKey.hashCode(), ".cache", cacheDir);
+
+					do {
+						if (isCancelled()) return null;
+
+						try {
+
+							try (FileOutputStream fos = new FileOutputStream(file)) {
+								fos.write(fileData);
+								fos.flush();
+							}
+
+							put(uniqueKey, file);
+							return null;
+						} catch (IOException e) {
+							logger.error("Unable to write to file!", e);
+
+							// Check if free space is too low and then attempt to free up enough space
+							// to store image
+							if (getFreeDiskSpace(context) > maxSize) return null;
+
+							try {
+								new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
+							} catch (ExecutionException | InterruptedException ignored) {
+								return null;
+							}
+						}
+
+						if (isCancelled()) return null;
+					} while (getFreeDiskSpace(context) >= file.length());
+				} catch (IOException e) {
+					setException(e);
 				}
 
-				freeSpace = getFreeDiskSpace(context);
-				if (freeSpace < file.length()) return;
-
-				put(uniqueKey, file, fileData);
+				return null;
 			}
-		});
+		};
+
+		try {
+			putTask.get(AsyncTask.THREAD_POOL_EXECUTOR);
+		} catch (ExecutionException e) {
+			final Throwable cause = e.getCause();
+			if (cause instanceof IOException)
+				throw (IOException)cause;
+
+			logger.error("There was an error putting the file with the unique key " + uniqueKey + " into the cache.", e);
+		} catch (InterruptedException e) {
+			logger.error("Putting the file with the unique key " + uniqueKey + " into the cache was interrupted.", e);
+		}
 	}
 
 	private void put(final String uniqueKey, final File file) {
