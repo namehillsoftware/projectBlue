@@ -74,7 +74,7 @@ public class DiskFileCache {
 				if (isCancelled()) return null;
 
 				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
-				if (!cacheDir.exists() && !cacheDir.mkdirs() || isCancelled()) return null;
+				if (isCancelled() || (!cacheDir.exists() && !cacheDir.mkdirs())) return null;
 
 				final File file = new File(cacheDir, (String.valueOf(library.getId()) + "-" + cacheName + "-" + uniqueKey).hashCode() + ".cache");
 
