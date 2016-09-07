@@ -23,6 +23,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -82,7 +86,6 @@ public class DiskFileCache {
 					if (isCancelled()) return null;
 
 					try {
-
 						try (FileOutputStream fos = new FileOutputStream(file)) {
 							fos.write(fileData);
 							fos.flush();

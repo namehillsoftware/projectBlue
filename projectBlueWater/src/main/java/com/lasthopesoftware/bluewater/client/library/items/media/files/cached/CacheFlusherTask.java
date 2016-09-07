@@ -38,8 +38,7 @@ class CacheFlusherTask extends FluentTask<Void, Void, Void> {
 
 	@Override
 	protected Void executeInBackground(Void[] params) {
-		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-		try {
+		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return null;
 
 			do {
@@ -63,14 +62,13 @@ class CacheFlusherTask extends FluentTask<Void, Void, Void> {
 
 			for (File fileInCacheDir : filesInCacheDir) {
 				try {
-					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null) continue;
+					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null)
+						continue;
 				} catch (IOException e) {
 					logger.warn("Issue getting canonical file path.");
 				}
 				fileInCacheDir.delete();
 			}
-		} finally {
-			repositoryAccessHelper.close();
 		}
 
 		return null;
