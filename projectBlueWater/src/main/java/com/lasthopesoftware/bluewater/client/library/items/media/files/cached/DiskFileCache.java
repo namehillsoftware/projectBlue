@@ -81,7 +81,8 @@ public class DiskFileCache {
 				try {
 					file = File.createTempFile(cachePrefix ,".cache", cacheDir);
 				} catch (IOException e) {
-					logger.error("There was an error creating the temp file");
+					logger.error("There was an error creating the temp file", e);
+					setException(e);
 					return null;
 				}
 
