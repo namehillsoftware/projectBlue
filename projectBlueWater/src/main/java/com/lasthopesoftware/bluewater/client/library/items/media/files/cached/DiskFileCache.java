@@ -23,12 +23,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class DiskFileCache {
 	
@@ -59,12 +53,14 @@ public class DiskFileCache {
 	private final long maxSize;
 
 	private final long expirationTime;
+	private final String cachePrefix;
 
 	public DiskFileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
 		this.context = context;
 		this.cacheName = cacheName;
 		this.maxSize = maxSize;
 		this.library = library;
+		this.cachePrefix = String.valueOf(library.getId()) + "-" + cacheName;
 		expirationTime = expirationDays * msInDay;
 	}
 
@@ -78,9 +74,16 @@ public class DiskFileCache {
 				if (isCancelled()) return null;
 
 				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
-				if (isCancelled() || (!cacheDir.exists() && !cacheDir.mkdirs())) return null;
+				if (isCancelled()) return null;
+				if (!cacheDir.exists() && !cacheDir.mkdirs()) return null;
 
-				final File file = new File(cacheDir, (String.valueOf(library.getId()) + "-" + cacheName + "-" + uniqueKey).hashCode() + ".cache");
+				final File file;
+				try {
+					file = File.createTempFile(cachePrefix ,".cache", cacheDir);
+				} catch (IOException e) {
+					logger.error("There was an error creating the temp file");
+					return null;
+				}
 
 				do {
 					if (isCancelled()) return null;
@@ -135,6 +138,14 @@ public class DiskFileCache {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 
+				final String canonicalFilePath;
+				try {
+					canonicalFilePath = file.getCanonicalPath();
+				} catch (IOException e) {
+					logger.error("There was an error getting the canonical path for " + file, e);
+					return;
+				}
+
 				final CachedFile cachedFile;
 				try {
 					cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
@@ -143,18 +154,25 @@ public class DiskFileCache {
 				}
 
 				if (cachedFile != null) {
+					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+						repositoryAccessHelper
+								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
+								.addParameter(CachedFile.FILE_NAME, canonicalFilePath)
+								.addParameter("id", cachedFile.getId())
+								.execute();
+
+						closeableTransaction.setTransactionSuccessful();
+					} catch (SQLException sqlException) {
+						logger.error("There was an error trying to update the cached file with ID " + cachedFile.getId(), sqlException);
+					}
+
 					doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
 					return;
 				}
 
 				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
-				try {
-					sqlInsertMapper.addParameter(CachedFile.FILE_NAME, file.getCanonicalPath());
-				} catch (IOException e) {
-					logger.error("There was an error getting the canonical path for " + file, e);
-					return;
-				}
+				sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
 
 				try {
 					sqlInsertMapper
@@ -225,12 +243,7 @@ public class DiskFileCache {
 		};
 
 		try {
-			return getFileTask.get(RepositoryAccessHelper.databaseExecutor, 60, TimeUnit.SECONDS);
-		} catch (TimeoutException te) {
-			logger.warn("Getting the cached file '" + uniqueKey + "'  timed out.", te);
-
-			if (!getFileTask.isCancelled())
-				getFileTask.cancel(true);
+			return getFileTask.get(RepositoryAccessHelper.databaseExecutor);
 		} catch (Exception e) {
 			logger.error("There was an error running the database task.", e);
 
