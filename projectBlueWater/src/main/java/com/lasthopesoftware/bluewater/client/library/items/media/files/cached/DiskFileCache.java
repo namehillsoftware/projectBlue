@@ -80,7 +80,7 @@ public class DiskFileCache {
 
 				final File file;
 				try {
-					file = File.createTempFile(cachePrefix ,".cache", cacheDir);
+					file = File.createTempFile(cachePrefix + "-" + uniqueKey.hashCode() + "-", ".cache", cacheDir);
 				} catch (IOException e) {
 					logger.error("There was an error creating the temp file", e);
 					setException(e);
@@ -224,6 +224,8 @@ public class DiskFileCache {
 							logger.warn("Cached file `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
 							if (deleteCachedFile(repositoryAccessHelper, cachedFile.getId()) <= 0)
 								setException(new SQLDataException("Unable to delete file with ID " + cachedFile.getId()));
+
+							return null;
 						}
 
 						// Remove the file and return null if it's past its expired time
