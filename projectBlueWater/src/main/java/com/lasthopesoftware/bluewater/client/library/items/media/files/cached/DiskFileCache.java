@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.SQLDataException;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -149,13 +150,16 @@ public class DiskFileCache {
 
 				final CachedFile cachedFile;
 				try {
-					cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+					cachedFile = getCachedFile(repositoryAccessHelper, uniqueKey);
 				} catch (IOException e) {
+					logger.error("There was an error getting the cached file with unique key " + uniqueKey, e);
 					return;
 				}
 
 				if (cachedFile != null) {
 					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+						logger.info("Updating file name of cached file " + uniqueKey + " to " + canonicalFilePath);
+
 						repositoryAccessHelper
 								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
 								.addParameter(CachedFile.FILE_NAME, canonicalFilePath)
@@ -165,11 +169,14 @@ public class DiskFileCache {
 						closeableTransaction.setTransactionSuccessful();
 					} catch (SQLException sqlException) {
 						logger.error("There was an error trying to update the cached file with ID " + cachedFile.getId(), sqlException);
+						return;
 					}
 
 					doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
 					return;
 				}
+
+				logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
 
 				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
@@ -203,7 +210,7 @@ public class DiskFileCache {
 					try {
 						final CachedFile cachedFile;
 						try {
-							cachedFile = getCachedFile(repositoryAccessHelper, library.getId(), cacheName, uniqueKey);
+							cachedFile = getCachedFile(repositoryAccessHelper, uniqueKey);
 						} catch (IOException e) {
 							setException(e);
 							return null;
@@ -215,20 +222,22 @@ public class DiskFileCache {
 						logger.info("Checking if " + cachedFile.getFileName() + " exists.");
 						if (!returnFile.exists()) {
 							logger.warn("Cached file `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
-							deleteCachedFile(repositoryAccessHelper, cachedFile.getId());
-
-							return null;
+							if (deleteCachedFile(repositoryAccessHelper, cachedFile.getId()) <= 0)
+								setException(new SQLDataException("Unable to delete file with ID " + cachedFile.getId()));
 						}
 
 						// Remove the file and return null if it's past its expired time
 						if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
 							logger.info("Cached file " + uniqueKey + " expired. Deleting.");
-							if (returnFile.delete()) {
-								deleteCachedFile(repositoryAccessHelper, cachedFile.getId());
+							if (!returnFile.delete()) {
+								setException(new IOException("Unable to delete file " + returnFile.getAbsolutePath()));
 								return null;
 							}
 
-							setException(new IOException("Unable to delete file " + returnFile.getAbsolutePath()));
+							if (deleteCachedFile(repositoryAccessHelper, cachedFile.getId()) <= 0)
+								setException(new SQLDataException("Unable to delete file with ID " + cachedFile.getId()));
+
+							return null;
 						}
 
 						doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
@@ -279,11 +288,11 @@ public class DiskFileCache {
 		}
 	}
 
-	private static CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final int libraryId, final String cacheName, final String uniqueKey) throws IOException {
+	private CachedFile getCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final String uniqueKey) throws IOException {
 		try (final CloseableNonExclusiveTransaction closeableNonExclusiveTransaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
 			final CachedFile cachedFile = repositoryAccessHelper
 					.mapSql("SELECT * FROM " + CachedFile.tableName + cachedFileFilter)
-					.addParameter(CachedFile.LIBRARY_ID, libraryId)
+					.addParameter(CachedFile.LIBRARY_ID, library.getId())
 					.addParameter(CachedFile.CACHE_NAME, cacheName)
 					.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
 					.fetchFirst(CachedFile.class);
@@ -300,31 +309,30 @@ public class DiskFileCache {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			logger.info("Deleting cached file with id " + cachedFileId);
 
-			if (logger.isDebugEnabled()) {
-				final long cachedFileCount = repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
-
-				logger.debug("Cached file count: " + cachedFileCount);
-			}
+			if (logger.isDebugEnabled())
+				logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
 
 			final long executionResult =
 					repositoryAccessHelper
 							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 							.addParameter("id", cachedFileId)
 							.execute();
+
+			if (logger.isDebugEnabled())
+				logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
+
 			closeableTransaction.setTransactionSuccessful();
-
-			if (logger.isDebugEnabled()) {
-				final long cachedFileCount = repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
-
-				logger.debug("Cached file count: " + cachedFileCount);
-			}
 
 			return executionResult;
 		} catch (SQLException sqlException) {
-			logger.warn("There was an error trying to delete the cached file with id " + cachedFileId);
+			logger.warn("There was an error trying to delete the cached file with id " + cachedFileId, sqlException);
 		}
 
 		return -1;
+	}
+
+	private static long getTotalCachedFileCount(RepositoryAccessHelper repositoryAccessHelper) {
+		return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
 	}
 
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
