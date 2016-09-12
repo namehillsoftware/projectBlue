@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.SQLException;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.SystemClock;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -158,19 +159,12 @@ public class DiskFileCache {
 				}
 
 				if (cachedFile != null) {
-					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-						logger.info("Updating file name of cached file " + uniqueKey + " to " + canonicalFilePath);
-
-						repositoryAccessHelper
-								.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
-								.addParameter(CachedFile.FILE_NAME, canonicalFilePath)
-								.addParameter("id", cachedFile.getId())
-								.execute();
-
-						closeableTransaction.setTransactionSuccessful();
-					} catch (SQLException sqlException) {
-						logger.error("There was an error trying to update the cached file with ID " + cachedFile.getId(), sqlException);
-						return;
+					if (!cachedFile.getFileName().equals(canonicalFilePath)) {
+						try {
+							updateFilePath(repositoryAccessHelper, cachedFile.getId(), canonicalFilePath);
+						} catch (SQLException e) {
+							return;
+						}
 					}
 
 					doFileAccessedUpdate(repositoryAccessHelper, cachedFile.getId());
@@ -184,13 +178,14 @@ public class DiskFileCache {
 				sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
 
 				try {
+					final long currentTimeMillis = System.currentTimeMillis();
 					sqlInsertMapper
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
 							.addParameter(CachedFile.FILE_SIZE, file.length())
 							.addParameter(CachedFile.LIBRARY_ID, library.getId())
 							.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-							.addParameter(CachedFile.CREATED_TIME, System.currentTimeMillis())
-							.addParameter(CachedFile.LAST_ACCESSED_TIME, System.currentTimeMillis())
+							.addParameter(CachedFile.CREATED_TIME, currentTimeMillis)
+							.addParameter(CachedFile.LAST_ACCESSED_TIME, currentTimeMillis)
 							.execute();
 				} catch (SQLException sqlException) {
 					logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
@@ -274,6 +269,23 @@ public class DiskFileCache {
 		return get(uniqueKey) != null;
 	}
 
+	private static void updateFilePath(final RepositoryAccessHelper repositoryAccessHelper, final long cachedFileId, final String filePath) {
+		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+			logger.info("Updating file name of cached file with ID " + cachedFileId + " to " + filePath);
+
+			repositoryAccessHelper
+					.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
+					.addParameter(CachedFile.FILE_NAME, filePath)
+					.addParameter("id", cachedFileId)
+					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
+		} catch (SQLException sqlException) {
+			logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
+			throw sqlException;
+		}
+	}
+
 	private static void doFileAccessedUpdate(final RepositoryAccessHelper repositoryAccessHelper, final long cachedFileId) {
 		final long updateTime = System.currentTimeMillis();
 		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
@@ -288,6 +300,7 @@ public class DiskFileCache {
 			closeableTransaction.setTransactionSuccessful();
 		} catch (SQLException sqlException) {
 			logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
+			throw sqlException;
 		}
 	}
 
