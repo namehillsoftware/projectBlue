@@ -13,10 +13,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
-import com.vedsoft.lazyj.ThreadLocalLazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
@@ -302,6 +300,9 @@ public class DiskFileCache {
 
 			closeableNonExclusiveTransaction.setTransactionSuccessful();
 			return cachedFile;
+		} catch (SQLException sqlException) {
+			logger.error("There was an error getting the file with unique key " + uniqueKey, sqlException);
+			return null;
 		} catch (IOException e) {
 			logger.error("There was an error opening the non exclusive transaction", e);
 			throw e;
