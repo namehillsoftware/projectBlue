@@ -12,7 +12,11 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
+import com.vedsoft.lazyj.ThreadLocalLazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
@@ -54,14 +58,22 @@ public class DiskFileCache {
 	private final long maxSize;
 
 	private final long expirationTime;
-	private final String cachePrefix;
+
+	private final ILazy<File> lazyDiskCacheDir = new AbstractSynchronousLazy<File>() {
+		@Override
+		protected File initialize() throws Exception {
+			final java.io.File cacheDir = new File(DiskFileCache.getDiskCacheDir(context, cacheName), String.valueOf(library.getId()));
+			if (!cacheDir.exists() && !cacheDir.mkdirs()) return null;
+
+			return cacheDir;
+		}
+	};
 
 	public DiskFileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
 		this.context = context;
 		this.cacheName = cacheName;
 		this.maxSize = maxSize;
 		this.library = library;
-		this.cachePrefix = String.valueOf(library.getId()) + "-" + cacheName;
 		expirationTime = expirationDays * msInDay;
 	}
 
@@ -74,18 +86,7 @@ public class DiskFileCache {
 			protected Void executeInBackground(Void[] params) {
 				if (isCancelled()) return null;
 
-				final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
-				if (isCancelled()) return null;
-				if (!cacheDir.exists() && !cacheDir.mkdirs()) return null;
-
-				final File file;
-				try {
-					file = File.createTempFile(cachePrefix + "-" + uniqueKey.hashCode() + "-", ".cache", cacheDir);
-				} catch (IOException e) {
-					logger.error("There was an error creating the temp file", e);
-					setException(e);
-					return null;
-				}
+				final File file = new File(lazyDiskCacheDir.getObject(), uniqueKey.hashCode() + ".cache");
 
 				do {
 					if (isCancelled()) return null;
