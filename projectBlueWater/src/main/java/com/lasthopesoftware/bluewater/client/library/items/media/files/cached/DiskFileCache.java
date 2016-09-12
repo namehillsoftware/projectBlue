@@ -103,13 +103,14 @@ public class DiskFileCache {
 
 						// Check if free space is too low and then attempt to free up enough space
 						// to store image
-						if (getFreeDiskSpace(context) > maxSize) {
+						final long freeDiskSpace = getFreeDiskSpace(context);
+						if (freeDiskSpace > maxSize) {
 							setException(e);
 							return null;
 						}
 
 						try {
-							new CacheFlusherTask(context, cacheName, maxSize - file.length()).get();
+							new CacheFlusherTask(context, cacheName, freeDiskSpace + file.length()).get();
 						} catch (ExecutionException | InterruptedException ignored) {
 							setException(e);
 							return null;
