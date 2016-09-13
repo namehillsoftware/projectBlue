@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.net.Uri;
-import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by david on 7/14/15.
@@ -43,8 +42,6 @@ import java.util.concurrent.Executors;
 public class StoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
-
-	public static final ExecutorService storedFileExecutor = Executors.newSingleThreadExecutor();
 
 	private final Context context;
 	private final Library library;
@@ -81,31 +78,39 @@ public class StoredFileAccess {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return getStoredFile(repositoryAccessHelper, storedFileId);
-				} finally {
-					repositoryAccessHelper.close();
 				}
 			}
 		};
 
-		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return getStoredFileTask(serviceFile).get(AsyncTask.THREAD_POOL_EXECUTOR);
+		return getStoredFileTask(serviceFile).get(RepositoryAccessHelper.databaseExecutor);
+	}
+
+	public List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
+		return new FluentTask<Void, Void, List<StoredFile>>() {
+			@Override
+			public List<StoredFile> executeInBackground(Void... params) {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+					return repositoryAccessHelper
+						.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " + @" + StoredFileEntityInformation.libraryIdColumnName)
+						.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+						.fetch(StoredFile.class);
+				}
+			}
+		}.get(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
 		return new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return getStoredFile(repositoryAccessHelper, serviceFile);
-				} finally {
-					repositoryAccessHelper.close();
 				}
 			}
 		};
@@ -115,35 +120,34 @@ public class StoredFileAccess {
 		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<Void, Void, List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return repositoryAccessHelper
 							.mapSql(
 									selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = @" + StoredFileEntityInformation.isDownloadCompleteColumnName)
 							.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
 							.fetch(StoredFile.class);
-				} finally {
-					repositoryAccessHelper.close();
 				}
 			}
 		};
 
-		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(AsyncTask.THREAD_POOL_EXECUTOR);
+		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
-		storedFileExecutor.execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			try {
-				repositoryAccessHelper
-						.mapSql(
-								" UPDATE " + StoredFileEntityInformation.tableName +
-								" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
-								" WHERE id = @id")
-						.addParameter("id", storedFile.getId())
-						.execute();
-			} finally {
-				repositoryAccessHelper.close();
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+
+					repositoryAccessHelper
+							.mapSql(
+									" UPDATE " + StoredFileEntityInformation.tableName +
+											" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
+											" WHERE id = @id")
+							.addParameter("id", storedFile.getId())
+							.execute();
+
+					closeableTransaction.setTransactionSuccessful();
+				}
 			}
 
 			storedFile.setIsDownloadComplete(true);
@@ -151,26 +155,26 @@ public class StoredFileAccess {
 	}
 
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
-		storedFileExecutor.execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			try {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 				if (storedFile == null) {
 					storedFile =
-						repositoryAccessHelper
-							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName)
-							.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
-							.fetchFirst(StoredFile.class);
+							repositoryAccessHelper
+									.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName)
+									.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
+									.fetchFirst(StoredFile.class);
 
-					if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath)) return;
+					if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
+						return;
 				}
 
 				if (storedFile == null) {
 					storedFile =
-						repositoryAccessHelper
-							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName)
-							.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
-							.fetchFirst(StoredFile.class);
+							repositoryAccessHelper
+									.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName)
+									.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
+									.fetchFirst(StoredFile.class);
 				}
 
 				if (storedFile == null) {
@@ -182,8 +186,6 @@ public class StoredFileAccess {
 
 				storedFile.setStoredMediaId(mediaFileId);
 				updateStoredFile(repositoryAccessHelper, storedFile);
-			} finally {
-				repositoryAccessHelper.close();
 			}
 		});
 	}
@@ -192,8 +194,7 @@ public class StoredFileAccess {
 		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 					if (storedFile == null) {
 						logger.info("Stored file was not found for " + file.getKey() + ", creating file");
@@ -266,14 +267,12 @@ public class StoredFileAccess {
 					updateStoredFile(repositoryAccessHelper, storedFile);
 
 					return storedFile;
-				} finally {
-					repositoryAccessHelper.close();
 				}
 			}
 		};
 
 		try {
-			return createOrUpdateStoredFileTask.get(storedFileExecutor);
+			return createOrUpdateStoredFileTask.get(RepositoryAccessHelper.databaseExecutor);
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
 			return null;
@@ -282,7 +281,7 @@ public class StoredFileAccess {
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
 		try {
-			new PruneFilesTask(context, library.getId(), serviceIdsToKeep).get(storedFileExecutor);
+			new PruneFilesTask(context, library, serviceIdsToKeep).get();
 		} catch (ExecutionException | InterruptedException e) {
 			logger.error("There was an exception while pruning the files", e);
 		}
@@ -310,23 +309,52 @@ public class StoredFileAccess {
 	}
 
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
-		repositoryAccessHelper
-				.mapSql(insertSql.getObject())
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
-				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-				.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-				.execute();
+		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+			repositoryAccessHelper
+					.mapSql(insertSql.getObject())
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
+		}
 	}
 
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
-		repositoryAccessHelper
-				.mapSql(updateSql.getObject())
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.getServiceId())
-				.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.getStoredMediaId())
-				.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.getPath())
-				.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner())
-				.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
-				.addParameter("id", storedFile.getId())
-				.execute();
+		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+			repositoryAccessHelper
+					.mapSql(updateSql.getObject())
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.getServiceId())
+					.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.getStoredMediaId())
+					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.getPath())
+					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner())
+					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete())
+					.addParameter("id", storedFile.getId())
+					.execute();
+
+			closeableTransaction.setTransactionSuccessful();
+		}
+	}
+
+
+	public void deleteStoredFile(final StoredFile storedFile) {
+		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
+			final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
+			try {
+				repositoryAccessHelper
+						.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
+						.addParameter("id", storedFile.getId())
+						.execute();
+
+				closeableTransaction.setTransactionSuccessful();
+			} catch (SQLException e) {
+				logger.error("There was an error deleting file " + storedFile.getId(), e);
+			} finally {
+				closeableTransaction.close();
+				repositoryAccessHelper.close();
+			}
+		});
 	}
 }

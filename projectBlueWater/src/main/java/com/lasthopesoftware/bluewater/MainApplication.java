@@ -190,7 +190,7 @@ public class MainApplication extends Application {
 
 		if (!DEBUG_MODE) return;
 
-		rootLogger.setLevel(Level.INFO);
+		rootLogger.setLevel(Level.DEBUG);
 
 		logger.info("DEBUG_MODE active");
 		StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()

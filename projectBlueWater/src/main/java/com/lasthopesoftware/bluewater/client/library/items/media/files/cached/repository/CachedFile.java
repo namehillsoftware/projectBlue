@@ -16,7 +16,7 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	public static final String CREATED_TIME = "createdTime";
 	public static final String tableName = "CachedFile";
 	
-	private int id;
+	private long id;
 	
 	private int libraryId;
 	
@@ -130,11 +130,11 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 		this.createdTime = createdTime;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

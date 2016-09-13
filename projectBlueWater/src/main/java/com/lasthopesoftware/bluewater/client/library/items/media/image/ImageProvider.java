@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -77,7 +78,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 			if (artist == null || artist.isEmpty())
 				artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-			uniqueKey = artist + ":" + fileProperties.get(FilePropertiesProvider.ALBUM);
+			String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
+			if (albumOrTrackName == null)
+				albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
+
+			uniqueKey = artist + ":" + albumOrTrackName;
 		} catch (InterruptedException | ExecutionException e) {
 			logger.error("Error getting file properties.", e);
 			return getFillerBitmap();
@@ -92,11 +97,15 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 
         final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
-		final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
-		if (imageCacheFile != null) {
-			imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
-			if (imageBytes.length > 0)
-				return getBitmapFromBytes(imageBytes);
+		try {
+			final java.io.File imageCacheFile = imageDiskCache.get(uniqueKey);
+			if (imageCacheFile != null) {
+				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
+				if (imageBytes.length > 0)
+					return getBitmapFromBytes(imageBytes);
+			}
+		} catch (IOException e) {
+			logger.error("There was an error getting the cached file", e);
 		}
 
 		try {
@@ -109,11 +118,11 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 					//isCancelled was called, return an empty bitmap but do not put it into the cache
 					if (isCancelled()) return getFillerBitmap();
 
-					final InputStream is = connection.getInputStream();
-					try {
+					try (InputStream is = connection.getInputStream()) {
 						imageBytes = IOUtils.toByteArray(is);
-					} finally {
-						is.close();
+					} catch (InterruptedIOException interruptedIoException) {
+						logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
+						return getFillerBitmap();
 					}
 
 					if (imageBytes.length == 0)
@@ -124,11 +133,7 @@ public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
 				}
 
 				try {
-					final java.io.File cacheDir = DiskFileCache.getDiskCacheDir(context, IMAGES_CACHE_NAME);
-					if (!cacheDir.exists() && !cacheDir.mkdirs()) return getFillerBitmap();
-
-					final java.io.File file = java.io.File.createTempFile(String.valueOf(library.getId()) + "-" + IMAGES_CACHE_NAME, "." + IMAGE_FORMAT, cacheDir);
-					imageDiskCache.put(uniqueKey, file, imageBytes);
+					imageDiskCache.put(uniqueKey, imageBytes);
 				} catch (IOException ioe) {
 					logger.error("Error writing file!", ioe);
 				}

@@ -56,8 +56,7 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 			try {
 				if (isCancelled()) return new HashMap<>();
 
-				final InputStream is = conn.getInputStream();
-				try {
+				try (InputStream is = conn.getInputStream()) {
 					if (isCancelled()) return new HashMap<>();
 
 					final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
@@ -70,8 +69,6 @@ public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String
 					FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertyCache.FilePropertiesContainer(revision, returnProperties));
 
 					return returnProperties;
-				} finally {
-					is.close();
 				}
 			} finally {
 				conn.disconnect();

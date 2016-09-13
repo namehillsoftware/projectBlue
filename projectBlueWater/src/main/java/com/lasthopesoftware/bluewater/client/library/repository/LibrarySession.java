@@ -7,6 +7,7 @@ import android.database.SQLException;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
@@ -78,43 +79,43 @@ public class LibrarySession {
 
 			@Override
 			protected Library executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
-					final boolean isLibraryExists = library.getId() > -1;
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+						final boolean isLibraryExists = library.getId() > -1;
 
-					final ObjectiveDroid objectiveDroid =
-						repositoryAccessHelper
-								.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
-								.addParameter(Library.accessCodeColumn, library.getAccessCode())
-								.addParameter(Library.authKeyColumn, library.getAuthKey())
-								.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
-								.addParameter(Library.libraryNameColumn, library.getLibraryName())
-								.addParameter(Library.isRepeatingColumn, library.isRepeating())
-								.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
-								.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
-								.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
-								.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
-								.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
-								.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
-								.addParameter(Library.selectedViewColumn, library.getSelectedView())
-								.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
-								.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
+						final ObjectiveDroid objectiveDroid =
+								repositoryAccessHelper
+										.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
+										.addParameter(Library.accessCodeColumn, library.getAccessCode())
+										.addParameter(Library.authKeyColumn, library.getAuthKey())
+										.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
+										.addParameter(Library.libraryNameColumn, library.getLibraryName())
+										.addParameter(Library.isRepeatingColumn, library.isRepeating())
+										.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
+										.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
+										.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
+										.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
+										.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
+										.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
+										.addParameter(Library.selectedViewColumn, library.getSelectedView())
+										.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
+										.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
-					if (isLibraryExists)
-						objectiveDroid.addParameter("id", library.getId());
+						if (isLibraryExists)
+							objectiveDroid.addParameter("id", library.getId());
 
-					final long result = objectiveDroid.execute();
+						final long result = objectiveDroid.execute();
+						closeableTransaction.setTransactionSuccessful();
 
-					if (!isLibraryExists)
-						library.setId((int)result);
+						if (!isLibraryExists)
+							library.setId((int) result);
 
-					logger.debug("Library saved.");
-					return library;
-				} catch (SQLException se) {
-					logger.error("There was an error saving the library", se);
-					return null;
-				} finally {
-					repositoryAccessHelper.close();
+						logger.debug("Library saved.");
+						return library;
+					} catch (SQLException se) {
+						logger.error("There was an error saving the library", se);
+						return null;
+					}
 				}
 			}
 		};
@@ -161,15 +162,12 @@ public class LibrarySession {
 	private static synchronized Library GetLibrary(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
-		final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-		try {
+		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			return
-				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
-					.addParameter("id", libraryId)
-					.fetchFirst(Library.class);
-		} finally {
-			repositoryAccessHelper.close();
+					repositoryAccessHelper
+							.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
+							.addParameter("id", libraryId)
+							.fetchFirst(Library.class);
 		}
 	}
 	
@@ -177,14 +175,11 @@ public class LibrarySession {
 		new FluentTask<Void, Void, List<Library>>() {
 			@Override
 			protected List<Library> executeInBackground(Void... params) {
-				final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-				try {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return
-						repositoryAccessHelper
-							.mapSql("SELECT * FROM " + Library.tableName)
-							.fetch(Library.class);
-				} finally {
-					repositoryAccessHelper.close();
+							repositoryAccessHelper
+									.mapSql("SELECT * FROM " + Library.tableName)
+									.fetch(Library.class);
 				}
 			}
 		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);

@@ -5,10 +5,12 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,14 @@ import java.util.List;
 public class StoredItemAccess {
 
     private static final Logger logger = LoggerFactory.getLogger(StoredItemAccess.class);
+
+	private static final Lazy<String> storedItemInsertSql = new Lazy<>(
+			() -> InsertBuilder
+					.fromTable(StoredItem.tableName)
+					.addColumn(StoredItem.libraryIdColumnName)
+					.addColumn(StoredItem.serviceIdColumnName)
+					.addColumn(StoredItem.itemTypeColumnName)
+					.build());
 
     private final Context context;
 	private final Library library;
@@ -42,12 +52,9 @@ public class StoredItemAccess {
 
             @Override
             protected Boolean executeInBackground(Void... params) {
-                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-                try {
-                    return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
-                } finally {
-                    repositoryAccessHelper.close();
-                }
+	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+		            return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
+	            }
             }
         };
 
@@ -58,54 +65,43 @@ public class StoredItemAccess {
     }
 
     private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-        RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-                try {
-                    if (isItemMarkedForSync(repositoryAccessHelper, library, item, itemType)) return;
+        RepositoryAccessHelper.databaseExecutor.execute(() -> {
+	        try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+		        if (isItemMarkedForSync(repositoryAccessHelper, library, item, itemType))
+			        return;
 
-                    final String storedItemInsertSql =
-                        InsertBuilder
-                            .fromTable(StoredItem.tableName)
-                            .addColumn(StoredItem.libraryIdColumnName)
-                            .addColumn(StoredItem.serviceIdColumnName)
-		                    .addColumn(StoredItem.itemTypeColumnName)
-		                    .build();
+		        try (final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+			        repositoryAccessHelper
+					        .mapSql(storedItemInsertSql.getObject())
+					        .addParameter(StoredItem.libraryIdColumnName, library.getId())
+					        .addParameter(StoredItem.serviceIdColumnName, item.getKey())
+					        .addParameter(StoredItem.itemTypeColumnName, itemType)
+					        .execute();
 
-                    repositoryAccessHelper
-                            .mapSql(storedItemInsertSql)
-		                    .addParameter(StoredItem.libraryIdColumnName, library.getId())
-		                    .addParameter(StoredItem.serviceIdColumnName, item.getKey())
-		                    .addParameter(StoredItem.itemTypeColumnName, itemType)
-		                    .execute();
-                } finally {
-	                repositoryAccessHelper.close();
-                }
-            }
+			        closeableTransaction.setTransactionSuccessful();
+		        }
+	        }
         });
     }
 
     private void disableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-        RepositoryAccessHelper.databaseExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-	            try {
-		            repositoryAccessHelper
-				            .mapSql(
-                                    " DELETE FROM " + StoredItem.tableName +
-                                            " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
-                                            " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
-                                            " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
-				            .addParameter(StoredItem.serviceIdColumnName, item.getKey())
-				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
-				            .addParameter(StoredItem.itemTypeColumnName, itemType)
-				            .execute();
-	            } finally {
-		            repositoryAccessHelper.close();
-	            }
-            }
+        RepositoryAccessHelper.databaseExecutor.execute(() -> {
+	        try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+		        try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+			        repositoryAccessHelper
+					        .mapSql(
+							        " DELETE FROM " + StoredItem.tableName +
+									        " WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
+									        " AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
+									        " AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
+					        .addParameter(StoredItem.serviceIdColumnName, item.getKey())
+					        .addParameter(StoredItem.libraryIdColumnName, library.getId())
+					        .addParameter(StoredItem.itemTypeColumnName, itemType)
+					        .execute();
+
+			        closeableTransaction.setTransactionSuccessful();
+		        }
+	        }
         });
     }
 
@@ -114,17 +110,13 @@ public class StoredItemAccess {
 
             @Override
             protected List<StoredItem> executeInBackground(Void... params) {
-                final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-                try {
-	                return
-			                repositoryAccessHelper
-					                .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
-					                .addParameter(StoredItem.libraryIdColumnName, library.getId())
-					                .fetch(StoredItem.class);
-
-                } finally {
-                    repositoryAccessHelper.close();
-                }
+	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+		            return
+			            repositoryAccessHelper
+				            .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
+				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
+				            .fetch(StoredItem.class);
+	            }
             }
         };
 

@@ -12,10 +12,11 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
+import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RepositoryAccessHelper extends SQLiteOpenHelper {
+public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeable {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
 	private static final int DATABASE_VERSION = 6;
@@ -46,8 +47,16 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper {
 			entityUpdater.onUpdate(db, oldVersion, newVersion);
 	}
 
+	public CloseableTransaction beginTransaction() {
+		return new CloseableTransaction(sqliteDb.getObject());
+	}
+
+	public CloseableNonExclusiveTransaction beginNonExclusiveTransaction() {
+		return new CloseableNonExclusiveTransaction(sqliteDb.getObject());
+	}
+
 	@Override
-	public synchronized void close() {
+	public void close() {
 		super.close();
 
 		if (sqliteDb.isInitialized())
