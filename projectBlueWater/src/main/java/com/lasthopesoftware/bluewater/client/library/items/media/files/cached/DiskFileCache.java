@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.SQLException;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.os.SystemClock;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -85,7 +84,14 @@ public class DiskFileCache {
 			protected Void executeInBackground(Void[] params) {
 				if (isCancelled()) return null;
 
-				final File file = new File(lazyDiskCacheDir.getObject(), uniqueKey.hashCode() + ".cache");
+				final String suffix = ".cache";
+				final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
+				final File diskCacheDir = lazyDiskCacheDir.getObject();
+				File file = new File(diskCacheDir, uniqueKeyHashCode + suffix);
+
+				int collisionNumber = 0;
+				while (file.exists())
+					file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
 
 				do {
 					if (isCancelled()) return null;
