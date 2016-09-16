@@ -89,9 +89,12 @@ public class DiskFileCache {
 				final File diskCacheDir = lazyDiskCacheDir.getObject();
 				File file = new File(diskCacheDir, uniqueKeyHashCode + suffix);
 
-				int collisionNumber = 0;
-				while (file.exists())
-					file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
+				if (file.exists()) {
+					int collisionNumber = 0;
+					do {
+						file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
+					} while (file.exists());
+				}
 
 				do {
 					if (isCancelled()) return null;
