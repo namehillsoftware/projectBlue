@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request;
+package com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write;
 
 /**
  * Created by david on 7/3/16.

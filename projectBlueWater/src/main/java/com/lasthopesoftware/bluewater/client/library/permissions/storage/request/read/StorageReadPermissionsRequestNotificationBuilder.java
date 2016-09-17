@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.permissions.storage.write.request;
+package com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read;
 
 import android.app.Notification;
 import android.content.Context;
@@ -7,21 +7,21 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.StoragePermissionsRequestNotificationBuilder;
 
 /**
- * Created by david on 7/10/16.
+ * Created by david on 7/3/16.
  */
-public class StorageWritePermissionsRequestNotificationBuilder implements IStorageWritePermissionsRequestNotificationBuilder {
+public class StorageReadPermissionsRequestNotificationBuilder implements IStorageReadPermissionsRequestNotificationBuilder {
 	private final IStoragePermissionsRequestNotificationBuilder storagePermissionsRequestNotificationBuilder;
 
-	public StorageWritePermissionsRequestNotificationBuilder(Context context) {
+	public StorageReadPermissionsRequestNotificationBuilder(Context context) {
 		this(new StoragePermissionsRequestNotificationBuilder(context));
 	}
 
-	public StorageWritePermissionsRequestNotificationBuilder(IStoragePermissionsRequestNotificationBuilder storagePermissionsRequestNotificationBuilder) {
+	public StorageReadPermissionsRequestNotificationBuilder(IStoragePermissionsRequestNotificationBuilder storagePermissionsRequestNotificationBuilder) {
 		this.storagePermissionsRequestNotificationBuilder = storagePermissionsRequestNotificationBuilder;
 	}
 
 	@Override
-	public Notification buildWritePermissionsRequestNotification(int libraryId) {
+	public Notification buildReadPermissionsRequestNotification(int libraryId) {
 		return storagePermissionsRequestNotificationBuilder.buildStoragePermissionsRequestNotification(libraryId);
 	}
 }
