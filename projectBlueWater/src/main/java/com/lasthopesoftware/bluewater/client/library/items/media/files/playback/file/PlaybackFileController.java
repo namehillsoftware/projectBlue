@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-public class PlaybackFile implements
+public class PlaybackFileController implements
 	IPlaybackFile,
 	OnPreparedListener,
 	OnErrorListener, 
@@ -52,7 +52,7 @@ public class PlaybackFile implements
 			MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
 	}))); 
 	
-	private static final Logger logger = LoggerFactory.getLogger(PlaybackFile.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlaybackFileController.class);
 	
 	private volatile MediaPlayer mediaPlayer;
 	
@@ -73,11 +73,11 @@ public class PlaybackFile implements
 	private static final int bufferMin = 0, bufferMax = 100;
 
 	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
-	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
+	private OnFilePreparedListener onFilePreparedListener;
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
 
-	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
+	public PlaybackFileController(Context context, ConnectionProvider connectionProvider, IFile file) {
 		mpContext = context;
 		this.connectionProvider = connectionProvider;
 		this.file = file;
@@ -215,8 +215,9 @@ public class PlaybackFile implements
 		isPrepared = true;
 		isPreparing = false;
 		logger.info(file.getKey() + " prepared!");
-		
-		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
+
+		if (onFilePreparedListener != null)
+			onFilePreparedListener.onFilePrepared(this);
 	}
 	
 	@Override
@@ -389,13 +390,12 @@ public class PlaybackFile implements
 	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
 		onFileCompleteListeners.remove(listener);
 	}
-	
-	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
-		onFilePreparedListeners.add(listener);
-	}
-	
-	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
-		onFilePreparedListeners.remove(listener);
+
+	@Override
+	public IPlaybackFilePreparation setOnFilePreparedListener(OnFilePreparedListener listener) {
+		onFilePreparedListener = listener;
+
+		return this;
 	}
 	
 	public void addOnFileErrorListener(OnFileErrorListener listener) {

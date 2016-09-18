@@ -4,15 +4,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
-public interface IPlaybackFile {
+public interface IPlaybackFile extends IPlaybackFilePreparation {
 	IFile getFile();
 	void initMediaPlayer();
 	boolean isMediaPlayerCreated();
-	boolean isPrepared();
-	void prepareMediaPlayer();
-	void prepareMpSynchronously();
 	void releaseMediaPlayer();
 	int getCurrentPosition();
 	boolean isBuffered();
@@ -29,8 +25,6 @@ public interface IPlaybackFile {
 	/* Listener methods */
 	void addOnFileCompleteListener(OnFileCompleteListener listener);
 	void removeOnFileCompleteListener(OnFileCompleteListener listener);
-	void addOnFilePreparedListener(OnFilePreparedListener listener);
-	void removeOnFilePreparedListener(OnFilePreparedListener listener);
 	void addOnFileErrorListener(OnFileErrorListener listener);
 	void removeOnFileErrorListener(OnFileErrorListener listener);
 	void addOnFileBufferedListener(OnFileBufferedListener listener);
