@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
 /**
@@ -10,4 +11,7 @@ public interface IPlaybackFilePreparation {
 	void prepareMediaPlayer();
 	void prepareMpSynchronously();
 	IPlaybackFilePreparation setOnFilePreparedListener(OnFilePreparedListener listener);
+	boolean isBuffered();
+	int getBufferPercentage();
+	void setOnFileBufferedListener(OnFileBufferedListener listener);
 }

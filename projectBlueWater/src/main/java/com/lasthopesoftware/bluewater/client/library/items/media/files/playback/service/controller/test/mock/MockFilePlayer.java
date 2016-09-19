@@ -155,7 +155,7 @@ public class MockFilePlayer implements IPlaybackFile {
 	}
 
 	@Override
-	public void addOnFileBufferedListener(OnFileBufferedListener listener) {
+	public void setOnFileBufferedListener(OnFileBufferedListener listener) {
 		// TODO Auto-generated method stub
 		
 	}

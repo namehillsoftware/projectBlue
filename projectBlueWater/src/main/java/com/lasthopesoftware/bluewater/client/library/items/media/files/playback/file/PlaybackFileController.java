@@ -66,7 +66,7 @@ public class PlaybackFileController implements
 	private volatile float volume = 1.0f;
 	private float maxVolume = 1.0f;
 
-	private final Context mpContext;
+	private final Context context;
 	private final IFile file;
 	private final ConnectionProvider connectionProvider;
 	
@@ -75,14 +75,14 @@ public class PlaybackFileController implements
 	private OnFileCompleteListener onFileCompleteListener;
 	private OnFilePreparedListener onFilePreparedListener;
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
-	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
+	private OnFileBufferedListener onFileBufferedListener;
 
 	public PlaybackFileController(Context context, ConnectionProvider connectionProvider, IFile file) {
-		mpContext = context;
+		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.file = file;
 	}
-	
+
 	public IFile getFile() {
 		return file;
 	}
@@ -101,7 +101,7 @@ public class PlaybackFileController implements
 		mediaPlayer.setOnErrorListener(this);
 		mediaPlayer.setOnCompletionListener(this);
 		mediaPlayer.setOnBufferingUpdateListener(this);
-		mediaPlayer.setWakeMode(mpContext, PowerManager.PARTIAL_WAKE_LOCK);
+		mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
 		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 	}
 	
@@ -114,7 +114,7 @@ public class PlaybackFileController implements
 	}
 
 	private Uri getFileUri() throws IOException {
-		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mpContext, connectionProvider, LibrarySession.GetActiveLibrary(mpContext), file);
+		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(context, connectionProvider, LibrarySession.GetActiveLibrary(context), file);
 		return bestMatchUriProvider.getFileUri();
 	}
 
@@ -130,7 +130,7 @@ public class PlaybackFileController implements
 			if (uri == null) return;
 
 			maxVolume = 1.0f;
-			final MaxFileVolumeProvider maxFileVolumeProvider = new MaxFileVolumeProvider(mpContext, connectionProvider, file);
+			final MaxFileVolumeProvider maxFileVolumeProvider = new MaxFileVolumeProvider(context, connectionProvider, file);
 			maxFileVolumeProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 
 			setMpDataSource(uri);
@@ -179,11 +179,11 @@ public class PlaybackFileController implements
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
 		final Map<String, String> headers = new HashMap<>();
-		if (mpContext == null)
+		if (context == null)
 			throw new NullPointerException("The file player's context cannot be null");
 
 		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
-			final Library library = LibrarySession.GetActiveLibrary(mpContext);
+			final Library library = LibrarySession.GetActiveLibrary(context);
 			if (library != null) {
 				final String authKey = library.getAuthKey();
 
@@ -192,7 +192,7 @@ public class PlaybackFileController implements
 			}
 		}
 		
-		mediaPlayer.setDataSource(mpContext, uri, headers);
+		mediaPlayer.setDataSource(context, uri, headers);
 	}
 	
 	private void resetMediaPlayer() {
@@ -277,7 +277,7 @@ public class PlaybackFileController implements
 		// remove the listener
 		mp.setOnBufferingUpdateListener(null);
 		
-		for (OnFileBufferedListener onFileBufferedListener : onFileBufferedListeners)
+		if (onFileBufferedListener != null)
 			onFileBufferedListener.onFileBuffered(this);
 	}
 	
@@ -383,8 +383,10 @@ public class PlaybackFileController implements
 	private static void handleIllegalStateException(IllegalStateException ise) {
 		logger.warn("The media player was in an incorrect state.", ise);
 	}
-	
+
 	/* Listener methods */
+
+	@Override
 	public void setOnFileCompleteListener(OnFileCompleteListener listener) {
 		onFileCompleteListener = listener;
 	}
@@ -395,20 +397,19 @@ public class PlaybackFileController implements
 
 		return this;
 	}
-	
+
+	@Override
 	public void addOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.add(listener);
 	}
-	
+
+	@Override
 	public void removeOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.remove(listener);
 	}
-	
-	public void addOnFileBufferedListener(OnFileBufferedListener listener) {
-		onFileBufferedListeners.add(listener);
-	}
-	
-	public void removeOnFileErrorListener(OnFileBufferedListener listener) {
-		onFileBufferedListeners.remove(listener);
+
+	@Override
+	public void setOnFileBufferedListener(OnFileBufferedListener listener) {
+		onFileBufferedListener = listener;
 	}
 }
