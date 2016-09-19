@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
+import android.support.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 
 public interface IPlaybackFile extends
 		IPlaybackFilePreparation,
 		IPlaybackFilePlaybackController,
 		IMediaPlayerResourceManager,
-		IPlaybackFileVolumeController {
-	IFile getFile();
-
-	/* Listener methods */
-	void addOnFileErrorListener(OnFileErrorListener listener);
-	void removeOnFileErrorListener(OnFileErrorListener listener);
+		IPlaybackFileVolumeController,
+		IPlaybackFileErrorBroadcaster {
+	@NonNull IFile getFile();
 }
