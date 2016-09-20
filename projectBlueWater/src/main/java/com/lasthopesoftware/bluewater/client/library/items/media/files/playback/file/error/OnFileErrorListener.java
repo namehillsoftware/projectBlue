@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 

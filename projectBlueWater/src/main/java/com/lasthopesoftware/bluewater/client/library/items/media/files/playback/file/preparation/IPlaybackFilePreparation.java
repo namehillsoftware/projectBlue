@@ -1,7 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
-
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
 
 /**
  * Created by david on 9/17/16.
