@@ -72,7 +72,7 @@ public class PlaybackFileController implements
 	
 	private static final int bufferMin = 0, bufferMax = 100;
 
-	private OnFileCompleteListener onFileCompleteListener;
+	private final HashSet<OnFileCompleteListener> onFileCompleteListeners = new HashSet<>();
 	private OnFilePreparedListener onFilePreparedListener;
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
@@ -223,9 +223,7 @@ public class PlaybackFileController implements
 	@Override
 	public void onCompletion(MediaPlayer mp) {
 		releaseMediaPlayer();
-
-		if (onFileCompleteListener != null)
-			onFileCompleteListener.onFileComplete(this);
+		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
 	}
 	
 	@Override
@@ -385,8 +383,12 @@ public class PlaybackFileController implements
 	}
 	
 	/* Listener methods */
-	public void setOnFileCompleteListener(OnFileCompleteListener listener) {
-		onFileCompleteListener = listener;
+	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListeners.add(listener);
+	}
+	
+	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListeners.remove(listener);
 	}
 
 	@Override

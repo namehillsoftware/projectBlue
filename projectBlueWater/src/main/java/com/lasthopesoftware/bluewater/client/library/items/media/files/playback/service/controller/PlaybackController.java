@@ -105,7 +105,7 @@ public class PlaybackController implements
         mCurrentFilePos = filePos;
         
 		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
-		filePlayer.setOnFileCompleteListener(this);
+		filePlayer.addOnFileCompleteListener(this);
 		filePlayer.setOnFilePreparedListener(this);
 		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
@@ -144,7 +144,7 @@ public class PlaybackController implements
 		}
 		
 		if (!mCurrentPlaybackFile.isMediaPlayerCreated()) {
-			mCurrentPlaybackFile.setOnFileCompleteListener(this);
+			mCurrentPlaybackFile.addOnFileCompleteListener(this);
 			mCurrentPlaybackFile.setOnFilePreparedListener(this);
 			mCurrentPlaybackFile.addOnFileErrorListener(this);
 			
@@ -325,7 +325,7 @@ public class PlaybackController implements
 		// returned
 		mCurrentFilePos = nextFilePos;
 		mCurrentPlaybackFile = mNextPlaybackFile;
-		mCurrentPlaybackFile.setOnFileCompleteListener(this);
+		mCurrentPlaybackFile.addOnFileCompleteListener(this);
 		mCurrentPlaybackFile.addOnFileErrorListener(this);
 		if (!mCurrentPlaybackFile.isPrepared()) {
 			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getKey() + " was not prepared. Preparing now.");

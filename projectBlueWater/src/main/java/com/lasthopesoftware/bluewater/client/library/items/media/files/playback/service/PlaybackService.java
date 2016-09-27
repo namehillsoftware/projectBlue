@@ -942,7 +942,7 @@ public class PlaybackService extends Service implements
 	
 	@Override
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
-		filePlayer.setOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, filePlayer));
+		filePlayer.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, filePlayer));
 		final IFile playingFile = filePlayer.getFile();
 		
 		if (!areListenersRegistered) registerListeners();
