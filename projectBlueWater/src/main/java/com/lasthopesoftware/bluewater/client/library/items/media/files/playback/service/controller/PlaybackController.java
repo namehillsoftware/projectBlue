@@ -203,7 +203,7 @@ public class PlaybackController implements
 		if (mCurrentPlaybackFile.isBuffered())
 			onFileBuffered(mCurrentPlaybackFile);
 		else
-			mCurrentPlaybackFile.setOnFileBufferedListener(this);
+			mCurrentPlaybackFile.addOnFileBufferedListener(this);
 	}
 
 	@Override
