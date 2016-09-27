@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFileController;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
@@ -51,7 +51,7 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>());
+		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<IFile>());
 	}
 	
 	private PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
@@ -106,7 +106,7 @@ public class PlaybackController implements
         
 		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
 		filePlayer.addOnFileCompleteListener(this);
-		filePlayer.setOnFilePreparedListener(this);
+		filePlayer.addOnFilePreparedListener(this);
 		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
 		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
@@ -145,7 +145,7 @@ public class PlaybackController implements
 		
 		if (!mCurrentPlaybackFile.isMediaPlayerCreated()) {
 			mCurrentPlaybackFile.addOnFileCompleteListener(this);
-			mCurrentPlaybackFile.setOnFilePreparedListener(this);
+			mCurrentPlaybackFile.addOnFilePreparedListener(this);
 			mCurrentPlaybackFile.addOnFileErrorListener(this);
 			
 			mCurrentPlaybackFile.initMediaPlayer();
@@ -332,7 +332,7 @@ public class PlaybackController implements
 			if (!mCurrentPlaybackFile.isMediaPlayerCreated())
 				mCurrentPlaybackFile.initMediaPlayer();
 			
-			mCurrentPlaybackFile.setOnFilePreparedListener(this);
+			mCurrentPlaybackFile.addOnFilePreparedListener(this);
 			mCurrentPlaybackFile.prepareMediaPlayer();
 			return;
 		}
@@ -345,7 +345,7 @@ public class PlaybackController implements
 		mLogger.error("JR File error - " + what + " - " + extra);
 		
 		// We don't know what happened, release the next file player too
-		if (!PlaybackFileController.MEDIA_ERROR_EXTRAS.contains(extra) && mNextPlaybackFile != null && mediaPlayer != mNextPlaybackFile)
+		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(extra) && mNextPlaybackFile != null && mediaPlayer != mNextPlaybackFile)
 			mNextPlaybackFile.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
