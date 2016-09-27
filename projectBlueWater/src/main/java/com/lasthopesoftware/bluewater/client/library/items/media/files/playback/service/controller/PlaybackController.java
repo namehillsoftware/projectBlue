@@ -107,7 +107,7 @@ public class PlaybackController implements
 		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
 		filePlayer.setOnFileCompleteListener(this);
 		filePlayer.setOnFilePreparedListener(this);
-		filePlayer.setOnFileErrorListener(this);
+		filePlayer.addOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
 		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
 		mCurrentPlaybackFile = filePlayer;
@@ -146,7 +146,7 @@ public class PlaybackController implements
 		if (!mCurrentPlaybackFile.isMediaPlayerCreated()) {
 			mCurrentPlaybackFile.setOnFileCompleteListener(this);
 			mCurrentPlaybackFile.setOnFilePreparedListener(this);
-			mCurrentPlaybackFile.setOnFileErrorListener(this);
+			mCurrentPlaybackFile.addOnFileErrorListener(this);
 			
 			mCurrentPlaybackFile.initMediaPlayer();
 		}
@@ -326,7 +326,7 @@ public class PlaybackController implements
 		mCurrentFilePos = nextFilePos;
 		mCurrentPlaybackFile = mNextPlaybackFile;
 		mCurrentPlaybackFile.setOnFileCompleteListener(this);
-		mCurrentPlaybackFile.setOnFileErrorListener(this);
+		mCurrentPlaybackFile.addOnFileErrorListener(this);
 		if (!mCurrentPlaybackFile.isPrepared()) {
 			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getKey() + " was not prepared. Preparing now.");
 			if (!mCurrentPlaybackFile.isMediaPlayerCreated())
@@ -373,7 +373,7 @@ public class PlaybackController implements
 		if (mOnNowPlayingChangeListeners.contains(listener))
 			mOnNowPlayingChangeListeners.remove(listener);
 	}
-
+	
 	public void addOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
 		mOnNowPlayingStartListeners.add(listener);
 	}
@@ -382,7 +382,7 @@ public class PlaybackController implements
 		if (mOnNowPlayingStartListeners.contains(listener))
 			mOnNowPlayingStartListeners.remove(listener);
 	}
-
+	
 	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		mOnNowPlayingStopListeners.add(listener);
 	}
@@ -391,7 +391,7 @@ public class PlaybackController implements
 		if (mOnNowPlayingStopListeners.contains(listener))
 			mOnNowPlayingStopListeners.remove(listener);
 	}
-
+	
 	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
 		mOnNowPlayingPauseListeners.add(listener);
 	}
@@ -400,7 +400,7 @@ public class PlaybackController implements
 		if (mOnNowPlayingPauseListeners.contains(listener))
 			mOnNowPlayingPauseListeners.remove(listener);
 	}
-
+	
 	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
 		mOnPlaylistStateControlErrorListeners.add(listener);
 	}
@@ -409,7 +409,7 @@ public class PlaybackController implements
 		if (mOnPlaylistStateControlErrorListeners.contains(listener))
 			mOnPlaylistStateControlErrorListeners.remove(listener);
 	}
-
+	
 	// Release all heavy resources
 	public void release() {
 		mIsPlaying = false;

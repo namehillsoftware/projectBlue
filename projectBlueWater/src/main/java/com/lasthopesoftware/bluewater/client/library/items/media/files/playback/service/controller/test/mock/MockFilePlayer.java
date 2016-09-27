@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test.mock;
 
-import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFilePreparation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MockFilePlayer implements IPlaybackFile {
 	private final IFile mFile;
@@ -18,13 +18,12 @@ public class MockFilePlayer implements IPlaybackFile {
 	private int mPosition = 0;
 	private float mVolume = 0f;
 	
-	private OnFilePreparedListener onFilePreparedListener;
+	private final List<OnFilePreparedListener> mOnFilePreparedListeners = new ArrayList<>();
 	
 	public MockFilePlayer(IFile file) {
 		mFile = file;
 	}
 	
-	@NonNull
 	@Override
 	public IFile getFile() {
 		return mFile;
@@ -48,19 +47,13 @@ public class MockFilePlayer implements IPlaybackFile {
 	@Override
 	public void prepareMediaPlayer() {
 		mIsPrepared = true;
-		if (onFilePreparedListener != null)
+		for (OnFilePreparedListener onFilePreparedListener : mOnFilePreparedListeners)
 			onFilePreparedListener.onFilePrepared(this);
 	}
 
 	@Override
 	public void prepareMpSynchronously() {
 		mIsPrepared = true; 
-	}
-
-	@Override
-	public IPlaybackFilePreparation setOnFilePreparedListener(OnFilePreparedListener listener) {
-		onFilePreparedListener = listener;
-		return this;
 	}
 
 	@Override
@@ -134,7 +127,29 @@ public class MockFilePlayer implements IPlaybackFile {
 	}
 
 	@Override
-	public void setOnFileErrorListener(OnFileErrorListener listener) {
+	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
+		mOnFilePreparedListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
+		mOnFilePreparedListeners.remove(listener);
+	}
+
+	@Override
+	public void addOnFileErrorListener(OnFileErrorListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeOnFileErrorListener(OnFileErrorListener listener) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -144,4 +159,11 @@ public class MockFilePlayer implements IPlaybackFile {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void removeOnFileErrorListener(OnFileBufferedListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -11,7 +11,6 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
@@ -78,13 +77,12 @@ public class PlaybackFileController implements
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private OnFileBufferedListener onFileBufferedListener;
 
-	public PlaybackFileController(@NonNull Context context, @NonNull ConnectionProvider connectionProvider, @NonNull IFile file) {
+	public PlaybackFileController(Context context, ConnectionProvider connectionProvider, IFile file) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.file = file;
 	}
 
-	@NonNull
 	public IFile getFile() {
 		return file;
 	}
@@ -180,7 +178,9 @@ public class PlaybackFileController implements
 	}
 	
 	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
-		final Map<String, String> headers = new HashMap<>(1);
+		final Map<String, String> headers = new HashMap<>();
+		if (context == null)
+			throw new NullPointerException("The file player's context cannot be null");
 
 		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
 			final Library library = LibrarySession.GetActiveLibrary(context);
@@ -399,8 +399,13 @@ public class PlaybackFileController implements
 	}
 
 	@Override
-	public void setOnFileErrorListener(OnFileErrorListener listener) {
+	public void addOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.add(listener);
+	}
+
+	@Override
+	public void removeOnFileErrorListener(OnFileErrorListener listener) {
+		onFileErrorListeners.remove(listener);
 	}
 
 	@Override
