@@ -38,10 +38,8 @@ import java.util.concurrent.ExecutionException;
 
 public class PlaybackFile implements
 	IPlaybackFile,
-	OnPreparedListener,
 	OnErrorListener, 
 	OnCompletionListener,
-	OnBufferingUpdateListener
 {
 	@SuppressLint("InlinedApi")
 	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
@@ -82,7 +80,7 @@ public class PlaybackFile implements
 		this.connectionProvider = connectionProvider;
 		this.file = file;
 	}
-	
+
 	public IFile getFile() {
 		return file;
 	}
@@ -215,7 +213,7 @@ public class PlaybackFile implements
 		isPrepared = true;
 		isPreparing = false;
 		logger.info(file.getKey() + " prepared!");
-		
+
 		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
@@ -380,36 +378,36 @@ public class PlaybackFile implements
 	private static void handleIllegalStateException(IllegalStateException ise) {
 		logger.warn("The media player was in an incorrect state.", ise);
 	}
-	
+
 	/* Listener methods */
 	public void addOnFileCompleteListener(OnFileCompleteListener listener) {
 		onFileCompleteListeners.add(listener);
 	}
-	
+
 	public void removeOnFileCompleteListener(OnFileCompleteListener listener) {
 		onFileCompleteListeners.remove(listener);
 	}
-	
+
 	public void addOnFilePreparedListener(OnFilePreparedListener listener) {
 		onFilePreparedListeners.add(listener);
 	}
-	
+
 	public void removeOnFilePreparedListener(OnFilePreparedListener listener) {
 		onFilePreparedListeners.remove(listener);
 	}
-	
+
 	public void addOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.add(listener);
 	}
-	
+
 	public void removeOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.remove(listener);
 	}
-	
+
 	public void addOnFileBufferedListener(OnFileBufferedListener listener) {
 		onFileBufferedListeners.add(listener);
 	}
-	
+
 	public void removeOnFileErrorListener(OnFileBufferedListener listener) {
 		onFileBufferedListeners.remove(listener);
 	}

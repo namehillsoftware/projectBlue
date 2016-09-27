@@ -25,7 +25,7 @@ public interface IPlaybackFile {
 	void stop();
 	float getVolume();
 	void setVolume(float volume);
-	
+
 	/* Listener methods */
 	void addOnFileCompleteListener(OnFileCompleteListener listener);
 	void removeOnFileCompleteListener(OnFileCompleteListener listener);

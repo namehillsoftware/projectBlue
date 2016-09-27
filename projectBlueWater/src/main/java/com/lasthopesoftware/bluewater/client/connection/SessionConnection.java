@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
@@ -106,7 +106,7 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final TwoParameterRunnable<FluentTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
+		final TwoParameterRunnable<IFluentTask<Integer,Void,Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
 			if (!result) build(context);
 
 			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);

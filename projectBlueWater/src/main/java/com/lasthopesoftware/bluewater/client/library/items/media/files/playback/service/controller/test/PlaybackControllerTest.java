@@ -68,7 +68,7 @@ public class PlaybackControllerTest extends TestCase {
 			}
 			
 			@Override
-			public IPlaybackFile getNewPlaybackFile(int filePos) {
+			public IPlaybackFile getPreparingPlaybackFile(int filePos) {
 				return new MockFilePlayer(mMockFiles.get(filePos));
 			}
 			

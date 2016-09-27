@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
@@ -74,7 +75,7 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+	public void getStoredFile(final int storedFileId, TwoParameterRunnable<IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground(Void... params) {
@@ -105,7 +106,7 @@ public class StoredFileAccess {
 		}.get(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
+	private IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile> getStoredFileTask(final IFile serviceFile) {
 		return new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
@@ -116,7 +117,7 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+	public void getDownloadingStoredFiles(TwoParameterRunnable<IFluentTask<Void,Void,List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
 		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<Void, Void, List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground(Void... params) {
@@ -191,7 +192,7 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
-		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
+		final IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<
 	}
 
 	@Override
-	public FluentTask<Integer, Void, Map<String, String>> cancel(boolean interrupt) {
+	public IFluentTask<Integer,Void,Map<String,String>> cancel(boolean interrupt) {
 		super.cancel(interrupt);
 
 		if (filePropertiesProvider != null)

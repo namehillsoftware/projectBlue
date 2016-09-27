@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
@@ -60,10 +60,10 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final TwoParameterRunnable<FluentTask<String, Void, List<IFile>>, List<IFile>> onFileProviderComplete = new TwoParameterRunnable<FluentTask<String,Void,List<IFile>>, List<IFile>>() {
+		final TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>> onFileProviderComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>>() {
 
 			@Override
-			public void run(FluentTask<String, Void, List<IFile>> owner, List<IFile> result) {
+			public void run(IFluentTask<String,Void,List<IFile>> owner, List<IFile> result) {
 				if (result == null) return;
 
 				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

@@ -43,7 +43,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private static FluentTask<Void, Void, Bitmap> getFileImageTask;
+	private static IFluentTask<Void,Void,Bitmap> getFileImageTask;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);

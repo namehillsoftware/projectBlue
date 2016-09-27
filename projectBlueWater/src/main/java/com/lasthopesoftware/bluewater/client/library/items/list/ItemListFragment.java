@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
@@ -52,7 +52,7 @@ public class ItemListFragment extends Fragment {
     	layout.addView(pbLoading);
 
     	LibrarySession.GetActiveLibrary(activity, activeLibrary -> {
-		    final TwoParameterRunnable<FluentTask<String, Void, List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner1, result) -> {
+		    final TwoParameterRunnable<IFluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner1, result) -> {
 			    if (result == null || result.size() == 0) return;
 
 			    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);

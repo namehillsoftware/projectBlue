@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
@@ -31,9 +31,9 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .onComplete(new TwoParameterRunnable<FluentTask<String,Void,List<Item>>, List<Item>>() {
+            .onComplete(new TwoParameterRunnable<IFluentTask<String,Void,List<Item>>, List<Item>>() {
                 @Override
-                public void run(FluentTask<String, Void, List<Item>> owner, List<Item> items) {
+                public void run(IFluentTask<String,Void,List<Item>> owner, List<Item> items) {
                     if (items == null) return;
 
                     if (items.size() > 0) {

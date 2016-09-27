@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -78,7 +79,7 @@ public class DiskFileCache {
 	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		final FluentTask<Void, Void, Void> putTask = new FluentTask<Void, Void, Void>() {
+		final IFluentTask<Void,Void,Void> putTask = new FluentTask<Void, Void, Void>() {
 
 			@Override
 			protected Void executeInBackground(Void[] params) {
@@ -205,7 +206,7 @@ public class DiskFileCache {
 	}
 
 	public File get(final String uniqueKey) throws IOException {
-		final FluentTask<Void, Void, File> getFileTask = new FluentTask<Void, Void, File>() {
+		final IFluentTask<Void,Void,File> getFileTask = new FluentTask<Void, Void, File>() {
 
 			@Override
 			protected File executeInBackground(Void... params) {
