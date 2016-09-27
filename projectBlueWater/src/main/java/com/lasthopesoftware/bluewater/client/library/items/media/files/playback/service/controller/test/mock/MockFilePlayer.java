@@ -4,11 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackFilePreparation;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnPlaybackCompleteListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFilePreparation;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 
 public class MockFilePlayer implements IPlaybackFile {
 	private final IFile mFile;
@@ -127,7 +127,8 @@ public class MockFilePlayer implements IPlaybackFile {
 		mVolume = volume;
 	}
 
-	public void setOnPlaybackCompleteListener(OnPlaybackCompleteListener listener) {
+	@Override
+	public void setOnFileCompleteListener(OnFileCompleteListener listener) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -136,11 +137,6 @@ public class MockFilePlayer implements IPlaybackFile {
 	public void setOnFileErrorListener(OnFileErrorListener listener) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public void broadcastFileError(IPlaybackFile mediaPlayer, int what, int extra) {
-
 	}
 
 	@Override

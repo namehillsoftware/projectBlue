@@ -9,10 +9,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFileController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnPlaybackCompleteListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -29,8 +29,8 @@ import java.util.List;
 
 public class PlaybackController implements
 	OnFilePreparedListener,
-	OnFileErrorListener,
-		OnPlaybackCompleteListener,
+	OnFileErrorListener, 
+	OnFileCompleteListener,
 	OnFileBufferedListener
 {
 	private final HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<>();
@@ -105,7 +105,7 @@ public class PlaybackController implements
         mCurrentFilePos = filePos;
         
 		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
-		filePlayer.setOnPlaybackCompleteListener(this);
+		filePlayer.setOnFileCompleteListener(this);
 		filePlayer.setOnFilePreparedListener(this);
 		filePlayer.setOnFileErrorListener(this);
 		filePlayer.initMediaPlayer();
@@ -144,7 +144,7 @@ public class PlaybackController implements
 		}
 		
 		if (!mCurrentPlaybackFile.isMediaPlayerCreated()) {
-			mCurrentPlaybackFile.setOnPlaybackCompleteListener(this);
+			mCurrentPlaybackFile.setOnFileCompleteListener(this);
 			mCurrentPlaybackFile.setOnFilePreparedListener(this);
 			mCurrentPlaybackFile.setOnFileErrorListener(this);
 			
@@ -325,7 +325,7 @@ public class PlaybackController implements
 		// returned
 		mCurrentFilePos = nextFilePos;
 		mCurrentPlaybackFile = mNextPlaybackFile;
-		mCurrentPlaybackFile.setOnPlaybackCompleteListener(this);
+		mCurrentPlaybackFile.setOnFileCompleteListener(this);
 		mCurrentPlaybackFile.setOnFileErrorListener(this);
 		if (!mCurrentPlaybackFile.isPrepared()) {
 			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getKey() + " was not prepared. Preparing now.");

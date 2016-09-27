@@ -2,6 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 
-public interface OnPlaybackCompleteListener {
+public interface OnFileCompleteListener {
 	void onFileComplete(IPlaybackFile mediaPlayer);
 }

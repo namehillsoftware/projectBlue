@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.volume;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
 /**
  * Created by david on 9/19/16.

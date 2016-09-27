@@ -15,12 +15,10 @@ import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnPlaybackCompleteListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackFilePreparation;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.volume.MaxFileVolumeProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -71,22 +69,19 @@ public class PlaybackFileController implements
 
 	private final Context context;
 	private final IFile file;
-	@NonNull
-	private final IPlaybackController playbackController;
 	private final ConnectionProvider connectionProvider;
 	
 	private static final int bufferMin = 0, bufferMax = 100;
 
-	private OnPlaybackCompleteListener onPlaybackCompleteListener;
+	private OnFileCompleteListener onFileCompleteListener;
 	private OnFilePreparedListener onFilePreparedListener;
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private OnFileBufferedListener onFileBufferedListener;
 
-	public PlaybackFileController(@NonNull Context context, @NonNull ConnectionProvider connectionProvider, @NonNull IFile file, @NonNull IPlaybackController playbackController) {
+	public PlaybackFileController(@NonNull Context context, @NonNull ConnectionProvider connectionProvider, @NonNull IFile file) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.file = file;
-		this.playbackController = playbackController;
 	}
 
 	@NonNull
@@ -229,8 +224,8 @@ public class PlaybackFileController implements
 	public void onCompletion(MediaPlayer mp) {
 		releaseMediaPlayer();
 
-		if (onPlaybackCompleteListener != null)
-			onPlaybackCompleteListener.onFileComplete(this);
+		if (onFileCompleteListener != null)
+			onFileCompleteListener.onFileComplete(this);
 	}
 	
 	@Override
@@ -343,7 +338,6 @@ public class PlaybackFileController implements
 		try {
 			position = mediaPlayer.getCurrentPosition();
 			mediaPlayer.pause();
-			playbackController.pause();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 		}
@@ -392,8 +386,9 @@ public class PlaybackFileController implements
 
 	/* Listener methods */
 
-	public void setOnPlaybackCompleteListener(OnPlaybackCompleteListener listener) {
-		onPlaybackCompleteListener = listener;
+	@Override
+	public void setOnFileCompleteListener(OnFileCompleteListener listener) {
+		onFileCompleteListener = listener;
 	}
 
 	@Override
@@ -406,11 +401,6 @@ public class PlaybackFileController implements
 	@Override
 	public void setOnFileErrorListener(OnFileErrorListener listener) {
 		onFileErrorListeners.add(listener);
-	}
-
-	@Override
-	public void broadcastFileError(IPlaybackFile mediaPlayer, int what, int extra) {
-
 	}
 
 	@Override
