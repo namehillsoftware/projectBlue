@@ -4,12 +4,13 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements TwoParameterRunnable<FluentSpecifiedTask<String, Void, String>, String> {
+public class OnGetFileStringListForClickCompleteListener implements OneParameterRunnable<String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -17,7 +18,7 @@ public class OnGetFileStringListForClickCompleteListener implements TwoParameter
     }
 
     @Override
-    public void run(FluentSpecifiedTask<String, Void, String> owner, String result) {
+    public void run(String result) {
         PlaybackService.launchMusicService(mContext, result);
     }
 }

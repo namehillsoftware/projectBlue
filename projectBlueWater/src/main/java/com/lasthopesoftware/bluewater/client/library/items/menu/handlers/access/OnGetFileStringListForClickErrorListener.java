@@ -5,6 +5,7 @@ import android.view.View;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.io.IOException;
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickErrorListener implements TwoParameterCallable<FluentSpecifiedTask<String, Void, String>, Exception, Boolean> {
+public class OnGetFileStringListForClickErrorListener implements OneParameterCallable<Exception, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -22,15 +23,9 @@ public class OnGetFileStringListForClickErrorListener implements TwoParameterCal
     }
 
     @Override
-    public Boolean call(FluentSpecifiedTask<String, Void, String> owner, Exception innerException) {
+    public Boolean call(Exception innerException) {
         if (innerException instanceof IOException) {
-            PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(new Runnable() {
-
-                @Override
-                public void run() {
-                    mOnClickListener.onClick(mView);
-                }
-            });
+            PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
 
             WaitForConnectionDialog.show(mView.getContext());
             return true;

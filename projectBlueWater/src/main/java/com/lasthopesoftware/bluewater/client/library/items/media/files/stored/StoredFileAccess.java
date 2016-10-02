@@ -23,6 +23,7 @@ import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissi
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentDeterministicTask;
 import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
@@ -75,7 +76,7 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, TwoParameterRunnable<FluentSpecifiedTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+	public void getStoredFile(final int storedFileId, TwoParameterRunnable<IFluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
 		final FluentDeterministicTask<StoredFile> getStoredFileTask = new FluentDeterministicTask<StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground() {
@@ -117,7 +118,7 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+	public void getDownloadingStoredFiles(TwoParameterRunnable<IFluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
 		final FluentDeterministicTask<List<StoredFile>> getDownloadingStoredFilesTask = new FluentDeterministicTask<List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground() {

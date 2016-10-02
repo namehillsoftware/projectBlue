@@ -27,8 +27,9 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         this.activity = activity;
     }
 
-    public void run(FluentSpecifiedTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-        super.run(owner, result);
+    @Override
+    public void run(List<Playlist> result) {
+        super.run(result);
         if (result == null) return;
 
         listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));

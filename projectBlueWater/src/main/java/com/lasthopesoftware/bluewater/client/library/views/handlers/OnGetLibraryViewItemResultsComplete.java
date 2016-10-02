@@ -27,8 +27,9 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
         this.activity = activity;
     }
 
-    public void run(FluentSpecifiedTask<String, Void, List<Item>> owner, List<Item> result) {
-        super.run(owner, result);
+    @Override
+    public void run(List<Item> result) {
+        super.run(result);
         if (result == null) return;
 
         listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
