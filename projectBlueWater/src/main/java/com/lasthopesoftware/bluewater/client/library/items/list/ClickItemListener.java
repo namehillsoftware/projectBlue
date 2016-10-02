@@ -10,12 +10,8 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
-import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ClickItemListener implements OnItemClickListener {
 

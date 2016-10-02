@@ -8,8 +8,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.fluent.FluentDeterministicTask;
-import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -62,7 +61,7 @@ public class AccessConfigurationBuilder {
 	}
 
 	private static void executeReturnNullTask(TwoParameterRunnable<IFluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onReturnFalseListener) {
-		final FluentDeterministicTask<MediaServerUrlProvider> returnFalseTask = new FluentDeterministicTask<MediaServerUrlProvider>() {
+		final FluentCallable<MediaServerUrlProvider> returnFalseTask = new FluentCallable<MediaServerUrlProvider>() {
 			@Override
 			protected MediaServerUrlProvider executeInBackground() {
 				return null;
@@ -81,7 +80,7 @@ public class AccessConfigurationBuilder {
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentDeterministicTask<MediaServerUrlProvider> mediaCenterAccessTask = new FluentDeterministicTask<MediaServerUrlProvider>() {
+		final FluentCallable<MediaServerUrlProvider> mediaCenterAccessTask = new FluentCallable<MediaServerUrlProvider>() {
 			@Override
 			protected MediaServerUrlProvider executeInBackground() {
 				try {

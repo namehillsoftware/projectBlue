@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransactio
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentDeterministicTask;
-import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.fluent.FluentCallable;
+import com.vedsoft.fluent.FluentRunnable;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -79,11 +79,11 @@ public class DiskFileCache {
 	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		final FluentDeterministicTask<Void> putTask = new FluentDeterministicTask<Void>() {
+		final FluentRunnable putTask = new FluentRunnable() {
 
 			@Override
-			protected Void executeInBackground() {
-				if (isCancelled()) return null;
+			protected void runInBackground() {
+				if (isCancelled()) return;
 
 				final String suffix = ".cache";
 				final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
@@ -98,7 +98,7 @@ public class DiskFileCache {
 				}
 
 				do {
-					if (isCancelled()) return null;
+					if (isCancelled()) return;
 
 					try {
 						try (FileOutputStream fos = new FileOutputStream(file)) {
@@ -107,7 +107,7 @@ public class DiskFileCache {
 						}
 
 						putIntoDatabase(uniqueKey, file);
-						return null;
+						return;
 					} catch (IOException e) {
 						logger.error("Unable to write to file!", e);
 
@@ -116,21 +116,19 @@ public class DiskFileCache {
 						final long freeDiskSpace = getFreeDiskSpace(context);
 						if (freeDiskSpace > maxSize) {
 							setException(e);
-							return null;
+							return;
 						}
 
 						try {
 							new CacheFlusherTask(context, cacheName, freeDiskSpace + file.length()).get();
 						} catch (ExecutionException | InterruptedException ignored) {
 							setException(e);
-							return null;
+							return;
 						}
 					}
 
-					if (isCancelled()) return null;
+					if (isCancelled()) return;
 				} while (getFreeDiskSpace(context) >= file.length());
-
-				return null;
 			}
 		};
 
@@ -206,7 +204,7 @@ public class DiskFileCache {
 	}
 
 	public File get(final String uniqueKey) throws IOException {
-		final FluentDeterministicTask<File> getFileTask = new FluentDeterministicTask<File>() {
+		final FluentCallable<File> getFileTask = new FluentCallable<File>() {
 
 			@Override
 			protected File executeInBackground() {

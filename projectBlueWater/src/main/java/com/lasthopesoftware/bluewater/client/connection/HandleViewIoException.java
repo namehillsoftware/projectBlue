@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
 
-import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 

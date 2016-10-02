@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 4/3/15.

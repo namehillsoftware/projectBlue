@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
@@ -76,7 +76,7 @@ public class LibrarySession {
 
 	public static void SaveLibrary(final Context context, final Library library, final OneParameterRunnable<Library> onSaveComplete) {
 
-		final FluentDeterministicTask<Library> writeToDatabaseTask = new FluentDeterministicTask<Library>() {
+		final FluentCallable<Library> writeToDatabaseTask = new FluentCallable<Library>() {
 
 			@Override
 			protected Library executeInBackground() {

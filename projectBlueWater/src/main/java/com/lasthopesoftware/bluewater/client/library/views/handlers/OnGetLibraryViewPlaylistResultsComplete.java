@@ -8,7 +8,6 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import java.util.List;
 
