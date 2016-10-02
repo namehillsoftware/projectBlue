@@ -65,7 +65,7 @@ public class ImageProvider extends FluentDeterministicTask<Bitmap> {
 	}
 
 	@Override
-	protected Bitmap executeInBackground(Void[] params) {
+	protected Bitmap executeInBackground() {
 		if (isCancelled()) return getFillerBitmap();
 
 		String uniqueKey;

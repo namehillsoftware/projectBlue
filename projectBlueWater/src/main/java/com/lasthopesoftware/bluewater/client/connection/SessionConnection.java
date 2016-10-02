@@ -106,7 +106,7 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final TwoParameterRunnable<FluentSpecifiedTask<Integer, Void, Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
+		final TwoParameterRunnable<FluentSpecifiedTask<Void, Void, Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
 			if (!result) build(context);
 
 			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
