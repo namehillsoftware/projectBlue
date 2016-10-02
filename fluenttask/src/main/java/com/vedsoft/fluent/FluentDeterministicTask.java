@@ -24,7 +24,7 @@ public abstract class FluentDeterministicTask<TResult> extends FluentSpecifiedTa
 	}
 
 	@Override
-	public FluentDeterministicTask<TResult> onComplete(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, TResult>, TResult> listener) {
+	public FluentDeterministicTask<TResult> onComplete(TwoParameterRunnable<IFluentTask<Void, Void, TResult>, TResult> listener) {
 		return (FluentDeterministicTask<TResult>)super.onComplete(listener);
 	}
 

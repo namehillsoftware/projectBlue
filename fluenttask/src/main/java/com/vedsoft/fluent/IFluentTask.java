@@ -34,11 +34,11 @@ public interface IFluentTask<TParams, TProgress, TResult> {
 
 	IFluentTask<TParams,TProgress,TResult> beforeStart(OneParameterRunnable<IFluentTask<TParams,TProgress,TResult>> listener);
 
-	FluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener);
+	IFluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener);
 
-	FluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener);
 
-	FluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener);
 
 	IFluentTask<TParams,TProgress,TResult> onProgress(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TProgress[]> listener);
 
