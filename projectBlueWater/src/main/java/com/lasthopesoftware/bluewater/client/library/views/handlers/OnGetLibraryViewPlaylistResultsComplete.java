@@ -8,7 +8,6 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.ClickPlaylistListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.vedsoft.fluent.IFluentTask;
 
 import java.util.List;
 
@@ -27,8 +26,9 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         this.activity = activity;
     }
 
-    public void run(IFluentTask<String,Void,List<Playlist>> owner, List<Playlist> result) {
-        super.run(owner, result);
+    @Override
+    public void run(List<Playlist> result) {
+        super.run(result);
         if (result == null) return;
 
         listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));

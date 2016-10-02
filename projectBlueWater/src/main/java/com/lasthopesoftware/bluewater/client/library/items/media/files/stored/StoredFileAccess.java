@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
-import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
@@ -76,8 +76,8 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, TwoParameterRunnable<IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile>, StoredFile> onStoredFileRetrieved) {
-		final FluentDeterministicTask<Void, Void, StoredFile> getStoredFileTask = new FluentDeterministicTask<Void, Void, StoredFile>() {
+	public void getStoredFile(final int storedFileId, TwoParameterRunnable<IFluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+		final FluentCallable<StoredFile> getStoredFileTask = new FluentCallable<StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -118,8 +118,8 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
-		final FluentDeterministicTask<List<StoredFile>> getDownloadingStoredFilesTask = new FluentDeterministicTask<List<StoredFile>>() {
+	public void getDownloadingStoredFiles(TwoParameterRunnable<IFluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+		final FluentCallable<List<StoredFile>> getDownloadingStoredFilesTask = new FluentCallable<List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -193,7 +193,7 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
-		final FluentDeterministicTask<StoredFile> createOrUpdateStoredFileTask = new FluentDeterministicTask<StoredFile>() {
+		final FluentCallable<StoredFile> createOrUpdateStoredFileTask = new FluentCallable<StoredFile>() {
 			@Override
 			public StoredFile executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

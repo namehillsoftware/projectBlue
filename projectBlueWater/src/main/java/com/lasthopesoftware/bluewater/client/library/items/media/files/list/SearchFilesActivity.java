@@ -22,8 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.Se
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
@@ -72,30 +71,26 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>> onSearchFilesComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>>() {
+        final OneParameterRunnable<List<IFile>> onSearchFilesComplete = result -> {
+			if (result == null) return;
 
-            @Override
-            public void run(IFluentTask<String,Void,List<IFile>> owner, List<IFile> result) {
-                if (result == null) return;
+			final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
 
-                final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
-
-                fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-                fileListView.setAdapter(fileListAdapter);
-            }
-        };
+			fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+			fileListView.setAdapter(fileListAdapter);
+		};
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
             .onComplete(onSearchFilesComplete)
-            .onError(new HandleViewIoException<String, Void, List<IFile>>(this, new Runnable() {
+            .onError(new HandleViewIoException<>(this, new Runnable() {
 
-                        @Override
-                        public void run() {
-                            SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
-                                    .onComplete(onSearchFilesComplete)
-                                    .onError(new HandleViewIoException<String, Void, List<IFile>>(SearchFilesActivity.this, this));
-                        }
-                    })
+						@Override
+						public void run() {
+							SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
+									.onComplete(onSearchFilesComplete)
+									.onError(new HandleViewIoException<>(SearchFilesActivity.this, this));
+						}
+					})
             ).execute();
 	}
 

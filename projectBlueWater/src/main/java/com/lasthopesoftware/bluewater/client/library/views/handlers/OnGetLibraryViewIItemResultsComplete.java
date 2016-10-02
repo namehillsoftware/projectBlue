@@ -16,15 +16,14 @@ import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.ha
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
 /**
  * Created by david on 11/5/15.
  */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements TwoParameterRunnable<IFluentTask<String,Void,List<T>>, List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements OneParameterRunnable<List<T>> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -47,7 +46,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     }
 
     @Override
-    public void run(IFluentTask<String,Void,List<T>> owner, List<T> result) {
+    public void run(List<T> result) {
         if (result == null) return;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());

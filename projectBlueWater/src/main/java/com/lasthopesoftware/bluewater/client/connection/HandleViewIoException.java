@@ -7,13 +7,13 @@ import com.vedsoft.futures.callables.TwoParameterCallable;
 
 import java.io.IOException;
 
-public class HandleViewIoException<TParams, TProgress, TResult> implements TwoParameterCallable<IFluentTask<TParams,TProgress,TResult>, Exception, Boolean> {
+public class HandleViewIoException<TParams, TProgress, TResult> implements TwoParameterCallable<IFluentTask<TParams, TProgress, TResult>, Exception, Boolean> {
 	
 	private final Context mContext;
 	private final Runnable mOnConnectionRegainedListener;
 	
 	@Override
-	public Boolean call(IFluentTask<TParams,TProgress,TResult> owner, Exception innerException) {
+	public Boolean call(IFluentTask<TParams, TProgress, TResult> owner, Exception innerException) {
 		if (!(innerException instanceof IOException)) return false;
 		
 		WaitForConnectionActivity.beginWaiting(mContext, mOnConnectionRegainedListener);

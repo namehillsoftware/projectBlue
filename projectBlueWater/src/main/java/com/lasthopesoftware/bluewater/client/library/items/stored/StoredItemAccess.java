@@ -8,8 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentDeterministicTask;
-import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
@@ -50,7 +49,7 @@ public class StoredItemAccess {
     }
 
     public void isItemMarkedForSync(final IItem item, TwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
-        final FluentDeterministicTask<Boolean> isItemSyncedTask = new FluentDeterministicTask<Boolean>() {
+        final FluentCallable<Boolean> isItemSyncedTask = new FluentCallable<Boolean>() {
 
             @Override
             protected Boolean executeInBackground() {
@@ -108,7 +107,7 @@ public class StoredItemAccess {
     }
 
     public void getStoredItems(TwoParameterRunnable<IFluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
-        final FluentDeterministicTask<List<StoredItem>> getAllStoredItemsTasks = new FluentDeterministicTask<List<StoredItem>>() {
+        final FluentCallable<List<StoredItem>> getAllStoredItemsTasks = new FluentCallable<List<StoredItem>>() {
 
             @Override
             protected List<StoredItem> executeInBackground() {

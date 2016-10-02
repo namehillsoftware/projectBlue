@@ -23,9 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.List;
 
@@ -61,33 +59,29 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>> onFileProviderComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<IFile>>, List<IFile>>() {
+		final OneParameterRunnable<List<IFile>> onFileProviderComplete = result -> {
+			if (result == null) return;
 
-			@Override
-			public void run(IFluentTask<String,Void,List<IFile>> owner, List<IFile> result) {
-				if (result == null) return;
+			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
 
-				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+			fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+			final FileListAdapter fileListAdapter = new FileListAdapter(FileListActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
 
-				fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-				final FileListAdapter fileListAdapter = new FileListAdapter(FileListActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
+			fileListView.setAdapter(fileListAdapter);
 
-				fileListView.setAdapter(fileListAdapter);
-
-				fileListView.setVisibility(View.VISIBLE);
-				pbLoading.setVisibility(View.INVISIBLE);
-			}
+			fileListView.setVisibility(View.VISIBLE);
+			pbLoading.setVisibility(View.INVISIBLE);
 		};
 
 		getNewFileProvider()
 			.onComplete(onFileProviderComplete)
-			.onError(new HandleViewIoException<String, Void, List<IFile>>(this, new Runnable() {
+			.onError(new HandleViewIoException<>(this, new Runnable() {
 
 						@Override
 						public void run() {
 							getNewFileProvider()
 									.onComplete(onFileProviderComplete)
-									.onError(new HandleViewIoException<String, Void, List<IFile>>(FileListActivity.this, this))
+									.onError(new HandleViewIoException<>(FileListActivity.this, this))
 									.execute();
 						}
 					})

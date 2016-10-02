@@ -56,10 +56,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final TwoParameterRunnable<IFluentTask<String,Void,List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
+		final TwoParameterRunnable<IFluentTask<String, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
 
 			@Override
-			public void run(IFluentTask<String,Void,List<Playlist>> owner, List<Playlist> result) {
+			public void run(IFluentTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
 				if (result == null) return;
 
 				BuildPlaylistView(result);

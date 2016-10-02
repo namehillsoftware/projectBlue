@@ -10,11 +10,8 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ClickItemListener implements OnItemClickListener {
 
@@ -31,27 +28,24 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .onComplete(new TwoParameterRunnable<IFluentTask<String,Void,List<Item>>, List<Item>>() {
-                @Override
-                public void run(IFluentTask<String,Void,List<Item>> owner, List<Item> items) {
-                    if (items == null) return;
+            .onComplete(items -> {
+				if (items == null) return;
 
-                    if (items.size() > 0) {
-                        final Intent itemlistIntent = new Intent(mContext, ItemListActivity.class);
-                        itemlistIntent.putExtra(ItemListActivity.KEY, item.getKey());
-                        itemlistIntent.putExtra(ItemListActivity.VALUE, item.getValue());
-                        mContext.startActivity(itemlistIntent);
+				if (items.size() > 0) {
+					final Intent itemlistIntent = new Intent(mContext, ItemListActivity.class);
+					itemlistIntent.putExtra(ItemListActivity.KEY, item.getKey());
+					itemlistIntent.putExtra(ItemListActivity.VALUE, item.getValue());
+					mContext.startActivity(itemlistIntent);
 
-                        return;
-                    }
+					return;
+				}
 
-                    final Intent fileListIntent = new Intent(mContext, FileListActivity.class);
-                    fileListIntent.putExtra(FileListActivity.KEY, item.getKey());
-                    fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
-                    fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
-                    mContext.startActivity(fileListIntent);
-                }
-            })
+				final Intent fileListIntent = new Intent(mContext, FileListActivity.class);
+				fileListIntent.putExtra(FileListActivity.KEY, item.getKey());
+				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
+				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
+				mContext.startActivity(fileListIntent);
+			})
             .execute();
 	}
 

@@ -18,17 +18,17 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 	private final TParams[] params;
 	private final Executor defaultExecutor;
 
-	private OneParameterRunnable<IFluentTask<TParams,TProgress,TResult>> oneParameterBeforeStartListener;
+	private OneParameterRunnable<IFluentTask<TParams, TProgress, TResult>> oneParameterBeforeStartListener;
 	private Runnable beforeStartListener;
 
-	private TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TProgress[]> twoParameterOnProgressListener;
+	private TwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TProgress[]> twoParameterOnProgressListener;
 	private OneParameterRunnable<TProgress[]> oneParameterOnProgressListener;
 
-	private TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> twoParameterOnCompleteListener;
+	private TwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private OneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
 	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
-	private TwoParameterCallable<IFluentTask<TParams,TProgress,TResult>, Exception, Boolean> twoParameterOnErrorListener;
+	private TwoParameterCallable<IFluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
 	private volatile boolean isExecuting = false;
 
@@ -182,7 +182,7 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 	}
 
 	@Override
-	public IFluentTask<TParams,TProgress,TResult> beforeStart(OneParameterRunnable<IFluentTask<TParams,TProgress,TResult>> listener) {
+	public IFluentTask<TParams, TProgress, TResult> beforeStart(OneParameterRunnable<IFluentTask<TParams, TProgress, TResult>> listener) {
 		oneParameterBeforeStartListener = listener;
 		return this;
 	}
@@ -194,7 +194,7 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 	}
 
 	@Override
-	public IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult> listener) {
 		twoParameterOnCompleteListener = listener;
 		return this;
 	}
@@ -206,31 +206,31 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 	}
 
 	@Override
-	public IFluentTask<TParams,TProgress,TResult> onProgress(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TProgress[]> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onProgress(TwoParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TProgress[]> listener) {
 		twoParameterOnProgressListener = listener;
 		return this;
 	}
 
 	@Override
-	public IFluentTask<TParams,TProgress,TResult> onProgress(OneParameterRunnable<TProgress[]> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onProgress(OneParameterRunnable<TProgress[]> listener) {
 		oneParameterOnProgressListener = listener;
 		return this;
 	}
 
 	@Override
-	public IFluentTask<TParams,TProgress,TResult> onError(TwoParameterCallable<IFluentTask<TParams,TProgress,TResult>, Exception, Boolean> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onError(TwoParameterCallable<IFluentTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
 		twoParameterOnErrorListener = listener;
 		return this;
 	}
 
 	@Override
-	public IFluentTask<TParams,TProgress,TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
 		oneParameterOnErrorListener = listener;
 		return this;
 	}
 
 	private static abstract class AndroidAsyncTask<TParams, TProgress, TResult> extends AsyncExceptionTask<TParams, TProgress, TResult> {
-		public void updateProgress(TProgress[] progress) {
+		void updateProgress(TProgress[] progress) {
 			publishProgress(progress);
 		}
 	}
