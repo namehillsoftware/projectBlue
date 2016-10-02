@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ import java.io.IOException;
  * @author david
  *
  */
-class CacheFlusherTask extends FluentTask<Void, Void, Void> {
+class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	

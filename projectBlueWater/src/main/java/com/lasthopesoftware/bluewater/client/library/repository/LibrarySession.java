@@ -12,7 +12,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
@@ -75,10 +76,10 @@ public class LibrarySession {
 
 	public static void SaveLibrary(final Context context, final Library library, final OneParameterRunnable<Library> onSaveComplete) {
 
-		final FluentTask<Void, Void, Library> writeToDatabaseTask = new FluentTask<Void, Void, Library>() {
+		final FluentDeterministicTask<Library> writeToDatabaseTask = new FluentDeterministicTask<Library>() {
 
 			@Override
-			protected Library executeInBackground(Void... params) {
+			protected Library executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 						final boolean isLibraryExists = library.getId() > -1;
@@ -127,7 +128,7 @@ public class LibrarySession {
 	}
 
 	public static void GetActiveLibrary(final Context context, final OneParameterRunnable<Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
+		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
 				return GetActiveLibrary(context);
@@ -136,7 +137,7 @@ public class LibrarySession {
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final OneParameterRunnable<Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentTask<Integer, Void, Library>() {
+		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
 				return GetLibrary(context, libraryId);
@@ -144,7 +145,7 @@ public class LibrarySession {
 		}, onGetLibraryComplete);
 	}
 
-	private static void ExecuteGetLibrary(FluentTask<Integer, Void, Library> getLibraryTask, final OneParameterRunnable<Library> onGetLibraryComplete) {
+	private static void ExecuteGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterRunnable<Library> onGetLibraryComplete) {
 
 		getLibraryTask
 				.onComplete(onGetLibraryComplete)
@@ -172,7 +173,7 @@ public class LibrarySession {
 	}
 	
 	public static void GetLibraries(final Context context, OneParameterRunnable<List<Library>> onGetLibrariesComplete) {
-		new FluentTask<Void, Void, List<Library>>() {
+		new FluentSpecifiedTask<Void, Void, List<Library>>() {
 			@Override
 			protected List<Library> executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 11/26/15.
  */
-public abstract class AbstractProvider<T> extends FluentTask<String, Void, T> {
+public abstract class AbstractProvider<T> extends FluentSpecifiedTask<String, Void, T> {
 
 	private final IConnectionProvider connectionProvider;
 	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();

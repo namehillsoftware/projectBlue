@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by david on 5/8/16.
  */
-public class MaxFileVolumeProvider extends FluentTask<Void, Void, Float> {
+public class MaxFileVolumeProvider extends FluentSpecifiedTask<Void, Void, Float> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);
 

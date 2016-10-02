@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class FluentTask<TParams, TProgress, TResult> implements IFluentTask<TParams, TProgress, TResult> {
+public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implements IFluentTask<TParams, TProgress, TResult> {
 
 	private final TParams[] params;
 	private final Executor defaultExecutor;
@@ -40,7 +40,7 @@ public abstract class FluentTask<TParams, TProgress, TResult> implements IFluent
 				@Override
 				protected final void onPreExecute() {
 					if (oneParameterBeforeStartListener != null)
-						oneParameterBeforeStartListener.run(FluentTask.this);
+						oneParameterBeforeStartListener.run(FluentSpecifiedTask.this);
 
 					if (beforeStartListener != null)
 						beforeStartListener.run();
@@ -48,13 +48,13 @@ public abstract class FluentTask<TParams, TProgress, TResult> implements IFluent
 
 				@Override
 				protected final TResult doInBackground(Void... params) {
-					return executeInBackground(FluentTask.this.params);
+					return executeInBackground(FluentSpecifiedTask.this.params);
 				}
 
 				@Override
 				protected final void onProgressUpdate(TProgress... values) {
 					if (twoParameterOnProgressListener != null)
-						twoParameterOnProgressListener.run(FluentTask.this, values);
+						twoParameterOnProgressListener.run(FluentSpecifiedTask.this, values);
 
 					if (oneParameterOnProgressListener != null)
 						oneParameterOnProgressListener.run(values);
@@ -65,7 +65,7 @@ public abstract class FluentTask<TParams, TProgress, TResult> implements IFluent
 					if (handleError(exception)) return;
 
 					if (twoParameterOnCompleteListener != null)
-						twoParameterOnCompleteListener.run(FluentTask.this, result);
+						twoParameterOnCompleteListener.run(FluentSpecifiedTask.this, result);
 
 					if (oneParameterOnCompleteListener != null)
 						oneParameterOnCompleteListener.run(result);
@@ -80,12 +80,12 @@ public abstract class FluentTask<TParams, TProgress, TResult> implements IFluent
 	};
 
 	@SafeVarargs
-	public FluentTask(TParams... params) {
+	public FluentSpecifiedTask(TParams... params) {
 		this(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 
 	@SafeVarargs
-	public FluentTask(Executor defaultExecutor, TParams... params) {
+	public FluentSpecifiedTask(Executor defaultExecutor, TParams... params) {
 		this.params = params;
 		this.defaultExecutor = defaultExecutor;
 	}
@@ -188,19 +188,19 @@ public abstract class FluentTask<TParams, TProgress, TResult> implements IFluent
 	}
 
 	@Override
-	public FluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener) {
+	public IFluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener) {
 		beforeStartListener = listener;
 		return this;
 	}
 
 	@Override
-	public FluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener) {
 		twoParameterOnCompleteListener = listener;
 		return this;
 	}
 
 	@Override
-	public FluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener) {
+	public IFluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener) {
 		oneParameterOnCompleteListener = listener;
 		return this;
 	}

@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.IFluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
@@ -69,7 +70,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
-		final TwoParameterRunnable<IFluentTask<String,Void,List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner, result) -> {
+		final TwoParameterRunnable<FluentSpecifiedTask<String, Void, List<Item>>, List<Item>> onGetVisibleViewsCompleteListener = (owner, result) -> {
 			if (result == null) return;
 
 			final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
