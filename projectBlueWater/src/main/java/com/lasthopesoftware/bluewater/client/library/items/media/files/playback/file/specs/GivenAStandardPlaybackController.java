@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IMediaHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,11 +14,11 @@ public class GivenAStandardPlaybackController {
 
     public class WhenCallingPauseWithAPlaybackFileController {
 
-        private IMediaHandler mockPlaybackController;
+        private IPlaybackHandler mockPlaybackController;
 
         @Before
         public void before() {
-            mockPlaybackController = mock(IMediaHandler.class);
+            mockPlaybackController = mock(IPlaybackHandler.class);
         }
 
         @Test

@@ -12,11 +12,11 @@ import java.io.IOException;
  * Created by david on 9/20/16.
  */
 
-public class MediaPlayerController implements IMediaHandler, MediaPlayer.OnErrorListener {
+public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer.OnErrorListener {
 	private final MediaPlayer mediaPlayer;
 	private TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerErrorData> onFileErrorListener;
 
-	public MediaPlayerController(MediaPlayer mediaPlayer) {
+	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
 		this.mediaPlayer.setOnErrorListener(this);
 	}
@@ -60,6 +60,11 @@ public class MediaPlayerController implements IMediaHandler, MediaPlayer.OnError
 	public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
 		broadcastFileError(new MediaPlayerErrorData(mediaPlayer, what, extra));
 		return true;
+	}
+
+	@Override
+	public void setOnFileErrorListener(TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerErrorData> listener) {
+		this.onFileErrorListener = listener;
 	}
 
 	@Override

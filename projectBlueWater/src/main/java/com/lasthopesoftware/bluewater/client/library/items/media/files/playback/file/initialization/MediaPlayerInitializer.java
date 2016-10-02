@@ -5,9 +5,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.PowerManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IMediaHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerErrorData;
-
 /**
  * Created by david on 9/24/16.
  */

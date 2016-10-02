@@ -4,9 +4,8 @@ import android.annotation.SuppressLint;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IMediaHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerController;
-import com.vedsoft.fluent.FluentTask;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,7 @@ public class MediaPlayerPreparer implements IPlaybackFilePreparer {
 	}
 
 	@Override
-	public IMediaHandler getMediaHandler() throws IOException {
+	public IPlaybackHandler getMediaHandler() throws IOException {
 		try {
 //			final Uri uri = getFileUri();
 //			if (uri == null) return;
@@ -66,6 +65,6 @@ public class MediaPlayerPreparer implements IPlaybackFilePreparer {
 			return null;
 		}
 
-		return new MediaPlayerController(mediaPlayer);
+		return new MediaPlayerPlaybackHandler(mediaPlayer);
 	}
 }
