@@ -13,22 +13,22 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class FluentTask<TParams, TProgress, TResult>  {
+public abstract class FluentSpecifiedTask<TParams, TProgress, TResult>  {
 
 	private final TParams[] params;
 	private final Executor defaultExecutor;
 
-	private OneParameterRunnable<FluentTask<TParams, TProgress, TResult>> oneParameterBeforeStartListener;
+	private OneParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>> oneParameterBeforeStartListener;
 	private Runnable beforeStartListener;
 
-	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TProgress[]> twoParameterOnProgressListener;
+	private TwoParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>, TProgress[]> twoParameterOnProgressListener;
 	private OneParameterRunnable<TProgress[]> oneParameterOnProgressListener;
 
-	private TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
+	private TwoParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>, TResult> twoParameterOnCompleteListener;
 	private OneParameterRunnable<TResult> oneParameterOnCompleteListener;
 
 	private OneParameterCallable<Exception, Boolean> oneParameterOnErrorListener;
-	private TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
+	private TwoParameterCallable<FluentSpecifiedTask<TParams, TProgress, TResult>, Exception, Boolean> twoParameterOnErrorListener;
 
 	private volatile boolean isExecuting = false;
 
@@ -40,7 +40,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 				@Override
 				protected final void onPreExecute() {
 					if (oneParameterBeforeStartListener != null)
-						oneParameterBeforeStartListener.run(FluentTask.this);
+						oneParameterBeforeStartListener.run(FluentSpecifiedTask.this);
 
 					if (beforeStartListener != null)
 						beforeStartListener.run();
@@ -48,13 +48,13 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 
 				@Override
 				protected final TResult doInBackground(Void... params) {
-					return executeInBackground(FluentTask.this.params);
+					return executeInBackground(FluentSpecifiedTask.this.params);
 				}
 
 				@Override
 				protected final void onProgressUpdate(TProgress... values) {
 					if (twoParameterOnProgressListener != null)
-						twoParameterOnProgressListener.run(FluentTask.this, values);
+						twoParameterOnProgressListener.run(FluentSpecifiedTask.this, values);
 
 					if (oneParameterOnProgressListener != null)
 						oneParameterOnProgressListener.run(values);
@@ -65,7 +65,7 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 					if (handleError(exception)) return;
 
 					if (twoParameterOnCompleteListener != null)
-						twoParameterOnCompleteListener.run(FluentTask.this, result);
+						twoParameterOnCompleteListener.run(FluentSpecifiedTask.this, result);
 
 					if (oneParameterOnCompleteListener != null)
 						oneParameterOnCompleteListener.run(result);
@@ -80,12 +80,12 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 	};
 
 	@SafeVarargs
-	public FluentTask(TParams... params) {
+	public FluentSpecifiedTask(TParams... params) {
 		this(AsyncTask.SERIAL_EXECUTOR, params);
 	}
 
 	@SafeVarargs
-	public FluentTask(Executor defaultExecutor, TParams... params) {
+	public FluentSpecifiedTask(Executor defaultExecutor, TParams... params) {
 		this.params = params;
 		this.defaultExecutor = defaultExecutor;
 	}
@@ -153,11 +153,11 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 					(oneParameterOnErrorListener != null && oneParameterOnErrorListener.call(exception));
 	}
 
-	public FluentTask<TParams, TProgress, TResult> cancel() {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> cancel() {
 		return cancel(true);
 	}
 
-	public FluentTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> cancel(boolean interrupt) {
 		task.getObject().cancel(interrupt);
 		return this;
 	}
@@ -172,42 +172,42 @@ public abstract class FluentTask<TParams, TProgress, TResult>  {
 		task.getObject().setException(exception);
 	}
 
-	public FluentTask<TParams, TProgress, TResult> beforeStart(OneParameterRunnable<FluentTask<TParams, TProgress, TResult>> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> beforeStart(OneParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>> listener) {
 		oneParameterBeforeStartListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> beforeStart(Runnable listener) {
 		beforeStartListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TResult> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>, TResult> listener) {
 		twoParameterOnCompleteListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener) {
 		oneParameterOnCompleteListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onProgress(TwoParameterRunnable<FluentTask<TParams, TProgress, TResult>, TProgress[]> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onProgress(TwoParameterRunnable<FluentSpecifiedTask<TParams, TProgress, TResult>, TProgress[]> listener) {
 		twoParameterOnProgressListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onProgress(OneParameterRunnable<TProgress[]> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onProgress(OneParameterRunnable<TProgress[]> listener) {
 		oneParameterOnProgressListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onError(TwoParameterCallable<FluentTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onError(TwoParameterCallable<FluentSpecifiedTask<TParams, TProgress, TResult>, Exception, Boolean> listener) {
 		twoParameterOnErrorListener = listener;
 		return this;
 	}
 
-	public FluentTask<TParams, TProgress, TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
+	public FluentSpecifiedTask<TParams, TProgress, TResult> onError(OneParameterCallable<Exception, Boolean> listener) {
 		oneParameterOnErrorListener = listener;
 		return this;
 	}

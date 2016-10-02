@@ -8,7 +8,8 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.apache.commons.io.IOUtils;
@@ -32,11 +33,11 @@ public class AccessConfigurationBuilder {
 	private static final int buildConnectionTimeoutTime = 10000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final Library library, final TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) {
+	public static void buildConfiguration(final Context context, final Library library, final TwoParameterRunnable<FluentSpecifiedTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) {
 		buildConfiguration(context, library, buildConnectionTimeoutTime, onBuildComplete);
 	}
 
-	private static void buildConfiguration(final Context context, final Library library, int timeout, final TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
+	private static void buildConfiguration(final Context context, final Library library, int timeout, final TwoParameterRunnable<FluentSpecifiedTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
@@ -59,10 +60,10 @@ public class AccessConfigurationBuilder {
 		});
 	}
 
-	private static void executeReturnNullTask(TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onReturnFalseListener) {
-		final FluentTask<Void, Void, MediaServerUrlProvider> returnFalseTask = new FluentTask<Void, Void, MediaServerUrlProvider>() {
+	private static void executeReturnNullTask(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onReturnFalseListener) {
+		final FluentDeterministicTask<MediaServerUrlProvider> returnFalseTask = new FluentDeterministicTask<MediaServerUrlProvider>() {
 			@Override
-			protected MediaServerUrlProvider executeInBackground(Void... params) {
+			protected MediaServerUrlProvider executeInBackground() {
 				return null;
 			}
 		};
@@ -72,18 +73,17 @@ public class AccessConfigurationBuilder {
 			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private static void buildAccessConfiguration(final Library library, final int timeout, TwoParameterRunnable<FluentTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final Library library, final int timeout, TwoParameterRunnable<FluentSpecifiedTask<Void, Void, MediaServerUrlProvider>, MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");
 
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentTask<Void, Void, MediaServerUrlProvider> mediaCenterAccessTask = new FluentTask<Void, Void, MediaServerUrlProvider>() {
+		final FluentDeterministicTask<MediaServerUrlProvider> mediaCenterAccessTask = new FluentDeterministicTask<MediaServerUrlProvider>() {
 			@Override
-			protected MediaServerUrlProvider executeInBackground(Void... params) {
+			protected MediaServerUrlProvider executeInBackground() {
 				try {
-					final int libraryId = library.getId();
 					final String authKey = library.getAuthKey();
 
 					String localAccessString = library.getAccessCode();

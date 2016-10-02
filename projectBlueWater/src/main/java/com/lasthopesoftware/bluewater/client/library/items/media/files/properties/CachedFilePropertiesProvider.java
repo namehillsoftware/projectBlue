@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 3/7/16.
  */
-public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
+public class CachedFilePropertiesProvider extends FluentSpecifiedTask<Integer, Void, Map<String, String>> {
 	private static final Executor cachedFilePropertyExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2 + 1);
 
 	private final IConnectionProvider connectionProvider;
@@ -50,7 +50,7 @@ public class CachedFilePropertiesProvider extends FluentTask<Integer, Void, Map<
 	}
 
 	@Override
-	public FluentTask<Integer, Void, Map<String, String>> cancel(boolean interrupt) {
+	public FluentSpecifiedTask<Integer, Void, Map<String, String>> cancel(boolean interrupt) {
 		super.cancel(interrupt);
 
 		if (filePropertiesProvider != null)

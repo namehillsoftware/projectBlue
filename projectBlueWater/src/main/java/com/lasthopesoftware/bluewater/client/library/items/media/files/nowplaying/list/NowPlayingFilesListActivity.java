@@ -22,7 +22,8 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 
 import java.util.ArrayList;
@@ -106,10 +107,10 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		public void run(final Library library) {
 			if (library == null) return;
 
-	        final FluentTask<Void, Void, ArrayList<IFile>> getFileStringTask = new FluentTask<Void, Void, ArrayList<IFile>>() {
+	        final FluentDeterministicTask<ArrayList<IFile>> getFileStringTask = new FluentDeterministicTask<ArrayList<IFile>>() {
 
 		        @Override
-		        protected ArrayList<IFile> executeInBackground(Void... params) {
+		        protected ArrayList<IFile> executeInBackground() {
 			        return FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
 		        }
 	        };

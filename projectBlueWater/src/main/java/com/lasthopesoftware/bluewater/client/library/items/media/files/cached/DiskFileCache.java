@@ -11,7 +11,8 @@ import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransactio
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -78,10 +79,10 @@ public class DiskFileCache {
 	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		final FluentTask<Void, Void, Void> putTask = new FluentTask<Void, Void, Void>() {
+		final FluentDeterministicTask<Void> putTask = new FluentDeterministicTask<Void>() {
 
 			@Override
-			protected Void executeInBackground(Void[] params) {
+			protected Void executeInBackground() {
 				if (isCancelled()) return null;
 
 				final String suffix = ".cache";
@@ -205,10 +206,10 @@ public class DiskFileCache {
 	}
 
 	public File get(final String uniqueKey) throws IOException {
-		final FluentTask<Void, Void, File> getFileTask = new FluentTask<Void, Void, File>() {
+		final FluentDeterministicTask<File> getFileTask = new FluentDeterministicTask<File>() {
 
 			@Override
-			protected File executeInBackground(Void... params) {
+			protected File executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					logger.info("Getting cached file " + uniqueKey);
 					try {

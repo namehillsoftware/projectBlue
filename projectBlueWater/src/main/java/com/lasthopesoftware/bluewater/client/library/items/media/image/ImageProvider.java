@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ImageProvider extends FluentTask<Void, Void, Bitmap> {
+public class ImageProvider extends FluentDeterministicTask<Bitmap> {
 	
 	private static final String IMAGE_FORMAT = "jpg";
 	

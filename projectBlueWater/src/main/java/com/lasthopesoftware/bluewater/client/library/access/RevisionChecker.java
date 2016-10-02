@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.access;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker extends FluentTask<Void, Void, Integer> {
+public class RevisionChecker extends FluentSpecifiedTask<Void, Void, Integer> {
 	
 	private final static Integer mBadRevision = -1;
     private static final Map<String, Integer> cachedRevisions = new HashMap<>();

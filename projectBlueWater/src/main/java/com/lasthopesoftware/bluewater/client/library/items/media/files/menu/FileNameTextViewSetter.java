@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Created by david on 4/14/15.
  */
-public class FileNameTextViewSetter implements TwoParameterRunnable<FluentTask<Integer, Void, Map<String, String>>, Map<String, String>>, OneParameterCallable<Exception, Boolean>, Runnable {
+public class FileNameTextViewSetter implements TwoParameterRunnable<FluentSpecifiedTask<Integer, Void, Map<String, String>>, Map<String, String>>, OneParameterCallable<Exception, Boolean>, Runnable {
 
 	private final TextView textView;
 
@@ -48,7 +48,7 @@ public class FileNameTextViewSetter implements TwoParameterRunnable<FluentTask<I
 	}
 
 	@Override
-	public void run(FluentTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties) {
+	public void run(FluentSpecifiedTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties) {
 		if (provider.isCancelled()) return;
 
 		final String fileName = properties.get(FilePropertiesProvider.NAME);

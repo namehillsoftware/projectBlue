@@ -8,7 +8,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
@@ -47,11 +48,11 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-    public void isItemMarkedForSync(final IItem item, TwoParameterRunnable<FluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
-        final FluentTask<Void, Void, Boolean> isItemSyncedTask = new FluentTask<Void, Void, Boolean>() {
+    public void isItemMarkedForSync(final IItem item, TwoParameterRunnable<FluentSpecifiedTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
+        final FluentDeterministicTask<Boolean> isItemSyncedTask = new FluentDeterministicTask<Boolean>() {
 
             @Override
-            protected Boolean executeInBackground(Void... params) {
+            protected Boolean executeInBackground() {
 	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 		            return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
 	            }
@@ -105,11 +106,11 @@ public class StoredItemAccess {
         });
     }
 
-    public void getStoredItems(TwoParameterRunnable<FluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
-        final FluentTask<Void, Void, List<StoredItem>> getAllStoredItemsTasks = new FluentTask<Void, Void, List<StoredItem>>() {
+    public void getStoredItems(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
+        final FluentDeterministicTask<List<StoredItem>> getAllStoredItemsTasks = new FluentDeterministicTask<List<StoredItem>>() {
 
             @Override
-            protected List<StoredItem> executeInBackground(Void... params) {
+            protected List<StoredItem> executeInBackground() {
 	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 		            return
 			            repositoryAccessHelper

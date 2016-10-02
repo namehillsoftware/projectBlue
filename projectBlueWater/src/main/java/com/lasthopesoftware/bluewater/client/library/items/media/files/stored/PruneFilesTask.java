@@ -5,7 +5,7 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 1/19/16.
  */
-public final class PruneFilesTask extends FluentTask<Void, Void, Void> {
+public final class PruneFilesTask extends FluentSpecifiedTask<Void, Void, Void> {
 	private static final Logger logger = LoggerFactory.getLogger(PruneFilesTask.class);
 	private static final ExecutorService pruneFilesExecutor = Executors.newSingleThreadExecutor();
 

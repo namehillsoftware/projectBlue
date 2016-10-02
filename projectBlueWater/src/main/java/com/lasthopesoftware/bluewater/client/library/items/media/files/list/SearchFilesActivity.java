@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.Se
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
@@ -72,10 +72,10 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final TwoParameterRunnable<FluentTask<String, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new TwoParameterRunnable<FluentTask<String,Void,List<IFile>>, List<IFile>>() {
+        final TwoParameterRunnable<FluentSpecifiedTask<String, Void, List<IFile>>, List<IFile>> onSearchFilesComplete = new TwoParameterRunnable<FluentSpecifiedTask<String,Void,List<IFile>>, List<IFile>>() {
 
             @Override
-            public void run(FluentTask<String, Void, List<IFile>> owner, List<IFile> result) {
+            public void run(FluentSpecifiedTask<String, Void, List<IFile>> owner, List<IFile> result) {
                 if (result == null) return;
 
                 final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));

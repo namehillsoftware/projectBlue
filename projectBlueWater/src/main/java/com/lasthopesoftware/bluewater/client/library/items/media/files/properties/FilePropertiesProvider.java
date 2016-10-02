@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-public class FilePropertiesProvider extends FluentTask<Integer, Void, Map<String, String>> {
+public class FilePropertiesProvider extends FluentSpecifiedTask<Integer, Void, Map<String, String>> {
 
 	private final int fileKey;
 	private final IConnectionProvider connectionProvider;

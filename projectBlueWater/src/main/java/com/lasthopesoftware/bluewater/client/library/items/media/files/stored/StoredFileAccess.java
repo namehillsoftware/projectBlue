@@ -21,7 +21,8 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
-import com.vedsoft.fluent.FluentTask;
+import com.vedsoft.fluent.FluentDeterministicTask;
+import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
@@ -74,10 +75,10 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, TwoParameterRunnable<FluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
-		final FluentTask<Void, Void, StoredFile> getStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
+	public void getStoredFile(final int storedFileId, TwoParameterRunnable<FluentSpecifiedTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+		final FluentDeterministicTask<StoredFile> getStoredFileTask = new FluentDeterministicTask<StoredFile>() {
 			@Override
-			protected StoredFile executeInBackground(Void... params) {
+			protected StoredFile executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return getStoredFile(repositoryAccessHelper, storedFileId);
 				}
@@ -92,7 +93,7 @@ public class StoredFileAccess {
 	}
 
 	public List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
-		return new FluentTask<Void, Void, List<StoredFile>>() {
+		return new FluentSpecifiedTask<Void, Void, List<StoredFile>>() {
 			@Override
 			public List<StoredFile> executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -105,8 +106,8 @@ public class StoredFileAccess {
 		}.get(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private FluentTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
-		return new FluentTask<Void, Void, StoredFile>() {
+	private FluentSpecifiedTask<Void, Void, StoredFile> getStoredFileTask(final IFile serviceFile) {
+		return new FluentSpecifiedTask<Void, Void, StoredFile>() {
 			@Override
 			public StoredFile executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -116,10 +117,10 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
-		final FluentTask<Void, Void, List<StoredFile>> getDownloadingStoredFilesTask = new FluentTask<Void, Void, List<StoredFile>>() {
+	public void getDownloadingStoredFiles(TwoParameterRunnable<FluentSpecifiedTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+		final FluentDeterministicTask<List<StoredFile>> getDownloadingStoredFilesTask = new FluentDeterministicTask<List<StoredFile>>() {
 			@Override
-			protected List<StoredFile> executeInBackground(Void... params) {
+			protected List<StoredFile> executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return repositoryAccessHelper
 							.mapSql(
@@ -191,9 +192,9 @@ public class StoredFileAccess {
 	}
 
 	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
-		final FluentTask<Void, Void, StoredFile> createOrUpdateStoredFileTask = new FluentTask<Void, Void, StoredFile>() {
+		final FluentDeterministicTask<StoredFile> createOrUpdateStoredFileTask = new FluentDeterministicTask<StoredFile>() {
 			@Override
-			public StoredFile executeInBackground(Void... params) {
+			public StoredFile executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
 					if (storedFile == null) {
