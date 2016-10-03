@@ -111,7 +111,9 @@ public class LibrarySyncHandler {
 
 	public void startSync() {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-		storedItemAccess.getStoredItems((owner, storedItems) -> AsyncTask
+		storedItemAccess
+			.getStoredItems()
+			.onComplete((storedItems) -> AsyncTask
 				.THREAD_POOL_EXECUTOR
 				.execute(() -> {
 					if (isCancelled) {

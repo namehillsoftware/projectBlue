@@ -1002,7 +1002,7 @@ public class PlaybackService extends Service implements
 
 			ImageProvider
 					.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), playingFile.getKey())
-					.onComplete((owner1, bitmap) -> {
+					.onComplete((bitmap) -> {
 						// Track the remote client bitmap and recycle it in case the remote control client
 						// does not properly recycle the bitmap
 						if (remoteClientBitmap != null) remoteClientBitmap.recycle();

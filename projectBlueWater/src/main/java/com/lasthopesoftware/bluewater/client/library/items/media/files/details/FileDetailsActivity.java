@@ -187,7 +187,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         ImageProvider
 		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
-		        .onComplete((owner, result) -> {
+		        .onComplete((result) -> {
 			        if (mFileImage != null) mFileImage.recycle();
 
 			        if (isDestroyed) {

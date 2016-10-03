@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.IFluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.Logger;
@@ -24,11 +25,11 @@ public class ConnectionTester {
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, TwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(ConnectionProvider connectionProvider, OneParameterRunnable<Boolean> onTestComplete) {
 		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
 	}
 
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, TwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> onTestComplete) {
+	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, OneParameterRunnable<Boolean> onTestComplete) {
 		final FluentCallable<Boolean> connectionTestTask = new FluentCallable<Boolean>() {
 			@Override
 			protected Boolean executeInBackground() {

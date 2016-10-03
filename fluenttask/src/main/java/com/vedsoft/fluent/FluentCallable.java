@@ -1,7 +1,7 @@
 package com.vedsoft.fluent;
 
 import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
 import java.util.concurrent.Executor;
 
@@ -16,16 +16,6 @@ public abstract class FluentCallable<TResult> extends FluentSpecifiedTask<Void, 
 
 	public FluentCallable(Executor executor) {
 		super(executor);
-	}
-
-	@Override
-	public FluentCallable<TResult> onComplete(OneParameterRunnable<TResult> onComplete) {
-		return (FluentCallable<TResult>)super.onComplete(onComplete);
-	}
-
-	@Override
-	public FluentCallable<TResult> onComplete(TwoParameterRunnable<IFluentTask<Void, Void, TResult>, TResult> listener) {
-		return (FluentCallable<TResult>)super.onComplete(listener);
 	}
 
 	protected abstract TResult executeInBackground();

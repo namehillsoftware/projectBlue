@@ -60,7 +60,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete((owner, items) -> {
+        itemProvider.onComplete((items) -> {
             if (items == null) return;
 
             BuildItemListView(items);

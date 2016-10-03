@@ -185,7 +185,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete((owner, items) -> {
+				.onComplete((items) -> {
 					if (isStopped || items == null) return;
 
 					LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);

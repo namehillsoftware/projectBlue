@@ -59,71 +59,74 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		LibrarySession.GetActiveLibrary(getActivity(), library -> {
 			final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
-			storedFileAccess.getDownloadingStoredFiles((owner1, storedFiles) -> {
-				final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles.size());
-				for (StoredFile storedFile : storedFiles) {
-					if (storedFile.getLibraryId() == library.getId())
-						localStoredFiles.add(storedFile);
-				}
+			storedFileAccess.getDownloadingStoredFiles()
+				.onComplete((storedFiles) -> {
+					final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles.size());
+					for (StoredFile storedFile : storedFiles) {
+						if (storedFile.getLibraryId() == library.getId())
+							localStoredFiles.add(storedFile);
+					}
 
-				final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), localStoredFiles);
+					final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), localStoredFiles);
 
-				if (onFileDownloadedReceiver != null)
-					localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
+					if (onFileDownloadedReceiver != null)
+						localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
 
-				onFileDownloadedReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+					onFileDownloadedReceiver = new BroadcastReceiver() {
+						@Override
+						public void onReceive(Context context, Intent intent) {
+							final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 
-						for (StoredFile storedFile : localStoredFiles) {
-							if (storedFile.getId() != storedFileId) continue;
+							for (StoredFile storedFile : localStoredFiles) {
+								if (storedFile.getId() != storedFileId) continue;
 
-							final List<IFile> files = activeFileDownloadsAdapter.getFiles();
-							for (IFile file : files) {
-								if (file.getKey() != storedFile.getServiceId()) continue;
+								final List<IFile> files = activeFileDownloadsAdapter.getFiles();
+								for (IFile file : files) {
+									if (file.getKey() != storedFile.getServiceId()) continue;
 
-								activeFileDownloadsAdapter.remove(file);
-								files.remove(file);
+									activeFileDownloadsAdapter.remove(file);
+									files.remove(file);
+									break;
+								}
+
 								break;
 							}
-
-							break;
 						}
-					}
-				};
+					};
 
-				localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
+					localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
 
-				if (onFileQueuedReceiver != null)
-					localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
+					if (onFileQueuedReceiver != null)
+						localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
 
-				onFileQueuedReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
-						if (storedFileId == -1) return;
+					onFileQueuedReceiver = new BroadcastReceiver() {
+						@Override
+						public void onReceive(Context context, Intent intent) {
+							final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+							if (storedFileId == -1) return;
 
-						for (StoredFile storedFile : localStoredFiles) {
-							if (storedFile.getId() == storedFileId) return;
+							for (StoredFile storedFile : localStoredFiles) {
+								if (storedFile.getId() == storedFileId) return;
+							}
+
+							storedFileAccess
+									.getStoredFile(storedFileId)
+									.onComplete((storedFile) -> {
+										if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
+
+										localStoredFiles.add(storedFile);
+										activeFileDownloadsAdapter.add(new File(storedFile.getServiceId()));
+									});
 						}
+					};
 
-						storedFileAccess.getStoredFile(storedFileId, (owner2, storedFile) -> {
-							if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
+					localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
 
-							localStoredFiles.add(storedFile);
-							activeFileDownloadsAdapter.add(new File(storedFile.getServiceId()));
-						});
-					}
-				};
+					listView.setAdapter(activeFileDownloadsAdapter);
 
-				localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
-
-				listView.setAdapter(activeFileDownloadsAdapter);
-
-				progressBar.setVisibility(View.INVISIBLE);
-				listView.setVisibility(View.VISIBLE);
-			});
+					progressBar.setVisibility(View.INVISIBLE);
+					listView.setVisibility(View.VISIBLE);
+				});
 		});
 
 		final Button toggleSyncButton = (Button) viewFileslayout.findViewById(R.id.toggleSyncButton);
