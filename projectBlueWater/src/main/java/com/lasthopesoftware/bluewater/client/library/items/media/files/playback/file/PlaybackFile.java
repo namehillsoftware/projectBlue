@@ -18,6 +18,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackFilePreparer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparingPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPreparer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -39,7 +43,7 @@ import java.util.concurrent.ExecutionException;
 public class PlaybackFile implements
 	IPlaybackFile,
 	OnErrorListener, 
-	OnCompletionListener,
+	OnCompletionListener
 {
 	@SuppressLint("InlinedApi")
 	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
@@ -74,6 +78,7 @@ public class PlaybackFile implements
 	private final HashSet<OnFilePreparedListener> onFilePreparedListeners = new HashSet<>();
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
+	private MediaPlayerPreparer playbackFilePreparer;
 
 	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
 		mpContext = context;
@@ -95,6 +100,8 @@ public class PlaybackFile implements
 		maxVolume = 1.0f;
 		
 		mediaPlayer = new MediaPlayer(); // initialize it here
+		playbackFilePreparer = new MediaPlayerPreparer(mediaPlayer, file);
+
 		mediaPlayer.setOnPreparedListener(this);
 		mediaPlayer.setOnErrorListener(this);
 		mediaPlayer.setOnCompletionListener(this);

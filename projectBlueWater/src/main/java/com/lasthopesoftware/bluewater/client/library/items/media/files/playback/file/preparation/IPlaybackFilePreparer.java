@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.vedsoft.fluent.FluentCallable;
 
 import java.io.IOException;
 
@@ -9,5 +10,5 @@ import java.io.IOException;
  */
 
 public interface IPlaybackFilePreparer {
-	IPlaybackHandler getMediaHandler() throws IOException;
+	FluentCallable<IPlaybackHandler> getMediaHandler();
 }

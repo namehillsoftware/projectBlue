@@ -2,10 +2,12 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.annotation.SuppressLint;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
+import com.vedsoft.fluent.FluentCallable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,25 +48,35 @@ public class MediaPlayerPreparer implements IPlaybackFilePreparer {
 	}
 
 	@Override
-	public IPlaybackHandler getMediaHandler() throws IOException {
-		try {
-//			final Uri uri = getFileUri();
-//			if (uri == null) return;
-//
-//			setMpDataSource(uri);
-//			initializeBufferPercentage(uri);
+	public FluentCallable<IPlaybackHandler> getMediaHandler() {
+		final FluentCallable<IPlaybackHandler> mediaHandlerTask =
+				new FluentCallable<IPlaybackHandler>() {
+				@Override
+				protected IPlaybackHandler executeInBackground() {
+					try {
+	//			final Uri uri = getFileUri();
+	//			if (uri == null) return;
+	//
+	//			setMpDataSource(uri);
+	//			initializeBufferPercentage(uri);
 
-			logger.info("Preparing " + file.getKey() + " synchronously.");
-			mediaPlayer.prepare();
+						logger.info("Preparing " + file.getKey() + " synchronously.");
+						mediaPlayer.prepare();
 
-		} catch (IOException io) {
-			logger.error(io.toString(), io);
-			throw io;
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			return null;
-		}
+					} catch (IOException io) {
+						logger.error(io.toString(), io);
+						setException(io);
+					} catch (Exception e) {
+						logger.error(e.toString(), e);
+						return null;
+					}
 
-		return new MediaPlayerPlaybackHandler(mediaPlayer);
+					return new MediaPlayerPlaybackHandler(mediaPlayer);
+				}
+			};
+
+		mediaHandlerTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+
+		return mediaHandlerTask;
 	}
 }
