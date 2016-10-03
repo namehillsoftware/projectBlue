@@ -132,7 +132,7 @@ public class SyncService extends Service {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
 		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
-			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (parameterOne1, urlProvider) -> {
+			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
 				if (urlProvider == null) return;
 
 				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
@@ -243,7 +243,7 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library, (owner1, urlProvider) -> {
+				AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
 					if (urlProvider == null) {
 						if (--librariesProcessing == 0) finishSync();
 						return;

@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentCallable;
+import com.vedsoft.fluent.IFluentTask;
 
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private static FluentCallable<Bitmap> getFileImageTask;
+	private static IFluentTask<Void, Void, Bitmap> getFileImageTask;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
@@ -340,7 +341,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 				getFileImageTask =
 						ImageProvider
 								.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey())
-								.onComplete((owner, result) -> {
+								.onComplete((result) -> {
 									if (viewStructure.nowPlayingImage != null)
 										viewStructure.nowPlayingImage.recycle();
 									viewStructure.nowPlayingImage = result;

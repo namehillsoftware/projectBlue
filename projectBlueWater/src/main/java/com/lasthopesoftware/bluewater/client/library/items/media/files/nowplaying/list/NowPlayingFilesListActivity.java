@@ -114,7 +114,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		        }
 	        };
 	        
-	        getFileStringTask.onComplete((owner1, result) -> {
+	        getFileStringTask.onComplete((result) -> {
 		        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
 		        mFileListView.setAdapter(nowPlayingFilesListAdapter);
 

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.io.FileNotFoundException;
@@ -17,7 +18,7 @@ import java.util.Map;
 /**
  * Created by david on 4/14/15.
  */
-public class FileNameTextViewSetter implements TwoParameterRunnable<IFluentTask<Integer, Void, Map<String, String>>, Map<String, String>>, OneParameterCallable<Exception, Boolean>, Runnable {
+public class FileNameTextViewSetter implements ThreeParameterRunnable<IFluentTask<Integer, Void, Map<String, String>>, Map<String, String>, Exception>, Runnable {
 
 	private final TextView textView;
 
@@ -27,7 +28,6 @@ public class FileNameTextViewSetter implements TwoParameterRunnable<IFluentTask<
 		cachedFilePropertiesProvider
 				.beforeStart(fileNameTextViewSetter)
 				.onComplete(fileNameTextViewSetter)
-				.onError(fileNameTextViewSetter)
 				.execute();
 
 		return cachedFilePropertiesProvider;
@@ -38,18 +38,13 @@ public class FileNameTextViewSetter implements TwoParameterRunnable<IFluentTask<
 	}
 
 	@Override
-	public Boolean call(Exception exception) {
+	public void run(IFluentTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties, Exception exception) {
+		if (provider.isCancelled()) return;
+
 		if (exception instanceof FileNotFoundException) {
 			textView.setText(R.string.file_not_found);
-			return true;
+			return;
 		}
-
-		return false;
-	}
-
-	@Override
-	public void run(IFluentTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties) {
-		if (provider.isCancelled()) return;
 
 		final String fileName = properties.get(FilePropertiesProvider.NAME);
 

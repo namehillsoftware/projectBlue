@@ -48,7 +48,7 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-    public void isItemMarkedForSync(final IItem item, TwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> isItemSyncedResult) {
+    public FluentCallable<Boolean> isItemMarkedForSync(final IItem item) {
         final FluentCallable<Boolean> isItemSyncedTask = new FluentCallable<Boolean>() {
 
             @Override
@@ -59,10 +59,9 @@ public class StoredItemAccess {
             }
         };
 
-        if (isItemSyncedResult != null)
-            isItemSyncedTask.onComplete(isItemSyncedResult);
-
         isItemSyncedTask.execute(RepositoryAccessHelper.databaseExecutor);
+
+		return isItemSyncedTask;
     }
 
     private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
@@ -106,7 +105,7 @@ public class StoredItemAccess {
         });
     }
 
-    public void getStoredItems(TwoParameterRunnable<IFluentTask<Void, Void, List<StoredItem>>, List<StoredItem>> onStoredListsRetrieved) {
+    public FluentCallable<List<StoredItem>> getStoredItems() {
         final FluentCallable<List<StoredItem>> getAllStoredItemsTasks = new FluentCallable<List<StoredItem>>() {
 
             @Override
@@ -121,10 +120,9 @@ public class StoredItemAccess {
             }
         };
 
-        if (onStoredListsRetrieved != null)
-            getAllStoredItemsTasks.onComplete(onStoredListsRetrieved);
-
         getAllStoredItemsTasks.execute(RepositoryAccessHelper.databaseExecutor);
+
+		return getAllStoredItemsTasks;
     }
 
     private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {

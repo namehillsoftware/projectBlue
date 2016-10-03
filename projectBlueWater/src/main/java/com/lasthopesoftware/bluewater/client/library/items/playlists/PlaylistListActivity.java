@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.access.Play
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.IFluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.List;
@@ -56,17 +57,13 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final TwoParameterRunnable<IFluentTask<String, Void, List<Playlist>>, List<Playlist>> onPlaylistProviderComplete = new TwoParameterRunnable<IFluentTask<String,Void,List<Playlist>>, List<Playlist>>() {
+		final OneParameterRunnable<List<Playlist>> onPlaylistProviderComplete = result -> {
+			if (result == null) return;
 
-			@Override
-			public void run(IFluentTask<String, Void, List<Playlist>> owner, List<Playlist> result) {
-				if (result == null) return;
+			BuildPlaylistView(result);
 
-				BuildPlaylistView(result);
-
-				playlistView.setVisibility(View.VISIBLE);
-				pbLoading.setVisibility(View.INVISIBLE);
-			}
+			playlistView.setVisibility(View.VISIBLE);
+			pbLoading.setVisibility(View.INVISIBLE);
 		};
 
 		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)

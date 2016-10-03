@@ -3,6 +3,7 @@ package com.vedsoft.fluent;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.callables.TwoParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.util.concurrent.ExecutionException;
@@ -36,7 +37,9 @@ public interface IFluentTask<TParams, TProgress, TResult> {
 
 	IFluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener);
 
-	IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TResult> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(ThreeParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult, Exception> listener);
+
+	IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<TResult, Exception> listener);
 
 	IFluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener);
 

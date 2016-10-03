@@ -76,7 +76,7 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
-	public void getStoredFile(final int storedFileId, TwoParameterRunnable<IFluentTask<Void, Void, StoredFile>, StoredFile> onStoredFileRetrieved) {
+	public FluentCallable<StoredFile> getStoredFile(final int storedFileId) {
 		final FluentCallable<StoredFile> getStoredFileTask = new FluentCallable<StoredFile>() {
 			@Override
 			protected StoredFile executeInBackground() {
@@ -86,7 +86,9 @@ public class StoredFileAccess {
 			}
 		};
 
-		getStoredFileTask.onComplete(onStoredFileRetrieved).execute(RepositoryAccessHelper.databaseExecutor);
+		getStoredFileTask.execute(RepositoryAccessHelper.databaseExecutor);
+
+		return getStoredFileTask;
 	}
 
 	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
@@ -118,7 +120,7 @@ public class StoredFileAccess {
 		};
 	}
 
-	public void getDownloadingStoredFiles(TwoParameterRunnable<IFluentTask<Void, Void, List<StoredFile>>, List<StoredFile>> onGetDownloadingStoredFilesComplete) {
+	public FluentCallable<List<StoredFile>> getDownloadingStoredFiles() {
 		final FluentCallable<List<StoredFile>> getDownloadingStoredFilesTask = new FluentCallable<List<StoredFile>>() {
 			@Override
 			protected List<StoredFile> executeInBackground() {
@@ -132,7 +134,9 @@ public class StoredFileAccess {
 			}
 		};
 
-		getDownloadingStoredFilesTask.onComplete(onGetDownloadingStoredFilesComplete).execute(RepositoryAccessHelper.databaseExecutor);
+		getDownloadingStoredFilesTask.execute(RepositoryAccessHelper.databaseExecutor);
+
+		return getDownloadingStoredFilesTask;
 	}
 
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {

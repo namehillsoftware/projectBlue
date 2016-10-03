@@ -29,7 +29,7 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 		final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 		if (fileKey < 0) return;
 
-		LibrarySession.GetLibrary(context, libraryId, library -> AccessConfigurationBuilder.buildConfiguration(context, library, (task, urlProvider) -> {
+		LibrarySession.GetLibrary(context, libraryId, library -> AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
 			final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 			try {
 				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, fileKey);

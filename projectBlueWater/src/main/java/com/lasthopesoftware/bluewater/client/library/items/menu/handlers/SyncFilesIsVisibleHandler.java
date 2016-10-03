@@ -35,13 +35,14 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 			if (!v.isShown()) return;
 
 			final StoredItemAccess syncListManager = new StoredItemAccess(context, library);
-			syncListManager.isItemMarkedForSync(item, (owner, isSynced) -> {
-				if (!v.isShown()) return;
+			syncListManager.isItemMarkedForSync(item)
+				.onComplete((isSynced) -> {
+					if (!v.isShown()) return;
 
-				syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
-				syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
-				syncButton.setEnabled(true);
-			});
+					syncButton.setImageDrawable(ViewUtils.getDrawable(context, isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
+					syncButton.setOnClickListener(new SyncFilesClickHandler(notifyOnFlipViewAnimator, library, item, isSynced));
+					syncButton.setEnabled(true);
+				});
 		});
 	}
 }

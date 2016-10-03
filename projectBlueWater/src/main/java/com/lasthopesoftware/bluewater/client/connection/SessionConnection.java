@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.IFluentTask;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class SessionConnection {
 
 			doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-			AccessConfigurationBuilder.buildConfiguration(context, library, (owner, result) -> {
+			AccessConfigurationBuilder.buildConfiguration(context, library, (result) -> {
 				if (result == null) {
 					doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 					return;
@@ -77,7 +78,7 @@ public class SessionConnection {
 				doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
 				LibraryViewsProvider.provide(sessionConnectionProvider)
-						.onComplete((owner1, result1) -> {
+						.onComplete((result1) -> {
 
 							if (result1 == null || result1.size() == 0) {
 								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
@@ -106,7 +107,7 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final TwoParameterRunnable<IFluentTask<Void, Void, Boolean>, Boolean> testConnectionCompleteListener = (owner, result) -> {
+		final OneParameterRunnable<Boolean> testConnectionCompleteListener = (result) -> {
 			if (!result) build(context);
 
 			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
