@@ -15,9 +15,9 @@ import java.util.concurrent.TimeoutException;
  * Created by david on 9/24/16.
  */
 public interface IFluentTask<TParams, TProgress, TResult> {
-	void execute();
+	IFluentTask<TParams,TProgress,TResult> execute();
 
-	void execute(Executor exec);
+	IFluentTask<TParams,TProgress,TResult> execute(Executor exec);
 
 	TResult get() throws ExecutionException, InterruptedException;
 

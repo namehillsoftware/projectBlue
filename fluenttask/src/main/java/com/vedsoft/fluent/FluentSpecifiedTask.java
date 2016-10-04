@@ -96,13 +96,14 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 	}
 
 	@Override
-	public void execute() {
-		execute(null);
+	public IFluentTask<TParams, TProgress, TResult> execute() {
+		return execute(null);
 	}
 
 	@Override
-	public void execute(Executor exec) {
+	public IFluentTask<TParams, TProgress, TResult> execute(Executor exec) {
 		executeTask(exec);
+		return this;
 	}
 
 	@Override
