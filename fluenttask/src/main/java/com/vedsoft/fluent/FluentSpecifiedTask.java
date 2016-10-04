@@ -95,12 +95,13 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 		this.defaultExecutor = defaultExecutor;
 	}
 
-	public void execute() {
-		execute(null);
+	public IFluentTask<TParams, TProgress, TResult> execute() {
+		return execute(null);
 	}
 
-	public void execute(Executor exec) {
+	public IFluentTask<TParams, TProgress, TResult> execute(Executor exec) {
 		executeTask(exec);
+		return this;
 	}
 
 	public TResult get() throws ExecutionException, InterruptedException {
