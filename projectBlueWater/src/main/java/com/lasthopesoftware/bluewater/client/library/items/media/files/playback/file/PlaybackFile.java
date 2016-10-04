@@ -2,28 +2,21 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
-import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.PowerManager;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackFilePreparer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparingPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPreparer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 
@@ -34,9 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -55,9 +46,8 @@ public class PlaybackFile implements
 	}))); 
 	
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackFile.class);
-	
-	private volatile MediaPlayer mediaPlayer;
-	
+	private final MediaPlayerInitializer mediaPlayerInitializer;
+
 	// FilePlayer State Variables
 	private volatile boolean isPrepared = false;
 	private volatile boolean isPreparing = false;
@@ -79,11 +69,13 @@ public class PlaybackFile implements
 	private final HashSet<OnFileErrorListener> onFileErrorListeners = new HashSet<>();
 	private final HashSet<OnFileBufferedListener> onFileBufferedListeners = new HashSet<>();
 	private MediaPlayerPreparer playbackFilePreparer;
+	private IPlaybackHandler mediaHandler;
 
 	public PlaybackFile(Context context, ConnectionProvider connectionProvider, IFile file) {
 		mpContext = context;
 		this.connectionProvider = connectionProvider;
 		this.file = file;
+		this.mediaPlayerInitializer = new MediaPlayerInitializer(context);
 	}
 
 	public IFile getFile() {
@@ -91,23 +83,19 @@ public class PlaybackFile implements
 	}
 	
 	public void initMediaPlayer() {
-		if (mediaPlayer != null) return;
-		
 		isPrepared = false;
 		isPreparing = false;
 		isInErrorState = false;
 		bufferPercentage = bufferMin;
 		maxVolume = 1.0f;
-		
-		mediaPlayer = new MediaPlayer(); // initialize it here
-		playbackFilePreparer = new MediaPlayerPreparer(mediaPlayer, file);
 
-		mediaPlayer.setOnPreparedListener(this);
-		mediaPlayer.setOnErrorListener(this);
-		mediaPlayer.setOnCompletionListener(this);
-		mediaPlayer.setOnBufferingUpdateListener(this);
-		mediaPlayer.setWakeMode(mpContext, PowerManager.PARTIAL_WAKE_LOCK);
-		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		final MediaPlayer mediaPlayer;
+		try {
+			mediaPlayer = mediaPlayerInitializer.initializeMediaPlayer(getFileUri());
+			playbackFilePreparer = new MediaPlayerPreparer(mediaPlayer);
+		} catch (IOException e) {
+			throwIoErrorEvent();
+		}
 	}
 	
 	public boolean isMediaPlayerCreated() {
@@ -138,13 +126,11 @@ public class PlaybackFile implements
 			final MaxFileVolumeProvider maxFileVolumeProvider = new MaxFileVolumeProvider(mpContext, connectionProvider, file);
 			maxFileVolumeProvider.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 
-			setMpDataSource(uri);
 			initializeBufferPercentage(uri);
 			
 			isPreparing = true;
-			
 			logger.info("Preparing " + file.getKey() + " synchronously.");
-			mediaPlayer.prepare();
+			mediaHandler = playbackFilePreparer.getMediaHandler().get();
 
 			try {
 				maxVolume = maxFileVolumeProvider.get();
@@ -155,6 +141,10 @@ public class PlaybackFile implements
 			updateMediaPlayerVolume();
 			
 			isPrepared = true;
+
+			logger.info(file.getKey() + " prepared!");
+
+			for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.toString(), fe);
 			resetMediaPlayer();
@@ -182,24 +172,6 @@ public class PlaybackFile implements
 			listener.onFileError(this, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_IO);
 	}
 	
-	private void setMpDataSource(Uri uri) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
-		final Map<String, String> headers = new HashMap<>();
-		if (mpContext == null)
-			throw new NullPointerException("The file player's context cannot be null");
-
-		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
-			final Library library = LibrarySession.GetActiveLibrary(mpContext);
-			if (library != null) {
-				final String authKey = library.getAuthKey();
-
-				if (authKey != null && !authKey.isEmpty())
-					headers.put("Authorization", "basic " + authKey);
-			}
-		}
-		
-		mediaPlayer.setDataSource(mpContext, uri, headers);
-	}
-	
 	private void resetMediaPlayer() {
 		final int position = getCurrentPosition();
 		releaseMediaPlayer();
@@ -213,15 +185,6 @@ public class PlaybackFile implements
 		if (mediaPlayer != null) mediaPlayer.release();
 		mediaPlayer = null;
 		isPrepared = false;
-	}
-	
-	@Override
-	public void onPrepared(MediaPlayer mp) {
-		isPrepared = true;
-		isPreparing = false;
-		logger.info(file.getKey() + " prepared!");
-
-		for (OnFilePreparedListener listener : onFilePreparedListeners) listener.onFilePrepared(this);
 	}
 	
 	@Override

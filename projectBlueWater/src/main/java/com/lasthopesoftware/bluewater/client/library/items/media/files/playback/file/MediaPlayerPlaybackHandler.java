@@ -4,17 +4,24 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.IPlaybackFileErrorBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerErrorData;
+import com.vedsoft.fluent.FluentRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by david on 9/20/16.
  */
 
 public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer.OnErrorListener {
+
+	private static final ExecutorService playbackExecutor = Executors.newSingleThreadExecutor();
+
 	private final MediaPlayer mediaPlayer;
 	private TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerErrorData> onFileErrorListener;
+	private boolean isComplete;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -47,8 +54,22 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer
 	}
 
 	@Override
-	public void start() {
-		mediaPlayer.start();
+	public FluentRunnable start() {
+		return new FluentRunnable(playbackExecutor) {
+			@Override
+			protected void runInBackground() {
+				mediaPlayer.setOnCompletionListener(mp -> isComplete = true);
+				mediaPlayer.start();
+
+				while (!isComplete) {
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						return;
+					}
+				}
+			}
+		};
 	}
 
 	@Override
