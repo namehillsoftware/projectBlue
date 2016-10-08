@@ -2,30 +2,20 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.IPlaybackFileErrorBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.Promise;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by david on 9/20/16.
  */
 
-public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer.OnErrorListener {
-
-	private static final ExecutorService playbackExecutor = Executors.newSingleThreadExecutor();
+public class MediaPlayerPlaybackHandler implements IPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
-	private TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerException> onFileErrorListener;
-	private IFluentTask<Void, Integer, Void> mediaPlayerPlaybackTask;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		this.mediaPlayer.setOnErrorListener(this);
 	}
 
 	@Override
@@ -54,39 +44,12 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer
 	}
 
 	@Override
-	public IFluentTask<Void, Integer, Void> start() {
-		if (mediaPlayerPlaybackTask != null) {
-			mediaPlayer.start();
-			return mediaPlayerPlaybackTask;
-		}
-
-		mediaPlayerPlaybackTask = new MediaPlayerPlaybackTask(mediaPlayer, playbackExecutor).execute();
-		return mediaPlayerPlaybackTask;
-	}
-
-	@Override
-	public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
-		broadcastFileError(new MediaPlayerException(mediaPlayer, what, extra));
-		return true;
-	}
-
-	@Override
-	public void setOnFileErrorListener(TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerException> listener) {
-		onFileErrorListener = listener;
-	}
-
-	@Override
-	public void broadcastFileError(MediaPlayerException mediaPlayerException) {
-		if (onFileErrorListener != null)
-			onFileErrorListener.run(this, mediaPlayerException);
+	public Promise<IPlaybackHandler> start() {
+		return new Promise<>(new MediaPlayerPlaybackTask(this, mediaPlayer));
 	}
 
 	@Override
 	public void close() throws IOException {
 		mediaPlayer.release();
-
-		if (mediaPlayerPlaybackTask != null)
-			mediaPlayerPlaybackTask.cancel();
 	}
-
 }

@@ -1,5 +1,7 @@
-package com.example;
+package com.lasthopesoftware;
 
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
@@ -25,7 +27,7 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 	}
 
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(final OneParameterCallable<TResult, TNewResult> onFulfilled) {
+	public <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
 		final UnresolvedPromise<TResult, TNewResult> newResolution = new UnresolvedPromise<>((originalResult, newResolve, newReject) -> {
 			try {
 				newResolve.run(onFulfilled.call(originalResult));
@@ -34,9 +36,17 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 			}
 		});
 
+		if (onRejected != null)
+			error(onRejected);
+
 		this.resolution = newResolution;
 
 		return newResolution;
+	}
+
+	@Override
+	public <TNewResult> IPromise<TNewResult> then(final OneParameterCallable<TResult, TNewResult> onFulfilled) {
+		return then(onFulfilled, null);
 	}
 
 	@Override

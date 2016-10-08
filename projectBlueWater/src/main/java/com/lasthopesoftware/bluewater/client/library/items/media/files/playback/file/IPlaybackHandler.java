@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.IPlaybackFileErrorBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.vedsoft.fluent.IFluentTask;
+import com.lasthopesoftware.Promise;
 
 import java.io.Closeable;
 
-public interface IPlaybackHandler extends IPlaybackFileErrorBroadcaster<MediaPlayerException>, Closeable {
+public interface IPlaybackHandler extends Closeable {
 	boolean isPlaying();
 	void pause();
 	void seekTo(int pos);
@@ -15,5 +13,5 @@ public interface IPlaybackHandler extends IPlaybackFileErrorBroadcaster<MediaPla
 
 	int getDuration();
 
-	IFluentTask<Void, Integer, Void> start();
+	Promise<IPlaybackHandler> start();
 }
