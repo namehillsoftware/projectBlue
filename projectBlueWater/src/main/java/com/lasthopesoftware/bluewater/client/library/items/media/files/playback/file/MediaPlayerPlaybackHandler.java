@@ -21,7 +21,7 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer
 
 	private final MediaPlayer mediaPlayer;
 	private TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerException> onFileErrorListener;
-	private IFluentTask<Void, Integer, Void> mediaPlayerTask;
+	private IFluentTask<Void, Integer, Void> mediaPlayerPlaybackTask;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -55,8 +55,13 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer
 
 	@Override
 	public IFluentTask<Void, Integer, Void> start() {
-		mediaPlayerTask = new MediaPlayerPlaybackTask(mediaPlayer, playbackExecutor).execute();
-		return mediaPlayerTask;
+		if (mediaPlayerPlaybackTask != null) {
+			mediaPlayer.start();
+			return mediaPlayerPlaybackTask;
+		}
+
+		mediaPlayerPlaybackTask = new MediaPlayerPlaybackTask(mediaPlayer, playbackExecutor).execute();
+		return mediaPlayerPlaybackTask;
 	}
 
 	@Override
@@ -67,21 +72,21 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler, MediaPlayer
 
 	@Override
 	public void setOnFileErrorListener(TwoParameterRunnable<IPlaybackFileErrorBroadcaster, MediaPlayerException> listener) {
-		this.onFileErrorListener = listener;
+		onFileErrorListener = listener;
 	}
 
 	@Override
 	public void broadcastFileError(MediaPlayerException mediaPlayerException) {
-		if (this.onFileErrorListener != null)
-			this.onFileErrorListener.run(this, mediaPlayerException);
+		if (onFileErrorListener != null)
+			onFileErrorListener.run(this, mediaPlayerException);
 	}
 
 	@Override
 	public void close() throws IOException {
 		mediaPlayer.release();
 
-		if (mediaPlayerTask != null)
-			mediaPlayerTask.cancel();
+		if (mediaPlayerPlaybackTask != null)
+			mediaPlayerPlaybackTask.cancel();
 	}
 
 }

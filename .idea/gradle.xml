@@ -16,6 +16,7 @@
             <option value="$PROJECT_DIR$/objective-droid" />
             <option value="$PROJECT_DIR$/pagerslidingtabstrip" />
             <option value="$PROJECT_DIR$/projectBlueWater" />
+            <option value="$PROJECT_DIR$/promises" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

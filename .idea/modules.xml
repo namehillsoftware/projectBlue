@@ -9,6 +9,7 @@
       <module fileurl="file://$PROJECT_DIR$/pagerslidingtabstrip/pagerslidingtabstrip.iml" filepath="$PROJECT_DIR$/pagerslidingtabstrip/pagerslidingtabstrip.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlue.iml" filepath="$PROJECT_DIR$/projectBlue.iml" />
       <module fileurl="file://$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" filepath="$PROJECT_DIR$/projectBlueWater/projectBlueWater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/promises/promises.iml" filepath="$PROJECT_DIR$/promises/promises.iml" />
     </modules>
   </component>
 </project>
