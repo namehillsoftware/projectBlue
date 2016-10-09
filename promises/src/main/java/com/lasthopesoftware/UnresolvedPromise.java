@@ -4,38 +4,32 @@ import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
-abstract class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
+class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 
+	private final ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor;
 	private UnresolvedPromise<TResult, ?> resolution;
 	private UnresolvedPromise<Exception, Void> rejection;
 
-
-	protected abstract void execute(TOriginalResult result);
-
-	protected final void resolve(TResult result) {
-		if (resolution != null)
-			resolution.execute(result);
+	UnresolvedPromise(ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
+		this.executor = executor;
 	}
 
-	protected final void reject(Exception error) {
-		if (rejection != null)
-			rejection.execute(error);
+	final void execute(TOriginalResult originalResult) {
+		this.executor.run(originalResult, result -> {
+			if (resolution != null)
+				resolution.execute(result);
+		}, error -> {
+			if (rejection != null)
+				rejection.execute(error);
+		});
 	}
 
 	@Override
 	public final <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
-
-		final UnresolvedPromise<TResult, TNewResult> newResolution = new UnresolvedPromise<TResult, TNewResult>() {
-			@Override
-			protected void execute(TResult result) {
-				try {
-					resolve(onFulfilled.call(result));
-				} catch (Exception e) {
-					reject(e);
-				}
-			}
-		};
+		final UnresolvedPromise<TResult, TNewResult> newResolution =
+				new UnresolvedPromise<>(new FulfilledInternalExecutor<>(onFulfilled));
 
 		if (onRejected != null)
 			error(onRejected);
@@ -56,18 +50,8 @@ abstract class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<T
 	}
 
 	@Override
-	public IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
-		rejection = new UnresolvedPromise<Exception, Void>() {
-			@Override
-			protected void execute(Exception exception) {
-				try {
-					onRejected.run(exception);
-					resolve(null);
-				} catch (Exception e) {
-					reject(e);
-				}
-			}
-		};
+	public final IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
+		rejection = new UnresolvedPromise<>(new InternalErrorExecutor(onRejected));
 
 		return rejection;
 	}

@@ -2,28 +2,29 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.AbstractPromise;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 10/4/16.
  */
-class MediaPlayerPlayerPromise extends AbstractPromise<IPlaybackHandler> {
+class MediaPlayerPlaybackTask implements TwoParameterRunnable<OneParameterRunnable<IPlaybackHandler>, OneParameterRunnable<Exception>> {
 
 	private final IPlaybackHandler playbackHandler;
 	private final MediaPlayer mediaPlayer;
 
-	MediaPlayerPlayerPromise(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
+	MediaPlayerPlaybackTask(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
 		this.playbackHandler = playbackHandler;
 		this.mediaPlayer = mediaPlayer;
 	}
 
 	@Override
-	protected void execute() {
-		mediaPlayer.setOnCompletionListener(mp -> resolve(playbackHandler));
+	public void run(OneParameterRunnable<IPlaybackHandler> resolve, OneParameterRunnable<Exception> reject) {
+		mediaPlayer.setOnCompletionListener(mp -> resolve.run(playbackHandler));
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
 			final MediaPlayerException mediaPlayerException = new MediaPlayerException(mp, what, extra);
-			reject(mediaPlayerException);
+			reject.run(mediaPlayerException);
 			return true;
 		});
 
