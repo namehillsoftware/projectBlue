@@ -1,0 +1,103 @@
+Index: projectBlueWater/src/main/java/com/lasthopesoftware/bluewater/servers/library/items/media/files/stored/repository/StoredFileEntityUpdater.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- projectBlueWater/src/main/java/com/lasthopesoftware/bluewater/servers/library/items/media/files/stored/repository/StoredFileEntityUpdater.java	(revision c9d9ffffba494fce383dc2af58a7c7b35e52242f)
++++ projectBlueWater/src/main/java/com/lasthopesoftware/bluewater/servers/library/items/media/files/stored/repository/StoredFileEntityUpdater.java	(revision )
+@@ -22,50 +22,55 @@
+ 			return;
+ 		}
+ 
+-		if (oldVersion < 6) {
++		if (oldVersion > 6)
++			return;
++
++		recreateTableSchema(db);
++	}
++
++	private static void recreateTableSchema(SQLiteDatabase db) {
+-			final String storedFilesTempTableName = StoredFileEntityInformation.tableName + "Temp";
++		final String storedFilesTempTableName = StoredFileEntityInformation.tableName + "Temp";
+ 
+-			try {
+-				db.execSQL("DROP TABLE `" + storedFilesTempTableName + "`");
+-			} catch (SQLException se) {
+-				logger.warn("There was an error while dropping the temp table", se);
+-			}
++		try {
++			db.execSQL("DROP TABLE `" + storedFilesTempTableName + "`");
++		} catch (SQLException se) {
++			logger.warn("There was an error while dropping the temp table", se);
++		}
+ 
+-			final String createTempTableSql =
+-					StoredFileEntityInformation
+-							.createTableSql
+-							.replaceFirst(StoredFileEntityInformation.tableName, storedFilesTempTableName);
+-			logger.warn("Creating temp table with SQL: " + createTempTableSql);
+-			db.execSQL(createTempTableSql);
++		final String createTempTableSql =
++				StoredFileEntityInformation
++						.createTableSql
++						.replaceFirst(StoredFileEntityInformation.tableName, storedFilesTempTableName);
++		logger.warn("Creating temp table with SQL: " + createTempTableSql);
++		db.execSQL(createTempTableSql);
+ 
+-			try {
+-				final String insertIntoTempTable =
+-						"INSERT INTO `" + storedFilesTempTableName + "` " +
+-								"(`id`, " +
+-								"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.pathColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.storedMediaIdColumnName + "`) " +
+-								"SELECT " +
+-								"`id`, " +
+-								"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.pathColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
+-								"`" + StoredFileEntityInformation.storedMediaIdColumnName + "` " +
+-								"FROM " + StoredFileEntityInformation.tableName;
++		try {
++			final String insertIntoTempTable =
++					"INSERT INTO `" + storedFilesTempTableName + "` " +
++							"(`id`, " +
++							"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
++							"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
++							"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
++							"`" + StoredFileEntityInformation.pathColumnName + "`, " +
++							"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
++							"`" + StoredFileEntityInformation.storedMediaIdColumnName + "`) " +
++							"SELECT " +
++							"`id`, " +
++							"`" + StoredFileEntityInformation.isDownloadCompleteColumnName + "`, " +
++							"`" + StoredFileEntityInformation.isOwnerColumnName + "`, " +
++							"`" + StoredFileEntityInformation.libraryIdColumnName + "`, " +
++							"`" + StoredFileEntityInformation.pathColumnName + "`, " +
++							"`" + StoredFileEntityInformation.serviceIdColumnName + "`, " +
++							"`" + StoredFileEntityInformation.storedMediaIdColumnName + "` " +
++							"FROM " + StoredFileEntityInformation.tableName;
+ 
+-				db.execSQL(insertIntoTempTable);
+-			} catch (SQLException sqlException) {
+-				logger.error("There was an error moving the data!", sqlException);
+-				throw sqlException;
+-			}
++			db.execSQL(insertIntoTempTable);
++		} catch (SQLException sqlException) {
++			logger.error("There was an error moving the data!", sqlException);
++			throw sqlException;
++		}
+ 
+-			db.execSQL("DROP TABLE `" + StoredFileEntityInformation.tableName + "`");
+-			db.execSQL("ALTER TABLE `" + storedFilesTempTableName + "` RENAME TO `" + StoredFileEntityInformation.tableName + "`");
++		db.execSQL("DROP TABLE `" + StoredFileEntityInformation.tableName + "`");
++		db.execSQL("ALTER TABLE `" + storedFilesTempTableName + "` RENAME TO `" + StoredFileEntityInformation.tableName + "`");
+-		}
+ 	}
+ }

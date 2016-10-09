@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.Promise;
+import com.lasthopesoftware.AbstractPromise;
 
 import java.io.IOException;
 
@@ -44,8 +44,8 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler {
 	}
 
 	@Override
-	public Promise<IPlaybackHandler> start() {
-		return new Promise<>(new MediaPlayerPlaybackTask(this, mediaPlayer));
+	public AbstractPromise<IPlaybackHandler> start() {
+		return new MediaPlayerPlayerPromise(this, mediaPlayer);
 	}
 
 	@Override
