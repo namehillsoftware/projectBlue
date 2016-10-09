@@ -17,7 +17,13 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 	}
 
 	final void execute(TOriginalResult originalResult) {
-		this.executor.run(originalResult, new InternalResolution<>(resolution), new InternalRejection(rejection));
+		this.executor.run(originalResult, result -> {
+			if (resolution != null)
+				resolution.execute(result);
+		}, error -> {
+			if (rejection != null)
+				rejection.execute(error);
+		});
 	}
 
 	@Override
@@ -39,8 +45,8 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 	}
 
 	@Override
-	public final IPromise<Void> then(OneParameterRunnable<TResult> resolve) {
-		return then(new FulfilledRunnableExecutor<>(resolve));
+	public final IPromise<Void> then(OneParameterRunnable<TResult> onFulfilled) {
+		return then(new FulfilledRunnableExecutor<>(onFulfilled));
 	}
 
 	@Override
