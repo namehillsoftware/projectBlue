@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
-import com.lasthopesoftware.Promise;
+import com.lasthopesoftware.IPromise;
 
 import java.io.Closeable;
 
@@ -13,5 +13,5 @@ public interface IPlaybackHandler extends Closeable {
 
 	int getDuration();
 
-	Promise<IPlaybackHandler> start();
+	IPromise<IPlaybackHandler> start();
 }
