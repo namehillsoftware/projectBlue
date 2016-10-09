@@ -16,25 +16,14 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 		this.executor = executor;
 	}
 
-	void execute(TOriginalResult originalResult) {
-		this.executor.run(originalResult, (result) -> {
-			if (resolution != null)
-				resolution.execute(result);
-		}, (error) -> {
-			if (rejection != null)
-				rejection.execute(error);
-		});
+	final void execute(TOriginalResult originalResult) {
+		this.executor.run(originalResult, new InternalResolution<>(resolution), new InternalRejection(rejection));
 	}
 
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
-		final UnresolvedPromise<TResult, TNewResult> newResolution = new UnresolvedPromise<>((originalResult, newResolve, newReject) -> {
-			try {
-				newResolve.run(onFulfilled.call(originalResult));
-			} catch (Exception e) {
-				newReject.run(e);
-			}
-		});
+	public final <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
+		final UnresolvedPromise<TResult, TNewResult> newResolution =
+				new UnresolvedPromise<>(new FulfilledInternalExecutor<>(onFulfilled));
 
 		if (onRejected != null)
 			error(onRejected);
@@ -45,29 +34,20 @@ class UnresolvedPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 	}
 
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(final OneParameterCallable<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(final OneParameterCallable<TResult, TNewResult> onFulfilled) {
 		return then(onFulfilled, null);
 	}
 
 	@Override
-	public IPromise<Void> then(OneParameterRunnable<TResult> resolve) {
-		return then(result -> {
-			resolve.run(result);
-			return null;
-		});
+	public final IPromise<Void> then(OneParameterRunnable<TResult> resolve) {
+		return then(new FulfilledRunnableExecutor<>(resolve));
 	}
 
 	@Override
-	public IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
-		rejection = new UnresolvedPromise<>((exception, newResolve, newReject) -> {
-			try {
-				onRejected.run(exception);
-				newResolve.run(null);
-			} catch (Exception e) {
-				newReject.run(e);
-			}
-		});
+	public final IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
+		rejection = new UnresolvedPromise<>(new InternalErrorExecutor(onRejected));
 
 		return rejection;
 	}
+
 }
