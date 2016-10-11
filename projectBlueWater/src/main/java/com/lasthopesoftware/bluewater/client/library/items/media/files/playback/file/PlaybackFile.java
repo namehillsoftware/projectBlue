@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -33,8 +32,7 @@ import java.util.concurrent.ExecutionException;
 
 public class PlaybackFile implements
 	IPlaybackFile,
-	OnErrorListener, 
-	OnCompletionListener
+	OnErrorListener
 {
 	@SuppressLint("InlinedApi")
 	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
@@ -99,7 +97,7 @@ public class PlaybackFile implements
 	}
 	
 	public boolean isMediaPlayerCreated() {
-		return mediaPlayer != null;
+		return playbackFilePreparer != null;
 	}
 	
 	public boolean isPrepared() {
@@ -181,18 +179,6 @@ public class PlaybackFile implements
 		if (position > 0) seekTo(position);
 	}
 	
-	public void releaseMediaPlayer() {
-		if (mediaPlayer != null) mediaPlayer.release();
-		mediaPlayer = null;
-		isPrepared = false;
-	}
-	
-	@Override
-	public void onCompletion(MediaPlayer mp) {
-		releaseMediaPlayer();
-		for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
-	}
-	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		mp.setOnErrorListener(null);
@@ -268,11 +254,11 @@ public class PlaybackFile implements
 	}
 	
 	public int getDuration() {
-		if (mediaPlayer == null || isInErrorState || !isPlaying())
+		if (mediaHandler == null || isInErrorState || !isPlaying())
 			return -1;
 		
 		try {
-			return mediaPlayer.getDuration();
+			return mediaHandler.getDuration();
 		} catch (IllegalStateException ie) {
 			handleIllegalStateException(ie);
 			return -1;
@@ -319,8 +305,15 @@ public class PlaybackFile implements
 
 	public void start() throws IllegalStateException {
 		logger.info("Playback started on " + file.getKey());
-		mediaPlayer.seekTo(position);
-		mediaPlayer.start();
+		mediaHandler.seekTo(position);
+		mediaHandler.start().then(playbackHandler -> {
+			try {
+				playbackHandler.close();
+			} catch (IOException e) {
+				throwIoErrorEvent();
+			}
+			for (OnFileCompleteListener listener : onFileCompleteListeners) listener.onFileComplete(this);
+		});
 	}
 	
 	public void stop() throws IllegalStateException {

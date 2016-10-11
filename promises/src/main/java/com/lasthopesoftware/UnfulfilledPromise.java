@@ -61,7 +61,7 @@ class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TResult> 
 
 	@Override
 	public final IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
-		rejection = new UnfulfilledPromise<>(new InternalErrorExecutor(onRejected));
+		rejection = new UnfulfilledPromise<>(new RejectedInternalExecutor(onRejected));
 
 		if (fulfilledError != null)
 			rejection.fulfill(fulfilledError);
