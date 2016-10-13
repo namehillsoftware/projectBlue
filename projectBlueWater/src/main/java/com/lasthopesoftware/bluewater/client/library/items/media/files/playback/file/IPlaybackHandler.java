@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
-import com.lasthopesoftware.IPromise;
+import com.lasthopesoftware.promises.IPromise;
 
 import java.io.Closeable;
 

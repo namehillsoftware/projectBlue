@@ -1,4 +1,4 @@
-package com.lasthopesoftware;
+package com.lasthopesoftware.promises.unfulfilled;
 
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
@@ -6,10 +6,10 @@ import com.vedsoft.futures.runnables.OneParameterRunnable;
 /**
  * Created by david on 10/8/16.
  */
-class FulfilledRunnableExecutor<TResult> implements OneParameterCallable<TResult, Void> {
+public class NullReturnRunnable<TResult> implements OneParameterCallable<TResult, Void> {
 	private final OneParameterRunnable<TResult> resolve;
 
-	FulfilledRunnableExecutor(OneParameterRunnable<TResult> resolve) {
+	NullReturnRunnable(OneParameterRunnable<TResult> resolve) {
 		this.resolve = resolve;
 	}
 

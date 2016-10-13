@@ -1,4 +1,4 @@
-package com.lasthopesoftware;
+package com.lasthopesoftware.promises;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;

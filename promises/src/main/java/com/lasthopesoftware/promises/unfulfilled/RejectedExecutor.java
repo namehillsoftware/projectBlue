@@ -1,4 +1,4 @@
-package com.lasthopesoftware;
+package com.lasthopesoftware.promises.unfulfilled;
 
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
@@ -6,10 +6,10 @@ import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 /**
  * Created by david on 10/8/16.
  */
-class InternalErrorExecutor implements ThreeParameterRunnable<Exception, OneParameterRunnable<Void>, OneParameterRunnable<Exception>> {
+public class RejectedExecutor implements ThreeParameterRunnable<Exception, OneParameterRunnable<Void>, OneParameterRunnable<Exception>> {
 	private final OneParameterRunnable<Exception> onRejected;
 
-	InternalErrorExecutor(OneParameterRunnable<Exception> onRejected) {
+	RejectedExecutor(OneParameterRunnable<Exception> onRejected) {
 		this.onRejected = onRejected;
 	}
 
