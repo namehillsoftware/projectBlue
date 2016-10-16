@@ -51,7 +51,7 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<IFile>());
+		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>());
 	}
 	
 	private PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
