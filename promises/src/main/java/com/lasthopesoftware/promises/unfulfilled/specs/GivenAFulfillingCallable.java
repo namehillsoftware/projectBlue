@@ -1,5 +1,7 @@
 package com.lasthopesoftware.promises.unfulfilled.specs;
 
+import com.lasthopesoftware.promises.unfulfilled.FulfilledExecutor;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,8 +17,9 @@ public class GivenAFulfillingCallable {
 		Object result;
 
 		@Before
-		public void BeforeHand() {
-
+		public void before() {
+			final FulfilledExecutor<Object, Object> fulfilledExecutor = new FulfilledExecutor<>(innerResult -> this.result = innerResult);
+//			fulfilledExecutor.run(new Object(), );
 		}
 
 		@Test
