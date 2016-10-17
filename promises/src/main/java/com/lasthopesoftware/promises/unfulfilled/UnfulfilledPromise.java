@@ -1,11 +1,12 @@
 package com.lasthopesoftware.promises.unfulfilled;
 
 import com.lasthopesoftware.promises.IPromise;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 
@@ -16,11 +17,11 @@ public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TR
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
 
-	protected UnfulfilledPromise(ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
+	protected UnfulfilledPromise(@NotNull ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
 		this.executor = executor;
 	}
 
-	protected final void fulfill(TOriginalResult originalResult) {
+	protected final void fulfill(@Nullable TOriginalResult originalResult) {
 		this.executor.run(originalResult, result -> {
 			if (resolution != null)
 				resolution.fulfill(result);
@@ -34,6 +35,7 @@ public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TR
 		});
 	}
 
+	@NotNull
 	@Override
 	public final <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
 		final UnfulfilledPromise<TResult, TNewResult> newResolution =
@@ -51,17 +53,18 @@ public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TR
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(final OneParameterCallable<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(@NotNull final OneParameterCallable<TResult, TNewResult> onFulfilled) {
 		return then(onFulfilled, null);
 	}
 
 	@Override
-	public final IPromise<Void> then(OneParameterRunnable<TResult> onFulfilled) {
+	public final IPromise<Void> then(@NotNull OneParameterRunnable<TResult> onFulfilled) {
 		return then(new NullReturnRunnable<>(onFulfilled));
 	}
 
+	@NotNull
 	@Override
-	public final IPromise<Void> error(OneParameterRunnable<Exception> onRejected) {
+	public final IPromise<Void> error(@NotNull OneParameterRunnable<Exception> onRejected) {
 		rejection = new UnfulfilledPromise<>(new RejectedExecutor(onRejected));
 
 		if (fulfilledError != null)

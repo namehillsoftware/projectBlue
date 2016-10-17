@@ -1,9 +1,10 @@
 package com.lasthopesoftware.promises;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by david on 10/8/16.
