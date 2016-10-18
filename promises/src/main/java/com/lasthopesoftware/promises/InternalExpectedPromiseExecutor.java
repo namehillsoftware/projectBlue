@@ -3,6 +3,8 @@ package com.lasthopesoftware.promises;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.Callable;
 
 /**
@@ -11,7 +13,7 @@ import java.util.concurrent.Callable;
 class InternalExpectedPromiseExecutor<TResult> implements TwoParameterRunnable<OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> {
 	private final Callable<TResult> executor;
 
-	InternalExpectedPromiseExecutor(Callable<TResult> executor) {
+	InternalExpectedPromiseExecutor(@NotNull Callable<TResult> executor) {
 		this.executor = executor;
 	}
 
