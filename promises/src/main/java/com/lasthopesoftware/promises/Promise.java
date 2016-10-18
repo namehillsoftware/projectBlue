@@ -5,12 +5,12 @@ import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.jetbrains.annotations.NotNull;
 
-public class Promise<TResult> extends UnfulfilledPromise<Void, TResult> {
+public class Promise<TResult> extends DependentPromise<Void, TResult> {
 
 	public Promise(@NotNull TwoParameterRunnable<OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
 		super(new InternalPromiseExecutor<>(executor));
 
-		fulfill(null);
+		provide(null);
 	}
 
 }
