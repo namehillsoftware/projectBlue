@@ -9,13 +9,8 @@ import java.util.concurrent.Callable;
  */
 
 public class ExpectedPromise<TResult> extends Promise<TResult> {
-	ExpectedPromise(@NotNull Callable<TResult> executor) {
-		super((resolve, reject) -> {
-			try {
-				resolve.run(executor.call());
-			} catch (Exception e) {
-				reject.run(e);
-			}
-		});
+	public ExpectedPromise(@NotNull Callable<TResult> executor) {
+		super(new InternalExpectedPromiseExecutor<>(executor));
 	}
+
 }

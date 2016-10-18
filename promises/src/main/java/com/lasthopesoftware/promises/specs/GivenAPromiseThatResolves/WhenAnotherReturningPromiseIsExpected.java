@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
 
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.ExpectedPromise;
 import com.vedsoft.futures.callables.OneParameterCallable;
 
 import org.junit.Assert;
@@ -17,7 +17,7 @@ public class WhenAnotherReturningPromiseIsExpected {
 	@Before
 	public void before() {
 		final OneParameterCallable<String, Integer> nextReturningPromise = (result) -> 330;
-		new Promise<String>((resolve, reject) -> resolve.run("test"))
+		new ExpectedPromise<>(() -> "test")
 				.then(nextReturningPromise)
 				.then(nextResult -> {
 					nextReturningPromiseResult = nextResult;
