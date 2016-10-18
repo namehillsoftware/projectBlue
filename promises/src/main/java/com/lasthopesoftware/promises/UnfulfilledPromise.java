@@ -1,6 +1,5 @@
-package com.lasthopesoftware.promises.unfulfilled;
+package com.lasthopesoftware.promises;
 
-import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
@@ -8,7 +7,7 @@ import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TResult> {
+class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TResult> {
 
 	private final ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor;
 	private UnfulfilledPromise<TResult, ?> resolution;
@@ -17,11 +16,11 @@ public class UnfulfilledPromise<TOriginalResult, TResult> implements IPromise<TR
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
 
-	protected UnfulfilledPromise(@NotNull ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
+	UnfulfilledPromise(@NotNull ThreeParameterRunnable<TOriginalResult, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
 		this.executor = executor;
 	}
 
-	protected final void fulfill(@Nullable TOriginalResult originalResult) {
+	final void fulfill(@Nullable TOriginalResult originalResult) {
 		this.executor.run(originalResult, result -> {
 			if (resolution != null)
 				resolution.fulfill(result);

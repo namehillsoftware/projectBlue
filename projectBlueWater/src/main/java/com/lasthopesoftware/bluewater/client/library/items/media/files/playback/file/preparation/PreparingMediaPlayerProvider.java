@@ -5,9 +5,12 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.List;
 /**
  * Created by david on 9/26/16.
  */
-public class PreparingMediaPlayerProvider implements IPreparingPlaybackFileProvider {
+public class PreparingMediaPlayerProvider implements IPreparedPlaybackFileProvider {
 	private ConnectionProvider connectionProvider;
 	private final List<IFile> playlist;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
@@ -31,10 +34,10 @@ public class PreparingMediaPlayerProvider implements IPreparingPlaybackFileProvi
 	}
 
 	@Override
-	public IPlaybackFilePreparer getPreparingPlaybackFile(int pos) throws IOException {
+	public IPromise<IPlaybackHandler> promisePreparedPlaybackFile(int pos) throws IOException {
 		final IFile file = playlist.get(pos);
 		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(context, connectionProvider, library, file);
 		final MediaPlayer mediaPlayer = playbackInitialization.initializeMediaPlayer(bestMatchUriProvider.getFileUri());
-		return new MediaPlayerPreparer(mediaPlayer);
+		return new Promise<>(new MediaPlayerPreparerTask(mediaPlayer));
 	}
 }

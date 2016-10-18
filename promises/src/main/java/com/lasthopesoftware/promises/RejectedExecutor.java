@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.unfulfilled;
+package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by david on 10/8/16.
  */
-public class RejectedExecutor implements ThreeParameterRunnable<Exception, OneParameterRunnable<Void>, OneParameterRunnable<Exception>> {
+class RejectedExecutor implements ThreeParameterRunnable<Exception, OneParameterRunnable<Void>, OneParameterRunnable<Exception>> {
 	private final OneParameterRunnable<Exception> onRejected;
 
 	RejectedExecutor(@NotNull OneParameterRunnable<Exception> onRejected) {

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises;
 
-import com.lasthopesoftware.promises.unfulfilled.UnfulfilledPromise;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.TwoParameterRunnable;
 

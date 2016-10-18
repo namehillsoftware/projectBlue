@@ -1,44 +1,33 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
 
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
-import com.vedsoft.fluent.FluentCallable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask extends FluentCallable<IPlaybackHandler> {
-	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPreparerTask.class);
+class MediaPlayerPreparerTask implements TwoParameterRunnable<OneParameterRunnable<IPlaybackHandler>,OneParameterRunnable<Exception>> {
 
 	private final MediaPlayer mediaPlayer;
 
 	MediaPlayerPreparerTask(MediaPlayer mediaPlayer) {
-		super(AsyncTask.THREAD_POOL_EXECUTOR);
-
 		this.mediaPlayer = mediaPlayer;
 	}
 
 	@Override
-	protected IPlaybackHandler executeInBackground() {
-		try {
-			mediaPlayer.prepare();
+	public void run(OneParameterRunnable<IPlaybackHandler> resolve, OneParameterRunnable<Exception> reject) {
+		mediaPlayer.setOnPreparedListener(mp -> resolve.run(new MediaPlayerPlaybackHandler(mp)));
 
-		} catch (IOException io) {
-			logger.error(io.toString(), io);
-			setException(io);
-		} catch (Exception e) {
-			logger.error(e.toString(), e);
-			return null;
-		}
+		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+			reject.run(new MediaPlayerException(mp, what, extra));
+			return true;
+		});
 
-		return new MediaPlayerPlaybackHandler(mediaPlayer);
+		mediaPlayer.prepareAsync();
 	}
 }

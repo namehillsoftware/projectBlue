@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.unfulfilled;
+package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.OneParameterCallable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
