@@ -11,7 +11,7 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	private final ThreeParameterRunnable<TInput, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor;
 	private DependentPromise<TResult, ?> resolution;
-	private DependentPromise<Exception, Void> rejection;
+	private DependentPromise<Exception, ?> rejection;
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
@@ -36,22 +36,6 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	@NotNull
 	@Override
-	public <TNewResult, TNewRejectedResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> onFulfilled, @NotNull ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected) {
-		final IPromise<TNewResult> newResolution = then(onFulfilled);
-
-		error(onRejected);
-
-		return newResolution;
-	}
-
-	@NotNull
-	@Override
-	public final <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
-		return then(new FulfilledExecutor<>(onFulfilled), new RejectedExecutor(onRejected));
-	}
-
-	@NotNull
-	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> onFulfilled) {
 		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>(onFulfilled);
 
@@ -63,11 +47,13 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 		return newResolution;
 	}
 
+	@NotNull
 	@Override
 	public final <TNewResult> IPromise<TNewResult> then(@NotNull final OneParameterCallable<TResult, TNewResult> onFulfilled) {
-		return then(onFulfilled, null);
+		return then(new FulfilledExecutor<>(onFulfilled));
 	}
 
+	@NotNull
 	@Override
 	public final IPromise<Void> then(@NotNull OneParameterRunnable<TResult> onFulfilled) {
 		return then(new NullReturnRunnable<>(onFulfilled));
@@ -76,23 +62,25 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected) {
-		return null;
+		final DependentPromise<Exception, TNewRejectedResult> newResolution = new DependentPromise<>(onRejected);
+
+		rejection = newResolution;
+
+		if (fulfilledError != null)
+			newResolution.provide(fulfilledError);
+
+		return newResolution;
 	}
 
 	@NotNull
 	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterCallable<Exception, TNewRejectedResult> onFulfilled, @Nullable OneParameterRunnable<Exception> onRejected) {
-		return null;
+	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterCallable<Exception, TNewRejectedResult> onRejected) {
+		return error(new FulfilledExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
 	public final IPromise<Void> error(@NotNull OneParameterRunnable<Exception> onRejected) {
-		rejection = new DependentPromise<>(new RejectedExecutor(onRejected));
-
-		if (fulfilledError != null)
-			rejection.provide(fulfilledError);
-
-		return rejection;
+		return error(new NullReturnRunnable<>(onRejected));
 	}
 }

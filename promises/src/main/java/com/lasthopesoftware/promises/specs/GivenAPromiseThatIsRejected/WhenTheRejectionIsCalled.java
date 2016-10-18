@@ -18,9 +18,12 @@ public class WhenTheRejectionIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		new ExpectedPromise<String>(() -> {
-				throw thrownException;
-			}).error(exception -> caughtException = exception);
+		new ExpectedPromise<String>(
+				() -> {
+					throw thrownException;
+				}).error(exception -> {
+					caughtException = exception;
+				});
 	}
 
 	@Test
