@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by david on 10/8/16.
  */
-public class FulfilledExecutor<TResult, TNewResult> implements ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> {
+class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> {
 	private final OneParameterCallable<TResult, TNewResult> onFulfilled;
 
-	public FulfilledExecutor(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled) {
+	ExpectedResultExecutor(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled) {
 		this.onFulfilled = onFulfilled;
 	}
 

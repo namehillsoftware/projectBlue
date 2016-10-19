@@ -22,22 +22,32 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	final void provide(@Nullable TInput input) {
 		this.executor.run(input, result -> {
+			fulfilledResult = result;
+
 			if (resolution != null)
 				resolution.provide(result);
-
-			fulfilledResult = result;
 		}, error -> {
+			fulfilledError = error;
+
 			if (rejection != null)
 				rejection.provide(error);
 
-			fulfilledError = error;
+			if (resolution != null)
+				resolution.provide(null);
 		});
 	}
 
 	@NotNull
 	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> onFulfilled) {
-		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>(onFulfilled);
+		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>((result, resolve, reject) -> {
+			if (fulfilledError != null) {
+				reject.run(fulfilledError);
+				return;
+			}
+
+			onFulfilled.run(result, resolve, reject);
+		});
 
 		resolution = newResolution;
 
@@ -50,7 +60,7 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	@NotNull
 	@Override
 	public final <TNewResult> IPromise<TNewResult> then(@NotNull final OneParameterCallable<TResult, TNewResult> onFulfilled) {
-		return then(new FulfilledExecutor<>(onFulfilled));
+		return then(new ExpectedResultExecutor<>(onFulfilled));
 	}
 
 	@NotNull
@@ -62,20 +72,20 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected) {
-		final DependentPromise<Exception, TNewRejectedResult> newResolution = new DependentPromise<>(onRejected);
+		final DependentPromise<Exception, TNewRejectedResult> newRejection = new DependentPromise<>(onRejected);
 
-		rejection = newResolution;
+		rejection = newRejection;
 
 		if (fulfilledError != null)
-			newResolution.provide(fulfilledError);
+			newRejection.provide(fulfilledError);
 
-		return newResolution;
+		return newRejection;
 	}
 
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterCallable<Exception, TNewRejectedResult> onRejected) {
-		return error(new FulfilledExecutor<>(onRejected));
+		return error(new ExpectedResultExecutor<>(onRejected));
 	}
 
 	@NotNull
