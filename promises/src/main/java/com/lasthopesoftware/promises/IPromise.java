@@ -1,6 +1,7 @@
 package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.runnables.FourParameterRunnable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface IPromise<TResult> {
 
+	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterRunnable<TResult, Exception, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, OneParameterRunnable<TNewResult>, OneParameterRunnable<Exception>> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled);
 	@NotNull IPromise<Void> then(@NotNull OneParameterRunnable<TResult> onFulfilled);
