@@ -12,11 +12,11 @@ import org.junit.Test;
  */
 public class WhenAnotherReturningPromiseIsExpected {
 
-	private int nextReturningPromiseResult;
+	private String nextReturningPromiseResult;
 
 	@Before
 	public void before() {
-		final OneParameterCallable<String, Integer> nextReturningPromise = (result) -> 330;
+		final OneParameterCallable<String, String> nextReturningPromise = (result) -> 330 + result;
 		new ExpectedPromise<>(() -> "test")
 				.then(nextReturningPromise)
 				.then(nextResult -> {
@@ -26,6 +26,6 @@ public class WhenAnotherReturningPromiseIsExpected {
 
 	@Test
 	public void thenTheNextActionReturnsAPromiseOfTheCorrectType() {
-		Assert.assertEquals(330, nextReturningPromiseResult);
+		Assert.assertEquals("330test", nextReturningPromiseResult);
 	}
 }
