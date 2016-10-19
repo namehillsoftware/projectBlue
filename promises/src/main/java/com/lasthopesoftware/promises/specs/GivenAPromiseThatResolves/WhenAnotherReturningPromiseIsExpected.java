@@ -1,7 +1,6 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
 
 import com.lasthopesoftware.promises.ExpectedPromise;
-import com.vedsoft.futures.callables.OneParameterCallable;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,13 +11,12 @@ import org.junit.Test;
  */
 public class WhenAnotherReturningPromiseIsExpected {
 
-	private String nextReturningPromiseResult;
+	private Integer nextReturningPromiseResult;
 
 	@Before
 	public void before() {
-		final OneParameterCallable<String, String> nextReturningPromise = (result) -> 330 + result;
 		new ExpectedPromise<>(() -> "test")
-				.then(nextReturningPromise)
+				.then(result -> 330 + result.hashCode())
 				.then(nextResult -> {
 					nextReturningPromiseResult = nextResult;
 				});
@@ -26,6 +24,6 @@ public class WhenAnotherReturningPromiseIsExpected {
 
 	@Test
 	public void thenTheNextActionReturnsAPromiseOfTheCorrectType() {
-		Assert.assertEquals("330test", nextReturningPromiseResult);
+		Assert.assertEquals(330 + "test".hashCode(), nextReturningPromiseResult.intValue());
 	}
 }
