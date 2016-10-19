@@ -26,17 +26,17 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 			fulfilledResult = result;
 
 			if (resolution != null)
-				resolution.provide(result, exception);
+				resolution.provide(result, null);
 		}, error -> {
 			fulfilledError = error;
 
 			if (rejection != null) {
-				rejection.provide(error, exception);
+				rejection.provide(error, null);
 				return;
 			}
 
 			if (resolution != null)
-				resolution.provide(null, exception);
+				resolution.provide(null, error);
 		});
 	}
 
