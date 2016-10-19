@@ -104,16 +104,4 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 		return error(new NullReturnRunnable<>(onRejected));
 	}
 
-	private static class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterRunnable<TResult, Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> {
-		private final ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected;
-
-		RejectionDependentExecutor(ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected) {
-			this.onRejected = onRejected;
-		}
-
-		@Override
-		public void run(TResult result, Exception exception, OneParameterRunnable<TNewRejectedResult> resolve, OneParameterRunnable<Exception> reject) {
-			onRejected.run(exception, resolve, reject);
-		}
-	}
 }
