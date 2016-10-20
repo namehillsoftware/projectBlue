@@ -16,6 +16,7 @@ public class WhenThePromiseIsFulfilled {
 
 	@Before
 	public void before() {
+		result = new Object();
 		new ExpectedPromise<>(() -> null)
 				.then(result -> { this.result = result; });
 	}
