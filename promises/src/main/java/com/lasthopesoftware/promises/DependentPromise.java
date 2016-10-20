@@ -14,11 +14,10 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	private DependentPromise<TResult, ?> resolution;
 	private final Object resolutionSync = new Object();
+	private volatile boolean isResolved;
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
-	private final Object fulfilledResultSync = new Object();
-	private final Object fulfilledErrorSync = new Object();
 
 	DependentPromise(@NotNull FourParameterRunnable<TInput, Exception, OneParameterRunnable<TResult>, OneParameterRunnable<Exception>> executor) {
 		this.executor = executor;
@@ -26,24 +25,23 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception) {
 		this.executor.run(input, exception, result -> {
-			synchronized (fulfilledResultSync) {
-				fulfilledResult = result;
-			}
+			fulfilledResult = result;
 
-			synchronized (resolutionSync) {
-				if (resolution != null)
-					resolution.provide(result, null);
-			}
+			resolve(result, null);
 		}, error -> {
-			synchronized (fulfilledErrorSync) {
-				fulfilledError = error;
-			}
+			fulfilledError = error;
 
-			synchronized (resolutionSync) {
-				if (resolution != null)
-					resolution.provide(null, error);
-			}
+			resolve(null, error);
 		});
+	}
+
+	private void resolve(TResult result, Exception error) {
+		isResolved = true;
+
+		synchronized (resolutionSync) {
+			if (resolution != null)
+				resolution.provide(result, error);
+		}
 	}
 
 	@NotNull
@@ -55,15 +53,8 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 			resolution = newResolution;
 		}
 
-		synchronized (fulfilledResultSync) {
-			if (fulfilledResult != null)
-				newResolution.provide(fulfilledResult, null);
-		}
-
-		synchronized (fulfilledErrorSync) {
-			if (fulfilledError != null)
-				newResolution.provide(null, fulfilledError);
-		}
+		if (isResolved)
+			newResolution.provide(fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}
