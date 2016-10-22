@@ -19,20 +19,17 @@ public class WhenThePromiseIsFulfilled {
 	private Object expectedResult;
 
 	@Before
-	public void before() {
+	public void before() throws InterruptedException {
 		expectedResult = new Object();
 		final CountDownLatch latch = new CountDownLatch(1);
 		new Promise<>((resolve, reject) -> new Thread(() -> {
 			resolve.run(result);
 			latch.countDown();
-		}).run())
+		})
+				.run())
 		.then(result -> { this.result = expectedResult; });
 
-		try {
-			latch.await(500, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		latch.await(500, TimeUnit.MILLISECONDS);
 	}
 
 	@Test
