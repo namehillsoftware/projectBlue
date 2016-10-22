@@ -25,8 +25,7 @@ public class WhenThePromiseIsFulfilled {
 		new Promise<>((resolve, reject) -> new Thread(() -> {
 			resolve.run(result);
 			latch.countDown();
-		})
-				.run())
+		}).run())
 		.then(result -> { this.result = expectedResult; });
 
 		latch.await(500, TimeUnit.MILLISECONDS);
