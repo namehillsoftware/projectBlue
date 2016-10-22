@@ -10,5 +10,5 @@ import java.io.IOException;
  */
 
 public interface IPreparedPlaybackFileProvider {
-	IPromise<IPlaybackHandler> promisePreparedPlaybackFile(int pos) throws IOException;
+	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile() throws IOException;
 }
