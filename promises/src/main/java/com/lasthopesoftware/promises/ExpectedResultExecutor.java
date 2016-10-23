@@ -18,7 +18,7 @@ class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterActio
 	@Override
 	public void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 		try {
-			newResolve.withResult(onFulfilled.expectUsing(originalResult));
+			newResolve.withResult(onFulfilled.expectedUsing(originalResult));
 		} catch (Exception e) {
 			newReject.withError(e);
 		}

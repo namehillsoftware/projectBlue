@@ -16,7 +16,7 @@ class NullReturnRunnable<TResult> implements OneParameterFunction<TResult, Void>
 	}
 
 	@Override
-	public Void expectUsing(TResult result) {
+	public Void expectedUsing(TResult result) {
 		resolve.runWith(result);
 		return null;
 	}

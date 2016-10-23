@@ -61,7 +61,7 @@ public class PreparingMediaPlayerProvider implements
 	}
 
 	@Override
-	public IPlaybackHandler expectUsing(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+	public IPlaybackHandler expectedUsing(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		bufferingPlaybackHandler.bufferPlaybackFile().then((OneParameterAction<IBufferingPlaybackHandler>) this);
 
 		return bufferingPlaybackHandler;

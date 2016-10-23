@@ -34,14 +34,14 @@ public class GivenAFileThatExists {
 			mockFile = mock(File.class);
 			when(mockFile.exists()).thenReturn(true);
 
-			when(mockFileAssertionTester.expectUsing(any())).thenReturn(true);
+			when(mockFileAssertionTester.expectedUsing(any())).thenReturn(true);
 
 			RecursiveFileAssertionTester.recursivelyTestAssertion(mockFile, mockFileAssertionTester);
 		}
 
 		@Test
 		public void ThenTheAssertionIsTestedOnThatFile() {
-			verify(mockFileAssertionTester, times(1)).expectUsing(mockFile);
+			verify(mockFileAssertionTester, times(1)).expectedUsing(mockFile);
 		}
 	}
 }
