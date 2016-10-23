@@ -8,9 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.callables.OneParameterCallable;
-import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.io.FileNotFoundException;
 import java.util.Map;
@@ -18,7 +16,7 @@ import java.util.Map;
 /**
  * Created by david on 4/14/15.
  */
-public class FileNameTextViewSetter implements ThreeParameterRunnable<IFluentTask<Integer, Void, Map<String, String>>, Map<String, String>, Exception>, Runnable {
+public class FileNameTextViewSetter implements ThreeParameterAction<IFluentTask<Integer, Void, Map<String, String>>, Map<String, String>, Exception>, Runnable {
 
 	private final TextView textView;
 
@@ -38,7 +36,7 @@ public class FileNameTextViewSetter implements ThreeParameterRunnable<IFluentTas
 	}
 
 	@Override
-	public void run(IFluentTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties, Exception exception) {
+	public void runWith(IFluentTask<Integer, Void, Map<String, String>> provider, Map<String, String> properties, Exception exception) {
 		if (provider.isCancelled()) return;
 
 		if (exception instanceof FileNotFoundException) {

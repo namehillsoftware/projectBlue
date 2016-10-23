@@ -1,10 +1,10 @@
 package com.vedsoft.fluent;
 
-import com.vedsoft.futures.callables.OneParameterCallable;
-import com.vedsoft.futures.callables.TwoParameterCallable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.callables.TwoParameterFunction;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -33,21 +33,21 @@ public interface IFluentTask<TParams, TProgress, TResult> {
 
 	boolean isCancelled();
 
-	IFluentTask<TParams,TProgress,TResult> beforeStart(OneParameterRunnable<IFluentTask<TParams,TProgress,TResult>> listener);
+	IFluentTask<TParams,TProgress,TResult> beforeStart(OneParameterAction<IFluentTask<TParams,TProgress,TResult>> listener);
 
 	IFluentTask<TParams, TProgress, TResult> beforeStart(Runnable listener);
 
-	IFluentTask<TParams, TProgress, TResult> onComplete(ThreeParameterRunnable<IFluentTask<TParams, TProgress, TResult>, TResult, Exception> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(ThreeParameterAction<IFluentTask<TParams, TProgress, TResult>, TResult, Exception> listener);
 
-	IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterRunnable<TResult, Exception> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(TwoParameterAction<TResult, Exception> listener);
 
-	IFluentTask<TParams, TProgress, TResult> onComplete(OneParameterRunnable<TResult> listener);
+	IFluentTask<TParams, TProgress, TResult> onComplete(OneParameterAction<TResult> listener);
 
-	IFluentTask<TParams,TProgress,TResult> onProgress(TwoParameterRunnable<IFluentTask<TParams,TProgress,TResult>, TProgress[]> listener);
+	IFluentTask<TParams,TProgress,TResult> onProgress(TwoParameterAction<IFluentTask<TParams,TProgress,TResult>, TProgress[]> listener);
 
-	IFluentTask<TParams,TProgress,TResult> onProgress(OneParameterRunnable<TProgress[]> listener);
+	IFluentTask<TParams,TProgress,TResult> onProgress(OneParameterAction<TProgress[]> listener);
 
-	IFluentTask<TParams,TProgress,TResult> onError(TwoParameterCallable<IFluentTask<TParams,TProgress,TResult>, Exception, Boolean> listener);
+	IFluentTask<TParams,TProgress,TResult> onError(TwoParameterFunction<IFluentTask<TParams,TProgress,TResult>, Exception, Boolean> listener);
 
-	IFluentTask<TParams,TProgress,TResult> onError(OneParameterCallable<Exception, Boolean> listener);
+	IFluentTask<TParams,TProgress,TResult> onError(OneParameterFunction<Exception, Boolean> listener);
 }

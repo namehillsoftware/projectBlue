@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
@@ -59,7 +59,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterRunnable<List<IFile>> onFileProviderComplete = result -> {
+		final OneParameterAction<List<IFile>> onFileProviderComplete = result -> {
 			if (result == null) return;
 
 			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

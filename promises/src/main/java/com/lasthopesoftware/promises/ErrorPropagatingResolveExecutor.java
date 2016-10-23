@@ -1,25 +1,25 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.FourParameterRunnable;
-import com.vedsoft.futures.runnables.ThreeParameterRunnable;
+import com.vedsoft.futures.runnables.FourParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 /**
  * Created by david on 10/18/16.
  */
-class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterRunnable<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> {
-	private final ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
+class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
-	ErrorPropagatingResolveExecutor(ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		this.onFulfilled = onFulfilled;
 	}
 
 	@Override
-	public void run(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
+	public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 		if (exception != null) {
 			reject.withError(exception);
 			return;
 		}
 
-		onFulfilled.run(result, resolve, reject);
+		onFulfilled.runWith(result, resolve, reject);
 	}
 }

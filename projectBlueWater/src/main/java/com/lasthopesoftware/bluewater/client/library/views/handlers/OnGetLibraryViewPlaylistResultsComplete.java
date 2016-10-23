@@ -27,8 +27,8 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
     }
 
     @Override
-    public void run(List<Playlist> result) {
-        super.run(result);
+    public void runWith(List<Playlist> result) {
+        super.runWith(result);
         if (result == null) return;
 
         listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));

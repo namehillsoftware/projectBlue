@@ -9,9 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -34,11 +32,11 @@ public class AccessConfigurationBuilder {
 	private static final int buildConnectionTimeoutTime = 10000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final Library library, final OneParameterRunnable<MediaServerUrlProvider> onBuildComplete) {
+	public static void buildConfiguration(final Context context, final Library library, final OneParameterAction<MediaServerUrlProvider> onBuildComplete) {
 		buildConfiguration(context, library, buildConnectionTimeoutTime, onBuildComplete);
 	}
 
-	private static void buildConfiguration(final Context context, final Library library, int timeout, final OneParameterRunnable<MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
+	private static void buildConfiguration(final Context context, final Library library, int timeout, final OneParameterAction<MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
@@ -57,11 +55,11 @@ public class AccessConfigurationBuilder {
 			}
 
 			if (onBuildComplete != null)
-				onBuildComplete.run(urlProvider);
+				onBuildComplete.runWith(urlProvider);
 		});
 	}
 
-	private static void executeReturnNullTask(OneParameterRunnable<MediaServerUrlProvider> onReturnFalseListener) {
+	private static void executeReturnNullTask(OneParameterAction<MediaServerUrlProvider> onReturnFalseListener) {
 		final FluentCallable<MediaServerUrlProvider> returnFalseTask = new FluentCallable<MediaServerUrlProvider>() {
 			@Override
 			protected MediaServerUrlProvider executeInBackground() {
@@ -74,7 +72,7 @@ public class AccessConfigurationBuilder {
 			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private static void buildAccessConfiguration(final Library library, final int timeout, OneParameterRunnable<MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
+	private static void buildAccessConfiguration(final Library library, final int timeout, OneParameterAction<MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");
 

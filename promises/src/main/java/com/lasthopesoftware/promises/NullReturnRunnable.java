@@ -1,23 +1,23 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.callables.OneParameterCallable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by david on 10/8/16.
  */
-class NullReturnRunnable<TResult> implements OneParameterCallable<TResult, Void> {
-	private final OneParameterRunnable<TResult> resolve;
+class NullReturnRunnable<TResult> implements OneParameterFunction<TResult, Void> {
+	private final OneParameterAction<TResult> resolve;
 
-	NullReturnRunnable(@NotNull OneParameterRunnable<TResult> resolve) {
+	NullReturnRunnable(@NotNull OneParameterAction<TResult> resolve) {
 		this.resolve = resolve;
 	}
 
 	@Override
-	public Void call(TResult result) {
-		resolve.run(result);
+	public Void expectUsing(TResult result) {
+		resolve.runWith(result);
 		return null;
 	}
 }

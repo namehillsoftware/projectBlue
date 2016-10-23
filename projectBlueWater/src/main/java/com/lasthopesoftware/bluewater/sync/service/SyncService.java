@@ -48,8 +48,8 @@ import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissi
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -118,17 +118,17 @@ public class SyncService extends Service {
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
-	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
+	private final OneParameterAction<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
 		librarySyncHandlers.remove(librarySyncHandler);
 
 		if (--librariesProcessing == 0) finishSync();
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
+	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
-	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = storedFile -> {
+	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
 		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
@@ -148,19 +148,19 @@ public class SyncService extends Service {
 			}));
 	};
 
-	private final OneParameterRunnable<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
+	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
 		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
 
 		if (storedFileJobResult.storedFileJobResult == StoredFileJobResultOptions.Downloaded)
 			scanMediaFileBroadcasterLazy.getObject().sendScanMediaFileBroadcastForFile(storedFileJobResult.downloadedFile);
 	};
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
+	private final TwoParameterAction<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
 		if (!storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
 			storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
 	};
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
+	private final TwoParameterAction<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
 		if (!storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
 			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
@@ -321,7 +321,7 @@ public class SyncService extends Service {
 	private void finishSync() {
 		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
 
-		// Set an alarm for the next time we run this bad boy
+		// Set an alarm for the next time we runWith this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);

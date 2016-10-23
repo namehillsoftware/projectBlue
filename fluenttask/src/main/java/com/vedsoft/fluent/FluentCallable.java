@@ -1,8 +1,5 @@
 package com.vedsoft.fluent;
 
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-
 import java.util.concurrent.Executor;
 
 /**

@@ -21,8 +21,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ public class LibrarySyncHandler {
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final StoredFileDownloader storedFileDownloader;
-	private OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted;
+	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
 	private volatile boolean isFaulted;
@@ -73,33 +73,33 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
-	public void setOnFileDownloading(OneParameterRunnable<StoredFile> onFileDownloading) {
+	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
 		storedFileDownloader.setOnFileDownloading(onFileDownloading);
 	}
 
-	public void setOnFileDownloaded(OneParameterRunnable<StoredFileJobResult> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterAction<StoredFileJobResult> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
-	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
+	public void setOnFileQueued(OneParameterAction<StoredFile> onFileQueued) {
 		storedFileDownloader.setOnFileQueued(onFileQueued);
 	}
 
-	public void setOnQueueProcessingCompleted(final OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
+	public void setOnQueueProcessingCompleted(final OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
-	public void setOnFileReadError(TwoParameterRunnable<Library, StoredFile> onFileReadError) {
+	public void setOnFileReadError(TwoParameterAction<Library, StoredFile> onFileReadError) {
 		storedFileDownloader.setOnFileReadError(storedFile -> {
 			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
-				onFileReadError.run(library, storedFile);
+				onFileReadError.runWith(library, storedFile);
 		});
 	}
 
-	public void setOnFileWriteError(TwoParameterRunnable<Library, StoredFile> onFileWriteError) {
+	public void setOnFileWriteError(TwoParameterAction<Library, StoredFile> onFileWriteError) {
 		storedFileDownloader.setOnFileWriteError(storedFile -> {
 			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-				onFileWriteError.run(library, storedFile);
+				onFileWriteError.runWith(library, storedFile);
 		});
 	}
 
@@ -200,6 +200,6 @@ public class LibrarySyncHandler {
 
 	private void handleQueueProcessingCompleted() {
 		if (onQueueProcessingCompleted != null)
-			onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+			onQueueProcessingCompleted.runWith(LibrarySyncHandler.this);
 	}
 }

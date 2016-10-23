@@ -1,7 +1,7 @@
 package com.lasthopesoftware.storage.specs;
 
 import com.lasthopesoftware.storage.RecursiveFileAssertionTester;
-import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.callables.OneParameterFunction;
 
 import junit.framework.Assert;
 
@@ -30,7 +30,7 @@ public class GivenAFileThatDoesNotExist {
 				private File grandParentFile;
 
 				@Mock
-				private OneParameterCallable<File, Boolean> mockCallable;
+				private OneParameterFunction<File, Boolean> mockCallable;
 				private boolean fileAssertionResult;
 				private final boolean expectedFileAssertionResult = true;
 
@@ -47,15 +47,15 @@ public class GivenAFileThatDoesNotExist {
 					when(childFile.exists()).thenReturn(false);
 					when(childFile.getParentFile()).thenReturn(parentFile);
 
-					when(mockCallable.call(any())).thenReturn(false);
-					when(mockCallable.call(grandParentFile)).thenReturn(expectedFileAssertionResult);
+					when(mockCallable.expectUsing(any())).thenReturn(false);
+					when(mockCallable.expectUsing(grandParentFile)).thenReturn(expectedFileAssertionResult);
 
 					fileAssertionResult = RecursiveFileAssertionTester.recursivelyTestAssertion(childFile, mockCallable);
 				}
 
 				@Test
 				public void ThenTheAssertionIsTestedOnTheGrandParentFile() {
-					verify(mockCallable, times(1)).call(grandParentFile);
+					verify(mockCallable, times(1)).expectUsing(grandParentFile);
 				}
 
 				@Test
@@ -72,7 +72,7 @@ public class GivenAFileThatDoesNotExist {
 				private File childFile;
 
 				@Mock
-				private OneParameterCallable<File, Boolean> mockCallable;
+				private OneParameterFunction<File, Boolean> mockCallable;
 				private boolean fileAssertionResult;
 
 				@Before
@@ -85,14 +85,14 @@ public class GivenAFileThatDoesNotExist {
 					when(childFile.exists()).thenReturn(false);
 					when(childFile.getParentFile()).thenReturn(parentFile);
 
-					when(mockCallable.call(any())).thenReturn(true);
+					when(mockCallable.expectUsing(any())).thenReturn(true);
 
 					fileAssertionResult = RecursiveFileAssertionTester.recursivelyTestAssertion(childFile, mockCallable);
 				}
 
 				@Test
 				public void ThenTheAssertionIsNotTested() {
-					verify(mockCallable, times(0)).call(any());
+					verify(mockCallable, times(0)).expectUsing(any());
 				}
 
 				@Test

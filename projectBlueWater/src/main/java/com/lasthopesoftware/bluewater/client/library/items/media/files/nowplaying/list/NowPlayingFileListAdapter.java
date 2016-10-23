@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterRunnable<Integer> {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterAction<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
@@ -36,7 +36,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter implement
     }
 
     @Override
-    public void run(Integer position) {
+    public void runWith(Integer position) {
         remove(getItem(position));
     }
 }

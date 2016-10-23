@@ -22,9 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
@@ -57,7 +55,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterRunnable<List<Playlist>> onPlaylistProviderComplete = result -> {
+		final OneParameterAction<List<Playlist>> onPlaylistProviderComplete = result -> {
 			if (result == null) return;
 
 			BuildPlaylistView(result);

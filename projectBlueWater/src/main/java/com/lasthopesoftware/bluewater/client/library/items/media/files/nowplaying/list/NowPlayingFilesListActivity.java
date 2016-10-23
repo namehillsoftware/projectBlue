@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.ArrayList;
 
@@ -90,7 +90,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements OneParameterRunnable<Library> {
+	private static class OnGetLibraryNowComplete implements OneParameterAction<Library> {
 		
 		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
 		private final ListView mFileListView;
@@ -103,7 +103,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void run(final Library library) {
+		public void runWith(final Library library) {
 			if (library == null) return;
 
 	        final FluentCallable<ArrayList<IFile>> getFileStringTask = new FluentCallable<ArrayList<IFile>>() {

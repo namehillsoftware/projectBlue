@@ -55,7 +55,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -388,12 +388,12 @@ public class PlaybackService extends Service implements
 		}
 	};
 		
-	private void restorePlaylistControllerFromStorage(final OneParameterRunnable<Boolean> onPlaylistRestored) {
+	private void restorePlaylistControllerFromStorage(final OneParameterAction<Boolean> onPlaylistRestored) {
 
 		LibrarySession.GetActiveLibrary(this, library -> {
 			if (library == null) return;
 
-			final Runnable onPlaylistInitialized = () -> onPlaylistRestored.run(true);
+			final Runnable onPlaylistInitialized = () -> onPlaylistRestored.runWith(true);
 
 			final LocalBroadcastManager localBroadcastManager = this.localBroadcastManagerLazy.getObject();
 			final BroadcastReceiver buildSessionReceiver = new BroadcastReceiver() {
@@ -405,7 +405,7 @@ public class PlaybackService extends Service implements
 					localBroadcastManager.unregisterReceiver(this);
 
 					if (result != BuildingSessionConnectionStatus.BuildingSessionComplete) {
-						onPlaylistRestored.run(false);
+						onPlaylistRestored.runWith(false);
 						return;
 					}
 

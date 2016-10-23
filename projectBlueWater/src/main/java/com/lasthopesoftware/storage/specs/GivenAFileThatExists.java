@@ -1,7 +1,7 @@
 package com.lasthopesoftware.storage.specs;
 
 import com.lasthopesoftware.storage.RecursiveFileAssertionTester;
-import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,21 +27,21 @@ public class GivenAFileThatExists {
 		private File mockFile;
 
 		@Mock
-		private OneParameterCallable<File, Boolean> mockFileAssertionTester;
+		private OneParameterFunction<File, Boolean> mockFileAssertionTester;
 
 		@Before
 		public void setUp() {
 			mockFile = mock(File.class);
 			when(mockFile.exists()).thenReturn(true);
 
-			when(mockFileAssertionTester.call(any())).thenReturn(true);
+			when(mockFileAssertionTester.expectUsing(any())).thenReturn(true);
 
 			RecursiveFileAssertionTester.recursivelyTestAssertion(mockFile, mockFileAssertionTester);
 		}
 
 		@Test
 		public void ThenTheAssertionIsTestedOnThatFile() {
-			verify(mockFileAssertionTester, times(1)).call(mockFile);
+			verify(mockFileAssertionTester, times(1)).expectUsing(mockFile);
 		}
 	}
 }

@@ -9,8 +9,6 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;

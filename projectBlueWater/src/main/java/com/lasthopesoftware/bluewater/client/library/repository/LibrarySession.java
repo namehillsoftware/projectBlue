@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
@@ -74,7 +74,7 @@ public class LibrarySession {
 		SaveLibrary(context, library, null);
 	}
 
-	public static void SaveLibrary(final Context context, final Library library, final OneParameterRunnable<Library> onSaveComplete) {
+	public static void SaveLibrary(final Context context, final Library library, final OneParameterAction<Library> onSaveComplete) {
 
 		final FluentCallable<Library> writeToDatabaseTask = new FluentCallable<Library>() {
 
@@ -127,7 +127,7 @@ public class LibrarySession {
 		writeToDatabaseTask.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static void GetActiveLibrary(final Context context, final OneParameterRunnable<Library> onGetLibraryComplete) {
+	public static void GetActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
@@ -136,7 +136,7 @@ public class LibrarySession {
 		}, onGetLibraryComplete);
 	}
 
-	public static void GetLibrary(final Context context, final int libraryId, final OneParameterRunnable<Library> onGetLibraryComplete) {
+	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
@@ -145,7 +145,7 @@ public class LibrarySession {
 		}, onGetLibraryComplete);
 	}
 
-	private static void ExecuteGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterRunnable<Library> onGetLibraryComplete) {
+	private static void ExecuteGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterAction<Library> onGetLibraryComplete) {
 
 		getLibraryTask
 				.onComplete(onGetLibraryComplete)
@@ -172,7 +172,7 @@ public class LibrarySession {
 		}
 	}
 	
-	public static void GetLibraries(final Context context, OneParameterRunnable<List<Library>> onGetLibrariesComplete) {
+	public static void GetLibraries(final Context context, OneParameterAction<List<Library>> onGetLibrariesComplete) {
 		new FluentSpecifiedTask<Void, Void, List<Library>>() {
 			@Override
 			protected List<Library> executeInBackground(Void... params) {
@@ -186,7 +186,7 @@ public class LibrarySession {
 		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public synchronized static void ChangeActiveLibrary(final Context context, final int libraryKey, final OneParameterRunnable<Library> onLibraryChangeComplete) {
+	public synchronized static void ChangeActiveLibrary(final Context context, final int libraryKey, final OneParameterAction<Library> onLibraryChangeComplete) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1))
@@ -198,7 +198,7 @@ public class LibrarySession {
 			LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 
 			if (onLibraryChangeComplete != null)
-				onLibraryChangeComplete.run(library);
+				onLibraryChangeComplete.runWith(library);
 		});
 	}
 }

@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.Se
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
@@ -71,7 +71,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final OneParameterRunnable<List<IFile>> onSearchFilesComplete = result -> {
+        final OneParameterAction<List<IFile>> onSearchFilesComplete = result -> {
 			if (result == null) return;
 
 			final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));

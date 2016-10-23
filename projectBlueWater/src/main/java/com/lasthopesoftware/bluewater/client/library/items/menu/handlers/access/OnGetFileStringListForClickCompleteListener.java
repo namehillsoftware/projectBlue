@@ -3,12 +3,12 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 /**
  * Created by david on 4/3/15.
  */
-public class OnGetFileStringListForClickCompleteListener implements OneParameterRunnable<String> {
+public class OnGetFileStringListForClickCompleteListener implements OneParameterAction<String> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -16,7 +16,7 @@ public class OnGetFileStringListForClickCompleteListener implements OneParameter
     }
 
     @Override
-    public void run(String result) {
+    public void runWith(String result) {
         PlaybackService.launchMusicService(mContext, result);
     }
 }
