@@ -22,13 +22,13 @@ public class WhenThePromiseIsFulfilled {
 	public void before() throws InterruptedException {
 		expectedResult = new Object();
 		final CountDownLatch latch = new CountDownLatch(1);
-		new Promise<>((resolve, reject) -> new Thread(() -> {
+		new Promise<>((resolution) -> new Thread(() -> {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			resolve.run(expectedResult);
+			resolution.fulfilled(expectedResult);
 			latch.countDown();
 		}).run())
 		.then(result -> { this.result = result; });

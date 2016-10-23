@@ -1,21 +1,22 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.FourParameterRunnable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by david on 10/19/16.
  */
-class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterRunnable<TResult, Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> {
-	private final ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected;
+class RejectionDependentExecutor<TResult, TNewRejectedResult> implements ThreeParameterRunnable<TResult, Exception, IPromiseResolution<TNewRejectedResult>> {
+	private final TwoParameterRunnable<Exception, IPromiseResolution<TNewRejectedResult>> onRejected;
 
-	RejectionDependentExecutor(ThreeParameterRunnable<Exception, OneParameterRunnable<TNewRejectedResult>, OneParameterRunnable<Exception>> onRejected) {
+	RejectionDependentExecutor(@NotNull TwoParameterRunnable<Exception, IPromiseResolution<TNewRejectedResult>> onRejected) {
 		this.onRejected = onRejected;
 	}
 
 	@Override
-	public void run(TResult result, Exception exception, OneParameterRunnable<TNewRejectedResult> resolve, OneParameterRunnable<Exception> reject) {
-		onRejected.run(exception, resolve, reject);
+	public void run(TResult result, Exception exception, IPromiseResolution<TNewRejectedResult> resolution) {
+		onRejected.run(exception, resolution);
 	}
 }
