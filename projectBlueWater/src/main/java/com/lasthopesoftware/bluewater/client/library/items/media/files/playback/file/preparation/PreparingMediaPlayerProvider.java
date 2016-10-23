@@ -45,11 +45,16 @@ public class PreparingMediaPlayerProvider implements
 
 	@Override
 	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile() {
+		IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
+
+		if (bufferingPlaybackHandlerPromise == null)
+			bufferingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise();
+
+		nextPreparingMediaPlayerPromise = null;
+
 		return
-			(nextPreparingMediaPlayerPromise != null ?
-				nextPreparingMediaPlayerPromise :
-				getNextPreparingMediaPlayerPromise())
-			.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
+			bufferingPlaybackHandlerPromise
+				.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
 	}
 
 	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise() {
@@ -69,6 +74,7 @@ public class PreparingMediaPlayerProvider implements
 
 	@Override
 	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise();
+		if (nextPreparingMediaPlayerPromise == null)
+			nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise();
 	}
 }

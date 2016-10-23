@@ -208,7 +208,8 @@ public class PlaybackController implements
 		else
 			mCurrentPlaybackFile.addOnFileBufferedListener(this);
 
-		preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile()
+		preparedPlaybackFileProvider
+			.promiseNextPreparedPlaybackFile()
 	}
 
 	@Override
