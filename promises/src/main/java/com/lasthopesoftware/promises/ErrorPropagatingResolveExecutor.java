@@ -1,27 +1,25 @@
 package com.lasthopesoftware.promises;
 
+import com.vedsoft.futures.runnables.FourParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by david on 10/18/16.
  */
-class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements ThreeParameterRunnable<TResult, Exception, IPromiseResolution<TNewResult>> {
-	private final TwoParameterRunnable<TResult, IPromiseResolution<TNewResult>> onFulfilled;
+class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterRunnable<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	private final ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
-	ErrorPropagatingResolveExecutor(@NotNull TwoParameterRunnable<TResult, IPromiseResolution<TNewResult>> onFulfilled) {
+	ErrorPropagatingResolveExecutor(ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		this.onFulfilled = onFulfilled;
 	}
 
 	@Override
-	public void run(TResult result, Exception exception, IPromiseResolution<TNewResult> resolution) {
+	public void run(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 		if (exception != null) {
-			resolution.rejected(exception);
+			reject.withError(exception);
 			return;
 		}
 
-		onFulfilled.run(result, resolution);
+		onFulfilled.run(result, resolve, reject);
 	}
 }

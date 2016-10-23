@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by david on 10/17/16.
  */
-class InternalExpectedPromiseExecutor<TResult> implements OneParameterRunnable<IPromiseResolution<TResult>> {
+class InternalExpectedPromiseExecutor<TResult> implements TwoParameterRunnable<IResolvedPromise<TResult>, IRejectedPromise> {
 	private final Callable<TResult> executor;
 
 	InternalExpectedPromiseExecutor(@NotNull Callable<TResult> executor) {
@@ -17,11 +17,11 @@ class InternalExpectedPromiseExecutor<TResult> implements OneParameterRunnable<I
 	}
 
 	@Override
-	public void run(IPromiseResolution<TResult> resolution) {
+	public void run(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 		try {
-			resolution.fulfilled(executor.call());
+			resolve.withResult(executor.call());
 		} catch (Exception e) {
-			resolution.rejected(e);
+			reject.withError(e);
 		}
 	}
 }

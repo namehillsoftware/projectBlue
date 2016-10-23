@@ -1,16 +1,16 @@
 package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.runnables.FourParameterRunnable;
 import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.ThreeParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
-	private final ThreeParameterRunnable<TInput, Exception, IPromiseResolution<TResult>> executor;
+	private final FourParameterRunnable<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise> executor;
 
 	private DependentPromise<TResult, ?> resolution;
 	private final Object resolutionSync = new Object();
@@ -19,25 +19,19 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
 
-	DependentPromise(@NotNull ThreeParameterRunnable<TInput, Exception, IPromiseResolution<TResult>> executor) {
+	DependentPromise(@NotNull FourParameterRunnable<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise> executor) {
 		this.executor = executor;
 	}
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception) {
-		this.executor.run(input, exception, new IPromiseResolution<TResult>() {
-			@Override
-			public void fulfilled(TResult result) {
-				fulfilledResult = result;
+		this.executor.run(input, exception, result -> {
+			fulfilledResult = result;
 
-				resolve(result, null);
-			}
+			resolve(result, null);
+		}, error -> {
+			fulfilledError = error;
 
-			@Override
-			public void rejected(Exception error) {
-				fulfilledError = error;
-
-				resolve(null, error);
-			}
+			resolve(null, error);
 		});
 	}
 
@@ -52,7 +46,7 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, Exception, IPromiseResolution<TNewResult>> onFulfilled) {
+	public <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterRunnable<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>(onFulfilled);
 
 		synchronized (resolutionSync) {
@@ -67,7 +61,7 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterRunnable<TResult, IPromiseResolution<TNewResult>> onFulfilled) {
+	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return then(new ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
@@ -85,7 +79,7 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	@NotNull
 	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull TwoParameterRunnable<Exception, IPromiseResolution<TNewRejectedResult>> onRejected) {
+	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterRunnable<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
 		return then(new RejectionDependentExecutor<>(onRejected));
 	}
 

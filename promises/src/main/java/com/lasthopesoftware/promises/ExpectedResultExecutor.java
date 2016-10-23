@@ -1,14 +1,14 @@
 package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.OneParameterCallable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.vedsoft.futures.runnables.ThreeParameterRunnable;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by david on 10/8/16.
  */
-class ExpectedResultExecutor<TResult, TNewResult> implements TwoParameterRunnable<TResult, IPromiseResolution<TNewResult>> {
+class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterRunnable<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
 	private final OneParameterCallable<TResult, TNewResult> onFulfilled;
 
 	ExpectedResultExecutor(@NotNull OneParameterCallable<TResult, TNewResult> onFulfilled) {
@@ -16,11 +16,11 @@ class ExpectedResultExecutor<TResult, TNewResult> implements TwoParameterRunnabl
 	}
 
 	@Override
-	public void run(TResult originalResult, IPromiseResolution<TNewResult> resolution) {
+	public void run(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 		try {
-			resolution.fulfilled(onFulfilled.call(originalResult));
+			newResolve.withResult(onFulfilled.call(originalResult));
 		} catch (Exception e) {
-			resolution.rejected(e);
+			newReject.withError(e);
 		}
 	}
 }
