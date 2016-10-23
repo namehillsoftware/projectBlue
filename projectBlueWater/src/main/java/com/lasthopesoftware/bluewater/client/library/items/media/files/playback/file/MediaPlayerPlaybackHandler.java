@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.MediaPlayerBufferedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -11,12 +13,14 @@ import java.io.IOException;
  * Created by david on 9/20/16.
  */
 
-public class MediaPlayerPlaybackHandler implements IPlaybackHandler {
+public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
+	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
+		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
 	}
 
 	@Override
@@ -53,4 +57,10 @@ public class MediaPlayerPlaybackHandler implements IPlaybackHandler {
 	public void close() throws IOException {
 		mediaPlayer.release();
 	}
+
+	@Override
+	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+		return bufferingPromise;
+	}
+
 }

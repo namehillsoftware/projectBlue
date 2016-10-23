@@ -3,12 +3,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;
 
-import java.io.IOException;
-
 /**
  * Created by david on 9/26/16.
  */
 
 public interface IPreparedPlaybackFileProvider {
-	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile() throws IOException;
+	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile();
 }

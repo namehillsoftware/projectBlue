@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -49,6 +50,8 @@ public class PlaybackController implements
 	private boolean mIsPlaying = false;
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
+
+	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
 	
 	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
 		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>());
@@ -195,7 +198,7 @@ public class PlaybackController implements
 			if (mNextPlaybackFile != null && mNextPlaybackFile != mCurrentPlaybackFile)
 				mNextPlaybackFile.releaseMediaPlayer();
 			
-			mNextPlaybackFile = mPlaybackFileProvider.getPreparingPlaybackFile(filePos);
+			mNextPlaybackFile = mPlaybackFileProvider.getPreparingPlaybackFile();
 		}
 				
 		if (mNextPlaybackFile.isPrepared()) return;
@@ -204,6 +207,8 @@ public class PlaybackController implements
 			onFileBuffered(mCurrentPlaybackFile);
 		else
 			mCurrentPlaybackFile.addOnFileBufferedListener(this);
+
+		preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile()
 	}
 
 	@Override
