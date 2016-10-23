@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +22,11 @@ import java.util.Queue;
 /**
  * Created by david on 9/26/16.
  */
-public class PreparingMediaPlayerProvider implements IPreparedPlaybackFileProvider, OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler> {
+public class PreparingMediaPlayerProvider implements
+	IPreparedPlaybackFileProvider,
+	OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>,
+	OneParameterAction<IBufferingPlaybackHandler>
+{
 	private final ConnectionProvider connectionProvider;
 	private final Queue<IFile> playlist;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
@@ -44,7 +49,7 @@ public class PreparingMediaPlayerProvider implements IPreparedPlaybackFileProvid
 			(nextPreparingMediaPlayerPromise != null ?
 				nextPreparingMediaPlayerPromise :
 				getNextPreparingMediaPlayerPromise())
-			.then(this);
+			.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
 	}
 
 	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise() {
@@ -57,10 +62,13 @@ public class PreparingMediaPlayerProvider implements IPreparedPlaybackFileProvid
 
 	@Override
 	public IPlaybackHandler expectUsing(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		bufferingPlaybackHandler.bufferPlaybackFile().then(result -> {
-			nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise();
-		});
+		bufferingPlaybackHandler.bufferPlaybackFile().then((OneParameterAction<IBufferingPlaybackHandler>) this);
 
 		return bufferingPlaybackHandler;
+	}
+
+	@Override
+	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+		nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise();
 	}
 }
