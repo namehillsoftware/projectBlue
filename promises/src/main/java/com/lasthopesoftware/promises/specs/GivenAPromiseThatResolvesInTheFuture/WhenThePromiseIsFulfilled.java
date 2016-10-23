@@ -23,12 +23,17 @@ public class WhenThePromiseIsFulfilled {
 		expectedResult = new Object();
 		final CountDownLatch latch = new CountDownLatch(1);
 		new Promise<>((resolve, reject) -> new Thread(() -> {
-			resolve.run(result);
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			resolve.run(expectedResult);
 			latch.countDown();
 		}).run())
-		.then(result -> { this.result = expectedResult; });
+		.then(result -> { this.result = result; });
 
-		latch.await(500, TimeUnit.MILLISECONDS);
+		latch.await(1000, TimeUnit.MILLISECONDS);
 	}
 
 	@Test
