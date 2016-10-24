@@ -2,23 +2,29 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.content.Context;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +47,10 @@ public class PlaybackController implements
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<>();
 	
 	private final IPlaybackFileProvider mPlaybackFileProvider;
+	private final Context context;
+	private final Library library;
+	private final ConnectionProvider connectionProvider;
+	private final ArrayList<IFile> playlist;
 	private int mFileKey = -1;
 	private int mCurrentFilePos = -1;
 	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
@@ -53,18 +63,14 @@ public class PlaybackController implements
 
 	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
 	
-	public PlaybackController(final Context context, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, connectionProvider, playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>());
+	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
+		this(context, library, connectionProvider, );
+		this.context = context;
+		this.library = library;
+		this.connectionProvider = connectionProvider;
+		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>()
 	}
-	
-	private PlaybackController(final Context context, final ConnectionProvider connectionProvider, final ArrayList<IFile> playlist) {
-		this(new PlaybackFileProvider(context, connectionProvider, playlist));
-	}
-	
-	public PlaybackController(IPlaybackFileProvider playbackFileProvider) {
-		mPlaybackFileProvider = playbackFileProvider;
-	}
-	
+
 	/* Begin playlist control */
 	
 	/**
@@ -116,6 +122,14 @@ public class PlaybackController implements
 		mCurrentPlaybackFile = filePlayer;
 		if (wasPlaying) mCurrentPlaybackFile.prepareMediaPlayer();
 		throwChangeEvent(mCurrentPlaybackFile);
+
+		preparedPlaybackFileProvider =
+			new PreparingMediaPlayerProvider(
+				context,
+				library,
+				connectionProvider,
+				Stream.of(playlist).skip(filePos).collect(Collectors.toList()),
+				new MediaPlayerInitializer(context, library));
 	}
 	
 	/**
@@ -133,6 +147,10 @@ public class PlaybackController implements
 	 */
 	public void startAt(int filePos, int fileProgress) {
 		seekTo(filePos, fileProgress);
+		preparedPlaybackFileProvider
+			.promiseNextPreparedPlaybackFile()
+			.then((OneParameterAction<IPlaybackHandler>) IPlaybackHandler::start);
+
 		if (mCurrentPlaybackFile == null || mCurrentPlaybackFile.isPlaying()) return;
 		if (!mCurrentPlaybackFile.isPrepared()) mCurrentPlaybackFile.prepareMediaPlayer(); // prepare async to not block main thread
 		else startFilePlayback(mCurrentPlaybackFile);
