@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
@@ -24,11 +23,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,8 +44,7 @@ public class PlaybackController implements
 	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<>();
 	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<>();
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<>();
-	
-	private final IPlaybackFileProvider mPlaybackFileProvider;
+
 	private final Context context;
 	private final Library library;
 	private final ConnectionProvider connectionProvider;
@@ -62,7 +60,8 @@ public class PlaybackController implements
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 
 	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
-	
+	private IPlaybackHandler playbackHandler;
+
 	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
 		this(context, library, connectionProvider, );
 		this.context = context;
@@ -149,11 +148,7 @@ public class PlaybackController implements
 		seekTo(filePos, fileProgress);
 		preparedPlaybackFileProvider
 			.promiseNextPreparedPlaybackFile()
-			.then((OneParameterAction<IPlaybackHandler>) IPlaybackHandler::start);
-
-		if (mCurrentPlaybackFile == null || mCurrentPlaybackFile.isPlaying()) return;
-		if (!mCurrentPlaybackFile.isPrepared()) mCurrentPlaybackFile.prepareMediaPlayer(); // prepare async to not block main thread
-		else startFilePlayback(mCurrentPlaybackFile);
+			.then(this::startFilePlayback);
 	}
 	
 	public boolean resume() {
@@ -177,15 +172,25 @@ public class PlaybackController implements
 			return true;
 		}
 		
-		startFilePlayback(mCurrentPlaybackFile);
+		startFilePlayback(playbackHandler);
 		return true;
 	}
 
-	private void startFilePlayback(IPlaybackFile playbackFile) {
+	private void startFilePlayback(IPlaybackHandler playbackHandler) {
 		mIsPlaying = true;
-		mCurrentPlaybackFile = playbackFile;
-		playbackFile.setVolume(mVolume);
-		playbackFile.start();
+
+		this.playbackHandler = playbackHandler;
+
+		playbackHandler.setVolume(mVolume);
+		playbackHandler
+			.start()
+			.then(handler -> {
+				try {
+					handler.close();
+				} catch (IOException e) {
+					mLogger.error("There was an error releasing the media player", e);
+				}
+			});
 		
 		mFileKey = playbackFile.getFile().getKey();
 		
@@ -227,15 +232,9 @@ public class PlaybackController implements
 			mCurrentPlaybackFile.addOnFileBufferedListener(this);
 
 		preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile()
+			.promiseNextPreparedPlaybackFile();
 	}
 
-	@Override
-	public void onFileBuffered(IPlaybackFile filePlayer) {
-		mNextPlaybackFile.initMediaPlayer();
-		mNextPlaybackFile.prepareMediaPlayer();
-	}
-	
 	public void pause() {
 		mIsPlaying = false;
 
@@ -285,7 +284,15 @@ public class PlaybackController implements
 	}
 	
 	public void removeFile(final int position) {
-		mPlaybackFileProvider.remove(position);
+		playlist.remove(position);
+
+		preparedPlaybackFileProvider =
+			new PreparingMediaPlayerProvider(
+				context,
+				library,
+				connectionProvider,
+				playlist,
+				new MediaPlayerInitializer(context, library));
 		
 		if (position != mCurrentFilePos) return;
 		
@@ -306,7 +313,7 @@ public class PlaybackController implements
 	}
 	
 	public List<IFile> getPlaylist() {
-		return Collections.unmodifiableList(mPlaybackFileProvider.getFiles());
+		return Collections.unmodifiableList(playlist);
 	}
 	
 	public String getPlaylistString() {
