@@ -10,12 +10,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 7/24/15.
  */
-public class RemoteFileUriProvider extends AbstractFileUriProvider {
+class RemoteFileUriProvider implements IFileUriProvider {
 	private final ConnectionProvider connectionProvider;
 
-	public RemoteFileUriProvider(ConnectionProvider connectionProvider, IFile file) {
-		super(file);
-
+	RemoteFileUriProvider(ConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
 

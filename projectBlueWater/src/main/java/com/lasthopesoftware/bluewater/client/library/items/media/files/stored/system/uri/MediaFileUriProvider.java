@@ -9,7 +9,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.AbstractFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * Created by david on 7/24/15.
  */
-public class MediaFileUriProvider extends AbstractFileUriProvider {
+public class MediaFileUriProvider extends IFileUriProvider {
 
 	public static final String mediaFileFoundEvent = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundEvent");
 	public static final String mediaFileFoundMediaId = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundMediaId");
@@ -38,19 +38,16 @@ public class MediaFileUriProvider extends AbstractFileUriProvider {
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 	private final boolean isSilent;
 
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
-		this (context, mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator, false);
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
+		this (context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, false);
 	}
 
 	/**
 	 *
 	 * @param context the application context under which to operate
-	 * @param file the file to provide a URI for
 	 * @param isSilent if true, will not emit broadcast events when media files are found
 	 */
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, boolean isSilent) {
-		super(file);
-
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, boolean isSilent) {
 		this.context = context;
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;

@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.AbstractFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.runnables.TwoParameterAction;
@@ -18,10 +18,10 @@ import java.io.IOException;
  */
 class MediaPlayerPreparerTask implements TwoParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise> {
 
-	private final AbstractFileUriProvider uriProvider;
+	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	MediaPlayerPreparerTask(AbstractFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+	MediaPlayerPreparerTask(IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.uriProvider = uriProvider;
 		this.playbackInitialization = playbackInitialization;
 	}

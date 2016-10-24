@@ -61,7 +61,7 @@ public class PreparingMediaPlayerProvider implements
 		return
 			new Promise<>(
 				new MediaPlayerPreparerTask(
-					new BestMatchUriProvider(context, connectionProvider, library, playlist.poll()),
+					new BestMatchUriProvider(context, connectionProvider, library),
 					playbackInitialization));
 	}
 

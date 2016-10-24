@@ -7,7 +7,7 @@ import android.os.Environment;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.AbstractFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
@@ -20,14 +20,12 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by david on 7/24/15.
  */
-public class StoredFileUriProvider extends AbstractFileUriProvider {
+public class StoredFileUriProvider implements IFileUriProvider {
 	private final StoredFileAccess storedFileAccess;
 	private final Context context;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public StoredFileUriProvider(Context context, Library library, IFile file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
-		super(file);
-
+	public StoredFileUriProvider(Context context, Library library, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 		storedFileAccess = new StoredFileAccess(context, library);
 		this.context = context;

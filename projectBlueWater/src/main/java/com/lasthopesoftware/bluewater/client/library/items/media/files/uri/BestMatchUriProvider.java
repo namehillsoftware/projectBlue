@@ -18,14 +18,12 @@ import java.io.IOException;
  * Created by david on 7/24/15.
  * Will get the best URI for access speed.
  */
-public class BestMatchUriProvider extends AbstractFileUriProvider {
+public class BestMatchUriProvider implements IFileUriProvider {
 	private final Context context;
 	private final Library library;
 	private final ConnectionProvider connectionProvider;
 
-	public BestMatchUriProvider(Context context, ConnectionProvider connectionProvider, Library library, IFile file) {
-		super(file);
-
+	public BestMatchUriProvider(Context context, ConnectionProvider connectionProvider, Library library) {
 		this.context = context;
 		this.library = library;
 		this.connectionProvider = connectionProvider;
@@ -35,19 +33,19 @@ public class BestMatchUriProvider extends AbstractFileUriProvider {
 	public Uri getFileUri(IFile file) throws IOException {
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
 
-		final StoredFileUriProvider storedFileUriProvider = new StoredFileUriProvider(context, library, file, externalStorageReadPermissionsArbitrator);
-		Uri fileUri = storedFileUriProvider.getFileUri();
+		final StoredFileUriProvider storedFileUriProvider = new StoredFileUriProvider(context, library, externalStorageReadPermissionsArbitrator);
+		Uri fileUri = storedFileUriProvider.getFileUri(file);
 		if (fileUri != null)
 			return fileUri;
 
 		if (library.isUsingExistingFiles()) {
-			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, connectionProvider), file, externalStorageReadPermissionsArbitrator);
-			fileUri = mediaFileUriProvider.getFileUri();
+			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, connectionProvider), externalStorageReadPermissionsArbitrator);
+			fileUri = mediaFileUriProvider.getFileUri(file);
 			if (fileUri != null)
 				return fileUri;
 		}
 
-		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider, file);
-		return remoteFileUriProvider.getFileUri();
+		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
+		return remoteFileUriProvider.getFileUri(file);
 	}
 }
