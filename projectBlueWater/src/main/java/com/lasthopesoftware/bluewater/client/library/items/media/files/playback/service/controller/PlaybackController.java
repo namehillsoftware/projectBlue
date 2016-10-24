@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.content.Context;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
@@ -116,7 +118,7 @@ public class PlaybackController {
 
 		preparedPlaybackFileProvider =
 			new PreparingMediaPlayerProvider(
-				playlist,
+				Stream.of(playlist).skip(filePos).collect(Collectors.toList()),
 				new BestMatchUriProvider(context, connectionProvider, library),
 				new MediaPlayerInitializer(context, library));
 
