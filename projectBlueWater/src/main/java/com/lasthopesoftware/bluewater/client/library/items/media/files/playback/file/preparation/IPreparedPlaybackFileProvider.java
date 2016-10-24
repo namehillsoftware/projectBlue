@@ -9,4 +9,5 @@ import com.lasthopesoftware.promises.IPromise;
 
 public interface IPreparedPlaybackFileProvider {
 	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile();
+	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt);
 }

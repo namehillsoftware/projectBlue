@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.content.Context;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
@@ -11,10 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileBufferedListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileCompleteListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFileErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.listeners.OnFilePreparedListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -22,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import org.slf4j.Logger;
@@ -33,12 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class PlaybackController implements
-	OnFilePreparedListener,
-	OnFileErrorListener,
-	OnFileCompleteListener,
-	OnFileBufferedListener
-{
+public class PlaybackController {
 	private final HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<>();
 	private final HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<>();
 	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<>();
@@ -63,7 +53,6 @@ public class PlaybackController implements
 	private IPlaybackHandler playbackHandler;
 
 	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
-		this(context, library, connectionProvider, );
 		this.context = context;
 		this.library = library;
 		this.connectionProvider = connectionProvider;
@@ -90,45 +79,52 @@ public class PlaybackController implements
 	public void seekTo(int filePos, int fileProgress) throws IndexOutOfBoundsException {
 		boolean wasPlaying = false;
 		
-		if (mCurrentPlaybackFile != null) {
+		if (playbackHandler != null) {
 			
-			if (mCurrentPlaybackFile.isPlaying()) {
+			if (playbackHandler.isPlaying()) {
 				
 				// If the seek-to index is the same as that of the file playing, keep on playing
 				if (filePos == mCurrentFilePos) return;
 			
 				// stop any playback that is in action
 				wasPlaying = true;
-				mCurrentPlaybackFile.stop();
+				playbackHandler.pause();
 			}
-			
-			mCurrentPlaybackFile.releaseMediaPlayer();
-			mCurrentPlaybackFile = null;
+
+			try {
+				playbackHandler.close();
+			} catch (IOException e) {
+				mLogger.error("There was an error closing the playback handler", e);
+			}
+			playbackHandler = null;
 		}
 		
 		if (filePos < 0) filePos = 0;
-        if (filePos >= mPlaybackFileProvider.size())
+        if (filePos >= playlist.size())
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 		
         mCurrentFilePos = filePos;
         
-		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
-		filePlayer.addOnFileCompleteListener(this);
-		filePlayer.addOnFilePreparedListener(this);
-		filePlayer.addOnFileErrorListener(this);
-		filePlayer.initMediaPlayer();
-		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
-		mCurrentPlaybackFile = filePlayer;
-		if (wasPlaying) mCurrentPlaybackFile.prepareMediaPlayer();
-		throwChangeEvent(mCurrentPlaybackFile);
+//		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(mCurrentFilePos);
+//		filePlayer.addOnFileCompleteListener(this);
+//		filePlayer.addOnFilePreparedListener(this);
+//		filePlayer.addOnFileErrorListener(this);
+//		filePlayer.initMediaPlayer();
+//		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
+//		mCurrentPlaybackFile = filePlayer;
+//		throwChangeEvent(mCurrentPlaybackFile);
 
 		preparedPlaybackFileProvider =
 			new PreparingMediaPlayerProvider(
-				context,
-				library,
-				connectionProvider,
-				Stream.of(playlist).skip(filePos).collect(Collectors.toList()),
+				playlist,
+				new BestMatchUriProvider(context, connectionProvider, library),
 				new MediaPlayerInitializer(context, library));
+
+		if (wasPlaying) {
+			preparedPlaybackFileProvider
+				.promiseNextPreparedPlaybackFile(fileProgress)
+				.then(this::startFilePlayback);
+		}
 	}
 	
 	/**
@@ -289,9 +285,6 @@ public class PlaybackController implements
 		preparedPlaybackFileProvider =
 			new PreparingMediaPlayerProvider(
 				context,
-				library,
-				connectionProvider,
-				playlist,
 				new MediaPlayerInitializer(context, library));
 		
 		if (position != mCurrentFilePos) return;

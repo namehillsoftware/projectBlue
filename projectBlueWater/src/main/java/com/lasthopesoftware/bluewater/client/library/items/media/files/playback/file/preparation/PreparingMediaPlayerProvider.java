@@ -1,15 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
 
-import android.content.Context;
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
@@ -27,28 +24,29 @@ public class PreparingMediaPlayerProvider implements
 	OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>,
 	OneParameterAction<IBufferingPlaybackHandler>
 {
-	private final ConnectionProvider connectionProvider;
+	private final IFileUriProvider fileUriProvider;
 	private final Queue<IFile> playlist;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
-	private final Context context;
-	private final Library library;
 
 	private IPromise<IBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 
-	public PreparingMediaPlayerProvider(Context context, Library library, ConnectionProvider connectionProvider, List<IFile> playlist, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
-		this.library = library;
-		this.connectionProvider = connectionProvider;
+	public PreparingMediaPlayerProvider(List<IFile> playlist, IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+		this.fileUriProvider = fileUriProvider;
 		this.playlist = new LinkedList<>(playlist);
 		this.playbackInitialization = playbackInitialization;
-		this.context = context;
 	}
 
 	@Override
 	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile() {
+		return promiseNextPreparedPlaybackFile(0);
+	}
+
+	@Override
+	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt) {
 		IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
 
 		if (bufferingPlaybackHandlerPromise == null)
-			bufferingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise();
+			bufferingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
 
 		nextPreparingMediaPlayerPromise = null;
 
@@ -57,11 +55,13 @@ public class PreparingMediaPlayerProvider implements
 				.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
 	}
 
-	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise() {
+	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
 		return
 			new Promise<>(
 				new MediaPlayerPreparerTask(
-					new BestMatchUriProvider(context, connectionProvider, library),
+					playlist.poll(),
+					preparedAt,
+					fileUriProvider,
 					playbackInitialization));
 	}
 
@@ -75,6 +75,6 @@ public class PreparingMediaPlayerProvider implements
 	@Override
 	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		if (nextPreparingMediaPlayerPromise == null)
-			nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise();
+			nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
 	}
 }
