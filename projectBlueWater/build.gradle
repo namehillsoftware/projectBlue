@@ -9,8 +9,8 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
         targetSdkVersion 24
-        versionCode 2013
-        versionName "1.5.1.0"
+        versionCode 2014
+        versionName "1.5.1.1"
     }
 
     compileOptions {
