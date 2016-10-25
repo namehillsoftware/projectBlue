@@ -12,6 +12,7 @@ import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -76,5 +77,10 @@ public class PreparingMediaPlayerProvider implements
 	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		if (nextPreparingMediaPlayerPromise == null)
 			nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+	}
+
+	@Override
+	public void close() throws IOException {
+
 	}
 }
