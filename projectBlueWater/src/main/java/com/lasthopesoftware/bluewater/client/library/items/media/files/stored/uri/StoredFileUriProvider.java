@@ -22,13 +22,11 @@ import java.util.concurrent.ExecutionException;
  */
 public class StoredFileUriProvider implements IFileUriProvider {
 	private final StoredFileAccess storedFileAccess;
-	private final Context context;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
 	public StoredFileUriProvider(Context context, Library library, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 		storedFileAccess = new StoredFileAccess(context, library);
-		this.context = context;
 	}
 
 	@Override

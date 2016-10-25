@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * Created by david on 7/24/15.
  */
-public class MediaFileUriProvider extends IFileUriProvider {
+public class MediaFileUriProvider implements IFileUriProvider {
 
 	public static final String mediaFileFoundEvent = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundEvent");
 	public static final String mediaFileFoundMediaId = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundMediaId");
