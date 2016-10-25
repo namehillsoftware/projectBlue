@@ -25,8 +25,15 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 		new FilePropertiesStorage(connectionProvider, fileKey, property, value).execute();
 	}
 
-	public FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		super(connectionProvider, "File/SetInfo", "File=" + String.valueOf(fileKey), "Field=" + property, "Value=" + value);
+	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
+		super(
+			connectionProvider,
+			"File/SetInfo",
+			"File=" + String.valueOf(fileKey),
+			"Field=" + property,
+			"Value=" + value,
+			"formatted=0");
+
 		this.connectionProvider = connectionProvider;
 		this.fileKey = fileKey;
 		this.property = property;
