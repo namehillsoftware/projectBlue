@@ -26,9 +26,7 @@ public class CancellablePromise<TInput, TResult> implements ICancellablePromise<
 	private boolean isCancelled;
 	private final Object resolutionSync = new Object();
 
-	private Runnable onCancellation = () -> {
-		isCancelled = true;
-	};
+	private Runnable onCancellation = () -> {};
 
 	public CancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this.executor = executor;
