@@ -20,22 +20,30 @@ public class CancellablePromise<TInput, TResult> implements ICancellablePromise<
 
 	private CancellablePromise<TResult, ?> resolution;
 
-	private Runnable onCancellation;
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
 	private boolean isResolved;
+	private boolean isCancelled;
 	private final Object resolutionSync = new Object();
 
-	CancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
+	private Runnable onCancellation = () -> {
+		isCancelled = true;
+	};
+
+	public CancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this.executor = executor;
 	}
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception, @Nullable Runnable cancellation) {
 		this.executor.runWith(input, exception, result -> {
+			if (isCancelled) return;
+
 			fulfilledResult = result;
 
 			resolve(result, null);
 		}, error -> {
+			if (isCancelled) return;
+
 			fulfilledError = error;
 
 			resolve(null, error);
@@ -58,13 +66,23 @@ public class CancellablePromise<TInput, TResult> implements ICancellablePromise<
 
 	@Override
 	public void cancel() {
+		isCancelled = true;
 		onCancellation.run();
 	}
 
 	@NotNull
 	@Override
 	public <TNewResult> ICancellablePromise<TNewResult> then(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		return null;
+		final CancellablePromise<TResult, TNewResult> newResolution = new CancellablePromise<>(onFulfilled);
+
+		synchronized (resolutionSync) {
+			resolution = newResolution;
+		}
+
+		if (isResolved)
+			newResolution.provide(fulfilledResult, fulfilledError, this::cancel);
+
+		return newResolution;
 	}
 
 	@NotNull
