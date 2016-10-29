@@ -18,12 +18,11 @@ public class WhenTheCancellationIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		new CancellablePromise<Void, String>(
-			(input, exception, resolve, reject, onCancelled) ->
-					onCancelled.runWith(() -> reject.withError(new Exception())))
+		new CancellablePromise<String>(
+			(resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)))
 			.error((exception, onCancelled) -> {
-					caughtException = exception;
-				}).cancel();
+				caughtException = exception;
+			}).cancel();
 	}
 
 	@Test

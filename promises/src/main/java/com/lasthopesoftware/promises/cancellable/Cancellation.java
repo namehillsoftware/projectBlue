@@ -1,17 +1,25 @@
 package com.lasthopesoftware.promises.cancellable;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 /**
  * Created by david on 10/25/16.
  */
 
-public abstract class Cancellation {
-	private boolean isCancelled;
+class Cancellation {
+
+	private final Queue<Runnable> cancellationReactions =
+		new LinkedList<>();
 
 	public void cancel() {
-		isCancelled = true;
+		Runnable cancellationReaction;
+		while ((cancellationReaction = cancellationReactions.poll()) != null)
+			cancellationReaction.run();
 	}
 
-	public boolean isCancelled() {
-		return isCancelled;
+	void onCancelled(Runnable react) {
+		if (react != null)
+			cancellationReactions.offer(react);
 	}
 }
