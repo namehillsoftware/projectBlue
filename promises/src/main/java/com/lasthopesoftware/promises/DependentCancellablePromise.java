@@ -95,6 +95,11 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 	@Override
 	public <TNewResult> ICancellablePromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return then((result, exception, resolve, reject, onCancelled) -> {
+			if (exception != null) {
+				reject.withError(exception);
+				return;
+			}
+
 			onFulfilled.runWith(result, resolve, reject, onCancelled);
 		});
 	}
