@@ -38,10 +38,6 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 	}
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception) {
-		provide(input, exception, this.cancellation);
-	}
-
-	private void provide(@Nullable TInput input, @Nullable Exception exception, @NotNull Cancellation cancellation) {
 		this.executor.runWith(input, exception, result -> {
 			fulfilledResult = result;
 
@@ -58,7 +54,7 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 
 		synchronized (resolutionSync) {
 			if (resolution != null)
-				resolution.provide(result, error, this.cancellation);
+				resolution.provide(result, error);
 		}
 	}
 
@@ -78,7 +74,7 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 		}
 
 		if (isResolved || isCancelled)
-			newResolution.provide(fulfilledResult, fulfilledError, this.cancellation);
+			newResolution.provide(fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}

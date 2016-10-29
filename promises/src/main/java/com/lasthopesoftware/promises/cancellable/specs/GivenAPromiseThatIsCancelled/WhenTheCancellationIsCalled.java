@@ -22,7 +22,8 @@ public class WhenTheCancellationIsCalled {
 			(resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)))
 			.error((exception, onCancelled) -> {
 				caughtException = exception;
-			}).cancel();
+			})
+			.cancel();
 	}
 
 	@Test

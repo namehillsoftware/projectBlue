@@ -1,7 +1,6 @@
 package com.lasthopesoftware.promises.cancellable;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Stack;
 
 /**
  * Created by david on 10/25/16.
@@ -9,17 +8,15 @@ import java.util.Queue;
 
 class Cancellation {
 
-	private final Queue<Runnable> cancellationReactions =
-		new LinkedList<>();
+	private final Stack<Runnable> cancellationReactions = new Stack<>();
 
 	public void cancel() {
-		Runnable cancellationReaction;
-		while ((cancellationReaction = cancellationReactions.poll()) != null)
-			cancellationReaction.run();
+		while (!cancellationReactions.empty())
+			cancellationReactions.pop().run();
 	}
 
 	void onCancelled(Runnable react) {
 		if (react != null)
-			cancellationReactions.offer(react);
+			cancellationReactions.push(react);
 	}
 }
