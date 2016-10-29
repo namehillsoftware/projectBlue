@@ -1,7 +1,7 @@
-package com.lasthopesoftware.promises.cancellable;
+package com.lasthopesoftware.promises;
 
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.cancellable.Cancellation;
+import com.lasthopesoftware.promises.cancellable.ICancellablePromise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
 import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
@@ -20,15 +20,13 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 
 	private DependentCancellablePromise<TResult, ?> resolution;
 
-	private TResult fulfilledResult;
-	private Exception fulfilledError;
 	private volatile boolean isResolved;
 	private volatile boolean isResolutionHandled;
-	private boolean isCancelled;
-	private final Object resolutionSync = new Object();
+
+	private TResult fulfilledResult;
+	private Exception fulfilledError;
 
 	private final Cancellation cancellation;
-
 
 	DependentCancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this(executor, new Cancellation());
@@ -39,53 +37,56 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 		this.cancellation = cancellation;
 	}
 
-	final void provide(@Nullable TInput input, @Nullable Exception exception) {
-		this.executor.runWith(input, exception, result -> {
-			fulfilledResult = result;
+	public void provide(@Nullable TInput input, @Nullable Exception exception) {
+		this.executor.runWith(
+			input,
+			exception,
+			result -> resolve(result, null),
+			error -> resolve(null, error),
+			this.cancellation::onCancelled);
+	}
 
-			resolve(result, null);
-		}, error -> {
-			fulfilledError = error;
-
-			resolve(null, error);
-		}, this.cancellation::onCancelled);
+	public void cancel() {
+		this.cancellation.cancel();
 	}
 
 	private void resolve(TResult result, Exception error) {
+		fulfilledResult = result;
+		fulfilledError = error;
+
 		isResolved = true;
 
-		synchronized (resolutionSync) {
-			if (resolution != null)
-				resolution.provide(result, error);
-		}
+		DependentCancellablePromise<TResult, ?> localResolution = resolution;
+
+		if (localResolution != null)
+			handleResolution(localResolution, result, error);
 	}
 
-	private void handleResolution(TResult result, Exception error) {
-		synchronized (resolutionSync) {
-			if (resolution != null) {
-				resolution.provide(result, error);
-				isResolutionHandled = true;
-			}
-		}
+	private void handleResolution(@NotNull DependentCancellablePromise<TResult, ?> resolution, @Nullable TResult result, @Nullable Exception error) {
+		if (isResolutionHandled) return;
+
+		resolution.provide(result, error);
+		isResolutionHandled = true;
 	}
 
-	@Override
-	public void cancel() {
-		isCancelled = true;
-		this.cancellation.cancel();
+	<TNewResult> DependentPromise<TResult, TNewResult> mutateCancellablePromise(DependentCancellablePromise<TResult, TNewResult> internalCancellablePromise) {
+		resolution = internalCancellablePromise;
+
+		if (isResolved)
+			handleResolution(internalCancellablePromise, fulfilledResult, fulfilledError);
+
+		return new DependentPromise<>(internalCancellablePromise);
 	}
 
 	@NotNull
 	@Override
-	public <TNewResult> ICancellablePromise<TNewResult> then(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	public <TNewResult> DependentCancellablePromise<TResult, TNewResult> then(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled, this.cancellation);
 
-		synchronized (resolutionSync) {
-			resolution = newResolution;
-		}
+		resolution = newResolution;
 
-		if (isResolved || isCancelled)
-			newResolution.provide(fulfilledResult, fulfilledError);
+		if (isResolved)
+			handleResolution(newResolution, fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}

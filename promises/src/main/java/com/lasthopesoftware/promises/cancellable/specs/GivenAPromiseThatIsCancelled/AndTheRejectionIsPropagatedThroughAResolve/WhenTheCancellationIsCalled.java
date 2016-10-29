@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises.cancellable.specs.GivenAPromiseThatIsCancelled.AndTheRejectionIsPropagatedThroughAResolve;
 
-import com.lasthopesoftware.promises.cancellable.CancellablePromise;
+import com.lasthopesoftware.promises.CancellablePromise;
 
 import org.junit.Assert;
 import org.junit.Before;

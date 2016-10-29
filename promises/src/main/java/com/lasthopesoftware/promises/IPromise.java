@@ -1,5 +1,6 @@
 package com.lasthopesoftware.promises;
 
+import com.lasthopesoftware.promises.cancellable.ICancellablePromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -21,4 +22,7 @@ public interface IPromise<TResult> {
 	@NotNull <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected);
 	@NotNull <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected);
 	@NotNull IPromise<Void> error(@NotNull OneParameterAction<Exception> onRejected);
+
+	@NotNull
+	ICancellablePromise<TResult> cancellable();
 }

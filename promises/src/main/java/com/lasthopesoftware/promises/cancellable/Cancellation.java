@@ -1,22 +1,20 @@
 package com.lasthopesoftware.promises.cancellable;
 
-import java.util.Stack;
+import com.lasthopesoftware.promises.NoOpRunnable;
 
 /**
  * Created by david on 10/25/16.
  */
 
-class Cancellation {
+public class Cancellation {
 
-	private final Stack<Runnable> cancellationReactions = new Stack<>();
+	private Runnable reaction = NoOpRunnable.getInstance();
 
 	public void cancel() {
-		while (!cancellationReactions.empty())
-			cancellationReactions.pop().run();
+		reaction.run();
 	}
 
-	void onCancelled(Runnable react) {
-		if (react != null)
-			cancellationReactions.push(react);
+	public void onCancelled(Runnable react) {
+		reaction = react;
 	}
 }

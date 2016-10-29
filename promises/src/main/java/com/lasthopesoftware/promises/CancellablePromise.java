@@ -1,7 +1,5 @@
-package com.lasthopesoftware.promises.cancellable;
+package com.lasthopesoftware.promises;
 
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 

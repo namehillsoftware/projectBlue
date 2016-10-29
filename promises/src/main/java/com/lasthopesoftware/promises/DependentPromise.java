@@ -1,6 +1,8 @@
 package com.lasthopesoftware.promises;
 
+import com.lasthopesoftware.promises.cancellable.ICancellablePromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -10,57 +12,30 @@ import org.jetbrains.annotations.Nullable;
 
 class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
-	private final FourParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise> executor;
-
-	private volatile DependentPromise<TResult, ?> resolution;
-	private volatile boolean isResolved;
-	private volatile boolean isResolutionHandled;
-
-	private TResult fulfilledResult;
-	private Exception fulfilledError;
+	private final DependentCancellablePromise<TInput, TResult> internalCancellablePromise;
 
 	DependentPromise(@NotNull FourParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise> executor) {
-		this.executor = executor;
+		this(new DependentCancellablePromise<>((input, exception, resolve, reject, onCancelled) -> {
+			onCancelled.runWith(NoOpRunnable.getInstance());
+			executor.runWith(input, exception, resolve, reject);
+		}));
+	}
+
+	DependentPromise(@NotNull DependentCancellablePromise<TInput, TResult> internalCancellablePromise) {
+		this.internalCancellablePromise = internalCancellablePromise;
 	}
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception) {
-		this.executor.runWith(
-			input,
-			exception,
-			result -> resolve(result, null),
-			error -> resolve(null, error));
-	}
-
-	private void resolve(TResult result, Exception error) {
-		fulfilledResult = result;
-		fulfilledError = error;
-
-		isResolved = true;
-
-		DependentPromise<TResult, ?> localResolution = resolution;
-
-		if (localResolution != null)
-			handleResolution(localResolution, result, error);
-	}
-
-	private void handleResolution(@NotNull DependentPromise<TResult, ?> resolution, @Nullable TResult result, @Nullable Exception error) {
-		if (isResolutionHandled) return;
-
-		resolution.provide(result, error);
-		isResolutionHandled = true;
+		internalCancellablePromise.provide(input, exception);
 	}
 
 	@NotNull
 	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>(onFulfilled);
-
-		resolution = newResolution;
-
-		if (isResolved)
-			handleResolution(newResolution, fulfilledResult, fulfilledError);
-
-		return newResolution;
+		return internalCancellablePromise.mutateCancellablePromise(
+			internalCancellablePromise.then((FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>>)(result, exception, resolve, reject, onCancelled) -> {
+			onFulfilled.runWith(result, exception, resolve, reject);
+		}));
 	}
 
 	@NotNull
@@ -99,4 +74,9 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 		return error(new NullReturnRunnable<>(onRejected));
 	}
 
+	@NotNull
+	@Override
+	public ICancellablePromise<TResult> cancellable() {
+		return internalCancellablePromise;
+	}
 }
