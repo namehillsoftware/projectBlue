@@ -22,11 +22,13 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
-	private boolean isResolved;
+	private volatile boolean isResolved;
+	private volatile boolean isResolutionHandled;
 	private boolean isCancelled;
 	private final Object resolutionSync = new Object();
 
 	private final Cancellation cancellation;
+
 
 	DependentCancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this(executor, new Cancellation());
@@ -55,6 +57,15 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 		synchronized (resolutionSync) {
 			if (resolution != null)
 				resolution.provide(result, error);
+		}
+	}
+
+	private void handleResolution(TResult result, Exception error) {
+		synchronized (resolutionSync) {
+			if (resolution != null) {
+				resolution.provide(result, error);
+				isResolutionHandled = true;
+			}
 		}
 	}
 

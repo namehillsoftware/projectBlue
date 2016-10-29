@@ -12,9 +12,9 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 
 	private final FourParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise> executor;
 
-	private DependentPromise<TResult, ?> resolution;
-	private final Object resolutionSync = new Object();
+	private volatile DependentPromise<TResult, ?> resolution;
 	private volatile boolean isResolved;
+	private volatile boolean isResolutionHandled;
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
@@ -24,24 +24,30 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	}
 
 	final void provide(@Nullable TInput input, @Nullable Exception exception) {
-		this.executor.runWith(input, exception, result -> {
-			fulfilledResult = result;
-
-			resolve(result, null);
-		}, error -> {
-			fulfilledError = error;
-
-			resolve(null, error);
-		});
+		this.executor.runWith(
+			input,
+			exception,
+			result -> resolve(result, null),
+			error -> resolve(null, error));
 	}
 
 	private void resolve(TResult result, Exception error) {
+		fulfilledResult = result;
+		fulfilledError = error;
+
 		isResolved = true;
 
-		synchronized (resolutionSync) {
-			if (resolution != null)
-				resolution.provide(result, error);
-		}
+		DependentPromise<TResult, ?> localResolution = resolution;
+
+		if (localResolution != null)
+			handleResolution(localResolution, result, error);
+	}
+
+	private void handleResolution(@NotNull DependentPromise<TResult, ?> resolution, @Nullable TResult result, @Nullable Exception error) {
+		if (isResolutionHandled) return;
+
+		resolution.provide(result, error);
+		isResolutionHandled = true;
 	}
 
 	@NotNull
@@ -49,12 +55,10 @@ class DependentPromise<TInput, TResult> implements IPromise<TResult> {
 	public <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		final DependentPromise<TResult, TNewResult> newResolution = new DependentPromise<>(onFulfilled);
 
-		synchronized (resolutionSync) {
-			resolution = newResolution;
-		}
+		resolution = newResolution;
 
 		if (isResolved)
-			newResolution.provide(fulfilledResult, fulfilledError);
+			handleResolution(newResolution, fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}
