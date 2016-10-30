@@ -26,8 +26,6 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	private boolean isPrepared;
-
 	MediaPlayerPreparerTask(IFile file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.file = file;
 		this.prepareAt = prepareAt;
@@ -54,8 +52,7 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 		});
 
 		onCancelled.runWith(() -> {
-			if (!isPrepared)
-				mediaPlayer.release();
+			mediaPlayer.release();
 
 			reject.withError(new InterruptedIOException("Media player preparation was interrupted"));
 		});
