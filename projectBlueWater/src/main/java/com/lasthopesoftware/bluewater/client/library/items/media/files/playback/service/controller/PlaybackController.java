@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
@@ -253,15 +254,18 @@ public class PlaybackController {
 		if (position != currentFilePos) return;
 		
 		playbackHandler.stop();
-		
-		// First try seeking to the next file
-		if (position < mPlaybackFileProvider.size()) {
-			seekTo(position);
-			return;
-		}
-		// If the next file is greater than the size, seek to the previous file if that's possible
-		if (position > 0)
-			seekTo(position - 1);
+
+		preparedPlaybackFileProvider
+			.promiseNextPreparedPlaybackFile()
+			.then(this::startFilePlayback)
+			.error(error -> {
+				if (error instanceof MediaPlayerException) {
+					this.onFileError((MediaPlayerException) error);
+					return;
+				}
+
+				mLogger.error("There was an error preparing the file", error);
+			});
 	}
 	
 	public IPlaybackFile getCurrentPlaybackFile() {
@@ -273,26 +277,24 @@ public class PlaybackController {
 	}
 	
 	public String getPlaylistString() {
-		return mPlaybackFileProvider.toPlaylistString();
+		return FileStringListUtilities.serializeFileStringList(playlist);
 	}
 	
 	public int getCurrentPosition() {
 		return currentFilePos;
 	}
-
-	/* Event handlers */
-	@Override
-	public void onFilePrepared(IPlaybackFile mediaPlayer) {
-		if (mediaPlayer.isPlaying()) return;
-		
-		startFilePlayback(mediaPlayer);
-	}
 	
 	@Override
-	public void onFileComplete(IPlaybackFile mediaPlayer) {
-		mediaPlayer.releaseMediaPlayer();
+	public void onFileComplete(IPlaybackHandler playbackHandler) {
+		try {
+			playbackHandler.close();
+		} catch (IOException e) {
+			mLogger.error("There was an error releasing the media player", e);
+		}
+
+
 		
-		final boolean isLastFile = currentFilePos == mPlaybackFileProvider.size() - 1;
+		final boolean isLastFile = currentFilePos == playlist.size() - 1;
 		// store the next file position in a local variable in case it is decided to not set
 		// the current file position (such as in the not repeat scenario below)
 		final int nextFilePos = !isLastFile ? currentFilePos + 1 : 0;
@@ -326,17 +328,16 @@ public class PlaybackController {
 		
 		startFilePlayback(mCurrentPlaybackFile);
 	}
-	
-	@Override
-	public void onFileError(IPlaybackFile mediaPlayer, int what, int extra) {
-		mLogger.error("JR File error - " + what + " - " + extra);
+
+	private void onFileError(MediaPlayerException mediaPlayerException) {
+		mLogger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
 		
 		// We don't know what happened, release the next file player too
-		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(extra) && mNextPlaybackFile != null && mediaPlayer != mNextPlaybackFile)
+		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
 			mNextPlaybackFile.releaseMediaPlayer();
 		
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
-			listener.onPlaylistStateControlError(this, mediaPlayer);
+			listener.onPlaylistStateControlError(this, mediaPlayerException);
 	}
 	/* End event handlers */
 	
@@ -400,8 +401,11 @@ public class PlaybackController {
 	// Release all heavy resources
 	public void release() {
 		mIsPlaying = false;
-		if (mCurrentPlaybackFile != null) mCurrentPlaybackFile.releaseMediaPlayer();
-		if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
-		preparedPlaybackFileProvider.close();
+
+		try {
+			preparedPlaybackFileProvider.close();
+		} catch (IOException e) {
+			mLogger.warn("There was an error closing the playback file provider", e);
+		}
 	}
 }
