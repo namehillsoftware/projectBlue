@@ -178,15 +178,8 @@ public class PlaybackController {
 		playbackHandler.setVolume(mVolume);
 		playbackHandler
 			.start()
-			.then(handler -> {
-				try {
-					handler.close();
-				} catch (IOException e) {
-					mLogger.error("There was an error releasing the media player", e);
-				}
-			});
-		
-		mFileKey = playbackFile.getFile().getKey();
+			.then(this::onFileComplete)
+			.error(this::onFileError);
 
         // Throw events after asynchronous calls have started
         throwChangeEvent(mCurrentPlaybackFile);
@@ -258,14 +251,7 @@ public class PlaybackController {
 		preparedPlaybackFileProvider
 			.promiseNextPreparedPlaybackFile()
 			.then(this::startFilePlayback)
-			.error(error -> {
-				if (error instanceof MediaPlayerException) {
-					this.onFileError((MediaPlayerException) error);
-					return;
-				}
-
-				mLogger.error("There was an error preparing the file", error);
-			});
+			.error(this::onFileError);
 	}
 	
 	public IPlaybackFile getCurrentPlaybackFile() {
@@ -283,53 +269,44 @@ public class PlaybackController {
 	public int getCurrentPosition() {
 		return currentFilePos;
 	}
-	
-	@Override
-	public void onFileComplete(IPlaybackHandler playbackHandler) {
+
+	private void onFileComplete(IPlaybackHandler playbackHandler) {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
 			mLogger.error("There was an error releasing the media player", e);
 		}
 
-
+		preparedPlaybackFileProvider
+			.promiseNextPreparedPlaybackFile()
+			.then(this::startFilePlayback)
+			.error(this::onFileError);
 		
-		final boolean isLastFile = currentFilePos == playlist.size() - 1;
-		// store the next file position in a local variable in case it is decided to not set
-		// the current file position (such as in the not repeat scenario below)
-		final int nextFilePos = !isLastFile ? currentFilePos + 1 : 0;
-		
-		if (mNextPlaybackFile == null) {
-			// Playlist is complete, throw stop event and get out
-			if (!mIsRepeating && isLastFile) {
-				mIsPlaying = false;
-				throwStopEvent(mediaPlayer);
-				return;
-			}
-			
-			mNextPlaybackFile = mPlaybackFileProvider.getPreparingPlaybackFile(nextFilePos);
-		}
-		
-		// Move the pointer early so that getting the currently playing file is correctly
-		// returned
-		currentFilePos = nextFilePos;
-		mCurrentPlaybackFile = mNextPlaybackFile;
-		mCurrentPlaybackFile.addOnFileCompleteListener(this);
-		mCurrentPlaybackFile.addOnFileErrorListener(this);
-		if (!mCurrentPlaybackFile.isPrepared()) {
-			mLogger.warn("File " + mCurrentPlaybackFile.getFile().getKey() + " was not prepared. Preparing now.");
-			if (!mCurrentPlaybackFile.isMediaPlayerCreated())
-				mCurrentPlaybackFile.initMediaPlayer();
-			
-			mCurrentPlaybackFile.addOnFilePreparedListener(this);
-			mCurrentPlaybackFile.prepareMediaPlayer();
-			return;
-		}
-		
-		startFilePlayback(mCurrentPlaybackFile);
+//		final boolean isLastFile = currentFilePos == playlist.size() - 1;
+//		// store the next file position in a local variable in case it is decided to not set
+//		// the current file position (such as in the not repeat scenario below)
+//		final int nextFilePos = !isLastFile ? currentFilePos + 1 : 0;
+//
+//		if (mNextPlaybackFile == null) {
+//			// Playlist is complete, throw stop event and get out
+//			if (!mIsRepeating && isLastFile) {
+//				mIsPlaying = false;
+//				throwStopEvent(mediaPlayer);
+//				return;
+//			}
+//
+//			mNextPlaybackFile = mPlaybackFileProvider.getPreparingPlaybackFile(nextFilePos);
+//		}
 	}
 
-	private void onFileError(MediaPlayerException mediaPlayerException) {
+	private void onFileError(Exception exception) {
+		if (!(exception instanceof MediaPlayerException)) {
+			mLogger.error("There was an error preparing the file", exception);
+			return;
+		}
+
+		final MediaPlayerException mediaPlayerException = (MediaPlayerException)exception;
+
 		mLogger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
 		
 		// We don't know what happened, release the next file player too
