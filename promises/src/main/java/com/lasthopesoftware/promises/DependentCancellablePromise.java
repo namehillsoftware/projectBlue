@@ -79,99 +79,247 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	@NotNull
 	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		return thenCreateCancellablePromise(new ErrorPropagatingCancellableExecutor<>(onFulfilled));
+		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
-		return then((result, resolve, reject, onCancelled) -> {
-			try {
-				resolve.withResult(onFulfilled.expectedUsing(result, onCancelled));
-			} catch (Exception e) {
-				reject.withError(e);
-			}
-		});
+		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public IPromise<Void> then(@NotNull TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled) {
-		return then((result, onCancelled) -> {
-			onFulfilled.runWith(result,  onCancelled);
-			return null;
-		});
+		return then(new Execution.Cancellable.NullReturnCancellableRunnable<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
-		return thenCreateCancellablePromise((result, error, resolve, reject, onCancelled) -> {
-			onRejected.runWith(error, resolve, reject, onCancelled);
-		});
+		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
-		return error((error, resolve, reject, onCancelled) -> {
-			try {
-				resolve.withResult(onRejected.expectedUsing(error, onCancelled));
-			} catch (Exception e) {
-				reject.withError(e);
-			}
-		});
+		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
 	public IPromise<Void> error(@NotNull TwoParameterAction<Exception, OneParameterAction<Runnable>> onRejected) {
-		return error((error, onCancelled) -> {
-			onRejected.runWith(error, onCancelled);
-			return null;
-		});
+		return error(new Execution.Cancellable.NullReturnCancellableRunnable<>(onRejected));
 	}
 
 	@NotNull
 	private <TNewResult> IPromise<TNewResult> thenCreatePromise(@NotNull FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return
-			thenCreateCancellablePromise((result, exception, resolve, reject, onCancelled) -> onFulfilled.runWith(result, exception, resolve, reject));
+			thenCreateCancellablePromise(new Execution.NonCancellableExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-		return thenCreatePromise(new ErrorPropagatingResolveExecutor<>(onFulfilled));
+		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public final <TNewResult> IPromise<TNewResult> then(@NotNull final OneParameterFunction<TResult, TNewResult> onFulfilled) {
-		return then(new ExpectedResultExecutor<>(onFulfilled));
+		return then(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public final IPromise<Void> then(@NotNull OneParameterAction<TResult> onFulfilled) {
-		return then(new NullReturnRunnable<>(onFulfilled));
+		return then(new Execution.NullReturnRunnable<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
-		return thenCreatePromise(new RejectionDependentExecutor<>(onRejected));
+		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
 	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
-		return error(new ExpectedResultExecutor<>(onRejected));
+		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
 	public final IPromise<Void> error(@NotNull OneParameterAction<Exception> onRejected) {
-		return error(new NullReturnRunnable<>(onRejected));
+		return error(new Execution.NullReturnRunnable<>(onRejected));
 	}
 
+	private static class Execution {
+		private static class Cancellable  {
+
+			/**
+			 * Created by david on 10/30/16.
+			 */
+			static class ExpectedResultCancellableExecutor<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+				private final TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled;
+
+				ExpectedResultCancellableExecutor(TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+					this.onFulfilled = onFulfilled;
+				}
+
+				@Override
+				public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+					try {
+						resolve.withResult(onFulfilled.expectedUsing(result, onCancelled));
+					} catch (Exception e) {
+						reject.withError(e);
+					}
+				}
+			}
+
+			/**
+			 * Created by david on 10/30/16.
+			 */
+			static class ErrorPropagatingCancellableExecutor<TResult, TNewResult> implements FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+				private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
+
+				ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+					this.onFulfilled = onFulfilled;
+				}
+
+				@Override
+				public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+					if (exception != null) {
+						reject.withError(exception);
+						return;
+					}
+
+					onFulfilled.runWith(result, resolve, reject, onCancelled);
+				}
+			}
+
+			/**
+			 * Created by david on 10/30/16.
+			 */
+			static class NullReturnCancellableRunnable<TResult> implements TwoParameterFunction<TResult, OneParameterAction<Runnable>, Void> {
+				private final TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled;
+
+				NullReturnCancellableRunnable(TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled) {
+					this.onFulfilled = onFulfilled;
+				}
+
+				@Override
+				public Void expectedUsing(TResult result, OneParameterAction<Runnable> onCancelled) {
+					onFulfilled.runWith(result, onCancelled);
+					return null;
+				}
+			}
+
+			/**
+			 * Created by david on 10/30/16.
+			 */
+			static class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> implements FiveParameterAction<TResult, Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+				private final FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
+
+				RejectionDependentCancellableExecutor(FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
+					this.onRejected = onRejected;
+				}
+
+				@Override
+				public void runWith(TResult result, Exception error, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+					onRejected.runWith(error, resolve, reject, onCancelled);
+				}
+			}
+		}
+
+		/**
+		 * Created by david on 10/30/16.
+		 */
+		static class NonCancellableExecutor<TResult, TNewResult> implements FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+			private final FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
+
+			NonCancellableExecutor(FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+				this.onFulfilled = onFulfilled;
+			}
+
+			@Override
+			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				onFulfilled.runWith(result, exception, resolve, reject);
+			}
+		}
+
+		/**
+		 * Created by david on 10/8/16.
+		 */
+		static class NullReturnRunnable<TResult> implements OneParameterFunction<TResult, Void> {
+			private final OneParameterAction<TResult> resolve;
+
+			NullReturnRunnable(@NotNull OneParameterAction<TResult> resolve) {
+				this.resolve = resolve;
+			}
+
+			@Override
+			public Void expectedUsing(TResult result) {
+				resolve.runWith(result);
+				return null;
+			}
+		}
+
+		/**
+		 * Created by david on 10/19/16.
+		 */
+		static class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterAction<TResult, Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> {
+			private final ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
+
+			RejectionDependentExecutor(ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
+				this.onRejected = onRejected;
+			}
+
+			@Override
+			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject) {
+				onRejected.runWith(exception, resolve, reject);
+			}
+		}
+
+		/**
+		 * Created by david on 10/8/16.
+		 */
+		static class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
+			private final OneParameterFunction<TResult, TNewResult> onFulfilled;
+
+			ExpectedResultExecutor(@NotNull OneParameterFunction<TResult, TNewResult> onFulfilled) {
+				this.onFulfilled = onFulfilled;
+			}
+
+			@Override
+			public void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
+				try {
+					newResolve.withResult(onFulfilled.expectedUsing(originalResult));
+				} catch (Exception e) {
+					newReject.withError(e);
+				}
+			}
+		}
+
+		/**
+		 * Created by david on 10/18/16.
+		 */
+		static class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> {
+			private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
+
+			ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+				this.onFulfilled = onFulfilled;
+			}
+
+			@Override
+			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
+				if (exception != null) {
+					reject.withError(exception);
+					return;
+				}
+
+				onFulfilled.runWith(result, resolve, reject);
+			}
+		}
+	}
 }
