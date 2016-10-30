@@ -11,6 +11,9 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by david on 10/25/16.
  */
@@ -18,10 +21,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	private final FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
-	private DependentCancellablePromise<TResult, ?> resolution;
+	private final List<DependentCancellablePromise<TResult, ?>> resolutions = new ArrayList<>();
 
 	private volatile boolean isResolved;
-	private volatile boolean isResolutionHandled;
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
@@ -51,27 +53,18 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 		isResolved = true;
 
-		final DependentCancellablePromise<TResult, ?> localResolution = resolution;
-
-		if (localResolution != null)
-			handleResolution(localResolution, result, error);
-	}
-
-	private void handleResolution(@NotNull DependentCancellablePromise<TResult, ?> resolution, @Nullable TResult result, @Nullable Exception error) {
-		if (isResolutionHandled) return;
-
-		resolution.provide(result, error);
-		isResolutionHandled = true;
+		for (DependentCancellablePromise<TResult, ?> resolution : resolutions)
+			resolution.provide(result, error);
 	}
 
 	@NotNull
 	private <TNewResult> DependentCancellablePromise<TResult, TNewResult> thenCreateCancellablePromise(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled);
 
-		resolution = newResolution;
+		resolutions.add(newResolution);
 
 		if (isResolved)
-			handleResolution(newResolution, fulfilledResult, fulfilledError);
+			newResolution.provide(fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}

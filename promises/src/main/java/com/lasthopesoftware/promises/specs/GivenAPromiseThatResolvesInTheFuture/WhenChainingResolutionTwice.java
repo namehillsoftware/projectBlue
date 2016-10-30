@@ -1,11 +1,14 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
+package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolvesInTheFuture;
 
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -22,9 +25,18 @@ public class WhenChainingResolutionTwice {
 	private OneParameterAction<String> secondResultHandler;
 
 	@Before
-	public void before() {
+	public void before() throws InterruptedException {
+		final CountDownLatch latch = new CountDownLatch(1);
 		final IPromise<String> rootPromise =
-			new ExpectedPromise<>(() -> "test");
+			new Promise<>((resolve, reject) -> new Thread(() -> {
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				resolve.withResult("test");
+				latch.countDown();
+			}).run());
 
 		firstResultHandler = mock(OneParameterAction.class);
 
@@ -35,6 +47,8 @@ public class WhenChainingResolutionTwice {
 
 		rootPromise
 			.then(secondResultHandler);
+
+		latch.await(1000, TimeUnit.MILLISECONDS);
 	}
 
 	@Test
