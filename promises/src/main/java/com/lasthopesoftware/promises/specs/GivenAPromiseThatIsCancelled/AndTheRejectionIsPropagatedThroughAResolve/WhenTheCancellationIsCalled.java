@@ -1,6 +1,6 @@
-package com.lasthopesoftware.promises.cancellable.specs.GivenAPromiseThatIsCancelled.AndTheRejectionIsPropagatedThroughAResolve;
+package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsCancelled.AndTheRejectionIsPropagatedThroughAResolve;
 
-import com.lasthopesoftware.promises.CancellablePromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,7 +16,7 @@ public class WhenTheCancellationIsCalled {
 
 	@Before
 	public void before() {
-		new CancellablePromise<String>((resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(new Exception())))
+		new Promise<String>((resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(new Exception())))
 			.then((result, onCancelled) -> {})
 			.error((exception, onCancelled) -> { caughtException = exception; })
 			.cancel();

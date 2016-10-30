@@ -1,6 +1,7 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.FourParameterAction;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by david on 10/8/16.
  */
-class InternalPromiseExecutor<TResult> implements FourParameterAction<Void, Exception, IResolvedPromise<TResult>, IRejectedPromise> {
+class InternalPromiseExecutor<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 	private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor;
 
 	InternalPromiseExecutor(@NotNull TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
@@ -16,7 +17,8 @@ class InternalPromiseExecutor<TResult> implements FourParameterAction<Void, Exce
 	}
 
 	@Override
-	public void runWith(Void ignoredResult, Exception ignoredException, IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
+	public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		onCancelled.runWith(NoOpRunnable.getInstance());
 		executor.runWith(resolve, reject);
 	}
 }

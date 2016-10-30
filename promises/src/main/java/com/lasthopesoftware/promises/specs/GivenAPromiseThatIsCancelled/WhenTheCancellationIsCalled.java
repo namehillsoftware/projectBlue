@@ -1,6 +1,6 @@
-package com.lasthopesoftware.promises.cancellable.specs.GivenAPromiseThatIsCancelled;
+package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsCancelled;
 
-import com.lasthopesoftware.promises.CancellablePromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +18,7 @@ public class WhenTheCancellationIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		final CancellablePromise<String> cancellablePromise = new CancellablePromise<>(
+		final Promise<String> cancellablePromise = new Promise<>(
 			(resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)));
 
 		cancellablePromise.error((exception, onCancelled) -> { caughtException = exception;	});
