@@ -51,7 +51,7 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 
 		isResolved = true;
 
-		DependentCancellablePromise<TResult, ?> localResolution = resolution;
+		final DependentCancellablePromise<TResult, ?> localResolution = resolution;
 
 		if (localResolution != null)
 			handleResolution(localResolution, result, error);
