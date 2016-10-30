@@ -244,6 +244,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 			@Override
 			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				onCancelled.runWith(NoOpRunnable.getInstance());
 				onFulfilled.runWith(result, exception, resolve, reject);
 			}
 		}
