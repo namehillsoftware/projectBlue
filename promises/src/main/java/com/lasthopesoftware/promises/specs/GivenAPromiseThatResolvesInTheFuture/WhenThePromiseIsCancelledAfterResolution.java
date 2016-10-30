@@ -32,7 +32,8 @@ public class WhenThePromiseIsCancelledAfterResolution {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					reject.withError(e);
+					return;
 				}
 				resolve.withResult(expectedResult);
 				latch.countDown();
