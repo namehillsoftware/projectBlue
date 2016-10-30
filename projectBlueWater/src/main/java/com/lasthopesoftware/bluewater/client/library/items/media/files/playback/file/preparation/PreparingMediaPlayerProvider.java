@@ -30,6 +30,7 @@ public class PreparingMediaPlayerProvider implements
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
 	private IPromise<IBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
+	private IPromise<IBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
 	public PreparingMediaPlayerProvider(List<IFile> playlist, IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.fileUriProvider = fileUriProvider;
@@ -44,15 +45,15 @@ public class PreparingMediaPlayerProvider implements
 
 	@Override
 	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt) {
-		IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
+		currentPreparingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
 
-		if (bufferingPlaybackHandlerPromise == null)
-			bufferingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
+		if (currentPreparingPlaybackHandlerPromise == null)
+			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
 
 		nextPreparingMediaPlayerPromise = null;
 
 		return
-			bufferingPlaybackHandlerPromise
+			currentPreparingPlaybackHandlerPromise
 				.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
 	}
 
@@ -81,6 +82,10 @@ public class PreparingMediaPlayerProvider implements
 
 	@Override
 	public void close() throws IOException {
+		if (currentPreparingPlaybackHandlerPromise != null)
+			currentPreparingPlaybackHandlerPromise.cancel();
 
+		if (nextPreparingMediaPlayerPromise != null)
+			nextPreparingMediaPlayerPromise.cancel();
 	}
 }
