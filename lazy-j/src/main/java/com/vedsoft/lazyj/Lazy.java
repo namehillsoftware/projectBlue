@@ -9,10 +9,6 @@ public final class Lazy<T> extends AbstractSynchronousLazy<T> {
 
 	private final Callable<T> initialization;
 
-	public Lazy(final Class<T> cls) {
-		this(cls::newInstance);
-	}
-
 	public Lazy(Callable<T> initialization) {
 		this.initialization = initialization;
 	}

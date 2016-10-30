@@ -12,20 +12,18 @@ import org.junit.Test;
 
 public class WhenTheCancellationIsCalled {
 
-	private Exception thrownException;
 	private Exception caughtException;
 
 	@Before
 	public void before() {
-		thrownException = new Exception();
-		new CancellablePromise<String>((resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)))
+		new CancellablePromise<String>((resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(new Exception())))
 			.then((result, onCancelled) -> {})
 			.error((exception, onCancelled) -> { caughtException = exception; })
 			.cancel();
 	}
 
 	@Test
-	public void thenTheRejectionIsCorrect() {
-		Assert.assertEquals(thrownException, caughtException);
+	public void thenTheRejectionIsNull() {
+		Assert.assertNull(caughtException);
 	}
 }

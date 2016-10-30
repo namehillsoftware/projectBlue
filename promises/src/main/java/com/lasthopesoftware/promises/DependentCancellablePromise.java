@@ -26,15 +26,10 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
 
-	private final Cancellation cancellation;
+	private final Cancellation cancellation = new Cancellation();
 
 	DependentCancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
-		this(executor, new Cancellation());
-	}
-
-	private DependentCancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor, @NotNull Cancellation cancellation) {
 		this.executor = executor;
-		this.cancellation = cancellation;
 	}
 
 	public void provide(@Nullable TInput input, @Nullable Exception exception) {
@@ -81,7 +76,7 @@ class DependentCancellablePromise<TInput, TResult> implements ICancellablePromis
 	@NotNull
 	@Override
 	public <TNewResult> DependentCancellablePromise<TResult, TNewResult> then(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled, this.cancellation);
+		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled);
 
 		resolution = newResolution;
 
