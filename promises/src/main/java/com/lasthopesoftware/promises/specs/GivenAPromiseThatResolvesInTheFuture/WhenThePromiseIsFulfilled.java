@@ -30,14 +30,14 @@ public class WhenThePromiseIsFulfilled {
 			}
 			resolve.withResult(expectedResult);
 			latch.countDown();
-		}).run())
+		}).start())
 		.then(result -> { this.result = result; });
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}
 
 	@Test
-	public void thenTheResultIsNull() {
+	public void thenTheExpectedResultIsPresent() {
 		Assert.assertEquals(expectedResult, result);
 	}
 }

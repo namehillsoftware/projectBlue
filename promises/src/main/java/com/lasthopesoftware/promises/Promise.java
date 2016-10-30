@@ -49,7 +49,6 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 			@Override
 			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				onCancelled.runWith(NoOpRunnable.getInstance());
 				executor.runWith(resolve, reject);
 			}
 		}

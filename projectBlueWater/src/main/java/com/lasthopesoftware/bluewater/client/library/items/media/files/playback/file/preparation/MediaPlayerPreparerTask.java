@@ -10,19 +10,23 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask implements TwoParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise> {
+class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private final IFile file;
 	private final int prepareAt;
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
+
+	private boolean isPrepared;
 
 	MediaPlayerPreparerTask(IFile file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.file = file;
@@ -32,7 +36,7 @@ class MediaPlayerPreparerTask implements TwoParameterAction<IResolvedPromise<IBu
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject) {
+	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		final MediaPlayer mediaPlayer;
 		try {
 			mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
@@ -47,6 +51,13 @@ class MediaPlayerPreparerTask implements TwoParameterAction<IResolvedPromise<IBu
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
 			reject.withError(new MediaPlayerException(mp, what, extra));
 			return true;
+		});
+
+		onCancelled.runWith(() -> {
+			if (!isPrepared)
+				mediaPlayer.release();
+
+			reject.withError(new InterruptedIOException("Media player preparation was interrupted"));
 		});
 
 		mediaPlayer.prepareAsync();

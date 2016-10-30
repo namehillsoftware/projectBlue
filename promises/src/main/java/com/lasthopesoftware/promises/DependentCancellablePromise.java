@@ -35,16 +35,17 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	void provide(@Nullable TInput input, @Nullable Exception exception) {
-		this.executor.runWith(
+		executor.runWith(
 			input,
 			exception,
 			result -> resolve(result, null),
 			error -> resolve(null, error),
-			this.cancellation);
+			cancellation);
 	}
 
 	public void cancel() {
-		this.cancellation.cancel();
+		if (!isResolved)
+			cancellation.cancel();
 	}
 
 	private void resolve(TResult result, Exception error) {
@@ -237,7 +238,6 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 			@Override
 			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				onCancelled.runWith(NoOpRunnable.getInstance());
 				onFulfilled.runWith(result, exception, resolve, reject);
 			}
 		}

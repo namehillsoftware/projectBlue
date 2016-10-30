@@ -36,7 +36,7 @@ public class WhenChainingResolutionTwice {
 				}
 				resolve.withResult("test");
 				latch.countDown();
-			}).run());
+			}).start());
 
 		firstResultHandler = mock(OneParameterAction.class);
 
