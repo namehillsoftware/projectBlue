@@ -44,8 +44,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	public void cancel() {
-		if (!isResolved)
-			cancellation.cancel();
+		cancellation.cancel();
 	}
 
 	private void resolve(TResult result, Exception error) {
