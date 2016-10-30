@@ -6,7 +6,7 @@ import com.vedsoft.lazyj.Lazy;
  * Created by david on 10/29/16.
  */
 
-public class NoOpRunnable implements Runnable {
+class NoOpRunnable implements Runnable {
 
 	private final static Lazy<Runnable> instance = new Lazy<>(NoOpRunnable::new);
 
