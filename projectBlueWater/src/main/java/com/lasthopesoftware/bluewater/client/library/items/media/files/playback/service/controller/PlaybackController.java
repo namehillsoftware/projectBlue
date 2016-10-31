@@ -12,8 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.CyclicalQueuedMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparingMediaPlayerProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.QueuedMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -42,13 +43,12 @@ public class PlaybackController {
 	private final Library library;
 	private final ConnectionProvider connectionProvider;
 	private final ArrayList<IFile> playlist;
-	private int mFileKey = -1;
 	private int currentFilePos = -1;
 	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
 	
 	private float mVolume = 1.0f;
-	private boolean mIsRepeating = false;
-	private boolean mIsPlaying = false;
+	private boolean isRepeating = false;
+	private boolean isPlaying = false;
 	
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 
@@ -59,7 +59,8 @@ public class PlaybackController {
 		this.context = context;
 		this.library = library;
 		this.connectionProvider = connectionProvider;
-		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>()
+		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>();
+		updatePreparedPlaybackFileProvider();
 	}
 
 	/* Begin playlist control */
@@ -107,21 +108,8 @@ public class PlaybackController {
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 		
         currentFilePos = filePos;
-        
-//		final IPlaybackFile filePlayer = mPlaybackFileProvider.getNewPlaybackFile(currentFilePos);
-//		filePlayer.addOnFileCompleteListener(this);
-//		filePlayer.addOnFilePreparedListener(this);
-//		filePlayer.addOnFileErrorListener(this);
-//		filePlayer.initMediaPlayer();
-//		filePlayer.seekTo(fileProgress < 0 ? 0 : fileProgress);
-//		mCurrentPlaybackFile = filePlayer;
-//		throwChangeEvent(mCurrentPlaybackFile);
 
-		preparedPlaybackFileProvider =
-			new PreparingMediaPlayerProvider(
-				Stream.of(playlist).skip(currentFilePos).collect(Collectors.toList()),
-				new BestMatchUriProvider(context, connectionProvider, library),
-				new MediaPlayerInitializer(context, library));
+		updatePreparedPlaybackFileProvider();
 
 		if (wasPlaying) {
 			preparedPlaybackFileProvider
@@ -151,13 +139,6 @@ public class PlaybackController {
 	}
 	
 	public boolean resume() {
-		if (mCurrentPlaybackFile == null) {
-			if (mFileKey == -1) return false;
-			
-			startAt(mFileKey);
-			return true;
-		}
-		
 		if (playbackHandler == null) {
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile()
@@ -165,13 +146,18 @@ public class PlaybackController {
 
 			return true;
 		}
-		
-		startFilePlayback(playbackHandler);
+
+		playbackHandler.start();
 		return true;
 	}
 
 	private void startFilePlayback(IPlaybackHandler playbackHandler) {
-		mIsPlaying = true;
+		if (playbackHandler == null) {
+			isPlaying = false;
+			return;
+		}
+
+		isPlaying = true;
 
 		this.playbackHandler = playbackHandler;
 
@@ -188,7 +174,7 @@ public class PlaybackController {
 	}
 
 	public void pause() {
-		mIsPlaying = false;
+		isPlaying = false;
 
 		if (playbackHandler == null) return;
 		
@@ -197,12 +183,8 @@ public class PlaybackController {
 			onPauseListener.onNowPlayingPause(this, mCurrentPlaybackFile);
 	}
 	
-	public boolean isPrepared() {
-		return mCurrentPlaybackFile != null && mCurrentPlaybackFile.isPrepared();
-	}
-	
 	public boolean isPlaying() {
-		return mIsPlaying;
+		return isPlaying;
 	}
 	
 	public void setVolume(float volume) {
@@ -211,22 +193,25 @@ public class PlaybackController {
 	}
 	
 	public void setIsRepeating(boolean isRepeating) {
-		mIsRepeating = isRepeating;
-		
-		if (mCurrentPlaybackFile == null) return;
-		
-		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
-				
-		if (lastFile == mCurrentPlaybackFile.getFile()) {
-			if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
-			
-			if (mIsRepeating) prepareNextFile(0);
-			else mNextPlaybackFile = null;
-		}
+		this.isRepeating = isRepeating;
+		updatePreparedPlaybackFileProvider();
+
+//		if (playbackHandler == null) return;
+//
+//
+//
+//		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
+//
+//		if (lastFile == mCurrentPlaybackFile.getFile()) {
+//			if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
+//
+//			if (this.isRepeating) prepareNextFile(0);
+//			else mNextPlaybackFile = null;
+//		}
 	}
 	
 	public boolean isRepeating() {
-		return mIsRepeating;
+		return isRepeating;
 	}
 	
 	/* End playlist control */
@@ -234,21 +219,13 @@ public class PlaybackController {
 	public void addFile(final IFile file) {
 		playlist.add(file);
 
-		preparedPlaybackFileProvider =
-			new PreparingMediaPlayerProvider(
-				playlist,
-				new BestMatchUriProvider(context, connectionProvider, library),
-				new MediaPlayerInitializer(context, library));
+		updatePreparedPlaybackFileProvider();
 	}
 	
 	public void removeFile(final int position) {
 		playlist.remove(position);
 
-		preparedPlaybackFileProvider =
-			new PreparingMediaPlayerProvider(
-				playlist,
-				new BestMatchUriProvider(context, connectionProvider, library),
-				new MediaPlayerInitializer(context, library));
+		updatePreparedPlaybackFileProvider();
 		
 		if (position != currentFilePos) return;
 		
@@ -287,22 +264,29 @@ public class PlaybackController {
 			.promiseNextPreparedPlaybackFile()
 			.then(this::startFilePlayback)
 			.error(this::onFileError);
-		
-//		final boolean isLastFile = currentFilePos == playlist.size() - 1;
-//		// store the next file position in a local variable in case it is decided to not set
-//		// the current file position (such as in the not repeat scenario below)
-//		final int nextFilePos = !isLastFile ? currentFilePos + 1 : 0;
-//
-//		if (mNextPlaybackFile == null) {
-//			// Playlist is complete, throw stop event and get out
-//			if (!mIsRepeating && isLastFile) {
-//				mIsPlaying = false;
-//				throwStopEvent(mediaPlayer);
-//				return;
-//			}
-//
-//			mNextPlaybackFile = mPlaybackFileProvider.getPreparingPlaybackFile(nextFilePos);
-//		}
+	}
+
+	private void updatePreparedPlaybackFileProvider() {
+		final List<IFile> truncatedPlaylist = Stream.of(playlist).skip(currentFilePos - 1).collect(Collectors.toList());
+
+		if (!isRepeating) {
+			preparedPlaybackFileProvider =
+				new QueuedMediaPlayerProvider(
+					truncatedPlaylist,
+					new BestMatchUriProvider(context, connectionProvider, library),
+					new MediaPlayerInitializer(context, library));
+
+			return;
+		}
+
+		final List<IFile> positionalPlaylist = new ArrayList<>(truncatedPlaylist);
+		positionalPlaylist.addAll(playlist.subList(0, currentFilePos - 1));
+
+		preparedPlaybackFileProvider =
+			new CyclicalQueuedMediaPlayerProvider(
+				positionalPlaylist,
+				new BestMatchUriProvider(context, connectionProvider, library),
+				new MediaPlayerInitializer(context, library));
 	}
 
 	private void onFileError(Exception exception) {
@@ -383,7 +367,7 @@ public class PlaybackController {
 
 	// Release all heavy resources
 	public void release() {
-		mIsPlaying = false;
+		isPlaying = false;
 
 		try {
 			preparedPlaybackFileProvider.close();

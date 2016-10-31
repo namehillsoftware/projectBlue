@@ -20,7 +20,7 @@ import java.util.Queue;
 /**
  * Created by david on 9/26/16.
  */
-public class PreparingMediaPlayerProvider implements
+public class QueuedMediaPlayerProvider implements
 	IPreparedPlaybackFileProvider,
 	OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>,
 	OneParameterAction<IBufferingPlaybackHandler>
@@ -32,7 +32,7 @@ public class PreparingMediaPlayerProvider implements
 	private IPromise<IBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 	private IPromise<IBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
-	public PreparingMediaPlayerProvider(List<IFile> playlist, IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+	public QueuedMediaPlayerProvider(List<IFile> playlist, IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.fileUriProvider = fileUriProvider;
 		this.playlist = new LinkedList<>(playlist);
 		this.playbackInitialization = playbackInitialization;
@@ -59,12 +59,14 @@ public class PreparingMediaPlayerProvider implements
 
 	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
 		return
-			new Promise<>(
-				new MediaPlayerPreparerTask(
-					playlist.poll(),
-					preparedAt,
-					fileUriProvider,
-					playbackInitialization));
+			playlist.size() == 0 ?
+				new Promise<>((resolve, reject) -> resolve.withResult(null)) :
+				new Promise<>(
+					new MediaPlayerPreparerTask(
+						playlist.poll(),
+						preparedAt,
+						fileUriProvider,
+						playbackInitialization));
 	}
 
 	@Override
