@@ -17,6 +17,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
 	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
+	private float volume;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -36,6 +37,17 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	@Override
 	public void seekTo(int pos) {
 		mediaPlayer.seekTo(pos);
+	}
+
+	@Override
+	public void setVolume(float volume) {
+		this.volume = volume;
+		mediaPlayer.setVolume(volume, volume);
+	}
+
+	@Override
+	public float getVolume() {
+		return volume;
 	}
 
 	@Override

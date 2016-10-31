@@ -232,7 +232,13 @@ public class PlaybackController {
 	/* End playlist control */
 	
 	public void addFile(final IFile file) {
-		mPlaybackFileProvider.add(file);
+		playlist.add(file);
+
+		preparedPlaybackFileProvider =
+			new PreparingMediaPlayerProvider(
+				playlist,
+				new BestMatchUriProvider(context, connectionProvider, library),
+				new MediaPlayerInitializer(context, library));
 	}
 	
 	public void removeFile(final int position) {
@@ -246,7 +252,7 @@ public class PlaybackController {
 		
 		if (position != currentFilePos) return;
 		
-		playbackHandler.stop();
+		playbackHandler.pause();
 
 		preparedPlaybackFileProvider
 			.promiseNextPreparedPlaybackFile()
