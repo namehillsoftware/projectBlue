@@ -39,11 +39,6 @@ public class QueuedMediaPlayerProvider implements
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile() {
-		return promiseNextPreparedPlaybackFile(0);
-	}
-
-	@Override
 	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt) {
 		currentPreparingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
 

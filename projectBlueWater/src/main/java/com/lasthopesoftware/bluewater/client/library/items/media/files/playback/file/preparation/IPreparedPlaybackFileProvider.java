@@ -10,6 +10,5 @@ import java.io.Closeable;
  */
 
 public interface IPreparedPlaybackFileProvider extends Closeable {
-	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile();
 	IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt);
 }
