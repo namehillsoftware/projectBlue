@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.promises.IPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,15 +46,17 @@ public class PlaybackController {
 	private final ArrayList<IFile> playlist;
 	private int currentFilePos = -1;
 	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
-	
+
 	private float mVolume = 1.0f;
 	private boolean isRepeating = false;
 	private boolean isPlaying = false;
-	
+
 	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
 
 	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
 	private IPlaybackHandler playbackHandler;
+	private IPromise<IPlaybackHandler> preparingPlaybackFile;
+	private int preparingFileIndex;
 
 	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
 		this.context = context;
@@ -64,7 +67,7 @@ public class PlaybackController {
 	}
 
 	/* Begin playlist control */
-	
+
 	/**
 	 * Seeks to the File with the file key in the playlist and beginning of the file.
 	 * If a file in the playlist is already playing, it will begin playback.
@@ -73,7 +76,7 @@ public class PlaybackController {
 	public void seekTo(int filePos) {
 		seekTo(filePos, 0);
 	}
-	
+
 	/**
 	 * Seeks to the file key in the playlist and the start position in that file.
 	 * If a file in the playlist is already playing, it will begin playback.
@@ -82,14 +85,14 @@ public class PlaybackController {
 	 */
 	public void seekTo(final int filePos, final int fileProgress) throws IndexOutOfBoundsException {
 		boolean wasPlaying = false;
-		
+
 		if (playbackHandler != null) {
-			
+
 			if (playbackHandler.isPlaying()) {
-				
+
 				// If the seek-to index is the same as that of the file playing, keep on playing
 				if (filePos == currentFilePos) return;
-			
+
 				// stop any playback that is in action
 				wasPlaying = true;
 				playbackHandler.pause();
@@ -102,22 +105,20 @@ public class PlaybackController {
 			}
 			playbackHandler = null;
 		}
-		
+
 		if (filePos < 0) currentFilePos = 0;
         if (filePos >= playlist.size())
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
-		
+
         currentFilePos = filePos;
 
 		updatePreparedPlaybackFileProvider();
 
 		if (wasPlaying) {
-			preparedPlaybackFileProvider
-				.promiseNextPreparedPlaybackFile(fileProgress)
-				.then(this::startFilePlayback);
+			setupNextPreparedFile(fileProgress);
 		}
 	}
-	
+
 	/**
 	 * Start playback of the playlist at the desired file key
 	 * @param filePos The file key to start playback with
@@ -125,7 +126,7 @@ public class PlaybackController {
 	public void startAt(int filePos) {
 		startAt(filePos, 0);
 	}
-	
+
 	/**
 	 * Start playback of the playlist at the desired file key and at the desired position in the file
 	 * @param filePos The file key to start playback with
@@ -133,16 +134,12 @@ public class PlaybackController {
 	 */
 	public void startAt(int filePos, int fileProgress) {
 		seekTo(filePos, fileProgress);
-		preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile()
-			.then(this::startFilePlayback);
+		setupNextPreparedFile();
 	}
-	
+
 	public boolean resume() {
 		if (playbackHandler == null) {
-			preparedPlaybackFileProvider
-				.promiseNextPreparedPlaybackFile()
-				.then(this::startFilePlayback);
+			setupNextPreparedFile();
 
 			return true;
 		}
@@ -177,65 +174,62 @@ public class PlaybackController {
 		isPlaying = false;
 
 		if (playbackHandler == null) return;
-		
+
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
 			onPauseListener.onNowPlayingPause(this, mCurrentPlaybackFile);
 	}
-	
+
 	public boolean isPlaying() {
 		return isPlaying;
 	}
-	
+
 	public void setVolume(float volume) {
 		mVolume = volume;
 		if (mCurrentPlaybackFile != null && mCurrentPlaybackFile.isPlaying()) mCurrentPlaybackFile.setVolume(mVolume);
 	}
-	
+
 	public void setIsRepeating(boolean isRepeating) {
 		this.isRepeating = isRepeating;
 		updatePreparedPlaybackFileProvider();
 	}
-	
+
 	public boolean isRepeating() {
 		return isRepeating;
 	}
-	
+
 	/* End playlist control */
-	
+
 	public void addFile(final IFile file) {
 		playlist.add(file);
 
 		updatePreparedPlaybackFileProvider();
 	}
-	
+
 	public void removeFile(final int position) {
 		playlist.remove(position);
 
 		updatePreparedPlaybackFileProvider();
-		
+
 		if (position != currentFilePos) return;
-		
+
 		playbackHandler.pause();
 
-		preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile()
-			.then(this::startFilePlayback)
-			.error(this::onFileError);
+		setupNextPreparedFile();
 	}
-	
+
 	public IPlaybackFile getCurrentPlaybackFile() {
 		return mCurrentPlaybackFile;
 	}
-	
+
 	public List<IFile> getPlaylist() {
 		return Collections.unmodifiableList(playlist);
 	}
-	
+
 	public String getPlaylistString() {
 		return FileStringListUtilities.serializeFileStringList(playlist);
 	}
-	
+
 	public int getCurrentPosition() {
 		return currentFilePos;
 	}
@@ -247,14 +241,13 @@ public class PlaybackController {
 			mLogger.error("There was an error releasing the media player", e);
 		}
 
-		preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile()
-			.then(this::startFilePlayback)
-			.error(this::onFileError);
+		setupNextPreparedFile();
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
-		final List<IFile> truncatedPlaylist = Stream.of(playlist).skip(currentFilePos - 1).collect(Collectors.toList());
+		preparingFileIndex = currentFilePos;
+
+		final List<IFile> truncatedPlaylist = Stream.of(playlist).skip(preparingFileIndex - 1).collect(Collectors.toList());
 
 		if (!isRepeating) {
 			preparedPlaybackFileProvider =
@@ -267,13 +260,30 @@ public class PlaybackController {
 		}
 
 		final List<IFile> positionalPlaylist = new ArrayList<>(truncatedPlaylist);
-		positionalPlaylist.addAll(playlist.subList(0, currentFilePos - 1));
+		positionalPlaylist.addAll(playlist.subList(0, preparingFileIndex - 1));
 
 		preparedPlaybackFileProvider =
 			new CyclicalQueuedMediaPlayerProvider(
 				positionalPlaylist,
 				new BestMatchUriProvider(context, connectionProvider, library),
 				new MediaPlayerInitializer(context, library));
+	}
+
+	private void setupNextPreparedFile() {
+		setupNextPreparedFile(0);
+	}
+
+	private void setupNextPreparedFile(int preparedPosition) {
+		preparingPlaybackFile =
+			preparedPlaybackFileProvider
+				.promiseNextPreparedPlaybackFile(preparedPosition);
+
+		preparingPlaybackFile
+			.then(handler -> {
+				preparingFileIndex++;
+				startFilePlayback(handler);
+			})
+			.error(this::onFileError);
 	}
 
 	private void onFileError(Exception exception) {
@@ -285,32 +295,32 @@ public class PlaybackController {
 		final MediaPlayerException mediaPlayerException = (MediaPlayerException)exception;
 
 		mLogger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
-		
-		// We don't know what happened, release the next file player too
+
+		// We don't know what happened, release the entire queue
 		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
-			mNextPlaybackFile.releaseMediaPlayer();
-		
+			closePreparedPlaybackFileProvider();
+
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
 			listener.onPlaylistStateControlError(this, mediaPlayerException);
 	}
 	/* End event handlers */
-	
+
 	/* Listener callers */
 	private void throwChangeEvent(IPlaybackFile filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, filePlayer);
 	}
-	
+
 	private void throwStopEvent(IPlaybackFile filePlayer) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
 			listener.onNowPlayingStop(this, filePlayer);
 	}
-	
+
 	/* Listener collection helpers */
 	public void addOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
 		mOnNowPlayingChangeListeners.add(listener);
 	}
-	
+
 	public void removeOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
 		if (mOnNowPlayingChangeListeners.contains(listener))
 			mOnNowPlayingChangeListeners.remove(listener);
@@ -319,7 +329,7 @@ public class PlaybackController {
 	public void addOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
 		mOnNowPlayingStartListeners.add(listener);
 	}
-	
+
 	public void removeOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
 		if (mOnNowPlayingStartListeners.contains(listener))
 			mOnNowPlayingStartListeners.remove(listener);
@@ -328,7 +338,7 @@ public class PlaybackController {
 	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		mOnNowPlayingStopListeners.add(listener);
 	}
-	
+
 	public void removeOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		if (mOnNowPlayingStopListeners.contains(listener))
 			mOnNowPlayingStopListeners.remove(listener);
@@ -337,7 +347,7 @@ public class PlaybackController {
 	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
 		mOnNowPlayingPauseListeners.add(listener);
 	}
-	
+
 	public void removeOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
 		if (mOnNowPlayingPauseListeners.contains(listener))
 			mOnNowPlayingPauseListeners.remove(listener);
@@ -346,7 +356,7 @@ public class PlaybackController {
 	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
 		mOnPlaylistStateControlErrorListeners.add(listener);
 	}
-	
+
 	public void removeOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
 		if (mOnPlaylistStateControlErrorListeners.contains(listener))
 			mOnPlaylistStateControlErrorListeners.remove(listener);
@@ -355,11 +365,14 @@ public class PlaybackController {
 	// Release all heavy resources
 	public void release() {
 		isPlaying = false;
+		closePreparedPlaybackFileProvider();
+	}
 
+	private void closePreparedPlaybackFileProvider() {
 		try {
 			preparedPlaybackFileProvider.close();
 		} catch (IOException e) {
-			mLogger.warn("There was an error closing the playback file provider", e);
+			mLogger.error("There was an error closing the playback file provider", e);
 		}
 	}
 }
