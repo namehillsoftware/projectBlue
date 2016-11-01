@@ -195,19 +195,6 @@ public class PlaybackController {
 	public void setIsRepeating(boolean isRepeating) {
 		this.isRepeating = isRepeating;
 		updatePreparedPlaybackFileProvider();
-
-//		if (playbackHandler == null) return;
-//
-//
-//
-//		final IFile lastFile = mPlaybackFileProvider.getFiles().get(mPlaybackFileProvider.size() - 1);
-//
-//		if (lastFile == mCurrentPlaybackFile.getFile()) {
-//			if (mNextPlaybackFile != null) mNextPlaybackFile.releaseMediaPlayer();
-//
-//			if (this.isRepeating) prepareNextFile(0);
-//			else mNextPlaybackFile = null;
-//		}
 	}
 	
 	public boolean isRepeating() {
