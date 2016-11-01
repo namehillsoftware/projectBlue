@@ -154,6 +154,8 @@ public class PlaybackController {
 			return;
 		}
 
+		currentFilePos++;
+
 		isPlaying = true;
 
 		this.playbackHandler = playbackHandler;
@@ -245,8 +247,6 @@ public class PlaybackController {
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
-		preparingFileIndex = currentFilePos;
-
 		final List<IFile> truncatedPlaylist = Stream.of(playlist).skip(preparingFileIndex - 1).collect(Collectors.toList());
 
 		if (!isRepeating) {
