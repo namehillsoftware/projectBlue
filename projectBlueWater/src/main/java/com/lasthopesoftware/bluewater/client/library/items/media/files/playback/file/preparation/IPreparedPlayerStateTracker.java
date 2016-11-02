@@ -5,5 +5,5 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
  */
 
 public interface IPreparedPlayerStateTracker extends IPreparedPlaybackFileProvider {
-	int getPosition();
+	int getPreparedIndex();
 }

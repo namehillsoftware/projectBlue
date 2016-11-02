@@ -1,28 +1,21 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
-import android.content.Context;
-
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.CyclicalQueuedMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.QueuedMediaPlayerProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlayerStateTracker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IProvidePlaybackQueues;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparedStateTrackingPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.promises.IPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,11 +33,8 @@ public class PlaybackController {
 	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<>();
 	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<>();
 
-	private final Context context;
-	private final Library library;
-	private final ConnectionProvider connectionProvider;
 	private final ArrayList<IFile> playlist;
-	private final PlaybackQueuesProvider playbackQueuesProvider;
+	private final IProvidePlaybackQueues playbackQueuesProvider;
 
 	private float mVolume = 1.0f;
 	private boolean isRepeating = false;
@@ -52,22 +42,14 @@ public class PlaybackController {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackController.class);
 
-	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
+	private IPreparedPlayerStateTracker preparedPlaybackFileProvider;
 	private IPlaybackHandler playbackHandler;
-	private int preparingFileIndex;
+	private int currentFilePos;
 
-	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
-		this.context = context;
-		this.library = library;
-		this.connectionProvider = connectionProvider;
+	public PlaybackController(final String playlistString, IProvidePlaybackQueues playbackQueuesProvider) {
 		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>();
-		updatePreparedPlaybackFileProvider();
 
-		this.playbackQueuesProvider =
-			new PlaybackQueuesProvider(
-				playlist,
-				new BestMatchUriProvider(context, connectionProvider, library),
-				new MediaPlayerInitializer(context, library));
+		this.playbackQueuesProvider = playbackQueuesProvider;
 	}
 
 	/* Begin playlist control */
@@ -110,13 +92,10 @@ public class PlaybackController {
 			playbackHandler = null;
 		}
 
-		if (filePos < 0) currentFilePos = 0;
         if (filePos >= playlist.size())
         	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
 
-        currentFilePos = filePos;
-
-		updatePreparedPlaybackFileProvider();
+		updatePreparedPlaybackFileProvider(Math.min(filePos, 0));
 
 		if (wasPlaying) {
 			setupNextPreparedFile(fileProgress);
@@ -251,26 +230,14 @@ public class PlaybackController {
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
-		final List<IFile> truncatedPlaylist = Stream.of(playlist).skip(preparingFileIndex - 1).collect(Collectors.toList());
+		updatePreparedPlaybackFileProvider(preparedPlaybackFileProvider.getPreparedIndex());
+	}
 
-		if (!isRepeating) {
-			preparedPlaybackFileProvider =
-				new QueuedMediaPlayerProvider(
-					truncatedPlaylist,
-					new BestMatchUriProvider(context, connectionProvider, library),
-					new MediaPlayerInitializer(context, library));
+	private void updatePreparedPlaybackFileProvider(int newPosition) {
+		final IPreparedPlaybackFileProvider newPlaybackFileProvider	=
+			playbackQueuesProvider.getQueue(playlist, newPosition, isRepeating);
 
-			return;
-		}
-
-		final List<IFile> positionalPlaylist = new ArrayList<>(truncatedPlaylist);
-		positionalPlaylist.addAll(playlist.subList(0, preparingFileIndex - 1));
-
-		preparedPlaybackFileProvider =
-			new CyclicalQueuedMediaPlayerProvider(
-				positionalPlaylist,
-				new BestMatchUriProvider(context, connectionProvider, library),
-				new MediaPlayerInitializer(context, library));
+		preparedPlaybackFileProvider = new PreparedStateTrackingPlayerProvider(newPosition, playlist.size(), newPlaybackFileProvider);
 	}
 
 	private void setupNextPreparedFile() {
@@ -278,15 +245,11 @@ public class PlaybackController {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		preparingPlaybackFile =
-			preparedPlaybackFileProvider
-				.promiseNextPreparedPlaybackFile(preparedPosition);
+		final IPromise<IPlaybackHandler> preparingPlaybackFile = preparedPlaybackFileProvider
+			.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		preparingPlaybackFile
-			.then(handler -> {
-				preparingFileIndex++;
-				startFilePlayback(handler);
-			})
+			.then(this::startFilePlayback)
 			.error(this::onFileError);
 	}
 

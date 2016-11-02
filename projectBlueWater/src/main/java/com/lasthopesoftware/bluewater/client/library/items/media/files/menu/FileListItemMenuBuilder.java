@@ -34,20 +34,20 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
     private final List<IFile> files;
 
     private static final class ViewHolder extends BaseMenuViewHolder {
-        public final LazyViewFinder<ImageButton> addButtonFinder;
+        final LazyViewFinder<ImageButton> addButtonFinder;
 
-        public ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
+        ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
             super(viewFileDetailsButtonFinder, playButtonFinder);
 
             this.addButtonFinder = addButtonFinder;
             this.fileListItemContainer = fileListItemContainer;
         }
 
-        public final FileListItemContainer fileListItemContainer;
-        public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
+        final FileListItemContainer fileListItemContainer;
+        AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public CachedFilePropertiesProvider filePropertiesProvider;
 
-        public final ImageButton getAddButton() {
+        final ImageButton getAddButton() {
             return addButtonFinder.findView();
         }
     }
@@ -112,7 +112,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
     private static class AddClickListener extends AbstractMenuClickHandler {
         private final IFile mFile;
 
-        public AddClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
+        AddClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
             super(viewFlipper);
             mFile = file;
         }
