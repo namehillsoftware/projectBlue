@@ -39,6 +39,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
@@ -49,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -487,7 +490,12 @@ public class PlaybackService extends Service implements
 						playlistController.release();
 					}
 
-					playlistController = new PlaybackController(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), PlaybackService.playlistString);
+					final PlaybackQueuesProvider playbackQueuesProvider =
+						new PlaybackQueuesProvider(
+							new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary),
+							new MediaPlayerInitializer(PlaybackService.this, savedLibrary));
+
+					playlistController = new PlaybackController(playlistString, playbackQueuesProvider);
 
 					playlistController.setIsRepeating(savedLibrary.isRepeating());
 					playlistController.addOnNowPlayingChangeListener(PlaybackService.this);
