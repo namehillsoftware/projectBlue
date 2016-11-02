@@ -36,7 +36,7 @@ public class PlaybackController {
 	private final ArrayList<IFile> playlist;
 	private final IProvidePlaybackQueues playbackQueuesProvider;
 
-	private float mVolume = 1.0f;
+	private float volume = 1.0f;
 	private boolean isRepeating = false;
 	private boolean isPlaying = false;
 
@@ -70,6 +70,9 @@ public class PlaybackController {
 	 * @param fileProgress The position in the file to start at
 	 */
 	public void seekTo(final int filePos, final int fileProgress) throws IndexOutOfBoundsException {
+		if (filePos >= playlist.size())
+			throw new IndexOutOfBoundsException("File position is greater than playlist size.");
+
 		boolean wasPlaying = false;
 
 		if (playbackHandler != null) {
@@ -89,17 +92,15 @@ public class PlaybackController {
 			} catch (IOException e) {
 				logger.error("There was an error closing the playback handler", e);
 			}
+
 			playbackHandler = null;
 		}
 
-        if (filePos >= playlist.size())
-        	throw new IndexOutOfBoundsException("File position is greater than playlist size.");
+		currentFilePos = Math.min(filePos, 0);
+		updatePreparedPlaybackFileProvider(currentFilePos);
 
-		updatePreparedPlaybackFileProvider(Math.min(filePos, 0));
-
-		if (wasPlaying) {
+		if (wasPlaying)
 			setupNextPreparedFile(fileProgress);
-		}
 	}
 
 	/**
@@ -143,7 +144,7 @@ public class PlaybackController {
 
 		this.playbackHandler = playbackHandler;
 
-		playbackHandler.setVolume(mVolume);
+		playbackHandler.setVolume(volume);
 		playbackHandler
 			.start()
 			.then(this::closeAndStartNextFile)
@@ -170,8 +171,8 @@ public class PlaybackController {
 	}
 
 	public void setVolume(float volume) {
-		mVolume = volume;
-		if (playbackHandler != null && playbackHandler.isPlaying()) playbackHandler.setVolume(mVolume);
+		this.volume = volume;
+		if (playbackHandler != null && playbackHandler.isPlaying()) playbackHandler.setVolume(this.volume);
 	}
 
 	public void setIsRepeating(boolean isRepeating) {
@@ -198,8 +199,12 @@ public class PlaybackController {
 
 		if (position != currentFilePos) return;
 
-		playbackHandler.pause();
+		if (playbackHandler == null || !playbackHandler.isPlaying()) {
+			setupNextPreparedFile();
+			return;
+		}
 
+		playbackHandler.pause();
 		closeAndStartNextFile(playbackHandler);
 	}
 
