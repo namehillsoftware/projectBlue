@@ -146,7 +146,7 @@ public class PlaybackController {
 		playbackHandler.setVolume(mVolume);
 		playbackHandler
 			.start()
-			.then(this::onFileComplete)
+			.then(this::closeAndStartNextFile)
 			.error(this::onFileError);
 
         // Throw events after asynchronous calls have started
@@ -171,7 +171,7 @@ public class PlaybackController {
 
 	public void setVolume(float volume) {
 		mVolume = volume;
-		if (mCurrentPlaybackFile != null && mCurrentPlaybackFile.isPlaying()) mCurrentPlaybackFile.setVolume(mVolume);
+		if (playbackHandler != null && playbackHandler.isPlaying()) playbackHandler.setVolume(mVolume);
 	}
 
 	public void setIsRepeating(boolean isRepeating) {
@@ -200,7 +200,7 @@ public class PlaybackController {
 
 		playbackHandler.pause();
 
-		setupNextPreparedFile();
+		closeAndStartNextFile(playbackHandler);
 	}
 
 	public IPlaybackFile getCurrentPlaybackFile() {
@@ -219,7 +219,7 @@ public class PlaybackController {
 		return currentFilePos;
 	}
 
-	private void onFileComplete(IPlaybackHandler playbackHandler) {
+	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
@@ -234,6 +234,8 @@ public class PlaybackController {
 	}
 
 	private void updatePreparedPlaybackFileProvider(int newPosition) {
+		closePreparedPlaybackFileProvider();
+
 		final IPreparedPlaybackFileProvider newPlaybackFileProvider	=
 			playbackQueuesProvider.getQueue(playlist, newPosition, isRepeating);
 
@@ -245,8 +247,9 @@ public class PlaybackController {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		final IPromise<IPlaybackHandler> preparingPlaybackFile = preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile(preparedPosition);
+		final IPromise<IPlaybackHandler> preparingPlaybackFile =
+			preparedPlaybackFileProvider
+				.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		preparingPlaybackFile
 			.then(this::startFilePlayback)
