@@ -199,10 +199,8 @@ public class PlaybackController {
 
 		if (position != currentFilePos) return;
 
-		if (playbackHandler == null || !playbackHandler.isPlaying()) {
-			setupNextPreparedFile();
+		if (playbackHandler == null || !playbackHandler.isPlaying())
 			return;
-		}
 
 		playbackHandler.pause();
 		closeAndStartNextFile(playbackHandler);
