@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.CyclicalQueuedMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.QueuedMediaPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
@@ -22,7 +23,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.promises.IPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,18 +44,16 @@ public class PlaybackController {
 	private final Library library;
 	private final ConnectionProvider connectionProvider;
 	private final ArrayList<IFile> playlist;
-	private int currentFilePos = -1;
-	private IPlaybackFile mCurrentPlaybackFile, mNextPlaybackFile;
+	private final PlaybackQueuesProvider playbackQueuesProvider;
 
 	private float mVolume = 1.0f;
 	private boolean isRepeating = false;
 	private boolean isPlaying = false;
 
-	private static final Logger mLogger = LoggerFactory.getLogger(PlaybackController.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlaybackController.class);
 
 	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
 	private IPlaybackHandler playbackHandler;
-	private IPromise<IPlaybackHandler> preparingPlaybackFile;
 	private int preparingFileIndex;
 
 	public PlaybackController(final Context context, final Library library, final ConnectionProvider connectionProvider, final String playlistString) {
@@ -64,6 +62,12 @@ public class PlaybackController {
 		this.connectionProvider = connectionProvider;
 		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>();
 		updatePreparedPlaybackFileProvider();
+
+		this.playbackQueuesProvider =
+			new PlaybackQueuesProvider(
+				playlist,
+				new BestMatchUriProvider(context, connectionProvider, library),
+				new MediaPlayerInitializer(context, library));
 	}
 
 	/* Begin playlist control */
@@ -101,7 +105,7 @@ public class PlaybackController {
 			try {
 				playbackHandler.close();
 			} catch (IOException e) {
-				mLogger.error("There was an error closing the playback handler", e);
+				logger.error("There was an error closing the playback handler", e);
 			}
 			playbackHandler = null;
 		}
@@ -240,7 +244,7 @@ public class PlaybackController {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
-			mLogger.error("There was an error releasing the media player", e);
+			logger.error("There was an error releasing the media player", e);
 		}
 
 		setupNextPreparedFile();
@@ -288,13 +292,13 @@ public class PlaybackController {
 
 	private void onFileError(Exception exception) {
 		if (!(exception instanceof MediaPlayerException)) {
-			mLogger.error("There was an error preparing the file", exception);
+			logger.error("There was an error preparing the file", exception);
 			return;
 		}
 
 		final MediaPlayerException mediaPlayerException = (MediaPlayerException)exception;
 
-		mLogger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
+		logger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
 
 		// We don't know what happened, release the entire queue
 		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
@@ -372,7 +376,7 @@ public class PlaybackController {
 		try {
 			preparedPlaybackFileProvider.close();
 		} catch (IOException e) {
-			mLogger.error("There was an error closing the playback file provider", e);
+			logger.error("There was an error closing the playback file provider", e);
 		}
 	}
 }

@@ -5,8 +5,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
  */
 
 public interface IProvidePlaybackQueues {
-	IPreparedPlaybackFileProvider getQueue();
-	IPreparedPlaybackFileProvider getRepeatingQueue();
-	IPreparedPlaybackFileProvider getQueue(int startingAt);
-	IPreparedPlaybackFileProvider getRepeatingQueue(int startingAt);
+	IPreparedPlaybackFileProvider getQueue(boolean isCyclical);
+	IPreparedPlaybackFileProvider getQueue(boolean isCyclical, int startingAt);
 }
