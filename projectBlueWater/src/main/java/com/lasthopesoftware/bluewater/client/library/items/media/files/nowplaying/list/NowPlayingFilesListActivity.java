@@ -96,7 +96,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		private final ListView mFileListView;
 		private final ProgressBar mLoadingProgressBar;
 		
-		public OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar) {
+		OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar) {
             mNowPlayingFilesListActivity = nowPlayingFilesListActivity;
 			mFileListView = fileListView;
 			mLoadingProgressBar = loadingProgressBar;

@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuV
 import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
@@ -32,6 +33,7 @@ import java.util.List;
 public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> {
 
     private final List<IFile> files;
+    private final INowPlayingFileProvider nowPlayingFileProvider;
 
     private static final class ViewHolder extends BaseMenuViewHolder {
         final LazyViewFinder<ImageButton> addButtonFinder;
@@ -52,8 +54,9 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         }
     }
 
-    public FileListItemMenuBuilder(final List<IFile> files) {
+    public FileListItemMenuBuilder(final List<IFile> files, INowPlayingFileProvider nowPlayingFileProvider) {
         this.files = files;
+        this.nowPlayingFileProvider = nowPlayingFileProvider;
     }
 
     @Override
@@ -89,7 +92,11 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
 
         textView.setTypeface(null, Typeface.NORMAL);
-		textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == PlaybackService.getCurrentPlayingFileKey()));
+        nowPlayingFileProvider
+            .getNowPlayingFile()
+            .then((f) -> {
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == f.getKey()));
+            });
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {

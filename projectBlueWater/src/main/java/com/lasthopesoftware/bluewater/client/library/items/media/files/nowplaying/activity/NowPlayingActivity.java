@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -43,7 +43,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.IFluentTask;
 
 import org.slf4j.LoggerFactory;
@@ -235,13 +234,6 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	private void initializeView() {
-
-		// Get initial view state from playlist controller if it is active
-		final IPlaybackFile filePlayer = PlaybackService.getCurrentPlaybackFile();
-		if (filePlayer != null) {
-			setView(filePlayer);
-			return;
-		}
 
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);

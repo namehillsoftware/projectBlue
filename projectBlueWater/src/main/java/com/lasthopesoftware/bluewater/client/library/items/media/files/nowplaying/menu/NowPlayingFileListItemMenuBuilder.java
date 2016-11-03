@@ -38,18 +38,18 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         private final LazyViewFinder<ImageButton> removeButtonFinder;
 
-        public ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
+        ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
             super(viewFileDetailsButtonFinder, playButtonFinder);
 
             this.removeButtonFinder = removeButtonFinder;
             this.fileListItemContainer = fileListItemContainer;
         }
 
-        public final FileListItemContainer fileListItemContainer;
-        public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
+        final FileListItemContainer fileListItemContainer;
+        AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public CachedFilePropertiesProvider filePropertiesProvider;
 
-	    public final ImageButton getRemoveButton() {
+	    final ImageButton getRemoveButton() {
 		    return removeButtonFinder.findView();
 	    }
     }
@@ -96,10 +96,6 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
-
-        final int currentPlaylistPosition = PlaybackService.getCurrentPlaylistPosition();
-        if (currentPlaylistPosition > -1)
-            textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == currentPlaylistPosition));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {

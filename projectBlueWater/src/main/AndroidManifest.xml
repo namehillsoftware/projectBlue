@@ -100,7 +100,7 @@
                 android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity" />
         </activity>
         <activity
-            android:name=".client.library.items.media.files.nowplaying.NowPlayingActivity"
+            android:name=".client.library.items.media.files.nowplaying.activity.NowPlayingActivity"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask"
             android:theme="@style/NowPlayingTheme" >
@@ -111,7 +111,7 @@
             android:launchMode="singleTask" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingActivity" />
+                android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity" />
         </activity>
 
         <receiver android:name=".client.library.items.media.files.playback.service.receivers.AudioBecomingNoisyReceiver" >

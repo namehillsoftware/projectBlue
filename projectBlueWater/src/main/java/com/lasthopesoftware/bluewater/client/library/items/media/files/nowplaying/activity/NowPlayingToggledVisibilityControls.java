@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
 import android.view.View;
 import android.widget.LinearLayout;
@@ -16,13 +16,13 @@ public class NowPlayingToggledVisibilityControls {
 
     private boolean isVisible = true;
 
-    public NowPlayingToggledVisibilityControls(LazyViewFinder<LinearLayout> playerControlsLinearLayout, LazyViewFinder<LinearLayout> menuControlsLinearLayout, LazyViewFinder<RatingBar> ratingBar) {
+    NowPlayingToggledVisibilityControls(LazyViewFinder<LinearLayout> playerControlsLinearLayout, LazyViewFinder<LinearLayout> menuControlsLinearLayout, LazyViewFinder<RatingBar> ratingBar) {
         this.playerControlsLinearLayout = playerControlsLinearLayout;
         this.menuControlsLinearLayout = menuControlsLinearLayout;
         this.ratingBar = ratingBar;
     }
 
-    public void toggleVisibility(boolean isVisible) {
+    void toggleVisibility(boolean isVisible) {
         this.isVisible = isVisible;
 
         final int normalVisibility = isVisible ? View.VISIBLE : View.INVISIBLE;

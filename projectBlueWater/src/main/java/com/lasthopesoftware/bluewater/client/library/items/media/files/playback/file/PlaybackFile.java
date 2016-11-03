@@ -105,7 +105,7 @@ public class PlaybackFile implements
 	}
 
 	private Uri getFileUri() throws IOException {
-		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mpContext, connectionProvider, LibrarySession.GetActiveLibrary(mpContext));
+		final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(mpContext, connectionProvider, LibrarySession.GetActiveLibraryInternal(mpContext));
 		return bestMatchUriProvider.getFileUri();
 	}
 

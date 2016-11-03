@@ -11,13 +11,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
-public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterAction<Integer> {
+class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterAction<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
-	public NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<IFile> files, int nowPlayingFilePos) {
+	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<IFile> files, int nowPlayingFilePos) {
 		super(context, resource, files);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
@@ -30,6 +32,7 @@ public class NowPlayingFileListAdapter extends AbstractFileListAdapter implement
         nowPlayingFileListItemMenuBuilder.setOnPlaylistFileRemovedListener(this);
 	}
 
+    @NotNull
     @Override
     public final View getView(final int position, View convertView, final ViewGroup parent) {
         return nowPlayingFileListItemMenuBuilder.getView(position, getItem(position), convertView, parent);

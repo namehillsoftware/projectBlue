@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
@@ -334,27 +334,9 @@ public class PlaybackService extends Service implements
 
 	/* End Events */
 
-	public static IPlaybackFile getCurrentPlaybackFile() {
-		synchronized(syncPlaylistControllerObject) {
-			return playlistController != null ? playlistController.getCurrentPlaybackFile() : null;
-		}
-	}
-
 	public static boolean isPlaying() {
 		synchronized (syncPlaylistControllerObject) {
 			return playlistController != null && playlistController.isPlaying();
-		}
-	}
-
-	public static int getCurrentPlayingFileKey() {
-		synchronized (syncPlaylistControllerObject) {
-			return playlistController != null && playlistController.getCurrentPlaybackFile() != null ? playlistController.getCurrentPlaybackFile().getFile().getKey() : -1;
-		}
-	}
-
-	public static int getCurrentPlaylistPosition() {
-		synchronized (syncPlaylistControllerObject) {
-			return playlistController != null ? playlistController.getCurrentPosition() : -1;
 		}
 	}
 
@@ -1041,8 +1023,8 @@ public class PlaybackService extends Service implements
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 
 		if (playlistController != null) {
-			if (playlistController.getCurrentPlaybackFile() != null)
-				saveStateToLibrary(playlistController, playlistController.getCurrentPlaybackFile());
+//			if (playlistController.getCurrentPlaybackFile() != null)
+//				saveStateToLibrary(playlistController, playlistController.getCurrentPlaybackFile());
 
 			playlistController.release();
 			playlistController = null;

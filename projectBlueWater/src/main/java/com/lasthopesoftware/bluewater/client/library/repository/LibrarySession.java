@@ -12,6 +12,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -131,36 +133,55 @@ public class LibrarySession {
 		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
-				return GetActiveLibrary(context);
+				return GetActiveLibraryInternal(context);
 			}
 		}, onGetLibraryComplete);
+	}
+
+	public static IPromise<Library> GetActiveLibrary(final Context context) {
+		return new Promise<>((resolve, reject) -> {
+			try {
+				resolve.withResult(GetActiveLibraryInternal(context));
+			} catch (Exception e) {
+				reject.withError(e);
+			}
+		});
+	}
+
+	public static IPromise<Library> GetLibrary(final Context context, final int libraryId) {
+		return new Promise<>((resolve, reject) -> {
+			try {
+				resolve.withResult(GetLibraryInternal(context, libraryId));
+			} catch (Exception e) {
+				reject.withError(e);
+			}
+		});
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {
 		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
-				return GetLibrary(context, libraryId);
+				return GetLibraryInternal(context, libraryId);
 			}
 		}, onGetLibraryComplete);
 	}
 
 	private static void ExecuteGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterAction<Library> onGetLibraryComplete) {
-
 		getLibraryTask
 				.onComplete(onGetLibraryComplete)
 				.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static synchronized Library GetActiveLibrary(final Context context) {
+	public static synchronized Library GetActiveLibraryInternal(final Context context) {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 
 		final int chosenLibraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(chosenLibraryInt, -1);
-		return chosenLibraryId >= 0 ? GetLibrary(context, chosenLibraryId) : null;
+		return chosenLibraryId >= 0 ? GetLibraryInternal(context, chosenLibraryId) : null;
 	}
 
-	private static synchronized Library GetLibrary(final Context context, int libraryId) {
+	private static synchronized Library GetLibraryInternal(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
 import android.os.AsyncTask;
 import android.os.Message;
