@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
+import android.annotation.SuppressLint;
+import android.media.MediaPlayer;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlayerStateTracker;
@@ -22,11 +24,22 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PlaybackController {
+	@SuppressLint("InlinedApi")
+	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
+		MediaPlayer.MEDIA_ERROR_IO,
+		MediaPlayer.MEDIA_ERROR_MALFORMED,
+		MediaPlayer.MEDIA_ERROR_UNSUPPORTED,
+		MediaPlayer.MEDIA_ERROR_TIMED_OUT,
+		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
+	})));
+
 	private final HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<>();
 	private final HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<>();
 	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<>();
@@ -270,7 +283,7 @@ public class PlaybackController {
 		logger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
 
 		// We don't know what happened, release the entire queue
-		if (!PlaybackFile.MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
+		if (!MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
 			closePreparedPlaybackFileProvider();
 
 		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
