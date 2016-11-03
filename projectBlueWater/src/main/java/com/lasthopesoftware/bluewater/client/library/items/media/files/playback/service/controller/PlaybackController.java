@@ -164,9 +164,9 @@ public class PlaybackController {
 			.error(this::onFileError);
 
         // Throw events after asynchronous calls have started
-        throwChangeEvent(mCurrentPlaybackFile);
+        throwChangeEvent(playbackHandler);
         for (OnNowPlayingStartListener listener : mOnNowPlayingStartListeners)
-        	listener.onNowPlayingStart(this, mCurrentPlaybackFile);
+        	listener.onNowPlayingStart(this, playbackHandler);
 	}
 
 	public void pause() {
@@ -175,8 +175,9 @@ public class PlaybackController {
 		if (playbackHandler == null) return;
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
+
 		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
-			onPauseListener.onNowPlayingPause(this, mCurrentPlaybackFile);
+			onPauseListener.onNowPlayingPause(this, playbackHandler);
 	}
 
 	public boolean isPlaying() {
@@ -217,10 +218,6 @@ public class PlaybackController {
 
 		playbackHandler.pause();
 		closeAndStartNextFile(playbackHandler);
-	}
-
-	public IPlaybackFile getCurrentPlaybackFile() {
-		return mCurrentPlaybackFile;
 	}
 
 	public List<IFile> getPlaylist() {
@@ -292,9 +289,9 @@ public class PlaybackController {
 	/* End event handlers */
 
 	/* Listener callers */
-	private void throwChangeEvent(IPlaybackFile filePlayer) {
+	private void throwChangeEvent(IPlaybackHandler filePlayer) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
-			listener.onNowPlayingChange(this, filePlayer);
+			listener.onNowPlayingChange(this, playbackHandler);
 	}
 
 	private void throwStopEvent(IPlaybackFile filePlayer) {

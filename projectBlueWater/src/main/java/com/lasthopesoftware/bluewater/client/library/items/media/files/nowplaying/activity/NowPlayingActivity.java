@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -474,7 +475,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {
+	public void onNowPlayingChange(PlaybackController controller, IPlaybackHandler filePlayer) {
 		setView(filePlayer);
 	}
 

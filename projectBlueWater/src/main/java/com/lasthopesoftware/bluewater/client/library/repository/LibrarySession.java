@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -139,23 +140,11 @@ public class LibrarySession {
 	}
 
 	public static IPromise<Library> GetActiveLibrary(final Context context) {
-		return new Promise<>((resolve, reject) -> {
-			try {
-				resolve.withResult(GetActiveLibraryInternal(context));
-			} catch (Exception e) {
-				reject.withError(e);
-			}
-		});
+		return new Promise<>(new DispatchedAndroidTask<>(onCanceled -> GetActiveLibraryInternal(context)));
 	}
 
 	public static IPromise<Library> GetLibrary(final Context context, final int libraryId) {
-		return new Promise<>((resolve, reject) -> {
-			try {
-				resolve.withResult(GetLibraryInternal(context, libraryId));
-			} catch (Exception e) {
-				reject.withError(e);
-			}
-		});
+		return new Promise<>(new DispatchedAndroidTask<>(onCancelled -> GetLibraryInternal(context, libraryId)));
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {

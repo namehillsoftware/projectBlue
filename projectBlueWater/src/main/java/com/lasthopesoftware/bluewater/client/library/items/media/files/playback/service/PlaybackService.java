@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
@@ -914,7 +915,7 @@ public class PlaybackService extends Service implements
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, IPlaybackFile filePlayer) {
+	public void onNowPlayingChange(PlaybackController controller, IPlaybackHandler filePlayer) {
 		saveStateToLibrary(controller, filePlayer);		
 		throwChangeEvent(controller, filePlayer);
 	}
