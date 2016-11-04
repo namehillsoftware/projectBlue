@@ -315,7 +315,7 @@ public class PlaybackService extends Service implements
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
-					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playlistController.getPlaylist().get(currentPlaylistPosition).getKey())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackController.getPlaylist().get(currentPlaylistPosition).getKey())
 					.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackHandler.getCurrentPosition())
 					.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackHandler.isPlaying());
 
