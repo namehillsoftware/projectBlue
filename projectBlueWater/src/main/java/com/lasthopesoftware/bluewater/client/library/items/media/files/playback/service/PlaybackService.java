@@ -38,8 +38,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
@@ -298,24 +298,26 @@ public class PlaybackService extends Service implements
 		}
 	}
 
-	private void throwChangeEvent(final PlaybackController controller, final IPlaybackFile filePlayer) {
+	private void throwChangeEvent(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
 		synchronized(onStreamingChangeListeners) {
-            ListenerThrower.throwListeners(onStreamingChangeListeners, parameter -> parameter.onNowPlayingChange(controller, filePlayer));
+            ListenerThrower.throwListeners(onStreamingChangeListeners, parameter -> parameter.onNowPlayingChange(controller, playbackHandler));
 		}
 
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, controller, playbackHandler);
 	}
 	
-	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackFile playbackFile) {
+	private void sendPlaybackBroadcast(final String broadcastMessage, final PlaybackController playbackController, final IPlaybackHandler playbackHandler) {
 		LibrarySession.GetActiveLibrary(this, (library) -> {
 			final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
+			final int currentPlaylistPosition = playbackController.getCurrentPosition();
+
 			playbackBroadcastIntent
-					.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, playbackController.getCurrentPosition())
+					.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
-					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackFile.getFile().getKey())
-					.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackFile.getCurrentPosition())
-					.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackFile.isPlaying());
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playlistController.getPlaylist().get(currentPlaylistPosition).getKey())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackHandler.getCurrentPosition())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackHandler.isPlaying());
 
 			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
 			filePropertiesProvider.onComplete(fileProperties -> {
@@ -814,8 +816,8 @@ public class PlaybackService extends Service implements
 	}
 
 	@Override
-	public void onPlaylistStateControlError(PlaybackController controller, IPlaybackFile filePlayer) {
-		saveStateToLibrary(controller, filePlayer);
+	public void onPlaylistStateControlError(PlaybackController controller, MediaPlayerException exception) {
+		saveStateToLibrary(controller, exception.playbackHandler);
 
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
@@ -883,10 +885,10 @@ public class PlaybackService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(PlaybackController controller, IPlaybackFile filePlayer) {
-		saveStateToLibrary(controller, filePlayer);
+	public void onNowPlayingStop(PlaybackController controller, IPlaybackHandler playbackHandler) {
+		saveStateToLibrary(controller, playbackHandler);
 		
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, controller, playbackHandler);
 		
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
@@ -897,12 +899,12 @@ public class PlaybackService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingPause(PlaybackController controller, IPlaybackFile filePlayer) {
-		saveStateToLibrary(controller, filePlayer);
+	public void onNowPlayingPause(PlaybackController controller, IPlaybackHandler playbackHandler) {
+		saveStateToLibrary(controller, playbackHandler);
 		
 		stopNotification();
 		
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, controller, playbackHandler);
 		
 		sendBroadcast(getScrobbleIntent(false));
 	}
@@ -920,21 +922,21 @@ public class PlaybackService extends Service implements
 		throwChangeEvent(controller, filePlayer);
 	}
 	
-	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackFile filePlayer) {
+	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
 		LibrarySession.GetActiveLibrary(this, result -> {
 
 			result.setSavedTracksString(controller.getPlaylistString());
 			result.setNowPlayingId(controller.getCurrentPosition());
-			result.setNowPlayingProgress(filePlayer.getCurrentPosition());
+			result.setNowPlayingProgress(playbackHandler.getCurrentPosition());
 
 			LibrarySession.SaveLibrary(PlaybackService.this, result);
 		});
 	}
 	
 	@Override
-	public void onNowPlayingStart(PlaybackController controller, IPlaybackFile filePlayer) {
+	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
 		filePlayer.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, filePlayer));
-		final IFile playingFile = filePlayer.getFile();
+		final IFile playingFile = playbackHandler.getFile();
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
