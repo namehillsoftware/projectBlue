@@ -16,5 +16,5 @@ public interface IPlaybackHandler extends Closeable {
 
 	int getDuration();
 
-	IPromise<IPlaybackHandler> start();
+	IPromise<IPlaybackHandler> promisePlayback();
 }

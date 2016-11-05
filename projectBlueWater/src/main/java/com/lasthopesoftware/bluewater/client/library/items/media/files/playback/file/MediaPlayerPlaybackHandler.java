@@ -19,6 +19,8 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
 	private float volume;
 
+	private IPromise<IPlaybackHandler> playbackPromise;
+
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
@@ -61,12 +63,19 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> start() {
-		return new Promise<>(new MediaPlayerPlaybackTask(this, mediaPlayer));
+	public synchronized IPromise<IPlaybackHandler> promisePlayback() {
+		if (playbackPromise == null)
+			playbackPromise = new Promise<>(new MediaPlayerPlaybackTask(this, mediaPlayer));
+
+		if (!isPlaying())
+			mediaPlayer.start();
+
+		return playbackPromise;
 	}
 
 	@Override
 	public void close() throws IOException {
+		playbackPromise = null;
 		mediaPlayer.release();
 	}
 

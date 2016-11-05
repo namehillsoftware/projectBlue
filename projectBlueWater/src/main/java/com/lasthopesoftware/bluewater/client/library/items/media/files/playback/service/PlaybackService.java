@@ -485,11 +485,11 @@ public class PlaybackService extends Service implements
 					playlistController = new PlaybackController(playlistString, playbackQueuesProvider);
 
 					playlistController.setIsRepeating(savedLibrary.isRepeating());
-					playlistController.addOnNowPlayingChangeListener(PlaybackService.this);
-					playlistController.addOnNowPlayingStopListener(PlaybackService.this);
-					playlistController.addOnNowPlayingPauseListener(PlaybackService.this);
-					playlistController.addOnPlaylistStateControlErrorListener(PlaybackService.this);
-					playlistController.addOnNowPlayingStartListener(PlaybackService.this);
+					playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
+					playlistController.setOnNowPlayingStopListener(PlaybackService.this);
+					playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
+					playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
+					playlistController.setOnNowPlayingStartListener(PlaybackService.this);
 
 					onPlaylistControllerInitialized.run();
 				});
@@ -937,8 +937,11 @@ public class PlaybackService extends Service implements
 	
 	@Override
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
-		playbackHandler.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, playbackHandler));
-		final IFile playingFile = playbackHandler.getFile();
+		playbackHandler
+			.promisePlayback()
+			.then(handler -> { sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler); });
+
+		final IFile playingFile = controller.getPlaylist().get(controller.getCurrentPosition());
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();

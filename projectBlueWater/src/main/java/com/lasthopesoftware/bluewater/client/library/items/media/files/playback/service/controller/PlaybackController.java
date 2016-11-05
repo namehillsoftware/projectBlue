@@ -40,11 +40,11 @@ public class PlaybackController {
 		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
 	})));
 
-	private final HashSet<OnNowPlayingChangeListener> mOnNowPlayingChangeListeners = new HashSet<>();
-	private final HashSet<OnNowPlayingStartListener> mOnNowPlayingStartListeners = new HashSet<>();
-	private final HashSet<OnNowPlayingStopListener> mOnNowPlayingStopListeners = new HashSet<>();
-	private final HashSet<OnNowPlayingPauseListener> mOnNowPlayingPauseListeners = new HashSet<>();
-	private final HashSet<OnPlaylistStateControlErrorListener> mOnPlaylistStateControlErrorListeners = new HashSet<>();
+	private OnNowPlayingChangeListener onNowPlayingChangeListener;
+	private OnNowPlayingStartListener onNowPlayingStartListener;
+	private OnNowPlayingStopListener onNowPlayingStopListener;
+	private OnNowPlayingPauseListener onNowPlayingPauseListener;
+	private OnPlaylistStateControlErrorListener onPlaylistStateControlErrorListener;
 
 	private final ArrayList<IFile> playlist;
 	private final IProvidePlaybackQueues playbackQueuesProvider;
@@ -141,7 +141,7 @@ public class PlaybackController {
 			return true;
 		}
 
-		playbackHandler.start();
+		startFilePlayback(playbackHandler);
 		return true;
 	}
 
@@ -152,7 +152,7 @@ public class PlaybackController {
 
 		playbackHandler.setVolume(volume);
 		playbackHandler
-			.start()
+			.promisePlayback()
 			.then(this::closeAndStartNextFile)
 			.error(this::onFileError);
 
@@ -160,8 +160,9 @@ public class PlaybackController {
 
         // Throw events after asynchronous calls have started
         throwChangeEvent(playbackHandler);
-        for (OnNowPlayingStartListener listener : mOnNowPlayingStartListeners)
-        	listener.onNowPlayingStart(this, playbackHandler);
+
+		if (onNowPlayingStartListener != null)
+        	onNowPlayingStartListener.onNowPlayingStart(this, playbackHandler);
 	}
 
 	public void pause() {
@@ -171,8 +172,8 @@ public class PlaybackController {
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 
-		for (OnNowPlayingPauseListener onPauseListener : mOnNowPlayingPauseListeners)
-			onPauseListener.onNowPlayingPause(this, playbackHandler);
+		if (onNowPlayingPauseListener != null)
+			onNowPlayingPauseListener.onNowPlayingPause(this, playbackHandler);
 	}
 
 	public boolean isPlaying() {
@@ -284,46 +285,41 @@ public class PlaybackController {
 		if (!MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
 			closePreparedPlaybackFileProvider();
 
-		for (OnPlaylistStateControlErrorListener listener : mOnPlaylistStateControlErrorListeners)
-			listener.onPlaylistStateControlError(this, mediaPlayerException);
+		if (onPlaylistStateControlErrorListener != null)
+			onPlaylistStateControlErrorListener.onPlaylistStateControlError(this, mediaPlayerException);
 	}
 	/* End event handlers */
 
 	/* Listener callers */
 	private void throwChangeEvent(IPlaybackHandler playbackHandler) {
-		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
-			listener.onNowPlayingChange(this, playbackHandler);
+		if (onNowPlayingChangeListener != null)
+			onNowPlayingChangeListener.onNowPlayingChange(this, playbackHandler);
 	}
 
 	private void throwStopEvent(IPlaybackHandler playbackHandler) {
-		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
-			listener.onNowPlayingStop(this, playbackHandler);
+		if (onNowPlayingStopListener != null)
+			onNowPlayingStopListener.onNowPlayingStop(this, playbackHandler);
 	}
 
 	/* Listener collection helpers */
-	public void addOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
-		mOnNowPlayingChangeListeners.add(listener);
+	public void setOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
+		onNowPlayingChangeListener = listener;
 	}
 
-	public void removeOnNowPlayingChangeListener(OnNowPlayingChangeListener listener) {
-		if (mOnNowPlayingChangeListeners.contains(listener))
-			mOnNowPlayingChangeListeners.remove(listener);
+	public void setOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
+		onNowPlayingStartListener = listener;
 	}
 
-	public void addOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
-		mOnNowPlayingStartListeners.add(listener);
+	public void setOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
+		onNowPlayingStopListener = listener;
 	}
 
-	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
-		mOnNowPlayingStopListeners.add(listener);
+	public void setOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
+		onNowPlayingPauseListener = listener;
 	}
 
-	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
-		mOnNowPlayingPauseListeners.add(listener);
-	}
-
-	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
-		mOnPlaylistStateControlErrorListeners.add(listener);
+	public void setOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
+		onPlaylistStateControlErrorListener = listener;
 	}
 
 	// Release all heavy resources

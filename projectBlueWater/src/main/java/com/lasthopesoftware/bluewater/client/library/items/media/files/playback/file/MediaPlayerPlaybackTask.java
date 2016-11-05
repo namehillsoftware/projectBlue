@@ -24,8 +24,7 @@ class MediaPlayerPlaybackTask implements TwoParameterAction<IResolvedPromise<IPl
 	public void runWith(IResolvedPromise<IPlaybackHandler> resolve, IRejectedPromise reject) {
 		mediaPlayer.setOnCompletionListener(mp -> resolve.withResult(playbackHandler));
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			final MediaPlayerException mediaPlayerException = new MediaPlayerException(mp, what, extra);
-			reject.withError(mediaPlayerException);
+			reject.withError(new MediaPlayerException(playbackHandler, mp, what, extra));
 			return true;
 		});
 
