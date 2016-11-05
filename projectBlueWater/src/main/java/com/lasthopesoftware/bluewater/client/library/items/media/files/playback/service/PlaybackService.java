@@ -56,9 +56,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -460,40 +462,45 @@ public class PlaybackService extends Service implements
 		});
 	}
 	
-	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {		
-		LibrarySession.GetActiveLibrary(this, result -> {
-			synchronized (syncPlaylistControllerObject) {
-				logger.info("Initializing playlist.");
-				PlaybackService.playlistString = playlistString;
+	private void initializePlaylist(final String playlistString, final Runnable onPlaylistControllerInitialized) {
+		if (playlistController != null) {
+			playlistController.pause();
+			playlistController.release();
+		}
 
-				// First try to get the playlist string from the database
-				if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
-					PlaybackService.playlistString = result.getSavedTracksString();
+		LibrarySession
+			.GetActiveLibrary(this)
+			.then(result -> {
+				synchronized (syncPlaylistControllerObject) {
+					logger.info("Initializing playlist.");
+					PlaybackService.playlistString = playlistString;
 
-				result.setSavedTracksString(PlaybackService.playlistString);
-				LibrarySession.SaveLibrary(PlaybackService.this, result, savedLibrary -> {
-					if (playlistController != null) {
-						playlistController.pause();
-						playlistController.release();
-					}
+					// First try to get the playlist string from the database
+					if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
+						PlaybackService.playlistString = result.getSavedTracksString();
 
-					final PlaybackQueuesProvider playbackQueuesProvider =
-						new PlaybackQueuesProvider(
-							new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary),
-							new MediaPlayerInitializer(PlaybackService.this, savedLibrary));
+					result.setSavedTracksString(PlaybackService.playlistString);
+					LibrarySession.SaveLibrary(PlaybackService.this, result, savedLibrary -> {
+						final PlaybackQueuesProvider playbackQueuesProvider =
+							new PlaybackQueuesProvider(
+								new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary),
+								new MediaPlayerInitializer(PlaybackService.this, savedLibrary));
 
-					playlistController = new PlaybackController(playlistString, playbackQueuesProvider);
+						new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(playlistString)))
+							.then(playlist -> {
+								playlistController = new PlaybackController(playlist, playbackQueuesProvider);
 
-					playlistController.setIsRepeating(savedLibrary.isRepeating());
-					playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
-					playlistController.setOnNowPlayingStopListener(PlaybackService.this);
-					playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
-					playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
-					playlistController.setOnNowPlayingStartListener(PlaybackService.this);
+								playlistController.setIsRepeating(savedLibrary.isRepeating());
+								playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
+								playlistController.setOnNowPlayingStopListener(PlaybackService.this);
+								playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
+								playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
+								playlistController.setOnNowPlayingStartListener(PlaybackService.this);
 
-					onPlaylistControllerInitialized.run();
-				});
-			}
+								onPlaylistControllerInitialized.run();
+							});
+					});
+				}
 		});
 	}
 	

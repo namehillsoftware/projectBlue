@@ -140,11 +140,11 @@ public class LibrarySession {
 	}
 
 	public static IPromise<Library> GetActiveLibrary(final Context context) {
-		return new Promise<>(new DispatchedAndroidTask<>(onCanceled -> GetActiveLibraryInternal(context)));
+		return new Promise<>(new DispatchedAndroidTask<>(onCanceled -> GetActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor));
 	}
 
 	public static IPromise<Library> GetLibrary(final Context context, final int libraryId) {
-		return new Promise<>(new DispatchedAndroidTask<>(onCancelled -> GetLibraryInternal(context, libraryId)));
+		return new Promise<>(new DispatchedAndroidTask<>(onCancelled -> GetLibraryInternal(context, libraryId), RepositoryAccessHelper.databaseExecutor));
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {

@@ -3,13 +3,33 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.ILazy;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by david on 9/21/16.
  */
 
 public class MediaPlayerException extends PlaybackException {
-	private final MediaPlayer mediaPlayer;
+	private static final ILazy<Set<Integer>> mediaErrorExtrasLazy = new AbstractSynchronousLazy<Set<Integer>>() {
+		@Override
+		protected Set<Integer> initialize() throws Exception {
+			return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
+				MediaPlayer.MEDIA_ERROR_IO,
+				MediaPlayer.MEDIA_ERROR_MALFORMED,
+				MediaPlayer.MEDIA_ERROR_UNSUPPORTED,
+				MediaPlayer.MEDIA_ERROR_TIMED_OUT,
+				MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
+			})));
+		}
+	};
+
+	public final MediaPlayer mediaPlayer;
 	public final int what;
 	public final int extra;
 
@@ -19,5 +39,9 @@ public class MediaPlayerException extends PlaybackException {
 		this.mediaPlayer = mediaPlayer;
 		this.what = what;
 		this.extra = extra;
+	}
+
+	public static Set<Integer> mediaErrorExtras() {
+		return mediaErrorExtrasLazy.getObject();
 	}
 }

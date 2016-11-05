@@ -113,6 +113,21 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	@NotNull
 	@Override
+	public <TNewResult> IPromise<TNewResult> thenPromise(@NotNull OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+		return then((result, resolve, reject) -> {
+			try {
+				onFulfilled
+					.expectedUsing(result)
+					.then(resolve::withResult)
+					.error(reject::withError);
+			} catch (Exception e) {
+				reject.withError(e);
+			}
+		});
+	}
+
+	@NotNull
+	@Override
 	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
@@ -145,6 +160,21 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	@Override
 	public final IPromise<Void> error(@NotNull OneParameterAction<Exception> onRejected) {
 		return error(new Execution.NullReturnRunnable<>(onRejected));
+	}
+
+	@NotNull
+	@Override
+	public <TNewResult> IPromise<TNewResult> thenPromise(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+		return then((result, resolve, reject, onCancelled) -> {
+			try {
+				onFulfilled
+					.expectedUsing(result, onCancelled)
+					.then(resolve::withResult)
+					.error(reject::withError);
+			} catch (Exception e) {
+				reject.withError(e);
+			}
+		});
 	}
 
 	private static class Execution {

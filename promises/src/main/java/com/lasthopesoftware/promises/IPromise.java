@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface IPromise<TResult> {
 
+	@NotNull <TNewResult> IPromise<TNewResult> thenPromise(@NotNull OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull OneParameterFunction<TResult, TNewResult> onFulfilled);
 	@NotNull IPromise<Void> then(@NotNull OneParameterAction<TResult> onFulfilled);
@@ -23,6 +24,7 @@ public interface IPromise<TResult> {
 	@NotNull <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected);
 	@NotNull IPromise<Void> error(@NotNull OneParameterAction<Exception> onRejected);
 
+	@NotNull <TNewResult> IPromise<TNewResult> thenPromise(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled);
 	@NotNull <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled);
 	@NotNull IPromise<Void> then(@NotNull TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled);

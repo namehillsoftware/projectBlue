@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
-import android.annotation.SuppressLint;
-import android.media.MediaPlayer;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
@@ -24,21 +21,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class PlaybackController {
-	@SuppressLint("InlinedApi")
-	public static final Set<Integer> MEDIA_ERROR_EXTRAS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Integer[]{
-		MediaPlayer.MEDIA_ERROR_IO,
-		MediaPlayer.MEDIA_ERROR_MALFORMED,
-		MediaPlayer.MEDIA_ERROR_UNSUPPORTED,
-		MediaPlayer.MEDIA_ERROR_TIMED_OUT,
-		MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK
-	})));
 
 	private OnNowPlayingChangeListener onNowPlayingChangeListener;
 	private OnNowPlayingStartListener onNowPlayingStartListener;
@@ -59,8 +45,8 @@ public class PlaybackController {
 	private IPlaybackHandler playbackHandler;
 	private int currentFilePos;
 
-	public PlaybackController(final String playlistString, IProvidePlaybackQueues playbackQueuesProvider) {
-		this.playlist = playlistString != null ? FileStringListUtilities.parseFileStringList(playlistString) : new ArrayList<>();
+	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IProvidePlaybackQueues playbackQueuesProvider) {
+		this.playlist = playlist instanceof ArrayList ? (ArrayList<IFile>)playlist : new ArrayList<>(playlist);
 
 		this.playbackQueuesProvider = playbackQueuesProvider;
 	}
@@ -282,7 +268,7 @@ public class PlaybackController {
 		logger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
 
 		// We don't know what happened, release the entire queue
-		if (!MEDIA_ERROR_EXTRAS.contains(mediaPlayerException.extra))
+		if (!MediaPlayerException.mediaErrorExtras().contains(mediaPlayerException.extra))
 			closePreparedPlaybackFileProvider();
 
 		if (onPlaylistStateControlErrorListener != null)
