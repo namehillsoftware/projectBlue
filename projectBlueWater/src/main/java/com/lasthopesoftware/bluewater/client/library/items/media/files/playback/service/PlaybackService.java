@@ -312,14 +312,16 @@ public class PlaybackService extends Service implements
 
 			final int currentPlaylistPosition = playbackController.getCurrentPosition();
 
+			final int fileKey = playbackController.getPlaylist().get(currentPlaylistPosition).getKey();
+
 			playbackBroadcastIntent
 					.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
 					.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
-					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, playbackController.getPlaylist().get(currentPlaylistPosition).getKey())
+					.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
 					.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, playbackHandler.getCurrentPosition())
 					.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, playbackHandler.isPlaying());
 
-			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playbackFile.getFile().getKey());
+			final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
 			filePropertiesProvider.onComplete(fileProperties -> {
 				playbackBroadcastIntent
 						.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
@@ -935,7 +937,7 @@ public class PlaybackService extends Service implements
 	
 	@Override
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
-		filePlayer.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, filePlayer));
+		playbackHandler.addOnFileCompleteListener(mediaPlayer -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, playbackHandler));
 		final IFile playingFile = playbackHandler.getFile();
 		
 		if (!areListenersRegistered) registerListeners();
@@ -1016,7 +1018,7 @@ public class PlaybackService extends Service implements
 			return true;
 		}).execute();
 
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, filePlayer);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, playbackHandler);
 	}
 		
 	@Override

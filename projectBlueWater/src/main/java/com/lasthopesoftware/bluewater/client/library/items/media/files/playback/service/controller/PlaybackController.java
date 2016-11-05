@@ -5,7 +5,6 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
@@ -19,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.promises.IPromise;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,14 +145,7 @@ public class PlaybackController {
 		return true;
 	}
 
-	private void startFilePlayback(IPlaybackHandler playbackHandler) {
-		if (playbackHandler == null) {
-			isPlaying = false;
-			return;
-		}
-
-		currentFilePos++;
-
+	private void startFilePlayback(@NotNull IPlaybackHandler playbackHandler) {
 		isPlaying = true;
 
 		this.playbackHandler = playbackHandler;
@@ -162,6 +155,8 @@ public class PlaybackController {
 			.start()
 			.then(this::closeAndStartNextFile)
 			.error(this::onFileError);
+
+		currentFilePos = preparedPlaybackFileProvider.getPreparedIndex();
 
         // Throw events after asynchronous calls have started
         throwChangeEvent(playbackHandler);
@@ -243,7 +238,7 @@ public class PlaybackController {
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
-		updatePreparedPlaybackFileProvider(preparedPlaybackFileProvider.getPreparedIndex());
+		updatePreparedPlaybackFileProvider(preparedPlaybackFileProvider != null ? preparedPlaybackFileProvider.getPreparedIndex() : 0);
 	}
 
 	private void updatePreparedPlaybackFileProvider(int newPosition) {
@@ -263,6 +258,12 @@ public class PlaybackController {
 		final IPromise<IPlaybackHandler> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
+
+		if (preparingPlaybackFile == null) {
+			isPlaying = false;
+			throwStopEvent(this.playbackHandler);
+			return;
+		}
 
 		preparingPlaybackFile
 			.then(this::startFilePlayback)
@@ -289,14 +290,14 @@ public class PlaybackController {
 	/* End event handlers */
 
 	/* Listener callers */
-	private void throwChangeEvent(IPlaybackHandler filePlayer) {
+	private void throwChangeEvent(IPlaybackHandler playbackHandler) {
 		for (OnNowPlayingChangeListener listener : mOnNowPlayingChangeListeners)
 			listener.onNowPlayingChange(this, playbackHandler);
 	}
 
-	private void throwStopEvent(IPlaybackFile filePlayer) {
+	private void throwStopEvent(IPlaybackHandler playbackHandler) {
 		for (OnNowPlayingStopListener listener : mOnNowPlayingStopListeners)
-			listener.onNowPlayingStop(this, filePlayer);
+			listener.onNowPlayingStop(this, playbackHandler);
 	}
 
 	/* Listener collection helpers */
@@ -313,36 +314,16 @@ public class PlaybackController {
 		mOnNowPlayingStartListeners.add(listener);
 	}
 
-	public void removeOnNowPlayingStartListener(OnNowPlayingStartListener listener) {
-		if (mOnNowPlayingStartListeners.contains(listener))
-			mOnNowPlayingStartListeners.remove(listener);
-	}
-
 	public void addOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
 		mOnNowPlayingStopListeners.add(listener);
-	}
-
-	public void removeOnNowPlayingStopListener(OnNowPlayingStopListener listener) {
-		if (mOnNowPlayingStopListeners.contains(listener))
-			mOnNowPlayingStopListeners.remove(listener);
 	}
 
 	public void addOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
 		mOnNowPlayingPauseListeners.add(listener);
 	}
 
-	public void removeOnNowPlayingPauseListener(OnNowPlayingPauseListener listener) {
-		if (mOnNowPlayingPauseListeners.contains(listener))
-			mOnNowPlayingPauseListeners.remove(listener);
-	}
-
 	public void addOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
 		mOnPlaylistStateControlErrorListeners.add(listener);
-	}
-
-	public void removeOnPlaylistStateControlErrorListener(OnPlaylistStateControlErrorListener listener) {
-		if (mOnPlaylistStateControlErrorListeners.contains(listener))
-			mOnPlaylistStateControlErrorListeners.remove(listener);
 	}
 
 	// Release all heavy resources

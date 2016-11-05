@@ -14,10 +14,10 @@ public class PreparedStateTrackingPlayerProvider implements IPreparedPlayerState
 	private final IPreparedPlaybackFileProvider internalPlaybackFileProvider;
 	private final int size;
 
-	private int position;
+	private int preparedPosition;
 
 	public PreparedStateTrackingPlayerProvider(int startingPosition, int size, IPreparedPlaybackFileProvider internalPlaybackFileProvider) {
-		this.position = startingPosition;
+		this.preparedPosition = startingPosition - 1;
 		this.size = size;
 		this.internalPlaybackFileProvider = internalPlaybackFileProvider;
 	}
@@ -32,7 +32,7 @@ public class PreparedStateTrackingPlayerProvider implements IPreparedPlayerState
 
 		internalPreparedPlaybackPromise
 			.then(playbackHandler -> {
-				position = ++position % size;
+				preparedPosition = ++preparedPosition % size;
 			});
 
 		return internalPreparedPlaybackPromise;
@@ -45,6 +45,6 @@ public class PreparedStateTrackingPlayerProvider implements IPreparedPlayerState
 
 	@Override
 	public int getPreparedIndex() {
-		return position;
+		return preparedPosition;
 	}
 }
