@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
 
-import android.media.MediaPlayer;
-
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
@@ -13,14 +11,16 @@ import java.util.List;
 /**
  * Created by david on 11/1/16.
  */
-public class PlaybackQueuesProvider implements IProvidePlaybackQueues {
+public class PlaybackQueuesProvider<TMediaPlayer> implements IProvidePlaybackQueues {
 
 	private final IFileUriProvider fileUriProvider;
-	private final IPlaybackInitialization<MediaPlayer> mediaPlayerInitializer;
+	private final IPlaybackInitialization<TMediaPlayer> mediaPlayerInitializer;
+	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 
-	public PlaybackQueuesProvider(IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> mediaPlayerInitializer) {
+	public PlaybackQueuesProvider(IFileUriProvider fileUriProvider, IPlaybackInitialization<TMediaPlayer> mediaPlayerInitializer, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.fileUriProvider = fileUriProvider;
 		this.mediaPlayerInitializer = mediaPlayerInitializer;
+		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class PlaybackQueuesProvider implements IProvidePlaybackQueues {
 		final List<IFile> truncatedList = Stream.of(playlist).skip(startingAt - 1).collect(Collectors.toList());
 
 		if (!isCyclical)
-			return new QueuedMediaPlayerProvider(truncatedList, fileUriProvider, mediaPlayerInitializer);
+			return new QueuedMediaPlayerProvider(truncatedList, playbackPreparerTaskFactory);
 
 		truncatedList.addAll(truncatedList.subList(0, startingAt - 1));
 

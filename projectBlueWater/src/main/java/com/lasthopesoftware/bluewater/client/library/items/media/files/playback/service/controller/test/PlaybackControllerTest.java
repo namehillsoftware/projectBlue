@@ -3,17 +3,15 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test.mock.MockFilePlayer;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class PlaybackControllerTest extends TestCase {
 
@@ -35,60 +33,11 @@ public class PlaybackControllerTest extends TestCase {
 										new MockFile(2), 
 										new MockFile(3) 
 							})); 
-		
-		mPlaybackFileProvider = new IPlaybackFileProvider() {
-			
-			@Override
-			public String toPlaylistString() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-			
-			@Override
-			public int size() {
-				return mMockFiles.size();
-			}
-			
-			@Override
-			public IFile remove(int filePos) {
-				return mMockFiles.remove(filePos);
-			}
-						
-			@Override
-			public int indexOf(int startingIndex, IFile file) {
-				for (int i = startingIndex; i < mMockFiles.size(); i++)
-					if (mMockFiles.get(i).equals(file)) return i;
-				
-				return -1;
-			}
-			
-			@Override
-			public int indexOf(IFile file) {
-				return mMockFiles.indexOf(file);
-			}
-			
-			@Override
-			public IPlaybackFile getPreparingPlaybackFile(int filePos) {
-				return new MockFilePlayer(mMockFiles.get(filePos));
-			}
-			
-			@Override
-			public List<IFile> getFiles() {
-				return mMockFiles;
-			}
-			
-			@Override
-			public IFile get(int filePos) {
-				return mMockFiles.get(filePos);
-			}
-						
-			@Override
-			public boolean add(IFile file) {
-				return mMockFiles.add(file);
-			}
-		};
-		
-		mPlaybackController = new PlaybackController(mPlaybackFileProvider);
+
+		mPlaybackController =
+			new PlaybackController(
+				mMockFiles,
+				new PlaybackQueuesProvider());
 	}
 
 	protected void tearDown() throws Exception {
