@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.Lazy;
@@ -73,61 +72,54 @@ public class LibrarySession {
 						.setFilter("WHERE id = @id")
 						.buildQuery());
 
-	public static void SaveLibrary(final Context context, final Library library) {
-		SaveLibrary(context, library, null);
-	}
-
 	public static void SaveLibrary(final Context context, final Library library, final OneParameterAction<Library> onSaveComplete) {
-
-		final FluentCallable<Library> writeToDatabaseTask = new FluentCallable<Library>() {
-
-			@Override
-			protected Library executeInBackground() {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-						final boolean isLibraryExists = library.getId() > -1;
-
-						final ObjectiveDroid objectiveDroid =
-								repositoryAccessHelper
-										.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
-										.addParameter(Library.accessCodeColumn, library.getAccessCode())
-										.addParameter(Library.authKeyColumn, library.getAuthKey())
-										.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
-										.addParameter(Library.libraryNameColumn, library.getLibraryName())
-										.addParameter(Library.isRepeatingColumn, library.isRepeating())
-										.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
-										.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
-										.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
-										.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
-										.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
-										.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
-										.addParameter(Library.selectedViewColumn, library.getSelectedView())
-										.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
-										.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
-
-						if (isLibraryExists)
-							objectiveDroid.addParameter("id", library.getId());
-
-						final long result = objectiveDroid.execute();
-						closeableTransaction.setTransactionSuccessful();
-
-						if (!isLibraryExists)
-							library.setId((int) result);
-
-						logger.debug("Library saved.");
-						return library;
-					} catch (SQLException se) {
-						logger.error("There was an error saving the library", se);
-						return null;
-					}
-				}
-			}
-		};
+		final IPromise<Library> savedLibraryPromise = SaveLibrary(context, library);
 
 		if (onSaveComplete != null)
-			writeToDatabaseTask.onComplete(onSaveComplete);
+			savedLibraryPromise.then(onSaveComplete);
+	}
 
-		writeToDatabaseTask.execute(RepositoryAccessHelper.databaseExecutor);
+	public static IPromise<Library> SaveLibrary(final Context context, final Library library) {
+		return new Promise<>(new DispatchedAndroidTask<>(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+					final boolean isLibraryExists = library.getId() > -1;
+
+					final ObjectiveDroid objectiveDroid =
+						repositoryAccessHelper
+							.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
+							.addParameter(Library.accessCodeColumn, library.getAccessCode())
+							.addParameter(Library.authKeyColumn, library.getAuthKey())
+							.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
+							.addParameter(Library.libraryNameColumn, library.getLibraryName())
+							.addParameter(Library.isRepeatingColumn, library.isRepeating())
+							.addParameter(Library.customSyncedFilesPathColumn, library.getCustomSyncedFilesPath())
+							.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly())
+							.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles())
+							.addParameter(Library.nowPlayingIdColumn, library.getNowPlayingId())
+							.addParameter(Library.nowPlayingProgressColumn, library.getNowPlayingProgress())
+							.addParameter(Library.savedTracksStringColumn, library.getSavedTracksString())
+							.addParameter(Library.selectedViewColumn, library.getSelectedView())
+							.addParameter(Library.selectedViewTypeColumn, library.getSelectedViewType())
+							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
+
+					if (isLibraryExists)
+						objectiveDroid.addParameter("id", library.getId());
+
+					final long result = objectiveDroid.execute();
+					closeableTransaction.setTransactionSuccessful();
+
+					if (!isLibraryExists)
+						library.setId((int) result);
+
+					logger.debug("Library saved.");
+					return library;
+				} catch (SQLException se) {
+					logger.error("There was an error saving the library", se);
+					return null;
+				}
+			}
+		}, RepositoryAccessHelper.databaseExecutor));
 	}
 
 	public static void GetActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {

@@ -1,12 +1,10 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
-
-import android.media.MediaPlayer;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
@@ -20,22 +18,20 @@ import java.util.Queue;
 /**
  * Created by david on 9/26/16.
  */
-public class CyclicalQueuedMediaPlayerProvider implements
+public class QueuedPlaybackHandlerProvider implements
 	IPreparedPlaybackFileProvider,
 	OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>,
 	OneParameterAction<IBufferingPlaybackHandler>
 {
-	private final IFileUriProvider fileUriProvider;
 	private final Queue<IFile> playlist;
-	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
+	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 
 	private IPromise<IBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 	private IPromise<IBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
-	public CyclicalQueuedMediaPlayerProvider(List<IFile> playlist, IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
-		this.fileUriProvider = fileUriProvider;
+	public QueuedPlaybackHandlerProvider(List<IFile> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playlist = new ArrayDeque<>(playlist);
-		this.playbackInitialization = playbackInitialization;
+		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
 
 	@Override
@@ -48,21 +44,18 @@ public class CyclicalQueuedMediaPlayerProvider implements
 		nextPreparingMediaPlayerPromise = null;
 
 		return
-			currentPreparingPlaybackHandlerPromise
-				.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this);
+			currentPreparingPlaybackHandlerPromise != null ?
+				currentPreparingPlaybackHandlerPromise
+					.then((OneParameterFunction<IBufferingPlaybackHandler, IPlaybackHandler>) this) :
+				null ;
 	}
 
 	private IPromise<IBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
-		final IFile file = playlist.poll();
-		playlist.offer(file);
-
 		return
-			new Promise<>(
-				new MediaPlayerPreparerTask(
-					playlist.poll(),
-					preparedAt,
-					fileUriProvider,
-					playbackInitialization));
+			playlist.size() > 0 ?
+				new Promise<>(
+					playbackPreparerTaskFactory.getPlaybackPreparerTask(playlist.poll(), preparedAt)) :
+				null;
 	}
 
 	@Override

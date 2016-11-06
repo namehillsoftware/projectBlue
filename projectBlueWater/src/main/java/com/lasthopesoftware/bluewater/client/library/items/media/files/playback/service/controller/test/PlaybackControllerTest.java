@@ -4,7 +4,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 
 import junit.framework.Assert;
@@ -12,6 +13,8 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static org.mockito.Mockito.mock;
 
 public class PlaybackControllerTest extends TestCase {
 
@@ -37,7 +40,7 @@ public class PlaybackControllerTest extends TestCase {
 		mPlaybackController =
 			new PlaybackController(
 				mMockFiles,
-				new PlaybackQueuesProvider());
+				new PlaybackQueuesProvider(mock(IPlaybackPreparerTaskFactory.class)));
 	}
 
 	protected void tearDown() throws Exception {

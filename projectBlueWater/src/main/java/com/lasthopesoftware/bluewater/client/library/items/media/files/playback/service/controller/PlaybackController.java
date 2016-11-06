@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlayerStateTracker;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IProvidePlaybackQueues;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PreparedStateTrackingPlayerProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IProvidePlaybackQueues;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedStateTrackingPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;

@@ -41,7 +41,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
@@ -53,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -470,7 +472,7 @@ public class PlaybackService extends Service implements
 
 		LibrarySession
 			.GetActiveLibrary(this)
-			.then(result -> {
+			.thenPromise(result -> {
 				synchronized (syncPlaylistControllerObject) {
 					logger.info("Initializing playlist.");
 					PlaybackService.playlistString = playlistString;
@@ -480,28 +482,31 @@ public class PlaybackService extends Service implements
 						PlaybackService.playlistString = result.getSavedTracksString();
 
 					result.setSavedTracksString(PlaybackService.playlistString);
-					LibrarySession.SaveLibrary(PlaybackService.this, result, savedLibrary -> {
+				}
+
+				return LibrarySession.SaveLibrary(PlaybackService.this, result);
+			})
+			.thenPromise(savedLibrary ->
+				new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(savedLibrary.getSavedTracksString())))
+					.then(playlist -> {
+						final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
 						final PlaybackQueuesProvider playbackQueuesProvider =
 							new PlaybackQueuesProvider(
-								new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary),
-								new MediaPlayerInitializer(PlaybackService.this, savedLibrary));
+								new MediaPlayerPlaybackPreparerTaskFactory(
+									uriProvider,
+									new MediaPlayerInitializer(PlaybackService.this,
+										savedLibrary)));
 
-						new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(playlistString)))
-							.then(playlist -> {
-								playlistController = new PlaybackController(playlist, playbackQueuesProvider);
+						playlistController = new PlaybackController(playlist, playbackQueuesProvider);
 
-								playlistController.setIsRepeating(savedLibrary.isRepeating());
-								playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
-								playlistController.setOnNowPlayingStopListener(PlaybackService.this);
-								playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
-								playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
-								playlistController.setOnNowPlayingStartListener(PlaybackService.this);
-
-								onPlaylistControllerInitialized.run();
-							});
-					});
-				}
-		});
+						playlistController.setIsRepeating(savedLibrary.isRepeating());
+						playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
+						playlistController.setOnNowPlayingStopListener(PlaybackService.this);
+						playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
+						playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
+						playlistController.setOnNowPlayingStartListener(PlaybackService.this);
+					}))
+			.then((OneParameterAction<Void>) v -> onPlaylistControllerInitialized.run());
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
