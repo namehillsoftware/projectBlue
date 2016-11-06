@@ -248,8 +248,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 					try {
 						onFulfilled
 							.expectedUsing(result, onCancelled)
-							.then(resolve::withResult)
-							.error(reject::withError);
+							.then(new Resolution.ResolveWithPromiseResult<>(resolve))
+							.error(new Resolution.RejectWithPromiseError(reject));
 					} catch (Exception e) {
 						reject.withError(e);
 					}
@@ -359,11 +359,39 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				try {
 					onFulfilled
 						.expectedUsing(result)
-						.then(resolve::withResult)
-						.error(reject::withError);
+						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
+						.error(new Resolution.RejectWithPromiseError(reject));
 				} catch (Exception e) {
 					reject.withError(e);
 				}
+			}
+		}
+	}
+
+	private static class Resolution {
+		static class ResolveWithPromiseResult<TNewResult> implements OneParameterAction<TNewResult> {
+			private final IResolvedPromise<TNewResult> resolve;
+
+			ResolveWithPromiseResult(IResolvedPromise<TNewResult> resolve) {
+				this.resolve = resolve;
+			}
+
+			@Override
+			public void runWith(TNewResult result1) {
+				resolve.withResult(result1);
+			}
+		}
+
+		static class RejectWithPromiseError implements OneParameterAction<Exception> {
+			private final IRejectedPromise reject;
+
+			RejectWithPromiseError(IRejectedPromise reject) {
+				this.reject = reject;
+			}
+
+			@Override
+			public void runWith(Exception exception) {
+				reject.withError(exception);
 			}
 		}
 	}
