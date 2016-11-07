@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by david on 11/1/16.
  */
-public class PlaybackQueuesProvider<TMediaPlayer> implements IProvidePlaybackQueues {
+public class PlaybackQueuesProvider implements IProvidePlaybackQueues {
 
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 
