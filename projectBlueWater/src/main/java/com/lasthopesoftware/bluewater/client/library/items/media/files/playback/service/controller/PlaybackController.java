@@ -320,6 +320,8 @@ public class PlaybackController {
 	}
 
 	private void closePreparedPlaybackFileProvider() {
+		if (preparedPlaybackFileProvider == null) return;
+
 		try {
 			preparedPlaybackFileProvider.close();
 		} catch (IOException e) {
