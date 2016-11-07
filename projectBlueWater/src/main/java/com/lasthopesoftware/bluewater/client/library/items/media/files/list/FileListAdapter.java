@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileListItemMenuBuilder;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
 
 import java.util.List;
@@ -15,7 +16,7 @@ class FileListAdapter extends AbstractFileListAdapter {
 
     private final FileListItemMenuBuilder fileListItemMenuBuilder;
 
-	public FileListAdapter(Context context, int resource, List<IFile> files, IItemListMenuChangeHandler itemListMenuChangeHandler) {
+	public FileListAdapter(Context context, int resource, List<IFile> files, IItemListMenuChangeHandler itemListMenuChangeHandler, INowPlayingFileProvider nowPlayingFileProvider) {
 		super(context, resource, files);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
@@ -23,7 +24,7 @@ class FileListAdapter extends AbstractFileListAdapter {
         viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler);
         viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler);
 
-        fileListItemMenuBuilder = new FileListItemMenuBuilder(files);
+        fileListItemMenuBuilder = new FileListItemMenuBuilder(files, nowPlayingFileProvider);
         fileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
     }
 

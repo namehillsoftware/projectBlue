@@ -31,7 +31,6 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
@@ -41,9 +40,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.IFluentTask;
 
 import org.slf4j.LoggerFactory;
@@ -298,14 +299,19 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		return songProgressBar.findView();
 	}
 
-	private void setView(final IPlaybackFile playbackFile) {
-		setView(playbackFile.getFile(), playbackFile.getCurrentPosition());
+	private void setView(final PlaybackController playbackController, final IPlaybackHandler playbackFile) {
+		LibrarySession
+			.GetActiveLibrary(this)
+			.thenPromise(library -> new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString()))))
+			.then(files -> {
+				setView(files.get(playbackController.getCurrentPosition()), playbackFile.getCurrentPosition());
 
-		playButton.findView().setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
-		pauseButton.findView().setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+				playButton.findView().setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
+				pauseButton.findView().setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
 
-		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
-		nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
+				if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
+				nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
+			});
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
@@ -476,7 +482,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 	@Override
 	public void onNowPlayingChange(PlaybackController controller, IPlaybackHandler filePlayer) {
-		setView(filePlayer);
+		setView(controller, filePlayer);
 	}
 
 	@Override

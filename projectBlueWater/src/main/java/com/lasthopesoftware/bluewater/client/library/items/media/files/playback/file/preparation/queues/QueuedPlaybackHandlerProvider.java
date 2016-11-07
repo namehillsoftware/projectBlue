@@ -60,7 +60,7 @@ public class QueuedPlaybackHandlerProvider implements
 	}
 
 	@Override
-	public PositionedPlaybackHandlerContainer expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) throws Exception {
+	public PositionedPlaybackHandlerContainer expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
 		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(this);
 
 		return new PositionedPlaybackHandlerContainer(positionedBufferingPlaybackHandler.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler);

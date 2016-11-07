@@ -5,11 +5,11 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.fluent.AsyncExceptionTask;
+import com.vedsoft.futures.callables.Function;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -21,12 +21,12 @@ public class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IRes
 	private final OneParameterFunction<OneParameterAction<Runnable>, TResult> task;
 	private final Executor executor;
 
-	public DispatchedAndroidTask(Callable<TResult> task) {
-		this((onCancelled) -> task.call());
+	public DispatchedAndroidTask(Function<TResult> task) {
+		this((onCancelled) -> task.expect());
 	}
 
-	public DispatchedAndroidTask(Callable<TResult> task, Executor executor) {
-		this((onCancelled) -> task.call(), executor);
+	public DispatchedAndroidTask(Function<TResult> task, Executor executor) {
+		this((onCancelled) -> task.expect(), executor);
 	}
 
 	public DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task) {

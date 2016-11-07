@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewCon
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.SearchFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -74,7 +75,13 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         final OneParameterAction<List<IFile>> onSearchFilesComplete = result -> {
 			if (result == null) return;
 
-			final FileListAdapter fileListAdapter = new FileListAdapter(SearchFilesActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(SearchFilesActivity.this));
+			final FileListAdapter fileListAdapter =
+				new FileListAdapter(
+					SearchFilesActivity.this,
+					R.id.tvStandard,
+					result,
+					new ItemListMenuChangeHandler(SearchFilesActivity.this),
+					new NowPlayingFileProvider(SearchFilesActivity.this));
 
 			fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			fileListView.setAdapter(fileListAdapter);

@@ -215,7 +215,7 @@ public class StoredFileAccess {
 							final MediaFileUriProvider mediaFileUriProvider =
 									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, true);
 
-							final Uri localUri = mediaFileUriProvider.getFileUri();
+							final Uri localUri = mediaFileUriProvider.getFileUri(file);
 							if (localUri != null) {
 								storedFile.setPath(localUri.getPath());
 								storedFile.setIsDownloadComplete(true);

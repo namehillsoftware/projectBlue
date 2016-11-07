@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import android.os.AsyncTask;
 import android.os.Message;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import java.util.concurrent.ExecutorService;
@@ -13,34 +13,34 @@ import java.util.concurrent.Executors;
 public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void, Void> {
 	private static final ExecutorService trackerExecutor = Executors.newSingleThreadExecutor();
 
-	private final IPlaybackFile filePlayer;
-
 	private final NowPlayingActivityMessageHandler handler;
+
+	private final IPlaybackHandler playbackHandler;
 
 	private final AbstractSynchronousLazy<Integer> fileDuration = new AbstractSynchronousLazy<Integer>() {
 		@Override
 		protected final Integer initialize() {
-			return filePlayer.getDuration();
+			return playbackHandler.getDuration();
 		}
 	};
 
-	public static NowPlayingActivityProgressTrackerTask trackProgress(IPlaybackFile filePlayer, NowPlayingActivityMessageHandler handler) {
-		final NowPlayingActivityProgressTrackerTask newProgressTrackerThread = new NowPlayingActivityProgressTrackerTask(filePlayer, handler);
+	static NowPlayingActivityProgressTrackerTask trackProgress(IPlaybackHandler playbackHandler, NowPlayingActivityMessageHandler handler) {
+		final NowPlayingActivityProgressTrackerTask newProgressTrackerThread = new NowPlayingActivityProgressTrackerTask(playbackHandler, handler);
 		newProgressTrackerThread.executeOnExecutor(trackerExecutor);
 		return newProgressTrackerThread;
 	}
 	
-	private NowPlayingActivityProgressTrackerTask(IPlaybackFile filePlayer, NowPlayingActivityMessageHandler handler) {
-		this.filePlayer = filePlayer;
+	private NowPlayingActivityProgressTrackerTask(IPlaybackHandler playbackHandler, NowPlayingActivityMessageHandler handler) {
+		this.playbackHandler = playbackHandler;
 		this.handler = handler;
 	}
 	
 	@Override
 	protected Void doInBackground(Void... params) {
-		while (!isCancelled() && filePlayer != null && filePlayer.isMediaPlayerCreated()) {
+		while (!isCancelled() && playbackHandler != null) {
 			try {
 				
-				if (filePlayer.isPlaying())
+				if (playbackHandler.isPlaying())
 					handler.sendMessage(getUpdatePlayingMessage());
 				
 				Thread.sleep(1000);
@@ -55,7 +55,7 @@ public class NowPlayingActivityProgressTrackerTask extends AsyncTask<Void, Void,
 	private Message getUpdatePlayingMessage() {
 		final Message msg = new Message();
 		msg.what = NowPlayingActivityMessageHandler.UPDATE_PLAYING;
-		msg.arg1 = filePlayer.getCurrentPosition();
+		msg.arg1 = playbackHandler.getCurrentPosition();
 		msg.arg2 = fileDuration.getObject();
 		
 		return msg;
