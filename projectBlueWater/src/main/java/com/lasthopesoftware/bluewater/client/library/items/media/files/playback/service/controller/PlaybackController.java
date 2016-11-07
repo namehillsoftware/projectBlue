@@ -4,10 +4,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlayerStateTracker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedPlaybackHandlerContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IProvidePlaybackQueues;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedStateTrackingPlayerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -41,9 +40,8 @@ public class PlaybackController {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackController.class);
 
-	private IPreparedPlayerStateTracker preparedPlaybackFileProvider;
-	private IPlaybackHandler playbackHandler;
-	private int currentFilePos;
+	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
+	private PositionedPlaybackHandlerContainer playbackHandlerContainer;
 
 	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IProvidePlaybackQueues playbackQueuesProvider) {
 		this.playlist = playlist instanceof ArrayList ? (ArrayList<IFile>)playlist : new ArrayList<>(playlist);
@@ -74,12 +72,13 @@ public class PlaybackController {
 
 		boolean wasPlaying = false;
 
-		if (playbackHandler != null) {
+		if (playbackHandlerContainer != null) {
+			final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
 
 			if (playbackHandler.isPlaying()) {
 
 				// If the seek-to index is the same as that of the file playing, keep on playing
-				if (filePos == currentFilePos) return;
+				if (filePos == playbackHandlerContainer.playlistPosition) return;
 
 				// stop any playback that is in action
 				wasPlaying = true;
@@ -92,11 +91,10 @@ public class PlaybackController {
 				logger.error("There was an error closing the playback handler", e);
 			}
 
-			playbackHandler = null;
+			playbackHandlerContainer = null;
 		}
 
-		currentFilePos = Math.min(filePos, 0);
-		updatePreparedPlaybackFileProvider(currentFilePos);
+		updatePreparedPlaybackFileProvider(Math.min(filePos, 0));
 
 		if (wasPlaying)
 			setupNextPreparedFile(fileProgress);
@@ -121,20 +119,22 @@ public class PlaybackController {
 	}
 
 	public boolean resume() {
-		if (playbackHandler == null) {
+		if (playbackHandlerContainer == null) {
 			setupNextPreparedFile();
 
 			return true;
 		}
 
-		startFilePlayback(playbackHandler);
+		startFilePlayback(playbackHandlerContainer);
 		return true;
 	}
 
-	private void startFilePlayback(@NotNull IPlaybackHandler playbackHandler) {
+	private void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer) {
 		isPlaying = true;
 
-		this.playbackHandler = playbackHandler;
+		this.playbackHandlerContainer = playbackHandlerContainer;
+
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
 
 		playbackHandler.setVolume(volume);
 		playbackHandler
@@ -142,9 +142,7 @@ public class PlaybackController {
 			.then(this::closeAndStartNextFile)
 			.error(this::onFileError);
 
-		currentFilePos = preparedPlaybackFileProvider.getPreparedIndex();
-
-        // Throw events after asynchronous calls have started
+		// Throw events after asynchronous calls have started
         throwChangeEvent(playbackHandler);
 
 		if (onNowPlayingStartListener != null)
@@ -154,7 +152,9 @@ public class PlaybackController {
 	public void pause() {
 		isPlaying = false;
 
-		if (playbackHandler == null) return;
+		if (playbackHandlerContainer == null) return;
+
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 
@@ -168,7 +168,10 @@ public class PlaybackController {
 
 	public void setVolume(float volume) {
 		this.volume = volume;
-		if (playbackHandler != null && playbackHandler.isPlaying()) playbackHandler.setVolume(this.volume);
+		if (playbackHandlerContainer == null) return;
+
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		if (playbackHandler.isPlaying()) playbackHandler.setVolume(this.volume);
 	}
 
 	public void setIsRepeating(boolean isRepeating) {
@@ -193,9 +196,12 @@ public class PlaybackController {
 
 		updatePreparedPlaybackFileProvider();
 
-		if (position != currentFilePos) return;
+		if (playbackHandlerContainer == null || position != playbackHandlerContainer.playlistPosition)
+			return;
 
-		if (playbackHandler == null || !playbackHandler.isPlaying())
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+
+		if (!playbackHandler.isPlaying())
 			return;
 
 		playbackHandler.pause();
@@ -211,7 +217,9 @@ public class PlaybackController {
 	}
 
 	public int getCurrentPosition() {
-		return currentFilePos;
+		return playbackHandlerContainer != null ?
+			playbackHandlerContainer.playlistPosition :
+			0;
 	}
 
 	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
@@ -225,16 +233,13 @@ public class PlaybackController {
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
-		updatePreparedPlaybackFileProvider(preparedPlaybackFileProvider != null ? preparedPlaybackFileProvider.getPreparedIndex() : 0);
+		updatePreparedPlaybackFileProvider(getCurrentPosition());
 	}
 
 	private void updatePreparedPlaybackFileProvider(int newPosition) {
 		closePreparedPlaybackFileProvider();
 
-		final IPreparedPlaybackFileProvider newPlaybackFileProvider	=
-			playbackQueuesProvider.getQueue(playlist, newPosition, isRepeating);
-
-		preparedPlaybackFileProvider = new PreparedStateTrackingPlayerProvider(newPosition, playlist.size(), newPlaybackFileProvider);
+		preparedPlaybackFileProvider = playbackQueuesProvider.getQueue(playlist, newPosition, isRepeating);
 	}
 
 	private void setupNextPreparedFile() {
@@ -242,13 +247,13 @@ public class PlaybackController {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		final IPromise<IPlaybackHandler> preparingPlaybackFile =
+		final IPromise<PositionedPlaybackHandlerContainer> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		if (preparingPlaybackFile == null) {
 			isPlaying = false;
-			throwStopEvent(this.playbackHandler);
+			throwStopEvent(this.playbackHandlerContainer.playbackHandler);
 			return;
 		}
 

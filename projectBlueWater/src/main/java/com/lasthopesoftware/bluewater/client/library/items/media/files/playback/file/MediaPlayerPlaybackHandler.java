@@ -83,5 +83,4 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
 		return bufferingPromise;
 	}
-
 }

@@ -51,7 +51,7 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 		});
 
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			reject.withError(new MediaPlayerException(mp, what, extra));
+			reject.withError(new MediaPlayerException(new MediaPlayerPlaybackHandler(mp), mp, what, extra));
 			return true;
 		});
 

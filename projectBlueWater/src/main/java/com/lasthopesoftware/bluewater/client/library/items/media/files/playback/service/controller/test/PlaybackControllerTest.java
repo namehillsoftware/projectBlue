@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 
@@ -14,13 +12,10 @@ import junit.framework.TestCase;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.mockito.Mockito.mock;
-
 public class PlaybackControllerTest extends TestCase {
 
 	private PlaybackController mPlaybackController;
-	private IPlaybackFileProvider mPlaybackFileProvider;
-	private ArrayList<IFile> mMockFiles; 
+	private ArrayList<IFile> mMockFiles;
 	
 	public PlaybackControllerTest(String name) {
 		super(name);
@@ -40,7 +35,7 @@ public class PlaybackControllerTest extends TestCase {
 		mPlaybackController =
 			new PlaybackController(
 				mMockFiles,
-				new PlaybackQueuesProvider(mock(IPlaybackPreparerTaskFactory.class)));
+				new PlaybackQueuesProvider(new Pl);
 	}
 
 	protected void tearDown() throws Exception {

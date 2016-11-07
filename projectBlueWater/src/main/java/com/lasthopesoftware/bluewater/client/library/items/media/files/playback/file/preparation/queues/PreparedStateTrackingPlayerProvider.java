@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPreparedPlayerStateTracker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedPlaybackHandlerContainer;
 import com.lasthopesoftware.promises.IPromise;
 
 import java.io.IOException;
@@ -25,8 +24,8 @@ public class PreparedStateTrackingPlayerProvider implements IPreparedPlayerState
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> promiseNextPreparedPlaybackFile(int preparedAt) {
-		final IPromise<IPlaybackHandler> internalPreparedPlaybackPromise
+	public IPromise<PositionedPlaybackHandlerContainer> promiseNextPreparedPlaybackFile(int preparedAt) {
+		final IPromise<PositionedPlaybackHandlerContainer> internalPreparedPlaybackPromise
 			= internalPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedAt);
 
 		if (internalPreparedPlaybackPromise == null)
