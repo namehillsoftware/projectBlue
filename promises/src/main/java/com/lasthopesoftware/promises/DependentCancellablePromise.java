@@ -34,7 +34,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		this.executor = executor;
 	}
 
-	void provide(@Nullable TInput input, @Nullable Exception exception) {
+	final void provide(@Nullable TInput input, @Nullable Exception exception) {
 		executor.runWith(
 			input,
 			exception,
@@ -43,7 +43,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			cancellation);
 	}
 
-	public void cancel() {
+	public final void cancel() {
 		cancellation.cancel();
 	}
 
@@ -71,38 +71,26 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
-	public IPromise<Void> then(@NotNull TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled) {
-		return then(new Execution.Cancellable.NullReturnCancellableRunnable<>(onFulfilled));
-	}
-
-	@NotNull
-	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
-	}
-
-	@NotNull
-	@Override
-	public IPromise<Void> error(@NotNull TwoParameterAction<Exception, OneParameterAction<Runnable>> onRejected) {
-		return error(new Execution.Cancellable.NullReturnCancellableRunnable<>(onRejected));
 	}
 
 	@NotNull
@@ -113,13 +101,13 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> thenPromise(@NotNull OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(@NotNull OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
 	@NotNull
 	@Override
-	public <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
@@ -131,31 +119,19 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	@NotNull
 	@Override
-	public final IPromise<Void> then(@NotNull OneParameterAction<TResult> onFulfilled) {
-		return then(new Execution.NullReturnRunnable<>(onFulfilled));
-	}
-
-	@NotNull
-	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
 		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
-	public <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
 		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
 	@NotNull
 	@Override
-	public final IPromise<Void> error(@NotNull OneParameterAction<Exception> onRejected) {
-		return error(new Execution.NullReturnRunnable<>(onRejected));
-	}
-
-	@NotNull
-	@Override
-	public <TNewResult> IPromise<TNewResult> thenPromise(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
 	}
 
@@ -173,7 +149,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					try {
 						resolve.withResult(onFulfilled.expectedUsing(result, onCancelled));
 					} catch (Exception e) {
@@ -193,7 +169,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				public final void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					if (exception != null) {
 						reject.withError(exception);
 						return;
@@ -214,7 +190,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public Void expectedUsing(TResult result, OneParameterAction<Runnable> onCancelled) {
+				public final Void expectedUsing(TResult result, OneParameterAction<Runnable> onCancelled) {
 					onFulfilled.runWith(result, onCancelled);
 					return null;
 				}
@@ -231,7 +207,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public void runWith(TResult result, Exception error, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				public final void runWith(TResult result, Exception error, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					onRejected.runWith(error, resolve, reject, onCancelled);
 				}
 			}
@@ -244,7 +220,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					try {
 						onFulfilled
 							.expectedUsing(result, onCancelled)
@@ -268,7 +244,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			public final void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 				onFulfilled.runWith(result, exception, resolve, reject);
 			}
 		}
@@ -284,7 +260,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public Void expectedUsing(TResult result) {
+			public final Void expectedUsing(TResult result) {
 				resolve.runWith(result);
 				return null;
 			}
@@ -301,7 +277,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject) {
+			public final void runWith(TResult result, Exception exception, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject) {
 				onRejected.runWith(exception, resolve, reject);
 			}
 		}
@@ -317,7 +293,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
+			public final void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 				try {
 					newResolve.withResult(onFulfilled.expectedUsing(originalResult));
 				} catch (Exception e) {
@@ -337,7 +313,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
+			public final void runWith(TResult result, Exception exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 				if (exception != null) {
 					reject.withError(exception);
 					return;
@@ -355,7 +331,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
+			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 				try {
 					onFulfilled
 						.expectedUsing(result)
@@ -377,7 +353,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(TNewResult result1) {
+			public final void runWith(TNewResult result1) {
 				resolve.withResult(result1);
 			}
 		}
@@ -390,7 +366,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public void runWith(Exception exception) {
+			public final void runWith(Exception exception) {
 				reject.withError(exception);
 			}
 		}
