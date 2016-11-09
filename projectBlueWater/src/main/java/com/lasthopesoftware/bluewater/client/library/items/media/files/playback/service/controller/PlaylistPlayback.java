@@ -3,15 +3,13 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.promises.Promise;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
 
 /**
  * Created by david on 11/7/16.
  */
 public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback {
 
-	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayback.class);
 	private final PlaylistPlaybackTask playlistPlaybackTask;
 
 	public PlaylistPlayback(IPreparedPlaybackFileProvider preparedPlaybackFileProvider, int preparedPosition) {
@@ -39,4 +37,8 @@ public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback
 		this.playlistPlaybackTask.setVolume(volume);
 	}
 
+	@Override
+	public void close() throws IOException {
+		this.cancel();
+	}
 }

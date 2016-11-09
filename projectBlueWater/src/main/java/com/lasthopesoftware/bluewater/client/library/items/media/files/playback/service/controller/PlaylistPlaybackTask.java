@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.OneParameterVoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
 /**
  * Created by david on 11/8/16.
@@ -33,7 +35,13 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 
 	@Override
 	public void runWith(IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-		setupNextPreparedFile(preparedPosition, resolve, reject);
+		setupNextPreparedFile(preparedPosition, resolve, reject, onCancelled);
+
+		onCancelled.runWith(() -> {
+			stopPlayback();
+
+			reject.withError(new CancellationException("Playlist playback was cancelled"));
+		});
 	}
 
 	public void pause() {
@@ -43,25 +51,22 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
-
-//		if (onNowPlayingPauseListener != null)
-//			onNowPlayingPauseListener.onNowPlayingPause(this, playbackHandler);
 	}
 
 	void resume() {
 		if (playbackHandlerContainer != null && !playbackHandlerContainer.playbackHandler.isPlaying())
-			startFilePlayback(playbackHandlerContainer);
+			playbackHandlerContainer.playbackHandler.promisePlayback();
 	}
 
 	public void setVolume(float volume) {
 		this.volume = volume;
 	}
 
-	private void setupNextPreparedFile(IResolvedPromise<Void> resolve, IRejectedPromise reject) {
-		setupNextPreparedFile(0, resolve, reject);
+	private void setupNextPreparedFile(IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		setupNextPreparedFile(0, resolve, reject, onCancelled);
 	}
 
-	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Void> resolve, IRejectedPromise reject) {
+	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		final IPromise<PositionedPlaybackHandlerContainer> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
@@ -72,11 +77,11 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		}
 
 		preparingPlaybackFile
-			.then(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject))
-			.error(reject::withError);
+			.then(new OneParameterVoidFunction<>(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
+			.error(new OneParameterVoidFunction<>(exception -> handlePlaybackException(exception, reject)));
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer, IResolvedPromise<Void> resolve, IRejectedPromise reject) {
+	private void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 
 		this.playbackHandlerContainer = playbackHandlerContainer;
 
@@ -85,35 +90,39 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		playbackHandler.setVolume(volume);
 		playbackHandler
 			.promisePlayback()
-			.then(this::closeAndStartNextFile)
-			.error(reject::withError);
+			.then(new OneParameterVoidFunction<>(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
+			.error(new OneParameterVoidFunction<>(exception -> handlePlaybackException(exception, reject)));
 	}
 
-	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Void> resolve, IRejectedPromise reject) {
+	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
 		}
 
-		setupNextPreparedFile(resolve, reject);
+		setupNextPreparedFile(resolve, reject, onCancelled);
 	}
 
-//	private void onFileError(Exception exception) {
-//		if (!(exception instanceof MediaPlayerException)) {
-//			logger.error("There was an error preparing the file", exception);
-//			return;
-//		}
-//
-//		final MediaPlayerException mediaPlayerException = (MediaPlayerException) exception;
-//
-//		logger.error("JR File error - " + mediaPlayerException.what + " - " + mediaPlayerException.extra);
-//
-//		// We don't know what happened, release the entire queue
-////		if (!MediaPlayerException.mediaErrorExtras().contains(mediaPlayerException.extra))
-////			closePreparedPlaybackFileProvider();
-////
-////		if (onPlaylistStateControlErrorListener != null)
-////			onPlaylistStateControlErrorListener.onPlaylistStateControlError(this, mediaPlayerException);
-//	}
+	private void stopPlayback() {
+		try {
+			preparedPlaybackFileProvider.close();
+		} catch (IOException e) {
+			logger.error("There was an error closing the prepared playback file provider", e);
+		}
+
+		if (playbackHandlerContainer == null) return;
+
+		try {
+			playbackHandlerContainer.playbackHandler.close();
+		} catch (IOException e) {
+			logger.error("There was an error closing the playback handler", e);
+		}
+	}
+
+	private void handlePlaybackException(Exception exception, IRejectedPromise reject) {
+		stopPlayback();
+
+		reject.withError(exception);
+	}
 }

@@ -345,7 +345,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	private static class Resolution {
-		static class ResolveWithPromiseResult<TNewResult> implements OneParameterAction<TNewResult> {
+		static class ResolveWithPromiseResult<TNewResult> implements OneParameterFunction<TNewResult, Void> {
 			private final IResolvedPromise<TNewResult> resolve;
 
 			ResolveWithPromiseResult(IResolvedPromise<TNewResult> resolve) {
@@ -353,12 +353,13 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public final void runWith(TNewResult result1) {
-				resolve.withResult(result1);
+			public final Void expectedUsing(TNewResult result) {
+				resolve.withResult(result);
+				return null;
 			}
 		}
 
-		static class RejectWithPromiseError implements OneParameterAction<Exception> {
+		static class RejectWithPromiseError implements OneParameterFunction<Exception, Void> {
 			private final IRejectedPromise reject;
 
 			RejectWithPromiseError(IRejectedPromise reject) {
@@ -366,8 +367,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public final void runWith(Exception exception) {
+			public final Void expectedUsing(Exception exception) {
 				reject.withError(exception);
+				return null;
 			}
 		}
 	}
