@@ -38,7 +38,7 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		setupNextPreparedFile(preparedPosition, resolve, reject, onCancelled);
 
 		onCancelled.runWith(() -> {
-			stopPlayback();
+			haltPlayback();
 
 			reject.withError(new CancellationException("Playlist playback was cancelled"));
 		});
@@ -104,7 +104,7 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		setupNextPreparedFile(resolve, reject, onCancelled);
 	}
 
-	private void stopPlayback() {
+	private void haltPlayback() {
 		try {
 			preparedPlaybackFileProvider.close();
 		} catch (IOException e) {
@@ -116,12 +116,12 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		try {
 			playbackHandlerContainer.playbackHandler.close();
 		} catch (IOException e) {
-			logger.error("There was an error closing the playback handler", e);
+			logger.error("There was an error releasing the media player", e);
 		}
 	}
 
 	private void handlePlaybackException(Exception exception, IRejectedPromise reject) {
-		stopPlayback();
+		haltPlayback();
 
 		reject.withError(exception);
 	}
