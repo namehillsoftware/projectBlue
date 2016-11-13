@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedPlaybackHandlerContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -25,7 +25,7 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlaybackTask.class);
 	private final IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
 	private final int preparedPosition;
-	private PositionedPlaybackHandlerContainer playbackHandlerContainer;
+	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
 	PlaylistPlaybackTask(IPreparedPlaybackFileProvider preparedPlaybackFileProvider, int preparedPosition) {
@@ -45,19 +45,19 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	}
 
 	public void pause() {
-		if (playbackHandlerContainer == null) return;
+		if (positionedPlaybackFile == null) return;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 	}
 
 	void resume() {
-		if (playbackHandlerContainer != null && !playbackHandlerContainer.playbackHandler.isPlaying())
-			playbackHandlerContainer.playbackHandler.promisePlayback();
+		if (positionedPlaybackFile != null && !positionedPlaybackFile.getPlaybackHandler().isPlaying())
+			positionedPlaybackFile.getPlaybackHandler().promisePlayback();
 	}
 
-	public void setVolume(float volume) {
+	void setVolume(float volume) {
 		this.volume = volume;
 	}
 
@@ -66,7 +66,7 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	}
 
 	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-		final IPromise<PositionedPlaybackHandlerContainer> preparingPlaybackFile =
+		final IPromise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
@@ -80,11 +80,11 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 			.error(new OneParameterVoidFunction<>(exception -> handlePlaybackException(exception, reject)));
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 
-		this.playbackHandlerContainer = playbackHandlerContainer;
+		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
 		playbackHandler
@@ -104,10 +104,10 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	}
 
 	private void haltPlayback() {
-		if (playbackHandlerContainer == null) return;
+		if (positionedPlaybackFile == null) return;
 
 		try {
-			playbackHandlerContainer.playbackHandler.close();
+			positionedPlaybackFile.getPlaybackHandler().close();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
 		}
