@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedPlaybackHandlerContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IProvidePlaybackQueues;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -41,7 +41,7 @@ public class PlaybackController {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackController.class);
 
 	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
-	private PositionedPlaybackHandlerContainer playbackHandlerContainer;
+	private PositionedPlaybackFile playbackHandlerContainer;
 
 	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IProvidePlaybackQueues playbackQueuesProvider) {
 		this.playlist = playlist instanceof ArrayList ? (ArrayList<IFile>)playlist : new ArrayList<>(playlist);
@@ -73,12 +73,12 @@ public class PlaybackController {
 		boolean wasPlaying = false;
 
 		if (playbackHandlerContainer != null) {
-			final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+			final IPlaybackHandler playbackHandler = playbackHandlerContainer.getPlaybackHandler();
 
 			if (playbackHandler.isPlaying()) {
 
 				// If the seek-to index is the same as that of the file playing, keep on playing
-				if (filePos == playbackHandlerContainer.playlistPosition) return;
+				if (filePos == playbackHandlerContainer.getPosition()) return;
 
 				// stop any playback that is in action
 				wasPlaying = true;
@@ -129,12 +129,12 @@ public class PlaybackController {
 		return true;
 	}
 
-	private Void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer) {
+	private Void startFilePlayback(@NotNull PositionedPlaybackFile playbackHandlerContainer) {
 		isPlaying = true;
 
 		this.playbackHandlerContainer = playbackHandlerContainer;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
 		playbackHandler
@@ -156,7 +156,7 @@ public class PlaybackController {
 
 		if (playbackHandlerContainer == null) return;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.getPlaybackHandler();
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 
@@ -172,7 +172,7 @@ public class PlaybackController {
 		this.volume = volume;
 		if (playbackHandlerContainer == null) return;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.getPlaybackHandler();
 		if (playbackHandler.isPlaying()) playbackHandler.setVolume(this.volume);
 	}
 
@@ -198,10 +198,10 @@ public class PlaybackController {
 
 		updatePreparedPlaybackFileProvider();
 
-		if (playbackHandlerContainer == null || position != playbackHandlerContainer.playlistPosition)
+		if (playbackHandlerContainer == null || position != playbackHandlerContainer.getPosition())
 			return;
 
-		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
+		final IPlaybackHandler playbackHandler = playbackHandlerContainer.getPlaybackHandler();
 
 		if (!playbackHandler.isPlaying())
 			return;
@@ -220,7 +220,7 @@ public class PlaybackController {
 
 	public int getCurrentPosition() {
 		return playbackHandlerContainer != null ?
-			playbackHandlerContainer.playlistPosition :
+			playbackHandlerContainer.getPosition() :
 			0;
 	}
 
@@ -251,13 +251,13 @@ public class PlaybackController {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		final IPromise<PositionedPlaybackHandlerContainer> preparingPlaybackFile =
+		final IPromise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		if (preparingPlaybackFile == null) {
 			isPlaying = false;
-			throwStopEvent(this.playbackHandlerContainer.playbackHandler);
+			throwStopEvent(this.playbackHandlerContainer.getPlaybackHandler());
 			return;
 		}
 

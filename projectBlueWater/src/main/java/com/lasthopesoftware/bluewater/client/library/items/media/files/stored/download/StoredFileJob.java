@@ -41,9 +41,9 @@ class StoredFileJob {
 	private final RemoteFileUriProvider remoteFileUriProvider;
 	private StoredFileAccess storedFileAccess;
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull RemoteFileUriProvider remoteFileUriProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
+	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
-		this.remoteFileUriProvider = remoteFileUriProvider;
+		this.remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;

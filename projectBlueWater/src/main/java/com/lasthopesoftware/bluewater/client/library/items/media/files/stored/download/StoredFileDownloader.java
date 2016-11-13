@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
@@ -38,7 +38,7 @@ public class StoredFileDownloader {
 	private final StoredFileAccess storedFileAccess;
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<StoredFileJob> storedFileJobQueue = new LinkedList<>();
 
@@ -51,7 +51,7 @@ public class StoredFileDownloader {
 
 	private volatile boolean isCancelled;
 
-	public StoredFileDownloader(@NonNull Context context, @NonNull ConnectionProvider connectionProvider, @NonNull Library library) {
+	public StoredFileDownloader(@NonNull Context context, @NonNull IConnectionProvider connectionProvider, @NonNull Library library) {
 		this(
 				connectionProvider,
 				new StoredFileAccess(context, library),
@@ -59,7 +59,7 @@ public class StoredFileDownloader {
 				new FileWritePossibleArbitrator());
 	}
 
-	public StoredFileDownloader(@NonNull ConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
+	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;

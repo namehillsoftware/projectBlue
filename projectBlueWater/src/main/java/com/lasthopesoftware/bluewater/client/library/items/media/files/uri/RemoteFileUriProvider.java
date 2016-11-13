@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 
 import org.slf4j.LoggerFactory;
@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
  * Created by david on 7/24/15.
  */
 public class RemoteFileUriProvider implements IFileUriProvider {
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 
-	RemoteFileUriProvider(ConnectionProvider connectionProvider) {
+	public RemoteFileUriProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
 
