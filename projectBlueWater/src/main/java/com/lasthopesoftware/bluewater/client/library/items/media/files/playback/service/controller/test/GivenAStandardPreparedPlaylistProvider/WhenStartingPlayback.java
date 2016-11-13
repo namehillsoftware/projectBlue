@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test.GivenAStandardPreparedPlaylistProvider;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedPlaybackHandlerContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayback;
 import com.lasthopesoftware.promises.ExpectedPromise;
@@ -28,12 +29,12 @@ public class WhenStartingPlayback {
 	public void before() {
 		playbackHandler = mock(IPlaybackHandler.class);
 
-		final IPromise<PositionedPlaybackHandlerContainer> positionedPlaybackHandlerContainer =
-			new ExpectedPromise<>(() -> new PositionedPlaybackHandlerContainer(0, playbackHandler));
+		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
+			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
 		new PlaylistPlayback(new IPreparedPlaybackFileProvider() {
 			@Override
-			public IPromise<PositionedPlaybackHandlerContainer> promiseNextPreparedPlaybackFile(int preparedAt) {
+			public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
 				return positionedPlaybackHandlerContainer;
 			}
 
