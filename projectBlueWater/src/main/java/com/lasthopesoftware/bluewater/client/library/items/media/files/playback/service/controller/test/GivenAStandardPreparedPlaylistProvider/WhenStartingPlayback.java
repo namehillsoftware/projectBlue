@@ -31,18 +31,17 @@ public class WhenStartingPlayback {
 		final IPromise<PositionedPlaybackHandlerContainer> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackHandlerContainer(0, playbackHandler));
 
-		final PlaylistPlayback playlistPlayback =
-			new PlaylistPlayback(new IPreparedPlaybackFileProvider() {
-				@Override
-				public IPromise<PositionedPlaybackHandlerContainer> promiseNextPreparedPlaybackFile(int preparedAt) {
-					return positionedPlaybackHandlerContainer;
-				}
+		new PlaylistPlayback(new IPreparedPlaybackFileProvider() {
+			@Override
+			public IPromise<PositionedPlaybackHandlerContainer> promiseNextPreparedPlaybackFile(int preparedAt) {
+				return positionedPlaybackHandlerContainer;
+			}
 
-				@Override
-				public void close() throws IOException {
+			@Override
+			public void close() throws IOException {
 
-				}
-			}, 0);
+			}
+		}, 0);
 	}
 
 	@Test

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
@@ -26,7 +27,7 @@ import java.net.HttpURLConnection;
 /**
  * Created by david on 7/17/16.
  */
-public class StoredFileJob {
+class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
@@ -36,10 +37,13 @@ public class StoredFileJob {
 	private final StoredFile storedFile;
 	private boolean isCancelled;
 	private IConnectionProvider connectionProvider;
+	@NonNull
+	private final RemoteFileUriProvider remoteFileUriProvider;
 	private StoredFileAccess storedFileAccess;
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
+	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull RemoteFileUriProvider remoteFileUriProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
+		this.remoteFileUriProvider = remoteFileUriProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
@@ -51,7 +55,7 @@ public class StoredFileJob {
 		isCancelled = true;
 	}
 
-	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
+	StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
 		final java.io.File file = new java.io.File(storedFile.getPath());
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
@@ -68,7 +72,7 @@ public class StoredFileJob {
 
 		HttpURLConnection connection;
 		try {
-			connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+			connection = connectionProvider.getConnection(remoteFileUriProvider.getFileUri(serviceFile).toString());
 		} catch (IOException e) {
 			logger.error("Error getting connection", e);
 			throw new StoredFileJobException(storedFile, e);
@@ -91,12 +95,9 @@ public class StoredFileJob {
 			if (!parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
 
 			try {
-				final FileOutputStream fos = new FileOutputStream(file);
-				try {
+				try (FileOutputStream fos = new FileOutputStream(file)) {
 					IOUtils.copy(is, fos);
 					fos.flush();
-				} finally {
-					fos.close();
 				}
 
 				storedFileAccess.markStoredFileAsDownloaded(storedFile);

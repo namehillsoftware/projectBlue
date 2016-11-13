@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
@@ -156,16 +155,6 @@ public class PlaybackControllerTest extends TestCase {
 		@Override
 		public void setKey(int key) {
 			mKey = key;
-		}
-
-		@Override
-		public String getPlaybackUrl(ConnectionProvider connectionProvider) {
-			return null;
-		}
-
-		@Override
-		public String[] getPlaybackParams() {
-			return new String[0];
 		}
 
 		@Override

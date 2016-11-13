@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 7/24/15.
  */
-class RemoteFileUriProvider implements IFileUriProvider {
+public class RemoteFileUriProvider implements IFileUriProvider {
 	private final ConnectionProvider connectionProvider;
 
 	RemoteFileUriProvider(ConnectionProvider connectionProvider) {
@@ -21,10 +21,22 @@ class RemoteFileUriProvider implements IFileUriProvider {
 	public Uri getFileUri(IFile file) {
 		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning file URL from server.");
 
-		final String itemUrl = file.getPlaybackUrl(connectionProvider);
-		if (itemUrl != null && !itemUrl.isEmpty())
-			return Uri.parse(itemUrl);
+		/* Playback:
+		 * 0: Downloading (not real-time playback);
+		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.;
+		 * 2: Real-time playback, no playback statistics handling (default: )
+		 */
 
-		return null;
+		final String itemUrl =
+			connectionProvider
+				.getUrlProvider()
+				.getUrl(
+					"File/GetFile",
+					"File=" + Integer.toString(file.getKey()),
+					"Quality=medium",
+					"Conversion=Android",
+					"Playback=0");
+
+		return Uri.parse(itemUrl);
 	}
 }

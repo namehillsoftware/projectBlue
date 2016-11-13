@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import org.jetbrains.annotations.NotNull;
 
 public class File implements IFile {
 
@@ -20,22 +20,8 @@ public class File implements IFile {
 		this.key = key;
 	}
 
-	public String[] getPlaybackParams() {
-		/* Playback:
-		 * 0: Downloading (not real-time playback);
-		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.;
-		 * 2: Real-time playback, no playback statistics handling (default: )
-		 */
-
-		return new String[] { "File/GetFile", "File=" + Integer.toString(getKey()), "Quality=medium", "Conversion=Android", "Playback=0" };
-	}
-	
-	public String getPlaybackUrl(ConnectionProvider connectionProvider) {
-		return connectionProvider.getUrlProvider().getUrl(getPlaybackParams());
-	}
-
 	@Override
-	public int compareTo(IFile another) {
-		return another == null ? 1 : getKey() - another.getKey();
+	public int compareTo(@NotNull IFile another) {
+		return getKey() - another.getKey();
 	}
 }
