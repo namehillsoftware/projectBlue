@@ -32,7 +32,7 @@ public class PlaybackQueuesProvider implements IProvidePlaybackQueues {
 		if (!isCyclical)
 			return new QueuedPlaybackHandlerProvider(truncatedList, playbackPreparerTaskFactory);
 
-		truncatedList.addAll(positionedFiles.subList(0, startingAt - 1));
+		truncatedList.addAll(positionedFiles.subList(0, Math.max(startingAt - 1, playlist.size())));
 
 		return new CyclicalQueuedPlaybackProvider(truncatedList, playbackPreparerTaskFactory);
 	}
