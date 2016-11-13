@@ -45,7 +45,6 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	}
 
 	public void pause() {
-
 		if (playbackHandlerContainer == null) return;
 
 		final IPlaybackHandler playbackHandler = playbackHandlerContainer.playbackHandler;
@@ -105,12 +104,6 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	}
 
 	private void haltPlayback() {
-		try {
-			preparedPlaybackFileProvider.close();
-		} catch (IOException e) {
-			logger.error("There was an error closing the prepared playback file provider", e);
-		}
-
 		if (playbackHandlerContainer == null) return;
 
 		try {

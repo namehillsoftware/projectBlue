@@ -63,6 +63,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.OneParameterVoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -505,8 +506,10 @@ public class PlaybackService extends Service implements
 						playlistController.setOnNowPlayingPauseListener(PlaybackService.this);
 						playlistController.setOnPlaylistStateControlErrorListener(PlaybackService.this);
 						playlistController.setOnNowPlayingStartListener(PlaybackService.this);
+
+						return null;
 					}))
-			.then((OneParameterAction<Void>) v -> onPlaylistControllerInitialized.run());
+			.then(new OneParameterVoidFunction<>(v -> onPlaylistControllerInitialized.run()));
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -951,7 +954,7 @@ public class PlaybackService extends Service implements
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
 		playbackHandler
 			.promisePlayback()
-			.then(handler -> { sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler); });
+			.then(new OneParameterVoidFunction<>(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler)));
 
 		final IFile playingFile = controller.getPlaylist().get(controller.getCurrentPosition());
 		

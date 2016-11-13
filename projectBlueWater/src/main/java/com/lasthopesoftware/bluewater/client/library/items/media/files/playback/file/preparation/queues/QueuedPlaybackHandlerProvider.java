@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.callables.OneParameterVoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class QueuedPlaybackHandlerProvider implements
 
 	@Override
 	public PositionedPlaybackHandlerContainer expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(this);
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(new OneParameterVoidFunction<>(this));
 
 		return new PositionedPlaybackHandlerContainer(positionedBufferingPlaybackHandler.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler);
 	}

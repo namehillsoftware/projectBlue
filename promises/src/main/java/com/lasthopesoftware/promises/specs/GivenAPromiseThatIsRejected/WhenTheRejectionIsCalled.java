@@ -21,9 +21,7 @@ public class WhenTheRejectionIsCalled {
 		new ExpectedPromise<String>(
 				() -> {
 					throw thrownException;
-				}).error(exception -> {
-					caughtException = exception;
-				});
+				}).error(exception -> caughtException = exception);
 	}
 
 	@Test

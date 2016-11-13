@@ -17,9 +17,7 @@ public class WhenAnotherReturningPromiseIsExpected {
 	public void before() {
 		new ExpectedPromise<>(() -> "test")
 				.then(result -> 330 + result.hashCode())
-				.then(nextResult -> {
-					nextReturningPromiseResult = nextResult;
-				});
+				.then(nextResult -> nextReturningPromiseResult = nextResult);
 	}
 
 	@Test

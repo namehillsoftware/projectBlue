@@ -47,7 +47,7 @@ public class WhenThePromiseIsCancelledBeforeResolution {
 
 		promise.cancel();
 
-		promise.then(result -> { this.result = result; });
+		promise.then(result -> this.result = result);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

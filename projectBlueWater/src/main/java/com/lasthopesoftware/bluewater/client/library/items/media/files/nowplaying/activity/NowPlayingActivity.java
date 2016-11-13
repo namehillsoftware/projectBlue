@@ -311,6 +311,8 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 
 				if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 				nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
+
+				return null;
 			});
 	}
 	

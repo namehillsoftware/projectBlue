@@ -17,8 +17,8 @@ public class WhenTheCancellationIsCalled {
 	@Before
 	public void before() {
 		new Promise<String>((resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(new Exception())))
-			.then((result, onCancelled) -> {})
-			.error((exception, onCancelled) -> { caughtException = exception; })
+			.then((result, onCancelled) -> null)
+			.error((exception, onCancelled) -> caughtException = exception)
 			.cancel();
 	}
 

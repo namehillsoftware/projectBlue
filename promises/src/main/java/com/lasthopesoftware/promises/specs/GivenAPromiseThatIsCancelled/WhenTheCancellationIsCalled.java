@@ -21,7 +21,7 @@ public class WhenTheCancellationIsCalled {
 		final Promise<String> cancellablePromise = new Promise<>(
 			(resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)));
 
-		cancellablePromise.error((exception, onCancelled) -> { caughtException = exception;	});
+		cancellablePromise.error((exception, onCancelled) -> caughtException = exception);
 
 		cancellablePromise.cancel();
 	}

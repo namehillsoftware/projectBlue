@@ -129,7 +129,7 @@ public class PlaybackController {
 		return true;
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer) {
+	private Void startFilePlayback(@NotNull PositionedPlaybackHandlerContainer playbackHandlerContainer) {
 		isPlaying = true;
 
 		this.playbackHandlerContainer = playbackHandlerContainer;
@@ -147,6 +147,8 @@ public class PlaybackController {
 
 		if (onNowPlayingStartListener != null)
         	onNowPlayingStartListener.onNowPlayingStart(this, playbackHandler);
+
+		return null;
 	}
 
 	public void pause() {
@@ -222,7 +224,7 @@ public class PlaybackController {
 			0;
 	}
 
-	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
+	private Void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
@@ -230,6 +232,8 @@ public class PlaybackController {
 		}
 
 		setupNextPreparedFile();
+
+		return null;
 	}
 
 	private void updatePreparedPlaybackFileProvider() {
@@ -262,10 +266,10 @@ public class PlaybackController {
 			.error(this::onFileError);
 	}
 
-	private void onFileError(Exception exception) {
+	private Void onFileError(Exception exception) {
 		if (!(exception instanceof MediaPlayerException)) {
 			logger.error("There was an error preparing the file", exception);
-			return;
+			return null;
 		}
 
 		final MediaPlayerException mediaPlayerException = (MediaPlayerException)exception;
@@ -278,6 +282,8 @@ public class PlaybackController {
 
 		if (onPlaylistStateControlErrorListener != null)
 			onPlaylistStateControlErrorListener.onPlaylistStateControlError(this, mediaPlayerException);
+
+		return null;
 	}
 	/* End event handlers */
 

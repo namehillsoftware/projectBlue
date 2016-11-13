@@ -2,7 +2,7 @@ package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolvesInTheFuture
 
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,8 +21,8 @@ import static org.mockito.Mockito.verify;
 
 public class WhenChainingResolutionTwice {
 
-	private OneParameterAction<String> firstResultHandler;
-	private OneParameterAction<String> secondResultHandler;
+	private OneParameterFunction<String, ?> firstResultHandler;
+	private OneParameterFunction<String, ?> secondResultHandler;
 
 	@Before
 	public void before() throws InterruptedException {
@@ -38,12 +38,12 @@ public class WhenChainingResolutionTwice {
 				latch.countDown();
 			}).start());
 
-		firstResultHandler = mock(OneParameterAction.class);
+		firstResultHandler = mock(OneParameterFunction.class);
 
 		rootPromise
 			.then(firstResultHandler);
 
-		secondResultHandler = mock(OneParameterAction.class);
+		secondResultHandler = mock(OneParameterFunction.class);
 
 		rootPromise
 			.then(secondResultHandler);
@@ -53,11 +53,11 @@ public class WhenChainingResolutionTwice {
 
 	@Test
 	public void thenTheFirstResolutionIsCalled() {
-		verify(firstResultHandler, times(1)).runWith(any());
+		verify(firstResultHandler, times(1)).expectedUsing(any());
 	}
 
 	@Test
 	public void thenTheSecondResolutionIsCalled() {
-		verify(secondResultHandler, times(1)).runWith(any());
+		verify(secondResultHandler, times(1)).expectedUsing(any());
 	}
 }
