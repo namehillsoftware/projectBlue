@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenAStandardPlaylist;
 
+import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
@@ -15,12 +16,11 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import junit.framework.Assert;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.mockito.Matchers.any;
@@ -35,26 +35,27 @@ import static org.mockito.Mockito.verify;
 
 public class WhenAQueueIsCycledThroughCompletely {
 
-	private HashMap<IFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
-	private int expectedNumberAbsolutePromises;
-	private List<IPromise<PositionedPlaybackFile>> returnedPromises;
-	private int expectedCycles;
+	private static Map<IFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
+	private static int expectedNumberAbsolutePromises;
+	private static int expectedCycles;
+	private static int returnedPromiseCount;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 
 		final Random random = new Random(System.currentTimeMillis());
 		final int numberOfFiles = random.nextInt(500);
 
-		fileActionMap = new HashMap<>(numberOfFiles);
-		final List<PositionedFileContainer> fileContainers = new ArrayList<>(numberOfFiles);
-		for (int i = 0; i < numberOfFiles; i++) {
-			final IFile newFile = new File(random.nextInt());
-			fileContainers.add(new PositionedFileContainer(i, newFile));
-			final ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>
-				action = new MockResolveAction();
-			fileActionMap.put(newFile, spy(action));
-		}
+		final List<PositionedFileContainer> fileContainers =
+			Stream
+				.range(0, numberOfFiles)
+				.map(i -> new PositionedFileContainer(i, new File(random.nextInt())))
+				.collect(Collectors.toList());
+
+		fileActionMap =
+			Stream
+				.of(fileContainers)
+				.collect(Collectors.toMap(value -> value.file, value -> spy(new MockResolveAction())));
 
 		final CyclicalQueuedPlaybackProvider cyclicalQueuedPlaybackProvider
 			= new CyclicalQueuedPlaybackProvider(fileContainers, (file, preparedAt) -> fileActionMap.get(file));
@@ -63,9 +64,13 @@ public class WhenAQueueIsCycledThroughCompletely {
 
 		expectedNumberAbsolutePromises = expectedCycles * numberOfFiles;
 
-		returnedPromises = new ArrayList<>(expectedNumberAbsolutePromises);
-		for (int i = 0; i < expectedNumberAbsolutePromises; i++)
-			returnedPromises.add(cyclicalQueuedPlaybackProvider.promiseNextPreparedPlaybackFile(0));
+		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
+			final IPromise<PositionedPlaybackFile> positionedPlaybackFilePromise =
+				cyclicalQueuedPlaybackProvider.promiseNextPreparedPlaybackFile(0);
+
+			if (positionedPlaybackFilePromise != null)
+				++returnedPromiseCount;
+		}
 	}
 
 	@Test
@@ -75,7 +80,7 @@ public class WhenAQueueIsCycledThroughCompletely {
 
 	@Test
 	public void thenTheCorrectNumberOfPromisesIsReturned() {
-		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromises.size());
+		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromiseCount);
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
