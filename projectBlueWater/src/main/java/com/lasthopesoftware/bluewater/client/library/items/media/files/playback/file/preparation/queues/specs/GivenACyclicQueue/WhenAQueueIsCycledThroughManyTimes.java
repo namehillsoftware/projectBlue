@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenAStandardPlaylist;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenACyclicQueue;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
  * Created by david on 11/13/16.
  */
 
-public class WhenAQueueIsCycledThroughCompletely {
+public class WhenAQueueIsCycledThroughManyTimes {
 
 	private static Map<IFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
 	private static int expectedNumberAbsolutePromises;
