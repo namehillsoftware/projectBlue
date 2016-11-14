@@ -24,4 +24,9 @@ public class File implements IFile {
 	public int compareTo(@NotNull IFile another) {
 		return getKey() - another.getKey();
 	}
+
+	@Override
+	public int hashCode() {
+		return key;
+	}
 }

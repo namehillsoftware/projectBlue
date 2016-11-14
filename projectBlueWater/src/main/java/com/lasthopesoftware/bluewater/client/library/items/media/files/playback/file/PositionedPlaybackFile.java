@@ -24,4 +24,9 @@ public class PositionedPlaybackFile extends File {
 	public IPlaybackHandler getPlaybackHandler() {
 		return playbackHandler;
 	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() * 31 + position;
+	}
 }
