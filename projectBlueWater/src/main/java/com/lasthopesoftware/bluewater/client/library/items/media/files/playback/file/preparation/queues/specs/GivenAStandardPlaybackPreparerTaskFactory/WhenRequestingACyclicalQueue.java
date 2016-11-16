@@ -16,7 +16,7 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import junit.framework.Assert;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,14 +31,11 @@ import static org.mockito.Mockito.spy;
  */
 
 public class WhenRequestingACyclicalQueue {
-	private IPreparedPlaybackFileProvider queue;
-	private Map<IFile, MockResolveAction> fileActionMap;
-	private int startPosition;
-	private int expectedNumberAbsolutePromises;
-	private int returnedPromiseCount;
+	private static IPreparedPlaybackFileProvider queue;
+	private static int startPosition;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		final Random random = new Random(System.currentTimeMillis());
 		final int numberOfFiles = random.nextInt(500);
 
@@ -48,7 +45,7 @@ public class WhenRequestingACyclicalQueue {
 				.map(i -> new File(random.nextInt()))
 				.collect(Collectors.toList());
 
-		fileActionMap =
+		Map<IFile, MockResolveAction> fileActionMap =
 			Stream
 				.of(files)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));

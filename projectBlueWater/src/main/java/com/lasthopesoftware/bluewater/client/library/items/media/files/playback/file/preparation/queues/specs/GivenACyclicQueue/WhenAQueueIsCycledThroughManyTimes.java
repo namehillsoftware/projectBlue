@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFileContainer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CyclicalQueuedPlaybackProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -46,19 +46,25 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		final Random random = new Random(System.currentTimeMillis());
 		final int numberOfFiles = random.nextInt(500);
 
-		final List<PositionedFileContainer> fileContainers =
+		final List<IFile> files =
 			Stream
 				.range(0, numberOfFiles)
-				.map(i -> new PositionedFileContainer(i, new File(random.nextInt())))
+				.map(i -> new File(random.nextInt()))
 				.collect(Collectors.toList());
 
 		fileActionMap =
 			Stream
-				.of(fileContainers)
-				.collect(Collectors.toMap(value -> value.file, value -> spy(new MockResolveAction())));
+				.of(files)
+				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
-		final CyclicalQueuedPlaybackProvider cyclicalQueuedPlaybackProvider
-			= new CyclicalQueuedPlaybackProvider(fileContainers, (file, preparedAt) -> fileActionMap.get(file));
+		final PlaybackQueuesProvider playbackQueuesProvider
+			= new PlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
+
+		final IPreparedPlaybackFileProvider queue =
+			playbackQueuesProvider.getQueue(
+				files,
+				0,
+				true);
 
 		expectedCycles = random.nextInt(100);
 
@@ -66,7 +72,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
 			final IPromise<PositionedPlaybackFile> positionedPlaybackFilePromise =
-				cyclicalQueuedPlaybackProvider.promiseNextPreparedPlaybackFile(0);
+				queue.promiseNextPreparedPlaybackFile(0);
 
 			if (positionedPlaybackFilePromise != null)
 				++returnedPromiseCount;
