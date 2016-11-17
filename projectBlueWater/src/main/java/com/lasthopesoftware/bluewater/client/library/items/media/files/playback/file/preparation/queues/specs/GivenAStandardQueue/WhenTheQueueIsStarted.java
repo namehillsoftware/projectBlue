@@ -1,11 +1,10 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenAStandardPlaybackPreparerTaskFactory;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenAStandardQueue;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CyclicalQueuedPlaybackProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.spy;
  * Created by david on 11/13/16.
  */
 
-public class WhenRequestingACyclicalQueue {
+public class WhenTheQueueIsStarted {
 	private static IPreparedPlaybackFileProvider queue;
 	private static int startPosition;
 
@@ -58,12 +57,7 @@ public class WhenRequestingACyclicalQueue {
 		queue = playbackQueuesProvider.getQueue(
 			files,
 			startPosition,
-			true);
-	}
-
-	@Test
-	public void thenACyclicalQueueIsProvided() {
-		Assert.assertEquals(CyclicalQueuedPlaybackProvider.class, queue.getClass());
+			false);
 	}
 
 	@Test
