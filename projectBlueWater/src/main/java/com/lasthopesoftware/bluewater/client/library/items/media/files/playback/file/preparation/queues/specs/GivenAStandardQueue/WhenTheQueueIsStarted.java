@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.callables.VoidFunction;
+import com.vedsoft.futures.callables.OneParameterVoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -64,7 +64,7 @@ public class WhenTheQueueIsStarted {
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(new VoidFunction<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPosition())));
+			.then(new OneParameterVoidFunction<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPosition())));
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {

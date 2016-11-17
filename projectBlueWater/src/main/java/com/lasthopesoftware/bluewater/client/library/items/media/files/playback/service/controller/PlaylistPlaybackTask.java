@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.callables.VoidFunction;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -72,8 +72,8 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		}
 
 		preparingPlaybackFile
-			.then(new VoidFunction<>(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
-			.error(new VoidFunction<>(exception -> handlePlaybackException(exception, reject)));
+			.then(VoidFunc.from(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
+			.error(VoidFunc.from(exception -> handlePlaybackException(exception, reject)));
 	}
 
 	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
@@ -85,8 +85,8 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		playbackHandler.setVolume(volume);
 		playbackHandler
 			.promisePlayback()
-			.then(new VoidFunction<>(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
-			.error(new VoidFunction<>(exception -> handlePlaybackException(exception, reject)));
+			.then(VoidFunc.from(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
+			.error(VoidFunc.from(exception -> handlePlaybackException(exception, reject)));
 	}
 
 	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {

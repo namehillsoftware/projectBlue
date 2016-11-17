@@ -6,11 +6,11 @@ import com.vedsoft.futures.runnables.OneParameterAction;
  * Created by david on 11/8/16.
  */
 
-public final class VoidFunction<ParameterOne> implements OneParameterFunction<ParameterOne, Void> {
+final class VoidOneParameterFunction<ParameterOne> implements OneParameterFunction<ParameterOne, Void> {
 
 	private final OneParameterAction<ParameterOne> action;
 
-	public VoidFunction(OneParameterAction<ParameterOne> action) {
+	VoidOneParameterFunction(OneParameterAction<ParameterOne> action) {
 		this.action = action;
 	}
 
