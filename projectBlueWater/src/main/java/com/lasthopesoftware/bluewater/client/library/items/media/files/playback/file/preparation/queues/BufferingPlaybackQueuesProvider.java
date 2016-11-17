@@ -12,16 +12,16 @@ import java.util.List;
 /**
  * Created by david on 11/1/16.
  */
-public class PlaybackQueuesProvider implements IPlaybackQueuesProvider {
+public class BufferingPlaybackQueuesProvider implements IBufferingPlaybackQueuesProvider {
 
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 
-	public PlaybackQueuesProvider(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
+	public BufferingPlaybackQueuesProvider(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
 
 	@Override
-	public IPreparedPlaybackFileQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical) {
+	public IBufferingPlaybackPromiseQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical) {
 		final List<PositionedFileContainer> positionedFiles = new ArrayList<>(playlist.size());
 
 		for (int i = 0; i < playlist.size(); i++)
@@ -30,10 +30,10 @@ public class PlaybackQueuesProvider implements IPlaybackQueuesProvider {
 		final List<PositionedFileContainer> truncatedList = Stream.of(positionedFiles).skip(startingAt - 1).collect(Collectors.toList());
 
 		if (!isCyclical)
-			return new PreparedPlaybackQueue(new BufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory));
+			return new BufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
 
 		truncatedList.addAll(positionedFiles.subList(0, Math.max(startingAt - 1, playlist.size())));
 
-		return new PreparedPlaybackQueue(new CyclicalBufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory));
+		return new CyclicalBufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
 	}
 }

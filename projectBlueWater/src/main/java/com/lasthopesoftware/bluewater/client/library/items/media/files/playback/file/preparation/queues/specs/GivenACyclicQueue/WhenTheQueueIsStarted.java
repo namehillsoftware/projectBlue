@@ -5,11 +5,12 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -49,22 +50,21 @@ public class WhenTheQueueIsStarted {
 				.of(files)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
-		final PlaybackQueuesProvider playbackQueuesProvider
-			= new PlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
+		final BufferingPlaybackQueuesProvider bufferingPlaybackQueuesProvider
+			= new BufferingPlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
 
 		startPosition = random.nextInt(numberOfFiles);
 
-		queue = playbackQueuesProvider.getQueue(
-			files,
-			startPosition,
-			true);
+		queue =
+			new PreparedPlaybackQueue(
+				bufferingPlaybackQueuesProvider.getQueue(files, startPosition, true));
 	}
 
 	@Test
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(new OneParameterVoidFunction<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPosition())));
+			.then(VoidFunc.running(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPosition())));
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {

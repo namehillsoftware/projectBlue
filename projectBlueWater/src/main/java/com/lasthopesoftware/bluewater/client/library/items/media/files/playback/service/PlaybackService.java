@@ -42,7 +42,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerTaskFactory;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
@@ -63,7 +63,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -491,14 +491,14 @@ public class PlaybackService extends Service implements
 				new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(savedLibrary.getSavedTracksString())))
 					.then(playlist -> {
 						final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
-						final PlaybackQueuesProvider playbackQueuesProvider =
-							new PlaybackQueuesProvider(
+						final BufferingPlaybackQueuesProvider bufferingPlaybackQueuesProvider =
+							new BufferingPlaybackQueuesProvider(
 								new MediaPlayerPlaybackPreparerTaskFactory(
 									uriProvider,
 									new MediaPlayerInitializer(PlaybackService.this,
 										savedLibrary)));
 
-						playlistController = new PlaybackController(playlist, playbackQueuesProvider);
+						playlistController = new PlaybackController(playlist, bufferingPlaybackQueuesProvider);
 
 						playlistController.setIsRepeating(savedLibrary.isRepeating());
 						playlistController.setOnNowPlayingChangeListener(PlaybackService.this);
@@ -509,7 +509,7 @@ public class PlaybackService extends Service implements
 
 						return null;
 					}))
-			.then(new OneParameterVoidFunction<>(v -> onPlaylistControllerInitialized.run()));
+			.then(VoidFunc.running(v -> onPlaylistControllerInitialized.run()));
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -954,7 +954,7 @@ public class PlaybackService extends Service implements
 	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
 		playbackHandler
 			.promisePlayback()
-			.then(new OneParameterVoidFunction<>(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler)));
+			.then(VoidFunc.running(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler)));
 
 		final IFile playingFile = controller.getPlaylist().get(controller.getCurrentPosition());
 		

@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Created by david on 9/26/16.
  */
-class PreparedPlaybackQueue implements
+public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
 	OneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
@@ -22,7 +22,7 @@ class PreparedPlaybackQueue implements
 	private IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
-	PreparedPlaybackQueue(IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue) {
+	public PreparedPlaybackQueue(IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue) {
 		this.nextPreparingMediaPlayerPromiseQueue = nextPreparingMediaPlayerPromiseQueue;
 	}
 
@@ -43,7 +43,7 @@ class PreparedPlaybackQueue implements
 
 	@Override
 	public PositionedPlaybackFile expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(new OneParameterVoidFunction<>(this));
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.running(this));
 
 		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFileContainer.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFileContainer.file);
 	}

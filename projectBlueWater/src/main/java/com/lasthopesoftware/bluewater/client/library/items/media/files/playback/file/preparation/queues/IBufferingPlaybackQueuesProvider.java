@@ -8,6 +8,6 @@ import java.util.List;
  * Created by david on 11/1/16.
  */
 
-public interface IPlaybackQueuesProvider {
-	IPreparedPlaybackFileQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical);
+public interface IBufferingPlaybackQueuesProvider {
+	IBufferingPlaybackPromiseQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical);
 }

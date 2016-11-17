@@ -4,7 +4,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 
 import junit.framework.Assert;
@@ -48,7 +48,7 @@ public class PlaybackControllerTest extends TestCase {
 		playbackController =
 			new PlaybackController(
 				mockFiles,
-				new PlaybackQueuesProvider(
+				new BufferingPlaybackQueuesProvider(
 					(file, preparedAt) -> (resolve, reject, onCancelled) -> {
 						bufferingPlaybackHandler = bufferingPlaybackHandlers.get(mockFiles.indexOf(file));
 						resolve.withResult(bufferingPlaybackHandler);
