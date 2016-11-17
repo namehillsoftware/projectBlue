@@ -18,8 +18,8 @@ import java.util.Queue;
 /**
  * Created by david on 9/26/16.
  */
-public class CyclicalQueuedPlaybackProvider implements
-	IPreparedPlaybackFileProvider,
+class PreparedPlaybackQueue implements
+	IPreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
 	OneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
@@ -29,7 +29,7 @@ public class CyclicalQueuedPlaybackProvider implements
 	private IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
-	public CyclicalQueuedPlaybackProvider(List<PositionedFileContainer> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
+	PreparedPlaybackQueue(List<PositionedFileContainer> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playlist = new ArrayDeque<>(playlist);
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
@@ -54,13 +54,11 @@ public class CyclicalQueuedPlaybackProvider implements
 			return null;
 
 		final PositionedFileContainer positionedFileContainer = playlist.poll();
-		playlist.offer(positionedFileContainer);
 
 		return
 			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFileContainer.file, preparedAt))
 				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFileContainer, handler));
 	}
-
 
 	@Override
 	public PositionedPlaybackFile expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {

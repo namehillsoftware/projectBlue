@@ -21,7 +21,7 @@ public class PlaybackQueuesProvider implements IPlaybackQueuesProvider {
 	}
 
 	@Override
-	public IPreparedPlaybackFileProvider getQueue(List<IFile> playlist, int startingAt, boolean isCyclical) {
+	public IPreparedPlaybackFileQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical) {
 		final List<PositionedFileContainer> positionedFiles = new ArrayList<>(playlist.size());
 
 		for (int i = 0; i < playlist.size(); i++)
@@ -30,10 +30,10 @@ public class PlaybackQueuesProvider implements IPlaybackQueuesProvider {
 		final List<PositionedFileContainer> truncatedList = Stream.of(positionedFiles).skip(startingAt - 1).collect(Collectors.toList());
 
 		if (!isCyclical)
-			return new QueuedPlaybackHandlerProvider(truncatedList, playbackPreparerTaskFactory);
+			return new PreparedPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
 
 		truncatedList.addAll(positionedFiles.subList(0, Math.max(startingAt - 1, playlist.size())));
 
-		return new CyclicalQueuedPlaybackProvider(truncatedList, playbackPreparerTaskFactory);
+		return new CyclicalPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
 	}
 }

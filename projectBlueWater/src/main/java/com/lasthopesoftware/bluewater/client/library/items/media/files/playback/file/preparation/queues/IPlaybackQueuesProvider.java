@@ -9,5 +9,5 @@ import java.util.List;
  */
 
 public interface IPlaybackQueuesProvider {
-	IPreparedPlaybackFileProvider getQueue(List<IFile> playlist, int startingAt, boolean isCyclical);
+	IPreparedPlaybackFileQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical);
 }

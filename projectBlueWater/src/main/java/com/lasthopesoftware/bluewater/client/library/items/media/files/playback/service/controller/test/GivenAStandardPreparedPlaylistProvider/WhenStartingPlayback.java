@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayback;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
@@ -32,7 +32,7 @@ public class WhenStartingPlayback {
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
-		new PlaylistPlayback(new IPreparedPlaybackFileProvider() {
+		new PlaylistPlayback(new IPreparedPlaybackFileQueue() {
 			@Override
 			public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
 				return positionedPlaybackHandlerContainer;

@@ -9,6 +9,6 @@ import java.io.Closeable;
  * Created by david on 9/26/16.
  */
 
-public interface IPreparedPlaybackFileProvider extends Closeable {
+public interface IPreparedPlaybackFileQueue extends Closeable {
 	IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt);
 }

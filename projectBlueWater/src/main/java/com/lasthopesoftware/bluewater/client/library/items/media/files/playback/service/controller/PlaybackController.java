@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPlaybackQueuesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
@@ -40,7 +40,7 @@ public class PlaybackController {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackController.class);
 
-	private IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
+	private IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private PositionedPlaybackFile playbackHandlerContainer;
 
 	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IPlaybackQueuesProvider playbackQueuesProvider) {

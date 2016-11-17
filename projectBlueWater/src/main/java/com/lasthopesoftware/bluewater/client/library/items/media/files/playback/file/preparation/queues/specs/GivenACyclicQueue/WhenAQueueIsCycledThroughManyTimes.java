@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PlaybackQueuesProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -60,7 +60,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		final PlaybackQueuesProvider playbackQueuesProvider
 			= new PlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
 
-		final IPreparedPlaybackFileProvider queue =
+		final IPreparedPlaybackFileQueue queue =
 			playbackQueuesProvider.getQueue(
 				files,
 				0,

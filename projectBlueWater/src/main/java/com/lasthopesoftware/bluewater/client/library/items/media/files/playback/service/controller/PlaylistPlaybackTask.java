@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -23,12 +23,12 @@ import java.util.concurrent.CancellationException;
 final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromise<Void>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlaybackTask.class);
-	private final IPreparedPlaybackFileProvider preparedPlaybackFileProvider;
+	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private final int preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
-	PlaylistPlaybackTask(IPreparedPlaybackFileProvider preparedPlaybackFileProvider, int preparedPosition) {
+	PlaylistPlaybackTask(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.preparedPosition = preparedPosition;
 	}

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback
 
 	private final PlaylistPlaybackTask playlistPlaybackTask;
 
-	public PlaylistPlayback(IPreparedPlaybackFileProvider preparedPlaybackFileProvider, int preparedPosition) {
+	public PlaylistPlayback(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this(new PlaylistPlaybackTask(preparedPlaybackFileProvider, preparedPosition));
 	}
 
