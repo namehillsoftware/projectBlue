@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
@@ -77,7 +77,7 @@ public class LibrarySession {
 		final IPromise<Library> savedLibraryPromise = SaveLibrary(context, library);
 
 		if (onSaveComplete != null)
-			savedLibraryPromise.then(new OneParameterVoidFunction<>(onSaveComplete));
+			savedLibraryPromise.then(new VoidFunction<>(onSaveComplete));
 	}
 
 	public static IPromise<Library> SaveLibrary(final Context context, final Library library) {

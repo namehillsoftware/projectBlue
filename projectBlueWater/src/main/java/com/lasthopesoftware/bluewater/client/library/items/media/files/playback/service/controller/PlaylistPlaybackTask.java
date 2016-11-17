@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -37,11 +37,7 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	public void runWith(IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		setupNextPreparedFile(preparedPosition, resolve, reject, onCancelled);
 
-		onCancelled.runWith(() -> {
-			haltPlayback();
-
-			reject.withError(new CancellationException("Playlist playback was cancelled"));
-		});
+		onCancelled.runWith(() -> handlePlaybackException(new CancellationException("Playlist playback was cancelled"), reject));
 	}
 
 	public void pause() {
@@ -76,8 +72,8 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		}
 
 		preparingPlaybackFile
-			.then(new OneParameterVoidFunction<>(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
-			.error(new OneParameterVoidFunction<>(exception -> handlePlaybackException(exception, reject)));
+			.then(new VoidFunction<>(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
+			.error(new VoidFunction<>(exception -> handlePlaybackException(exception, reject)));
 	}
 
 	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
@@ -89,8 +85,8 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		playbackHandler.setVolume(volume);
 		playbackHandler
 			.promisePlayback()
-			.then(new OneParameterVoidFunction<>(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
-			.error(new OneParameterVoidFunction<>(exception -> handlePlaybackException(exception, reject)));
+			.then(new VoidFunction<>(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
+			.error(new VoidFunction<>(exception -> handlePlaybackException(exception, reject)));
 	}
 
 	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {

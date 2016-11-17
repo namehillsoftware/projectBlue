@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.callables.OneParameterVoidFunction;
+import com.vedsoft.futures.callables.VoidFunction;
 
 import java.util.List;
 
@@ -95,7 +95,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider
             .getNowPlayingFile()
-            .then(new OneParameterVoidFunction<>((f) ->
+            .then(new VoidFunction<>((f) ->
                 textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == f.getKey()))));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
