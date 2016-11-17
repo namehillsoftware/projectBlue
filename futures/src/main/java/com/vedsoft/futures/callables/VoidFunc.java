@@ -10,11 +10,11 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 public final class VoidFunc {
 	private VoidFunc() {}
 
-	public static <ParameterOne> OneParameterFunction<ParameterOne, Void> from(OneParameterAction<ParameterOne> action) {
+	public static <ParameterOne> OneParameterFunction<ParameterOne, Void> running(OneParameterAction<ParameterOne> action) {
 		return new VoidOneParameterFunction<>(action);
 	}
 
-	public static <ParameterOne, ParameterTwo> TwoParameterFunction<ParameterOne, ParameterTwo, Void> from(final TwoParameterAction<ParameterOne, ParameterTwo> action) {
+	public static <ParameterOne, ParameterTwo> TwoParameterFunction<ParameterOne, ParameterTwo, Void> running(final TwoParameterAction<ParameterOne, ParameterTwo> action) {
 		return new VoidTwoParameterFunction<>(action);
 	}
 
