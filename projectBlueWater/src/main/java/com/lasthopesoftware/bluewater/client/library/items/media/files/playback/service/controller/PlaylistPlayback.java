@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
@@ -13,7 +12,7 @@ import rx.Observable;
 /**
  * Created by david on 11/7/16.
  */
-public class PlaylistPlayback extends Promise<Collection<IPlaybackHandler>> implements IPlaylistPlayback {
+public class PlaylistPlayback extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayback {
 
 	private final PlaylistPlaybackTask playlistPlaybackTask;
 	private final Observable<PositionedPlaybackFile> playbackFileObservable;
