@@ -1,16 +1,22 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
+import java.util.Collection;
+
+import rx.Observable;
 
 /**
  * Created by david on 11/7/16.
  */
-public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback {
+public class PlaylistPlayback extends Promise<Collection<IPlaybackHandler>> implements IPlaylistPlayback {
 
 	private final PlaylistPlaybackTask playlistPlaybackTask;
+	private final Observable<PositionedPlaybackFile> playbackFileObservable;
 
 	public PlaylistPlayback(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this(new PlaylistPlaybackTask(preparedPlaybackFileProvider, preparedPosition));
@@ -20,6 +26,7 @@ public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback
 		super(playlistPlaybackTask);
 
 		this.playlistPlaybackTask = playlistPlaybackTask;
+		playbackFileObservable = playlistPlaybackTask.playbackChangesPublisher.asObservable();
 	}
 
 	@Override
@@ -35,6 +42,11 @@ public class PlaylistPlayback extends Promise<Void> implements IPlaylistPlayback
 	@Override
 	public void setVolume(float volume) {
 		this.playlistPlaybackTask.setVolume(volume);
+	}
+
+	@Override
+	public Observable<PositionedPlaybackFile> observePlaybackChanges() {
+		return playbackFileObservable;
 	}
 
 	@Override

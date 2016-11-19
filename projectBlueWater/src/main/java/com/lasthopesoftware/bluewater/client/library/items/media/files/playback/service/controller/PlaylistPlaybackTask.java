@@ -15,12 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.concurrent.CancellationException;
+
+import rx.subjects.PublishSubject;
 
 /**
  * Created by david on 11/8/16.
  */
-final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromise<Void>, IRejectedPromise, OneParameterAction<Runnable>> {
+final class PlaylistPlaybackTask implements
+	ThreeParameterAction<IResolvedPromise<Collection<PositionedPlaybackFile>>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlaybackTask.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
@@ -28,13 +33,17 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
+	private final Collection<PositionedPlaybackFile> completedPlaybackFiles = new LinkedList<>();
+
+	final PublishSubject<PositionedPlaybackFile> playbackChangesPublisher = PublishSubject.create();
+
 	PlaylistPlaybackTask(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.preparedPosition = preparedPosition;
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	public void runWith(IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		setupNextPreparedFile(preparedPosition, resolve, reject, onCancelled);
 
 		onCancelled.runWith(() -> handlePlaybackException(new CancellationException("Playlist playback was cancelled"), reject));
@@ -57,17 +66,17 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 		this.volume = volume;
 	}
 
-	private void setupNextPreparedFile(IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void setupNextPreparedFile(IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		setupNextPreparedFile(0, resolve, reject, onCancelled);
 	}
 
-	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		final IPromise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		if (preparingPlaybackFile == null) {
-			resolve.withResult(null);
+			resolve.withResult(completedPlaybackFiles);
 			return;
 		}
 
@@ -76,9 +85,11 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 			.error(VoidFunc.running(exception -> handlePlaybackException(exception, reject)));
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 
 		this.positionedPlaybackFile = positionedPlaybackFile;
+
+		playbackChangesPublisher.onNext(positionedPlaybackFile);
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -89,7 +100,9 @@ final class PlaylistPlaybackTask implements ThreeParameterAction<IResolvedPromis
 			.error(VoidFunc.running(exception -> handlePlaybackException(exception, reject)));
 	}
 
-	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Void> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		completedPlaybackFiles.add(positionedPlaybackFile);
+
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
