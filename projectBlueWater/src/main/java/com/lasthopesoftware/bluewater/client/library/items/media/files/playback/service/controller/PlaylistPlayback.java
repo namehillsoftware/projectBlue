@@ -15,7 +15,6 @@ import rx.Observable;
 public class PlaylistPlayback extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayback {
 
 	private final PlaylistPlaybackTask playlistPlaybackTask;
-	private final Observable<PositionedPlaybackFile> playbackFileObservable;
 
 	public PlaylistPlayback(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this(new PlaylistPlaybackTask(preparedPlaybackFileProvider, preparedPosition));
@@ -25,7 +24,6 @@ public class PlaylistPlayback extends Promise<Collection<PositionedPlaybackFile>
 		super(playlistPlaybackTask);
 
 		this.playlistPlaybackTask = playlistPlaybackTask;
-		playbackFileObservable = playlistPlaybackTask.playbackChangesPublisher.asObservable();
 	}
 
 	@Override
@@ -45,7 +43,7 @@ public class PlaylistPlayback extends Promise<Collection<PositionedPlaybackFile>
 
 	@Override
 	public Observable<PositionedPlaybackFile> observePlaybackChanges() {
-		return playbackFileObservable;
+		return playlistPlaybackTask.playbackChangesPublisher;
 	}
 
 	@Override
