@@ -8,14 +8,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
+import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 /**
  * Created by david on 11/12/16.
@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 public class WhenStartingPlayback {
 
 	private IPlaybackHandler playbackHandler;
+	private PlaylistPlayback playlistPlayback;
 
 	@Before
 	public void before() {
@@ -32,21 +33,22 @@ public class WhenStartingPlayback {
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
-		new PlaylistPlayback(new IPreparedPlaybackFileQueue() {
-			@Override
-			public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
-				return positionedPlaybackHandlerContainer;
-			}
+		playlistPlayback =
+			new PlaylistPlayback(new IPreparedPlaybackFileQueue() {
+				@Override
+				public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
+					return positionedPlaybackHandlerContainer;
+				}
 
-			@Override
-			public void close() throws IOException {
+				@Override
+				public void close() throws IOException {
 
-			}
-		}, 0);
+				}
+			}, 0);
 	}
 
 	@Test
 	public void thenPlaybackIsBegun() {
-		verify(playbackHandler, times(1)).promisePlayback();
+		Assert.assertNotNull(playlistPlayback.observePlaybackChanges().first());
 	}
 }
