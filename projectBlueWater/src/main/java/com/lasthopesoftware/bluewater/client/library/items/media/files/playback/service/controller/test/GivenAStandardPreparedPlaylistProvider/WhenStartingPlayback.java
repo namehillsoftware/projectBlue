@@ -13,9 +13,10 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.util.Collection;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by david on 11/12/16.
@@ -24,31 +25,27 @@ import static org.mockito.Mockito.mock;
 public class WhenStartingPlayback {
 
 	private IPlaybackHandler playbackHandler;
-	private PlaylistPlayback playlistPlayback;
+	private Collection<PositionedPlaybackFile> positionedPlaybackFiles;
 
 	@Before
 	public void before() {
 		playbackHandler = mock(IPlaybackHandler.class);
+		when(playbackHandler.promisePlayback()).thenReturn(new ExpectedPromise<>(() -> playbackHandler));
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
-		playlistPlayback =
-			new PlaylistPlayback(new IPreparedPlaybackFileQueue() {
-				@Override
-				public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
-					return positionedPlaybackHandlerContainer;
-				}
+		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
+		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+			.thenReturn(positionedPlaybackHandlerContainer)
+			.thenReturn(null);
 
-				@Override
-				public void close() throws IOException {
-
-				}
-			}, 0);
+		new PlaylistPlayback(preparedPlaybackFileQueue, 0)
+			.then(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 
 	@Test
 	public void thenPlaybackIsBegun() {
-		Assert.assertNotNull(playlistPlayback.observePlaybackChanges().first());
+		Assert.assertNotNull(this.positionedPlaybackFiles);
 	}
 }

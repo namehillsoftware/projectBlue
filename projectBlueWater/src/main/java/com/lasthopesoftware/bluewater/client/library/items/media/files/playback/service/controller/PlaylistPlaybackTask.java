@@ -32,6 +32,8 @@ final class PlaylistPlaybackTask implements
 	private final int preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
+	private IResolvedPromise<Collection<PositionedPlaybackFile>> resolve;
+	private IRejectedPromise reject;
 
 	private final Collection<PositionedPlaybackFile> completedPlaybackFiles = new LinkedList<>();
 
@@ -44,9 +46,12 @@ final class PlaylistPlaybackTask implements
 
 	@Override
 	public void runWith(IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-		setupNextPreparedFile(preparedPosition, resolve, reject, onCancelled);
+		this.resolve = resolve;
+		this.reject = reject;
 
-		onCancelled.runWith(() -> handlePlaybackException(new CancellationException("Playlist playback was cancelled"), reject));
+		setupNextPreparedFile(preparedPosition);
+
+		onCancelled.runWith(() -> handlePlaybackException(new CancellationException("Playlist playback was cancelled")));
 	}
 
 	public void pause() {
@@ -66,11 +71,11 @@ final class PlaylistPlaybackTask implements
 		this.volume = volume;
 	}
 
-	private void setupNextPreparedFile(IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-		setupNextPreparedFile(0, resolve, reject, onCancelled);
+	private void setupNextPreparedFile() {
+		setupNextPreparedFile(0);
 	}
 
-	private void setupNextPreparedFile(int preparedPosition, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void setupNextPreparedFile(int preparedPosition) {
 		final IPromise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
@@ -81,11 +86,11 @@ final class PlaylistPlaybackTask implements
 		}
 
 		preparingPlaybackFile
-			.then(VoidFunc.running(playbackHandlerContainer -> this.startFilePlayback(playbackHandlerContainer, resolve, reject, onCancelled)))
-			.error(VoidFunc.running(exception -> handlePlaybackException(exception, reject)));
+			.then(VoidFunc.running(this::startFilePlayback))
+			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
 
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
@@ -96,11 +101,11 @@ final class PlaylistPlaybackTask implements
 		playbackHandler.setVolume(volume);
 		playbackHandler
 			.promisePlayback()
-			.then(VoidFunc.running(handler -> closeAndStartNextFile(handler, resolve, reject, onCancelled)))
-			.error(VoidFunc.running(exception -> handlePlaybackException(exception, reject)));
+			.then(VoidFunc.running(this::closeAndStartNextFile))
+			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
-	private void closeAndStartNextFile(IPlaybackHandler playbackHandler, IResolvedPromise<Collection<PositionedPlaybackFile>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
 		completedPlaybackFiles.add(positionedPlaybackFile);
 
 		try {
@@ -109,7 +114,7 @@ final class PlaylistPlaybackTask implements
 			logger.error("There was an error releasing the media player", e);
 		}
 
-		setupNextPreparedFile(resolve, reject, onCancelled);
+		setupNextPreparedFile();
 	}
 
 	private void haltPlayback() {
@@ -122,7 +127,7 @@ final class PlaylistPlaybackTask implements
 		}
 	}
 
-	private void handlePlaybackException(Exception exception, IRejectedPromise reject) {
+	private void handlePlaybackException(Exception exception) {
 		haltPlayback();
 
 		reject.withError(exception);
