@@ -45,7 +45,12 @@ public class WhenStartingPlayback {
 	}
 
 	@Test
-	public void thenPlaybackIsBegun() {
+	public void thenPlaybackCompletes() {
 		Assert.assertNotNull(this.positionedPlaybackFiles);
+	}
+
+	@Test
+	public void thenThePlaybackCountIsOne() {
+		Assert.assertEquals(1, this.positionedPlaybackFiles.size());
 	}
 }
