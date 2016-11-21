@@ -71,4 +71,5 @@ dependencies {
     compile 'com.annimon:stream:1.1.0'
     compile project(path: ':promises')
     compile 'io.reactivex:rxjava:1.+'
+    compile 'org.assertj:assertj-core:2.5.0'
 }

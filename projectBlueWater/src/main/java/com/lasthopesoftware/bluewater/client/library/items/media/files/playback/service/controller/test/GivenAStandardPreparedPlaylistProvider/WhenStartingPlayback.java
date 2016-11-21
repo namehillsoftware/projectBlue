@@ -8,13 +8,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
-import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,11 +45,11 @@ public class WhenStartingPlayback {
 
 	@Test
 	public void thenPlaybackCompletes() {
-		Assert.assertNotNull(this.positionedPlaybackFiles);
+		assertThat(this.positionedPlaybackFiles).isNotNull();
 	}
 
 	@Test
 	public void thenThePlaybackCountIsOne() {
-		Assert.assertEquals(1, this.positionedPlaybackFiles.size());
+		assertThat(this.positionedPlaybackFiles.size()).isEqualTo(1);
 	}
 }
