@@ -30,7 +30,7 @@ public class WhenStartingPlayback {
 	@Before
 	public void before() {
 		playbackHandler = mock(IPlaybackHandler.class);
-		when(playbackHandler.promisePlayback()).thenReturn(new ExpectedPromise<>(() -> playbackHandler));
+		when(playbackHandler.promisePlayback()).thenReturn(new ExpectedPromise<>(() -> mock(IPlaybackHandler.class)));
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));

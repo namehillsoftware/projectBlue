@@ -6,7 +6,6 @@ import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,23 +181,6 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			/**
 			 * Created by david on 10/30/16.
 			 */
-			static class NullReturnCancellableRunnable<TResult> implements TwoParameterFunction<TResult, OneParameterAction<Runnable>, Void> {
-				private final TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled;
-
-				NullReturnCancellableRunnable(TwoParameterAction<TResult, OneParameterAction<Runnable>> onFulfilled) {
-					this.onFulfilled = onFulfilled;
-				}
-
-				@Override
-				public final Void expectedUsing(TResult result, OneParameterAction<Runnable> onCancelled) {
-					onFulfilled.runWith(result, onCancelled);
-					return null;
-				}
-			}
-
-			/**
-			 * Created by david on 10/30/16.
-			 */
 			static class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> implements FiveParameterAction<TResult, Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 				private final FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
@@ -208,7 +190,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 				@Override
 				public final void runWith(TResult result, Exception error, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-					onRejected.runWith(error, resolve, reject, onCancelled);
+					if (error != null)
+						onRejected.runWith(error, resolve, reject, onCancelled);
 				}
 			}
 
@@ -250,23 +233,6 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		}
 
 		/**
-		 * Created by david on 10/8/16.
-		 */
-		static class NullReturnRunnable<TResult> implements OneParameterFunction<TResult, Void> {
-			private final OneParameterAction<TResult> resolve;
-
-			NullReturnRunnable(@NotNull OneParameterAction<TResult> resolve) {
-				this.resolve = resolve;
-			}
-
-			@Override
-			public final Void expectedUsing(TResult result) {
-				resolve.runWith(result);
-				return null;
-			}
-		}
-
-		/**
 		 * Created by david on 10/19/16.
 		 */
 		static class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterAction<TResult, Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> {
@@ -278,7 +244,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 			@Override
 			public final void runWith(TResult result, Exception exception, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject) {
-				onRejected.runWith(exception, resolve, reject);
+				if (exception != null)
+					onRejected.runWith(exception, resolve, reject);
 			}
 		}
 
