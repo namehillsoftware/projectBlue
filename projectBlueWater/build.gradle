@@ -51,7 +51,7 @@ android {
 
         test {
             java {
-                srcDirs += 'src/main'
+                setRoot 'src/main'
                 include '**/specs/**'
             }
         }
