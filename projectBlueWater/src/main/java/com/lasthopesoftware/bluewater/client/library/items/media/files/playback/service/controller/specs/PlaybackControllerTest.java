@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;

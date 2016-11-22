@@ -41,6 +41,21 @@ android {
     defaultConfig {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
+    sourceSets {
+        main {
+            java {
+                exclude '**/specs/**'
+            }
+        }
+
+        test {
+            java {
+                srcDirs += 'src/main'
+                include '**/specs/**'
+            }
+        }
+    }
 }
 
 repositories {
@@ -56,6 +71,7 @@ dependencies {
     compile files('libs/xmlwise-debug-1_2.jar')
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.+'
+    testCompile 'org.assertj:assertj-core:2.5.0'
     compile 'com.android.support:appcompat-v7:24.+'
     compile 'com.android.support:design:24.+'
     compile 'joda-time:joda-time:2.4'
@@ -66,10 +82,7 @@ dependencies {
     compile 'com.github.tony19:logback-android-classic:1.1.1-3'
     compile 'org.slf4j:slf4j-api:1.7.6'
     compile 'com.android.support:support-v4:24.+'
-    compile 'junit:junit:4.12'
-    compile 'org.mockito:mockito-core:1.+'
     compile 'com.annimon:stream:1.1.0'
     compile project(path: ':promises')
     compile 'io.reactivex:rxjava:1.+'
-    compile 'org.assertj:assertj-core:2.5.0'
 }
