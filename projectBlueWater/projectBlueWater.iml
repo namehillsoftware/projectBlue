@@ -129,7 +129,7 @@
     <orderEntry type="library" exported="" name="appcompat-v7-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-vector-drawable-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="support-core-utils-24.2.1" level="project" />
-    <orderEntry type="library" exported="" name="rxjava-1.2.2" level="project" />
+    <orderEntry type="library" exported="" name="rxjava-1.2.3" level="project" />
     <orderEntry type="library" exported="" name="apktool-lib-1.4.4-3" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-24.2.1" level="project" />
     <orderEntry type="library" exported="" name="joda-time-2.4" level="project" />
