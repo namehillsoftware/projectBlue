@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test.mock.MockFilePlayer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.mock.MockFilePlayer;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;

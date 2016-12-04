@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.test.mock;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.mock;
 
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 
