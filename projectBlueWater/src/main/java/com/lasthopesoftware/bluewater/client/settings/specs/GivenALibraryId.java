@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.settings.spec;
+package com.lasthopesoftware.bluewater.client.settings.specs;
 
 import android.content.Intent;
 

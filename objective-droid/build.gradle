@@ -2,12 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion 25
     buildToolsVersion "24.0.2"
 
     defaultConfig {
         minSdkVersion 11
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
     }
@@ -30,5 +30,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile project(':futures')
     compile project(':lazy-j')
-    compile 'com.android.support:appcompat-v7:24.+'
+    compile 'com.android.support:appcompat-v7:25.+'
 }
