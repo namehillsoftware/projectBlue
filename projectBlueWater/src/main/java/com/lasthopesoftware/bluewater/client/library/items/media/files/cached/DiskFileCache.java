@@ -182,7 +182,7 @@ public class DiskFileCache {
 
 				sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
 
-				try {
+				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final long currentTimeMillis = System.currentTimeMillis();
 					sqlInsertMapper
 							.addParameter(CachedFile.CACHE_NAME, cacheName)
@@ -192,6 +192,8 @@ public class DiskFileCache {
 							.addParameter(CachedFile.CREATED_TIME, currentTimeMillis)
 							.addParameter(CachedFile.LAST_ACCESSED_TIME, currentTimeMillis)
 							.execute();
+
+					closeableTransaction.setTransactionSuccessful();
 				} catch (SQLException sqlException) {
 					logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
 				}
