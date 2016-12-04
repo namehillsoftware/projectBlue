@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'idea'
 apply plugin: 'me.tatarka.retrolambda'
 
 sourceSets {
@@ -26,37 +25,4 @@ dependencies {
     testCompile 'junit:junit:4.+'
     compile 'com.annimon:stream:1.1.0'
     compile project(path: ':lazy-j')
-}
-
-idea {
-    module {
-        iml {
-            beforeMerged { module ->
-                sourceSets.test.java.srcDirs.each { file ->
-                    module.testSourceFolders += file
-                }
-            }
-
-            withXml {
-                def node = it.asNode();
-                node.appendNode('randomNode', 'random stuff')
-                node.get("content").each { contentNode ->
-                    contentNode.appendNode('sourceFolder', 'url="file://$MODULE_DIR$/src/main/java" isTestSource="false"')
-                }
-            }
-        }
-//        sourceSets.test.java.srcDirs.each { file ->
-//            testSourceDirs += file
-//        }
-    }
-}
-
-sourceSets.each {
-    println "sourceSet.name = " + it.name
-    println "sourceSet.java.srcDirs = " + it.java.srcDirs
-    println "output.classesDir = " + it.output.classesDir
-    println "output.resourcesDir = " + it.output.resourcesDir
-    println "compileClasspath = " + it.compileClasspath.asPath
-    println "runtimeClasspath = " + it.runtimeClasspath.asPath
-    println ""
 }
