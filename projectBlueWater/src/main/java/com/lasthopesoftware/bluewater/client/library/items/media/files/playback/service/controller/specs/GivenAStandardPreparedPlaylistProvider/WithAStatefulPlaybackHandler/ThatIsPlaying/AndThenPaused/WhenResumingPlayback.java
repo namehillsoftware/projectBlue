@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAPlayingPlaybackHandler;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
@@ -6,29 +6,30 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.IPlaylistPlayback;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayback;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Created by david on 11/12/16.
  */
 
-public class WhenPausingPlayback {
+public class WhenResumingPlayback {
 
 	private IPlaybackHandler playbackHandler;
 
 	@Before
 	public void before() {
-		playbackHandler = mock(IPlaybackHandler.class);
-		when(playbackHandler.isPlaying()).thenReturn(true);
+		playbackHandler = Mockito.spy(new StatefulPlaybackHandler());
+		playbackHandler.promisePlayback();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
@@ -40,10 +41,12 @@ public class WhenPausingPlayback {
 		final IPlaylistPlayback playlistPlayback = new PlaylistPlayback(preparedPlaybackFileQueue, 0);
 
 		playlistPlayback.pause();
+
+		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenPlaybackIsPaused() {
-		verify(playbackHandler, times(1)).pause();
+	public void thenPlaybackIsResumed() {
+		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
 }
