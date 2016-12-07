@@ -12,8 +12,6 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,7 +24,6 @@ import static org.mockito.Mockito.when;
 public class WhenPausingPlayback {
 
 	private IPlaybackHandler playbackHandler;
-	private Collection<PositionedPlaybackFile> positionedPlaybackFiles;
 
 	@Before
 	public void before() {
