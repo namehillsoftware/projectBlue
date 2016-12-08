@@ -35,7 +35,12 @@ public class WhenStartingPlayback {
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
+
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+			.thenReturn(positionedPlaybackHandlerContainer)
+			.thenReturn(positionedPlaybackHandlerContainer)
+			.thenReturn(positionedPlaybackHandlerContainer)
+			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
@@ -44,12 +49,7 @@ public class WhenStartingPlayback {
 	}
 
 	@Test
-	public void thenPlaybackCompletes() {
-		assertThat(this.positionedPlaybackFiles).isNotNull();
-	}
-
-	@Test
-	public void thenThePlaybackCountIsOne() {
-		assertThat(this.positionedPlaybackFiles.size()).isEqualTo(1);
+	public void thenThePlaybackCountIsCorrect() {
+		assertThat(this.positionedPlaybackFiles.size()).isEqualTo(5);
 	}
 }
