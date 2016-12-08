@@ -12,6 +12,7 @@ import java.io.IOException;
 
 public class StatefulPlaybackHandler implements IPlaybackHandler {
 	private boolean isPlaying;
+	private float volume;
 
 	@Override
 	public boolean isPlaying() {
@@ -30,12 +31,12 @@ public class StatefulPlaybackHandler implements IPlaybackHandler {
 
 	@Override
 	public void setVolume(float volume) {
-
+		this.volume = volume;
 	}
 
 	@Override
 	public float getVolume() {
-		return 0;
+		return this.volume;
 	}
 
 	@Override

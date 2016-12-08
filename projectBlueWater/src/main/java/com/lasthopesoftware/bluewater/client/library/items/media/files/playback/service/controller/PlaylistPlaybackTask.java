@@ -69,6 +69,10 @@ final class PlaylistPlaybackTask implements
 
 	void setVolume(float volume) {
 		this.volume = volume;
+
+		final PositionedPlaybackFile positionedPlaybackFile = this.positionedPlaybackFile;
+		if (positionedPlaybackFile != null)
+			positionedPlaybackFile.getPlaybackHandler().setVolume(volume);
 	}
 
 	private void setupNextPreparedFile() {

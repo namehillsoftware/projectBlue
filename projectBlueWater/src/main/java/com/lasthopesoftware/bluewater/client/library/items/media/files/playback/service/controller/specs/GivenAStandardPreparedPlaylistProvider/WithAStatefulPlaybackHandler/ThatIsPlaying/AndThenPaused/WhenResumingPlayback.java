@@ -12,7 +12,6 @@ import com.lasthopesoftware.promises.IPromise;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -28,8 +27,7 @@ public class WhenResumingPlayback {
 
 	@Before
 	public void before() {
-		playbackHandler = Mockito.spy(new StatefulPlaybackHandler());
-		playbackHandler.promisePlayback();
+		playbackHandler = new StatefulPlaybackHandler();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
