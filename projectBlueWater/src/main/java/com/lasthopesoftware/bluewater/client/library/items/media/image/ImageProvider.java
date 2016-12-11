@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.image;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -65,6 +66,7 @@ public class ImageProvider extends FluentCallable<Bitmap> {
 	}
 
 	@Override
+	@SuppressLint("NewApi")
 	protected Bitmap executeInBackground() {
 		if (isCancelled()) return getFillerBitmap();
 

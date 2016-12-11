@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.cached;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
 import android.os.AsyncTask;
@@ -76,6 +77,7 @@ public class DiskFileCache {
 		expirationTime = expirationDays * msInDay;
 	}
 
+	@SuppressLint("NewApi")
 	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
 
 		// Just execute this on the thread pool executor as it doesn't write to the database
@@ -145,6 +147,7 @@ public class DiskFileCache {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private void putIntoDatabase(final String uniqueKey, final File file) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			final String canonicalFilePath;
@@ -274,6 +277,7 @@ public class DiskFileCache {
 		return get(uniqueKey) != null;
 	}
 
+	@SuppressLint("NewApi")
 	private void updateFilePath(final long cachedFileId, final String filePath) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
@@ -293,6 +297,7 @@ public class DiskFileCache {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private void doFileAccessedUpdate(final long cachedFileId) {
 		final long updateTime = System.currentTimeMillis();
 		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
@@ -313,6 +318,7 @@ public class DiskFileCache {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private CachedFile getCachedFile(final String uniqueKey) throws IOException {
 		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (final CloseableNonExclusiveTransaction closeableNonExclusiveTransaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
@@ -335,6 +341,7 @@ public class DiskFileCache {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private long deleteCachedFile(final long cachedFileId) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {

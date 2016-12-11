@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.repository;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -74,6 +75,7 @@ public class LibrarySession {
 		SaveLibrary(context, library, null);
 	}
 
+	@SuppressLint("NewApi")
 	public static void SaveLibrary(final Context context, final Library library, final OneParameterRunnable<Library> onSaveComplete) {
 
 		final FluentCallable<Library> writeToDatabaseTask = new FluentCallable<Library>() {
@@ -160,6 +162,7 @@ public class LibrarySession {
 		return chosenLibraryId >= 0 ? GetLibrary(context, chosenLibraryId) : null;
 	}
 
+	@SuppressLint("NewApi")
 	private static synchronized Library GetLibrary(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
@@ -171,7 +174,8 @@ public class LibrarySession {
 							.fetchFirst(Library.class);
 		}
 	}
-	
+
+	@SuppressLint("NewApi")
 	public static void GetLibraries(final Context context, OneParameterRunnable<List<Library>> onGetLibrariesComplete) {
 		new FluentSpecifiedTask<Void, Void, List<Library>>() {
 			@Override

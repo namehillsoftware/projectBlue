@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
+import android.annotation.SuppressLint;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -35,6 +37,7 @@ public class FilePropertiesProvider extends FluentSpecifiedTask<Integer, Void, M
 		this.fileKey = fileKey;
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	protected Map<String, String> executeInBackground(Integer[] params) {
 		if (isCancelled()) return new HashMap<>();
