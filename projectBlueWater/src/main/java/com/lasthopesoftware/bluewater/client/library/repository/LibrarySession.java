@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.repository;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -80,6 +81,7 @@ public class LibrarySession {
 			savedLibraryPromise.then(VoidFunc.running(onSaveComplete));
 	}
 
+	@SuppressLint("NewApi")
 	public static IPromise<Library> SaveLibrary(final Context context, final Library library) {
 		return new Promise<>(new DispatchedAndroidTask<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -163,6 +165,7 @@ public class LibrarySession {
 		return chosenLibraryId >= 0 ? GetLibraryInternal(context, chosenLibraryId) : null;
 	}
 
+	@SuppressLint("NewApi")
 	private static synchronized Library GetLibraryInternal(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
@@ -174,7 +177,8 @@ public class LibrarySession {
 							.fetchFirst(Library.class);
 		}
 	}
-	
+
+	@SuppressLint("NewApi")
 	public static void GetLibraries(final Context context, OneParameterAction<List<Library>> onGetLibrariesComplete) {
 		new FluentSpecifiedTask<Void, Void, List<Library>>() {
 			@Override

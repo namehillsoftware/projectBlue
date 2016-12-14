@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
-        minSdkVersion 19
+        minSdkVersion 14
         targetSdkVersion 25
         versionCode 2014
         versionName "1.5.1.1"

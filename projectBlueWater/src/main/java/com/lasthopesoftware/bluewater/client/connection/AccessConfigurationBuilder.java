@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.vedsoft.fluent.FluentCallable;
+import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;
@@ -72,6 +74,7 @@ public class AccessConfigurationBuilder {
 			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
+	@SuppressLint("NewApi")
 	private static void buildAccessConfiguration(final Library library, final int timeout, OneParameterAction<MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");

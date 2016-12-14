@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
 import android.net.Uri;
@@ -75,6 +76,7 @@ public class StoredFileAccess {
 		this.library = library;
 	}
 
+	@SuppressLint("NewApi")
 	public FluentCallable<StoredFile> getStoredFile(final int storedFileId) {
 		final FluentCallable<StoredFile> getStoredFileTask = new FluentCallable<StoredFile>() {
 			@Override
@@ -94,9 +96,10 @@ public class StoredFileAccess {
 		return getStoredFileTask(serviceFile).get(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
+	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
 		return new FluentSpecifiedTask<Void, Void, List<StoredFile>>() {
 			@Override
+			@SuppressLint("NewApi")
 			public List<StoredFile> executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return repositoryAccessHelper
@@ -108,6 +111,7 @@ public class StoredFileAccess {
 		}.get(RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@SuppressLint("NewApi")
 	private IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile> getStoredFileTask(final IFile serviceFile) {
 		return new FluentSpecifiedTask<Void, Void, StoredFile>() {
 			@Override
@@ -119,6 +123,7 @@ public class StoredFileAccess {
 		};
 	}
 
+	@SuppressLint("NewApi")
 	public FluentCallable<List<StoredFile>> getDownloadingStoredFiles() {
 		final FluentCallable<List<StoredFile>> getDownloadingStoredFilesTask = new FluentCallable<List<StoredFile>>() {
 			@Override
@@ -138,6 +143,7 @@ public class StoredFileAccess {
 		return getDownloadingStoredFilesTask;
 	}
 
+	@SuppressLint("NewApi")
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -159,6 +165,7 @@ public class StoredFileAccess {
 		});
 	}
 
+	@SuppressLint("NewApi")
 	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -197,7 +204,9 @@ public class StoredFileAccess {
 
 	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
 		final FluentCallable<StoredFile> createOrUpdateStoredFileTask = new FluentCallable<StoredFile>() {
+
 			@Override
+			@SuppressLint("NewApi")
 			public StoredFile executeInBackground() {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
@@ -313,6 +322,7 @@ public class StoredFileAccess {
 				.fetchFirst(StoredFile.class);
 	}
 
+	@SuppressLint("NewApi")
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
@@ -326,6 +336,7 @@ public class StoredFileAccess {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
@@ -343,7 +354,7 @@ public class StoredFileAccess {
 	}
 
 
-	public void deleteStoredFile(final StoredFile storedFile) {
+	void deleteStoredFile(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
 			final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
