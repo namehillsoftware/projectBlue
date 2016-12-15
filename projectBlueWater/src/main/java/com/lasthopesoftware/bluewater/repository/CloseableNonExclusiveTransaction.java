@@ -12,7 +12,7 @@ public class CloseableNonExclusiveTransaction implements Closeable, ITransaction
 
     private final SQLiteDatabase sqLiteDatabase;
 
-    public CloseableNonExclusiveTransaction(SQLiteDatabase sqLiteDatabase) {
+    CloseableNonExclusiveTransaction(SQLiteDatabase sqLiteDatabase) {
         this.sqLiteDatabase = sqLiteDatabase;
         this.sqLiteDatabase.beginTransactionNonExclusive();
     }
