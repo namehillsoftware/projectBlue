@@ -12,15 +12,15 @@ import rx.Observable;
 /**
  * Created by david on 11/7/16.
  */
-public class PlaylistPlayback extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayback {
+public class PlaylistPlayer extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayer {
 
 	private final PlaylistPlaybackTask playlistPlaybackTask;
 
-	public PlaylistPlayback(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
+	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this(new PlaylistPlaybackTask(preparedPlaybackFileProvider, preparedPosition));
 	}
 
-	private PlaylistPlayback(PlaylistPlaybackTask playlistPlaybackTask) {
+	private PlaylistPlayer(PlaylistPlaybackTask playlistPlaybackTask) {
 		super(playlistPlaybackTask);
 
 		this.playlistPlaybackTask = playlistPlaybackTask;

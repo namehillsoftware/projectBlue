@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;

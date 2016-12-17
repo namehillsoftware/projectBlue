@@ -12,7 +12,7 @@ import rx.Observable;
  * Created by david on 11/7/16.
  */
 
-public interface IPlaylistPlayback extends IPromise<Collection<PositionedPlaybackFile>>, Closeable {
+public interface IPlaylistPlayer extends IPromise<Collection<PositionedPlaybackFile>>, Closeable {
 	void pause();
 	void resume();
 

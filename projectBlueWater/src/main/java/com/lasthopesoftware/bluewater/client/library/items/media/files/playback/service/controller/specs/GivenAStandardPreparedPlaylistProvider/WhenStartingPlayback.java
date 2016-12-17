@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayback;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayer;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
@@ -44,7 +44,7 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		new PlaylistPlayback(preparedPlaybackFileQueue, 0)
+		new PlaylistPlayer(preparedPlaybackFileQueue, 0)
 			.then(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 

@@ -1,7 +1,6 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.IPlaylistPlayer;
@@ -13,36 +12,44 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Created by david on 11/12/16.
+ * Created by david on 12/17/16.
  */
 
-public class WhenPausingPlayback {
+public class WhenChangingTracks {
 
-	private IPlaybackHandler playbackHandler;
+	private PositionedPlaybackFile positionedPlaybackFile;
+	private PositionedPlaybackFile expectedPositionedPlaybackFile;
 
 	@Before
-	public void before() {
-		playbackHandler = new StatefulPlaybackHandler();
+	public void context() {
+		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
+		final StatefulPlaybackHandler playbackHandlerUnderTest = new StatefulPlaybackHandler();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
+		final IPromise<PositionedPlaybackFile> secondPositionedPlaybackHandlerContainer =
+			new ExpectedPromise<>(() -> (this.expectedPositionedPlaybackFile = new PositionedPlaybackFile(0, playbackHandlerUnderTest, new File(1))));
+
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
-			.thenReturn(positionedPlaybackHandlerContainer);
+			.thenReturn(positionedPlaybackHandlerContainer)
+			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
-		playlistPlayback.pause();
+		playlistPlayback.observePlaybackChanges().subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
+
+		playbackHandler.resolve();
 	}
 
 	@Test
-	public void thenPlaybackIsPaused() {
-		assertThat(playbackHandler.isPlaying()).isFalse();
+	public void thenTheChangeCanBeObserved() {
+		assertThat(this.positionedPlaybackFile).isEqualTo(this.expectedPositionedPlaybackFile);
 	}
 }

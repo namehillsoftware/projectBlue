@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.IPlaylistPlayback;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayback;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayer;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
@@ -35,7 +35,7 @@ public class WhenChangingTheVolume {
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayback playlistPlayback = new PlaylistPlayback(preparedPlaybackFileQueue, 0);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
 		playlistPlayback.setVolume(0.8f);
 	}
