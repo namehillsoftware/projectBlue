@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
+package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
 import android.support.annotation.Nullable;
 

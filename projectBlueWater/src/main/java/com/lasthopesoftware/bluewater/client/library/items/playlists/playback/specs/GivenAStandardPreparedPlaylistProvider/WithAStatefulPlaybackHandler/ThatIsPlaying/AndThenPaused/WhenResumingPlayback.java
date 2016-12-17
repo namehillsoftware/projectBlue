@@ -1,12 +1,12 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
  * Created by david on 11/12/16.
  */
 
-public class WhenPausingPlayback {
+public class WhenResumingPlayback {
 
 	private IPlaybackHandler playbackHandler;
 
@@ -39,10 +39,12 @@ public class WhenPausingPlayback {
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0, null);
 
 		playlistPlayback.pause();
+
+		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenPlaybackIsPaused() {
-		assertThat(playbackHandler.isPlaying()).isFalse();
+	public void thenPlaybackIsResumed() {
+		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
 }

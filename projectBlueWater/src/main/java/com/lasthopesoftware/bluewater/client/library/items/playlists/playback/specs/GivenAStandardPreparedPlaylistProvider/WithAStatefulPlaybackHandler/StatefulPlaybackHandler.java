@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler;
+package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;

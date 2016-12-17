@@ -38,7 +38,7 @@ public class PreparedPlaybackQueue implements
 		return
 			currentPreparingPlaybackHandlerPromise != null ?
 				currentPreparingPlaybackHandlerPromise.then(this) :
-				null ;
+				null;
 	}
 
 	@Override
