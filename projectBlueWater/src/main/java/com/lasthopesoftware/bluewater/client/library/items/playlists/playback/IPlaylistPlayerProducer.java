@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 
 import java.util.List;
 
@@ -9,5 +9,5 @@ import java.util.List;
  */
 
 public interface IPlaylistPlayerProducer {
-	IPlaylistPlayer getPlaylistPlayer(List<File> files, int startPosition, boolean isCyclical);
+	IPlaylistPlayer getPlaylistPlayer(List<IFile> files, int startFilePosition, int startFileAt, boolean isCyclical);
 }
