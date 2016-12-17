@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller;
 
+import android.support.annotation.Nullable;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
@@ -24,24 +26,25 @@ import rx.subjects.PublishSubject;
 /**
  * Created by david on 11/8/16.
  */
-final class PlaylistPlaybackTask implements
+final class PlaylistPlayerTask implements
 	ThreeParameterAction<IResolvedPromise<Collection<PositionedPlaybackFile>>, IRejectedPromise, OneParameterAction<Runnable>> {
 
-	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlaybackTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayerTask.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private final int preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
+
+	@NotNull private final Collection<PositionedPlaybackFile> completedPlaybackFiles = new LinkedList<>();
+	@Nullable private final PublishSubject<PositionedPlaybackFile> playbackChangesPublisher;
+
 	private IResolvedPromise<Collection<PositionedPlaybackFile>> resolve;
 	private IRejectedPromise reject;
 
-	private final Collection<PositionedPlaybackFile> completedPlaybackFiles = new LinkedList<>();
-
-	final PublishSubject<PositionedPlaybackFile> playbackChangesPublisher = PublishSubject.create();
-
-	PlaylistPlaybackTask(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
+	PlaylistPlayerTask(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition, @Nullable PublishSubject<PositionedPlaybackFile> playbackChangesPublisher) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.preparedPosition = preparedPosition;
+		this.playbackChangesPublisher = playbackChangesPublisher;
 	}
 
 	@Override
@@ -98,7 +101,8 @@ final class PlaylistPlaybackTask implements
 
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		playbackChangesPublisher.onNext(positionedPlaybackFile);
+		if (playbackChangesPublisher != null)
+			playbackChangesPublisher.onNext(positionedPlaybackFile);
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 

@@ -44,7 +44,7 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		new PlaylistPlayer(preparedPlaybackFileQueue, 0)
+		new PlaylistPlayer(preparedPlaybackFileQueue, 0, null)
 			.then(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 

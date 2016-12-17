@@ -10,11 +10,11 @@ import com.lasthopesoftware.promises.Promise;
  * Created by david on 12/7/16.
  */
 
-class ResolveablePlaybackHandler extends StatefulPlaybackHandler {
+public class ResolveablePlaybackHandler extends StatefulPlaybackHandler {
 
 	private IResolvedPromise<IPlaybackHandler> resolve;
 
-	void resolve() {
+	public void resolve() {
 		if (this.resolve != null)
 			this.resolve.withResult(this);
 	}

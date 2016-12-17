@@ -35,7 +35,7 @@ public class WhenChangingTheVolume {
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0, null);
 
 		playlistPlayback.setVolume(0.8f);
 	}

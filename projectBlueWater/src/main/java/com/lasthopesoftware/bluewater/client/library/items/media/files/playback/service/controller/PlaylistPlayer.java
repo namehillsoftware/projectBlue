@@ -4,46 +4,44 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.util.Collection;
 
-import rx.Observable;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by david on 11/7/16.
  */
 public class PlaylistPlayer extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayer {
 
-	private final PlaylistPlaybackTask playlistPlaybackTask;
+	private final PlaylistPlayerTask playlistPlayerTask;
 
-	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
-		this(new PlaylistPlaybackTask(preparedPlaybackFileProvider, preparedPosition));
+	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition, @Nullable PublishSubject<PositionedPlaybackFile> playbackChangesPublisher) {
+		this(new PlaylistPlayerTask(preparedPlaybackFileProvider, preparedPosition, playbackChangesPublisher));
 	}
 
-	private PlaylistPlayer(PlaylistPlaybackTask playlistPlaybackTask) {
-		super(playlistPlaybackTask);
+	private PlaylistPlayer(PlaylistPlayerTask playlistPlayerTask) {
+		super(playlistPlayerTask);
 
-		this.playlistPlaybackTask = playlistPlaybackTask;
+		this.playlistPlayerTask = playlistPlayerTask;
 	}
 
 	@Override
 	public void pause() {
-		this.playlistPlaybackTask.pause();
+		this.playlistPlayerTask.pause();
 	}
 
 	@Override
 	public void resume() {
-		this.playlistPlaybackTask.resume();
+		this.playlistPlayerTask.resume();
 	}
 
 	@Override
 	public void setVolume(float volume) {
-		this.playlistPlaybackTask.setVolume(volume);
-	}
-
-	@Override
-	public Observable<PositionedPlaybackFile> observePlaybackChanges() {
-		return playlistPlaybackTask.playbackChangesPublisher;
+		this.playlistPlayerTask.setVolume(volume);
 	}
 
 	@Override

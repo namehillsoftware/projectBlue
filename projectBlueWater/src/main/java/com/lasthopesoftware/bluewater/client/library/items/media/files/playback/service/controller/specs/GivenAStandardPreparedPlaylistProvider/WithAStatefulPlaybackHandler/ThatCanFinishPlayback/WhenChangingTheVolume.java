@@ -40,7 +40,7 @@ public class WhenChangingTheVolume {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0, null);
 
 		playlistPlayback.setVolume(0.8f);
 

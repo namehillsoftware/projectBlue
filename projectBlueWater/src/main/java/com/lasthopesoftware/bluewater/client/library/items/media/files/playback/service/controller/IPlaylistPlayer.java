@@ -6,8 +6,6 @@ import com.lasthopesoftware.promises.IPromise;
 import java.io.Closeable;
 import java.util.Collection;
 
-import rx.Observable;
-
 /**
  * Created by david on 11/7/16.
  */
@@ -17,6 +15,4 @@ public interface IPlaylistPlayer extends IPromise<Collection<PositionedPlaybackF
 	void resume();
 
 	void setVolume(float volume);
-
-	Observable<PositionedPlaybackFile> observePlaybackChanges();
 }
