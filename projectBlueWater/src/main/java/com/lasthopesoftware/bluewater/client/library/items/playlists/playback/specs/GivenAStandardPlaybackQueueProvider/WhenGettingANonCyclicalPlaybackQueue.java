@@ -4,6 +4,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
@@ -15,10 +16,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 
-import rx.subjects.PublishSubject;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by david on 12/17/16.
@@ -30,13 +31,14 @@ public class WhenGettingANonCyclicalPlaybackQueue {
 
 	@BeforeClass
 	public static void setup() {
+		final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory = mock(IPlaybackPreparerTaskFactory.class);
+		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(any(), any())).thenReturn((resolve, reject, onCancelled) -> resolve.withResult(mock(IBufferingPlaybackHandler.class)));
+
 		final PlaylistPlayerProducer playlistPlayerProducer =
-			new PlaylistPlayerProducer(
-				new BufferingPlaybackQueuesProvider(mock(IPlaybackPreparerTaskFactory.class)),
-				PublishSubject.create());
+			new PlaylistPlayerProducer(new BufferingPlaybackQueuesProvider(playbackPreparerTaskFactory));
 
 		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getPlaylistPlayer(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, false);
-		playlistPlayer.then(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
+		playlistPlayer.toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
 	}
 
 	@Test

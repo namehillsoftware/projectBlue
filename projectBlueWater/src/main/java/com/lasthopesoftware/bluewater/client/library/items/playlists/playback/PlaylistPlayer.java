@@ -1,51 +1,150 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
+import android.support.annotation.Nullable;
+
+import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.IPromise;
+import com.vedsoft.futures.callables.VoidFunc;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 
-import rx.subjects.PublishSubject;
+import io.reactivex.Observer;
 
 /**
- * Created by david on 11/7/16.
+ * Created by david on 11/8/16.
  */
-public class PlaylistPlayer extends Promise<Collection<PositionedPlaybackFile>> implements IPlaylistPlayer {
+public final class PlaylistPlayer implements IPlaylistPlayer {
 
-	private final PlaylistPlayerTask playlistPlayerTask;
+	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
+	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
+	private PositionedPlaybackFile positionedPlaybackFile;
+	private float volume;
 
-	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition, @Nullable PublishSubject<PositionedPlaybackFile> playbackChangesPublisher) {
-		this(new PlaylistPlayerTask(preparedPlaybackFileProvider, preparedPosition, playbackChangesPublisher));
+	private final Collection<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
+	@Nullable private Observer<? super PositionedPlaybackFile> observer;
+
+	private boolean isCompleted;
+
+	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
+		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
+		setupNextPreparedFile(preparedPosition);
 	}
 
-	private PlaylistPlayer(PlaylistPlayerTask playlistPlayerTask) {
-		super(playlistPlayerTask);
-
-		this.playlistPlayerTask = playlistPlayerTask;
-	}
-
-	@Override
 	public void pause() {
-		this.playlistPlayerTask.pause();
+		if (positionedPlaybackFile == null) return;
+
+		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+
+		if (playbackHandler.isPlaying()) playbackHandler.pause();
 	}
 
 	@Override
 	public void resume() {
-		this.playlistPlayerTask.resume();
+		if (positionedPlaybackFile != null && !positionedPlaybackFile.getPlaybackHandler().isPlaying())
+			positionedPlaybackFile.getPlaybackHandler().promisePlayback();
 	}
 
 	@Override
 	public void setVolume(float volume) {
-		this.playlistPlayerTask.setVolume(volume);
+		this.volume = volume;
+
+		final PositionedPlaybackFile positionedPlaybackFile = this.positionedPlaybackFile;
+		if (positionedPlaybackFile != null)
+			positionedPlaybackFile.getPlaybackHandler().setVolume(volume);
+	}
+
+	private void setupNextPreparedFile() {
+		setupNextPreparedFile(0);
+	}
+
+	private void setupNextPreparedFile(int preparedPosition) {
+		final IPromise<PositionedPlaybackFile> preparingPlaybackFile =
+			preparedPlaybackFileProvider
+				.promiseNextPreparedPlaybackFile(preparedPosition);
+
+		if (preparingPlaybackFile == null) {
+			if (observer != null)
+				observer.onComplete();
+
+			isCompleted = true;
+			return;
+		}
+
+		preparingPlaybackFile
+			.then(VoidFunc.running(this::startFilePlayback))
+			.error(VoidFunc.running(this::handlePlaybackException));
+	}
+
+	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+
+		this.positionedPlaybackFile = positionedPlaybackFile;
+
+		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+
+		playbackHandler.setVolume(volume);
+		playbackHandler
+			.promisePlayback()
+			.then(VoidFunc.running(this::closeAndStartNextFile))
+			.error(VoidFunc.running(this::handlePlaybackException));
+
+		previousPlaybackFileChanges.add(positionedPlaybackFile);
+		if (observer != null)
+			observer.onNext(positionedPlaybackFile);
+	}
+
+	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
+		try {
+			playbackHandler.close();
+		} catch (IOException e) {
+			logger.error("There was an error releasing the media player", e);
+		}
+
+		setupNextPreparedFile();
+	}
+
+	private void haltPlayback() {
+		if (positionedPlaybackFile == null) return;
+
+		try {
+			positionedPlaybackFile.getPlaybackHandler().close();
+		} catch (IOException e) {
+			logger.error("There was an error releasing the media player", e);
+		}
+	}
+
+	private void handlePlaybackException(Exception exception) {
+		haltPlayback();
+
+		if (observer != null)
+			observer.onError(exception);
 	}
 
 	@Override
 	public void close() throws IOException {
-		this.cancel();
+		haltPlayback();
+	}
+
+	@Override
+	public void cancel() {
+		handlePlaybackException(new CancellationException("Playlist playback was cancelled"));
+	}
+
+	@Override
+	public void subscribe(Observer<? super PositionedPlaybackFile> observer) {
+		Stream.of(previousPlaybackFileChanges).forEach(observer::onNext);
+		if (isCompleted)
+			observer.onComplete();
+
+		this.observer = observer;
 	}
 }

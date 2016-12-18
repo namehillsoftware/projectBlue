@@ -36,7 +36,7 @@ public class WhenResumingPlayback {
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0, null);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
 		playlistPlayback.pause();
 

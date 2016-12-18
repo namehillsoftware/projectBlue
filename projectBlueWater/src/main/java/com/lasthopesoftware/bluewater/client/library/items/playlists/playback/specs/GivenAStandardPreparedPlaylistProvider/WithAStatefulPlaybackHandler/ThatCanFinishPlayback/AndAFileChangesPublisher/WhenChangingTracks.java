@@ -12,7 +12,7 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import rx.subjects.PublishSubject;
+import rx.Observable;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -43,10 +43,7 @@ public class WhenChangingTracks {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		final PublishSubject<PositionedPlaybackFile> playbackFilePublisher = PublishSubject.create();
-		new PlaylistPlayer(preparedPlaybackFileQueue, 0, playbackFilePublisher);
-
-		playbackFilePublisher.subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0)).subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
 
 		playbackHandler.resolve();
 	}

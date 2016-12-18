@@ -11,7 +11,9 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
+import java.util.List;
+
+import rx.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -24,7 +26,7 @@ import static org.mockito.Mockito.when;
 public class WhenStartingPlayback {
 
 	private IPlaybackHandler playbackHandler;
-	private Collection<PositionedPlaybackFile> positionedPlaybackFiles;
+	private List<PositionedPlaybackFile> positionedPlaybackFiles;
 
 	@Before
 	public void before() {
@@ -44,8 +46,8 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		new PlaylistPlayer(preparedPlaybackFileQueue, 0, null)
-			.then(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0))
+			.toList().subscribe(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 
 	@Test
