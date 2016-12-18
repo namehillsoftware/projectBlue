@@ -21,6 +21,6 @@ public class PlaylistPlayerProducer implements IPlaylistPlayerProducer {
 	@Override
 	public IPlaylistPlayer getPlaylistPlayer(List<IFile> files, int startFilePosition, int startFileAt, boolean isCyclical) {
 		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getQueue(files, startFilePosition, isCyclical));
-		return new PlaylistPlayer(playbackFileQueue, startFilePosition);
+		return new PlaylistPlayer(playbackFileQueue, startFileAt);
 	}
 }

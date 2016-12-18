@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import io.reactivex.Observable;
@@ -31,7 +31,7 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
-	private final Collection<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
+	private final List<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
 	@Nullable private Observer<? super PositionedPlaybackFile> observer;
 
 	private boolean isCompleted;
@@ -87,20 +87,20 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 	}
 
 	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
-
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
-		playbackHandler
-			.promisePlayback()
-			.then(VoidFunc.running(this::closeAndStartNextFile))
-			.error(VoidFunc.running(this::handlePlaybackException));
+		IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
 		previousPlaybackFileChanges.add(positionedPlaybackFile);
 		if (observer != null)
 			observer.onNext(positionedPlaybackFile);
+
+		promisedPlayback
+			.then(VoidFunc.running(this::closeAndStartNextFile))
+			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
 	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {

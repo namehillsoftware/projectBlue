@@ -18,7 +18,7 @@ public class ExpectedPromise<TResult> extends Promise<TResult> {
 	/**
 	 * Created by david on 10/17/16.
 	 */
-	static class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+	private static class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
 		private final Callable<TResult> executor;
 
 		InternalExpectedPromiseExecutor(@NotNull Callable<TResult> executor) {
