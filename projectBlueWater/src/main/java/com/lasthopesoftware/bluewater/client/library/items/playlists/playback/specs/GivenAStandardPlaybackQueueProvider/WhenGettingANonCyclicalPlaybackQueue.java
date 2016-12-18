@@ -16,6 +16,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 
+import io.reactivex.Observable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -38,7 +40,7 @@ public class WhenGettingANonCyclicalPlaybackQueue {
 			new PlaylistPlayerProducer(new BufferingPlaybackQueuesProvider(playbackPreparerTaskFactory));
 
 		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getPlaylistPlayer(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, false);
-		playlistPlayer.toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
+		Observable.create(playlistPlayer).toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
 	}
 
 	@Test

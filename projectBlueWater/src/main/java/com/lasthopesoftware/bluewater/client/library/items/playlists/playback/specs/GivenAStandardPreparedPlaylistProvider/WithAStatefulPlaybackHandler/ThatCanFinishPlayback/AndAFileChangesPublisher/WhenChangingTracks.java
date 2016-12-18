@@ -12,7 +12,7 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import rx.Observable;
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
