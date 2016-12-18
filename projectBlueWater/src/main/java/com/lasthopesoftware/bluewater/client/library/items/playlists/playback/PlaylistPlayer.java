@@ -18,12 +18,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 
-import io.reactivex.ObservableEmitter;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
 
 /**
  * Created by david on 11/8/16.
  */
-public final class PlaylistPlayer implements IPlaylistPlayer {
+public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> implements IPlaylistPlayer {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
@@ -31,7 +32,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer {
 	private float volume;
 
 	private final Collection<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
-	@Nullable private ObservableEmitter<PositionedPlaybackFile> observer;
+	@Nullable private Observer<? super PositionedPlaybackFile> observer;
 
 	private boolean isCompleted;
 
@@ -140,7 +141,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer {
 	}
 
 	@Override
-	public void subscribe(ObservableEmitter<PositionedPlaybackFile> observer) throws Exception {
+	protected void subscribeActual(Observer<? super PositionedPlaybackFile> observer) {
 		Stream.of(previousPlaybackFileChanges).forEach(observer::onNext);
 		if (isCompleted)
 			observer.onComplete();

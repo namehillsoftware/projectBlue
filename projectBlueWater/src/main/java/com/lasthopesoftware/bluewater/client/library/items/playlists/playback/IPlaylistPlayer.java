@@ -4,13 +4,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 
 import java.io.Closeable;
 
-import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.ObservableSource;
 
 /**
  * Created by david on 11/7/16.
  */
 
-public interface IPlaylistPlayer extends ObservableOnSubscribe<PositionedPlaybackFile>, Closeable {
+public interface IPlaylistPlayer extends ObservableSource<PositionedPlaybackFile>, Closeable {
 	void pause();
 	void resume();
 

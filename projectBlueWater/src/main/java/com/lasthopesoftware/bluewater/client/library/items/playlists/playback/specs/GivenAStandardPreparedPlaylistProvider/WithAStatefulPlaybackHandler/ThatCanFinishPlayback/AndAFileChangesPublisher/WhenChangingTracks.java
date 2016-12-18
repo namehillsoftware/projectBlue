@@ -12,8 +12,6 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -43,7 +41,7 @@ public class WhenChangingTracks {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0)).subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
+		new PlaylistPlayer(preparedPlaybackFileQueue, 0).subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
 
 		playbackHandler.resolve();
 	}

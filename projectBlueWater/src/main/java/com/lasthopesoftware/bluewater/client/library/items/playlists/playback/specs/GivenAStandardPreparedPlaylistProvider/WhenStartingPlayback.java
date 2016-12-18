@@ -13,8 +13,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,7 +44,7 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0))
+		new PlaylistPlayer(preparedPlaybackFileQueue, 0)
 			.toList().subscribe(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 
