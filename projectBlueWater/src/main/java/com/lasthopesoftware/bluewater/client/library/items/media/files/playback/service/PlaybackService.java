@@ -58,11 +58,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
+import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
-import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -488,7 +487,7 @@ public class PlaybackService extends Service implements
 				return LibrarySession.SaveLibrary(PlaybackService.this, result);
 			})
 			.thenPromise(savedLibrary ->
-				new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(savedLibrary.getSavedTracksString())))
+				new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(savedLibrary.getSavedTracksString()))
 					.then(playlist -> {
 						final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
 						final BufferingPlaybackQueuesProvider bufferingPlaybackQueuesProvider =

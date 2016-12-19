@@ -12,10 +12,9 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
+import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -83,7 +82,7 @@ public class LibrarySession {
 
 	@SuppressLint("NewApi")
 	public static IPromise<Library> SaveLibrary(final Context context, final Library library) {
-		return new Promise<>(new DispatchedAndroidTask<>(() -> {
+		return new DispatchedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;
@@ -122,7 +121,7 @@ public class LibrarySession {
 					return null;
 				}
 			}
-		}, RepositoryAccessHelper.databaseExecutor));
+		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static void GetActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
@@ -135,11 +134,11 @@ public class LibrarySession {
 	}
 
 	public static IPromise<Library> GetActiveLibrary(final Context context) {
-		return new Promise<>(new DispatchedAndroidTask<>(onCanceled -> GetActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor));
+		return new DispatchedPromise<>(onCanceled -> GetActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static IPromise<Library> GetLibrary(final Context context, final int libraryId) {
-		return new Promise<>(new DispatchedAndroidTask<>(onCancelled -> GetLibraryInternal(context, libraryId), RepositoryAccessHelper.databaseExecutor));
+		return new DispatchedPromise<>(onCancelled -> GetLibraryInternal(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {

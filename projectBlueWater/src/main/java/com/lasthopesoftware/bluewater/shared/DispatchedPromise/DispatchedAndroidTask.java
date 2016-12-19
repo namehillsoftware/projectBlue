@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared.DispatchedPromise;
 
 import android.os.AsyncTask;
 
@@ -16,24 +16,24 @@ import java.util.concurrent.Executor;
  * Created by david on 11/3/16.
  */
 
-public class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private final OneParameterFunction<OneParameterAction<Runnable>, TResult> task;
 	private final Executor executor;
 
-	public DispatchedAndroidTask(Function<TResult> task) {
-		this((onCancelled) -> task.expect());
+	DispatchedAndroidTask(Function<TResult> task) {
+		this((c) -> task.expect());
 	}
 
-	public DispatchedAndroidTask(Function<TResult> task, Executor executor) {
-		this((onCancelled) -> task.expect(), executor);
+	DispatchedAndroidTask(Function<TResult> task, Executor executor) {
+		this((c) -> task.expect(), executor);
 	}
 
-	public DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task) {
+	DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task) {
 		this(task, AsyncTask.SERIAL_EXECUTOR);
 	}
 
-	public DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task, Executor executor) {
+	DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task, Executor executor) {
 		this.task = task;
 		this.executor = executor;
 	}

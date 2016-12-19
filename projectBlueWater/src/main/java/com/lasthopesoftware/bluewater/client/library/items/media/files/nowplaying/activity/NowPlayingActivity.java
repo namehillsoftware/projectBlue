@@ -40,11 +40,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.DispatchedAndroidTask;
+import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.IFluentTask;
 
 import org.slf4j.LoggerFactory;
@@ -302,7 +301,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private void setView(final PlaybackController playbackController, final IPlaybackHandler playbackFile) {
 		LibrarySession
 			.GetActiveLibrary(this)
-			.thenPromise(library -> new Promise<>(new DispatchedAndroidTask<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString()))))
+			.thenPromise(library -> new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString())))
 			.then(files -> {
 				setView(files.get(playbackController.getCurrentPosition()), playbackFile.getCurrentPosition());
 
