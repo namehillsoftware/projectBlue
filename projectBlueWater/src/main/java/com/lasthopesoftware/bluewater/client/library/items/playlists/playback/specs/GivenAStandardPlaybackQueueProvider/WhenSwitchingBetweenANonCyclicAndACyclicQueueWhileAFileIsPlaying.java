@@ -1,11 +1,22 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPlaybackQueueProvider;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerProducer;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
@@ -22,7 +33,10 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 
 	@BeforeClass
 	public static void before() {
+		final PlaylistPlayerProducer playlistPlayerProducer =
+			new PlaylistPlayerProducer(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
+		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getPlaylistPlayer(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, false);
 	}
 
 	@Test
@@ -43,5 +57,13 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 	@Test
 	public void thenThePlaybackHandlerRemainsTheSame() {
 		assertThat(this.playbackHandler).isEqualTo(this.expectedPlaybackHandler);
+	}
+
+	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+		@Override
+		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			final IBufferingPlaybackHandler resolveablePlaybackHandler = new ResolveablePlaybackHandler();
+			resolve.withResult(resolveablePlaybackHandler);
+		}
 	}
 }

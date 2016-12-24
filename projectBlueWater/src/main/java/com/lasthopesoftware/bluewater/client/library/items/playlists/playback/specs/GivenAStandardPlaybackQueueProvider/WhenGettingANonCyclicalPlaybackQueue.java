@@ -34,7 +34,6 @@ public class WhenGettingANonCyclicalPlaybackQueue {
 
 	@BeforeClass
 	public static void setup() {
-
 		final PlaylistPlayerProducer playlistPlayerProducer =
 			new PlaylistPlayerProducer(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 

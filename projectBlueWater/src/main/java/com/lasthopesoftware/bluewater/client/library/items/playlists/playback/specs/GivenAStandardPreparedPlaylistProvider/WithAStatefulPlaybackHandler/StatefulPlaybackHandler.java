@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -10,7 +11,7 @@ import java.io.IOException;
  * Created by david on 12/7/16.
  */
 
-public class StatefulPlaybackHandler implements IPlaybackHandler {
+public class StatefulPlaybackHandler implements IBufferingPlaybackHandler {
 	private boolean isPlaying;
 	private float volume;
 
@@ -58,5 +59,10 @@ public class StatefulPlaybackHandler implements IPlaybackHandler {
 	@Override
 	public void close() throws IOException {
 
+	}
+
+	@Override
+	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+		return new Promise<>((resolve, reject) -> {});
 	}
 }
