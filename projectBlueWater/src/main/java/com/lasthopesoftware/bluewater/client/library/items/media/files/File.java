@@ -32,9 +32,6 @@ public class File implements IFile {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof IFile)
-			return compareTo((IFile)obj) == 0;
-
-		return super.equals(obj);
+		return obj instanceof IFile ? compareTo((IFile)obj) == 0 : super.equals(obj);
 	}
 }
