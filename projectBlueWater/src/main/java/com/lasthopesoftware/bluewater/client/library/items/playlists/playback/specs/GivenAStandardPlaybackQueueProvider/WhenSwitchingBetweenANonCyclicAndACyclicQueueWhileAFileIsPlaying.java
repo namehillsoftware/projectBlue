@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerProducer;
@@ -19,8 +20,11 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by david on 12/22/16.
@@ -33,6 +37,15 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 
 	@BeforeClass
 	public static void before() {
+
+		final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory =
+			mock(IPlaybackPreparerTaskFactory.class);
+
+		final ResolveablePlaybackHandler firstFilePlaybackHandler = new ResolveablePlaybackHandler();
+
+		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(new File(1), any()))
+			.thenReturn((resolve, reject, c) -> resolve.withResult(firstFilePlaybackHandler));
+
 		final PlaylistPlayerProducer playlistPlayerProducer =
 			new PlaylistPlayerProducer(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
@@ -60,9 +73,11 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+
+		final IBufferingPlaybackHandler resolveablePlaybackHandler = new ResolveablePlaybackHandler();
+
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			final IBufferingPlaybackHandler resolveablePlaybackHandler = new ResolveablePlaybackHandler();
 			resolve.withResult(resolveablePlaybackHandler);
 		}
 	}

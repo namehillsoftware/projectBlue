@@ -29,4 +29,12 @@ public class File implements IFile {
 	public int hashCode() {
 		return key;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof IFile)
+			return compareTo((IFile)obj) == 0;
+
+		return super.equals(obj);
+	}
 }
