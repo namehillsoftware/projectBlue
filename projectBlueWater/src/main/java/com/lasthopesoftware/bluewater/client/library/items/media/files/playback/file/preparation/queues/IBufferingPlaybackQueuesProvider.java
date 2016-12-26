@@ -9,5 +9,6 @@ import java.util.List;
  */
 
 public interface IBufferingPlaybackQueuesProvider {
-	IBufferingPlaybackPromiseQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical);
+	IBufferingPlaybackPromiseQueue getCompletableQueue(List<IFile> playlist, int startingAt);
+	IBufferingPlaybackPromiseQueue getCyclicalQueue(List<IFile> playlist, int startingAt);
 }

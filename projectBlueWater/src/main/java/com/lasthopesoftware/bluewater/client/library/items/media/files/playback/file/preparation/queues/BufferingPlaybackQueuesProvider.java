@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFileContainer;
@@ -19,21 +17,29 @@ public class BufferingPlaybackQueuesProvider implements IBufferingPlaybackQueues
 	public BufferingPlaybackQueuesProvider(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
+	
+	@Override
+	public IBufferingPlaybackPromiseQueue getCompletableQueue(List<IFile> playlist, int startingAt) {
+		return new BufferingPlaybackQueue(getTruncatedList(playlist, startingAt), playbackPreparerTaskFactory);
+	}
 
 	@Override
-	public IBufferingPlaybackPromiseQueue getQueue(List<IFile> playlist, int startingAt, boolean isCyclical) {
-		final List<PositionedFileContainer> positionedFiles = new ArrayList<>(playlist.size());
+	public IBufferingPlaybackPromiseQueue getCyclicalQueue(List<IFile> playlist, int startingAt) {
+		final List<PositionedFileContainer> truncatedList = getTruncatedList(playlist, startingAt);
 
-		for (int i = 0; i < playlist.size(); i++)
-			positionedFiles.add(new PositionedFileContainer(i, playlist.get(i)));
-
-		final List<PositionedFileContainer> truncatedList = Stream.of(positionedFiles).skip(startingAt - 1).collect(Collectors.toList());
-
-		if (!isCyclical)
-			return new BufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
-
-		truncatedList.addAll(positionedFiles.subList(0, Math.max(startingAt - 1, playlist.size())));
+		final int endingPosition = Math.max(startingAt - 1, playlist.size());
+		for (int i = 0; i < endingPosition; i++)
+			truncatedList.add(new PositionedFileContainer(i, playlist.get(i)));
 
 		return new CyclicalBufferingPlaybackQueue(truncatedList, playbackPreparerTaskFactory);
+	}
+
+	private static List<PositionedFileContainer> getTruncatedList(List<IFile> playlist, int startingAt) {
+		final List<PositionedFileContainer> positionedFiles = new ArrayList<>(playlist.size());
+
+		for (int i = startingAt; i < playlist.size(); i++)
+			positionedFiles.add(new PositionedFileContainer(i, playlist.get(i)));
+
+		return positionedFiles;
 	}
 }
