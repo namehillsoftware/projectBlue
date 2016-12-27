@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
  * Created by david on 12/22/16.
  */
 
-public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
+public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying {
 
 	private IPlaybackHandler playbackHandler;
 	private IPlaybackHandler expectedPlaybackHandler;
@@ -44,12 +44,19 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 		final ResolveablePlaybackHandler firstFilePlaybackHandler = new ResolveablePlaybackHandler();
 
 		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(new File(1), anyInt()))
-			.thenReturn((resolve, reject, c) -> resolve.withResult(firstFilePlaybackHandler));
+			.thenReturn((resolve, reject, c) -> resolve.withResult(firstFilePlaybackHandler))
+			.thenReturn((resolve, reject, c) -> resolve.withResult(new ResolveablePlaybackHandler()))
+			.thenReturn((resolve, reject, c) -> resolve.withResult(new ResolveablePlaybackHandler()));
 
 		final PlaylistPlayerProducer playlistPlayerProducer =
-			new PlaylistPlayerProducer(Arrays.asList(new File(1), new File(2), new File(3)), new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+			new PlaylistPlayerProducer(
+				Arrays.asList(new File(1), new File(2), new File(3)),
+				0, 0,
+				new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
-		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getCompletablePlaylistPlayer(0, 0);
+		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getCompletablePlaylistPlayer();
+		firstFilePlaybackHandler.resolve();
+		playlistPlayerProducer.getCyclicalPlaylistPlayer();
 	}
 
 	@Test
