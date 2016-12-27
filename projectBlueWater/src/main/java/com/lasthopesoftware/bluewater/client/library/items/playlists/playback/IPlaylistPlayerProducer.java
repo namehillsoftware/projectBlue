@@ -5,7 +5,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
  */
 
 public interface IPlaylistPlayerProducer {
-	IPlaylistPlayer getCompletablePlaylistPlayer(int startFilePosition, int startFileAt);
+	IPlaylistPlayer getCompletablePlaylistPlayer();
 
-	IPlaylistPlayer getCyclicalPlaylistPlayer(int startFilePosition, int startFileAt);
+	IPlaylistPlayer getCyclicalPlaylistPlayer();
 }

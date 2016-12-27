@@ -12,22 +12,26 @@ import java.util.List;
  */
 public class PlaylistPlayerProducer implements IPlaylistPlayerProducer {
 
+	private final int startFilePosition;
+	private final int startFileAt;
 	private final IBufferingPlaybackQueuesProvider playbackQueuesProvider;
-	private List<IFile> files;
+	private final List<IFile> files;
 
-	public PlaylistPlayerProducer(List<IFile> files, IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
+	public PlaylistPlayerProducer(List<IFile> files, int startFilePosition, int startFileAt, IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
 		this.files = files;
+		this.startFilePosition = startFilePosition;
+		this.startFileAt = startFileAt;
 		this.playbackQueuesProvider = playbackQueuesProvider;
 	}
 
 	@Override
-	public IPlaylistPlayer getCompletablePlaylistPlayer(int startFilePosition, int startFileAt) {
+	public IPlaylistPlayer getCompletablePlaylistPlayer() {
 		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(files, startFilePosition));
 		return new PlaylistPlayer(playbackFileQueue, startFileAt);
 	}
 
 	@Override
-	public IPlaylistPlayer getCyclicalPlaylistPlayer(int startFilePosition, int startFileAt) {
+	public IPlaylistPlayer getCyclicalPlaylistPlayer() {
 		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(files, startFilePosition));
 		return new PlaylistPlayer(playbackFileQueue, startFileAt);
 	}
