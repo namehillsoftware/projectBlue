@@ -62,7 +62,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 			= new BufferingPlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
 
 		final IPreparedPlaybackFileQueue queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getQueue(files, 0, true));
+			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCyclicalQueue(files, 0));
 
 		expectedCycles = random.nextInt(100);
 

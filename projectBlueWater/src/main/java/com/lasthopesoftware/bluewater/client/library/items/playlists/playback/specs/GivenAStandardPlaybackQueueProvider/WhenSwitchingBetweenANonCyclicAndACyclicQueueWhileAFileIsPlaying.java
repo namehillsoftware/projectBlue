@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,13 +43,13 @@ public class WhenSwitchingBetweenANonCyclicAndACyclicQueueWhileAFileIsPlaying {
 
 		final ResolveablePlaybackHandler firstFilePlaybackHandler = new ResolveablePlaybackHandler();
 
-		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(new File(1), any()))
+		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(new File(1), anyInt()))
 			.thenReturn((resolve, reject, c) -> resolve.withResult(firstFilePlaybackHandler));
 
 		final PlaylistPlayerProducer playlistPlayerProducer =
-			new PlaylistPlayerProducer(files, new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+			new PlaylistPlayerProducer(Arrays.asList(new File(1), new File(2), new File(3)), new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
-		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getCompletablePlaylistPlayer(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, false);
+		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getCompletablePlaylistPlayer(0, 0);
 	}
 
 	@Test

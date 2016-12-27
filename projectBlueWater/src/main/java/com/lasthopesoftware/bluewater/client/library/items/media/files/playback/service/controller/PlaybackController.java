@@ -245,7 +245,7 @@ public class PlaybackController {
 		closePreparedPlaybackFileProvider();
 
 		preparedPlaybackFileProvider =
-			new PreparedPlaybackQueue(playbackQueuesProvider.getQueue(playlist, newPosition, isRepeating));
+			new PreparedPlaybackQueue(!isRepeating ? playbackQueuesProvider.getCompletableQueue(playlist, newPosition) : playbackQueuesProvider.getCyclicalQueue(playlist, newPosition));
 	}
 
 	private void setupNextPreparedFile() {

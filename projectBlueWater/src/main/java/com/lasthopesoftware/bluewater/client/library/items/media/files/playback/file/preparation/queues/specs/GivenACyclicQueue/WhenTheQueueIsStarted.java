@@ -57,7 +57,7 @@ public class WhenTheQueueIsStarted {
 
 		queue =
 			new PreparedPlaybackQueue(
-				bufferingPlaybackQueuesProvider.getQueue(files, startPosition, true));
+				bufferingPlaybackQueuesProvider.getCyclicalQueue(files, startPosition));
 	}
 
 	@Test

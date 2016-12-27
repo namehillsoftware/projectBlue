@@ -56,7 +56,7 @@ public class WhenTheQueueIsStarted {
 		startPosition = random.nextInt(numberOfFiles);
 
 		queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getQueue(files, startPosition, false));
+			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCompletableQueue(files, startPosition));
 	}
 
 	@Test

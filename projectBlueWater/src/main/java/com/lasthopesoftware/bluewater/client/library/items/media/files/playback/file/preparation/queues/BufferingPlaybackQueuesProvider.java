@@ -27,7 +27,7 @@ public class BufferingPlaybackQueuesProvider implements IBufferingPlaybackQueues
 	public IBufferingPlaybackPromiseQueue getCyclicalQueue(List<IFile> playlist, int startingAt) {
 		final List<PositionedFileContainer> truncatedList = getTruncatedList(playlist, startingAt);
 
-		final int endingPosition = Math.max(startingAt - 1, playlist.size());
+		final int endingPosition = playlist.size() - truncatedList.size();
 		for (int i = 0; i < endingPosition; i++)
 			truncatedList.add(new PositionedFileContainer(i, playlist.get(i)));
 

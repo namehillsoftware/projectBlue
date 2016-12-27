@@ -22,13 +22,13 @@ public class PlaylistPlayerProducer implements IPlaylistPlayerProducer {
 
 	@Override
 	public IPlaylistPlayer getCompletablePlaylistPlayer(int startFilePosition, int startFileAt) {
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getQueue(files, startFilePosition, false));
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(files, startFilePosition));
 		return new PlaylistPlayer(playbackFileQueue, startFileAt);
 	}
 
 	@Override
 	public IPlaylistPlayer getCyclicalPlaylistPlayer(int startFilePosition, int startFileAt) {
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getQueue(files, startFilePosition, true));
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(files, startFilePosition));
 		return new PlaylistPlayer(playbackFileQueue, startFileAt);
 	}
 }

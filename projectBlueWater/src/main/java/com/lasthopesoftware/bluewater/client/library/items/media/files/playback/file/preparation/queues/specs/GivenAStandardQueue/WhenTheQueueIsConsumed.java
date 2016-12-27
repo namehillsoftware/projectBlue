@@ -61,7 +61,7 @@ public class WhenTheQueueIsConsumed {
 			= new BufferingPlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
 
 		final IPreparedPlaybackFileQueue queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getQueue(files, 0, false));
+			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCompletableQueue(files, 0));
 
 		final int expectedCycles = random.nextInt(100);
 
