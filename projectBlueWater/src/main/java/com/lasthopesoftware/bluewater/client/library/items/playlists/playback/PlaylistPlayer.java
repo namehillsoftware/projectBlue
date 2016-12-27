@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ import io.reactivex.Observer;
 /**
  * Created by david on 11/8/16.
  */
-public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> implements IPlaylistPlayer {
+public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
