@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerProducer;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -32,10 +32,10 @@ public class WhenGettingACyclicPlaybackQueue {
 
 	@BeforeClass
 	public static void setup() {
-		final PlaylistPlayerProducer playlistPlayerProducer =
-			new PlaylistPlayerProducer(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+		final PlaylistPlayerManager playlistPlayerProducer =
+			new PlaylistPlayerManager(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0, new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
-		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.getCyclicalPlaylistPlayer();
+		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.continueAsCyclical();
 		playlistPlayer
 			.toList()
 			.subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
