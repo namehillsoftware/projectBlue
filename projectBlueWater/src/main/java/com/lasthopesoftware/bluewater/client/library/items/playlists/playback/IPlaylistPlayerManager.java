@@ -8,13 +8,13 @@ import java.util.List;
  * Created by david on 12/17/16.
  */
 
-public interface IPlaylistPlayerManager {
+public interface IPlaylistPlayerManager extends IPlaylistPlayer {
 
-	IPlaylistPlayer startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart);
+	IPlaylistPlayerManager startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart);
 
-	IPlaylistPlayer startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart);
+	IPlaylistPlayerManager startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart);
 
-	IPlaylistPlayer continueAsCompletable();
+	IPlaylistPlayerManager continueAsCompletable();
 
-	IPlaylistPlayer continueAsCyclical();
+	IPlaylistPlayerManager continueAsCyclical();
 }
