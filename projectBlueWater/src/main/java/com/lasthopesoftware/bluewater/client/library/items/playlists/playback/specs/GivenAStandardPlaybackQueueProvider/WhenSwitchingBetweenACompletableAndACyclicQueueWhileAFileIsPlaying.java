@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -49,12 +48,9 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 			.thenReturn((resolve, reject, c) -> resolve.withResult(new ResolveablePlaybackHandler()));
 
 		final PlaylistPlayerManager playlistPlayerProducer =
-			new PlaylistPlayerManager(
-				Arrays.asList(new File(1), new File(2), new File(3)),
-				0, 0,
-				new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
-		final IPlaylistPlayer playlistPlayer = playlistPlayerProducer.continueAsCompletable();
+		playlistPlayerProducer.startAsCompletable(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
 		firstFilePlaybackHandler.resolve();
 		playlistPlayerProducer.continueAsCyclical();
 	}

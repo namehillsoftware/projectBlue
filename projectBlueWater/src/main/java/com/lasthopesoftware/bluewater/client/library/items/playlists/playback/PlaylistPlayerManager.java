@@ -19,7 +19,7 @@ import io.reactivex.Single;
 public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable {
 
 	private final IBufferingPlaybackQueuesProvider playbackQueuesProvider;
-	private List<IFile> files;
+	private List<IFile> playlist;
 	private PlaylistPlayer playlistPlayer;
 	private Observer<? super PositionedPlaybackFile> observer;
 
@@ -29,24 +29,34 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public IPlaylistPlayerManager startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart) {
-		return null;
+		this.playlist = playlist;
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(playlist, playlistStart));
+		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
 	}
 
 	@Override
 	public IPlaylistPlayerManager startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart) {
-		return null;
+		this.playlist = playlist;
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(playlist, playlistStart));
+		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
 	}
 
 	@Override
 	public IPlaylistPlayerManager continueAsCompletable() {
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(files, startFilePosition));
-		return new PlaylistPlayer(playbackFileQueue, startFileAt);
+		return this;
 	}
 
 	@Override
 	public IPlaylistPlayerManager continueAsCyclical() {
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(files, startFilePosition));
-		playlistPlayer = new PlaylistPlayer(playbackFileQueue, startFileAt);
+		return this;
+	}
+
+	private IPlaylistPlayerManager getNewPlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileQueue, int fileStart) {
+		playlistPlayer = new PlaylistPlayer(preparedPlaybackFileQueue, fileStart);
+
+		if (observer != null)
+			playlistPlayer.subscribeActual(observer);
+
 		return this;
 	}
 
