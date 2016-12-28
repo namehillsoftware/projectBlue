@@ -35,7 +35,7 @@ public class WhenGettingACyclicPlaybackQueue {
 		final PlaylistPlayerManager playlistPlayerProducer =
 			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
-		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCompletable(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
+		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
 
 		playlistPlayerManager
 			.toList()
