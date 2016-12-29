@@ -118,16 +118,16 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 		try {
 			if (positionedPlaybackFile != null)
 				positionedPlaybackFile.getPlaybackHandler().close();
+
+			isCompleted = true;
+
+			if (observer != null)
+				observer.onComplete();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
 			if (observer != null)
 				observer.onError(e);
-
-			return;
 		}
-
-		if (observer != null)
-			observer.onComplete();
 	}
 
 	private void handlePlaybackException(Exception exception) {
