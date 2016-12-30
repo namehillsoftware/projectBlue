@@ -50,40 +50,37 @@ public class WhenGettingACyclicPlaybackQueue {
 				return new MockResolveAction(resolveablePlaybackHandlers.get(file));
 			}));
 
-		try {
-			final Random random = new Random();
 
-			int numFiles;
-			while ((numFiles = random.nextInt(10000)) <= 0);
+		final Random random = new Random();
 
-			final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Stream.range(1, numFiles).map(File::new).collect(Collectors.toList()), 0, 0);
+		int numFiles;
+		while ((numFiles = random.nextInt(10000)) <= 0);
 
-			int iterations;
-			while ((iterations = random.nextInt(100)) <= 0);
+		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Stream.range(1, numFiles).map(File::new).collect(Collectors.toList()), 0, 0);
 
-			final int stopFile = random.nextInt(numFiles);
+		int iterations;
+		while ((iterations = random.nextInt(100)) <= 0);
 
-			expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
+		final int stopFile = random.nextInt(numFiles);
 
-			for (int j = 0; j <= iterations; j++) {
-				for (int i = 1; i < numFiles; i++) {
-					if (j >= iterations && i >= stopFile) {
-						expectedGeneratedFileStream.add(i);
-						break;
-					}
+		expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
 
-					resolveablePlaybackHandlers.get(new File(i)).resolve();
-
+		for (int j = 0; j <= iterations; j++) {
+			for (int i = 1; i < numFiles; i++) {
+				if (j >= iterations && i >= stopFile) {
 					expectedGeneratedFileStream.add(i);
+					break;
 				}
-			}
 
-			playlistPlayerManager
-				.toList()
-				.subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
-		} finally {
-			playlistPlayerProducer.close();
+				resolveablePlaybackHandlers.get(new File(i)).resolve();
+
+				expectedGeneratedFileStream.add(i);
+			}
 		}
+
+		playedFiles = new ArrayList<>(expectedGeneratedFileStream.size());
+
+		playlistPlayerManager.subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 	}
 
 	@Test

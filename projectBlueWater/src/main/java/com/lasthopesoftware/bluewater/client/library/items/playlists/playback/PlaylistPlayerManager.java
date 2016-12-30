@@ -12,6 +12,9 @@ import java.util.List;
 
 import io.reactivex.Observer;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
+import io.reactivex.functions.Consumer;
 
 /**
  * Created by david on 12/17/16.
@@ -93,6 +96,11 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	@Override
 	public Single<List<PositionedPlaybackFile>> toList() {
 		return playlistPlayer != null ? playlistPlayer.toList() : Single.never();
+	}
+
+	@Override
+	public Disposable subscribe(Consumer<? super PositionedPlaybackFile> onNext) {
+		return playlistPlayer != null ? playlistPlayer.subscribe(onNext) : Disposables.empty();
 	}
 
 	@Override
