@@ -75,10 +75,7 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
 		if (preparingPlaybackFile == null) {
-			if (observer != null)
-				observer.onComplete();
-
-			isCompleted = true;
+			doCompletion();
 			return;
 		}
 
@@ -119,10 +116,7 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 			if (positionedPlaybackFile != null)
 				positionedPlaybackFile.getPlaybackHandler().close();
 
-			isCompleted = true;
-
-			if (observer != null)
-				observer.onComplete();
+			doCompletion();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
 			if (observer != null)
@@ -145,6 +139,13 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 	@Override
 	public void cancel() {
 		handlePlaybackException(new CancellationException("Playlist playback was cancelled"));
+	}
+
+	private void doCompletion() {
+		if (observer != null)
+			observer.onComplete();
+
+		isCompleted = true;
 	}
 
 	@Override

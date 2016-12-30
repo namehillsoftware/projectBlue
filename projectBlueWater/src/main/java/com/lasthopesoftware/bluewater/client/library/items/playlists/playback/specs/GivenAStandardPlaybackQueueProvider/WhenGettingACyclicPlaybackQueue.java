@@ -19,10 +19,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WhenGettingACyclicPlaybackQueue {
 
 	private static Collection<PositionedPlaybackFile> playedFiles;
+	private static List<Integer> expectedGeneratedFileStream;
 
 	@BeforeClass
 	public static void setup() throws IOException {
@@ -48,13 +51,30 @@ public class WhenGettingACyclicPlaybackQueue {
 			}));
 
 		try {
-			final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
+			final Random random = new Random();
 
-			for (int j = 0; j < 2; j++) {
-				for (int i = 1; i <= 3; i++) {
-					if (j > 0) break;
+			int numFiles;
+			while ((numFiles = random.nextInt(10000)) <= 0);
+
+			final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Stream.range(1, numFiles).map(File::new).collect(Collectors.toList()), 0, 0);
+
+			int iterations;
+			while ((iterations = random.nextInt(100)) <= 0);
+
+			final int stopFile = random.nextInt(numFiles);
+
+			expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
+
+			for (int j = 0; j <= iterations; j++) {
+				for (int i = 1; i < numFiles; i++) {
+					if (j >= iterations && i >= stopFile) {
+						expectedGeneratedFileStream.add(i);
+						break;
+					}
 
 					resolveablePlaybackHandlers.get(new File(i)).resolve();
+
+					expectedGeneratedFileStream.add(i);
 				}
 			}
 
@@ -68,7 +88,7 @@ public class WhenGettingACyclicPlaybackQueue {
 
 	@Test
 	public void thenTheNewPlaybackQueuePlaysUntilCompletion() {
-		assertThat(Stream.of(playedFiles).map(File::getKey).collect(Collectors.toList())).containsExactly(1, 2, 3, 1);
+		assertThat(Stream.of(playedFiles).map(File::getKey).collect(Collectors.toList())).containsExactlyElementsOf(expectedGeneratedFileStream);
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
