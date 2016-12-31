@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPlaybackQueueProvider;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -16,14 +19,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by david on 12/22/16.
@@ -37,22 +40,54 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 	@BeforeClass
 	public static void before() {
 
-		final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory =
-			mock(IPlaybackPreparerTaskFactory.class);
-
-		final ResolveablePlaybackHandler firstFilePlaybackHandler = new ResolveablePlaybackHandler();
-
-		when(playbackPreparerTaskFactory.getPlaybackPreparerTask(new File(1), anyInt()))
-			.thenReturn((resolve, reject, c) -> resolve.withResult(firstFilePlaybackHandler))
-			.thenReturn((resolve, reject, c) -> resolve.withResult(new ResolveablePlaybackHandler()))
-			.thenReturn((resolve, reject, c) -> resolve.withResult(new ResolveablePlaybackHandler()));
+		final Map<IFile, ResolveablePlaybackHandler> resolveablePlaybackHandlers = new HashMap<>();
 
 		final PlaylistPlayerManager playlistPlayerProducer =
-			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> {
+				if (!resolveablePlaybackHandlers.containsKey(file)) {
+					resolveablePlaybackHandlers.put(file, new ResolveablePlaybackHandler());
+				}
 
-		playlistPlayerProducer.startAsCompletable(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
-		firstFilePlaybackHandler.resolve();
-		playlistPlayerProducer.continueAsCyclical();
+				return new MockResolveAction(resolveablePlaybackHandlers.get(file));
+			}));
+
+		final Random random = new Random();
+
+		int numFiles;
+		while ((numFiles = random.nextInt(10000)) < 10);
+
+		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCompletable(Stream.range(1, numFiles).map(File::new).collect(Collectors.toList()), 0, 0);
+
+		int switchPoint;
+		while ((switchPoint = random.nextInt(numFiles)) <= 0);
+
+		for (int i = 1; i <= switchPoint; i++) {
+			resolveablePlaybackHandlers.get(new File(i)).resolve();
+		}
+
+		playlistPlayerManager.continueAsCyclical();
+
+		int iterations;
+		while ((iterations = random.nextInt(100)) <= 0);
+
+		expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
+
+		for (int j = 0; j <= iterations; j++) {
+			for (int i = 1; i < numFiles; i++) {
+				if (j >= iterations && i >= switchPoint) {
+					expectedGeneratedFileStream.add(i);
+					break;
+				}
+
+				resolveablePlaybackHandlers.get(new File(i)).resolve();
+
+				expectedGeneratedFileStream.add(i);
+			}
+		}
+
+		playedFiles = new ArrayList<>(expectedGeneratedFileStream.size());
+
+		playlistPlayerManager.subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 	}
 
 	@Test
@@ -77,7 +112,11 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
-		final IBufferingPlaybackHandler resolveablePlaybackHandler = new ResolveablePlaybackHandler();
+		final IBufferingPlaybackHandler resolveablePlaybackHandler;
+
+		private MockResolveAction(IBufferingPlaybackHandler resolveablePlaybackHandler) {
+			this.resolveablePlaybackHandler = resolveablePlaybackHandler;
+		}
 
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
