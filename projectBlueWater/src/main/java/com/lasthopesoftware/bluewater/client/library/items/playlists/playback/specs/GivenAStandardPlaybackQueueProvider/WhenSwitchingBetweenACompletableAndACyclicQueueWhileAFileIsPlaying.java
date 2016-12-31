@@ -40,6 +40,7 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 	private static IPlaybackHandler expectedPlaybackHandler;
 	private static ArrayList<PositionedPlaybackFile> playedFiles;
 	private static ArrayList<Integer> expectedGeneratedFileStream;
+	private static int iterations;
 
 	@BeforeClass
 	public static void before() {
@@ -49,7 +50,7 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 		final Random random = new Random();
 
 		int numFiles;
-		while ((numFiles = random.nextInt(10)) < 10);
+		while ((numFiles = random.nextInt(10)) < 1);
 
 		int generatedSwitchPoint;
 		while ((generatedSwitchPoint = random.nextInt(numFiles)) <= 0);
@@ -82,7 +83,6 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 
 		playlistPlayerManager.continueAsCyclical();
 
-		int iterations;
 		while ((iterations = random.nextInt(100)) <= 0);
 
 		expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
@@ -107,8 +107,8 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 	}
 
 	@Test
-	public void thenTheCurrentPlaybackHandlerIsNeverClosed() throws IOException {
-		verify(playbackHandler, times(0)).close();
+	public void thenTheCurrentPlaybackHandlerIsClosedTheNormalAmountOfTimes() throws IOException {
+		verify(playbackHandler, times(iterations)).close();
 	}
 
 	@Test
@@ -122,7 +122,7 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 //	}
 
 	@Test
-	public void thenTheNewPlaybackQueuePlaysUntilCompletion() {
+	public void thenTheNewPlaybackQueuePlaysCyclicallyUntilPaused() {
 		assertThat(Stream.of(playedFiles).map(File::getKey).collect(Collectors.toList())).containsExactlyElementsOf(expectedGeneratedFileStream);
 	}
 

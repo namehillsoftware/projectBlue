@@ -13,8 +13,9 @@ import java.util.List;
 import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.disposables.Disposables;
 import io.reactivex.functions.Consumer;
+import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.observers.LambdaObserver;
 
 /**
  * Created by david on 12/17/16.
@@ -58,7 +59,7 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackFileQueue, fileStart);
 
 		if (observer != null)
-			playlistPlayer.subscribeActual(observer);
+			playlistPlayer.subscribe(observer);
 
 		return this;
 	}
@@ -100,7 +101,9 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public Disposable subscribe(Consumer<? super PositionedPlaybackFile> onNext) {
-		return playlistPlayer != null ? playlistPlayer.subscribe(onNext) : Disposables.empty();
+		final LambdaObserver<? super PositionedPlaybackFile> lambdaObserver = new LambdaObserver<>(onNext, Functions.ERROR_CONSUMER, Functions.EMPTY_ACTION, Functions.emptyConsumer());
+		subscribe(lambdaObserver);
+		return lambdaObserver;
 	}
 
 	@Override
