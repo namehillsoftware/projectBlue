@@ -43,6 +43,8 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public IPlaylistPlayerManager continueAsCompletable() {
+		Observable.create(playlistPlayer).firstElement().subscribe(f -> startAsCompletable(this.playlist, f.getPosition(), 0));
+
 		return this;
 	}
 
