@@ -10,8 +10,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
+import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.Observer;
 
 /**
  * Created by david on 12/17/16.
@@ -21,7 +21,6 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	private final IBufferingPlaybackQueuesProvider playbackQueuesProvider;
 	private List<IFile> playlist;
 	private PlaylistPlayer playlistPlayer;
-	private Observer<? super PositionedPlaybackFile> observer;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
 	public PlaylistPlayerManager(IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
@@ -29,14 +28,14 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	}
 
 	@Override
-	public IPlaylistPlayerManager startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart) {
+	public IPlaylistPlayerManager startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart) throws IOException {
 		this.playlist = playlist;
 		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(playlist, playlistStart));
 		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
 	}
 
 	@Override
-	public IPlaylistPlayerManager startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart) {
+	public IPlaylistPlayerManager startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart) throws IOException {
 		this.playlist = playlist;
 		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(playlist, playlistStart));
 		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
@@ -49,10 +48,22 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public IPlaylistPlayerManager continueAsCyclical() {
+		Observable.create(playlistPlayer).subscribe(f -> startAsCyclical(this.playlist, f.getPosition(), 0));
+
 		return this;
 	}
 
-	private IPlaylistPlayerManager getNewPlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileQueue, int fileStart) {
+	private IPlaylistPlayerManager getNewPlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileQueue, int fileStart) throws IOException {
+		if (playlistPlayer != null) {
+			try {
+				playlistPlayer.subscribe(null);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+
+			playlistPlayer.close();
+		}
+
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackFileQueue, fileStart);
 
 		if (emitter != null) {
@@ -91,16 +102,10 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	}
 
 	@Override
-	public void cancel() {
-		if (playlistPlayer != null)
-			playlistPlayer.cancel();
-	}
-
-	@Override
 	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
+		emitter = e;
+
 		if (playlistPlayer != null)
 			playlistPlayer.subscribe(e);
-
-		emitter = e;
 	}
 }

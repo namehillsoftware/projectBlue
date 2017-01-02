@@ -45,13 +45,13 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 	private static int iterations;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws IOException {
 
 		final Map<IFile, ResolveablePlaybackHandler> resolveablePlaybackHandlers = new HashMap<>();
 
 		final Random random = new Random();
 
-		final int numFiles = 1 + random.nextInt(9);
+		final int numFiles = 10 + random.nextInt(90);
 
 		final int generatedSwitchPoint = 1 + random.nextInt(numFiles - 1);
 

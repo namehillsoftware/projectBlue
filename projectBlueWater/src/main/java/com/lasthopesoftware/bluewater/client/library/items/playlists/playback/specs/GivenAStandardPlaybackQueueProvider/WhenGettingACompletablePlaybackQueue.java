@@ -17,6 +17,7 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -35,7 +36,7 @@ public class WhenGettingACompletablePlaybackQueue {
 	private static Collection<PositionedPlaybackFile> playedFiles;
 
 	@BeforeClass
-	public static void setup() {
+	public static void setup() throws IOException {
 		final PlaylistPlayerManager playlistPlayerProducer =
 			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
@@ -13,9 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CancellationException;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 import io.reactivex.ObservableEmitter;
 
@@ -29,7 +27,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
-	private final List<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
+	private final Queue<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayDeque<>();
 
 	private boolean isCompleted;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
@@ -82,16 +80,20 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+
+		if (emitter != null)
+			emitter.onNext(positionedPlaybackFile);
+		else
+			previousPlaybackFileChanges.offer(positionedPlaybackFile);
+
+		if (isCompleted) return;
+
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
 		IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
-
-		previousPlaybackFileChanges.add(positionedPlaybackFile);
-		if (emitter != null)
-			emitter.onNext(positionedPlaybackFile);
 
 		promisedPlayback
 			.then(VoidFunc.running(this::closeAndStartNextFile))
@@ -133,11 +135,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		haltPlayback();
 	}
 
-	@Override
-	public void cancel() {
-		handlePlaybackException(new CancellationException("Playlist playback was cancelled"));
-	}
-
 	private void doCompletion() {
 		if (emitter != null)
 			emitter.onComplete();
@@ -147,10 +144,14 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	@Override
 	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
-		Stream.of(previousPlaybackFileChanges).forEach(e::onNext);
-		if (isCompleted)
-			e.onComplete();
-
 		emitter = e;
+
+		if (emitter == null) return;
+
+		while (previousPlaybackFileChanges.size() > 0)
+			emitter.onNext(previousPlaybackFileChanges.poll());
+
+		if (isCompleted)
+			emitter.onComplete();
 	}
 }
