@@ -90,8 +90,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private void changePlaybackFile(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		if (emitter != null)
-			emitter.onNext(this.positionedPlaybackFile);
+		emitter.onNext(this.positionedPlaybackFile);
 	}
 
 	private void startFilePlayback() {
@@ -126,16 +125,14 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 			doCompletion();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
-			if (emitter != null)
-				emitter.onError(e);
+			emitter.onError(e);
 		}
 	}
 
 	private void handlePlaybackException(Exception exception) {
 		haltPlayback();
 
-		if (emitter != null)
-			emitter.onError(exception);
+		emitter.onError(exception);
 	}
 
 	@Override
@@ -146,7 +143,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private void doCompletion() {
 		this.positionedPlaybackFile = null;
 
-		if (emitter != null)
-			emitter.onComplete();
+		emitter.onComplete();
 	}
 }
