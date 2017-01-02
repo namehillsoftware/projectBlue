@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFileContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -13,10 +13,10 @@ import java.util.Queue;
  * Created by david on 9/26/16.
  */
 class BufferingPlaybackQueue implements IBufferingPlaybackPromiseQueue {
-	private final Queue<PositionedFileContainer> playlist;
+	private final Queue<PositionedFile> playlist;
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 
-	BufferingPlaybackQueue(List<PositionedFileContainer> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
+	BufferingPlaybackQueue(List<PositionedFile> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playlist = new ArrayDeque<>(playlist);
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
@@ -26,10 +26,10 @@ class BufferingPlaybackQueue implements IBufferingPlaybackPromiseQueue {
 		if (playlist.size() == 0)
 			return null;
 
-		final PositionedFileContainer positionedFileContainer = playlist.poll();
+		final PositionedFile positionedFile = playlist.poll();
 
 		return
-			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFileContainer.file, preparedAt))
-				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFileContainer, handler));
+			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
 	}
 }

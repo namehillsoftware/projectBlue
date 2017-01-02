@@ -1,26 +1,33 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 /**
  * Created by david on 9/26/16.
  */
 public class PreparedPlaybackQueue implements
-	IPreparedPlaybackFileQueue,
+	IMutablePreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
 	OneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
+	private static final int bufferingPlaybackQueueSize = 1;
+
 	private final IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue;
 
-	private IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise;
 	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
+
+	private final Queue<IPromise<PositionedBufferingPlaybackHandler>> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
 	public PreparedPlaybackQueue(IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue) {
 		this.nextPreparingMediaPlayerPromiseQueue = nextPreparingMediaPlayerPromiseQueue;
@@ -28,12 +35,10 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
-		currentPreparingPlaybackHandlerPromise = nextPreparingMediaPlayerPromise;
-
-		if (currentPreparingPlaybackHandlerPromise == null)
-			currentPreparingPlaybackHandlerPromise = nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(preparedAt);
-
-		nextPreparingMediaPlayerPromise = null;
+		currentPreparingPlaybackHandlerPromise =
+			bufferingMediaPlayerPromises.size() > 0
+				? bufferingMediaPlayerPromises.poll()
+				: nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(preparedAt);
 
 		return
 			currentPreparingPlaybackHandlerPromise != null ?
@@ -45,13 +50,13 @@ public class PreparedPlaybackQueue implements
 	public PositionedPlaybackFile expectedUsing(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
 		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.running(this));
 
-		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFileContainer.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFileContainer.file);
+		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFile.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile.file);
 	}
 
 	@Override
 	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		if (nextPreparingMediaPlayerPromise == null)
-			nextPreparingMediaPlayerPromise = nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(0);
+		while (bufferingMediaPlayerPromises.size() < bufferingPlaybackQueueSize)
+			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(0));
 	}
 
 	@Override
@@ -59,7 +64,23 @@ public class PreparedPlaybackQueue implements
 		if (currentPreparingPlaybackHandlerPromise != null)
 			currentPreparingPlaybackHandlerPromise.cancel();
 
-		if (nextPreparingMediaPlayerPromise != null)
-			nextPreparingMediaPlayerPromise.cancel();
+		while (bufferingMediaPlayerPromises.size() > 0)
+			bufferingMediaPlayerPromises.poll().cancel();
+	}
+
+	@Override
+	public IMutablePreparedPlaybackFileQueue add(File file) {
+
+		return this;
+	}
+
+	@Override
+	public IMutablePreparedPlaybackFileQueue insert(PositionedFile positionedFile) {
+		return this;
+	}
+
+	@Override
+	public IMutablePreparedPlaybackFileQueue remove(PositionedFile positionedFile) {
+		return this;
 	}
 }

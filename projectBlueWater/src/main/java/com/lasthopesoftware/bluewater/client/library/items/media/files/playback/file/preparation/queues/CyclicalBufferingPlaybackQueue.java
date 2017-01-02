@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFileContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -15,9 +15,9 @@ import java.util.Queue;
 class CyclicalBufferingPlaybackQueue implements IBufferingPlaybackPromiseQueue
 {
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
-	private final Queue<PositionedFileContainer> playlist;
+	private final Queue<PositionedFile> playlist;
 
-	CyclicalBufferingPlaybackQueue(List<PositionedFileContainer> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
+	CyclicalBufferingPlaybackQueue(List<PositionedFile> playlist, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playlist = new ArrayDeque<>(playlist);
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
@@ -27,11 +27,11 @@ class CyclicalBufferingPlaybackQueue implements IBufferingPlaybackPromiseQueue
 		if (playlist.size() == 0)
 			return null;
 
-		final PositionedFileContainer positionedFileContainer = playlist.poll();
-		playlist.offer(positionedFileContainer);
+		final PositionedFile positionedFile = playlist.poll();
+		playlist.offer(positionedFile);
 
 		return
-			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFileContainer.file, preparedAt))
-				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFileContainer, handler));
+			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
 	}
 }
