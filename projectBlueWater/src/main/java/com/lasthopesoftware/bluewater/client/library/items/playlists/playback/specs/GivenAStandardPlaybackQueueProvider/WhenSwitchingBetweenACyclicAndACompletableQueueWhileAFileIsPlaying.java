@@ -102,7 +102,7 @@ public class WhenSwitchingBetweenACyclicAndACompletableQueueWhileAFileIsPlaying 
 
 	@Test
 	public void thenTheCurrentPlaybackHandlerIsClosedTheNormalAmountOfTimes() throws IOException {
-		verify(playbackHandler, times(iterations)).close();
+		verify(playbackHandler, times(1)).close();
 	}
 
 	@Test

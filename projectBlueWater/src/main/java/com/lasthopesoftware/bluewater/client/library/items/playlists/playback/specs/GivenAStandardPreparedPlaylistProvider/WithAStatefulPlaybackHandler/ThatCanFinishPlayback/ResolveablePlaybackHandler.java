@@ -17,6 +17,8 @@ public class ResolveablePlaybackHandler extends StatefulPlaybackHandler {
 	public void resolve() {
 		if (this.resolve != null)
 			this.resolve.withResult(this);
+
+		this.resolve = null;
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Created by david on 12/17/16.
@@ -50,7 +51,13 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public IPlaylistPlayerManager continueAsCyclical() {
-		Observable.create(playlistPlayer).firstElement().subscribe(f -> startAsCyclical(this.playlist, f.getPosition(), 0));
+		Observable
+			.create(playlistPlayer)
+			.firstElement()
+			.subscribe(
+				f -> startAsCyclical(this.playlist, f.getPosition(), 0),
+				Functions.ERROR_CONSUMER,
+				() -> startAsCyclical(this.playlist, 0, 0));
 
 		return this;
 	}

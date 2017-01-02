@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 import io.reactivex.ObservableEmitter;
 
@@ -24,17 +22,26 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
+	private final int preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
-	private final Queue<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayDeque<>();
-
-	private boolean isCompleted;
+	private volatile boolean isStarted;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
 	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
-		setupNextPreparedFile(preparedPosition);
+		this.preparedPosition = preparedPosition;
+	}
+
+	@Override
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
+		emitter = e;
+
+		if (!isStarted) {
+			isStarted = true;
+			setupNextPreparedFile(preparedPosition);
+		}
 	}
 
 	public void pause() {
@@ -85,8 +92,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 		if (emitter != null)
 			emitter.onNext(this.positionedPlaybackFile);
-		else
-			previousPlaybackFileChanges.offer(this.positionedPlaybackFile);
 	}
 
 	private void startFilePlayback() {
@@ -142,21 +147,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		this.positionedPlaybackFile = null;
 
 		if (emitter != null)
-			emitter.onComplete();
-
-		isCompleted = true;
-	}
-
-	@Override
-	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
-		emitter = e;
-
-		if (emitter == null) return;
-
-		while (previousPlaybackFileChanges.size() > 0)
-			emitter.onNext(previousPlaybackFileChanges.poll());
-
-		if (isCompleted)
 			emitter.onComplete();
 	}
 }

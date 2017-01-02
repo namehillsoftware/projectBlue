@@ -11,6 +11,8 @@ import com.lasthopesoftware.promises.IPromise;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.reactivex.Observable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,6 +38,7 @@ public class WhenChangingTheVolume {
 			.thenReturn(positionedPlaybackHandlerContainer);
 
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
+		Observable.create(playlistPlayback).subscribe();
 
 		playlistPlayback.setVolume(0.8f);
 	}

@@ -55,13 +55,14 @@ public class WhenGettingACyclicPlaybackQueue {
 
 		final Random random = new Random();
 
-		int numFiles;
-		while ((numFiles = random.nextInt(10000)) <= 0);
+		final int numFiles = 1 + random.nextInt(9999);
 
 		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCyclical(Stream.range(1, numFiles).map(File::new).collect(Collectors.toList()), 0, 0);
 
-		int iterations;
-		while ((iterations = random.nextInt(100)) <= 0);
+		final int iterations  = 1 + random.nextInt(99);
+
+		playedFiles = new ArrayList<>(iterations * numFiles);
+		Observable.create(playlistPlayerManager).subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 
 		final int stopFile = random.nextInt(numFiles);
 
@@ -79,10 +80,6 @@ public class WhenGettingACyclicPlaybackQueue {
 				expectedGeneratedFileStream.add(i);
 			}
 		}
-
-		playedFiles = new ArrayList<>(expectedGeneratedFileStream.size());
-
-		Observable.create(playlistPlayerManager).subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 	}
 
 	@Test

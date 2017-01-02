@@ -113,11 +113,6 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 	public void thenTheCurrentPlaybackHandlerIsPlaying() {
 		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
-//
-//	@Test
-//	public void thenThePlaybackHandlerRemainsTheSame() {
-//		assertThat(playbackHandler).isEqualTo(expectedPlaybackHandler);
-//	}
 
 	@Test
 	public void thenTheNewPlaybackQueuePlaysCyclicallyUntilPaused() {
