@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
-import android.support.annotation.Nullable;
-
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
@@ -19,13 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import io.reactivex.Observable;
-import io.reactivex.Observer;
+import io.reactivex.ObservableEmitter;
 
 /**
  * Created by david on 11/8/16.
  */
-public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> implements IPlaylistPlayer, Closeable {
+public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
@@ -33,9 +30,9 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 	private float volume;
 
 	private final List<PositionedPlaybackFile> previousPlaybackFileChanges = new ArrayList<>();
-	@Nullable private Observer<? super PositionedPlaybackFile> observer;
 
 	private boolean isCompleted;
+	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
 	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
@@ -93,8 +90,8 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 		IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
 		previousPlaybackFileChanges.add(positionedPlaybackFile);
-		if (observer != null)
-			observer.onNext(positionedPlaybackFile);
+		if (emitter != null)
+			emitter.onNext(positionedPlaybackFile);
 
 		promisedPlayback
 			.then(VoidFunc.running(this::closeAndStartNextFile))
@@ -119,16 +116,16 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 			doCompletion();
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
-			if (observer != null)
-				observer.onError(e);
+			if (emitter != null)
+				emitter.onError(e);
 		}
 	}
 
 	private void handlePlaybackException(Exception exception) {
 		haltPlayback();
 
-		if (observer != null)
-			observer.onError(exception);
+		if (emitter != null)
+			emitter.onError(exception);
 	}
 
 	@Override
@@ -142,18 +139,18 @@ public final class PlaylistPlayer extends Observable<PositionedPlaybackFile> imp
 	}
 
 	private void doCompletion() {
-		if (observer != null)
-			observer.onComplete();
+		if (emitter != null)
+			emitter.onComplete();
 
 		isCompleted = true;
 	}
 
 	@Override
-	protected void subscribeActual(Observer<? super PositionedPlaybackFile> observer) {
-		Stream.of(previousPlaybackFileChanges).forEach(observer::onNext);
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
+		Stream.of(previousPlaybackFileChanges).forEach(e::onNext);
 		if (isCompleted)
-			observer.onComplete();
+			e.onComplete();
 
-		this.observer = observer;
+		emitter = e;
 	}
 }

@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import io.reactivex.Observable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -80,7 +82,7 @@ public class WhenGettingACyclicPlaybackQueue {
 
 		playedFiles = new ArrayList<>(expectedGeneratedFileStream.size());
 
-		playlistPlayerManager.subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
+		Observable.create(playlistPlayerManager).subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 	}
 
 	@Test

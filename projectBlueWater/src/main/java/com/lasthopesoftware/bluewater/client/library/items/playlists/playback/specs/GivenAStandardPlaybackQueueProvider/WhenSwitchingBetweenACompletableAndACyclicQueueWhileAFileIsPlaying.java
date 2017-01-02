@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import io.reactivex.Observable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -49,19 +51,15 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 
 		final Random random = new Random();
 
-		int numFiles;
-		while ((numFiles = random.nextInt(10)) < 1);
+		final int numFiles = 1 + random.nextInt(9);
 
-		int generatedSwitchPoint;
-		while ((generatedSwitchPoint = random.nextInt(numFiles)) <= 0);
-
-		final int switchPoint = generatedSwitchPoint;
+		final int generatedSwitchPoint = 1 + random.nextInt(numFiles - 1);
 
 		final PlaylistPlayerManager playlistPlayerProducer =
 			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> {
 				if (!resolveablePlaybackHandlers.containsKey(file)) {
 					final ResolveablePlaybackHandler resolveablePlaybackHandler = spy(new ResolveablePlaybackHandler());
-					if (file.getKey() == switchPoint)
+					if (file.getKey() == generatedSwitchPoint)
 						playbackHandler = resolveablePlaybackHandler;
 
 					resolveablePlaybackHandlers.put(file, resolveablePlaybackHandler);
@@ -75,7 +73,7 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 
 		playedFiles = new ArrayList<>();
 
-		playlistPlayerManager.subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
+		Observable.create(playlistPlayerManager).subscribe(positionedPlaybackFile -> playedFiles.add(positionedPlaybackFile));
 
 		for (int i = 1; i < generatedSwitchPoint; i++) {
 			resolveablePlaybackHandlers.get(new File(i)).resolve();
@@ -83,13 +81,13 @@ public class WhenSwitchingBetweenACompletableAndACyclicQueueWhileAFileIsPlaying 
 
 		playlistPlayerManager.continueAsCyclical();
 
-		while ((iterations = random.nextInt(100)) <= 0);
+		iterations = random.nextInt(100);
 
 		expectedGeneratedFileStream = new ArrayList<>(iterations * numFiles);
 
 		for (int j = 0; j <= iterations; j++) {
 			for (int i = 1; i < numFiles; i++) {
-				if (j >= iterations && i >= switchPoint) {
+				if (j >= iterations && i >= generatedSwitchPoint) {
 					expectedGeneratedFileStream.add(i);
 					break;
 				}

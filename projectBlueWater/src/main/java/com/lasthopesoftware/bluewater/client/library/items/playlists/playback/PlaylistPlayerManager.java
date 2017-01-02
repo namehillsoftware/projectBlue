@@ -10,12 +10,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
+import io.reactivex.ObservableEmitter;
 import io.reactivex.Observer;
-import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.internal.functions.Functions;
-import io.reactivex.internal.observers.LambdaObserver;
 
 /**
  * Created by david on 12/17/16.
@@ -26,6 +22,7 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	private List<IFile> playlist;
 	private PlaylistPlayer playlistPlayer;
 	private Observer<? super PositionedPlaybackFile> observer;
+	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
 	public PlaylistPlayerManager(IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
 		this.playbackQueuesProvider = playbackQueuesProvider;
@@ -58,8 +55,13 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	private IPlaylistPlayerManager getNewPlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileQueue, int fileStart) {
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackFileQueue, fileStart);
 
-		if (observer != null)
-			playlistPlayer.subscribe(observer);
+		if (emitter != null) {
+			try {
+				playlistPlayer.subscribe(emitter);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		return this;
 	}
@@ -95,21 +97,10 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 	}
 
 	@Override
-	public Single<List<PositionedPlaybackFile>> toList() {
-		return playlistPlayer != null ? playlistPlayer.toList() : Single.never();
-	}
-
-	@Override
-	public Disposable subscribe(Consumer<? super PositionedPlaybackFile> onNext) {
-		final LambdaObserver<? super PositionedPlaybackFile> lambdaObserver = new LambdaObserver<>(onNext, Functions.ERROR_CONSUMER, Functions.EMPTY_ACTION, Functions.emptyConsumer());
-		subscribe(lambdaObserver);
-		return lambdaObserver;
-	}
-
-	@Override
-	public void subscribe(Observer<? super PositionedPlaybackFile> observer) {
-		this.observer = observer;
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
 		if (playlistPlayer != null)
-			playlistPlayer.subscribe(observer);
+			playlistPlayer.subscribe(e);
+
+		emitter = e;
 	}
 }

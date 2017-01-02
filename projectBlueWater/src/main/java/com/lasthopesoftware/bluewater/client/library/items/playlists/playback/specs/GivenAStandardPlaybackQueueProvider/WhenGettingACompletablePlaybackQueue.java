@@ -20,6 +20,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 
+import io.reactivex.Observable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,7 +40,7 @@ public class WhenGettingACompletablePlaybackQueue {
 			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
 
 		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCompletable(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
-		playlistPlayerManager.toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
+		Observable.create(playlistPlayerManager).toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);
 	}
 
 	@Test
