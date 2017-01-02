@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -69,18 +67,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public IMutablePreparedPlaybackFileQueue add(File file) {
-
-		return this;
-	}
-
-	@Override
-	public IMutablePreparedPlaybackFileQueue insert(PositionedFile positionedFile) {
-		return this;
-	}
-
-	@Override
-	public IMutablePreparedPlaybackFileQueue remove(PositionedFile positionedFile) {
+	public IMutablePreparedPlaybackFileQueue updateQueue(IBufferingPlaybackPromiseQueue newBufferingPlaybackPromiseQueue) {
 		return this;
 	}
 }
