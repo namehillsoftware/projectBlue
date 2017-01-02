@@ -75,25 +75,28 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
-			.then(VoidFunc.running(this::startFilePlayback))
+			.then(VoidFunc.running(this::changePlaybackFile))
+			.then(VoidFunc.running(v -> startFilePlayback()))
 			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
-	private void startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+	private void changePlaybackFile(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		if (emitter != null)
-			emitter.onNext(positionedPlaybackFile);
+			emitter.onNext(this.positionedPlaybackFile);
 		else
-			previousPlaybackFileChanges.offer(positionedPlaybackFile);
+			previousPlaybackFileChanges.offer(this.positionedPlaybackFile);
+	}
 
-		if (isCompleted) return;
-
-		this.positionedPlaybackFile = positionedPlaybackFile;
+	private void startFilePlayback() {
+		if (positionedPlaybackFile == null) return;
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
-		IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
+
+		final IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
 		promisedPlayback
 			.then(VoidFunc.running(this::closeAndStartNextFile))
@@ -136,6 +139,8 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void doCompletion() {
+		this.positionedPlaybackFile = null;
+
 		if (emitter != null)
 			emitter.onComplete();
 

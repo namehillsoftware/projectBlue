@@ -48,7 +48,7 @@ public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable 
 
 	@Override
 	public IPlaylistPlayerManager continueAsCyclical() {
-		Observable.create(playlistPlayer).subscribe(f -> startAsCyclical(this.playlist, f.getPosition(), 0));
+		Observable.create(playlistPlayer).firstElement().subscribe(f -> startAsCyclical(this.playlist, f.getPosition(), 0));
 
 		return this;
 	}
