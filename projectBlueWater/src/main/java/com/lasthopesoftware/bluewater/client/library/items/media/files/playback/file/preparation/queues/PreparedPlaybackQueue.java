@@ -52,9 +52,13 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		while (bufferingMediaPlayerPromises.size() < bufferingPlaybackQueueSize)
-			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(0));
+	public synchronized void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+		if (bufferingMediaPlayerPromises.size() >= bufferingPlaybackQueueSize) return;
+
+		final IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise = nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(0);
+		nextPreparingMediaPlayerPromise.then(this);
+
+		bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
 	}
 
 	@Override
