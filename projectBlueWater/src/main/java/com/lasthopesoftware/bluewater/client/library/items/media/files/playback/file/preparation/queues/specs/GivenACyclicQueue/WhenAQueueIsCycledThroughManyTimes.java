@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -58,8 +58,8 @@ public class WhenAQueueIsCycledThroughManyTimes {
 				.of(files)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
-		final BufferingPlaybackQueuesProvider bufferingPlaybackQueuesProvider
-			= new BufferingPlaybackQueuesProvider((file, preparedAt) -> fileActionMap.get(file));
+		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider
+			= new PositionedFileQueueProvider((file, preparedAt) -> fileActionMap.get(file));
 
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCyclicalQueue(files, 0));

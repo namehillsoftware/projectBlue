@@ -2,7 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -21,13 +24,15 @@ public class PreparedPlaybackQueue implements
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
-	private final IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue;
+	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
+	private final IPositionedFileQueue nextPreparingMediaPlayerPromiseQueue;
 
 	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
 	private final Queue<IPromise<PositionedBufferingPlaybackHandler>> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
-	public PreparedPlaybackQueue(IBufferingPlaybackPromiseQueue nextPreparingMediaPlayerPromiseQueue) {
+	public PreparedPlaybackQueue(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory, IPositionedFileQueue nextPreparingMediaPlayerPromiseQueue) {
+		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 		this.nextPreparingMediaPlayerPromiseQueue = nextPreparingMediaPlayerPromiseQueue;
 	}
 
@@ -36,12 +41,22 @@ public class PreparedPlaybackQueue implements
 		currentPreparingPlaybackHandlerPromise =
 			bufferingMediaPlayerPromises.size() > 0
 				? bufferingMediaPlayerPromises.poll()
-				: nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(preparedAt);
+				: getNextPreparingMediaPlayerPromise(preparedAt);
 
 		return
 			currentPreparingPlaybackHandlerPromise != null ?
 				currentPreparingPlaybackHandlerPromise.then(this) :
 				null;
+	}
+
+	private IPromise<PositionedBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
+		final PositionedFile positionedFile = this.nextPreparingMediaPlayerPromiseQueue.poll();
+
+		if (positionedFile == null) return null;
+
+		return
+			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
 	}
 
 	@Override
@@ -55,7 +70,9 @@ public class PreparedPlaybackQueue implements
 	public synchronized void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		if (bufferingMediaPlayerPromises.size() >= bufferingPlaybackQueueSize) return;
 
-		final IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise = nextPreparingMediaPlayerPromiseQueue.getNextPreparingMediaPlayerPromise(0);
+		final IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+		if (nextPreparingMediaPlayerPromise == null) return;
+
 		nextPreparingMediaPlayerPromise.then(this);
 
 		bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
@@ -71,7 +88,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public IMutablePreparedPlaybackFileQueue updateQueue(IBufferingPlaybackPromiseQueue newBufferingPlaybackPromiseQueue) {
+	public IMutablePreparedPlaybackFileQueue updateQueue(IPositionedFileQueue newBufferingPlaybackPromiseQueue) {
 		return this;
 	}
 }

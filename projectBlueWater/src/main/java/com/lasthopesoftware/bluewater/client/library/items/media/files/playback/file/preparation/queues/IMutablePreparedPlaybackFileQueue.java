@@ -5,5 +5,5 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
  */
 
 public interface IMutablePreparedPlaybackFileQueue extends IPreparedPlaybackFileQueue {
-	IMutablePreparedPlaybackFileQueue updateQueue(IBufferingPlaybackPromiseQueue newBufferingPlaybackPromiseQueue);
+	IMutablePreparedPlaybackFileQueue updateQueue(IPositionedFileQueue newBufferingPlaybackPromiseQueue);
 }

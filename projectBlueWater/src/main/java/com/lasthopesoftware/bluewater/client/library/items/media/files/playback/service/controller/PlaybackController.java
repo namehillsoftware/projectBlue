@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IBufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -33,7 +33,7 @@ public class PlaybackController {
 	private OnPlaylistStateControlErrorListener onPlaylistStateControlErrorListener;
 
 	private final ArrayList<IFile> playlist;
-	private final IBufferingPlaybackQueuesProvider playbackQueuesProvider;
+	private final IPositionedFileQueueProvider playbackQueuesProvider;
 
 	private float volume = 1.0f;
 	private boolean isRepeating = false;
@@ -44,7 +44,7 @@ public class PlaybackController {
 	private IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private PositionedPlaybackFile playbackHandlerContainer;
 
-	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
+	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IPositionedFileQueueProvider playbackQueuesProvider) {
 		this.playlist = playlist instanceof ArrayList ? (ArrayList<IFile>)playlist : new ArrayList<>(playlist);
 
 		this.playbackQueuesProvider = playbackQueuesProvider;
@@ -245,7 +245,7 @@ public class PlaybackController {
 		closePreparedPlaybackFileProvider();
 
 		preparedPlaybackFileProvider =
-			new PreparedPlaybackQueue(!isRepeating ? playbackQueuesProvider.getCompletableQueue(playlist, newPosition) : playbackQueuesProvider.getCyclicalQueue(playlist, newPosition));
+			new PreparedPlaybackQueue(null, !isRepeating ? playbackQueuesProvider.getCompletableQueue(playlist, newPosition) : playbackQueuesProvider.getCyclicalQueue(playlist, newPosition));
 	}
 
 	private void setupNextPreparedFile() {

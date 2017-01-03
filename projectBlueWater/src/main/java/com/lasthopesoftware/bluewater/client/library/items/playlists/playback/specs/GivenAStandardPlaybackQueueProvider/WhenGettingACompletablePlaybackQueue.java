@@ -5,7 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerManager;
 import com.lasthopesoftware.promises.ExpectedPromise;
@@ -38,7 +38,7 @@ public class WhenGettingACompletablePlaybackQueue {
 	@BeforeClass
 	public static void setup() throws IOException {
 		final PlaylistPlayerManager playlistPlayerProducer =
-			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> new MockResolveAction()));
+			new PlaylistPlayerManager(new PositionedFileQueueProvider((file, preparedAt) -> new MockResolveAction()));
 
 		final IPlaylistPlayerManager playlistPlayerManager = playlistPlayerProducer.startAsCompletable(Arrays.asList(new File(1), new File(2), new File(3)), 0, 0);
 		Observable.create(playlistPlayerManager).toList().subscribe(positionedPlaybackFiles -> playedFiles = positionedPlaybackFiles);

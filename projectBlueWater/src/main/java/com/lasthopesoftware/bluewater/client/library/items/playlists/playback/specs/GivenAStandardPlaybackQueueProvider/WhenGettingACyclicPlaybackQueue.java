@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.BufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayerManager;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
@@ -44,7 +44,7 @@ public class WhenGettingACyclicPlaybackQueue {
 		final Map<IFile, ResolveablePlaybackHandler> resolveablePlaybackHandlers = new HashMap<>();
 
 		final PlaylistPlayerManager playlistPlayerProducer =
-			new PlaylistPlayerManager(new BufferingPlaybackQueuesProvider((file, preparedAt) -> {
+			new PlaylistPlayerManager(new PositionedFileQueueProvider((file, preparedAt) -> {
 				if (!resolveablePlaybackHandlers.containsKey(file)) {
 					resolveablePlaybackHandlers.put(file, new ResolveablePlaybackHandler());
 				}

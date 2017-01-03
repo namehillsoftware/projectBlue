@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IBufferingPlaybackQueuesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 
@@ -18,26 +19,28 @@ import io.reactivex.ObservableEmitter;
  */
 public class PlaylistPlayerManager implements IPlaylistPlayerManager, Closeable {
 
-	private final IBufferingPlaybackQueuesProvider playbackQueuesProvider;
+	private final IPositionedFileQueueProvider playbackQueuesProvider;
+	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
 	private List<IFile> playlist;
 	private PlaylistPlayer playlistPlayer;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
-	public PlaylistPlayerManager(IBufferingPlaybackQueuesProvider playbackQueuesProvider) {
+	public PlaylistPlayerManager(IPositionedFileQueueProvider playbackQueuesProvider, IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
 		this.playbackQueuesProvider = playbackQueuesProvider;
+		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 	}
 
 	@Override
 	public IPlaylistPlayerManager startAsCompletable(List<IFile> playlist, int playlistStart, int fileStart) throws IOException {
 		this.playlist = playlist;
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCompletableQueue(playlist, playlistStart));
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackPreparerTaskFactory, playbackQueuesProvider.getCompletableQueue(playlist, playlistStart));
 		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
 	}
 
 	@Override
 	public IPlaylistPlayerManager startAsCyclical(List<IFile> playlist, int playlistStart, int fileStart) throws IOException {
 		this.playlist = playlist;
-		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackQueuesProvider.getCyclicalQueue(playlist, playlistStart));
+		final IPreparedPlaybackFileQueue playbackFileQueue = new PreparedPlaybackQueue(playbackPreparerTaskFactory, playbackQueuesProvider.getCyclicalQueue(playlist, playlistStart));
 		return getNewPlaylistPlayer(playbackFileQueue, fileStart);
 	}
 

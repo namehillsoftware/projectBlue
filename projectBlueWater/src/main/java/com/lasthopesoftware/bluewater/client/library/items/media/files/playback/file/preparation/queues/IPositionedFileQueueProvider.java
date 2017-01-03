@@ -8,7 +8,7 @@ import java.util.List;
  * Created by david on 11/1/16.
  */
 
-public interface IBufferingPlaybackQueuesProvider {
-	IBufferingPlaybackPromiseQueue getCompletableQueue(List<IFile> playlist, int startingAt);
-	IBufferingPlaybackPromiseQueue getCyclicalQueue(List<IFile> playlist, int startingAt);
+public interface IPositionedFileQueueProvider {
+	IPositionedFileQueue getCompletableQueue(List<IFile> playlist, int startingAt);
+	IPositionedFileQueue getCyclicalQueue(List<IFile> playlist, int startingAt);
 }
