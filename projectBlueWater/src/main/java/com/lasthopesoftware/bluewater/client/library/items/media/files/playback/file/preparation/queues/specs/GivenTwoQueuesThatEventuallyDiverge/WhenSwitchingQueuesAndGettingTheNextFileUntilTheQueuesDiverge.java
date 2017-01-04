@@ -42,7 +42,8 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 				new PositionedFile(2, new File(2)),
 				new PositionedFile(3, new File(3)),
 				new PositionedFile(4, new File(4)),
-				new PositionedFile(5, new File(5)));
+				new PositionedFile(5, new File(5)),
+				null);
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
@@ -56,11 +57,11 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		when(newPositionedFileQueue.poll())
 			.thenReturn(
 				new PositionedFile(3, new File(3)),
-				new PositionedFile(6, new File(6)));
+				new PositionedFile(6, new File(6)),
+				null);
 
 		queue.updateQueue(newPositionedFileQueue);
 
-		queue.promiseNextPreparedPlaybackFile(0);
 		queue.promiseNextPreparedPlaybackFile(0);
 		queue.promiseNextPreparedPlaybackFile(0).then(file -> positionedPlaybackFile = file);
 	}
@@ -81,7 +82,9 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 	private static class BufferingStatefulPlaybackHandler extends StatefulPlaybackHandler {
 		@Override
 		public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
-			return new ExpectedPromise<>(() -> this);
+			return new ExpectedPromise<>(() -> {
+				return BufferingStatefulPlaybackHandler.this;
+			});
 		}
 	}
 }
