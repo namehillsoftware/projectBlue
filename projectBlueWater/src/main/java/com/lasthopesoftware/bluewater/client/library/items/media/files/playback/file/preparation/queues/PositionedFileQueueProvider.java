@@ -24,7 +24,7 @@ public class PositionedFileQueueProvider implements IPositionedFileQueueProvider
 		for (int i = 0; i < endingPosition; i++)
 			truncatedList.add(new PositionedFile(i, playlist.get(i)));
 
-		return new CyclicalPositionedFileQueue(truncatedList);
+		return new RepeatingPositionedFileQueue(truncatedList);
 	}
 
 	private static List<PositionedFile> getTruncatedList(List<IFile> playlist, int startingAt) {

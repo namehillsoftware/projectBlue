@@ -8,4 +8,5 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 
 public interface IPositionedFileQueue {
 	PositionedFile poll();
+	PositionedFile peek();
 }

@@ -20,4 +20,9 @@ class CompletingPositionedFileQueue implements IPositionedFileQueue {
 	public PositionedFile poll() {
 		return playlist.size() > 0 ? playlist.poll() : null;
 	}
+
+	@Override
+	public PositionedFile peek() {
+		return playlist.size() > 0 ? playlist.peek() : null;
+	}
 }

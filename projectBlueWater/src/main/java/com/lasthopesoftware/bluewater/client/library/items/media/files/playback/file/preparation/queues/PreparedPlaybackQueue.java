@@ -13,6 +13,7 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by david on 9/26/16.
@@ -24,13 +25,14 @@ public class PreparedPlaybackQueue implements
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
+	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
+
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
-	private final IPositionedFileQueue positionedFileQueue;
+	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
-	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
+	private IPositionedFileQueue positionedFileQueue;
 
-	private final Queue<IPromise<PositionedBufferingPlaybackHandler>> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
-	private IPositionedFileQueue newPositionedFileQueue;
+	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
 	public PreparedPlaybackQueue(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
@@ -38,9 +40,45 @@ public class PreparedPlaybackQueue implements
 	}
 
 	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
-		this.newPositionedFileQueue = newPositionedFileQueue;
+		queueUpdateLock.writeLock().lock();
+		try {
+			if (bufferingMediaPlayerPromises.size() == 0) {
+				this.positionedFileQueue = newPositionedFileQueue;
+				return this;
+			}
 
-		return this;
+			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
+
+			while (bufferingMediaPlayerPromises.size() > 0) {
+				final PositionedFile positionedFile = newPositionedFileQueue.poll();
+				final PositionedPreparingFile positionedPreparingFile = bufferingMediaPlayerPromises.poll();
+
+				if (positionedFile == null) break;
+
+				if (positionedFile.equals(positionedPreparingFile.positionedFile)) {
+					newPositionedPreparingMediaPlayerPromises.offer(positionedPreparingFile);
+					continue;
+				}
+
+				while (bufferingMediaPlayerPromises.size() > 0)
+					bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
+
+				enqueuePositionedPreparingFile(
+					new PositionedPreparingFile(
+						positionedFile,
+						new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, 0))
+							.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler))));
+			}
+
+			while (newPositionedPreparingMediaPlayerPromises.size() > 0)
+				bufferingMediaPlayerPromises.offer(newPositionedPreparingMediaPlayerPromises.poll());
+
+			this.positionedFileQueue = newPositionedFileQueue;
+
+			return this;
+		} finally {
+			queueUpdateLock.writeLock().unlock();
+		}
 	}
 
 	@Override
@@ -52,18 +90,20 @@ public class PreparedPlaybackQueue implements
 
 		return
 			currentPreparingPlaybackHandlerPromise != null ?
-				currentPreparingPlaybackHandlerPromise.then(this) :
+				currentPreparingPlaybackHandlerPromise.positionedBufferingPlaybackHandlerPromise.then(this) :
 				null;
 	}
 
-	private IPromise<PositionedBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
+	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
 		final PositionedFile positionedFile = positionedFileQueue.poll();
 
 		if (positionedFile == null) return null;
 
 		return
-			new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
-				.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
+			new PositionedPreparingFile(
+				positionedFile,
+				new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler)));
 	}
 
 	@Override
@@ -77,20 +117,33 @@ public class PreparedPlaybackQueue implements
 	public synchronized void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		if (bufferingMediaPlayerPromises.size() >= bufferingPlaybackQueueSize) return;
 
-		final IPromise<PositionedBufferingPlaybackHandler> nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
-		if (nextPreparingMediaPlayerPromise == null) return;
+		final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+		if (nextPreparingMediaPlayerPromise != null)
+			enqueuePositionedPreparingFile(nextPreparingMediaPlayerPromise);
+	}
 
-		nextPreparingMediaPlayerPromise.then(this);
+	private void enqueuePositionedPreparingFile(PositionedPreparingFile positionedPreparingFile) {
+		positionedPreparingFile.positionedBufferingPlaybackHandlerPromise.then(this);
 
-		bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
+		bufferingMediaPlayerPromises.offer(positionedPreparingFile);
 	}
 
 	@Override
 	public void close() throws IOException {
 		if (currentPreparingPlaybackHandlerPromise != null)
-			currentPreparingPlaybackHandlerPromise.cancel();
+			currentPreparingPlaybackHandlerPromise.positionedBufferingPlaybackHandlerPromise.cancel();
 
 		while (bufferingMediaPlayerPromises.size() > 0)
-			bufferingMediaPlayerPromises.poll().cancel();
+			bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
+	}
+
+	private static class PositionedPreparingFile {
+		final PositionedFile positionedFile;
+		final IPromise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise;
+
+		private PositionedPreparingFile(PositionedFile positionedFile, IPromise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise) {
+			this.positionedFile = positionedFile;
+			this.positionedBufferingPlaybackHandlerPromise = positionedBufferingPlaybackHandlerPromise;
+		}
 	}
 }

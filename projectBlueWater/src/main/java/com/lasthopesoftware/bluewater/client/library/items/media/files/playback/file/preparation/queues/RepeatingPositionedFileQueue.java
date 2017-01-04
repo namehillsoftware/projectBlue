@@ -9,11 +9,11 @@ import java.util.Queue;
 /**
  * Created by david on 9/26/16.
  */
-class CyclicalPositionedFileQueue implements IPositionedFileQueue
+class RepeatingPositionedFileQueue implements IPositionedFileQueue
 {
 	private final Queue<PositionedFile> playlist;
 
-	CyclicalPositionedFileQueue(List<PositionedFile> playlist) {
+	RepeatingPositionedFileQueue(List<PositionedFile> playlist) {
 		this.playlist = new ArrayDeque<>(playlist);
 	}
 
@@ -26,5 +26,10 @@ class CyclicalPositionedFileQueue implements IPositionedFileQueue
 		playlist.offer(positionedFile);
 
 		return positionedFile;
+	}
+
+	@Override
+	public PositionedFile peek() {
+		return playlist.size() > 0 ? playlist.peek() : null;
 	}
 }
