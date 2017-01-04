@@ -7,9 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
-import com.lasthopesoftware.promises.ExpectedPromise;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -75,16 +72,8 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			resolve.withResult(new BufferingStatefulPlaybackHandler());
+			resolve.withResult(new FakeBufferingStatefulPlaybackHandler());
 		}
 	}
 
-	private static class BufferingStatefulPlaybackHandler extends StatefulPlaybackHandler {
-		@Override
-		public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
-			return new ExpectedPromise<>(() -> {
-				return BufferingStatefulPlaybackHandler.this;
-			});
-		}
-	}
 }

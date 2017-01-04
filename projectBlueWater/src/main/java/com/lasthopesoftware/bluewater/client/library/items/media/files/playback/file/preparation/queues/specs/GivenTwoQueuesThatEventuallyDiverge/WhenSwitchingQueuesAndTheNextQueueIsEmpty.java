@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -36,7 +35,8 @@ public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 				new PositionedFile(2, new File(2)),
 				new PositionedFile(3, new File(3)),
 				new PositionedFile(4, new File(4)),
-				new PositionedFile(5, new File(5)));
+				new PositionedFile(5, new File(5)),
+				null);
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
@@ -62,7 +62,7 @@ public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			resolve.withResult(new StatefulPlaybackHandler());
+			resolve.withResult(new FakeBufferingStatefulPlaybackHandler());
 		}
 	}
 }
