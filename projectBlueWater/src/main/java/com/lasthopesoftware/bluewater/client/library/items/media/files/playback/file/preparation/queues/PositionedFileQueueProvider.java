@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 
 import java.util.ArrayList;
@@ -12,12 +11,6 @@ import java.util.List;
  */
 public class PositionedFileQueueProvider implements IPositionedFileQueueProvider {
 
-	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
-
-	public PositionedFileQueueProvider(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory) {
-		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
-	}
-	
 	@Override
 	public IPositionedFileQueue getCompletableQueue(List<IFile> playlist, int startingAt) {
 		return new CompletingPositionedFileQueue(getTruncatedList(playlist, startingAt));

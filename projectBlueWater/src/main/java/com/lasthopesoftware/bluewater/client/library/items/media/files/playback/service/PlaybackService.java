@@ -40,8 +40,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
@@ -491,11 +489,12 @@ public class PlaybackService extends Service implements
 					.then(playlist -> {
 						final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
 						final PositionedFileQueueProvider bufferingPlaybackQueuesProvider =
-							new PositionedFileQueueProvider(
-								new MediaPlayerPlaybackPreparerTaskFactory(
-									uriProvider,
-									new MediaPlayerInitializer(PlaybackService.this,
-										savedLibrary)));
+							new PositionedFileQueueProvider();
+
+//						new MediaPlayerPlaybackPreparerTaskFactory(
+//							uriProvider,
+//							new MediaPlayerInitializer(PlaybackService.this,
+//								savedLibrary)
 
 						playlistController = new PlaybackController(playlist, bufferingPlaybackQueuesProvider);
 

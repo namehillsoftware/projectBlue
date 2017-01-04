@@ -29,4 +29,13 @@ public class PositionedPlaybackFile extends File {
 	public int hashCode() {
 		return super.hashCode() * 31 + position;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof PositionedPlaybackFile)) return false;
+
+		final PositionedPlaybackFile other = (PositionedPlaybackFile)obj;
+
+		return position == other.position && super.equals(obj);
+	}
 }

@@ -6,6 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
  * Created by david on 11/16/16.
  */
 
-interface IPositionedFileQueue {
+public interface IPositionedFileQueue {
 	PositionedFile poll();
 }

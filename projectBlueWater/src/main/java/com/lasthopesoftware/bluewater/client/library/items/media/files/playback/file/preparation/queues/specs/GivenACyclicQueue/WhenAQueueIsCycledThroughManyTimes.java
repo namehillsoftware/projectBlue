@@ -59,10 +59,12 @@ public class WhenAQueueIsCycledThroughManyTimes {
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
 		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider
-			= new PositionedFileQueueProvider((file, preparedAt) -> fileActionMap.get(file));
+			= new PositionedFileQueueProvider();
 
 		final IPreparedPlaybackFileQueue queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCyclicalQueue(files, 0));
+			new PreparedPlaybackQueue(
+				(file, preparedAt) -> fileActionMap.get(file),
+				bufferingPlaybackQueuesProvider.getCyclicalQueue(files, 0));
 
 		expectedCycles = random.nextInt(100);
 

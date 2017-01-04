@@ -58,10 +58,12 @@ public class WhenTheQueueIsConsumed {
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
 		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider
-			= new PositionedFileQueueProvider((file, preparedAt) -> fileActionMap.get(file));
+			= new PositionedFileQueueProvider();
 
 		final IPreparedPlaybackFileQueue queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCompletableQueue(files, 0));
+			new PreparedPlaybackQueue(
+				(file, preparedAt) -> fileActionMap.get(file),
+				bufferingPlaybackQueuesProvider.getCompletableQueue(files, 0));
 
 		final int expectedCycles = random.nextInt(100);
 

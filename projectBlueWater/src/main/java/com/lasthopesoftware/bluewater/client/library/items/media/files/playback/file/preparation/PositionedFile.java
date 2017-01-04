@@ -14,4 +14,15 @@ public class PositionedFile {
 		this.playlistPosition = playlistPosition;
 		this.file = file;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof PositionedFile)) return false;
+
+		final PositionedFile other = (PositionedFile)obj;
+
+		return
+			playlistPosition == other.playlistPosition &&
+			file.equals(other.file);
+	}
 }

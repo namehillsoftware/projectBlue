@@ -51,12 +51,14 @@ public class WhenTheQueueIsStarted {
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
 		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider
-			= new PositionedFileQueueProvider((file, preparedAt) -> fileActionMap.get(file));
+			= new PositionedFileQueueProvider();
 
 		startPosition = random.nextInt(numberOfFiles);
 
 		queue =
-			new PreparedPlaybackQueue(bufferingPlaybackQueuesProvider.getCompletableQueue(files, startPosition));
+			new PreparedPlaybackQueue(
+				(file, preparedAt) -> fileActionMap.get(file),
+				bufferingPlaybackQueuesProvider.getCompletableQueue(files, startPosition));
 	}
 
 	@Test

@@ -18,22 +18,29 @@ import java.util.Queue;
  * Created by david on 9/26/16.
  */
 public class PreparedPlaybackQueue implements
-	IMutablePreparedPlaybackFileQueue,
+	IPreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
 	OneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
 	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
-	private final IPositionedFileQueue nextPreparingMediaPlayerPromiseQueue;
+	private final IPositionedFileQueue positionedFileQueue;
 
 	private IPromise<PositionedBufferingPlaybackHandler> currentPreparingPlaybackHandlerPromise;
 
 	private final Queue<IPromise<PositionedBufferingPlaybackHandler>> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
+	private IPositionedFileQueue newPositionedFileQueue;
 
-	public PreparedPlaybackQueue(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory, IPositionedFileQueue nextPreparingMediaPlayerPromiseQueue) {
+	public PreparedPlaybackQueue(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
-		this.nextPreparingMediaPlayerPromiseQueue = nextPreparingMediaPlayerPromiseQueue;
+		this.positionedFileQueue = positionedFileQueue;
+	}
+
+	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
+		this.newPositionedFileQueue = newPositionedFileQueue;
+
+		return this;
 	}
 
 	@Override
@@ -50,7 +57,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	private IPromise<PositionedBufferingPlaybackHandler> getNextPreparingMediaPlayerPromise(int preparedAt) {
-		final PositionedFile positionedFile = this.nextPreparingMediaPlayerPromiseQueue.poll();
+		final PositionedFile positionedFile = positionedFileQueue.poll();
 
 		if (positionedFile == null) return null;
 
@@ -85,10 +92,5 @@ public class PreparedPlaybackQueue implements
 
 		while (bufferingMediaPlayerPromises.size() > 0)
 			bufferingMediaPlayerPromises.poll().cancel();
-	}
-
-	@Override
-	public IMutablePreparedPlaybackFileQueue updateQueue(IPositionedFileQueue newBufferingPlaybackPromiseQueue) {
-		return this;
 	}
 }
