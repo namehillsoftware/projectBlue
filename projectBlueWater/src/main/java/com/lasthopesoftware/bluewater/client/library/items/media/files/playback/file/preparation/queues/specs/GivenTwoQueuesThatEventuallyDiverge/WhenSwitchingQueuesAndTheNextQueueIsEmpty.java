@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenTwoQueuesThatEventuallyDiverge;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
+import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -21,18 +21,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Created by david on 1/3/17.
+ * Created by david on 1/4/17.
  */
 
-public class WhenSwitchingQueuesAndGettingTheNextFile {
-
-	private static PositionedPlaybackFile positionedPlaybackFile;
-	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
+public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
+	private static IPromise<PositionedPlaybackFile> nextPreparedPlaybackFilePromise;
 
 	@BeforeClass
 	public static void before() {
-		expectedPositionedPlaybackFile = new PositionedPlaybackFile(3, mock(IPlaybackHandler.class), new File(3));
-
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
 			.thenReturn(
@@ -51,22 +47,15 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 		queue.promiseNextPreparedPlaybackFile(0);
 
 		final IPositionedFileQueue newPositionedFileQueue = mock(IPositionedFileQueue.class);
-		when(newPositionedFileQueue.poll())
-			.thenReturn(
-				new PositionedFile(3, new File(3)),
-				new PositionedFile(4, new File(4)),
-				new PositionedFile(6, new File(6)));
 
 		queue.updateQueue(newPositionedFileQueue);
 
-		queue
-			.promiseNextPreparedPlaybackFile(0)
-			.then(file -> positionedPlaybackFile = file);
+		nextPreparedPlaybackFilePromise = queue.promiseNextPreparedPlaybackFile(0);
 	}
 
 	@Test
 	public void thenTheQueueContinues() {
-		assertThat(positionedPlaybackFile).isEqualTo(expectedPositionedPlaybackFile);
+		assertThat(nextPreparedPlaybackFilePromise).isNull();
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {

@@ -42,36 +42,34 @@ public class PreparedPlaybackQueue implements
 	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
 		queueUpdateLock.writeLock().lock();
 		try {
-			if (bufferingMediaPlayerPromises.size() == 0) {
-				this.positionedFileQueue = newPositionedFileQueue;
-				return this;
-			}
-
 			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
 			while (bufferingMediaPlayerPromises.size() > 0) {
 				final PositionedFile positionedFile = newPositionedFileQueue.poll();
 				final PositionedPreparingFile positionedPreparingFile = bufferingMediaPlayerPromises.poll();
 
-				if (positionedFile == null) break;
-
-				if (positionedFile.equals(positionedPreparingFile.positionedFile)) {
+				if (positionedPreparingFile.positionedFile.equals(positionedFile)) {
 					newPositionedPreparingMediaPlayerPromises.offer(positionedPreparingFile);
 					continue;
 				}
 
+				positionedPreparingFile.positionedBufferingPlaybackHandlerPromise.cancel();
 				while (bufferingMediaPlayerPromises.size() > 0)
 					bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
 
-				enqueuePositionedPreparingFile(
-					new PositionedPreparingFile(
-						positionedFile,
-						new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, 0))
-							.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler))));
-			}
+				while (newPositionedPreparingMediaPlayerPromises.size() > 0)
+					bufferingMediaPlayerPromises.offer(newPositionedPreparingMediaPlayerPromises.poll());
 
-			while (newPositionedPreparingMediaPlayerPromises.size() > 0)
-				bufferingMediaPlayerPromises.offer(newPositionedPreparingMediaPlayerPromises.poll());
+				if (positionedFile != null) {
+					enqueuePositionedPreparingFile(
+						new PositionedPreparingFile(
+							positionedFile,
+							new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, 0))
+								.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler))));
+				}
+
+				break;
+			}
 
 			this.positionedFileQueue = newPositionedFileQueue;
 
