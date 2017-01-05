@@ -40,7 +40,8 @@ public class PreparedPlaybackQueue implements
 	}
 
 	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
-		queueUpdateLock.writeLock().lock();
+		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		writeLock.lock();
 		try {
 			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
@@ -71,11 +72,11 @@ public class PreparedPlaybackQueue implements
 				break;
 			}
 
-			this.positionedFileQueue = newPositionedFileQueue;
+			positionedFileQueue = newPositionedFileQueue;
 
 			return this;
 		} finally {
-			queueUpdateLock.writeLock().unlock();
+			writeLock.unlock();
 		}
 	}
 
@@ -93,20 +94,23 @@ public class PreparedPlaybackQueue implements
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
-		queueUpdateLock.writeLock().lock();
+		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		writeLock.lock();
+
+		final PositionedFile positionedFile;
 		try {
-			final PositionedFile positionedFile = positionedFileQueue.poll();
-
-			if (positionedFile == null) return null;
-
-			return
-				new PositionedPreparingFile(
-					positionedFile,
-					new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
-						.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler)));
+			positionedFile = positionedFileQueue.poll();
 		} finally {
-			queueUpdateLock.writeLock().unlock();
+			writeLock.unlock();
 		}
+
+		if (positionedFile == null) return null;
+
+		return
+			new PositionedPreparingFile(
+				positionedFile,
+				new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler)));
 	}
 
 	@Override
@@ -118,26 +122,28 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public synchronized void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		queueUpdateLock.readLock().lock();
+		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
+		readLock.lock();
 		try {
 			if (bufferingMediaPlayerPromises.size() >= bufferingPlaybackQueueSize) return;
-
-			final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
-			if (nextPreparingMediaPlayerPromise != null)
-				enqueuePositionedPreparingFile(nextPreparingMediaPlayerPromise);
 		} finally {
-			queueUpdateLock.readLock().unlock();
+			readLock.unlock();
 		}
+
+		final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+		if (nextPreparingMediaPlayerPromise != null)
+			enqueuePositionedPreparingFile(nextPreparingMediaPlayerPromise);
 	}
 
 	private void enqueuePositionedPreparingFile(PositionedPreparingFile positionedPreparingFile) {
 		positionedPreparingFile.positionedBufferingPlaybackHandlerPromise.then(this);
 
-		queueUpdateLock.writeLock().lock();
+		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		writeLock.lock();
 		try {
 			bufferingMediaPlayerPromises.offer(positionedPreparingFile);
 		} finally {
-			queueUpdateLock.writeLock().unlock();
+			writeLock.unlock();
 		}
 	}
 
@@ -146,12 +152,13 @@ public class PreparedPlaybackQueue implements
 		if (currentPreparingPlaybackHandlerPromise != null)
 			currentPreparingPlaybackHandlerPromise.positionedBufferingPlaybackHandlerPromise.cancel();
 
-		queueUpdateLock.writeLock().lock();
+		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		writeLock.lock();
 		try {
 			while (bufferingMediaPlayerPromises.size() > 0)
 				bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
 		} finally {
-			queueUpdateLock.writeLock().unlock();
+			writeLock.unlock();
 		}
 	}
 
