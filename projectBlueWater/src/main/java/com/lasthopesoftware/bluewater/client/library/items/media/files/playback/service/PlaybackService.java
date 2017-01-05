@@ -65,6 +65,7 @@ import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
+import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -787,36 +788,31 @@ public class PlaybackService extends Service implements
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			LibrarySession.GetActiveLibrary(this, library -> {
-				if (library == null) return;
+			LibrarySession
+				.GetActiveLibrary(this)
+				.thenPromise(library -> {
+					if (library == null) return new ExpectedPromise<>(null);
 
-				// It could take quite a while to split string and put it back together, so let's do it
-				// in a background task
-				(new AsyncTask<Void, Void, String>() {
-					@Override
-					protected String doInBackground(Void... params) {
-						synchronized (syncPlaylistControllerObject) {
-							if (playlistController != null) {
-								playlistController.removeFile(filePosition);
-								return playlistController.getPlaylistString();
-							}
-						}
+					// It could take quite a while to split string and put it back together, so let's do it
+					// in a background task
+					return
+						new DispatchedPromise<>(() -> {
+//							synchronized (syncPlaylistControllerObject) {
+//								if (playlistController != null) {
+//									playlistController.removeFile(filePosition);
+//									return playlistController.getPlaylistString();
+//								}
+//							}
 
-						final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
-						savedTracks.remove(filePosition);
-						return FileStringListUtilities.serializeFileStringList(savedTracks);
-					}
+							final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
+							savedTracks.remove(filePosition);
+							return FileStringListUtilities.serializeFileStringList(savedTracks);
+						}, AsyncTask.THREAD_POOL_EXECUTOR).thenPromise(savedTracks -> {
+							library.setSavedTracksString(s);
 
-					@Override
-					protected void onPostExecute(String s) {
-						super.onPostExecute(s);
-
-						library.setSavedTracksString(s);
-
-						LibrarySession.SaveLibrary(PlaybackService.this, library);
-					}
-				}).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-			});
+							return LibrarySession.SaveLibrary(PlaybackService.this, library);
+						});
+				});
 		}
 	}
 	
