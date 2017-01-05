@@ -121,7 +121,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public synchronized void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
 		readLock.lock();
 		try {

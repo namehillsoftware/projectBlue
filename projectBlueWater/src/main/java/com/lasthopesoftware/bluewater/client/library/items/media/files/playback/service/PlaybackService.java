@@ -34,7 +34,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -67,6 +66,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -579,10 +579,12 @@ public class PlaybackService extends Service implements
 			remoteControlClient = new RemoteControlClient(mediaPendingIntent);
 			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
 			remoteControlClient.setTransportControlFlags(
-					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-							RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-							RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-							RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+				RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+				RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+				RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+				RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 		}
 		
 		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient);
@@ -761,20 +763,22 @@ public class PlaybackService extends Service implements
 			final int fileKey = intent.getIntExtra(Action.Bag.fileKey, -1);
 			if (fileKey < 0) return;
 
-			synchronized (syncPlaylistControllerObject) {
-				if (playlistController != null)
-					playlistController.addFile(new File(fileKey));
-			}
+			LibrarySession
+				.GetActiveLibrary(this)
+				.thenPromise((result) -> {
+					if (result == null) return new Promise<>((resolve, reject) -> resolve.withResult(null));
 
-			LibrarySession.GetActiveLibrary(this, result -> {
-				if (result == null) return;
-				String newFileString = result.getSavedTracksString();
-				if (!newFileString.endsWith(";")) newFileString += ";";
-				newFileString += fileKey + ";";
-				result.setSavedTracksString(newFileString);
+					String newFileString = result.getSavedTracksString();
+					if (!newFileString.endsWith(";")) newFileString += ";";
+					newFileString += fileKey + ";";
+					result.setSavedTracksString(newFileString);
 
-				LibrarySession.SaveLibrary(PlaybackService.this, result, result1 -> Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show());
-			});
+					return LibrarySession.SaveLibrary(this, result);
+				})
+				.then(library -> {
+					Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
+					return library;
+				});
 
 			return;
 		}
