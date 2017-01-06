@@ -22,7 +22,6 @@ import android.media.RemoteControlClient;
 import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -63,11 +62,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -504,7 +501,7 @@ public class PlaybackService extends Service implements
 					return LibrarySession.SaveLibrary(this, result);
 				})
 				.thenPromise(savedLibrary ->
-					new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(savedLibrary.getSavedTracksString()))
+					FileStringListUtilities.promiseParsedFileStringList(savedLibrary.getSavedTracksString())
 						.then(playlist -> {
 							final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
 							final PositionedFileQueueProvider bufferingPlaybackQueuesProvider =
@@ -855,27 +852,20 @@ public class PlaybackService extends Service implements
 			LibrarySession
 				.GetActiveLibrary(this)
 				.thenPromise(library -> {
-					if (library == null) return new ExpectedPromise<>(null);
-
 					// It could take quite a while to split string and put it back together, so let's do it
 					// in a background task
 					return
-						new DispatchedPromise<>(() -> {
-//							synchronized (syncPlaylistControllerObject) {
-//								if (playlistController != null) {
-//									playlistController.removeFile(filePosition);
-//									return playlistController.getPlaylistString();
-//								}
-//							}
+						FileStringListUtilities
+							.promiseParsedFileStringList(library.getSavedTracksString())
+							.thenPromise(savedTracks -> {
+								savedTracks.remove(filePosition);
+								return FileStringListUtilities.promiseSerializedFileStringList(savedTracks);
+							})
+							.thenPromise(savedTracks -> {
+								library.setSavedTracksString(savedTracks);
 
-							final List<IFile> savedTracks = FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
-							savedTracks.remove(filePosition);
-							return FileStringListUtilities.serializeFileStringList(savedTracks);
-						}, AsyncTask.THREAD_POOL_EXECUTOR).thenPromise(savedTracks -> {
-							library.setSavedTracksString(s);
-
-							return LibrarySession.SaveLibrary(PlaybackService.this, library);
-						});
+								return LibrarySession.SaveLibrary(PlaybackService.this, library);
+							});
 				});
 		}
 	}
