@@ -26,10 +26,7 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	        	break;
 	        case KeyEvent.KEYCODE_HEADSETHOOK:
 	        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-	            if (PlaybackService.isPlaying())
-	            	PlaybackService.pause(context);
-	            else
-	            	PlaybackService.play(context);
+				PlaybackService.togglePlayPause(context);
 	            break;
 	        case KeyEvent.KEYCODE_MEDIA_NEXT:
 	            PlaybackService.next(context);
