@@ -13,4 +13,6 @@ public interface IPlaylistPlayer extends ObservableOnSubscribe<PositionedPlaybac
 	void resume();
 
 	void setVolume(float volume);
+
+	boolean isPlaying();
 }

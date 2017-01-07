@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
@@ -44,13 +43,14 @@ import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.fluent.IFluentTask;
+import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -124,11 +124,11 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	};
 
 	private static class ViewStructure {
-		public final UrlKeyHolder<Integer> urlKeyHolder;
+		final UrlKeyHolder<Integer> urlKeyHolder;
 		public Map<String, String> fileProperties;
-		public Bitmap nowPlayingImage;
+		Bitmap nowPlayingImage;
 		
-		public ViewStructure(UrlKeyHolder<Integer> urlKeyHolder) {
+		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder) {
 			this.urlKeyHolder = urlKeyHolder;
 		}
 		
@@ -195,12 +195,18 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		setRepeatingIcon(shuffleButton);
 
 		if (shuffleButton != null) {
-			shuffleButton.setOnClickListener(v -> LibrarySession.GetActiveLibrary(v.getContext(), result -> {
-				if (result == null) return;
-				final boolean isRepeating = !result.isRepeating();
-				PlaybackService.setIsRepeating(v.getContext(), isRepeating);
-				setRepeatingIcon(shuffleButton, isRepeating);
-			}));
+			shuffleButton.setOnClickListener(v ->
+				LibrarySession
+					.GetActiveLibrary(v.getContext())
+					.then(VoidFunc.running(result -> {
+						final boolean isRepeating = !result.isRepeating();
+						if (isRepeating)
+							PlaybackService.setRepeating(v.getContext());
+						else
+							PlaybackService.setCompleting(v.getContext());
+
+						setRepeatingIcon(shuffleButton, isRepeating);
+					})));
 		}
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
@@ -235,30 +241,20 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	private void initializeView() {
-
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
-		// Otherwise set the view using the library persisted in the database
-		LibrarySession.GetActiveLibrary(this, library -> {
-			final String savedTracksString = library.getSavedTracksString();
-			if (savedTracksString == null || savedTracksString.isEmpty()) return;
+		LibrarySession
+			.GetActiveLibrary(this)
+			.thenPromise(library -> {
+				final String savedTracksString = library.getSavedTracksString();
+				if (savedTracksString == null || savedTracksString.isEmpty()) return new PassThroughPromise<>(null);
 
-			final AsyncTask<Void, Void, List<IFile>> getNowPlayingListTask = new AsyncTask<Void, Void, List<IFile>>() {
-
-				@Override
-				protected List<IFile> doInBackground(Void... params) {
-					return FileStringListUtilities.parseFileStringList(savedTracksString);
-				}
-
-				@Override
-				protected void onPostExecute(List<IFile> result) {
-					setView(result.get(library.getNowPlayingId()), library.getNowPlayingProgress());
-				}
-			};
-
-			getNowPlayingListTask.execute();
-		});
+				return
+					FileStringListUtilities
+						.promiseParsedFileStringList(savedTracksString)
+						.then(VoidFunc.running(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())));
+			});
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {

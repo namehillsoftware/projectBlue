@@ -370,13 +370,14 @@ public class PlaybackService extends Service implements
 		@Override
 		protected final Runnable initialize() throws Exception {
 			return () -> {
-				if (playlistController != null && !playlistController.isPlaying()) {
+				if (playlistPlayer != null && !playlistPlayer.isPlaying()) {
 					stopSelf(startId);
 					return;
 				}
 
-				LibrarySession.GetActiveLibrary(PlaybackService.this, result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress()));
-
+				LibrarySession
+					.GetActiveLibrary(PlaybackService.this)
+					.then(VoidFunc.running(result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress())));
 			};
 		}
 	};
@@ -422,7 +423,7 @@ public class PlaybackService extends Service implements
 
 							initializePlaylist(library)
 								.then(VoidFunc.running(playlistPlayer -> resolve.withResult(true)))
-								.error(VoidFunc.running(e -> resolve.withResult(false)));
+								.error(VoidFunc.running(reject::withError));
 						}
 					};
 
@@ -439,7 +440,7 @@ public class PlaybackService extends Service implements
 							localBroadcastManager.unregisterReceiver(buildSessionReceiver);
 							initializePlaylist(library)
 								.then(VoidFunc.running(playlistPlayer -> resolve.withResult(true)))
-								.error(VoidFunc.running(e -> resolve.withResult(false)));
+								.error(VoidFunc.running(reject::withError));
 						}
 					};
 
@@ -455,12 +456,10 @@ public class PlaybackService extends Service implements
 		// If the playlist has changed, change that
 		if (playlistPlayer == null || !playlistString.equals(this.playlistString)) {
 			initializePlaylist(playlistString, filePos, fileProgress)
-				.then(preparedPlaybackQueue -> {
-					return
+				.then(preparedPlaybackQueue ->
 						Observable
 							.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, fileProgress)))
-							.subscribe(positionedPlaybackFile -> positionedPlaybackFile.getPlaybackHandler().getCurrentPosition());
-				});
+							.subscribe(positionedPlaybackFile -> positionedPlaybackFile.getPlaybackHandler().getCurrentPosition()));
 			return;
 		}
         
@@ -476,6 +475,7 @@ public class PlaybackService extends Service implements
 		if (playlistPlayer != null) {
 			try {
 				playlistPlayer.close();
+				preparedPlaybackQueue.close();
 			} catch (IOException e) {
 				logger.error("There was an error closing the playlist player", e);
 			}
@@ -487,25 +487,23 @@ public class PlaybackService extends Service implements
 				.thenPromise(result -> {
 					synchronized (syncPlaylistControllerObject) {
 						logger.info("Initializing playlist.");
-						PlaybackService.playlistString = playlistString;
-
-						// First try to get the playlist string from the database
-						if (PlaybackService.playlistString == null || PlaybackService.playlistString.isEmpty())
-							PlaybackService.playlistString = result.getSavedTracksString();
-
-						result.setSavedTracksString(PlaybackService.playlistString);
-						result.setNowPlayingId(filePos);
-						result.setNowPlayingProgress(fileProgress);
+						this.playlistString = playlistString;
 					}
+
+					result.setSavedTracksString(playlistString);
+					result.setNowPlayingId(filePos);
+					result.setNowPlayingProgress(fileProgress);
 
 					return LibrarySession.SaveLibrary(this, result);
 				})
 				.thenPromise(savedLibrary ->
 					FileStringListUtilities.promiseParsedFileStringList(savedLibrary.getSavedTracksString())
 						.then(playlist -> {
+							this.playlist = playlist;
+
 							final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
-							final PositionedFileQueueProvider bufferingPlaybackQueuesProvider =
-								new PositionedFileQueueProvider();
+							final IPositionedFileQueueProvider bufferingPlaybackQueuesProvider =
+								lazyPositionedFileQueueProvider.getObject();
 
 							final IPositionedFileQueue positionedFileQueue =
 								savedLibrary.isRepeating()
@@ -532,17 +530,16 @@ public class PlaybackService extends Service implements
 	private void pausePlayback(boolean isUserInterrupted) {
 		stopNotification();
 		
-		if (playlistPlayer == null || !playlistPlayer.isPlaying()) return;
+		if (playlistPlayer == null) return;
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
+
 		playlistPlayer.pause();
 	}
 
 	private void setRepeating() {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
-				if (playlistPlayer == null) return;
-
 				final IPositionedFileQueue cyclicalQueue =
 					lazyPositionedFileQueueProvider
 						.getObject()
@@ -573,10 +570,10 @@ public class PlaybackService extends Service implements
 				.thenPromise(result -> {
 					result.setRepeating(isRepeating);
 
-					return	LibrarySession.SaveLibrary(this, result);
+					return LibrarySession.SaveLibrary(this, result);
 				});
 	}
-	
+
 	private void notifyForeground(Builder notificationBuilder) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
 		notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
@@ -771,13 +768,11 @@ public class PlaybackService extends Service implements
         		restorePlaylistForIntent(intent);
         		return;
         	}
-        	
-        	if (playlistPlayer.resume()) return;
-        	
+
         	LibrarySession
 				.GetActiveLibrary(this)
 				.then(VoidFunc.running(result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress())));
-        	
+
         	return;
         }
 		
@@ -792,12 +787,13 @@ public class PlaybackService extends Service implements
         }
 		
 		if (action.equals(Action.previous)) {
-        	if (playlistController == null) {
+        	if (playlistPlayer == null) {
         		restorePlaylistForIntent(intent);
         		return;
         	}
         	
-        	playlistController.seekTo(playlistController.getCurrentPosition() > 0 ? playlistController.getCurrentPosition() - 1 : playlistController.getPlaylist().size() - 1);
+        	playlistPlayer.seekTo(playlistController.getCurrentPosition() > 0 ? playlistController.getCurrentPosition() - 1 : playlistController.getPlaylist().size() - 1);
+
         	return;
         }
 		
@@ -811,7 +807,7 @@ public class PlaybackService extends Service implements
         	return;
         }
 		
-		if (playlistController != null && action.equals(Action.pause)) {
+		if (playlistPlayer != null && action.equals(Action.pause)) {
         	pausePlayback(true);
         	return;
         }
@@ -878,7 +874,7 @@ public class PlaybackService extends Service implements
 				if (result) {
 					actOnIntent(intent);
 
-					if (playlistController != null && playlistController.isPlaying()) return;
+					if (playlistPlayer != null && playlistPlayer.isPlaying()) return;
 				}
 
 				stopNotification();
@@ -933,20 +929,23 @@ public class PlaybackService extends Service implements
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			if (playlistController != null) {
-				playlistController.setVolume(1.0f);
-	    		if (playlistController.isPlaying() || playlistController.resume()) return;
+			if (playlistPlayer != null) {
+				playlistPlayer.setVolume(1.0f);
+	    		if (playlistPlayer.isPlaying()) {
+					playlistPlayer.resume();
+					return;
+				}
 			}
 
 			restorePlaylistControllerFromStorage()
 				.then(VoidFunc.running(result -> {
-					if (result) playlistController.resume();
+					if (result) playlistPlayer.resume();
 				}));
 
 			return;
 		}
 		
-		if (playlistController == null || !playlistController.isPlaying()) return;
+		if (playlistPlayer == null || !playlistPlayer.isPlaying()) return;
 		
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_LOSS:
@@ -958,7 +957,7 @@ public class PlaybackService extends Service implements
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
             // Lost focus for a short time, but it's ok to keep playing
             // at an attenuated level
-	            playlistController.setVolume(0.2f);
+	            playlistPlayer.setVolume(0.2f);
 	    }
 	}
 	
@@ -1106,12 +1105,20 @@ public class PlaybackService extends Service implements
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 
-		if (playlistController != null) {
-//			if (playlistController.getCurrentPlaybackFile() != null)
-//				saveStateToLibrary(playlistController, playlistController.getCurrentPlaybackFile());
+		if (playlistPlayer != null) {
+			try {
+				playlistPlayer.close();
+			} catch (IOException e) {
+				logger.warn("There was an error closing the playlist player", e);
+			}
+		}
 
-			playlistController.release();
-			playlistController = null;
+		if (preparedPlaybackQueue != null) {
+			try {
+				preparedPlaybackQueue.close();
+			} catch (IOException e) {
+				logger.warn("There was an error closing the prepared playback queue", e);
+			}
 		}
 		
 		if (areListenersRegistered) unregisterListeners();

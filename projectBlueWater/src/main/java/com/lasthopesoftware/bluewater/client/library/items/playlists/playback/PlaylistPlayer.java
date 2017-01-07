@@ -54,8 +54,13 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	@Override
 	public void resume() {
-		if (positionedPlaybackFile != null && !positionedPlaybackFile.getPlaybackHandler().isPlaying())
+		if (positionedPlaybackFile != null)
 			positionedPlaybackFile.getPlaybackHandler().promisePlayback();
+	}
+
+	@Override
+	public boolean isPlaying() {
+		return positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
 	}
 
 	@Override
