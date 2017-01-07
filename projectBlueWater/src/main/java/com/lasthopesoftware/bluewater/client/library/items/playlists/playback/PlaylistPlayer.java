@@ -82,20 +82,20 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
-			.then(VoidFunc.running(this::changePlaybackFile))
-			.then(VoidFunc.running(v -> startFilePlayback()))
+			.then(this::changePlaybackFile)
+			.thenPromise(this::startFilePlayback)
 			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
-	private void changePlaybackFile(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+	private PositionedPlaybackFile changePlaybackFile(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		emitter.onNext(this.positionedPlaybackFile);
+
+		return positionedPlaybackFile;
 	}
 
-	private void startFilePlayback() {
-		if (positionedPlaybackFile == null) return;
-
+	private IPromise<IPlaybackHandler> startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
@@ -105,6 +105,8 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		promisedPlayback
 			.then(VoidFunc.running(this::closeAndStartNextFile))
 			.error(VoidFunc.running(this::handlePlaybackException));
+
+		return promisedPlayback;
 	}
 
 	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
@@ -130,9 +132,9 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void handlePlaybackException(Exception exception) {
-		haltPlayback();
-
 		emitter.onError(exception);
+
+		haltPlayback();
 	}
 
 	@Override
