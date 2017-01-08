@@ -424,7 +424,7 @@ public class PlaybackService extends Service implements
 		notifyStartingService();
 
 		updateLibraryPlaylist(playlistString, filePos, filePosition)
-			.thenPromise(this::initializePlaylist)
+			.thenPromise(library -> initializePlaylist(library))
 			.then(this::initializePreparedPlaybackQueue)
 			.then(q -> startPlayback(preparedPlaybackQueue, filePosition));
 
