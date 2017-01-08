@@ -43,14 +43,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStopListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -64,9 +61,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.listener.ListenerThrower;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -81,6 +77,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 
 
 /**
@@ -89,10 +86,8 @@ import io.reactivex.Observable;
  */
 public class PlaybackService extends Service implements
 	OnAudioFocusChangeListener, 
-	OnNowPlayingChangeListener, 
 	OnNowPlayingStartListener,
-	OnNowPlayingStopListener,
-	OnNowPlayingPauseListener, 
+	OnNowPlayingPauseListener,
 	OnPlaylistStateControlErrorListener
 {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
@@ -302,35 +297,14 @@ public class PlaybackService extends Service implements
 
 	private static final Object syncPlaylistControllerObject = new Object();
 	
-	private static final HashSet<OnNowPlayingChangeListener> onStreamingChangeListeners = new HashSet<>();
-
 	private PlaylistPlayer playlistPlayer;
 
 	private List<IFile> playlist;
 
 	private PreparedPlaybackQueue preparedPlaybackQueue;
-	
-	/* Begin Events */
-	public static void addOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		synchronized(onStreamingChangeListeners) {
-			onStreamingChangeListeners.add(listener);
-		}
-	}
 
-	public static void removeOnStreamingChangeListener(OnNowPlayingChangeListener listener) {
-		synchronized(onStreamingChangeListeners) {
-			onStreamingChangeListeners.remove(listener);
-		}
-	}
+	private volatile PositionedPlaybackFile positionedPlaybackFile;
 
-	private void throwChangeEvent(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
-		synchronized(onStreamingChangeListeners) {
-            ListenerThrower.throwListeners(onStreamingChangeListeners, parameter -> parameter.onNowPlayingChange(controller, playbackHandler));
-		}
-
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, controller, playbackHandler);
-	}
-	
 	private void sendPlaybackBroadcast(final String broadcastMessage, final PositionedPlaybackFile positionedPlaybackFile) {
 		LibrarySession
 			.GetActiveLibrary(this)
@@ -450,37 +424,58 @@ public class PlaybackService extends Service implements
 				});
 	}
 
-	private void startPlaylist(final String playlistString, final int filePos, final int fileProgress) {
+	private void startPlaylist(final String playlistString, final int filePos, final int filePosition) {
 		notifyStartingService();
 
-		// If the playlist has changed, change that
-		if (playlistPlayer == null || !playlistString.equals(this.playlistString)) {
-			initializePlaylist(playlistString, filePos, fileProgress)
-				.then(preparedPlaybackQueue ->
-						Observable
-							.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, fileProgress)))
-							.subscribe(positionedPlaybackFile -> positionedPlaybackFile.getPlaybackHandler().getCurrentPosition()));
-			return;
-		}
-        
+		updateLibraryPlaylist(playlistString, filePos, filePosition)
+			.thenPromise(this::initializePlaylist)
+			.then(this::initializePreparedPlaybackQueue)
+			.then(q -> startPlayback(preparedPlaybackQueue, filePosition));
+
 		logger.info("Starting playback");
-        playlistPlayer.resume();
 	}
 
-	private IPromise<IPreparedPlaybackFileQueue> initializePlaylist(final Library library) {
-		return initializePlaylist(library.getSavedTracksString(), library.getNowPlayingId(), library.getNowPlayingProgress());
+	private void changePosition(final int playlistPosition, final int filePosition) {
+		boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
+
+		IPromise<Library> libraryPromise = updateLibraryPlaylist(playlistString, playlistPosition, filePosition);
+
+		if (wasPlaying) {
+			libraryPromise
+				.then(this::initializePreparedPlaybackQueue)
+				.then(q -> startPlayback(preparedPlaybackQueue, filePosition));
+		}
+
+		logger.info("Position changed");
 	}
 
-	private IPromise<IPreparedPlaybackFileQueue> initializePlaylist(final String playlistString, final int filePos, final int fileProgress) {
+	private Disposable startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) {
+		final Observable<PositionedPlaybackFile> positionedPlaybackFileObservable =
+			Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition)));
+
+		positionedPlaybackFileObservable.firstElement().subscribe(f -> sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, f));
+		return positionedPlaybackFileObservable.subscribe(this::changePositionedPlaybackFile);
+	}
+
+	private IPromise<Library> initializePlaylist(final Library library) {
 		if (playlistPlayer != null) {
 			try {
 				playlistPlayer.close();
-				preparedPlaybackQueue.close();
 			} catch (IOException e) {
 				logger.error("There was an error closing the playlist player", e);
 			}
 		}
 
+		return
+			FileStringListUtilities
+				.promiseParsedFileStringList(library.getSavedTracksString())
+				.then(playlist -> {
+					this.playlist = playlist;
+					return library;
+				});
+	}
+
+	private IPromise<Library> updateLibraryPlaylist(final String playlistString, final int filePos, final int fileProgress) {
 		return
 			LibrarySession
 				.GetActiveLibrary(this)
@@ -495,36 +490,32 @@ public class PlaybackService extends Service implements
 					result.setNowPlayingProgress(fileProgress);
 
 					return LibrarySession.SaveLibrary(this, result);
-				})
-				.thenPromise(savedLibrary ->
-					FileStringListUtilities.promiseParsedFileStringList(savedLibrary.getSavedTracksString())
-						.then(playlist -> {
-							this.playlist = playlist;
-
-							final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), savedLibrary);
-							final IPositionedFileQueueProvider bufferingPlaybackQueuesProvider =
-								lazyPositionedFileQueueProvider.getObject();
-
-							final IPositionedFileQueue positionedFileQueue =
-								savedLibrary.isRepeating()
-									? bufferingPlaybackQueuesProvider.getCyclicalQueue(playlist, savedLibrary.getNowPlayingId())
-									: bufferingPlaybackQueuesProvider.getCompletableQueue(playlist, savedLibrary.getNowPlayingId());
-
-							final PreparedPlaybackQueue preparedPlaybackQueue =
-								new PreparedPlaybackQueue(
-									new MediaPlayerPlaybackPreparerTaskFactory(
-										uriProvider,
-										new MediaPlayerInitializer(this, savedLibrary)),
-									positionedFileQueue);
-
-							this.preparedPlaybackQueue = preparedPlaybackQueue;
-
-							return preparedPlaybackQueue;
-						}));
+				});
 	}
-	
-	private IPromise<IPreparedPlaybackFileQueue> initializePlaylist(final String playlistString) {
-		return initializePlaylist(playlistString, 0, 0);
+
+	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) {
+		try {
+			preparedPlaybackQueue.close();
+		} catch (IOException e) {
+			logger.warn("There was an error closing the prepared playback queue", e);
+		}
+
+		final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), library);
+		final IPositionedFileQueueProvider bufferingPlaybackQueuesProvider = lazyPositionedFileQueueProvider.getObject();
+
+		final IPositionedFileQueue positionedFileQueue =
+			library.isRepeating()
+				? bufferingPlaybackQueuesProvider.getCyclicalQueue(playlist, library.getNowPlayingId())
+				: bufferingPlaybackQueuesProvider.getCompletableQueue(playlist, library.getNowPlayingId());
+
+		preparedPlaybackQueue =
+			new PreparedPlaybackQueue(
+				new MediaPlayerPlaybackPreparerTaskFactory(
+					uriProvider,
+					new MediaPlayerInitializer(this, library)),
+				positionedFileQueue);
+
+		return preparedPlaybackQueue;
 	}
 	
 	private void pausePlayback(boolean isUserInterrupted) {
@@ -537,7 +528,7 @@ public class PlaybackService extends Service implements
 		playlistPlayer.pause();
 	}
 
-	private void setRepeating() {
+	private void playRepeatedly() {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
 				final IPositionedFileQueue cyclicalQueue =
@@ -549,7 +540,7 @@ public class PlaybackService extends Service implements
 			}));
 	}
 
-	private void setCompleting() {
+	private void playToCompletion() {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
 				if (playlistPlayer == null) return;
@@ -567,10 +558,12 @@ public class PlaybackService extends Service implements
 		return
 			LibrarySession
 				.GetActiveLibrary(this)
-				.thenPromise(result -> {
+				.then(result -> {
 					result.setRepeating(isRepeating);
 
-					return LibrarySession.SaveLibrary(this, result);
+					LibrarySession.SaveLibrary(this, result);
+
+					return result;
 				});
 	}
 
@@ -744,12 +737,12 @@ public class PlaybackService extends Service implements
 		if (action == null) return;
 
 		if (action.equals(Action.repeating)) {
-			setRepeating();
+			playRepeatedly();
 			return;
 		}
 
 		if (action.equals(Action.completing)) {
-			setCompleting();
+			playToCompletion();
 			return;
 		}
 
@@ -759,7 +752,7 @@ public class PlaybackService extends Service implements
         }
 		
 		if (action.equals(Action.initializePlaylist)) {
-        	initializePlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0));
+        	updateLibraryPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0));
         	return;
         }
 		
@@ -769,9 +762,7 @@ public class PlaybackService extends Service implements
         		return;
         	}
 
-        	LibrarySession
-				.GetActiveLibrary(this)
-				.then(VoidFunc.running(result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress())));
+        	playlistPlayer.resume();
 
         	return;
         }
@@ -782,28 +773,47 @@ public class PlaybackService extends Service implements
         		return;
         	}
 
-        	playlistController.seekTo(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0));
+			changePosition(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0));
         	return;
         }
 		
 		if (action.equals(Action.previous)) {
-        	if (playlistPlayer == null) {
-        		restorePlaylistForIntent(intent);
-        		return;
-        	}
-        	
-        	playlistPlayer.seekTo(playlistController.getCurrentPosition() > 0 ? playlistController.getCurrentPosition() - 1 : playlistController.getPlaylist().size() - 1);
+        	if (positionedPlaybackFile != null) {
+				final int position =  positionedPlaybackFile.getPosition();
+				changePosition(position > 0 ? position - 1 : 0, 0);
+				return;
+			}
 
-        	return;
+        	LibrarySession
+				.GetActiveLibrary(this)
+				.then(VoidFunc.running(library -> {
+					final int position =  library.getNowPlayingId();
+					changePosition(position > 0 ? position - 1 : 0, 0);
+				}));
+
+			return;
         }
 		
 		if (action.equals(Action.next)) {
-        	if (playlistController == null) {
-        		restorePlaylistForIntent(intent);
+        	if (playlist != null && positionedPlaybackFile != null) {
+				final int newPosition =  positionedPlaybackFile.getPosition();
+				final int playlistSize = playlist.size();
+				changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
         		return;
         	}
-        	
-        	playlistController.seekTo(playlistController.getCurrentPosition() < playlistController.getPlaylist().size() - 1 ? playlistController.getCurrentPosition() + 1 : 0);
+
+			LibrarySession
+				.GetActiveLibrary(this)
+				.then(VoidFunc.running(library -> {
+					final int newPosition =  library.getNowPlayingId();
+					FileStringListUtilities
+						.promiseParsedFileStringList(library.getSavedTracksString())
+						.then(VoidFunc.running(savedTracks -> {
+							final int playlistSize = savedTracks.size();
+							changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
+						}));
+				}));
+
         	return;
         }
 		
@@ -824,7 +834,7 @@ public class PlaybackService extends Service implements
 			LibrarySession
 				.GetActiveLibrary(this)
 				.thenPromise((result) -> {
-					if (result == null) return new Promise<>((resolve, reject) -> resolve.withResult(null));
+					if (result == null) return new PassThroughPromise<>(null);
 
 					String newFileString = result.getSavedTracksString();
 					if (!newFileString.endsWith(";")) newFileString += ";";
@@ -962,20 +972,6 @@ public class PlaybackService extends Service implements
 	}
 	
 	@Override
-	public void onNowPlayingStop(PlaybackController controller, IPlaybackHandler playbackHandler) {
-		saveStateToLibrary(controller, playbackHandler);
-		
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, controller, playbackHandler);
-		
-		stopNotification();
-		if (areListenersRegistered) unregisterListeners();
-		
-		controller.seekTo(0);
-		
-		sendBroadcast(getScrobbleIntent(false));
-	}
-	
-	@Override
 	public void onNowPlayingPause(PlaybackController controller, IPlaybackHandler playbackHandler) {
 		saveStateToLibrary(controller, playbackHandler);
 		
@@ -992,12 +988,6 @@ public class PlaybackService extends Service implements
 		
 		return scrobbleDroidIntent;
 	}
-
-	@Override
-	public void onNowPlayingChange(PlaybackController controller, IPlaybackHandler filePlayer) {
-		saveStateToLibrary(controller, filePlayer);		
-		throwChangeEvent(controller, filePlayer);
-	}
 	
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
 		LibrarySession.GetActiveLibrary(this, result -> {
@@ -1010,13 +1000,15 @@ public class PlaybackService extends Service implements
 		});
 	}
 	
-	@Override
-	public void onNowPlayingStart(PlaybackController controller, IPlaybackHandler playbackHandler) {
-		playbackHandler
-			.promisePlayback()
-			.then(VoidFunc.running(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, controller, handler)));
+	public void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
+		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		final IFile playingFile = controller.getPlaylist().get(controller.getCurrentPosition());
+		positionedPlaybackFile
+			.getPlaybackHandler()
+			.promisePlayback()
+			.then(VoidFunc.running(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
+
+		final IFile playingFile = playlist.get(positionedPlaybackFile.getPosition());
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
@@ -1096,7 +1088,7 @@ public class PlaybackService extends Service implements
 			return true;
 		}).execute();
 
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, controller, playbackHandler);
+		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, positionedPlaybackFile);
 	}
 		
 	@Override

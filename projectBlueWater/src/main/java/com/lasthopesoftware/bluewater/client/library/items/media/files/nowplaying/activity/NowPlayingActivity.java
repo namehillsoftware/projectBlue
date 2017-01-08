@@ -30,10 +30,7 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingChangeListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -54,7 +51,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
 
-public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayingChangeListener {
+public class NowPlayingActivity extends AppCompatActivity {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
@@ -92,6 +89,18 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	private static boolean isScreenKeptOn;
 
 	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(NowPlayingActivity.this);
+
+	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final int playlistPosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
+			if (playlistPosition < 0) return;
+
+			final boolean isPlaying = intent.getBooleanExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.isPlaying, false);
+
+			setView(playlistPosition, isPlaying);
+		}
+	};
 
 	private final BroadcastReceiver onPlaybackStartedReciever = new BroadcastReceiver() {
 		@Override
@@ -156,8 +165,7 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
 		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
-
-		PlaybackService.addOnStreamingChangeListener(this);
+		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistChange));
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
@@ -294,18 +302,18 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		return songProgressBar.findView();
 	}
 
-	private void setView(final PlaybackController playbackController, final IPlaybackHandler playbackFile) {
+	private void setView(final int playlistPosition, final boolean isPlaying) {
 		LibrarySession
 			.GetActiveLibrary(this)
 			.thenPromise(library -> new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString())))
 			.then(files -> {
-				setView(files.get(playbackController.getCurrentPosition()), playbackFile.getCurrentPosition());
+				setView(files.get(playlistPosition), playlistPosition);
 
-				playButton.findView().setVisibility(playbackFile.isPlaying() ? View.INVISIBLE : View.VISIBLE);
-				pauseButton.findView().setVisibility(playbackFile.isPlaying() ? View.VISIBLE : View.INVISIBLE);
+				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
+				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
 
-				if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
-				nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
+//				if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
+//				nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
 
 				return null;
 			});
@@ -478,11 +486,6 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 	}
 
 	@Override
-	public void onNowPlayingChange(PlaybackController controller, IPlaybackHandler filePlayer) {
-		setView(controller, filePlayer);
-	}
-
-	@Override
 	protected void onStop() {
 		super.onStop();
 
@@ -496,10 +499,9 @@ public class NowPlayingActivity extends AppCompatActivity implements OnNowPlayin
 		if (timerTask != null) timerTask.cancel();
 		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
-		PlaybackService.removeOnStreamingChangeListener(this);
-
 		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackStartedReciever);
+		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver);
 
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
 	}
