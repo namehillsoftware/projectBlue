@@ -47,7 +47,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingStartListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -85,8 +84,7 @@ import io.reactivex.disposables.Disposable;
  *
  */
 public class PlaybackService extends Service implements
-	OnAudioFocusChangeListener, 
-	OnNowPlayingStartListener,
+	OnAudioFocusChangeListener,
 	OnNowPlayingPauseListener,
 	OnPlaylistStateControlErrorListener
 {
