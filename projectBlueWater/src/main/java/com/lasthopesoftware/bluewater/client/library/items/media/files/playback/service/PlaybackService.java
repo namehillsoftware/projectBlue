@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnNowPlayingPauseListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -85,7 +84,6 @@ import io.reactivex.disposables.Disposable;
  */
 public class PlaybackService extends Service implements
 	OnAudioFocusChangeListener,
-	OnNowPlayingPauseListener,
 	OnPlaylistStateControlErrorListener
 {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
@@ -524,6 +522,15 @@ public class PlaybackService extends Service implements
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
 		playlistPlayer.pause();
+
+		saveStateToLibrary();
+
+		stopNotification();
+
+		if (positionedPlaybackFile != null)
+			sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
+
+		sendBroadcast(getScrobbleIntent(false));
 	}
 
 	private void playRepeatedly() {
@@ -968,17 +975,6 @@ public class PlaybackService extends Service implements
 	            playlistPlayer.setVolume(0.2f);
 	    }
 	}
-	
-	@Override
-	public void onNowPlayingPause(PlaybackController controller, IPlaybackHandler playbackHandler) {
-		saveStateToLibrary(controller, playbackHandler);
-		
-		stopNotification();
-		
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, controller, playbackHandler);
-		
-		sendBroadcast(getScrobbleIntent(false));
-	}
 
 	private static Intent getScrobbleIntent(final boolean isPlaying) {
 		final Intent scrobbleDroidIntent = new Intent(SCROBBLE_DROID_INTENT);
@@ -986,7 +982,28 @@ public class PlaybackService extends Service implements
 		
 		return scrobbleDroidIntent;
 	}
-	
+
+	private void saveStateToLibrary() {
+		if (playlist == null) return;
+
+		LibrarySession
+			.GetActiveLibrary(this)
+			.then(VoidFunc.running(library -> {
+				FileStringListUtilities
+					.promiseSerializedFileStringList(playlist)
+					.then(VoidFunc.running(savedTracksString -> {
+						library.setSavedTracksString(savedTracksString);
+
+						if (positionedPlaybackFile != null) {
+							library.setNowPlayingId(positionedPlaybackFile.getPosition());
+							library.setNowPlayingProgress(positionedPlaybackFile.getPlaybackHandler().getCurrentPosition());
+						}
+
+						LibrarySession.SaveLibrary(this, library);
+					}));
+			}));
+	}
+
 	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
 		LibrarySession.GetActiveLibrary(this, result -> {
 
