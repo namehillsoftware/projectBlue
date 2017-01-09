@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +28,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private volatile boolean isStarted;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
-	public PlaylistPlayer(@NotNull IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
+	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.preparedPosition = preparedPosition;
 	}
@@ -92,7 +91,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 			.error(VoidFunc.running(this::handlePlaybackException));
 	}
 
-	private PositionedPlaybackFile changePlaybackFile(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+	private PositionedPlaybackFile changePlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		emitter.onNext(this.positionedPlaybackFile);
@@ -100,7 +99,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		return positionedPlaybackFile;
 	}
 
-	private IPromise<IPlaybackHandler> startFilePlayback(@NotNull PositionedPlaybackFile positionedPlaybackFile) {
+	private IPromise<IPlaybackHandler> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);

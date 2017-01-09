@@ -2,8 +2,6 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.Callable;
 
 /**
@@ -11,7 +9,7 @@ import java.util.concurrent.Callable;
  */
 
 public class ExpectedPromise<TResult> extends Promise<TResult> {
-	public ExpectedPromise(@NotNull Callable<TResult> executor) {
+	public ExpectedPromise(Callable<TResult> executor) {
 		super(new InternalExpectedPromiseExecutor<>(executor));
 	}
 
@@ -21,7 +19,7 @@ public class ExpectedPromise<TResult> extends Promise<TResult> {
 	private static class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
 		private final Callable<TResult> executor;
 
-		InternalExpectedPromiseExecutor(@NotNull Callable<TResult> executor) {
+		InternalExpectedPromiseExecutor(Callable<TResult> executor) {
 			this.executor = executor;
 		}
 

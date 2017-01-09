@@ -5,17 +5,15 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
-import org.jetbrains.annotations.NotNull;
-
 public class Promise<TResult> extends DependentCancellablePromise<Void, TResult> {
 
-	public Promise(@NotNull ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
+	public Promise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		super(new Execution.InternalCancellablePromiseExecutor<>(executor));
 
 		provide(null, null);
 	}
 
-	public Promise(@NotNull TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
+	public Promise(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
 		this(new Execution.InternalPromiseExecutor<>(executor));
 	}
 
@@ -43,7 +41,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 		static class InternalPromiseExecutor<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 			private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor;
 
-			InternalPromiseExecutor(@NotNull TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
+			InternalPromiseExecutor(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
 				this.executor = executor;
 			}
 

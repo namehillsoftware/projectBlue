@@ -7,9 +7,6 @@ import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,11 +26,11 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	private final Cancellation cancellation = new Cancellation();
 
-	DependentCancellablePromise(@NotNull FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
+	DependentCancellablePromise(FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this.executor = executor;
 	}
 
-	final void provide(@Nullable TInput input, @Nullable Exception exception) {
+	final void provide(TInput input, Exception exception) {
 		executor.runWith(
 			input,
 			exception,
@@ -56,8 +53,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			resolution.provide(result, error);
 	}
 
-	@NotNull
-	private <TNewResult> DependentCancellablePromise<TResult, TNewResult> thenCreateCancellablePromise(@NotNull FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	private <TNewResult> DependentCancellablePromise<TResult, TNewResult> thenCreateCancellablePromise(FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled);
 
 		resolutions.add(newResolution);
@@ -68,69 +64,58 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		return newResolution;
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(@NotNull FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
 
-	@NotNull
-	private <TNewResult> IPromise<TNewResult> thenCreatePromise(@NotNull FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	private <TNewResult> IPromise<TNewResult> thenCreatePromise(FourParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return
 			thenCreateCancellablePromise(new Execution.NonCancellableExecutor<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(@NotNull OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(@NotNull ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(@NotNull final OneParameterFunction<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(final OneParameterFunction<TResult, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
 		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(@NotNull OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
 		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
-	@NotNull
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(@NotNull TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
 	}
 
@@ -255,7 +240,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		static class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
 			private final OneParameterFunction<TResult, TNewResult> onFulfilled;
 
-			ExpectedResultExecutor(@NotNull OneParameterFunction<TResult, TNewResult> onFulfilled) {
+			ExpectedResultExecutor(OneParameterFunction<TResult, TNewResult> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 

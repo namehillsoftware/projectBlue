@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
 import com.lasthopesoftware.promises.IPromise;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public class PlaybackController {
 	private IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private PositionedPlaybackFile playbackHandlerContainer;
 
-	public PlaybackController(@NotNull List<IFile> playlist, @NotNull IPositionedFileQueueProvider playbackQueuesProvider) {
+	public PlaybackController(List<IFile> playlist, IPositionedFileQueueProvider playbackQueuesProvider) {
 		this.playlist = playlist instanceof ArrayList ? (ArrayList<IFile>)playlist : new ArrayList<>(playlist);
 
 		this.playbackQueuesProvider = playbackQueuesProvider;
@@ -130,7 +129,7 @@ public class PlaybackController {
 		return true;
 	}
 
-	private Void startFilePlayback(@NotNull PositionedPlaybackFile playbackHandlerContainer) {
+	private Void startFilePlayback(PositionedPlaybackFile playbackHandlerContainer) {
 		isPlaying = true;
 
 		this.playbackHandlerContainer = playbackHandlerContainer;

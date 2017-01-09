@@ -2,8 +2,6 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Created by david on 10/25/16.
  */
@@ -17,7 +15,7 @@ class Cancellation implements OneParameterAction<Runnable> {
 	}
 
 	@Override
-	public void runWith(@NotNull Runnable reaction) {
+	public void runWith(Runnable reaction) {
 		this.reaction = reaction;
 	}
 }
