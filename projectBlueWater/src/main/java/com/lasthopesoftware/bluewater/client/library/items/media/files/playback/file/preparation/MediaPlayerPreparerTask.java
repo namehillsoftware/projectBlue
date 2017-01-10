@@ -39,13 +39,13 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 		final MediaPlayer mediaPlayer;
 		try {
 			mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
-			mediaPlayer.seekTo(prepareAt);
 		} catch (IOException e) {
 			reject.withError(e);
 			return;
 		}
 
 		mediaPlayer.setOnPreparedListener(mp -> {
+			mediaPlayer.seekTo(prepareAt);
 			isPrepared = true;
 			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
 		});

@@ -59,6 +59,6 @@ public class MediaPlayerBufferedPromise implements TwoParameterAction<IResolvedP
 			lastBufferPercentage = bufferPercentage;
 			logger.info("Buffer percentage: " + String.valueOf(bufferPercentage) + "% Buffer Threshold: " + String.valueOf(bufferMax) + "%");
 		}
-		return bufferPercentage >= bufferMax;
+		return lastBufferPercentage >= bufferMax;
 	}
 }

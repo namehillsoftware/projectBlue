@@ -61,6 +61,7 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.PassThroughPromise;
+import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.Lazy;
@@ -420,13 +421,13 @@ public class PlaybackService extends Service implements
 				});
 	}
 
-	private void startPlaylist(final String playlistString, final int filePos, final int filePosition) {
+	private void startPlaylist(final String playlistString, final int playlistPosition, final int filePosition) {
 		notifyStartingService();
 
-		updateLibraryPlaylist(playlistString, filePos, filePosition)
-			.thenPromise(library -> initializePlaylist(library))
+		updateLibraryPlaylist(playlistString, playlistPosition, filePosition)
+			.thenPromise((OneParameterFunction<Library, IPromise<Library>>)this::initializePlaylist)
 			.then(this::initializePreparedPlaybackQueue)
-			.then(q -> startPlayback(preparedPlaybackQueue, filePosition));
+			.then(q -> startPlayback(q, filePosition));
 
 		logger.info("Starting playback");
 	}
@@ -439,7 +440,7 @@ public class PlaybackService extends Service implements
 		if (wasPlaying) {
 			libraryPromise
 				.then(this::initializePreparedPlaybackQueue)
-				.then(q -> startPlayback(preparedPlaybackQueue, filePosition));
+				.then(q -> startPlayback(q, filePosition));
 		}
 
 		logger.info("Position changed");
@@ -449,7 +450,7 @@ public class PlaybackService extends Service implements
 		final Observable<PositionedPlaybackFile> positionedPlaybackFileObservable =
 			Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition)));
 
-		positionedPlaybackFileObservable.firstElement().subscribe(f -> sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, f));
+//		positionedPlaybackFileObservable.firstElement().subscribe(f -> sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, f));
 		return positionedPlaybackFileObservable.subscribe(this::changePositionedPlaybackFile);
 	}
 
@@ -471,7 +472,7 @@ public class PlaybackService extends Service implements
 				});
 	}
 
-	private IPromise<Library> updateLibraryPlaylist(final String playlistString, final int filePos, final int fileProgress) {
+	private IPromise<Library> updateLibraryPlaylist(final String playlistString, final int playlistPosition, final int filePosition) {
 		return
 			LibrarySession
 				.GetActiveLibrary(this)
@@ -482,27 +483,31 @@ public class PlaybackService extends Service implements
 					}
 
 					result.setSavedTracksString(playlistString);
-					result.setNowPlayingId(filePos);
-					result.setNowPlayingProgress(fileProgress);
+					result.setNowPlayingId(playlistPosition);
+					result.setNowPlayingProgress(filePosition);
 
 					return LibrarySession.SaveLibrary(this, result);
 				});
 	}
 
 	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) {
-		try {
-			preparedPlaybackQueue.close();
-		} catch (IOException e) {
-			logger.warn("There was an error closing the prepared playback queue", e);
+		if (preparedPlaybackQueue != null) {
+			try {
+				preparedPlaybackQueue.close();
+			} catch (IOException e) {
+				logger.warn("There was an error closing the prepared playback queue", e);
+			}
 		}
 
 		final IFileUriProvider uriProvider = new BestMatchUriProvider(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), library);
 		final IPositionedFileQueueProvider bufferingPlaybackQueuesProvider = lazyPositionedFileQueueProvider.getObject();
 
+		final int startPosition = Math.max(library.getNowPlayingId(), 0);
+
 		final IPositionedFileQueue positionedFileQueue =
 			library.isRepeating()
-				? bufferingPlaybackQueuesProvider.getCyclicalQueue(playlist, library.getNowPlayingId())
-				: bufferingPlaybackQueuesProvider.getCompletableQueue(playlist, library.getNowPlayingId());
+				? bufferingPlaybackQueuesProvider.getCyclicalQueue(playlist, startPosition)
+				: bufferingPlaybackQueuesProvider.getCompletableQueue(playlist, startPosition);
 
 		preparedPlaybackQueue =
 			new PreparedPlaybackQueue(
