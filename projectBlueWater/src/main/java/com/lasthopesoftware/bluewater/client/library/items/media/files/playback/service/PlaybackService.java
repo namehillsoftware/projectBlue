@@ -36,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
@@ -45,8 +44,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.controller.PlaybackController;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.listeners.OnPlaylistStateControlErrorListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -64,6 +62,8 @@ import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -83,81 +83,9 @@ import io.reactivex.disposables.Disposable;
  * @author david
  *
  */
-public class PlaybackService extends Service implements
-	OnAudioFocusChangeListener,
-	OnPlaylistStateControlErrorListener
+public class PlaybackService extends Service implements OnAudioFocusChangeListener
 {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
-
-	private static class Action {
-		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Action.class);
-
-		/* String constant actions */
-		private static final String launchMusicService = magicPropertyBuilder.buildProperty("launchMusicService");
-		private static final String play = magicPropertyBuilder.buildProperty("play");
-		private static final String pause = magicPropertyBuilder.buildProperty("pause");
-		private static final String togglePlayPause = magicPropertyBuilder.buildProperty("togglePlayPause");
-		private static final String repeating = magicPropertyBuilder.buildProperty("repeating");
-		private static final String completing = magicPropertyBuilder.buildProperty("completing");
-		private static final String previous = magicPropertyBuilder.buildProperty("previous");
-		private static final String next = magicPropertyBuilder.buildProperty("next");
-		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
-		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
-		private static final String initializePlaylist = magicPropertyBuilder.buildProperty("initializePlaylist");
-		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
-		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
-
-		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
-			launchMusicService,
-			play,
-			pause,
-			togglePlayPause,
-			previous,
-			next,
-			seekTo,
-			repeating,
-			completing,
-			stopWaitingForConnection,
-			initializePlaylist,
-			addFileToPlaylist,
-			removeFileAtPositionFromPlaylist
-		}));
-
-		private static class Bag {
-			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
-
-			/* Bag constants */
-			private static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
-			private static final String filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist");
-			private static final String startPos = magicPropertyBuilder.buildProperty("startPos");
-			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
-		}
-	}
-
-	public static class PlaylistEvents {
-		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);
-
-		public static final String onPlaylistChange = magicPropertyBuilder.buildProperty("onPlaylistChange");
-		public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
-		public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
-		public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
-		public static final String onFileComplete = magicPropertyBuilder.buildProperty("onFileComplete");
-
-		public static class PlaybackFileParameters {
-			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
-
-			public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
-			public static final String fileLibraryId = magicPropertyBuilder.buildProperty("fileLibraryId");
-			public static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
-			public static final String fileDuration = magicPropertyBuilder.buildProperty("fileDuration");
-			public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
-		}
-
-		public static class PlaylistParameters {
-			public static final String playlistPosition = MagicPropertyBuilder.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
-		}
-	}
-
 
 	private static Intent getNewSelfIntent(final Context context, String action) {
 		final Intent newIntent = new Intent(context, PlaybackService.class);
@@ -302,38 +230,12 @@ public class PlaybackService extends Service implements
 
 	private volatile PositionedPlaybackFile positionedPlaybackFile;
 
-	private void sendPlaybackBroadcast(final String broadcastMessage, final PositionedPlaybackFile positionedPlaybackFile) {
-		LibrarySession
-			.GetActiveLibrary(this)
-			.then(VoidFunc.running(library -> {
-				final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
-
-				final int currentPlaylistPosition = positionedPlaybackFile.getPosition();
-
-				final int fileKey = positionedPlaybackFile.getKey();
-
-				playbackBroadcastIntent
-						.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
-						.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
-						.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
-						.putExtra(PlaylistEvents.PlaybackFileParameters.filePosition, currentPlaylistPosition)
-						.putExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, positionedPlaybackFile.getPlaybackHandler().isPlaying());
-
-				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
-				filePropertiesProvider.onComplete(fileProperties -> {
-					playbackBroadcastIntent
-							.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
-
-					localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
-				}).onError(error -> {
-					playbackBroadcastIntent
-							.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
-
-					localBroadcastManagerLazy.getObject().sendBroadcast(playbackBroadcastIntent);
-					return true;
-				}).execute();
-			}));
-	}
+	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new AbstractThreadLocalLazy<IPlaybackBroadcaster>() {
+		@Override
+		protected IPlaybackBroadcaster initialize() throws Exception {
+			return new LocalPlaybackBroadcaster(PlaybackService.this);
+		}
+	};
 
 	/* End Events */
 
@@ -427,7 +329,8 @@ public class PlaybackService extends Service implements
 		updateLibraryPlaylist(playlistString, playlistPosition, filePosition)
 			.thenPromise((OneParameterFunction<Library, IPromise<Library>>)this::initializePlaylist)
 			.then(this::initializePreparedPlaybackQueue)
-			.then(q -> startPlayback(q, filePosition));
+			.then(q -> startPlayback(q, filePosition))
+			.error(VoidFunc.running(this::uncaughtExceptionHandler));
 
 		logger.info("Starting playback");
 	}
@@ -440,7 +343,8 @@ public class PlaybackService extends Service implements
 		if (wasPlaying) {
 			libraryPromise
 				.then(this::initializePreparedPlaybackQueue)
-				.then(q -> startPlayback(q, filePosition));
+				.then(q -> startPlayback(q, filePosition))
+				.error(VoidFunc.running(this::uncaughtExceptionHandler));
 		}
 
 		logger.info("Position changed");
@@ -451,7 +355,9 @@ public class PlaybackService extends Service implements
 			Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition)));
 
 //		positionedPlaybackFileObservable.firstElement().subscribe(f -> sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, f));
-		return positionedPlaybackFileObservable.subscribe(this::changePositionedPlaybackFile);
+		return
+			positionedPlaybackFileObservable.subscribe(
+				this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
 	}
 
 	private IPromise<Library> initializePlaylist(final Library library) {
@@ -533,7 +439,7 @@ public class PlaybackService extends Service implements
 		stopNotification();
 
 		if (positionedPlaybackFile != null)
-			sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
 
 		sendBroadcast(getScrobbleIntent(false));
 	}
@@ -908,9 +814,17 @@ public class PlaybackService extends Service implements
 		registerRemoteClientControl();
 	}
 
-	@Override
-	public void onPlaylistStateControlError(PlaybackController controller, MediaPlayerException exception) {
-		saveStateToLibrary(controller, exception.playbackHandler);
+	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof MediaPlayerException) {
+			handleMediaPlayerException((MediaPlayerException)exception);
+			return;
+		}
+
+		logger.error("An uncaught error has occurred!", exception);
+	}
+
+	private void handleMediaPlayerException(MediaPlayerException exception) {
+		saveStateToLibrary();
 
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
@@ -1009,24 +923,13 @@ public class PlaybackService extends Service implements
 			}));
 	}
 
-	private void saveStateToLibrary(final PlaybackController controller, final IPlaybackHandler playbackHandler) {
-		LibrarySession.GetActiveLibrary(this, result -> {
-
-			result.setSavedTracksString(controller.getPlaylistString());
-			result.setNowPlayingId(controller.getCurrentPosition());
-			result.setNowPlayingProgress(playbackHandler.getCurrentPosition());
-
-			LibrarySession.SaveLibrary(PlaybackService.this, result);
-		});
-	}
-	
 	public void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		positionedPlaybackFile
 			.getPlaybackHandler()
 			.promisePlayback()
-			.then(VoidFunc.running(handler -> sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
+			.then(VoidFunc.running(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
 
 		final IFile playingFile = playlist.get(positionedPlaybackFile.getPosition());
 		
@@ -1108,7 +1011,7 @@ public class PlaybackService extends Service implements
 			return true;
 		}).execute();
 
-		sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, positionedPlaybackFile);
 	}
 		
 	@Override
@@ -1160,4 +1063,73 @@ public class PlaybackService extends Service implements
 	private final Lazy<IBinder> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 	/* End Binder Code */
 
+
+	private static class Action {
+		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Action.class);
+
+		/* String constant actions */
+		private static final String launchMusicService = magicPropertyBuilder.buildProperty("launchMusicService");
+		private static final String play = magicPropertyBuilder.buildProperty("play");
+		private static final String pause = magicPropertyBuilder.buildProperty("pause");
+		private static final String togglePlayPause = magicPropertyBuilder.buildProperty("togglePlayPause");
+		private static final String repeating = magicPropertyBuilder.buildProperty("repeating");
+		private static final String completing = magicPropertyBuilder.buildProperty("completing");
+		private static final String previous = magicPropertyBuilder.buildProperty("previous");
+		private static final String next = magicPropertyBuilder.buildProperty("next");
+		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
+		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
+		private static final String initializePlaylist = magicPropertyBuilder.buildProperty("initializePlaylist");
+		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
+		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
+
+		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
+				launchMusicService,
+				play,
+				pause,
+				togglePlayPause,
+				previous,
+				next,
+				seekTo,
+				repeating,
+				completing,
+				stopWaitingForConnection,
+				initializePlaylist,
+				addFileToPlaylist,
+				removeFileAtPositionFromPlaylist
+		}));
+
+		private static class Bag {
+			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
+
+			/* Bag constants */
+			private static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			private static final String filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist");
+			private static final String startPos = magicPropertyBuilder.buildProperty("startPos");
+			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
+		}
+	}
+
+	public static class PlaylistEvents {
+		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);
+
+		public static final String onPlaylistChange = magicPropertyBuilder.buildProperty("onPlaylistChange");
+		public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
+		public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
+		public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
+		public static final String onFileComplete = magicPropertyBuilder.buildProperty("onFileComplete");
+
+		public static class PlaybackFileParameters {
+			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
+
+			public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			public static final String fileLibraryId = magicPropertyBuilder.buildProperty("fileLibraryId");
+			public static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
+			public static final String fileDuration = magicPropertyBuilder.buildProperty("fileDuration");
+			public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
+		}
+
+		public static class PlaylistParameters {
+			public static final String playlistPosition = MagicPropertyBuilder.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
+		}
+	}
 }
