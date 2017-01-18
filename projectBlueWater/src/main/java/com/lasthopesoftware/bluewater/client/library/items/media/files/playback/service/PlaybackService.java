@@ -1011,7 +1011,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return true;
 		}).execute();
 
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, positionedPlaybackFile);
 	}
 		
 	@Override

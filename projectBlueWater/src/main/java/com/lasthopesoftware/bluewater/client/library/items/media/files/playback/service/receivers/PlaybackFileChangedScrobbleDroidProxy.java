@@ -1,9 +1,13 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -12,10 +16,20 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
  * Created by david on 1/17/17.
  */
 
-public class PlaybackFileChangedScrobbleDroidBroadcaster {
+public class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
-    public void broadcastFileChange(IFile file) {
-        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
+    private final IConnectionProvider connectionProvider;
+
+    public PlaybackFileChangedScrobbleDroidProxy(IConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
+        if (fileKey < 0) return;
+
+        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(this.connectionProvider, fileKey);
         filePropertiesProvider.onComplete(fileProperties -> {
             final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
             final String name = fileProperties.get(FilePropertiesProvider.NAME);
