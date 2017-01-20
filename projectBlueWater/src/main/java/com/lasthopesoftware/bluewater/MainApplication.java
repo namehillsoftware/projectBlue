@@ -67,7 +67,7 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
-				LibrarySession.GetActiveLibrary(context, library -> {
+				LibrarySession.getActiveLibrary(context, library -> {
 					if (library == null) return;
 
 					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);

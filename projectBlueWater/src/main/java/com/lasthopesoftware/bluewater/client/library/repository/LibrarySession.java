@@ -73,15 +73,15 @@ public class LibrarySession {
 						.setFilter("WHERE id = @id")
 						.buildQuery());
 
-	public static void SaveLibrary(final Context context, final Library library, final OneParameterAction<Library> onSaveComplete) {
-		final IPromise<Library> savedLibraryPromise = SaveLibrary(context, library);
+	public static void saveLibrary(final Context context, final Library library, final OneParameterAction<Library> onSaveComplete) {
+		final IPromise<Library> savedLibraryPromise = saveLibrary(context, library);
 
 		if (onSaveComplete != null)
 			savedLibraryPromise.then(VoidFunc.running(onSaveComplete));
 	}
 
 	@SuppressLint("NewApi")
-	public static IPromise<Library> SaveLibrary(final Context context, final Library library) {
+	public static IPromise<Library> saveLibrary(final Context context, final Library library) {
 		return new DispatchedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
@@ -124,48 +124,48 @@ public class LibrarySession {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static void GetActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
+	public static void getActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
+		executeGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
-				return GetActiveLibraryInternal(context);
+				return getActiveLibraryInternal(context);
 			}
 		}, onGetLibraryComplete);
 	}
 
-	public static IPromise<Library> GetActiveLibrary(final Context context) {
-		return new DispatchedPromise<>(onCanceled -> GetActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
+	public static IPromise<Library> getActiveLibrary(final Context context) {
+		return new DispatchedPromise<>(onCanceled -> getActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static IPromise<Library> GetLibrary(final Context context, final int libraryId) {
-		return new DispatchedPromise<>(onCancelled -> GetLibraryInternal(context, libraryId), RepositoryAccessHelper.databaseExecutor);
+	public static IPromise<Library> getLibrary(final Context context, final int libraryId) {
+		return new DispatchedPromise<>(onCancelled -> getLibraryInternal(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static void GetLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {
-		ExecuteGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
+	public static void getLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {
+		executeGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
 			@Override
 			protected Library executeInBackground(Integer... params) {
-				return GetLibraryInternal(context, libraryId);
+				return getLibraryInternal(context, libraryId);
 			}
 		}, onGetLibraryComplete);
 	}
 
-	private static void ExecuteGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterAction<Library> onGetLibraryComplete) {
+	private static void executeGetLibrary(FluentSpecifiedTask<Integer, Void, Library> getLibraryTask, final OneParameterAction<Library> onGetLibraryComplete) {
 		getLibraryTask
 				.onComplete(onGetLibraryComplete)
 				.execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public static synchronized Library GetActiveLibraryInternal(final Context context) {
+	public static synchronized Library getActiveLibraryInternal(final Context context) {
 		if ("Main".equals(Thread.currentThread().getName()))
 			throw new IllegalStateException("This method must be called from a background thread.");
 
 		final int chosenLibraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(chosenLibraryInt, -1);
-		return chosenLibraryId >= 0 ? GetLibraryInternal(context, chosenLibraryId) : null;
+		return chosenLibraryId >= 0 ? getLibraryInternal(context, chosenLibraryId) : null;
 	}
 
 	@SuppressLint("NewApi")
-	private static synchronized Library GetLibraryInternal(final Context context, int libraryId) {
+	private static synchronized Library getLibraryInternal(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -178,7 +178,7 @@ public class LibrarySession {
 	}
 
 	@SuppressLint("NewApi")
-	public static void GetLibraries(final Context context, OneParameterAction<List<Library>> onGetLibrariesComplete) {
+	public static void getLibraries(final Context context, OneParameterAction<List<Library>> onGetLibrariesComplete) {
 		new FluentSpecifiedTask<Void, Void, List<Library>>() {
 			@Override
 			protected List<Library> executeInBackground(Void... params) {
@@ -192,19 +192,19 @@ public class LibrarySession {
 		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public synchronized static void ChangeActiveLibrary(final Context context, final int libraryKey, final OneParameterAction<Library> onLibraryChangeComplete) {
+	public synchronized static IPromise<Library> changeActiveLibrary(final Context context, final int libraryKey) {
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1))
             sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
-		
-		GetActiveLibrary(context, library -> {
-			final Intent broadcastIntent = new Intent(libraryChosenEvent);
-			broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
-			LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 
-			if (onLibraryChangeComplete != null)
-				onLibraryChangeComplete.runWith(library);
-		});
+		return
+			getActiveLibrary(context).then(library -> {
+				final Intent broadcastIntent = new Intent(libraryChosenEvent);
+				broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+
+				return library;
+			});
 	}
 }

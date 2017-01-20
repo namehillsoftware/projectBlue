@@ -50,7 +50,7 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.GetActiveLibrary(activity, activeLibrary -> {
+    	LibrarySession.getActiveLibrary(activity, activeLibrary -> {
 		    final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = result -> {
 			    if (result == null || result.size() == 0) return;
 

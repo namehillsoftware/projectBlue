@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
+import android.support.annotation.NonNull;
+
 public class File implements IFile {
 
 	private int key;
@@ -19,7 +21,7 @@ public class File implements IFile {
 	}
 
 	@Override
-	public int compareTo(IFile another) {
+	public int compareTo(@NonNull IFile another) {
 		return getKey() - another.getKey();
 	}
 

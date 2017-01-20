@@ -9,16 +9,22 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.ILazy;
 
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
+import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
 
 public class SessionConnection {
 
@@ -27,10 +33,7 @@ public class SessionConnection {
 	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
 	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
-	private static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
-	public static final Set<Integer> completeConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete));
-
-	private static final AtomicBoolean isRunning = new AtomicBoolean();
+	private static volatile boolean isRunning;
 	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
 
 	private static ConnectionProvider sessionConnectionProvider;
@@ -48,13 +51,13 @@ public class SessionConnection {
 	}
 	
 	public static synchronized int build(final Context context) {
-		if (isRunning.get()) return buildingStatus;
+		if (isRunning) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.GetActiveLibrary(context, library -> {
+		LibrarySession.getActiveLibrary(context).then(VoidFunc.running(library -> {
 			if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
-				isRunning.set(false);
+				isRunning = false;
 				return;
 			}
 
@@ -88,11 +91,11 @@ public class SessionConnection {
 							library.setSelectedView(selectedView);
 							library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-							LibrarySession.SaveLibrary(context, library, (savedLibrary) -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete));
+							LibrarySession.saveLibrary(context, library, (savedLibrary) -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete));
 						})
 						.execute();
 			});
-		});
+		}));
 		
 		return buildingStatus;
 	}
@@ -122,8 +125,7 @@ public class SessionConnection {
 	private static void doStateChange(final Context context, final int status) {
 		buildingStatus = status;
 		
-		if (runningConditions.contains(status))
-			isRunning.set(true);
+		if (runningConditions.contains(status)) isRunning = true;
 
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
@@ -132,7 +134,7 @@ public class SessionConnection {
 		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
 			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
 		
-		if (completeConditions.contains(status)) isRunning.set(false);
+		if (completeConditions.contains(status)) isRunning = false;
 	}
 
 	public static class BuildingSessionConnectionStatus {
@@ -143,5 +145,24 @@ public class SessionConnection {
 		public static final int GettingView = 5;
 		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
+
+		private static final ILazy<Set<Integer>> runningConditionsLazy =
+				new AbstractSynchronousLazy<Set<Integer>>() {
+					@Override
+					protected Set<Integer> initialize() throws Exception {
+						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
+					}
+				};
+
+		private static final ILazy<Set<Integer>> completeConditionsLazy =
+				new AbstractSynchronousLazy<Set<Integer>>() {
+					@Override
+					protected Set<Integer> initialize() throws Exception {
+						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+					}
+				};
+
+		static final Set<Integer> runningConditions = runningConditionsLazy.getObject();
+		public static final Set<Integer> completeConditions = completeConditionsLazy.getObject();
 	}
 }

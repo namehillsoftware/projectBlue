@@ -48,7 +48,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         
         this.setTitle(R.string.title_view_now_playing_files);
 		
-		LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		LibrarySession.getActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 		
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
@@ -72,7 +72,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
 		
-		LibrarySession.GetActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+		LibrarySession.getActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
 	}
 	
 	@Override

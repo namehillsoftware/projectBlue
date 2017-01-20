@@ -93,7 +93,7 @@ public class ImageProvider extends FluentCallable<Bitmap> {
 		byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 		if (imageBytes.length > 0) return getBitmapFromBytes(imageBytes);
 
-        final Library library = LibrarySession.GetActiveLibraryInternal(context);
+        final Library library = LibrarySession.getActiveLibraryInternal(context);
 		if (library == null) return getFillerBitmap();
 
 

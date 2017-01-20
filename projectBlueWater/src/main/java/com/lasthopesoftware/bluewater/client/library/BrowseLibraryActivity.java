@@ -158,7 +158,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, library -> {
+		LibrarySession.getActiveLibrary(this, library -> {
 			// No library, must bail out
 			if (library == null) {
 				finish();
@@ -168,7 +168,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			if (showDownloadsAction.equals(getIntent().getAction())) {
 				library.setSelectedView(0);
 				library.setSelectedViewType(Library.ViewType.DownloadView);
-				LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				LibrarySession.saveLibrary(BrowseLibraryActivity.this, library);
 
 				// Clear the action
 				getIntent().setAction(null);
@@ -240,12 +240,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.findView().closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, library -> {
+		LibrarySession.getActiveLibrary(this, library -> {
 			if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 			library.setSelectedView(selectedViewKey);
 			library.setSelectedViewType(selectedViewType);
-			LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+			LibrarySession.saveLibrary(BrowseLibraryActivity.this, library);
 
 			displayLibrary(library);
 		});

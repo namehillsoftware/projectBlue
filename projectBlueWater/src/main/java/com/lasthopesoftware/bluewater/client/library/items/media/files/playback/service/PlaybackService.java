@@ -249,7 +249,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				}
 
 				LibrarySession
-					.GetActiveLibrary(PlaybackService.this)
+					.getActiveLibrary(PlaybackService.this)
 					.then(VoidFunc.running(result -> startPlaylist(result.getSavedTracksString(), result.getNowPlayingId(), result.getNowPlayingProgress())));
 			};
 		}
@@ -276,7 +276,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private IPromise<Boolean> restorePlaylistControllerFromStorage() {
 		return
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.then((library, resolve, reject) -> {
 					if (library == null) return;
 
@@ -285,7 +285,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 						@Override
 						public void onReceive(Context context, Intent intent) {
 							final int result = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-							if (!SessionConnection.completeConditions.contains(result)) return;
+							if (!BuildingSessionConnectionStatus.completeConditions.contains(result)) return;
 
 							localBroadcastManager.unregisterReceiver(this);
 
@@ -381,7 +381,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private IPromise<Library> updateLibraryPlaylist(final String playlistString, final int playlistPosition, final int filePosition) {
 		return
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.thenPromise(result -> {
 					synchronized (syncPlaylistControllerObject) {
 						logger.info("Initializing playlist.");
@@ -392,7 +392,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					result.setNowPlayingId(playlistPosition);
 					result.setNowPlayingProgress(filePosition);
 
-					return LibrarySession.SaveLibrary(this, result);
+					return LibrarySession.saveLibrary(this, result);
 				});
 	}
 
@@ -473,11 +473,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private IPromise<Library> persistLibraryRepeating(boolean isRepeating) {
 		return
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.then(result -> {
 					result.setRepeating(isRepeating);
 
-					LibrarySession.SaveLibrary(this, result);
+					LibrarySession.saveLibrary(this, result);
 
 					return result;
 				});
@@ -580,30 +580,29 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return START_NOT_STICKY;
 		}
 		
-		if (!SessionConnection.isBuilt()) {
-			// TODO this should probably be its own service soon
-			final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-			final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-					handleBuildConnectionStatusChange(buildStatus, intent);
-
-					if (SessionConnection.completeConditions.contains(buildStatus))
-						localBroadcastManager.unregisterReceiver(this);
-				}
-			};
-
-			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
-
-			handleBuildConnectionStatusChange(SessionConnection.build(this), intent);
-			
+		if (SessionConnection.isBuilt()) {
+			actOnIntent(intent);
 			return START_NOT_STICKY;
 		}
-		
-		actOnIntent(intent);
-		
+
+		// TODO this should probably be its own service soon
+		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
+		final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+				handleBuildConnectionStatusChange(buildStatus, intent);
+
+				if (BuildingSessionConnectionStatus.completeConditions.contains(buildStatus))
+					localBroadcastManager.unregisterReceiver(this);
+			}
+		};
+
+		localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+		handleBuildConnectionStatusChange(SessionConnection.build(this), intent);
+
 		return START_NOT_STICKY;
 	}
 	
@@ -701,7 +700,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			}
 
         	LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.then(VoidFunc.running(library -> {
 					final int position =  library.getNowPlayingId();
 					changePosition(position > 0 ? position - 1 : 0, 0);
@@ -719,7 +718,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         	}
 
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.then(VoidFunc.running(library -> {
 					final int newPosition =  library.getNowPlayingId();
 					FileStringListUtilities
@@ -748,7 +747,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (fileKey < 0) return;
 
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.thenPromise((result) -> {
 					if (result == null) return new PassThroughPromise<>(null);
 
@@ -757,7 +756,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					newFileString += fileKey + ";";
 					result.setSavedTracksString(newFileString);
 
-					return LibrarySession.SaveLibrary(this, result);
+					return LibrarySession.saveLibrary(this, result);
 				})
 				.then(library -> {
 					Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
@@ -772,7 +771,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (filePosition < -1) return;
 
 			LibrarySession
-				.GetActiveLibrary(this)
+				.getActiveLibrary(this)
 				.thenPromise(library -> {
 					// It could take quite a while to split string and put it back together, so let's do it
 					// in a background task
@@ -786,7 +785,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 							.thenPromise(savedTracks -> {
 								library.setSavedTracksString(savedTracks);
 
-								return LibrarySession.SaveLibrary(PlaybackService.this, library);
+								return LibrarySession.saveLibrary(PlaybackService.this, library);
 							});
 				});
 		}
@@ -906,7 +905,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (playlist == null) return;
 
 		LibrarySession
-			.GetActiveLibrary(this)
+			.getActiveLibrary(this)
 			.then(VoidFunc.running(library -> {
 				FileStringListUtilities
 					.promiseSerializedFileStringList(playlist)
@@ -918,7 +917,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 							library.setNowPlayingProgress(positionedPlaybackFile.getPlaybackHandler().getCurrentPosition());
 						}
 
-						LibrarySession.SaveLibrary(this, library);
+						LibrarySession.saveLibrary(this, library);
 					}));
 			}));
 	}

@@ -57,7 +57,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
 
-		LibrarySession.GetActiveLibrary(getActivity(), library -> {
+		LibrarySession.getActiveLibrary(getActivity(), library -> {
 			final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
 			storedFileAccess.getDownloadingStoredFiles()
 				.onComplete((storedFiles) -> {

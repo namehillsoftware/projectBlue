@@ -131,7 +131,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		syncFilesRadioGroup.setOnCheckedChangeListener((group, checkedId) -> syncPathTextView.setEnabled(checkedId == R.id.rbCustomLocation));
 
 		final int libraryId = intent.getIntExtra(serverIdExtra, -1);
-		LibrarySession.GetLibrary(this, libraryId, result -> {
+		LibrarySession.getLibrary(this, libraryId, result -> {
 			if (result == null) return;
 
 			library = result;
@@ -184,7 +184,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	private void saveLibraryAndFinish() {
-		LibrarySession.SaveLibrary(this, library, result -> {
+		LibrarySession.saveLibrary(this, library, result -> {
 			saveButton.findView().setText(getText(R.string.btn_saved));
 			finish();
 		});

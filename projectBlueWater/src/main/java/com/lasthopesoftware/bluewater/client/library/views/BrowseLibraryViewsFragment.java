@@ -86,7 +86,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
 		};
 
-		LibrarySession.GetActiveLibrary(getContext(), activeLibrary ->
+		LibrarySession.getActiveLibrary(getContext(), activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 					.onComplete(onGetVisibleViewsCompleteListener)
@@ -140,7 +140,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		outState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(getContext(), library -> {
+		LibrarySession.getActiveLibrary(getContext(), library -> {
 			if (library != null)
 				outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 		});
@@ -152,7 +152,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		if (savedInstanceState == null || viewPager == null) return;
 
-		LibrarySession.GetActiveLibrary(getContext(), library -> {
+		LibrarySession.getActiveLibrary(getContext(), library -> {
 			final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 			if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

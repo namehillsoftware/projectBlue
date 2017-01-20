@@ -31,7 +31,7 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 		if (!v.isShown()) return;
 
 		final Context context = v.getContext();
-		LibrarySession.GetActiveLibrary(context, library -> {
+		LibrarySession.getActiveLibrary(context, library -> {
 			if (!v.isShown()) return;
 
 			final StoredItemAccess syncListManager = new StoredItemAccess(context, library);

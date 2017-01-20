@@ -24,7 +24,7 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 	public IPromise<IFile> getNowPlayingFile() {
 		return
 			LibrarySession
-				.GetActiveLibrary(context)
+				.getActiveLibrary(context)
 				.then(library -> {
 					final List<IFile> playlist = FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
 					return playlist.get(library.getNowPlayingId());

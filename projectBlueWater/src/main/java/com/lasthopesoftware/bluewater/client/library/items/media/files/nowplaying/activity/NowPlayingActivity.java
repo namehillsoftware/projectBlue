@@ -205,7 +205,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (shuffleButton != null) {
 			shuffleButton.setOnClickListener(v ->
 				LibrarySession
-					.GetActiveLibrary(v.getContext())
+					.getActiveLibrary(v.getContext())
 					.then(VoidFunc.running(result -> {
 						final boolean isRepeating = !result.isRepeating();
 						if (isRepeating)
@@ -253,7 +253,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
 		LibrarySession
-			.GetActiveLibrary(this)
+			.getActiveLibrary(this)
 			.thenPromise(library -> {
 				final String savedTracksString = library.getSavedTracksString();
 				if (savedTracksString == null || savedTracksString.isEmpty()) return new PassThroughPromise<>(null);
@@ -267,7 +267,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.GetActiveLibrary(this, result -> {
+		LibrarySession.getActiveLibrary(this, result -> {
 			if (result != null)
 				setRepeatingIcon(imageButton, result.isRepeating());
 		});
@@ -304,7 +304,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private void setView(final int playlistPosition, final boolean isPlaying) {
 		LibrarySession
-			.GetActiveLibrary(this)
+			.getActiveLibrary(this)
 			.thenPromise(library -> new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString())))
 			.then(files -> {
 				setView(files.get(playlistPosition), playlistPosition);

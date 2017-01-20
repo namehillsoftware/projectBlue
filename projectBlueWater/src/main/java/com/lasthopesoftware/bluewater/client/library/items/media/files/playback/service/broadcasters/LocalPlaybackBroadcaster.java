@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.lazyj.Lazy;
 
 /**
  * Created by david on 1/17/17.
@@ -30,7 +29,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
     @Override
     public void sendPlaybackBroadcast(final String broadcastMessage, final PositionedPlaybackFile positionedPlaybackFile) {
         LibrarySession
-            .GetActiveLibrary(context)
+            .getActiveLibrary(context)
             .then(VoidFunc.running(library -> {
                 final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 

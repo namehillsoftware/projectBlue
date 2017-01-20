@@ -131,7 +131,7 @@ public class SyncService extends Service {
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
+		LibrarySession.getLibrary(SyncService.this, storedFile.getLibraryId(),
 			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
 				if (urlProvider == null) return;
 
@@ -231,7 +231,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.GetLibraries(context, libraries -> {
+		LibrarySession.getLibraries(context, libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {

@@ -53,7 +53,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetActiveLibrary(getContext(), result -> {
+        LibrarySession.getActiveLibrary(getContext(), result -> {
             isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
             setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 

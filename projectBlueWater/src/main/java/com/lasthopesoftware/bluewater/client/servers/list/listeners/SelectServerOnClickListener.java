@@ -21,7 +21,7 @@ public class SelectServerOnClickListener implements View.OnClickListener {
 	@Override
 	public void onClick(View v) {
 		final Context context = v.getContext();
-		LibrarySession.ChangeActiveLibrary(context, library.getId(), null);
+		LibrarySession.changeActiveLibrary(context, library.getId());
 
 		final Intent browseLibraryIntent = new Intent(context, BrowseLibraryActivity.class);
 		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

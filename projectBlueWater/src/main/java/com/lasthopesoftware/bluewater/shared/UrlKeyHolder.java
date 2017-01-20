@@ -4,7 +4,7 @@ package com.lasthopesoftware.bluewater.shared;
  * Created by david on 1/17/16.
  */
 public class UrlKeyHolder<T> {
-	private int hashCode = -1;
+	private Integer hashCode;
 
 	private final String url;
 	private final T key;
@@ -25,10 +25,13 @@ public class UrlKeyHolder<T> {
 
 	@Override
 	public int hashCode() {
-		if (hashCode != -1) return hashCode;
+		if (hashCode != null) return hashCode;
 
-		hashCode = url != null ? url.hashCode() : 0;
-		hashCode = 31 * hashCode + (key != null ? key.hashCode() : 0);
-		return hashCode;
+		int calculatedHashCode = url != null ? url.hashCode() : 0;
+		calculatedHashCode = 31 * calculatedHashCode + (key != null ? key.hashCode() : 0);
+
+		hashCode = calculatedHashCode;
+
+		return calculatedHashCode;
 	}
 }

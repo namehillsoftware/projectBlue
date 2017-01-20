@@ -4,9 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -18,18 +16,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 
 public class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
-    private final IConnectionProvider connectionProvider;
-
-    public PlaybackFileChangedScrobbleDroidProxy(IConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
+		if (!SessionConnection.isBuilt()) return;
+
         final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
         if (fileKey < 0) return;
 
-        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(this.connectionProvider, fileKey);
+        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
         filePropertiesProvider.onComplete(fileProperties -> {
             final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
             final String name = fileProperties.get(FilePropertiesProvider.NAME);
