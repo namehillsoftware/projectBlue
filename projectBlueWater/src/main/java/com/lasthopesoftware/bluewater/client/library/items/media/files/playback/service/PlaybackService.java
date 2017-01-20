@@ -588,7 +588,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				@Override
 				public void onReceive(Context context, Intent intent) {
 					final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-					handleBuildStatusChange(buildStatus, intent);
+					handleBuildConnectionStatusChange(buildStatus, intent);
 
 					if (SessionConnection.completeConditions.contains(buildStatus))
 						localBroadcastManager.unregisterReceiver(this);
@@ -597,7 +597,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-			handleBuildStatusChange(SessionConnection.build(this), intent);
+			handleBuildConnectionStatusChange(SessionConnection.build(this), intent);
 			
 			return START_NOT_STICKY;
 		}
@@ -607,7 +607,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return START_NOT_STICKY;
 	}
 	
-	private void handleBuildStatusChange(final int status, final Intent intentToRun) {
+	private void handleBuildConnectionStatusChange(final int status, final Intent intentToRun) {
 		final Builder notifyBuilder = new Builder(this);
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
