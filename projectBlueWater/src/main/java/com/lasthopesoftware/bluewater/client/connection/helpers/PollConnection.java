@@ -69,7 +69,7 @@ public class PollConnection {
 						public void onReceive(Context context, Intent intent) {
 							final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
 
-							if (!SessionConnection.completeConditions.contains(buildStatus)) return;
+							if (!SessionConnection.BuildingSessionConnectionStatus.completeConditions.contains(buildStatus)) return;
 
 							mIsRefreshing.set(false);
 							localBroadcastManager.unregisterReceiver(this);

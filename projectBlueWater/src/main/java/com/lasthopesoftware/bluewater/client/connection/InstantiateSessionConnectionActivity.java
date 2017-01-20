@@ -74,7 +74,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	}
 	
 	private void handleBuildStatusChange(int status) {
-		if (SessionConnection.completeConditions.contains(status))
+		if (BuildingSessionConnectionStatus.completeConditions.contains(status))
 			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
 
 		final TextView lblConnectionStatusView = lblConnectionStatus.findView();
