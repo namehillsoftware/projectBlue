@@ -141,7 +141,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			this.urlKeyHolder = urlKeyHolder;
 		}
 		
-		public void release() {
+		void release() {
 			if (nowPlayingImage != null)
 				nowPlayingImage.recycle();
 		}

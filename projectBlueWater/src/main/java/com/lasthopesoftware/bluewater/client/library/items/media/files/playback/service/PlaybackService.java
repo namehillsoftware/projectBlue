@@ -322,10 +322,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final Observable<PositionedPlaybackFile> positionedPlaybackFileObservable =
 			Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition)));
 
-//		positionedPlaybackFileObservable.firstElement().subscribe(f -> sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, f));
 		return
-			positionedPlaybackFileObservable.subscribe(
-				this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
+			positionedPlaybackFileObservable
+				.subscribe(this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
 	}
 
 	private IPromise<Library> initializePlaylist(final Library library) {
