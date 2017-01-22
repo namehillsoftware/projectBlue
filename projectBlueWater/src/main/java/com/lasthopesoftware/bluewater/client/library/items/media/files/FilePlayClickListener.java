@@ -10,19 +10,19 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.Abstrac
 import java.util.List;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private final List<IFile> mFiles;
-	private final int mPosition;
+	private final List<IFile> files;
+	private final int position;
 	
 	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<IFile> files) {
         super(parent);
 
-		mPosition = position;
-		mFiles = files;
+		this.position = position;
+		this.files = files;
 	}
 	
 	@Override
 	public void onClick(View v) {
-		PlaybackService.launchMusicService(v.getContext(), mPosition, FileStringListUtilities.serializeFileStringList(mFiles));
+		PlaybackService.launchMusicService(v.getContext(), position, FileStringListUtilities.serializeFileStringList(files));
 
         super.onClick(v);
 	}

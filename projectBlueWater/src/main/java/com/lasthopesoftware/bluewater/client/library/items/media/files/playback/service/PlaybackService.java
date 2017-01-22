@@ -93,28 +93,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return newIntent;
 	}
 
-	/* Begin streamer intent helpers */
-	public static void initializePlaylist(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
-		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
-	}
-
-	public static void initializePlaylist(final Context context, int filePos, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
-		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
-	}
-
-	public static void initializePlaylist(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.initializePlaylist);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
-		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
-		context.startService(svcIntent);
-	}
-
 	public static void launchMusicService(final Context context, String serializedFileList) {
 		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
 		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
@@ -125,14 +103,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
 		svcIntent.putExtra(Action.Bag.fileKey, filePos);
 		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
-	}
-
-	public static void launchMusicService(final Context context, int filePos, int fileProgress, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
-		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
 		context.startService(svcIntent);
 	}
 
@@ -236,8 +206,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return new LocalPlaybackBroadcaster(PlaybackService.this);
 		}
 	};
-
-	/* End Events */
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -566,12 +534,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 	
 	/* Begin Event Handlers */
-	
-	/* (non-Javadoc)
-	 * @see android.media.MediaPlayer.OnPreparedListener#onPrepared(android.media.MediaPlayer)
-	 */
-	
-	public int onStartCommand(final Intent intent, int flags, int startId) {
+
+	@Override
+	public final int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
 		PlaybackService.startId = startId;
 
@@ -665,12 +630,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			startPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0));
 			return;
         }
-		
-		if (action.equals(Action.initializePlaylist)) {
-        	updateLibraryPlaylist(intent.getStringExtra(Action.Bag.filePlaylist), intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0));
-        	return;
-        }
-		
+
 		if (action.equals(Action.play)) {
         	if (playlistPlayer == null) {
         		restorePlaylistForIntent(intent);
@@ -807,7 +767,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 	
 	@Override
-    public void onCreate() {
+    public final void onCreate() {
 		localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
 
 		registerRemoteClientControl();
@@ -964,16 +924,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			sendBroadcast(pebbleIntent);
 
-			final Intent scrobbleDroidIntent = getScrobbleIntent(true);
-			scrobbleDroidIntent.putExtra("artist", artist);
-			scrobbleDroidIntent.putExtra("album", album);
-			scrobbleDroidIntent.putExtra("track", name);
-			scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
-			if (trackNumber != null)
-				scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
-
-			sendBroadcast(scrobbleDroidIntent);
-
 			if (remoteControlClient == null) return;
 
 			final MetadataEditor metaData = remoteControlClient.editMetadata(true);
@@ -1077,7 +1027,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String next = magicPropertyBuilder.buildProperty("next");
 		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
 		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
-		private static final String initializePlaylist = magicPropertyBuilder.buildProperty("initializePlaylist");
 		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 
@@ -1092,7 +1041,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				repeating,
 				completing,
 				stopWaitingForConnection,
-				initializePlaylist,
 				addFileToPlaylist,
 				removeFileAtPositionFromPlaylist
 		}));

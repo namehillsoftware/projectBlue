@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -30,8 +31,9 @@ class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OnePa
         nowPlayingFileListItemMenuBuilder.setOnPlaylistFileRemovedListener(this);
 	}
 
+    @NonNull
     @Override
-    public final View getView(final int position, View convertView, final ViewGroup parent) {
+    public final View getView(final int position, View convertView, @NonNull final ViewGroup parent) {
         return nowPlayingFileListItemMenuBuilder.getView(position, getItem(position), convertView, parent);
     }
 
