@@ -37,7 +37,6 @@ public class PlaybackPlaylistStateManager {
 
 	private final Context context;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
-	private final Object syncPlaylistControllerObject = new Object();
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;

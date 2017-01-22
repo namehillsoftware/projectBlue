@@ -240,6 +240,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			stopSelf(startId);
 		}
 	};
+
+	private final ILazy<PlaybackPlaylistStateManager> playbackPlaylistStateManager = new AbstractSynchronousLazy<PlaybackPlaylistStateManager>() {
+		@Override
+		protected PlaybackPlaylistStateManager initialize() throws Exception {
+			return new PlaybackPlaylistStateManager(PlaybackService.this, new PositionedFileQueueProvider());
+		}
+	};
 		
 	private IPromise<Boolean> restorePlaylistControllerFromStorage() {
 		return
@@ -616,12 +623,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action == null) return;
 
 		if (action.equals(Action.repeating)) {
-			playRepeatedly();
+			playbackPlaylistStateManager.getObject().playRepeatedly();
 			return;
 		}
 
 		if (action.equals(Action.completing)) {
-			playToCompletion();
+			playbackPlaylistStateManager.getObject().playToCompletion();
 			return;
 		}
 
