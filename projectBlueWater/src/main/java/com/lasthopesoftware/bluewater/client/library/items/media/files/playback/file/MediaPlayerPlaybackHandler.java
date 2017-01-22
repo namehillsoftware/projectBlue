@@ -23,6 +23,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
+		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
 	}
 
@@ -64,9 +65,6 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public synchronized IPromise<IPlaybackHandler> promisePlayback() {
-		if (playbackPromise == null)
-			playbackPromise = new Promise<>(new MediaPlayerPlaybackTask(this, mediaPlayer));
-
 		if (!isPlaying())
 			mediaPlayer.start();
 

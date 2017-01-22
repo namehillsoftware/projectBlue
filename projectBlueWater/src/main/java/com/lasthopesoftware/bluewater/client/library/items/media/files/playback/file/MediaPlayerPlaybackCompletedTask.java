@@ -10,12 +10,12 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 10/4/16.
  */
-class MediaPlayerPlaybackTask implements TwoParameterAction<IResolvedPromise<IPlaybackHandler>, IRejectedPromise> {
+class MediaPlayerPlaybackCompletedTask implements TwoParameterAction<IResolvedPromise<IPlaybackHandler>, IRejectedPromise> {
 
 	private final IPlaybackHandler playbackHandler;
 	private final MediaPlayer mediaPlayer;
 
-	MediaPlayerPlaybackTask(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
+	MediaPlayerPlaybackCompletedTask(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
 		this.playbackHandler = playbackHandler;
 		this.mediaPlayer = mediaPlayer;
 	}
@@ -27,7 +27,5 @@ class MediaPlayerPlaybackTask implements TwoParameterAction<IResolvedPromise<IPl
 			reject.withError(new MediaPlayerException(playbackHandler, mp, what, extra));
 			return true;
 		});
-
-		mediaPlayer.start();
 	}
 }
