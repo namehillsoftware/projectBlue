@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerTaskFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
@@ -16,42 +17,51 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.ConnectableObservable;
 
 /**
  * Created by david on 1/22/17.
  */
 
-public class PlaybackPlaylistStateManager {
+class PlaybackPlaylistStateManager implements Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
 	private final Context context;
+	private final int libraryId;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
 	private List<IFile> playlist;
 	private PreparedPlaybackQueue preparedPlaybackQueue;
+	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
+	private Disposable disposableFileChangedSubscription;
 
-	public PlaybackPlaylistStateManager(Context context, IPositionedFileQueueProvider positionedFileQueueProvider) {
+	PlaybackPlaylistStateManager(Context context, int libraryId, IPositionedFileQueueProvider positionedFileQueueProvider) {
 		this.context = context;
+		this.libraryId = libraryId;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
 	}
 
-	public IPromise<Boolean> restorePlaylistFromStorage() {
+	IPromise<Boolean> restorePlaylistFromStorage() {
 		return
 			LibrarySession
-				.getActiveLibrary(context)
+				.getLibrary(context, libraryId)
 				.then((library, resolve, reject) -> {
 					if (library == null) {
 						resolve.withResult(false);
@@ -74,9 +84,7 @@ public class PlaybackPlaylistStateManager {
 				});
 	}
 
-	public IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
-//		notifyStartingService();
-
+	IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
 		if (playlistPlayer != null) {
@@ -89,29 +97,36 @@ public class PlaybackPlaylistStateManager {
 
 		this.playlist = playlist;
 
-		return
+		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			updateLibraryPlaylist(playlistPosition, filePosition)
 				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
-//			.error(VoidFunc.running(this::uncaughtExceptionHandler));
+
+		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+
+		return observablePromise;
 	}
 
-	public void changePosition(final int playlistPosition, final int filePosition) {
-		boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
+	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
+		final boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
 
 		IPromise<Library> libraryPromise = updateLibraryPlaylist(playlistPosition, filePosition);
 
-		if (wasPlaying) {
+		if (!wasPlaying)
+			return new ExpectedPromise<>(Observable::empty);
+
+		logger.info("Position changed");
+		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			libraryPromise
 				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
-//				.error(VoidFunc.running(this::uncaughtExceptionHandler));
-		}
 
-		logger.info("Position changed");
+		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+
+		return observablePromise;
 	}
 
-	public void playRepeatedly() {
+	void playRepeatedly() {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
 				final IPositionedFileQueue cyclicalQueue = positionedFileQueueProvider.getCyclicalQueue(playlist, library.getNowPlayingId());
@@ -120,7 +135,7 @@ public class PlaybackPlaylistStateManager {
 			}));
 	}
 
-	public void playToCompletion() {
+	void playToCompletion() {
 		persistLibraryRepeating(false)
 			.then(VoidFunc.running(library -> {
 				if (playlistPlayer == null) return;
@@ -131,14 +146,14 @@ public class PlaybackPlaylistStateManager {
 			}));
 	}
 
-	public Observable<PositionedPlaybackFile> resume() {
-		if (playlistPlayer == null) return Observable.empty();
+	IPromise<Observable<PositionedPlaybackFile>> resume() {
+		if (playlistPlayer == null) return new ExpectedPromise<>(Observable::empty);
 
 		playlistPlayer.resume();
 
 		saveStateToLibrary();
 
-		return Observable.create(playlistPlayer);
+		return new PassThroughPromise<>(observableProxy);
 	}
 
 	public void pause() {
@@ -148,14 +163,45 @@ public class PlaybackPlaylistStateManager {
 		saveStateToLibrary();
 	}
 
+
+	public boolean isPlaying() {
+		return playlistPlayer != null && playlistPlayer.isPlaying();
+	}
+
 	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) {
-		return Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition)));
+		if (disposableFileChangedSubscription != null && !disposableFileChangedSubscription.isDisposed())
+			disposableFileChangedSubscription.dispose();
+
+		observableProxy = Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition))).publish();
+		disposableFileChangedSubscription =
+			observableProxy.subscribe(p -> {
+				positionedPlaybackFile = p;
+				saveStateToLibrary();
+			}, this::uncaughtExceptionHandler);
+
+		return observableProxy;
+	}
+
+	public IPromise<Library> addFile(IFile file) {
+		if (playlist != null)
+			playlist.add(file);
+
+		LibrarySession
+			.getLibrary(context, libraryId)
+			.thenPromise((result) -> {
+				String newFileString = result.getSavedTracksString();
+				if (!newFileString.endsWith(";")) newFileString += ";";
+				newFileString += file.getKey() + ";";
+				result.setSavedTracksString(newFileString);
+
+				return LibrarySession.saveLibrary(context, result);
+			});
 	}
 
 	private IPromise<Library> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
 		return
 			LibrarySession
-				.getActiveLibrary(context)
+				.getLibrary(context, libraryId)
 				.thenPromise(result ->
 					FileStringListUtilities
 						.promiseSerializedFileStringList(playlist)
@@ -199,7 +245,7 @@ public class PlaybackPlaylistStateManager {
 	private IPromise<Library> persistLibraryRepeating(boolean isRepeating) {
 		return
 			LibrarySession
-				.getActiveLibrary(context)
+				.getLibrary(context, libraryId)
 				.then(result -> {
 					result.setRepeating(isRepeating);
 
@@ -213,7 +259,7 @@ public class PlaybackPlaylistStateManager {
 		if (playlist == null) return;
 
 		LibrarySession
-			.getActiveLibrary(context)
+			.getLibrary(context, libraryId)
 			.then(VoidFunc.running(library -> {
 				FileStringListUtilities
 					.promiseSerializedFileStringList(playlist)
@@ -228,5 +274,23 @@ public class PlaybackPlaylistStateManager {
 						LibrarySession.saveLibrary(context, library);
 					}));
 			}));
+	}
+
+	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof MediaPlayerException) {
+			saveStateToLibrary();
+			return;
+		}
+
+		logger.error("An uncaught error has occurred!", exception);
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (playlistPlayer != null)
+			playlistPlayer.close();
+
+		if (disposableFileChangedSubscription != null && !disposableFileChangedSubscription.isDisposed())
+			disposableFileChangedSubscription.dispose();
 	}
 }
