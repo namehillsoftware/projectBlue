@@ -224,10 +224,15 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			pausePlayback(true);
-			stopSelf(startId);
 
 			final int chosenLibrary = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1);
 			if (chosenLibrary < 0) return;
+
+			try {
+				playbackPlaylistStateManager.close();
+			} catch (IOException e) {
+				logger.error("There was an error closing the playbackPlaylistStateManager", e);
+			}
 
 			playbackPlaylistStateManager = new PlaybackPlaylistStateManager(PlaybackService.this, chosenLibrary, new PositionedFileQueueProvider());
 		}
@@ -445,19 +450,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         }
 		
 		if (action.equals(Action.seekTo)) {
-        	if (playlistPlayer == null) {
-        		restorePlaylistForIntent(intent);
-        		return;
-        	}
-
-			playbackPlaylistStateManager.getObject().changePosition(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0));
+        	playbackPlaylistStateManager.changePosition(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0));
         	return;
         }
 		
 		if (action.equals(Action.previous)) {
         	if (positionedPlaybackFile != null) {
 				final int position =  positionedPlaybackFile.getPosition();
-				playbackPlaylistStateManager.getObject().changePosition(position > 0 ? position - 1 : 0, 0);
+				playbackPlaylistStateManager.changePosition(position > 0 ? position - 1 : 0, 0);
 				return;
 			}
 
@@ -465,7 +465,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.getActiveLibrary(this)
 				.then(VoidFunc.running(library -> {
 					final int position =  library.getNowPlayingId();
-					playbackPlaylistStateManager.getObject().changePosition(position > 0 ? position - 1 : 0, 0);
+					playbackPlaylistStateManager.changePosition(position > 0 ? position - 1 : 0, 0);
 				}));
 
 			return;
@@ -475,7 +475,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         	if (playlist != null && positionedPlaybackFile != null) {
 				final int newPosition =  positionedPlaybackFile.getPosition();
 				final int playlistSize = playlist.size();
-				playbackPlaylistStateManager.getObject().changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
+				playbackPlaylistStateManager.changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
         		return;
         	}
 
@@ -487,14 +487,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 						.promiseParsedFileStringList(library.getSavedTracksString())
 						.then(VoidFunc.running(savedTracks -> {
 							final int playlistSize = savedTracks.size();
-							playbackPlaylistStateManager.getObject().changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
+							playbackPlaylistStateManager.changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
 						}));
 				}));
 
         	return;
         }
 		
-		if (playlistPlayer != null && action.equals(Action.pause)) {
+		if (playbackPlaylistStateManager != null && action.equals(Action.pause)) {
         	pausePlayback(true);
         	return;
         }
@@ -508,7 +508,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int fileKey = intent.getIntExtra(Action.Bag.fileKey, -1);
 			if (fileKey < 0) return;
 
-			playbackPlaylistStateManager.getObject()
+			playbackPlaylistStateManager
 				.addFile(new File(fileKey))
 				.then(library -> {
 					Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
@@ -522,24 +522,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			LibrarySession
-				.getActiveLibrary(this)
-				.thenPromise(library -> {
-					// It could take quite a while to split string and put it back together, so let's do it
-					// in a background task
-					return
-						FileStringListUtilities
-							.promiseParsedFileStringList(library.getSavedTracksString())
-							.thenPromise(savedTracks -> {
-								savedTracks.remove(filePosition);
-								return FileStringListUtilities.promiseSerializedFileStringList(savedTracks);
-							})
-							.thenPromise(savedTracks -> {
-								library.setSavedTracksString(savedTracks);
-
-								return LibrarySession.saveLibrary(PlaybackService.this, library);
-							});
-				});
+			playbackPlaylistStateManager.removeFileAtPosition(filePosition);
 		}
 	}
 	
@@ -622,8 +605,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			// resume playback
 			if (playbackPlaylistStateManager != null) {
 				playlistPlayer.setVolume(1.0f);
-	    		if (playlistPlayer.isPlaying()) {
-					playlistPlayer.resume();
+	    		if (playbackPlaylistStateManager.isPlaying()) {
+					playbackPlaylistStateManager.resume();
 					return;
 				}
 			}
@@ -631,14 +614,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			playbackPlaylistStateManager
 				.restorePlaylistFromStorage()
 				.then(VoidFunc.running(result -> {
-					if (result) playlistPlayer.resume();
+					if (result) playbackPlaylistStateManager.resume();
 				}));
 
 			return;
 		}
 		
-		if (playlistPlayer == null || !playlistPlayer.isPlaying()) return;
-		
+		if (playbackPlaylistStateManager == null || !playbackPlaylistStateManager.isPlaying()) return;
+
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_LOSS:
 		        // Lost focus for an unbounded amount of time: stop playback and release media player

@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.PassThroughPromise;
+import com.vedsoft.futures.callables.TwoParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
@@ -32,10 +33,6 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
-
-/**
- * Created by david on 1/22/17.
- */
 
 class PlaybackPlaylistStateManager implements Closeable {
 
@@ -50,7 +47,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private List<IFile> playlist;
 	private PreparedPlaybackQueue preparedPlaybackQueue;
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
-	private Disposable disposableFileChangedSubscription;
+	private Disposable fileChangedObservableConnection;
+	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
 
 	PlaybackPlaylistStateManager(Context context, int libraryId, IPositionedFileQueueProvider positionedFileQueueProvider) {
 		this.context = context;
@@ -129,7 +127,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 	void playRepeatedly() {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueProvider.getCyclicalQueue(playlist, library.getNowPlayingId());
+				positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue;
+				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.expectedUsing(playlist, library.getNowPlayingId());
 
 				preparedPlaybackQueue.updateQueue(cyclicalQueue);
 			}));
@@ -138,16 +137,16 @@ class PlaybackPlaylistStateManager implements Closeable {
 	void playToCompletion() {
 		persistLibraryRepeating(false)
 			.then(VoidFunc.running(library -> {
-				if (playlistPlayer == null) return;
+				positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue;
 
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueProvider.getCompletableQueue(playlist, library.getNowPlayingId());
+				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.expectedUsing(playlist, library.getNowPlayingId());
 
 				preparedPlaybackQueue.updateQueue(cyclicalQueue);
 			}));
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> resume() {
-		if (playlistPlayer == null) return new ExpectedPromise<>(Observable::empty);
+		if (playlistPlayer == null) return new PassThroughPromise<>(Observable.empty());
 
 		playlistPlayer.resume();
 
@@ -163,39 +162,67 @@ class PlaybackPlaylistStateManager implements Closeable {
 		saveStateToLibrary();
 	}
 
-
 	public boolean isPlaying() {
 		return playlistPlayer != null && playlistPlayer.isPlaying();
 	}
 
 	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) {
-		if (disposableFileChangedSubscription != null && !disposableFileChangedSubscription.isDisposed())
-			disposableFileChangedSubscription.dispose();
+		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
+			fileChangedObservableConnection.dispose();
 
 		observableProxy = Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition))).publish();
-		disposableFileChangedSubscription =
-			observableProxy.subscribe(p -> {
-				positionedPlaybackFile = p;
-				saveStateToLibrary();
-			}, this::uncaughtExceptionHandler);
+		fileChangedObservableConnection = observableProxy.connect();
+
+		observableProxy.subscribe(p -> {
+			positionedPlaybackFile = p;
+			saveStateToLibrary();
+		}, this::uncaughtExceptionHandler);
 
 		return observableProxy;
 	}
 
-	public IPromise<Library> addFile(IFile file) {
+	IPromise<Library> addFile(IFile file) {
 		if (playlist != null)
 			playlist.add(file);
 
-		LibrarySession
-			.getLibrary(context, libraryId)
-			.thenPromise((result) -> {
-				String newFileString = result.getSavedTracksString();
-				if (!newFileString.endsWith(";")) newFileString += ";";
-				newFileString += file.getKey() + ";";
-				result.setSavedTracksString(newFileString);
+		return
+			LibrarySession
+				.getLibrary(context, libraryId)
+				.thenPromise((result) -> {
+					String newFileString = result.getSavedTracksString();
+					if (!newFileString.endsWith(";")) newFileString += ";";
+					newFileString += file.getKey() + ";";
+					result.setSavedTracksString(newFileString);
 
-				return LibrarySession.saveLibrary(context, result);
-			});
+					return LibrarySession.saveLibrary(context, result);
+				});
+	}
+
+	IPromise<Library> removeFileAtPosition(int position) {
+		if (playlist != null) {
+			playlist.remove(position);
+
+			if (preparedPlaybackQueue != null) {
+				final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.expectedUsing(playlist, positionedPlaybackFile.getPosition());
+				preparedPlaybackQueue.updateQueue(newPositionedFileQueue);
+			}
+		}
+
+		return
+			LibrarySession
+				.getLibrary(context, libraryId)
+				.thenPromise(library ->
+					FileStringListUtilities
+						.promiseParsedFileStringList(library.getSavedTracksString())
+						.thenPromise(savedTracks -> {
+							savedTracks.remove(position);
+							return FileStringListUtilities.promiseSerializedFileStringList(savedTracks);
+						})
+						.thenPromise(savedTracks -> {
+							library.setSavedTracksString(savedTracks);
+
+							return LibrarySession.saveLibrary(context, library);
+						}));
 	}
 
 	private IPromise<Library> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
@@ -287,10 +314,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		if (playlistPlayer != null)
-			playlistPlayer.close();
+		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
+			fileChangedObservableConnection.dispose();
 
-		if (disposableFileChangedSubscription != null && !disposableFileChangedSubscription.isDisposed())
-			disposableFileChangedSubscription.dispose();
+		if (playlistPlayer != null)	playlistPlayer.close();
 	}
 }
