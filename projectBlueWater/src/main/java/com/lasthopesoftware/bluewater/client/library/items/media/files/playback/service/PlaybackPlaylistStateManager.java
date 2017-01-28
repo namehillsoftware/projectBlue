@@ -126,23 +126,14 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 	void playRepeatedly() {
 		persistLibraryRepeating(true)
-			.then(VoidFunc.running(library -> {
-				positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue;
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.resultFrom(playlist, library.getNowPlayingId());
-
-				preparedPlaybackQueue.updateQueue(cyclicalQueue);
-			}));
+			.then(VoidFunc.running(
+				library -> preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue).resultFrom(playlist, library.getNowPlayingId()))));
 	}
 
 	void playToCompletion() {
 		persistLibraryRepeating(false)
-			.then(VoidFunc.running(library -> {
-				positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue;
-
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.resultFrom(playlist, library.getNowPlayingId());
-
-				preparedPlaybackQueue.updateQueue(cyclicalQueue);
-			}));
+			.then(VoidFunc.running(
+				library ->	preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue).resultFrom(playlist, library.getNowPlayingId()))));
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> resume() {

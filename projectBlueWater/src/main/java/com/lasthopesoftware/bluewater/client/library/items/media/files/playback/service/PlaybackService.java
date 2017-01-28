@@ -179,8 +179,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
 
-	private PreparedPlaybackQueue preparedPlaybackQueue;
-
 	private volatile PositionedPlaybackFile positionedPlaybackFile;
 
 	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new AbstractThreadLocalLazy<IPlaybackBroadcaster>() {
@@ -472,7 +470,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         }
 		
 		if (action.equals(Action.next)) {
-        	if (playlist != null && positionedPlaybackFile != null) {
+        	if (playbackPlaylistStateManager != null && positionedPlaybackFile != null) {
 				final int newPosition =  positionedPlaybackFile.getPosition();
 				final int playlistSize = playlist.size();
 				playbackPlaylistStateManager.changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
