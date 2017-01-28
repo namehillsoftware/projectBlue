@@ -41,7 +41,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -470,24 +469,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         }
 		
 		if (action.equals(Action.next)) {
-        	if (playbackPlaylistStateManager != null && positionedPlaybackFile != null) {
-				final int newPosition =  positionedPlaybackFile.getPosition();
-				final int playlistSize = playlist.size();
-				playbackPlaylistStateManager.changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
-        		return;
-        	}
-
-			LibrarySession
-				.getActiveLibrary(this)
-				.then(VoidFunc.running(library -> {
-					final int newPosition =  library.getNowPlayingId();
-					FileStringListUtilities
-						.promiseParsedFileStringList(library.getSavedTracksString())
-						.then(VoidFunc.running(savedTracks -> {
-							final int playlistSize = savedTracks.size();
-							playbackPlaylistStateManager.changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
-						}));
-				}));
+        	playbackPlaylistStateManager.skipToNext();
 
         	return;
         }
