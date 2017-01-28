@@ -13,7 +13,7 @@ class VoidTwoParameterFunction<ParameterOne, ParameterTwo> implements TwoParamet
 	}
 
 	@Override
-	public Void expectedUsing(ParameterOne paramOne, ParameterTwo paramTwo) {
+	public Void resultFrom(ParameterOne paramOne, ParameterTwo paramTwo) {
 		action.runWith(paramOne, paramTwo);
 		return null;
 	}

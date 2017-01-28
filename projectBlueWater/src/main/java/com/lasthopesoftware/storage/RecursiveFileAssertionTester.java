@@ -15,7 +15,7 @@ public final class RecursiveFileAssertionTester {
 		File testFile = file;
 		do {
 			if (testFile.exists())
-				return assertion.expectedUsing(testFile);
+				return assertion.resultFrom(testFile);
 		} while ((testFile = testFile.getParentFile()) != null);
 
 		return false;

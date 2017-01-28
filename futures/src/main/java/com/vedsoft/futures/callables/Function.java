@@ -5,5 +5,5 @@ package com.vedsoft.futures.callables;
  */
 
 public interface Function<TResult> {
-	TResult expect();
+	TResult result();
 }

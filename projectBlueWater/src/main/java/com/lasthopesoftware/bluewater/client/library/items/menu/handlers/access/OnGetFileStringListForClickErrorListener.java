@@ -21,7 +21,7 @@ public class OnGetFileStringListForClickErrorListener implements OneParameterFun
     }
 
     @Override
-    public Boolean expectedUsing(Exception innerException) {
+    public Boolean resultFrom(Exception innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
 

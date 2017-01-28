@@ -22,11 +22,11 @@ class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPr
 	private final Executor executor;
 
 	DispatchedAndroidTask(Function<TResult> task) {
-		this((c) -> task.expect());
+		this((c) -> task.result());
 	}
 
 	DispatchedAndroidTask(Function<TResult> task, Executor executor) {
-		this((c) -> task.expect(), executor);
+		this((c) -> task.result(), executor);
 	}
 
 	DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task) {
@@ -59,7 +59,7 @@ class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPr
 		@Override
 		protected TResult doInBackground(Void... params) {
 			try {
-				return task.expectedUsing(onCancelled);
+				return task.resultFrom(onCancelled);
 			} catch (Exception e) {
 				setException(e);
 				return null;

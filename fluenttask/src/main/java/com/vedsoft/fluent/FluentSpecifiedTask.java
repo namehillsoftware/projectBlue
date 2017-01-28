@@ -159,10 +159,10 @@ public abstract class FluentSpecifiedTask<TParams, TProgress, TResult> implement
 		if (exception == null) return;
 
 		if (twoParameterOnErrorListener != null)
-			twoParameterOnErrorListener.expectedUsing(this, exception);
+			twoParameterOnErrorListener.resultFrom(this, exception);
 
 		if (oneParameterOnErrorListener != null)
-			oneParameterOnErrorListener.expectedUsing(exception);
+			oneParameterOnErrorListener.resultFrom(exception);
 	}
 
 	@Override

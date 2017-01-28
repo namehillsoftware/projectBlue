@@ -128,7 +128,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		persistLibraryRepeating(true)
 			.then(VoidFunc.running(library -> {
 				positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue;
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.expectedUsing(playlist, library.getNowPlayingId());
+				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.resultFrom(playlist, library.getNowPlayingId());
 
 				preparedPlaybackQueue.updateQueue(cyclicalQueue);
 			}));
@@ -139,7 +139,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			.then(VoidFunc.running(library -> {
 				positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue;
 
-				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.expectedUsing(playlist, library.getNowPlayingId());
+				final IPositionedFileQueue cyclicalQueue = positionedFileQueueGenerator.resultFrom(playlist, library.getNowPlayingId());
 
 				preparedPlaybackQueue.updateQueue(cyclicalQueue);
 			}));
@@ -203,7 +203,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			playlist.remove(position);
 
 			if (preparedPlaybackQueue != null) {
-				final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.expectedUsing(playlist, positionedPlaybackFile.getPosition());
+				final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition());
 				preparedPlaybackQueue.updateQueue(newPositionedFileQueue);
 			}
 		}
@@ -254,17 +254,17 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final int startPosition = Math.max(library.getNowPlayingId(), 0);
 
-		final IPositionedFileQueue positionedFileQueue =
+		positionedFileQueueGenerator =
 			library.isRepeating()
-				? positionedFileQueueProvider.getCyclicalQueue(playlist, startPosition)
-				: positionedFileQueueProvider.getCompletableQueue(playlist, startPosition);
+				? positionedFileQueueProvider::getCyclicalQueue
+				: positionedFileQueueProvider::getCompletableQueue;
 
 		preparedPlaybackQueue =
 			new PreparedPlaybackQueue(
 				new MediaPlayerPlaybackPreparerTaskFactory(
 					uriProvider,
 					new MediaPlayerInitializer(context, library)),
-				positionedFileQueue);
+				positionedFileQueueGenerator.resultFrom(playlist, startPosition));
 
 		return preparedPlaybackQueue;
 	}

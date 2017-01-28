@@ -47,15 +47,15 @@ public class GivenAFileThatDoesNotExist {
 					when(childFile.exists()).thenReturn(false);
 					when(childFile.getParentFile()).thenReturn(parentFile);
 
-					when(mockCallable.expectedUsing(any())).thenReturn(false);
-					when(mockCallable.expectedUsing(grandParentFile)).thenReturn(expectedFileAssertionResult);
+					when(mockCallable.resultFrom(any())).thenReturn(false);
+					when(mockCallable.resultFrom(grandParentFile)).thenReturn(expectedFileAssertionResult);
 
 					fileAssertionResult = RecursiveFileAssertionTester.recursivelyTestAssertion(childFile, mockCallable);
 				}
 
 				@Test
 				public void ThenTheAssertionIsTestedOnTheGrandParentFile() {
-					verify(mockCallable, times(1)).expectedUsing(grandParentFile);
+					verify(mockCallable, times(1)).resultFrom(grandParentFile);
 				}
 
 				@Test
@@ -85,14 +85,14 @@ public class GivenAFileThatDoesNotExist {
 					when(childFile.exists()).thenReturn(false);
 					when(childFile.getParentFile()).thenReturn(parentFile);
 
-					when(mockCallable.expectedUsing(any())).thenReturn(true);
+					when(mockCallable.resultFrom(any())).thenReturn(true);
 
 					fileAssertionResult = RecursiveFileAssertionTester.recursivelyTestAssertion(childFile, mockCallable);
 				}
 
 				@Test
 				public void ThenTheAssertionIsNotTested() {
-					verify(mockCallable, times(0)).expectedUsing(any());
+					verify(mockCallable, times(0)).resultFrom(any());
 				}
 
 				@Test

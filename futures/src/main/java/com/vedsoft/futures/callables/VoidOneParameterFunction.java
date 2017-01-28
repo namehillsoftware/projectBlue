@@ -15,7 +15,7 @@ final class VoidOneParameterFunction<ParameterOne> implements OneParameterFuncti
 	}
 
 	@Override
-	public Void expectedUsing(ParameterOne parameterOne) {
+	public Void resultFrom(ParameterOne parameterOne) {
 		action.runWith(parameterOne);
 		return null;
 	}

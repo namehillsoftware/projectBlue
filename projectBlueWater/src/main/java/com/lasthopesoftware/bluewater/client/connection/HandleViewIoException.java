@@ -13,7 +13,7 @@ public class HandleViewIoException<TParams, TProgress, TResult> implements TwoPa
 	private final Runnable mOnConnectionRegainedListener;
 	
 	@Override
-	public Boolean expectedUsing(IFluentTask<TParams, TProgress, TResult> owner, Exception innerException) {
+	public Boolean resultFrom(IFluentTask<TParams, TProgress, TResult> owner, Exception innerException) {
 		if (!(innerException instanceof IOException)) return false;
 		
 		WaitForConnectionActivity.beginWaiting(mContext, mOnConnectionRegainedListener);

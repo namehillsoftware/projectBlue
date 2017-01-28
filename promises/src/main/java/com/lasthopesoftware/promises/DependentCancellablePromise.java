@@ -135,7 +135,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				@Override
 				public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					try {
-						resolve.withResult(onFulfilled.expectedUsing(result, onCancelled));
+						resolve.withResult(onFulfilled.resultFrom(result, onCancelled));
 					} catch (Exception e) {
 						reject.withError(e);
 					}
@@ -191,7 +191,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 					try {
 						onFulfilled
-							.expectedUsing(result, onCancelled)
+							.resultFrom(result, onCancelled)
 							.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 							.error(new Resolution.RejectWithPromiseError(reject));
 					} catch (Exception e) {
@@ -247,7 +247,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			@Override
 			public final void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 				try {
-					newResolve.withResult(onFulfilled.expectedUsing(originalResult));
+					newResolve.withResult(onFulfilled.resultFrom(originalResult));
 				} catch (Exception e) {
 					newReject.withError(e);
 				}
@@ -286,7 +286,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 				try {
 					onFulfilled
-						.expectedUsing(result)
+						.resultFrom(result)
 						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 						.error(new Resolution.RejectWithPromiseError(reject));
 				} catch (Exception e) {
@@ -305,7 +305,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public final Void expectedUsing(TNewResult result) {
+			public final Void resultFrom(TNewResult result) {
 				resolve.withResult(result);
 				return null;
 			}
@@ -319,7 +319,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public final Void expectedUsing(Exception exception) {
+			public final Void resultFrom(Exception exception) {
 				reject.withError(exception);
 				return null;
 			}

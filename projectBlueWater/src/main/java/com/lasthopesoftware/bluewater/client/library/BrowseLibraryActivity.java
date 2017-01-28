@@ -113,7 +113,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
 				getSupportActionBar().setTitle(oldTitle);
-                invalidateOptionsMenu(); // creates expectedUsing to onPrepareOptionsMenu()
+                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
             }
 
             /** Called when a drawer has settled in a completely open state. */
@@ -122,7 +122,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
                 super.onDrawerOpened(drawerView);
                 oldTitle = getSupportActionBar().getTitle();
 				getSupportActionBar().setTitle(selectViewTitle);
-                invalidateOptionsMenu(); // creates expectedUsing to onPrepareOptionsMenu()
+                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
             }
 
 		};
