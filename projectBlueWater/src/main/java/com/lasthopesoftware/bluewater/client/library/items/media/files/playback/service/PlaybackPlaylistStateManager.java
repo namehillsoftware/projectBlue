@@ -49,6 +49,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
+	private float volume;
 
 	PlaybackPlaylistStateManager(Context context, int libraryId, IPositionedFileQueueProvider positionedFileQueueProvider) {
 		this.context = context;
@@ -184,7 +185,10 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
-		observableProxy = Observable.create((playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition))).publish();
+		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
+		playlistPlayer.setVolume(volume);
+
+		observableProxy = Observable.create(playlistPlayer).publish();
 		fileChangedObservableConnection = observableProxy.connect();
 
 		observableProxy.subscribe(p -> {
@@ -253,6 +257,13 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 							return LibrarySession.saveLibrary(context, result);
 						}));
+	}
+
+	void setVolume(float volume) {
+		this.volume = volume;
+
+		if (playlistPlayer != null)
+			playlistPlayer.setVolume(volume);
 	}
 
 	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) {

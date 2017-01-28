@@ -584,7 +584,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
 			if (playbackPlaylistStateManager != null) {
-				playlistPlayer.setVolume(1.0f);
+				playbackPlaylistStateManager.setVolume(1.0f);
 	    		if (playbackPlaylistStateManager.isPlaying()) {
 					playbackPlaylistStateManager.resume();
 					return;
@@ -610,9 +610,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		        pausePlayback(false);
 	            return;
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-            // Lost focus for a short time, but it's ok to keep playing
-            // at an attenuated level
-	            playlistPlayer.setVolume(0.2f);
+				// Lost focus for a short time, but it's ok to keep playing
+				// at an attenuated level
+				playbackPlaylistStateManager.setVolume(0.2f);
 	    }
 	}
 
@@ -631,7 +631,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.promisePlayback()
 			.then(VoidFunc.running(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
 
-		final IFile playingFile = playlist.get(positionedPlaybackFile.getPosition());
+		final IFile playingFile = positionedPlaybackFile;
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
