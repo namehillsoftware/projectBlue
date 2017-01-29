@@ -57,29 +57,21 @@ class PlaybackPlaylistStateManager implements Closeable {
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
 	}
 
-	IPromise<Boolean> restorePlaylistFromStorage() {
+	private IPromise<Library> restorePlaylistFromStorage() {
 		return
 			LibrarySession
 				.getLibrary(context, libraryId)
-				.then((library, resolve, reject) -> {
-					if (library == null) {
-						resolve.withResult(false);
-						return;
-					}
+				.thenPromise(library -> {
+					if (library.getSavedTracksString() == null)
+						return new PassThroughPromise<>(library);
 
-					if (library.getSavedTracksString() == null || library.getSavedTracksString().isEmpty()) {
-						resolve.withResult(false);
-						return;
-					}
-
-					FileStringListUtilities
-						.promiseParsedFileStringList(library.getSavedTracksString())
-						.then(playlist -> {
-							this.playlist = playlist;
-							return library;
-						})
-						.then(VoidFunc.running(playlistPlayer -> resolve.withResult(true)))
-						.error(VoidFunc.running(reject::withError));
+					return
+						FileStringListUtilities
+							.promiseParsedFileStringList(library.getSavedTracksString())
+							.then(playlist -> {
+								this.playlist = playlist;
+								return library;
+							});
 				});
 	}
 
@@ -107,7 +99,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
-		if (playlist != null&& positionedPlaybackFile != null) {
+		if (playlist != null && positionedPlaybackFile != null) {
 			final int newPosition =  positionedPlaybackFile.getPosition();
 			final int playlistSize = playlist.size();
 			return changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
@@ -126,6 +118,21 @@ class PlaybackPlaylistStateManager implements Closeable {
 								final int playlistSize = savedTracks.size();
 								return changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
 							});
+				});
+	}
+
+	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
+		if (positionedPlaybackFile != null) {
+			final int position =  positionedPlaybackFile.getPosition();
+			return changePosition(position > 0 ? position - 1 : 0, 0);
+		}
+
+		return
+			LibrarySession
+				.getLibrary(context, libraryId)
+				.thenPromise(library -> {
+					final int position =  library.getNowPlayingId();
+					return changePosition(position > 0 ? position - 1 : 0, 0);
 				});
 	}
 
@@ -161,13 +168,21 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> resume() {
-		if (playlistPlayer == null) return new PassThroughPromise<>(Observable.empty());
+		if (playlistPlayer != null) {
+			playlistPlayer.resume();
 
-		playlistPlayer.resume();
+			saveStateToLibrary();
 
-		saveStateToLibrary();
+			return new PassThroughPromise<>(observableProxy);
+		}
 
-		return new PassThroughPromise<>(observableProxy);
+		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
+			restorePlaylistFromStorage()
+				.then(library -> startPlayback(initializePreparedPlaybackQueue(library), library.getNowPlayingId()));
+
+		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+
+		return observablePromise;
 	}
 
 	public void pause() {
@@ -217,16 +232,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Library> removeFileAtPosition(int position) {
-		if (playlist != null) {
-			playlist.remove(position);
-
-			if (preparedPlaybackQueue != null) {
-				final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition());
-				preparedPlaybackQueue.updateQueue(newPositionedFileQueue);
-			}
-		}
-
-		return
+		final IPromise<Library> libraryUpdatePromise =
 			LibrarySession
 				.getLibrary(context, libraryId)
 				.thenPromise(library ->
@@ -241,6 +247,17 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 							return LibrarySession.saveLibrary(context, library);
 						}));
+
+		if (playlist == null) return libraryUpdatePromise;
+
+		playlist.remove(position);
+
+		if (preparedPlaybackQueue == null) return libraryUpdatePromise;
+
+		final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition());
+		preparedPlaybackQueue.updateQueue(newPositionedFileQueue);
+
+		return libraryUpdatePromise;
 	}
 
 	private IPromise<Library> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
