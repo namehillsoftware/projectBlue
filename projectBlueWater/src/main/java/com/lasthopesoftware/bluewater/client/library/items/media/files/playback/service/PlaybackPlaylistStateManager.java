@@ -91,9 +91,15 @@ class PlaybackPlaylistStateManager implements Closeable {
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			updateLibraryPlaylist(playlistPosition, filePosition)
 				.then(this::initializePreparedPlaybackQueue)
-				.then(q -> startPlayback(q, filePosition));
+				.then((q, resolve, reject) -> {
+					try {
+						resolve.withResult(startPlayback(q, filePosition));
+					} catch (IOException e) {
+						reject.withError(e);
+					}
+				});
 
-		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
@@ -150,20 +156,20 @@ class PlaybackPlaylistStateManager implements Closeable {
 				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
 
-		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
 
 	void playRepeatedly() {
 		persistLibraryRepeating(true)
-			.then(VoidFunc.running(
+			.then(VoidFunc.runningCarelessly(
 				library -> preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue).resultFrom(playlist, library.getNowPlayingId()))));
 	}
 
 	void playToCompletion() {
 		persistLibraryRepeating(false)
-			.then(VoidFunc.running(
+			.then(VoidFunc.runningCarelessly(
 				library ->	preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue).resultFrom(playlist, library.getNowPlayingId()))));
 	}
 
@@ -178,9 +184,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			restorePlaylistFromStorage()
-				.then(library -> startPlayback(initializePreparedPlaybackQueue(library), library.getNowPlayingId()));
+				.then((library) -> startPlayback(initializePreparedPlaybackQueue(library), library.getNowPlayingId()));
 
-		observablePromise.error(VoidFunc.running(this::uncaughtExceptionHandler));
+		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
@@ -196,9 +202,12 @@ class PlaybackPlaylistStateManager implements Closeable {
 		return playlistPlayer != null && playlistPlayer.isPlaying();
 	}
 
-	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) {
+	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
+
+		if (playlistPlayer != null)
+			playlistPlayer.close();
 
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
 		playlistPlayer.setVolume(volume);
@@ -215,10 +224,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Library> addFile(IFile file) {
-		if (playlist != null)
-			playlist.add(file);
-
-		return
+		final IPromise<Library> libraryUpdatePromise =
 			LibrarySession
 				.getLibrary(context, libraryId)
 				.thenPromise((result) -> {
@@ -229,6 +235,15 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 					return LibrarySession.saveLibrary(context, result);
 				});
+
+		if (playlist == null) return libraryUpdatePromise;
+
+		playlist.add(file);
+
+		if (preparedPlaybackQueue == null) return libraryUpdatePromise;
+
+		preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition()));
+		return libraryUpdatePromise;
 	}
 
 	IPromise<Library> removeFileAtPosition(int position) {
@@ -329,10 +344,10 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		LibrarySession
 			.getLibrary(context, libraryId)
-			.then(VoidFunc.running(library -> {
+			.thenPromise(library ->
 				FileStringListUtilities
 					.promiseSerializedFileStringList(playlist)
-					.then(VoidFunc.running(savedTracksString -> {
+					.thenPromise(savedTracksString -> {
 						library.setSavedTracksString(savedTracksString);
 
 						if (positionedPlaybackFile != null) {
@@ -340,9 +355,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 							library.setNowPlayingProgress(positionedPlaybackFile.getPlaybackHandler().getCurrentPosition());
 						}
 
-						LibrarySession.saveLibrary(context, library);
+						return LibrarySession.saveLibrary(context, library);
 					}));
-			}));
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {

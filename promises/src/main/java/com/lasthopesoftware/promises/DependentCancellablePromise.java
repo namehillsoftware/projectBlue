@@ -1,5 +1,7 @@
 package com.lasthopesoftware.promises;
 
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.TwoParameterFunction;
 import com.vedsoft.futures.runnables.FiveParameterAction;
@@ -70,7 +72,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
@@ -80,7 +82,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(TwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessTwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
 
@@ -100,7 +102,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(final OneParameterFunction<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> then(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
@@ -110,7 +112,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(OneParameterFunction<Exception, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessOneParameterFunction<Exception, TNewRejectedResult> onRejected) {
 		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
@@ -126,9 +128,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			 * Created by david on 10/30/16.
 			 */
 			static class ExpectedResultCancellableExecutor<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-				private final TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled;
+				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled;
 
-				ExpectedResultCancellableExecutor(TwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+				ExpectedResultCancellableExecutor(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 					this.onFulfilled = onFulfilled;
 				}
 
@@ -238,9 +240,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		 * Created by david on 10/8/16.
 		 */
 		static class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
-			private final OneParameterFunction<TResult, TNewResult> onFulfilled;
+			private final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled;
 
-			ExpectedResultExecutor(OneParameterFunction<TResult, TNewResult> onFulfilled) {
+			ExpectedResultExecutor(CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 
@@ -297,7 +299,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	private static class Resolution {
-		static class ResolveWithPromiseResult<TNewResult> implements OneParameterFunction<TNewResult, Void> {
+		static class ResolveWithPromiseResult<TNewResult> implements CarelessOneParameterFunction<TNewResult, Void> {
 			private final IResolvedPromise<TNewResult> resolve;
 
 			ResolveWithPromiseResult(IResolvedPromise<TNewResult> resolve) {
@@ -311,7 +313,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 		}
 
-		static class RejectWithPromiseError implements OneParameterFunction<Exception, Void> {
+		static class RejectWithPromiseError implements CarelessOneParameterFunction<Exception, Void> {
 			private final IRejectedPromise reject;
 
 			RejectWithPromiseError(IRejectedPromise reject) {

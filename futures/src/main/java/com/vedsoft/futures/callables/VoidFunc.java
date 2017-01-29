@@ -18,4 +18,11 @@ public final class VoidFunc {
 		return new VoidTwoParameterFunction<>(action);
 	}
 
+	public static <ParameterOne> CarelessOneParameterFunction<ParameterOne, Void> runningCarelessly(OneParameterAction<ParameterOne> action) {
+		return new CarelessVoidOneParameterFunction<>(action);
+	}
+
+	public static <ParameterOne, ParameterTwo> CarelessTwoParameterFunction<ParameterOne, ParameterTwo, Void> runningCarelessly(TwoParameterAction<ParameterOne, ParameterTwo> action) {
+		return new CarelessVoidTwoParameterFunction<>(action);
+	}
 }
