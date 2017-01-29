@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -21,7 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
-	OneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
+	CarelessOneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
@@ -115,7 +116,7 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public PositionedPlaybackFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.running(this));
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runningCarelessly(this));
 
 		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFile.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile.file);
 	}

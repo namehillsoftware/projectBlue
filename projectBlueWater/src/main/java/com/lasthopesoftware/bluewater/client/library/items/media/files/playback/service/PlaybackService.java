@@ -193,13 +193,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					return;
 				}
 
-				LibrarySession
-					.getActiveLibrary(PlaybackService.this)
-					.thenPromise(result ->
-						FileStringListUtilities
-							.promiseParsedFileStringList(result.getSavedTracksString())
-							.then(VoidFunc.running(playlist ->
-								playbackPlaylistStateManager.startPlaylist(playlist, result.getNowPlayingId(), result.getNowPlayingProgress()))));
+				playbackPlaylistStateManager.resume().then(observable -> observePlaybackFileChanges(observable));
 			};
 		}
 	};
@@ -442,7 +436,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action.equals(Action.launchMusicService)) {
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, intent.getIntExtra(Action.Bag.fileKey, -1), intent.getIntExtra(Action.Bag.startPos, 0)))
+				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0)))
 				.then(this::observePlaybackFileChanges);
 
 			return;
@@ -598,7 +592,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		positionedPlaybackFile
 			.getPlaybackHandler()
 			.promisePlayback()
-			.then(VoidFunc.running(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
+			.then(VoidFunc.runningCarelessly(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
 
 		final IFile playingFile = positionedPlaybackFile;
 		

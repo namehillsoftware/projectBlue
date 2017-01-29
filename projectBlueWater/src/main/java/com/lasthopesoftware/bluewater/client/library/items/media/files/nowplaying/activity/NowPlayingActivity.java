@@ -206,7 +206,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				LibrarySession
 					.getActiveLibrary(v.getContext())
-					.then(VoidFunc.running(result -> {
+					.then(VoidFunc.runningCarelessly(result -> {
 						final boolean isRepeating = !result.isRepeating();
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -261,7 +261,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return
 					FileStringListUtilities
 						.promiseParsedFileStringList(savedTracksString)
-						.then(VoidFunc.running(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())));
+						.then(VoidFunc.runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())));
 			});
 	}
 

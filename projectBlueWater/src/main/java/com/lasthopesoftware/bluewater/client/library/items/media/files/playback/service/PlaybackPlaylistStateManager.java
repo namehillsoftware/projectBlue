@@ -49,7 +49,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
-	private float volume;
+	private float volume = 1.0f;
 
 	PlaybackPlaylistStateManager(Context context, int libraryId, IPositionedFileQueueProvider positionedFileQueueProvider) {
 		this.context = context;

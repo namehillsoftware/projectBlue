@@ -30,7 +30,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
     public void sendPlaybackBroadcast(final String broadcastMessage, final PositionedPlaybackFile positionedPlaybackFile) {
         LibrarySession
             .getActiveLibrary(context)
-            .then(VoidFunc.running(library -> {
+            .then(VoidFunc.runningCarelessly(library -> {
                 final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
                 final int currentPlaylistPosition = positionedPlaybackFile.getPosition();

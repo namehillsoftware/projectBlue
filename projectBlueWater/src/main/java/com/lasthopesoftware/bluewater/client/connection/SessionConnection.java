@@ -54,7 +54,7 @@ public class SessionConnection {
 		if (isRunning) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.getActiveLibrary(context).then(VoidFunc.running(library -> {
+		LibrarySession.getActiveLibrary(context).then(VoidFunc.runningCarelessly(library -> {
 			if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 				isRunning = false;

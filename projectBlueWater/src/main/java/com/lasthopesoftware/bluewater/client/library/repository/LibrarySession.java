@@ -77,7 +77,7 @@ public class LibrarySession {
 		final IPromise<Library> savedLibraryPromise = saveLibrary(context, library);
 
 		if (onSaveComplete != null)
-			savedLibraryPromise.then(VoidFunc.running(onSaveComplete));
+			savedLibraryPromise.then(VoidFunc.runningCarelessly(onSaveComplete));
 	}
 
 	@SuppressLint("NewApi")
