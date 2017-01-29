@@ -5,7 +5,7 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 11/17/16.
  */
-class CarelessVoidTwoParameterFunction<ParameterOne, ParameterTwo> implements CarelessTwoParameterFunction<ParameterOne, ParameterTwo, Void> {
+final class CarelessVoidTwoParameterFunction<ParameterOne, ParameterTwo> implements CarelessTwoParameterFunction<ParameterOne, ParameterTwo, Void> {
 	private final TwoParameterAction<ParameterOne, ParameterTwo> action;
 
 	CarelessVoidTwoParameterFunction(TwoParameterAction<ParameterOne, ParameterTwo> action) {

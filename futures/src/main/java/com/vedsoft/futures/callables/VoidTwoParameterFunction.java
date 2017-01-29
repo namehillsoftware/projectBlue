@@ -5,7 +5,7 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 11/17/16.
  */
-class VoidTwoParameterFunction<ParameterOne, ParameterTwo> implements TwoParameterFunction<ParameterOne, ParameterTwo, Void> {
+final class VoidTwoParameterFunction<ParameterOne, ParameterTwo> implements TwoParameterFunction<ParameterOne, ParameterTwo, Void> {
 	private final TwoParameterAction<ParameterOne, ParameterTwo> action;
 
 	VoidTwoParameterFunction(TwoParameterAction<ParameterOne, ParameterTwo> action) {
