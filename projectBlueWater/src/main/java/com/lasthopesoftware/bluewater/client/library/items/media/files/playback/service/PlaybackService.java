@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -222,7 +223,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				logger.error("There was an error closing the playbackPlaylistStateManager", e);
 			}
 
-			playbackPlaylistStateManager = new PlaybackPlaylistStateManager(PlaybackService.this, chosenLibrary, new PositionedFileQueueProvider());
+			playbackPlaylistStateManager = null;
 		}
 	};
 	
@@ -327,16 +328,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	@Override
 	public final void onCreate() {
-		LibrarySession
-			.getActiveLibrary(this)
-			.then(library -> {
-				playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, library.getId(), new PositionedFileQueueProvider());
-
-				localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(LibrarySession.libraryChosenEvent));
-
-				return library;
-			});
-
 		registerRemoteClientControl();
 	}
 
@@ -351,7 +342,24 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 		
 		if (SessionConnection.isBuilt()) {
-			actOnIntent(intent);
+			if (playbackPlaylistStateManager != null) {
+				actOnIntent(intent);
+				return START_NOT_STICKY;
+			}
+
+			LibrarySession
+				.getActiveLibrary(this)
+				.then(library -> {
+					if (playbackPlaylistStateManager != null)
+						playbackPlaylistStateManager.close();
+
+					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, SessionConnection.getSessionConnectionProvider(), new PositionedFileQueueProvider(), library.getId(), 1.0f);
+					actOnIntent(intent);
+
+					return playbackPlaylistStateManager;
+				})
+				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+
 			return START_NOT_STICKY;
 		}
 
@@ -408,7 +416,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
-			actOnIntent(intentToRun);
+			LibrarySession
+				.getActiveLibrary(this)
+				.then(library -> {
+					if (playbackPlaylistStateManager != null)
+						playbackPlaylistStateManager.close();
+
+					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, SessionConnection.getSessionConnectionProvider(), new PositionedFileQueueProvider(), library.getId(), 1.0f);
+					actOnIntent(intentToRun);
+
+					return playbackPlaylistStateManager;
+				})
+				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+
 			return;
 		}
 		notifyForeground(notifyBuilder);

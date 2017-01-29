@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
@@ -39,6 +40,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
 	private final Context context;
+	private final IConnectionProvider connectionProvider;
 	private final int libraryId;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
 
@@ -49,30 +51,14 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
-	private float volume = 1.0f;
+	private float volume;
 
-	PlaybackPlaylistStateManager(Context context, int libraryId, IPositionedFileQueueProvider positionedFileQueueProvider) {
+	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IPositionedFileQueueProvider positionedFileQueueProvider, int libraryId, float initialVolume) {
 		this.context = context;
+		this.connectionProvider = connectionProvider;
 		this.libraryId = libraryId;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
-	}
-
-	private IPromise<Library> restorePlaylistFromStorage() {
-		return
-			LibrarySession
-				.getLibrary(context, libraryId)
-				.thenPromise(library -> {
-					if (library.getSavedTracksString() == null)
-						return new PassThroughPromise<>(library);
-
-					return
-						FileStringListUtilities
-							.promiseParsedFileStringList(library.getSavedTracksString())
-							.then(playlist -> {
-								this.playlist = playlist;
-								return library;
-							});
-				});
+		volume = initialVolume;
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
@@ -285,11 +271,29 @@ class PlaybackPlaylistStateManager implements Closeable {
 			playlistPlayer.setVolume(volume);
 	}
 
+	private IPromise<Library> restorePlaylistFromStorage() {
+		return
+			LibrarySession
+				.getLibrary(context, libraryId)
+				.thenPromise(library -> {
+					if (library.getSavedTracksString() == null)
+						return new PassThroughPromise<>(library);
+
+					return
+						FileStringListUtilities
+							.promiseParsedFileStringList(library.getSavedTracksString())
+							.then(playlist -> {
+								this.playlist = playlist;
+								return library;
+							});
+				});
+	}
+
 	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) throws IOException {
 		if (preparedPlaybackQueue != null)
 			preparedPlaybackQueue.close();
 
-		final IFileUriProvider uriProvider = new BestMatchUriProvider(context, SessionConnection.getSessionConnectionProvider(), library);
+		final IFileUriProvider uriProvider = new BestMatchUriProvider(context, connectionProvider, library);
 
 		final int startPosition = Math.max(library.getNowPlayingId(), 0);
 

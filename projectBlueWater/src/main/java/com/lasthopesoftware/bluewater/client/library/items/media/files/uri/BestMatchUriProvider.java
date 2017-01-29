@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
@@ -21,9 +22,9 @@ import java.io.IOException;
 public class BestMatchUriProvider implements IFileUriProvider {
 	private final Context context;
 	private final Library library;
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 
-	public BestMatchUriProvider(Context context, ConnectionProvider connectionProvider, Library library) {
+	public BestMatchUriProvider(Context context, IConnectionProvider connectionProvider, Library library) {
 		this.context = context;
 		this.library = library;
 		this.connectionProvider = connectionProvider;
