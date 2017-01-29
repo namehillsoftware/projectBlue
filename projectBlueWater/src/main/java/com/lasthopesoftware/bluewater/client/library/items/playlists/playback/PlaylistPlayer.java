@@ -88,7 +88,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		preparingPlaybackFile
 			.then(this::changePlaybackFile)
 			.thenPromise(this::startFilePlayback)
-			.error(VoidFunc.running(this::handlePlaybackException));
+			.error(VoidFunc.runningCarelessly(this::handlePlaybackException));
 	}
 
 	private PositionedPlaybackFile changePlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
@@ -107,7 +107,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		final IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
 		promisedPlayback
-			.then(VoidFunc.running(this::closeAndStartNextFile));
+			.then(VoidFunc.runningCarelessly(this::closeAndStartNextFile));
 
 		return promisedPlayback;
 	}

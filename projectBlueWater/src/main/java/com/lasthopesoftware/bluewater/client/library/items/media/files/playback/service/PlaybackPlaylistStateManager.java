@@ -78,26 +78,12 @@ class PlaybackPlaylistStateManager implements Closeable {
 	IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
-		if (playlistPlayer != null) {
-			try {
-				playlistPlayer.close();
-			} catch (IOException e) {
-				logger.error("There was an error closing the playlist player", e);
-			}
-		}
-
 		this.playlist = playlist;
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			updateLibraryPlaylist(playlistPosition, filePosition)
 				.then(this::initializePreparedPlaybackQueue)
-				.then((q, resolve, reject) -> {
-					try {
-						resolve.withResult(startPlayback(q, filePosition));
-					} catch (IOException e) {
-						reject.withError(e);
-					}
-				});
+				.then(q -> startPlayback(q, filePosition));
 
 		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
@@ -213,12 +199,13 @@ class PlaybackPlaylistStateManager implements Closeable {
 		playlistPlayer.setVolume(volume);
 
 		observableProxy = Observable.create(playlistPlayer).publish();
-		fileChangedObservableConnection = observableProxy.connect();
 
 		observableProxy.subscribe(p -> {
 			positionedPlaybackFile = p;
 			saveStateToLibrary();
 		}, this::uncaughtExceptionHandler);
+
+		fileChangedObservableConnection = observableProxy.connect();
 
 		return observableProxy;
 	}
@@ -298,14 +285,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 			playlistPlayer.setVolume(volume);
 	}
 
-	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) {
-		if (preparedPlaybackQueue != null) {
-			try {
-				preparedPlaybackQueue.close();
-			} catch (IOException e) {
-				logger.warn("There was an error closing the prepared playback queue", e);
-			}
-		}
+	private PreparedPlaybackQueue initializePreparedPlaybackQueue(Library library) throws IOException {
+		if (preparedPlaybackQueue != null)
+			preparedPlaybackQueue.close();
 
 		final IFileUriProvider uriProvider = new BestMatchUriProvider(context, SessionConnection.getSessionConnectionProvider(), library);
 
@@ -374,5 +356,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			fileChangedObservableConnection.dispose();
 
 		if (playlistPlayer != null)	playlistPlayer.close();
+
+		if (preparedPlaybackQueue != null) preparedPlaybackQueue.close();
 	}
 }
