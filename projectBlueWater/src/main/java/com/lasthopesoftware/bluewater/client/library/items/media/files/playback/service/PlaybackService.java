@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -63,6 +64,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -177,6 +179,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private Disposable disposableSubscription;
+	private Disposable filePositionSubscription;
 
 	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new AbstractThreadLocalLazy<IPlaybackBroadcaster>() {
 		@Override
@@ -575,10 +578,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
 			playbackPlaylistStateManager.setVolume(1.0f);
-			if (!playbackPlaylistStateManager.isPlaying()) {
+			if (!playbackPlaylistStateManager.isPlaying())
 				playbackPlaylistStateManager.resume();
-				return;
-			}
 
 			return;
 		}
@@ -613,6 +614,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.getPlaybackHandler()
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
+
+		if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
+			filePositionSubscription.dispose();
+
+		filePositionSubscription =
+			positionedPlaybackFile.getPlaybackHandler().observeCurrentPosition().sample(1, TimeUnit.SECONDS).subscribe(new TrackPositionChangedBroadcaster(this, positionedPlaybackFile));
 
 		final IFile playingFile = positionedPlaybackFile;
 		
@@ -769,6 +776,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
 		}
 	}
+
 
 	public static class PlaylistEvents {
 		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);

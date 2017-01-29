@@ -26,11 +26,6 @@ public class StatefulPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public void seekTo(int pos) {
-
-	}
-
-	@Override
 	public void setVolume(float volume) {
 		this.volume = volume;
 	}
