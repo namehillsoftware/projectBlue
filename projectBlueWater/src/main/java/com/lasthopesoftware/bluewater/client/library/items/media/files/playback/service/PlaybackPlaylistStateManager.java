@@ -157,7 +157,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			restorePlaylistFromStorage()
-				.thenPromise((np) -> initializePreparedPlaybackQueue(np).then(queue -> startPlayback(queue, np.playlistPosition)));
+				.thenPromise((np) -> initializePreparedPlaybackQueue(np).then(queue -> startPlayback(queue, np.filePosition)));
 
 		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 

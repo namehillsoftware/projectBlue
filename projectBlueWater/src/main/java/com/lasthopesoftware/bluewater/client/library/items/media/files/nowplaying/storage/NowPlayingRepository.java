@@ -28,15 +28,8 @@ public class NowPlayingRepository implements INowPlayingRepository {
 
 	@Override
 	public IPromise<NowPlaying> getNowPlaying() {
-		final NowPlaying cachedNowPlaying = nowPlayingCache.get(libraryId);
-		if (cachedNowPlaying != null) {
-			return new PassThroughPromise<>(
-				new NowPlaying(
-					cachedNowPlaying.playlist,
-					cachedNowPlaying.playlistPosition,
-					cachedNowPlaying.filePosition,
-					cachedNowPlaying.isRepeating));
-		}
+		if (nowPlayingCache.containsKey(libraryId))
+			return new PassThroughPromise<>(nowPlayingCache.get(libraryId));
 
 		return
 			LibrarySession
@@ -44,37 +37,41 @@ public class NowPlayingRepository implements INowPlayingRepository {
 				.thenPromise(library ->
 					FileStringListUtilities
 						.promiseParsedFileStringList(library.getSavedTracksString())
-						.then(files ->
-							nowPlayingCache.put(
-								libraryId,
+						.then(files -> {
+							final NowPlaying nowPlaying =
 								new NowPlaying(
 									files,
 									library.getNowPlayingId(),
 									library.getNowPlayingProgress(),
-									library.isRepeating()))));
+									library.isRepeating());
+
+							nowPlayingCache.put(libraryId, nowPlaying);
+
+							return nowPlaying;
+						}));
 	}
 
 	@Override
 	public IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying) {
 		nowPlayingCache.put(libraryId, nowPlaying);
 
-		return
-			LibrarySession
-				.getLibrary(context, libraryId)
-				.thenPromise(library -> {
-					library.setNowPlayingId(nowPlaying.playlistPosition);
-					library.setNowPlayingProgress(nowPlaying.filePosition);
-					library.setRepeating(nowPlaying.isRepeating);
+		LibrarySession
+			.getLibrary(context, libraryId)
+			.thenPromise(library -> {
+				library.setNowPlayingId(nowPlaying.playlistPosition);
+				library.setNowPlayingProgress(nowPlaying.filePosition);
+				library.setRepeating(nowPlaying.isRepeating);
 
-					return
-						FileStringListUtilities
-							.promiseSerializedFileStringList(nowPlaying.playlist)
-							.thenPromise(serializedPlaylist -> {
-								library.setSavedTracksString(serializedPlaylist);
+				return
+					FileStringListUtilities
+						.promiseSerializedFileStringList(nowPlaying.playlist)
+						.thenPromise(serializedPlaylist -> {
+							library.setSavedTracksString(serializedPlaylist);
 
-								return LibrarySession.saveLibrary(context, library);
-							})
-							.then(savedLibrary -> nowPlaying);
-				});
+							return LibrarySession.saveLibrary(context, library);
+						});
+			});
+
+		return new PassThroughPromise<>(nowPlaying);
 	}
 }
