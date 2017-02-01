@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -46,8 +47,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -356,7 +357,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					if (playbackPlaylistStateManager != null)
 						playbackPlaylistStateManager.close();
 
-					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, SessionConnection.getSessionConnectionProvider(), new PositionedFileQueueProvider(), library.getId(), 1.0f);
+					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, new BestMatchUriProvider(this, SessionConnection.getSessionConnectionProvider(), library), new PositionedFileQueueProvider(), new NowPlayingRepository(this, library), library.getId(), 1.0f);
 					actOnIntent(intent);
 
 					return playbackPlaylistStateManager;
@@ -425,7 +426,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					if (playbackPlaylistStateManager != null)
 						playbackPlaylistStateManager.close();
 
-					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, SessionConnection.getSessionConnectionProvider(), new PositionedFileQueueProvider(), library.getId(), 1.0f);
+					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, new BestMatchUriProvider(this, SessionConnection.getSessionConnectionProvider(), library), new PositionedFileQueueProvider(), new NowPlayingRepository(this, library), library.getId(), 1.0f);
 					actOnIntent(intentToRun);
 
 					return playbackPlaylistStateManager;

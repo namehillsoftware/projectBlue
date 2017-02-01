@@ -2,8 +2,6 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.callables.OneParameterFunction;
-import com.vedsoft.futures.callables.TwoParameterFunction;
 import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -92,7 +90,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
@@ -117,7 +115,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> IPromise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
 	}
 
@@ -183,9 +181,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			static class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-				private final TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled;
+				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled;
 
-				ResolvedCancellablePromise(TwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+				ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
 					this.onFulfilled = onFulfilled;
 				}
 
@@ -278,9 +276,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		}
 
 		static class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
-			private final OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled;
+			private final CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled;
 
-			PromisedResolution(OneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+			PromisedResolution(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 

@@ -7,6 +7,7 @@ import com.lasthopesoftware.promises.IPromise;
  */
 
 public interface INowPlayingRepository {
-	IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying);
 	IPromise<NowPlaying> getNowPlaying();
+
+	IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying);
 }
