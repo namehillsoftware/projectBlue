@@ -649,6 +649,16 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
 			final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
+			final Intent scrobbleDroidIntent = getScrobbleIntent(true);
+			scrobbleDroidIntent.putExtra("artist", artist);
+			scrobbleDroidIntent.putExtra("album", album);
+			scrobbleDroidIntent.putExtra("track", name);
+			scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
+			if (trackNumber != null)
+				scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
+
+			sendBroadcast(scrobbleDroidIntent);
+
 			final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 			pebbleIntent.putExtra("artist", artist);
 			pebbleIntent.putExtra("album", album);
