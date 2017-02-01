@@ -620,7 +620,16 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			filePositionSubscription.dispose();
 
 		filePositionSubscription =
-			positionedPlaybackFile.getPlaybackHandler().observeCurrentPosition().sample(1, TimeUnit.SECONDS).subscribe(new TrackPositionChangedBroadcaster(this, positionedPlaybackFile));
+			positionedPlaybackFile
+				.getPlaybackHandler()
+				.observeCurrentPosition()
+				.sample(1, TimeUnit.SECONDS)
+				.subscribe(
+					new TrackPositionChangedBroadcaster(this, positionedPlaybackFile),
+					error -> {
+						if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
+							filePositionSubscription.dispose();
+					});
 
 		final IFile playingFile = positionedPlaybackFile;
 		

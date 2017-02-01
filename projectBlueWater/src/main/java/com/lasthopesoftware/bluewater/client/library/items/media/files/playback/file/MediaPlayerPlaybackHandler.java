@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by david on 9/20/16.
@@ -35,7 +36,11 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public boolean isPlaying() {
-		return mediaPlayer.isPlaying();
+		try {
+			return mediaPlayer.isPlaying();
+		} catch (IllegalStateException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -79,6 +84,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public void close() throws IOException {
+
 		playbackPromise.cancel();
 		mediaPlayer.release();
 	}
