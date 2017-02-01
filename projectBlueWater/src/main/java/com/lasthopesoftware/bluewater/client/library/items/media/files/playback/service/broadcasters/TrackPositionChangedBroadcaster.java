@@ -19,6 +19,8 @@ public class TrackPositionChangedBroadcaster implements Consumer<Integer> {
 	private ILazy<LocalBroadcastManager> lazyLocalBroadcastManager;
 	private final PositionedPlaybackFile positionedPlaybackFile;
 
+	private volatile int lastPosition = -1;
+
 	public TrackPositionChangedBroadcaster(Context context, PositionedPlaybackFile positionedPlaybackFile) {
 		lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(context));
 		this.positionedPlaybackFile = positionedPlaybackFile;
@@ -26,8 +28,11 @@ public class TrackPositionChangedBroadcaster implements Consumer<Integer> {
 
 	@Override
 	public void accept(Integer newPosition) throws Exception {
+		if (lastPosition == newPosition) return;
+		lastPosition = newPosition;
+
 		final Intent trackPositionChangedIntent = new Intent(onTrackPositionChanged);
-		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, newPosition.intValue());
+		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, lastPosition);
 		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, positionedPlaybackFile.getPlaybackHandler().getDuration());
 
 		lazyLocalBroadcastManager.getObject().sendBroadcast(trackPositionChangedIntent);
