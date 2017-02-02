@@ -6,6 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.MediaPlayerBufferedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.lazyj.ILazy;
+import com.vedsoft.lazyj.Lazy;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -23,25 +25,14 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	private final MediaPlayer mediaPlayer;
 	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
 	private float volume;
-	private final Observable<Integer> currentPositionObservable;
+	private final ILazy<Observable<Integer>> currentPositionObservable;
 	private final IPromise<IPlaybackHandler> playbackPromise;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
 		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
-		currentPositionObservable =
-			Observable
-				.generate((Emitter<Integer> e) -> {
-					try {
-						e.onNext(mediaPlayer.getCurrentPosition());
-					} catch (IllegalStateException ex) {
-						e.onError(ex);
-					}
-				})
-				.sample(100, TimeUnit.MILLISECONDS)
-				.distinctUntilChanged()
-				.observeOn(Schedulers.newThread());
+		currentPositionObservable = new Lazy<>(() -> Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> mediaPlayer.getCurrentPosition()));
 	}
 
 	@Override
@@ -76,7 +67,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public Observable<Integer> observeCurrentPosition() {
-		return currentPositionObservable;
+		return currentPositionObservable.getObject();
 	}
 
 	@Override
