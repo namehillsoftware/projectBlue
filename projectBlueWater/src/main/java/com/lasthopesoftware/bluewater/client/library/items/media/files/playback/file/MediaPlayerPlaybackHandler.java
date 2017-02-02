@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by david on 9/20/16.
@@ -31,7 +30,15 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 		this.mediaPlayer = mediaPlayer;
 		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
-		currentPositionObservable = new Lazy<>(() -> Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> mediaPlayer.getCurrentPosition()));
+		currentPositionObservable =
+			new Lazy<>(() ->
+				Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> {
+					try {
+						return mediaPlayer.getCurrentPosition();
+					} catch (IllegalStateException e) {
+						return 0;
+					}
+				}).distinctUntilChanged());
 	}
 
 	@Override
@@ -71,7 +78,11 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public int getDuration() {
-		return mediaPlayer.getDuration();
+		try {
+			return mediaPlayer.getDuration();
+		} catch (IllegalStateException e) {
+			return 0;
+		}
 	}
 
 	@Override
@@ -84,7 +95,6 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public void close() throws IOException {
-
 		playbackPromise.cancel();
 		mediaPlayer.release();
 	}

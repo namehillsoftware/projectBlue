@@ -515,6 +515,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackStartedReciever);
 		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver);
+		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
 	}
