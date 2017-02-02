@@ -12,9 +12,7 @@ import com.vedsoft.lazyj.Lazy;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Emitter;
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by david on 9/20/16.
@@ -32,7 +30,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 		this.mediaPlayer = mediaPlayer;
 		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
-		currentPositionObservable = new Lazy<>(() -> Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> mediaPlayer.getCurrentPosition()));
+		currentPositionObservable = new Lazy<>(() -> Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> mediaPlayer.getCurrentPosition()).distinctUntilChanged());
 	}
 
 	@Override
