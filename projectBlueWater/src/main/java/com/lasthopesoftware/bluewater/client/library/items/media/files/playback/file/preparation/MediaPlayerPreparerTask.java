@@ -5,27 +5,26 @@ import android.media.MediaPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+class MediaPlayerPreparerTask implements CarelessOneParameterFunction<OneParameterAction<Runnable>, IBufferingPlaybackHandler> {
+
+	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newSingleThreadExecutor();
 
 	private final IFile file;
 	private final int prepareAt;
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
-	private boolean isPrepared;
+	private boolean isCancelled;
 
 	MediaPlayerPreparerTask(IFile file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.file = file;
@@ -35,39 +34,24 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-		final MediaPlayer mediaPlayer;
-		try {
-			mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
-		} catch (IOException e) {
-			reject.withError(e);
-			return;
-		}
-
-		mediaPlayer.setOnPreparedListener(mp -> {
-			isPrepared = true;
-
-			if (prepareAt == 0) {
-				resolve.withResult(new MediaPlayerPlaybackHandler(mp));
-				return;
-			}
-
-			mediaPlayer.setOnSeekCompleteListener(seekMp -> resolve.withResult(new MediaPlayerPlaybackHandler(seekMp)));
-			mediaPlayer.seekTo(prepareAt);
-		});
-
-		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			reject.withError(new MediaPlayerException(new MediaPlayerPlaybackHandler(mp), mp, what, extra));
-			return true;
-		});
+	public IBufferingPlaybackHandler resultFrom(OneParameterAction<Runnable> onCancelled) throws Exception {
+		final MediaPlayer mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
 
 		onCancelled.runWith(() -> {
-			if (isPrepared) return;
+			isCancelled = true;
 
 			mediaPlayer.release();
-			reject.withError(new InterruptedIOException("Media player preparation was interrupted"));
 		});
 
-		mediaPlayer.prepareAsync();
+		if (isCancelled) return null;
+
+		mediaPlayer.prepare();
+
+		if (isCancelled) return null;
+
+		mediaPlayer.seekTo(prepareAt);
+
+		if (isCancelled) return null;
+		return new MediaPlayerPlaybackHandler(mediaPlayer);
 	}
 }

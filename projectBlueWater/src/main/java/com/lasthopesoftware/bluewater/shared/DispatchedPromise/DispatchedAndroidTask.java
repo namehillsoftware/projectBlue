@@ -5,8 +5,8 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.fluent.AsyncExceptionTask;
-import com.vedsoft.futures.callables.Function;
-import com.vedsoft.futures.callables.OneParameterFunction;
+import com.vedsoft.futures.callables.CarelessFunction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -18,22 +18,22 @@ import java.util.concurrent.Executor;
 
 class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 
-	private final OneParameterFunction<OneParameterAction<Runnable>, TResult> task;
+	private final CarelessOneParameterFunction<OneParameterAction<Runnable>, TResult> task;
 	private final Executor executor;
 
-	DispatchedAndroidTask(Function<TResult> task) {
+	DispatchedAndroidTask(CarelessFunction<TResult> task) {
 		this((c) -> task.result());
 	}
 
-	DispatchedAndroidTask(Function<TResult> task, Executor executor) {
+	DispatchedAndroidTask(CarelessFunction<TResult> task, Executor executor) {
 		this((c) -> task.result(), executor);
 	}
 
-	DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task) {
+	DispatchedAndroidTask(CarelessOneParameterFunction<OneParameterAction<Runnable>, TResult> task) {
 		this(task, AsyncTask.SERIAL_EXECUTOR);
 	}
 
-	DispatchedAndroidTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task, Executor executor) {
+	DispatchedAndroidTask(CarelessOneParameterFunction<OneParameterAction<Runnable>, TResult> task, Executor executor) {
 		this.task = task;
 		this.executor = executor;
 	}
@@ -44,12 +44,12 @@ class DispatchedAndroidTask<TResult> implements ThreeParameterAction<IResolvedPr
 	}
 
 	private static class DispatchedAsyncTask<TResult> extends AsyncExceptionTask<Void, Void, TResult> {
-		private final OneParameterFunction<OneParameterAction<Runnable>, TResult> task;
+		private final CarelessOneParameterFunction<OneParameterAction<Runnable>, TResult> task;
 		private final OneParameterAction<Runnable> onCancelled;
 		private final IRejectedPromise reject;
 		private final IResolvedPromise<TResult> resolve;
 
-		DispatchedAsyncTask(OneParameterFunction<OneParameterAction<Runnable>, TResult> task, IRejectedPromise reject, IResolvedPromise<TResult> resolve, OneParameterAction<Runnable> onCancelled) {
+		DispatchedAsyncTask(CarelessOneParameterFunction<OneParameterAction<Runnable>, TResult> task, IRejectedPromise reject, IResolvedPromise<TResult> resolve, OneParameterAction<Runnable> onCancelled) {
 			this.task = task;
 			this.onCancelled = onCancelled;
 			this.reject = reject;
