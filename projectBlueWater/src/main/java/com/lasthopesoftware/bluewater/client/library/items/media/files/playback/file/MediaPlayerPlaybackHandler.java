@@ -6,13 +6,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.MediaPlayerBufferedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.lazyj.ILazy;
-import com.vedsoft.lazyj.Lazy;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Emitter;
 import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by david on 9/20/16.
@@ -23,7 +23,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	private final MediaPlayer mediaPlayer;
 	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
 	private float volume;
-	private final ILazy<Observable<Integer>> currentPositionObservable;
+	private final Observable<Integer> currentPositionObservable;
 	private final IPromise<IPlaybackHandler> playbackPromise;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
@@ -31,14 +31,17 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
 		currentPositionObservable =
-			new Lazy<>(() ->
-				Observable.interval(100, TimeUnit.MILLISECONDS).map(i -> {
+			Observable
+				.generate((Emitter<Integer> e) -> {
 					try {
-						return mediaPlayer.getCurrentPosition();
-					} catch (IllegalStateException e) {
-						return 0;
+						e.onNext(mediaPlayer.getCurrentPosition());
+					} catch (IllegalStateException ex) {
+						e.onError(ex);
 					}
-				}).distinctUntilChanged());
+				})
+				.sample(100, TimeUnit.MILLISECONDS)
+				.distinctUntilChanged()
+				.observeOn(Schedulers.newThread());
 	}
 
 	@Override
@@ -73,7 +76,7 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public Observable<Integer> observeCurrentPosition() {
-		return currentPositionObservable.getObject();
+		return currentPositionObservable;
 	}
 
 	@Override

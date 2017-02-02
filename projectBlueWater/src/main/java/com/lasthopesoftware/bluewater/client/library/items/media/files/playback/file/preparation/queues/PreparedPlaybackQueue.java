@@ -2,12 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerTaskFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerPromiseFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -28,14 +26,14 @@ public class PreparedPlaybackQueue implements
 
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
 
-	private final IPlaybackPreparerTaskFactory playbackPreparerTaskFactory;
+	private final IPlaybackPreparerPromiseFactory playbackPreparerTaskFactory;
 	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
 
 	private IPositionedFileQueue positionedFileQueue;
 
 	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
-	public PreparedPlaybackQueue(IPlaybackPreparerTaskFactory playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
+	public PreparedPlaybackQueue(IPlaybackPreparerPromiseFactory playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 		this.positionedFileQueue = positionedFileQueue;
 	}
@@ -66,7 +64,7 @@ public class PreparedPlaybackQueue implements
 					enqueuePositionedPreparingFile(
 						new PositionedPreparingFile(
 							positionedFile,
-							new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, 0))
+							playbackPreparerTaskFactory.getPlaybackPreparerPromise(positionedFile.file, 0)
 								.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler))));
 				}
 
@@ -110,7 +108,7 @@ public class PreparedPlaybackQueue implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				new Promise<>(playbackPreparerTaskFactory.getPlaybackPreparerTask(positionedFile.file, preparedAt))
+				playbackPreparerTaskFactory.getPlaybackPreparerPromise(positionedFile.file, preparedAt)
 					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler)));
 	}
 

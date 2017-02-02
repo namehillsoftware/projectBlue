@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -44,7 +45,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
-				(file, preparedAt) -> new MockResolveAction(),
+				(file, preparedAt) -> new PassThroughPromise<>(new FakeBufferingStatefulPlaybackHandler()),
 				positionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);
