@@ -30,6 +30,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
@@ -357,7 +358,17 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					if (playbackPlaylistStateManager != null)
 						playbackPlaylistStateManager.close();
 
-					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, new BestMatchUriProvider(this, SessionConnection.getSessionConnectionProvider(), library), new PositionedFileQueueProvider(), new NowPlayingRepository(this, library), library.getId(), 1.0f);
+					final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+					playbackPlaylistStateManager =
+						new PlaybackPlaylistStateManager(
+							this,
+							connectionProvider,
+							new BestMatchUriProvider(this, connectionProvider, library),
+							new PositionedFileQueueProvider(),
+							new NowPlayingRepository(this, library),
+							library.getId(),
+							1.0f);
+
 					actOnIntent(intent);
 
 					return playbackPlaylistStateManager;

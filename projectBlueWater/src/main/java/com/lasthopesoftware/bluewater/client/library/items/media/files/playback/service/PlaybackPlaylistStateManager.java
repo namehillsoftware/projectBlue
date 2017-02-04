@@ -145,7 +145,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 											playlistPosition,
 											new EmptyPlaybackHandler(duration),
 											file)));
-
 							})
 							.onError(e -> {
 								reject.withError(e);
