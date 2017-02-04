@@ -122,9 +122,12 @@ class PlaybackPlaylistStateManager implements Closeable {
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
 		final boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
 
-		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylistPositions(playlistPosition, filePosition);
-
-		logger.info("Position changed");
+		final IPromise<NowPlaying> nowPlayingPromise =
+			updateLibraryPlaylistPositions(playlistPosition, filePosition)
+				.then(np -> {
+					logger.info("Position changed");
+					return np;
+				});
 
 		if (wasPlaying) {
 			final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
