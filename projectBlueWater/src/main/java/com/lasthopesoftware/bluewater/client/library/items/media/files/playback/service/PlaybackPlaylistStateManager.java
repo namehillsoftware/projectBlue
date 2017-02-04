@@ -162,6 +162,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 							reject.withError(e);
 							return true;
 						});
+
+					filePropertiesProvider.execute();
 				});
 
 		singleFileChangeObservablePromise.error(VoidFunc.runningCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
