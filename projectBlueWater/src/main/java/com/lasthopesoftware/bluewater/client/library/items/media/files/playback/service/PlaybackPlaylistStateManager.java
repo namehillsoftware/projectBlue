@@ -66,7 +66,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		this.playlist = playlist;
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
-			updateLibraryPlaylist(playlistPosition, filePosition)
+			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.thenPromise(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
 
@@ -116,7 +116,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
 		final boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
 
-		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylist(playlistPosition, filePosition);
+		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylistPositions(playlistPosition, filePosition);
 
 		if (!wasPlaying)
 			return new PassThroughPromise<>(Observable.empty());
@@ -252,13 +252,14 @@ class PlaybackPlaylistStateManager implements Closeable {
 			preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition() + 1));
 	}
 
-	private IPromise<NowPlaying> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
+	private IPromise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
-					final NowPlaying newNowPlaying = new NowPlaying(playlist, playlistPosition, filePosition, np.isRepeating);
-					return nowPlayingRepository.updateNowPlaying(newNowPlaying);
+					np.playlistPosition = playlistPosition;
+					np.filePosition = filePosition;
+					return nowPlayingRepository.updateNowPlaying(np);
 				});
 	}
 
