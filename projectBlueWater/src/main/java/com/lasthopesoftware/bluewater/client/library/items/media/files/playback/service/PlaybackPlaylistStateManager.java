@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerPromiseFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
@@ -281,7 +281,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 				.then(library -> {
 					preparedPlaybackQueue =
 						new PreparedPlaybackQueue(
-							new MediaPlayerPlaybackPreparerPromiseFactory(
+							new MediaPlayerPlaybackPreparer(
 								fileUriProvider,
 								new MediaPlayerInitializer(context, library)),
 							positionedFileQueueGenerator.resultFrom(playlist, startPosition));

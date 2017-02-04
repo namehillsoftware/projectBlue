@@ -8,6 +8,6 @@ import com.lasthopesoftware.promises.IPromise;
  * Created by david on 11/6/16.
  */
 
-public interface IPlaybackPreparerPromiseFactory {
-	IPromise<IBufferingPlaybackHandler> getPlaybackPreparerPromise(IFile file, int preparedAt);
+public interface IPlaybackPreparer {
+	IPromise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(IFile file, int preparedAt);
 }

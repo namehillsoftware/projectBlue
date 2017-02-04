@@ -10,15 +10,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * Created by david on 10/3/16.
  */
 class MediaPlayerPreparerTask implements CarelessOneParameterFunction<OneParameterAction<Runnable>, IBufferingPlaybackHandler> {
-
-	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newSingleThreadExecutor();
 
 	private final IFile file;
 	private final int prepareAt;
