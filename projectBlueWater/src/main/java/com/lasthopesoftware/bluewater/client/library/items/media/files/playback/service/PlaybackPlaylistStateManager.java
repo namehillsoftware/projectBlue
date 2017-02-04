@@ -124,44 +124,49 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylistPositions(playlistPosition, filePosition);
 
-		if (!wasPlaying) {
-			return
+		logger.info("Position changed");
+
+		if (wasPlaying) {
+			final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 				nowPlayingPromise
-					.then((np, resolve, reject, onCancelled) -> {
-						final IFile file = np.playlist.get(playlistPosition);
-						final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
-						onCancelled.runWith(() -> {
-							filePropertiesProvider.cancel();
-							reject.withError(new InterruptedException());
-						});
+					.thenPromise(this::initializePreparedPlaybackQueue)
+					.then(q -> startPlayback(q, filePosition));
 
-						filePropertiesProvider
-							.onComplete(properties -> {
-								final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(properties);
+			observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
-								resolve.withResult(
-									Observable.just(
-										new PositionedPlaybackFile(
-											playlistPosition,
-											new EmptyPlaybackHandler(duration),
-											file)));
-							})
-							.onError(e -> {
-								reject.withError(e);
-								return true;
-							});
-					});
+			return observablePromise;
 		}
 
-		logger.info("Position changed");
-		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
+		final IPromise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
-				.thenPromise(this::initializePreparedPlaybackQueue)
-				.then(q -> startPlayback(q, filePosition));
+				.then((np, resolve, reject, onCancelled) -> {
+					final IFile file = np.playlist.get(playlistPosition);
+					final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
+					onCancelled.runWith(() -> {
+						filePropertiesProvider.cancel();
+						reject.withError(new InterruptedException());
+					});
 
-		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+					filePropertiesProvider
+						.onComplete(properties -> {
+							final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(properties);
 
-		return observablePromise;
+							resolve.withResult(
+								Observable.just(
+									new PositionedPlaybackFile(
+										playlistPosition,
+										new EmptyPlaybackHandler(duration),
+										file)));
+						})
+						.onError(e -> {
+							reject.withError(e);
+							return true;
+						});
+				});
+
+		singleFileChangeObservablePromise.error(VoidFunc.runningCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
+
+		return singleFileChangeObservablePromise;
 	}
 
 	void playRepeatedly() {

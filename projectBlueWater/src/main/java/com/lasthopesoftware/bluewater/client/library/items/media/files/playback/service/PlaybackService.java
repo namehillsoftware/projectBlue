@@ -76,8 +76,7 @@ import io.reactivex.disposables.Disposable;
  * @author david
  *
  */
-public class PlaybackService extends Service implements OnAudioFocusChangeListener
-{
+public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
 	private static Intent getNewSelfIntent(final Context context, String action) {
@@ -437,7 +436,17 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					if (playbackPlaylistStateManager != null)
 						playbackPlaylistStateManager.close();
 
-					playbackPlaylistStateManager = new PlaybackPlaylistStateManager(this, new BestMatchUriProvider(this, SessionConnection.getSessionConnectionProvider(), library), new PositionedFileQueueProvider(), new NowPlayingRepository(this, library), library.getId(), 1.0f);
+					final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+					playbackPlaylistStateManager =
+						new PlaybackPlaylistStateManager(
+							this,
+							connectionProvider,
+							new BestMatchUriProvider(this, connectionProvider, library),
+							new PositionedFileQueueProvider(),
+							new NowPlayingRepository(this, library),
+							library.getId(),
+							1.0f);
+
 					actOnIntent(intentToRun);
 
 					return playbackPlaylistStateManager;
