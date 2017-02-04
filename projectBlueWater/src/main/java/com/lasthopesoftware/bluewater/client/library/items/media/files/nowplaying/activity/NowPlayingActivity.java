@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -136,10 +136,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final int fileDuration = intent.getIntExtra(TrackPositionChangedBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
+			final int fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
 			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
 
-			final int filePosition = intent.getIntExtra(TrackPositionChangedBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+			final int filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 			if (filePosition > -1) songProgressBar.findView().setProgress(filePosition);
 		}
 	};
@@ -178,7 +178,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
 		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
 		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistChange));
-		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionChangedBroadcaster.onTrackPositionChanged));
+		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		

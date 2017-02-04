@@ -15,32 +15,27 @@ import io.reactivex.functions.Consumer;
  * Created by david on 1/29/17.
  */
 
-public class TrackPositionChangedBroadcaster implements Consumer<Integer> {
+public class TrackPositionBroadcaster implements Consumer<Integer> {
 	private ILazy<LocalBroadcastManager> lazyLocalBroadcastManager;
 	private final PositionedPlaybackFile positionedPlaybackFile;
 
-	private volatile int lastPosition = -1;
-
-	public TrackPositionChangedBroadcaster(Context context, PositionedPlaybackFile positionedPlaybackFile) {
+	public TrackPositionBroadcaster(Context context, PositionedPlaybackFile positionedPlaybackFile) {
 		lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(context));
 		this.positionedPlaybackFile = positionedPlaybackFile;
 	}
 
 	@Override
 	public void accept(Integer newPosition) throws Exception {
-		if (lastPosition == newPosition) return;
-		lastPosition = newPosition;
-
-		final Intent trackPositionChangedIntent = new Intent(onTrackPositionChanged);
-		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, lastPosition);
+		final Intent trackPositionChangedIntent = new Intent(trackPositionUpdate);
+		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, newPosition);
 		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, positionedPlaybackFile.getPlaybackHandler().getDuration());
 
 		lazyLocalBroadcastManager.getObject().sendBroadcast(trackPositionChangedIntent);
 	}
 
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(TrackPositionChangedBroadcaster.class);
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(TrackPositionBroadcaster.class);
 
-	public static final String onTrackPositionChanged = magicPropertyBuilder.buildProperty("onTrackPositionChange");
+	public static final String trackPositionUpdate = magicPropertyBuilder.buildProperty("trackPositionUpdate");
 
 	public static class TrackPositionChangedParameters {
 		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(TrackPositionChangedParameters.class);

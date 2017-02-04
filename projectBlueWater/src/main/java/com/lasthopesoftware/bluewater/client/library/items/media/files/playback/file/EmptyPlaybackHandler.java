@@ -6,8 +6,6 @@ import com.lasthopesoftware.promises.PassThroughPromise;
 
 import java.io.IOException;
 
-import io.reactivex.Observable;
-
 /**
  * Created by david on 2/4/17.
  */
@@ -44,11 +42,6 @@ public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
 	@Override
 	public int getCurrentPosition() {
 		return 0;
-	}
-
-	@Override
-	public Observable<Integer> observeCurrentPosition() {
-		return Observable.empty();
 	}
 
 	@Override

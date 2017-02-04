@@ -4,8 +4,6 @@ import com.lasthopesoftware.promises.IPromise;
 
 import java.io.Closeable;
 
-import io.reactivex.Observable;
-
 public interface IPlaybackHandler extends Closeable {
 	boolean isPlaying();
 	void pause();
@@ -14,8 +12,6 @@ public interface IPlaybackHandler extends Closeable {
 	float getVolume();
 
 	int getCurrentPosition();
-
-	Observable<Integer> observeCurrentPosition();
 
 	int getDuration();
 

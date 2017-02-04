@@ -43,7 +43,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -634,22 +634,22 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		positionedPlaybackFile
 			.getPlaybackHandler()
 			.promisePlayback()
-			.then(VoidFunc.runningCarelessly(handler -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile)));
+			.then(VoidFunc.runningCarelessly(handler -> {
+				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile);
+
+				if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
+					filePositionSubscription.dispose();
+			}));
 
 		if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
 			filePositionSubscription.dispose();
 
 		filePositionSubscription =
-			positionedPlaybackFile
-				.getPlaybackHandler()
-				.observeCurrentPosition()
-				.sample(1, TimeUnit.SECONDS)
-				.subscribe(
-					new TrackPositionChangedBroadcaster(this, positionedPlaybackFile),
-					error -> {
-						if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
-							filePositionSubscription.dispose();
-					});
+			Observable
+				.interval(1, TimeUnit.SECONDS)
+				.map(i -> positionedPlaybackFile.getPlaybackHandler().getCurrentPosition())
+				.distinctUntilChanged()
+				.subscribe(new TrackPositionBroadcaster(this, positionedPlaybackFile));
 
 		final IFile playingFile = positionedPlaybackFile;
 		
