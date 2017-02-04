@@ -4,7 +4,6 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
@@ -357,7 +356,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		nowPlayingRepository
 			.getNowPlaying()
-			.then(np -> {
+			.thenPromise(np -> {
 				np.playlist = playlist;
 
 				if (positionedPlaybackFile != null) {
@@ -365,7 +364,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 					np.filePosition = positionedPlaybackFile.getPlaybackHandler().getCurrentPosition();
 				}
 
-				return np;
+				return nowPlayingRepository.updateNowPlaying(np);
 			});
 	}
 
