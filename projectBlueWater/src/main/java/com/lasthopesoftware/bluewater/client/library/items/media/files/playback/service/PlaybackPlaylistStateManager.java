@@ -82,45 +82,28 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
-		if (playlist != null && positionedPlaybackFile != null) {
-			final int newPosition =  positionedPlaybackFile.getPosition();
-			final int playlistSize = playlist.size();
-			return changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
-		}
-
 		return
-			LibrarySession
-				.getLibrary(context, libraryId)
-				.thenPromise(library -> {
-					final int newPosition =  library.getNowPlayingId();
+			nowPlayingRepository
+				.getNowPlaying()
+				.thenPromise(np -> {
+					final int position =  np.playlistPosition;
 
-					return
-						FileStringListUtilities
-							.promiseParsedFileStringList(library.getSavedTracksString())
-							.thenPromise(savedTracks -> {
-								final int playlistSize = savedTracks.size();
-								return changePosition(newPosition < playlistSize - 1 ? newPosition + 1 : 0, 0);
-							});
+					return changePosition(position < np.playlist.size() - 1 ? position + 1 : 0, 0);
 				});
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
-		if (positionedPlaybackFile != null) {
-			final int position =  positionedPlaybackFile.getPosition();
-			return changePosition(position > 0 ? position - 1 : 0, 0);
-		}
-
 		return
-			LibrarySession
-				.getLibrary(context, libraryId)
-				.thenPromise(library -> {
-					final int position =  library.getNowPlayingId();
+			nowPlayingRepository
+				.getNowPlaying()
+				.thenPromise(np -> {
+					final int position =  np.playlistPosition;
 					return changePosition(position > 0 ? position - 1 : 0, 0);
 				});
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
-		final boolean wasPlaying = positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
+		final boolean wasPlaying = isPlaying();
 
 		final IPromise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
@@ -143,6 +126,21 @@ class PlaybackPlaylistStateManager implements Closeable {
 		final IPromise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
 				.then((np, resolve, reject, onCancelled) -> {
+					try {
+						if (preparedPlaybackQueue != null) {
+							preparedPlaybackQueue.close();
+							preparedPlaybackQueue = null;
+						}
+
+						if (playlistPlayer != null) {
+							playlistPlayer.close();
+							playlistPlayer = null;
+						}
+					} catch (IOException e) {
+						reject.withError(e);
+						return;
+					}
+
 					final IFile file = np.playlist.get(playlistPosition);
 					final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
 					onCancelled.runWith(() -> {
@@ -165,6 +163,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 							reject.withError(e);
 							return true;
 						});
+
+					filePropertiesProvider.execute();
 				});
 
 		singleFileChangeObservablePromise.error(VoidFunc.runningCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
