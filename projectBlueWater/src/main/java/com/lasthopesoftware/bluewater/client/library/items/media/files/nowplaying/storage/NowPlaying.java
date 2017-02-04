@@ -9,10 +9,10 @@ import java.util.List;
  */
 
 public class NowPlaying {
-	public final List<IFile> playlist;
-	public final int playlistPosition;
-	public final int filePosition;
-	public final boolean isRepeating;
+	public List<IFile> playlist;
+	public int playlistPosition;
+	public int filePosition;
+	public boolean isRepeating;
 
 	public NowPlaying(List<IFile> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
 		this.playlist = playlist;

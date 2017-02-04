@@ -135,15 +135,15 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	void playRepeatedly() {
-		persistLibraryRepeating(true)
-			.then(VoidFunc.runningCarelessly(
-				library -> preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCyclicalQueue).resultFrom(playlist, library.getNowPlayingId()))));
+		persistLibraryRepeating(true);
+
+		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCyclicalQueue);
 	}
 
 	void playToCompletion() {
-		persistLibraryRepeating(false)
-			.then(VoidFunc.runningCarelessly(
-				library ->	preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = positionedFileQueueProvider::getCompletableQueue).resultFrom(playlist, library.getNowPlayingId()))));
+		persistLibraryRepeating(false);
+
+		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCompletableQueue);
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> resume() {
@@ -212,7 +212,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		if (preparedPlaybackQueue == null) return nowPlayingPromise;
 
-		preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition()));
+		updatePreparedFileQueueUsingState(positionedFileQueueGenerator);
 		return nowPlayingPromise;
 	}
 
@@ -231,10 +231,21 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		if (preparedPlaybackQueue == null) return libraryUpdatePromise;
 
-		final IPositionedFileQueue newPositionedFileQueue = positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition());
-		preparedPlaybackQueue.updateQueue(newPositionedFileQueue);
+		updatePreparedFileQueueUsingState(positionedFileQueueGenerator);
 
 		return libraryUpdatePromise;
+	}
+
+	void setVolume(float volume) {
+		this.volume = volume;
+
+		if (playlistPlayer != null)
+			playlistPlayer.setVolume(volume);
+	}
+
+	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
+		if (preparedPlaybackQueue != null && playlist != null && positionedPlaybackFile != null)
+			preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = newFileQueueGenerator).resultFrom(playlist, positionedPlaybackFile.getPosition() + 1));
 	}
 
 	private IPromise<NowPlaying> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
@@ -245,13 +256,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 					final NowPlaying newNowPlaying = new NowPlaying(playlist, playlistPosition, filePosition, np.isRepeating);
 					return nowPlayingRepository.updateNowPlaying(newNowPlaying);
 				});
-	}
-
-	void setVolume(float volume) {
-		this.volume = volume;
-
-		if (playlistPlayer != null)
-			playlistPlayer.setVolume(volume);
 	}
 
 	private IPromise<NowPlaying> restorePlaylistFromStorage() {
@@ -290,14 +294,14 @@ class PlaybackPlaylistStateManager implements Closeable {
 				});
 	}
 
-	private IPromise<Library> persistLibraryRepeating(boolean isRepeating) {
+	private IPromise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {
 		return
-			LibrarySession
-				.getLibrary(context, libraryId)
+			nowPlayingRepository
+				.getNowPlaying()
 				.then(result -> {
-					result.setRepeating(isRepeating);
+					result.isRepeating = isRepeating;
 
-					LibrarySession.saveLibrary(context, result);
+					nowPlayingRepository.updateNowPlaying(result);
 
 					return result;
 				});
