@@ -2,10 +2,12 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
@@ -13,6 +15,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -37,6 +41,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
 	private final Context context;
+	private final IConnectionProvider connectionProvider;
 	private final IFileUriProvider fileUriProvider;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final int libraryId;
@@ -51,8 +56,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
 	private float volume;
 
-	PlaybackPlaylistStateManager(Context context, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, int libraryId, float initialVolume) {
+	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, int libraryId, float initialVolume) {
 		this.context = context;
+		this.connectionProvider = connectionProvider;
 		this.fileUriProvider = fileUriProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.libraryId = libraryId;
@@ -118,8 +124,35 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylistPositions(playlistPosition, filePosition);
 
-		if (!wasPlaying)
-			return new PassThroughPromise<>(Observable.empty());
+		if (!wasPlaying) {
+			return
+				nowPlayingPromise
+					.then((np, resolve, reject, onCancelled) -> {
+						final IFile file = np.playlist.get(playlistPosition);
+						final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
+						onCancelled.runWith(() -> {
+							filePropertiesProvider.cancel();
+							reject.withError(new InterruptedException());
+						});
+
+						filePropertiesProvider
+							.onComplete(properties -> {
+								final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(properties);
+
+								resolve.withResult(
+									Observable.just(
+										new PositionedPlaybackFile(
+											playlistPosition,
+											new EmptyPlaybackHandler(duration),
+											file)));
+
+							})
+							.onError(e -> {
+								reject.withError(e);
+								return true;
+							});
+					});
+		}
 
 		logger.info("Position changed");
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
