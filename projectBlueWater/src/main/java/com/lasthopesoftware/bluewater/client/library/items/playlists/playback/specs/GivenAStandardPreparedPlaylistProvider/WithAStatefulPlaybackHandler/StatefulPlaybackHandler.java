@@ -7,6 +7,8 @@ import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
 
+import io.reactivex.Observable;
+
 /**
  * Created by david on 12/7/16.
  */
@@ -38,6 +40,11 @@ public class StatefulPlaybackHandler implements IBufferingPlaybackHandler {
 	@Override
 	public int getCurrentPosition() {
 		return 0;
+	}
+
+	@Override
+	public Observable<Integer> observeCurrentPosition() {
+		return null;
 	}
 
 	@Override

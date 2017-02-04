@@ -15,9 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
@@ -121,7 +119,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		final IPromise<NowPlaying> nowPlayingPromise = updateLibraryPlaylist(playlistPosition, filePosition);
 
 		if (!wasPlaying)
-			return new ExpectedPromise<>(Observable::empty);
+			return new PassThroughPromise<>(Observable.empty());
 
 		logger.info("Position changed");
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
@@ -212,7 +210,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		if (preparedPlaybackQueue == null) return nowPlayingPromise;
 
-		updatePreparedFileQueueUsingState(positionedFileQueueGenerator);
+		updatePreparedFileQueueFromState();
 		return nowPlayingPromise;
 	}
 
@@ -231,7 +229,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		if (preparedPlaybackQueue == null) return libraryUpdatePromise;
 
-		updatePreparedFileQueueUsingState(positionedFileQueueGenerator);
+		updatePreparedFileQueueFromState();
 
 		return libraryUpdatePromise;
 	}
@@ -244,8 +242,14 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
+		positionedFileQueueGenerator = newFileQueueGenerator;
+
+		updatePreparedFileQueueFromState();
+	}
+
+	private void updatePreparedFileQueueFromState() {
 		if (preparedPlaybackQueue != null && playlist != null && positionedPlaybackFile != null)
-			preparedPlaybackQueue.updateQueue((positionedFileQueueGenerator = newFileQueueGenerator).resultFrom(playlist, positionedPlaybackFile.getPosition() + 1));
+			preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition() + 1));
 	}
 
 	private IPromise<NowPlaying> updateLibraryPlaylist(final int playlistPosition, final int filePosition) {
@@ -310,21 +314,18 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private void saveStateToLibrary() {
 		if (playlist == null) return;
 
-		LibrarySession
-			.getLibrary(context, libraryId)
-			.thenPromise(library ->
-				FileStringListUtilities
-					.promiseSerializedFileStringList(playlist)
-					.thenPromise(savedTracksString -> {
-						library.setSavedTracksString(savedTracksString);
+		nowPlayingRepository
+			.getNowPlaying()
+			.then(np -> {
+				np.playlist = playlist;
 
-						if (positionedPlaybackFile != null) {
-							library.setNowPlayingId(positionedPlaybackFile.getPosition());
-							library.setNowPlayingProgress(positionedPlaybackFile.getPlaybackHandler().getCurrentPosition());
-						}
+				if (positionedPlaybackFile != null) {
+					np.playlistPosition = positionedPlaybackFile.getPosition();
+					np.filePosition = positionedPlaybackFile.getPlaybackHandler().getCurrentPosition();
+				}
 
-						return LibrarySession.saveLibrary(context, library);
-					}));
+				return np;
+			});
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {

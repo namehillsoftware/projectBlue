@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -63,7 +64,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(
-				(file, preparedAt) -> fileActionMap.get(file),
+				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.getCyclicalQueue(files, 0));
 
 		expectedCycles = random.nextInt(100);
