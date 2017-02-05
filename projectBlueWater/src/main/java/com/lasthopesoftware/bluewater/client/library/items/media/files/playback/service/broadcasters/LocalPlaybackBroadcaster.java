@@ -6,7 +6,6 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;

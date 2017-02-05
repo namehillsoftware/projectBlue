@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -16,14 +16,18 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 
 public class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-		if (!SessionConnection.isBuilt()) return;
+    private final IConnectionProvider connectionProvider;
 
-        final int fileKey = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
+	public PlaybackFileChangedScrobbleDroidProxy(IConnectionProvider connectionProvider) {
+		this.connectionProvider = connectionProvider;
+	}
+
+	@Override
+    public void onReceive(Context context, Intent intent) {
+        final int fileKey = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
         if (fileKey < 0) return;
 
-        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
+        final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, fileKey);
         filePropertiesProvider.onComplete(fileProperties -> {
             final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
             final String name = fileProperties.get(FilePropertiesProvider.NAME);
@@ -39,7 +43,7 @@ public class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
             scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
             if (trackNumber != null)
                 scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
-        });
+        }).execute();
     }
 
     private Intent getScrobbleIntent(boolean isPlaying) {

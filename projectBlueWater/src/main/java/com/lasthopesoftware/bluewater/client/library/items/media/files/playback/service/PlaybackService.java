@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
@@ -50,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -165,29 +167,49 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private static final int errorCountResetDuration = 1000;
 
 	private WifiLock wifiLock = null;
-	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
-	private final Lazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
-	private final Lazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
-	private ComponentName remoteControlReceiver;
-	private RemoteControlClient remoteControlClient;
-	private Bitmap remoteClientBitmap = null;
-	private int numberOfErrors = 0;
-	private long lastErrorTime = 0;
+	private final ILazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
+	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
+	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
+		@Override
+		protected RemoteControlClient initialize() throws Exception {
+			// build the PendingIntent for the remote control client
+			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
+			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
+			// create and register the remote control client
+			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
+			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
+			remoteControlClient.setTransportControlFlags(
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 
-	private static boolean areListenersRegistered = false;
-	private static boolean isNotificationForeground = false;
-
-	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
-	private PositionedPlaybackFile positionedPlaybackFile;
-	private Disposable disposableSubscription;
-	private Disposable filePositionSubscription;
-
+			return remoteControlClient;
+		}
+	};
 	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new AbstractThreadLocalLazy<IPlaybackBroadcaster>() {
 		@Override
 		protected IPlaybackBroadcaster initialize() throws Exception {
 			return new LocalPlaybackBroadcaster(PlaybackService.this);
 		}
 	};
+
+	private Bitmap remoteClientBitmap = null;
+	private int numberOfErrors = 0;
+	private long lastErrorTime = 0;
+
+	private boolean areListenersRegistered = false;
+	private boolean isNotificationForeground = false;
+
+	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
+	private PositionedPlaybackFile positionedPlaybackFile;
+	private Disposable playbackFileChangedSubscription;
+	private Disposable filePositionSubscription;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -230,21 +252,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			playbackPlaylistStateManager = null;
 		}
 	};
-	
-	private void pausePlayback(boolean isUserInterrupted) {
-		stopNotification();
-
-		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
-
-		if (playbackPlaylistStateManager == null) return;
-
-		playbackPlaylistStateManager.pause();
-
-		if (positionedPlaybackFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
-
-		sendBroadcast(getScrobbleIntent(false));
-	}
 
 	private void notifyForeground(Builder notificationBuilder) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
@@ -286,29 +293,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 	
 	private void registerRemoteClientControl() {
-		if (remoteControlReceiver == null) {
-			remoteControlReceiver = new ComponentName(getPackageName(), RemoteControlReceiver.class.getName());
-			audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver);
-		}
-        
-		if (remoteControlClient == null) {
-	        // build the PendingIntent for the remote control client
-			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-			mediaButtonIntent.setComponent(remoteControlReceiver);
-			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0);
-			// create and register the remote control client
-			remoteControlClient = new RemoteControlClient(mediaPendingIntent);
-			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-			remoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-				RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-				RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-				RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-				RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-		}
-		
-		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient);
+		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject());
+		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject());
 	}
 	
 	private void unregisterListeners() {
@@ -344,6 +330,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			stopSelf(startId);
 			return START_NOT_STICKY;
 		}
+
+		notifyStartingService();
 		
 		if (SessionConnection.isBuilt()) {
 			if (playbackPlaylistStateManager != null) {
@@ -353,31 +341,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			LibrarySession
 				.getActiveLibrary(this)
-				.then(library -> {
-					if (playbackPlaylistStateManager != null)
-						playbackPlaylistStateManager.close();
-
-					final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-					playbackPlaylistStateManager =
-						new PlaybackPlaylistStateManager(
-							this,
-							connectionProvider,
-							new BestMatchUriProvider(this, connectionProvider, library),
-							new PositionedFileQueueProvider(),
-							new NowPlayingRepository(this, library),
-							library.getId(),
-							1.0f);
-
-					actOnIntent(intent);
-
-					return playbackPlaylistStateManager;
-				})
+				.then(library -> initializePlaybackPlaylistStateManager(library, intent))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 			return START_NOT_STICKY;
 		}
-
-		notifyStartingService();
 
 		// TODO this should probably be its own service soon
 		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
@@ -408,54 +376,53 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
 			break;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
-//			notifyBuilder.setContentText(getText(R.string.lbl_please_connect_to_valid_server));
+			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
 			stopSelf(startId);
-//			launchActivityDelayed(selectServerIntent);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
 			notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
 			break;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
-//			lblConnectionStatus.setText(R.string.lbl_error_connecting_try_again);
-//			launchActivityDelayed(selectServerIntent);
+			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
 			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
 			return;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
-//			lblConnectionStatus.setText(R.string.lbl_library_no_views);
-//			launchActivityDelayed(selectServerIntent);
+			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
 			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
 			LibrarySession
 				.getActiveLibrary(this)
-				.then(library -> {
-					if (playbackPlaylistStateManager != null)
-						playbackPlaylistStateManager.close();
-
-					final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-					playbackPlaylistStateManager =
-						new PlaybackPlaylistStateManager(
-							this,
-							connectionProvider,
-							new BestMatchUriProvider(this, connectionProvider, library),
-							new PositionedFileQueueProvider(),
-							new NowPlayingRepository(this, library),
-							library.getId(),
-							1.0f);
-
-					actOnIntent(intentToRun);
-
-					return playbackPlaylistStateManager;
-				})
+				.then(library -> initializePlaybackPlaylistStateManager(library, intentToRun))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 			return;
 		}
 		notifyForeground(notifyBuilder);
+	}
+
+	private PlaybackPlaylistStateManager initializePlaybackPlaylistStateManager(Library library, Intent intentToRun) throws IOException {
+		if (playbackPlaylistStateManager != null)
+			playbackPlaylistStateManager.close();
+
+		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+		playbackPlaylistStateManager =
+			new PlaybackPlaylistStateManager(
+				this,
+				connectionProvider,
+				new BestMatchUriProvider(this, connectionProvider, library),
+				new PositionedFileQueueProvider(),
+				new NowPlayingRepository(this, library),
+				library.getId(),
+				1.0f);
+
+		actOnIntent(intentToRun);
+
+		return playbackPlaylistStateManager;
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -527,7 +494,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			playbackPlaylistStateManager
 				.addFile(new File(fileKey))
 				.then(library -> {
-					Toast.makeText(PlaybackService.this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
+					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
 				});
 
@@ -542,13 +509,28 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	}
 
+	private void pausePlayback(boolean isUserInterrupted) {
+		stopNotification();
+
+		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
+
+		if (playbackPlaylistStateManager == null) return;
+
+		playbackPlaylistStateManager.pause();
+
+		if (positionedPlaybackFile != null)
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
+
+		sendBroadcast(getScrobbleIntent(false));
+	}
+
 	private Disposable observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
-		if (disposableSubscription != null && !disposableSubscription.isDisposed())
-			disposableSubscription.dispose();
+		if (playbackFileChangedSubscription != null)
+			playbackFileChangedSubscription.dispose();
 
-		disposableSubscription = observable.subscribe(this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
+		playbackFileChangedSubscription = observable.subscribe(this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
 
-		return disposableSubscription;
+		return playbackFileChangedSubscription;
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
@@ -631,17 +613,21 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange, positionedPlaybackFile);
+
+		if (!positionedPlaybackFile.getPlaybackHandler().isPlaying()) return;
+
 		positionedPlaybackFile
 			.getPlaybackHandler()
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
-				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, positionedPlaybackFile);
+				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onFileComplete, positionedPlaybackFile);
 
-				if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
+				if (filePositionSubscription != null)
 					filePositionSubscription.dispose();
 			}));
 
-		if (filePositionSubscription != null && !filePositionSubscription.isDisposed())
+		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
 
 		filePositionSubscription =
@@ -695,9 +681,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			sendBroadcast(pebbleIntent);
 
-			if (remoteControlClient == null) return;
-
-			final MetadataEditor metaData = remoteControlClient.editMetadata(true);
+			final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(true);
 			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
 			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
 			metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
@@ -716,7 +700,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 						if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 						remoteClientBitmap = bitmap;
 
-						final MetadataEditor metaData1 = remoteControlClient.editMetadata(false);
+						final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
 						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 					})
 					.execute();
@@ -730,8 +714,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return true;
 		}).execute();
-
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, positionedPlaybackFile);
 	}
 		
 	@Override
@@ -750,15 +732,21 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		
 		if (areListenersRegistered) unregisterListeners();
 		
-		if (remoteControlReceiver != null)
-			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver);
-		if (remoteControlClient != null)
-			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient);
+		if (remoteControlReceiver.isInitialized())
+			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
+		if (remoteControlClient.isInitialized())
+			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
 		
 		if (remoteClientBitmap != null) {
 			remoteClientBitmap.recycle();
 			remoteClientBitmap = null;
 		}
+
+		if (playbackFileChangedSubscription != null)
+			playbackFileChangedSubscription.dispose();
+
+		if (filePositionSubscription != null)
+			filePositionSubscription.dispose();
 	}
 
 	/* End Event Handlers */
@@ -814,31 +802,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			private static final String filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist");
 			private static final String startPos = magicPropertyBuilder.buildProperty("startPos");
 			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
-		}
-	}
-
-
-	public static class PlaylistEvents {
-		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);
-
-		public static final String onPlaylistChange = magicPropertyBuilder.buildProperty("onPlaylistChange");
-		public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
-		public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
-		public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
-		public static final String onFileComplete = magicPropertyBuilder.buildProperty("onFileComplete");
-
-		public static class PlaybackFileParameters {
-			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
-
-			public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
-			public static final String fileLibraryId = magicPropertyBuilder.buildProperty("fileLibraryId");
-			public static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
-			public static final String fileDuration = magicPropertyBuilder.buildProperty("fileDuration");
-			public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
-		}
-
-		public static class PlaylistParameters {
-			public static final String playlistPosition = MagicPropertyBuilder.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
 		}
 	}
 }
