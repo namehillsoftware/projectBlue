@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.File
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
@@ -101,7 +101,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
             public void onReceive(Context context, Intent intent) {
-                final int playlistPosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
+                final int playlistPosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
                 textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition));
             }
         };

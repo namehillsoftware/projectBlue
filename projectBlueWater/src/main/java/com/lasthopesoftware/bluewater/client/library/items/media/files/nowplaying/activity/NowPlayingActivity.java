@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
@@ -94,10 +95,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final int playlistPosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
+			final int playlistPosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
-			final boolean isPlaying = intent.getBooleanExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.isPlaying, false);
+			final boolean isPlaying = intent.getBooleanExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.isPlaying, false);
 
 			setView(playlistPosition, isPlaying);
 		}
@@ -120,10 +121,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		public void onReceive(Context context, Intent intent) {
 			if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
-			final int fileDuration = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
+			final int fileDuration = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
 			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
 
-			final int filePosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
+			final int filePosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
 			if (filePosition > -1) songProgressBar.findView().setProgress(filePosition);
 
 			playButton.findView().setVisibility(View.VISIBLE);
@@ -171,13 +172,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 		nowPlayingToggledVisibilityControls.toggleVisibility(false);
 
 		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
-		playbackStoppedIntentFilter.addAction(PlaybackService.PlaylistEvents.onPlaylistPause);
-		playbackStoppedIntentFilter.addAction(PlaybackService.PlaylistEvents.onPlaylistStop);
+		playbackStoppedIntentFilter.addAction(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause);
+		playbackStoppedIntentFilter.addAction(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStop);
 
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
-		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
-		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistChange));
+		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
+		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange));
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);

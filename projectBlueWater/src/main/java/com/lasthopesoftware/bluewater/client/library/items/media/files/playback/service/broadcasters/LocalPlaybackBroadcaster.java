@@ -6,7 +6,6 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
@@ -37,21 +36,21 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
                 final int fileKey = positionedPlaybackFile.getKey();
 
                 playbackBroadcastIntent
-                        .putExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
-                        .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
-                        .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
-                        .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.filePosition, currentPlaylistPosition)
-                        .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.isPlaying, positionedPlaybackFile.getPlaybackHandler().isPlaying());
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, currentPlaylistPosition)
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.isPlaying, positionedPlaybackFile.getPlaybackHandler().isPlaying());
 
                 final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
                 filePropertiesProvider.onComplete(fileProperties -> {
                     playbackBroadcastIntent
-                            .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
+                            .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration, FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties));
 
                     localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
                 }).onError(error -> {
                     playbackBroadcastIntent
-                            .putExtra(PlaybackService.PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
+                            .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration, -1);
 
                     localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
                     return true;
