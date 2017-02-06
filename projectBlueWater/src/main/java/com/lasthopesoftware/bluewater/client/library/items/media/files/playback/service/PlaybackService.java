@@ -447,43 +447,63 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.launchMusicService)) {
+			final int playlistPosition = intent.getIntExtra(Action.Bag.fileKey, -1);
+			if (playlistPosition < 0) return;
+
+			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
+			if (filePosition < 0) return;
+
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0)))
+				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, filePosition))
 				.then(this::observePlaybackFileChanges);
 
 			return;
         }
 
 		if (action.equals(Action.play)) {
-        	playbackPlaylistStateManager.resume().then(this::observePlaybackFileChanges);
-
+        	playbackPlaylistStateManager.resume().then(this::startPlayback);
         	return;
         }
-		
+
+		if (action.equals(Action.pause)) {
+			pausePlayback(true);
+			return;
+		}
+
+		if (action.equals(Action.togglePlayPause)) {
+			if (!playbackPlaylistStateManager.isPlaying())
+				pausePlayback(true);
+			else
+				playbackPlaylistStateManager.resume().then(this::startPlayback);
+			
+			return;
+		}
+
 		if (action.equals(Action.seekTo)) {
-        	playbackPlaylistStateManager
-				.changePosition(intent.getIntExtra(Action.Bag.fileKey, 0), intent.getIntExtra(Action.Bag.startPos, 0))
+			final int playlistPosition = intent.getIntExtra(Action.Bag.fileKey, -1);
+			if (playlistPosition < 0) return;
+
+			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
+			if (filePosition < 0) return;
+
+			playbackPlaylistStateManager
+				.changePosition(playlistPosition, filePosition)
 				.then(this::observePlaybackFileChanges);
 
-        	return;
-        }
-		
-		if (action.equals(Action.previous)) {
-        	playbackPlaylistStateManager.skipToPrevious().then(this::observePlaybackFileChanges);
 			return;
-        }
-		
+		}
+
+		if (action.equals(Action.previous)) {
+			playbackPlaylistStateManager.skipToPrevious().then(this::observePlaybackFileChanges);
+			return;
+		}
+
 		if (action.equals(Action.next)) {
-        	playbackPlaylistStateManager.skipToNext().then(this::observePlaybackFileChanges);
-        	return;
-        }
-		
-		if (playbackPlaylistStateManager != null && action.equals(Action.pause)) {
-        	pausePlayback(true);
-        	return;
-        }
-		
+			playbackPlaylistStateManager.skipToNext().then(this::observePlaybackFileChanges);
+			return;
+		}
+
 		if (action.equals(Action.stopWaitingForConnection)) {
         	PollConnection.Instance.get(this).stopPolling();
 			return;
@@ -509,6 +529,17 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager.removeFileAtPosition(filePosition);
 		}
+	}
+
+	private Disposable startPlayback(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+		if (positionedPlaybackFile != null) {
+			positionedPlaybackFileObservable =
+				Observable
+					.just(positionedPlaybackFile)
+					.concatWith(positionedPlaybackFileObservable);
+		}
+
+		return observePlaybackFileChanges(positionedPlaybackFileObservable);
 	}
 
 	private void pausePlayback(boolean isUserInterrupted) {
