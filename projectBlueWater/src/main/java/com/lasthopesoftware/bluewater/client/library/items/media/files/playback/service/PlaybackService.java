@@ -35,10 +35,11 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -615,10 +616,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange, positionedPlaybackFile);
 
-		if (!positionedPlaybackFile.getPlaybackHandler().isPlaying()) return;
+		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
-		positionedPlaybackFile
-			.getPlaybackHandler()
+		if (playbackHandler instanceof EmptyPlaybackHandler) return;
+
+		playbackHandler
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onFileComplete, positionedPlaybackFile);
@@ -633,11 +635,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		filePositionSubscription =
 			Observable
 				.interval(1, TimeUnit.SECONDS)
-				.map(i -> positionedPlaybackFile.getPlaybackHandler().getCurrentPosition())
+				.map(i -> playbackHandler.getCurrentPosition())
 				.distinctUntilChanged()
 				.subscribe(new TrackPositionBroadcaster(this, positionedPlaybackFile));
-
-		final IFile playingFile = positionedPlaybackFile;
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
@@ -647,7 +647,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), playingFile.getKey());
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey());
 		filePropertiesProvider.onComplete(fileProperties -> {
 			final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 			final String name = fileProperties.get(FilePropertiesProvider.NAME);
@@ -693,17 +693,17 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (Build.VERSION.SDK_INT < 19) return;
 
 			ImageProvider
-					.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), playingFile.getKey())
-					.onComplete((bitmap) -> {
-						// Track the remote client bitmap and recycle it in case the remote control client
-						// does not properly recycle the bitmap
-						if (remoteClientBitmap != null) remoteClientBitmap.recycle();
-						remoteClientBitmap = bitmap;
+				.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey())
+				.onComplete((bitmap) -> {
+					// Track the remote client bitmap and recycle it in case the remote control client
+					// does not properly recycle the bitmap
+					if (remoteClientBitmap != null) remoteClientBitmap.recycle();
+					remoteClientBitmap = bitmap;
 
-						final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
-						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
-					})
-					.execute();
+					final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
+					metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
+				})
+				.execute();
 		}).onError(exception -> {
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
