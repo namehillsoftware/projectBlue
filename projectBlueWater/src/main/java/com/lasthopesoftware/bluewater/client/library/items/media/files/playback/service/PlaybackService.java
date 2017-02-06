@@ -536,6 +536,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return observePlaybackFileChanges(positionedPlaybackFileObservable);
 	}
 
+	private Disposable observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
+		if (playbackFileChangedSubscription != null)
+			playbackFileChangedSubscription.dispose();
+
+		playbackFileChangedSubscription =
+			observable.subscribe(
+				this::changePositionedPlaybackFile,
+				this::uncaughtExceptionHandler,
+				this::onPlaylistPlaybackComplete);
+
+		return playbackFileChangedSubscription;
+	}
+
 	private void pausePlayback(boolean isUserInterrupted) {
 		stopNotification();
 
@@ -549,15 +562,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
 
 		sendBroadcast(getScrobbleIntent(false));
-	}
-
-	private Disposable observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
-		if (playbackFileChangedSubscription != null)
-			playbackFileChangedSubscription.dispose();
-
-		playbackFileChangedSubscription = observable.subscribe(this::changePositionedPlaybackFile, this::uncaughtExceptionHandler);
-
-		return playbackFileChangedSubscription;
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
@@ -609,7 +613,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			// resume playback
 			playbackPlaylistStateManager.setVolume(1.0f);
 			if (!playbackPlaylistStateManager.isPlaying())
-				playbackPlaylistStateManager.resume();
+				playbackPlaylistStateManager.resume().then(this::restartObservable);
 
 			return;
 		}
@@ -650,6 +654,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onFileComplete, positionedPlaybackFile);
+				sendBroadcast(getScrobbleIntent(false));
 
 				if (filePositionSubscription != null)
 					filePositionSubscription.dispose();
@@ -740,6 +745,17 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return true;
 		}).execute();
+	}
+
+	private void onPlaylistPlaybackComplete() {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStop, positionedPlaybackFile);
+
+		stopNotification();
+		if (areListenersRegistered) unregisterListeners();
+
+		playbackPlaylistStateManager.changePosition(0, 0);
+
+		sendBroadcast(getScrobbleIntent(false));
 	}
 		
 	@Override

@@ -224,10 +224,13 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		observableProxy = Observable.create(playlistPlayer).publish();
 
-		observableProxy.subscribe(p -> {
-			positionedPlaybackFile = p;
-			saveStateToLibrary();
-		}, this::uncaughtExceptionHandler);
+		observableProxy.subscribe(
+			p -> {
+				positionedPlaybackFile = p;
+				saveStateToLibrary();
+			},
+			this::uncaughtExceptionHandler,
+			this::saveStateToLibrary);
 
 		fileChangedObservableConnection = observableProxy.connect();
 
