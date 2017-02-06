@@ -465,7 +465,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			action = playbackPlaylistStateManager.isPlaying() ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
-        	playbackPlaylistStateManager.resume().then(this::startPlayback);
+        	playbackPlaylistStateManager.resume().then(this::restartObservable);
         	return;
         }
 
@@ -525,7 +525,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	}
 
-	private Disposable startPlayback(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+	private Disposable restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
 		if (positionedPlaybackFile != null) {
 			positionedPlaybackFileObservable =
 				Observable
