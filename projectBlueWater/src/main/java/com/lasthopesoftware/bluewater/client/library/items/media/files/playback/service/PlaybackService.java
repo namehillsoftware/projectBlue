@@ -332,7 +332,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return START_NOT_STICKY;
 		}
 
-		notifyStartingService();
+		if ((playbackPlaylistStateManager == null || !playbackPlaylistStateManager.isPlaying()) && Action.playbackStartingActions.contains(intent.getAction()))
+			notifyStartingService();
 		
 		if (SessionConnection.isBuilt()) {
 			if (playbackPlaylistStateManager != null) {
@@ -342,7 +343,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			LibrarySession
 				.getActiveLibrary(this)
-				.then(library -> initializePlaybackPlaylistStateManager(library, intent))
+				.then(this::initializePlaybackPlaylistStateManager)
+				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intent)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 			return START_NOT_STICKY;
@@ -398,7 +400,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			stopNotification();
 			LibrarySession
 				.getActiveLibrary(this)
-				.then(library -> initializePlaybackPlaylistStateManager(library, intentToRun))
+				.then(this::initializePlaybackPlaylistStateManager)
+				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intentToRun)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
 			return;
@@ -406,7 +409,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		notifyForeground(notifyBuilder);
 	}
 
-	private PlaybackPlaylistStateManager initializePlaybackPlaylistStateManager(Library library, Intent intentToRun) throws IOException {
+	private PlaybackPlaylistStateManager initializePlaybackPlaylistStateManager(Library library) throws IOException {
 		if (playbackPlaylistStateManager != null)
 			playbackPlaylistStateManager.close();
 
@@ -420,8 +423,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new NowPlayingRepository(this, library),
 				library.getId(),
 				1.0f);
-
-		actOnIntent(intentToRun);
 
 		return playbackPlaylistStateManager;
 	}
@@ -792,6 +793,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				stopWaitingForConnection,
 				addFileToPlaylist,
 				removeFileAtPositionFromPlaylist
+		}));
+
+		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(new String[]{
+			launchMusicService,
+			play,
+			togglePlayPause
 		}));
 
 		private static class Bag {
