@@ -433,7 +433,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		}
 		
-		final String action = intent.getAction();
+		String action = intent.getAction();
 		if (action == null) return;
 
 		if (action.equals(Action.repeating)) {
@@ -461,6 +461,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
         }
 
+		if (action.equals(Action.togglePlayPause))
+			action = playbackPlaylistStateManager.isPlaying() ? Action.pause : Action.play;
+
 		if (action.equals(Action.play)) {
         	playbackPlaylistStateManager.resume().then(this::startPlayback);
         	return;
@@ -468,15 +471,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (action.equals(Action.pause)) {
 			pausePlayback(true);
-			return;
-		}
-
-		if (action.equals(Action.togglePlayPause)) {
-			if (!playbackPlaylistStateManager.isPlaying())
-				pausePlayback(true);
-			else
-				playbackPlaylistStateManager.resume().then(this::startPlayback);
-			
 			return;
 		}
 
