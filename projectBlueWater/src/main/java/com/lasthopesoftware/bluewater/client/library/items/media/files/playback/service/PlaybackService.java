@@ -89,27 +89,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	public static void launchMusicService(final Context context, String serializedFileList) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
-		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
+		launchMusicService(context, 0, serializedFileList);
 	}
 
 	public static void launchMusicService(final Context context, int filePos, String serializedFileList) {
 		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
 		context.startService(svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos) {
 		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		context.startService(svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos, int fileProgress) {
 		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
-		svcIntent.putExtra(Action.Bag.fileKey, filePos);
+		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
 		context.startService(svcIntent);
 	}
@@ -144,7 +142,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	public static void addFileToPlaylist(final Context context, int fileKey) {
 		final Intent intent = getNewSelfIntent(context, Action.addFileToPlaylist);
-		intent.putExtra(Action.Bag.fileKey, fileKey);
+		intent.putExtra(Action.Bag.playlistPosition, fileKey);
 		context.startService(intent);
 	}
 
@@ -447,15 +445,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.launchMusicService)) {
-			final int playlistPosition = intent.getIntExtra(Action.Bag.fileKey, -1);
+			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (playlistPosition < 0) return;
-
-			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
-			if (filePosition < 0) return;
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, filePosition))
+				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
 				.then(this::observePlaybackFileChanges);
 
 			return;
@@ -475,7 +470,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.seekTo)) {
-			final int playlistPosition = intent.getIntExtra(Action.Bag.fileKey, -1);
+			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
 			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
@@ -504,7 +499,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.addFileToPlaylist)) {
-			final int fileKey = intent.getIntExtra(Action.Bag.fileKey, -1);
+			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (fileKey < 0) return;
 
 			playbackPlaylistStateManager
@@ -846,7 +841,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
 
 			/* Bag constants */
-			private static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
+			private static final String playlistPosition = magicPropertyBuilder.buildProperty("playlistPosition");
 			private static final String filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist");
 			private static final String startPos = magicPropertyBuilder.buildProperty("startPos");
 			private static final String filePosition = magicPropertyBuilder.buildProperty("filePosition");
