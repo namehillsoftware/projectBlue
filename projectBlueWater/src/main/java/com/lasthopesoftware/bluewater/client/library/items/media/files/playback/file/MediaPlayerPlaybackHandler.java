@@ -20,6 +20,8 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 	private float volume;
 	private final IPromise<IPlaybackHandler> playbackPromise;
 
+	private int previousMediaPlayerPosition;
+
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
 		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
@@ -53,7 +55,9 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public int getCurrentPosition() {
-		return mediaPlayer.getCurrentPosition();
+		return isPlaying()
+			? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
+			: previousMediaPlayerPosition;
 	}
 
 	@Override
