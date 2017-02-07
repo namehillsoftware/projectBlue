@@ -556,6 +556,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (positionedPlaybackFile != null)
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
 
+		if (filePositionSubscription != null)
+			filePositionSubscription.dispose();
+
 		sendBroadcast(getScrobbleIntent(false));
 	}
 
@@ -645,25 +648,24 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (playbackHandler instanceof EmptyPlaybackHandler) return;
 
+		if (filePositionSubscription != null)
+			filePositionSubscription.dispose();
+
+		final Disposable localFilePositionSubscription = filePositionSubscription =
+			Observable
+				.interval(1, TimeUnit.SECONDS)
+				.map(i -> playbackHandler.getCurrentPosition())
+				.distinctUntilChanged()
+				.subscribe(new TrackPositionBroadcaster(this, positionedPlaybackFile));
+
 		playbackHandler
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onFileComplete, positionedPlaybackFile);
 				sendBroadcast(getScrobbleIntent(false));
 
-				if (filePositionSubscription != null)
-					filePositionSubscription.dispose();
+				localFilePositionSubscription.dispose();
 			}));
-
-		if (filePositionSubscription != null)
-			filePositionSubscription.dispose();
-
-		filePositionSubscription =
-			Observable
-				.interval(1, TimeUnit.SECONDS)
-				.map(i -> playbackHandler.getCurrentPosition())
-				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this, positionedPlaybackFile));
 		
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
