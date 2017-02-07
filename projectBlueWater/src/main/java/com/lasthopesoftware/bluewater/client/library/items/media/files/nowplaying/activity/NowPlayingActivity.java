@@ -65,7 +65,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		context.startActivity(viewIntent);
 	}
 
-	private NowPlayingActivityProgressTrackerTask nowPlayingActivityProgressTrackerTask;
 	private NowPlayingActivityMessageHandler nowPlayingActivityMessageHandler;
 
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
@@ -119,8 +118,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
-
 			final int fileDuration = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
 			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
 
@@ -138,17 +135,30 @@ public class NowPlayingActivity extends AppCompatActivity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final int fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
-			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
+			if (fileDuration > -1) {
+				songProgressBar.findView().setMax(fileDuration);
+
+				if (viewStructure != null)
+					viewStructure.fileDuration = fileDuration;
+			}
 
 			final int filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
-			if (filePosition > -1) songProgressBar.findView().setProgress(filePosition);
+			if (filePosition > -1) {
+				songProgressBar.findView().setProgress(filePosition);
+
+				if (viewStructure != null)
+					viewStructure.filePosition = filePosition;
+			}
 		}
 	};
 
 	private static class ViewStructure {
 		final UrlKeyHolder<Integer> urlKeyHolder;
-		public Map<String, String> fileProperties;
+		Map<String, String> fileProperties;
 		Bitmap nowPlayingImage;
+
+		int filePosition;
+		int fileDuration;
 		
 		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder) {
 			this.urlKeyHolder = urlKeyHolder;
@@ -326,9 +336,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
 
-//				if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
-//				nowPlayingActivityProgressTrackerTask = NowPlayingActivityProgressTrackerTask.trackProgress(playbackFile, nowPlayingActivityMessageHandler);
-
 				return null;
 			});
 	}
@@ -378,6 +385,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImage);
 			displayImageBitmap();
 		}
+
+		songProgressBar.findView().setMax(viewStructure.fileDuration);
+		songProgressBar.findView().setProgress(viewStructure.filePosition);
 
 		if (viewStructure.fileProperties != null) {
 			setFileProperties(file, initialFilePosition, viewStructure.fileProperties);
@@ -511,7 +521,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		super.onDestroy();
 
 		if (timerTask != null) timerTask.cancel();
-		if (nowPlayingActivityProgressTrackerTask != null) nowPlayingActivityProgressTrackerTask.cancel(false);
 
 		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackStartedReciever);
