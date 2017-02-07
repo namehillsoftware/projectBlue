@@ -119,10 +119,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final int fileDuration = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
-			if (fileDuration > -1) songProgressBar.findView().setMax(fileDuration);
+			if (fileDuration > -1) setTrackDuration(fileDuration);
 
 			final int filePosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
-			if (filePosition > -1) songProgressBar.findView().setProgress(filePosition);
+			if (filePosition > -1) setTrackProgress(filePosition);
 
 			playButton.findView().setVisibility(View.VISIBLE);
 			pauseButton.findView().setVisibility(View.INVISIBLE);
@@ -135,20 +135,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final int fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
-			if (fileDuration > -1) {
-				songProgressBar.findView().setMax(fileDuration);
-
-				if (viewStructure != null)
-					viewStructure.fileDuration = fileDuration;
-			}
+			if (fileDuration > -1) setTrackDuration(fileDuration);
 
 			final int filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
-			if (filePosition > -1) {
-				songProgressBar.findView().setProgress(filePosition);
-
-				if (viewStructure != null)
-					viewStructure.filePosition = filePosition;
-			}
+			if (filePosition > -1) setTrackProgress(filePosition);
 		}
 	};
 
@@ -445,6 +435,20 @@ public class NowPlayingActivity extends AppCompatActivity {
 		});
 
 		songRatingBar.setEnabled(true);
+	}
+
+	private void setTrackDuration(int duration) {
+		songProgressBar.findView().setMax(duration);
+
+		if (viewStructure != null)
+			viewStructure.fileDuration = duration;
+	}
+
+	private void setTrackProgress(int progress) {
+		songProgressBar.findView().setProgress(progress);
+
+		if (viewStructure != null)
+			viewStructure.filePosition = progress;
 	}
 
 	private boolean handleFileNotFoundException(IFile file, FileNotFoundException fe) {

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -35,12 +36,21 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
 
                 final int fileKey = positionedPlaybackFile.getKey();
 
+				final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+
                 playbackBroadcastIntent
                         .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
                         .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileLibraryId, library.getId())
                         .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
-                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, currentPlaylistPosition)
-                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.isPlaying, positionedPlaybackFile.getPlaybackHandler().isPlaying());
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, playbackHandler.getCurrentPosition())
+                        .putExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.isPlaying, playbackHandler.isPlaying());
+
+                if (playbackHandler.getDuration() > 0) {
+					playbackBroadcastIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileDuration, playbackHandler.getDuration());
+
+					localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
+					return;
+				}
 
                 final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
                 filePropertiesProvider.onComplete(fileProperties -> {
