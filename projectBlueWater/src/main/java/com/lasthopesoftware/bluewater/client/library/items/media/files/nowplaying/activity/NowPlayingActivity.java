@@ -321,7 +321,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.getActiveLibrary(this)
 			.thenPromise(library -> new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString())))
 			.then(files -> {
-				setView(files.get(playlistPosition), playlistPosition);
+				setView(files.get(playlistPosition), viewStructure.filePosition);
 
 				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
@@ -375,9 +375,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImage);
 			displayImageBitmap();
 		}
-
-		songProgressBar.findView().setMax(viewStructure.fileDuration);
-		songProgressBar.findView().setProgress(viewStructure.filePosition);
 
 		if (viewStructure.fileProperties != null) {
 			setFileProperties(file, initialFilePosition, viewStructure.fileProperties);
