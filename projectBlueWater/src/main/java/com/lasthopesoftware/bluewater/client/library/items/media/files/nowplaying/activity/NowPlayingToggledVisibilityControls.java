@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 /**
  * Created by david on 10/16/15.
  */
-public class NowPlayingToggledVisibilityControls {
+class NowPlayingToggledVisibilityControls {
     private final LazyViewFinder<LinearLayout> playerControlsLinearLayout;
     private final LazyViewFinder<LinearLayout> menuControlsLinearLayout;
     private final LazyViewFinder<RatingBar> ratingBar;

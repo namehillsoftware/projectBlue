@@ -8,7 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
+import android.os.Handler;
 import android.support.annotation.StringRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -45,6 +45,8 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.callables.VoidFunc;
+import com.vedsoft.lazyj.ILazy;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		context.startActivity(viewIntent);
 	}
 
-	private NowPlayingActivityMessageHandler nowPlayingActivityMessageHandler;
+	private ILazy<Handler> messageHandler = new Lazy<>(Handler::new);
 
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
 	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
@@ -94,6 +96,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
+			showNowPlayingControls();
+			updateKeepScreenOnStatus();
+
 			final int playlistPosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
@@ -103,11 +108,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
-	private final BroadcastReceiver onPlaybackStartedReciever = new BroadcastReceiver() {
+	private final BroadcastReceiver onPlaybackStartedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			showNowPlayingControls();
-
 			playButton.findView().setVisibility(View.INVISIBLE);
 			pauseButton.findView().setVisibility(View.VISIBLE);
 
@@ -177,7 +180,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
-		localBroadcastManager.registerReceiver(onPlaybackStartedReciever, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
+		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
 		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange));
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
@@ -242,8 +245,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
-
-		nowPlayingActivityMessageHandler = new NowPlayingActivityMessageHandler(this);
 	}
 	
 	@Override
@@ -306,14 +307,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	public RelativeLayout getContentView() {
 		return contentView.findView();
-	}
-	
-	public NowPlayingToggledVisibilityControls getNowPlayingToggledVisibilityControls() {
-		return nowPlayingToggledVisibilityControls;
-	}
-
-	public ProgressBar getSongProgressBar() {
-		return songProgressBar.findView();
 	}
 
 	private void setView(final int playlistPosition, final boolean isPlaying) {
@@ -414,8 +407,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-		songProgressBar.findView().setMax(duration > 0 ? duration : 100);
-		songProgressBar.findView().setProgress(initialFilePosition);
+		setTrackDuration(duration > 0 ? duration : 100);
+		setTrackProgress(initialFilePosition);
 	}
 
 	private void setFileRating(IFile file, Float rating) {
@@ -482,11 +475,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 			@Override
 			public void run() {
-				if (cancelled) return;
-
-				final Message msg = new Message();
-				msg.what = NowPlayingActivityMessageHandler.HIDE_CONTROLS;
-				nowPlayingActivityMessageHandler.sendMessage(msg);
+				if (!cancelled)
+					nowPlayingToggledVisibilityControls.toggleVisibility(false);
 			}
 
 			@Override
@@ -495,7 +485,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return super.cancel();
 			}
 		};
-		nowPlayingActivityMessageHandler.postDelayed(timerTask, 5000);
+
+		messageHandler.getObject().postDelayed(timerTask, 5000);
 	}
 	
 	private void resetViewOnReconnect(final IFile file, final int position) {
@@ -524,7 +515,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (timerTask != null) timerTask.cancel();
 
 		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
-		localBroadcastManager.unregisterReceiver(onPlaybackStartedReciever);
+		localBroadcastManager.unregisterReceiver(onPlaybackStartedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver);
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
