@@ -38,13 +38,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.PassThroughPromise;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.callables.VoidFunc;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -79,9 +79,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
 	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
+	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractThreadLocalLazy<NowPlayingToggledVisibilityControls>() {
+		@Override
+		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
+			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
+		}
+	};
 
 	private TimerTask timerTask;
-	private NowPlayingToggledVisibilityControls nowPlayingToggledVisibilityControls;
 
 	private LocalBroadcastManager localBroadcastManager;
 
@@ -171,8 +176,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		contentView.findView().setOnClickListener(v -> showNowPlayingControls());
 
-		nowPlayingToggledVisibilityControls = new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(this, R.id.llNpButtons), new LazyViewFinder<>(this, R.id.menuControlsLinearLayout), songRating);
-		nowPlayingToggledVisibilityControls.toggleVisibility(false);
+		nowPlayingToggledVisibilityControls.getObject().toggleVisibility(false);
 
 		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
 		playbackStoppedIntentFilter.addAction(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause);
@@ -187,14 +191,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 		
 		playButton.findView().setOnClickListener(v -> {
-			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 			PlaybackService.play(v.getContext());
 			playButton.findView().setVisibility(View.INVISIBLE);
 			pauseButton.findView().setVisibility(View.VISIBLE);
 		});
 		
 		pauseButton.findView().setOnClickListener(v -> {
-			if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+			if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 			PlaybackService.pause(v.getContext());
 			playButton.findView().setVisibility(View.VISIBLE);
 			pauseButton.findView().setVisibility(View.INVISIBLE);
@@ -203,7 +207,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
 		if (next != null) {
 			next.setOnClickListener(v -> {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 				PlaybackService.next(v.getContext());
 			});
 		}
@@ -211,7 +215,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
 		if (previous != null) {
 			previous.setOnClickListener(v -> {
-				if (!nowPlayingToggledVisibilityControls.isVisible()) return;
+				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 				PlaybackService.previous(v.getContext());
 			});
 		}
@@ -305,14 +309,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	public RelativeLayout getContentView() {
-		return contentView.findView();
-	}
-
 	private void setView(final int playlistPosition, final boolean isPlaying) {
 		LibrarySession
 			.getActiveLibrary(this)
-			.thenPromise(library -> new DispatchedPromise<>(() -> FileStringListUtilities.parseFileStringList(library.getSavedTracksString())))
+			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
 			.then(files -> {
 				setView(files.get(playlistPosition), viewStructure.filePosition);
 
@@ -416,7 +416,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		songRatingBar.setRating(rating != null ? rating : 0f);
 
 		songRatingBar.setOnRatingBarChangeListener((ratingBar, newRating, fromUser) -> {
-			if (!fromUser || !nowPlayingToggledVisibilityControls.isVisible())
+			if (!fromUser || !nowPlayingToggledVisibilityControls.getObject().isVisible())
 				return;
 
 			final String stringRating = String.valueOf(Math.round(newRating));
@@ -466,7 +466,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	private void showNowPlayingControls() {
-		nowPlayingToggledVisibilityControls.toggleVisibility(true);
+		nowPlayingToggledVisibilityControls.getObject().toggleVisibility(true);
 		contentView.findView().invalidate();
 
 		if (timerTask != null) timerTask.cancel();
@@ -476,7 +476,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			@Override
 			public void run() {
 				if (!cancelled)
-					nowPlayingToggledVisibilityControls.toggleVisibility(false);
+					nowPlayingToggledVisibilityControls.getObject().toggleVisibility(false);
 			}
 
 			@Override
