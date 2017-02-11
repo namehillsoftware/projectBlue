@@ -1,5 +1,7 @@
 package com.lasthopesoftware.providers;
 
+import android.annotation.SuppressLint;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 
 import org.slf4j.Logger;
@@ -20,13 +22,11 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 		super(connectionProvider, params);
 	}
 
+	@SuppressLint("NewApi")
 	protected final T getData(HttpURLConnection connection) {
 		try {
-			final InputStream is = connection.getInputStream();
-			try {
+			try (InputStream is = connection.getInputStream()) {
 				return getData(is);
-			} finally {
-				is.close();
 			}
 		} catch (IOException e) {
 			logger.error("There was an error opening the input stream", e);

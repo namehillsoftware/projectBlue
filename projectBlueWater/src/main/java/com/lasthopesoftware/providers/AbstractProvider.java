@@ -9,12 +9,12 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 11/26/15.
  */
-public abstract class AbstractProvider<T> extends FluentSpecifiedTask<String, Void, T> {
+abstract class AbstractProvider<T> extends FluentSpecifiedTask<String, Void, T> {
 
 	private final IConnectionProvider connectionProvider;
 	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
 
-	protected AbstractProvider(IConnectionProvider connectionProvider, String... params) {
+	AbstractProvider(IConnectionProvider connectionProvider, String... params) {
 		super(providerExecutor, params);
 
 		this.connectionProvider = connectionProvider;
