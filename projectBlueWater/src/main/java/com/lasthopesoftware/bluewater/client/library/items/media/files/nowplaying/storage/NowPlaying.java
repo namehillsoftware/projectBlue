@@ -14,7 +14,7 @@ public class NowPlaying {
 	public int filePosition;
 	public boolean isRepeating;
 
-	public NowPlaying(List<IFile> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
+	NowPlaying(List<IFile> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
 		this.playlist = playlist;
 		this.playlistPosition = playlistPosition;
 		this.filePosition = filePosition;
