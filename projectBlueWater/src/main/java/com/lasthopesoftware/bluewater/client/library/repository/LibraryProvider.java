@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
+import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
@@ -24,6 +26,16 @@ public class LibraryProvider implements ILibraryProvider {
 
 	public LibraryProvider(Context context) {
 		this.context = context;
+	}
+
+	@Override
+	public IPromise<Library> getLibrary(int libraryId) {
+		return new DispatchedPromise<>(new GetLibraryTask(context, libraryId));
+	}
+
+	@Override
+	public IPromise<Library> saveLibrary(Library library) {
+		return new DispatchedPromise<Library>(new SaveLibraryTask(context, library));
 	}
 
 	private static class GetLibraryTask implements CarelessFunction<Library> {
