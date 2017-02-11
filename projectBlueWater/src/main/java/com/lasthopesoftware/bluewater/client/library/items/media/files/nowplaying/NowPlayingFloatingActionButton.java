@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.futures.callables.VoidFunc;
 
 /**
  * Created by david on 10/11/15.
@@ -53,7 +54,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.getActiveLibrary(getContext(), result -> {
+        LibrarySession.getActiveLibrary(getContext()).then(VoidFunc.runningCarelessly(result -> {
             isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
             setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
@@ -69,7 +70,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                     localBroadcastManager.unregisterReceiver(this);
                 }
             }, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
-        });
+        }));
     }
 
     @Override

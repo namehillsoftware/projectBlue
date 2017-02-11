@@ -165,7 +165,7 @@ public class LibrarySession {
 	}
 
 	@SuppressLint("NewApi")
-	private static synchronized Library getLibraryInternal(final Context context, int libraryId) {
+	private static Library getLibraryInternal(final Context context, int libraryId) {
 		if (libraryId < 0) return null;
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
