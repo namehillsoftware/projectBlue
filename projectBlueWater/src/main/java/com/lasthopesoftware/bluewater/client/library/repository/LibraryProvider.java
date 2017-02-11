@@ -20,7 +20,7 @@ public class LibraryProvider {
 	}
 
 	public IPromise<Library> get(int libraryId) {
-		return new DispatchedPromise<>(new GetLibraryTask(context, libraryId));
+		return new DispatchedPromise<>(new GetLibraryTask(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	private static class GetLibraryTask implements CarelessFunction<Library> {
