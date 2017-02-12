@@ -3,17 +3,25 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
+
+import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask implements CarelessOneParameterFunction<OneParameterAction<Runnable>, IBufferingPlaybackHandler> {
+class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private final IFile file;
 	private final int prepareAt;
@@ -29,8 +37,14 @@ class MediaPlayerPreparerTask implements CarelessOneParameterFunction<OneParamet
 	}
 
 	@Override
-	public IBufferingPlaybackHandler resultFrom(OneParameterAction<Runnable> onCancelled) throws Exception {
-		final MediaPlayer mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
+	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		final MediaPlayer mediaPlayer;
+		try {
+			mediaPlayer = playbackInitialization.initializeMediaPlayer(uriProvider.getFileUri(file));
+		} catch (IOException e) {
+			reject.withError(e);
+			return;
+		}
 
 		onCancelled.runWith(() -> {
 			isCancelled = true;
@@ -38,15 +52,30 @@ class MediaPlayerPreparerTask implements CarelessOneParameterFunction<OneParamet
 			mediaPlayer.release();
 		});
 
-		if (isCancelled) return null;
+		if (isCancelled) {
+			reject.withError(new CancellationException());
+			return;
+		}
 
-		mediaPlayer.prepare();
+		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+			reject.withError(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
+			return true;
+		});
 
-		if (isCancelled) return null;
+		mediaPlayer.setOnPreparedListener(mp -> {
+			if (prepareAt > 0) {
+				mediaPlayer.setOnSeekCompleteListener(seekMp -> resolve.withResult(new MediaPlayerPlaybackHandler(seekMp)));
+				mediaPlayer.seekTo(prepareAt);
+				return;
+			}
 
-		mediaPlayer.seekTo(prepareAt);
+			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
+		});
 
-		if (isCancelled) return null;
-		return new MediaPlayerPlaybackHandler(mediaPlayer);
+		try {
+			mediaPlayer.prepare();
+		} catch (IOException e) {
+			reject.withError(e);
+		}
 	}
 }

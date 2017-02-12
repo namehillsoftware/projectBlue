@@ -8,8 +8,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -44,7 +45,7 @@ public class LibrarySession {
 	}
 
 	public static IPromise<Library> getActiveLibrary(final Context context) {
-		return new DispatchedPromise<>(onCanceled -> getActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(() -> getActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static IPromise<Library> getLibrary(final Context context, final int libraryId) {

@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.lazyj.Lazy;
 
@@ -19,7 +20,7 @@ public class FileStringListUtilities {
 	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
 
 	public static IPromise<ArrayList<IFile>> promiseParsedFileStringList(String fileList) {
-		return new DispatchedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
+		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
 	}
 
 	public static ArrayList<IFile> parseFileStringList(String fileList) {
@@ -38,7 +39,7 @@ public class FileStringListUtilities {
 	}
 
 	public static IPromise<String> promiseSerializedFileStringList(List<IFile> files) {
-		return new DispatchedPromise<>(() -> serializeFileStringList(files), fileParsingExecutor.getObject());
+		return new QueuedPromise<>(() -> serializeFileStringList(files), fileParsingExecutor.getObject());
 	}
 
 	public static String serializeFileStringList(List<IFile> files) {

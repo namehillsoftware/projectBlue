@@ -8,7 +8,8 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.bluewater.shared.DispatchedPromise.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.lazyj.Lazy;
@@ -16,6 +17,8 @@ import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Callable;
 
 /**
  * Created by david on 2/11/17.
@@ -30,15 +33,15 @@ public class LibraryProvider implements ILibraryProvider {
 
 	@Override
 	public IPromise<Library> getLibrary(int libraryId) {
-		return new DispatchedPromise<>(new GetLibraryTask(context, libraryId));
+		return new QueuedPromise<>(new GetLibraryTask(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@Override
 	public IPromise<Library> saveLibrary(Library library) {
-		return new DispatchedPromise<Library>(new SaveLibraryTask(context, library));
+		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static class GetLibraryTask implements CarelessFunction<Library> {
+	private static class GetLibraryTask implements Callable<Library> {
 
 		private int libraryId;
 		private Context context;
@@ -50,7 +53,7 @@ public class LibraryProvider implements ILibraryProvider {
 
 		@SuppressLint("NewApi")
 		@Override
-		public Library result() throws Exception {
+		public Library call() throws Exception {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -63,7 +66,7 @@ public class LibraryProvider implements ILibraryProvider {
 		}
 	}
 
-	private static class SaveLibraryTask implements CarelessFunction<Library> {
+	private static class SaveLibraryTask implements Callable<Library> {
 
 		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryTask.class);
 
@@ -119,7 +122,7 @@ public class LibraryProvider implements ILibraryProvider {
 
 		@SuppressLint("NewApi")
 		@Override
-		public Library result() throws Exception {
+		public Library call() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;
