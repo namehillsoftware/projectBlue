@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
+import android.content.Context;
 import android.os.Handler;
 
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -27,6 +28,18 @@ public class DispatchedPromise<TResult> extends Promise<TResult> {
 
 	public DispatchedPromise(Callable<TResult> executor, Handler handler) {
 		super(new Executors.DispatchedCallable<>(executor, handler));
+	}
+
+	public DispatchedPromise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor, Context context) {
+		this(executor, new Handler(context.getMainLooper()));
+	}
+
+	public DispatchedPromise(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor, Context context) {
+		this(executor, new Handler(context.getMainLooper()));
+	}
+
+	public DispatchedPromise(Callable<TResult> executor, Context context) {
+		this(executor, new Handler(context.getMainLooper()));
 	}
 
 	private static class Executors {

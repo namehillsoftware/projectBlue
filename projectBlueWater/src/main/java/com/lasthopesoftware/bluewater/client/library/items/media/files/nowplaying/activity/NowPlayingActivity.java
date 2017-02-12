@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
@@ -313,13 +314,16 @@ public class NowPlayingActivity extends AppCompatActivity {
 		LibrarySession
 			.getActiveLibrary(this)
 			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
-			.then(files -> {
-				setView(files.get(playlistPosition), viewStructure.filePosition);
+			.thenPromise(files -> {
+				return
+					new DispatchedPromise<Void>(() -> {
+						setView(files.get(playlistPosition), viewStructure.filePosition);
 
-				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
-				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
+						playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
+						pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
 
-				return null;
+						return null;
+					}, this);
 			});
 	}
 	

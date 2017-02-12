@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
-import android.os.Handler;
-
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
