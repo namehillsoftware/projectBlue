@@ -290,10 +290,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		LibrarySession.getActiveLibrary(this, result -> {
-			if (result != null)
-				setRepeatingIcon(imageButton, result.isRepeating());
-		});
+		LibrarySession
+			.getActiveLibrary(this)
+			.thenPromise(result -> new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
+				if (result != null)
+					setRepeatingIcon(imageButton, result.isRepeating());
+			}), messageHandler.getObject()));
 	}
 	
 	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
