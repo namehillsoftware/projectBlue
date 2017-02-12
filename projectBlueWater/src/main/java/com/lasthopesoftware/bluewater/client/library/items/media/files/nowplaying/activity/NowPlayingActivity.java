@@ -236,7 +236,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 							PlaybackService.setCompleting(v.getContext());
 
 						setRepeatingIcon(shuffleButton, isRepeating);
-					}), this)));
+					}), messageHandler.getObject())));
 		}
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
@@ -284,7 +284,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 						.thenPromise(files ->
 							new DispatchedPromise<>(
 								VoidFunc.runningCarelessly(() -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
-								this));
+								messageHandler.getObject()));
 			});
 	}
 
@@ -323,7 +323,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 					playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 					pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
-				}), this));
+				}), messageHandler.getObject()));
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
