@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.PassThroughPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 
@@ -189,7 +189,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 			saveStateToLibrary();
 
-			return new PassThroughPromise<>(observableProxy);
+			return new Promise<>(observableProxy);
 		}
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =

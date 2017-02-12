@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,10 +31,10 @@ public class WhenStartingPlayback {
 	@Before
 	public void before() {
 		playbackHandler = mock(IPlaybackHandler.class);
-		when(playbackHandler.promisePlayback()).thenReturn(new ExpectedPromise<>(() -> mock(IPlaybackHandler.class)));
+		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mock(IPlaybackHandler.class)));
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
+			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
 

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
 
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Before;
@@ -24,7 +24,7 @@ public class WhenChainingResolutionTwice {
 	@Before
 	public void before() {
 		final IPromise<String> rootPromise =
-			new ExpectedPromise<>(() -> "test");
+			new Promise<>(() -> "test");
 
 		firstResultHandler = mock(OneParameterFunction.class);
 

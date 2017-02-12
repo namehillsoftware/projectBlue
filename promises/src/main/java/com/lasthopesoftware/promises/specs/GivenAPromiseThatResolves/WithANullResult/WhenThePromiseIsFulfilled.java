@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves.WithANullResult;
 
-import com.lasthopesoftware.promises.ExpectedPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,7 +17,7 @@ public class WhenThePromiseIsFulfilled {
 	@Before
 	public void before() {
 		result = new Object();
-		new ExpectedPromise<>(() -> null)
+		Promise.empty()
 				.then(result -> this.result = result);
 	}
 

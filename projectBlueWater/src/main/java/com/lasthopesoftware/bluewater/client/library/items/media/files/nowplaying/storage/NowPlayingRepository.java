@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.PassThroughPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +29,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 	@Override
 	public IPromise<NowPlaying> getNowPlaying() {
 		if (nowPlayingCache.containsKey(libraryId))
-			return new PassThroughPromise<>(nowPlayingCache.get(libraryId));
+			return new Promise<>(nowPlayingCache.get(libraryId));
 
 		return
 			LibrarySession
@@ -72,6 +72,6 @@ public class NowPlayingRepository implements INowPlayingRepository {
 						});
 			});
 
-		return new PassThroughPromise<>(nowPlaying);
+		return new Promise<>(nowPlaying);
 	}
 }

@@ -41,7 +41,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.PassThroughPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
@@ -275,7 +275,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.getActiveLibrary(this)
 			.thenPromise(library -> {
 				final String savedTracksString = library.getSavedTracksString();
-				if (savedTracksString == null || savedTracksString.isEmpty()) return new PassThroughPromise<>(null);
+				if (savedTracksString == null || savedTracksString.isEmpty()) return Promise.empty();
 
 				return
 					FileStringListUtilities

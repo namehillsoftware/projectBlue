@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,10 +33,10 @@ public class WhenChangingTracks {
 		final StatefulPlaybackHandler playbackHandlerUnderTest = new StatefulPlaybackHandler();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new ExpectedPromise<>(() -> new PositionedPlaybackFile(0, playbackHandler, new File(1)));
+			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new File(1)));
 
 		final IPromise<PositionedPlaybackFile> secondPositionedPlaybackHandlerContainer =
-			new ExpectedPromise<>(() -> (this.expectedPositionedPlaybackFile = new PositionedPlaybackFile(0, playbackHandlerUnderTest, new File(1))));
+			new Promise<>((this.expectedPositionedPlaybackFile = new PositionedPlaybackFile(0, playbackHandlerUnderTest, new File(1))));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))

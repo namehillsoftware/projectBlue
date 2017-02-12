@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
-import com.lasthopesoftware.promises.ExpectedPromise;
 import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 /**
  * Created by david on 1/4/17.
@@ -11,6 +11,6 @@ import com.lasthopesoftware.promises.IPromise;
 class FakeBufferingStatefulPlaybackHandler extends StatefulPlaybackHandler {
 	@Override
 	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
-		return new ExpectedPromise<>(() -> FakeBufferingStatefulPlaybackHandler.this);
+		return new Promise<>(FakeBufferingStatefulPlaybackHandler.this);
 	}
 }

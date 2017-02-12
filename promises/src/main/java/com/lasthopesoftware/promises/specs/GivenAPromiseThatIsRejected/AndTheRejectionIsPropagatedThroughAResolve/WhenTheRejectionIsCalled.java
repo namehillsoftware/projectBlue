@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsRejected.AndTheRejectionIsPropagatedThroughAResolve;
 
-import com.lasthopesoftware.promises.ExpectedPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +18,7 @@ public class WhenTheRejectionIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		new ExpectedPromise<String>(() -> { throw thrownException; })
+		new Promise<String>(() -> { throw thrownException; })
 				.then(result -> null)
 				.error(exception -> caughtException = exception);
 	}

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
 
-import com.lasthopesoftware.promises.ExpectedPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,7 +16,7 @@ public class WhenAnotherReturningPromiseIsExpected {
 
 	@Before
 	public void before() {
-		new ExpectedPromise<>(() -> "test")
+		new Promise<>(() -> "test")
 				.then(result -> 330 + result.hashCode())
 				.then(nextResult -> nextReturningPromiseResult = nextResult)
 				.error(err -> isCalled = true);
