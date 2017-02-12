@@ -72,7 +72,7 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 
 			@Override
 			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
-				this.executor.execute(new WrappedCallable<>(callable, resolve, reject));
+				this.executor.execute(new WrappedFunction<>(callable, resolve, reject));
 			}
 		}
 	}

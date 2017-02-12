@@ -6,11 +6,10 @@ import android.os.Handler;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-
-import java.util.concurrent.Callable;
 
 /**
  * Created by david on 12/18/16.
@@ -26,8 +25,8 @@ public class DispatchedPromise<TResult> extends Promise<TResult> {
 		super(new Executors.DispatchedTask<>(executor, handler));
 	}
 
-	public DispatchedPromise(Callable<TResult> executor, Handler handler) {
-		super(new Executors.DispatchedCallable<>(executor, handler));
+	public DispatchedPromise(CarelessFunction<TResult> executor, Handler handler) {
+		super(new Executors.DispatchedFunction<>(executor, handler));
 	}
 
 	public DispatchedPromise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor, Context context) {
@@ -38,7 +37,7 @@ public class DispatchedPromise<TResult> extends Promise<TResult> {
 		this(executor, new Handler(context.getMainLooper()));
 	}
 
-	public DispatchedPromise(Callable<TResult> executor, Context context) {
+	public DispatchedPromise(CarelessFunction<TResult> executor, Context context) {
 		this(executor, new Handler(context.getMainLooper()));
 	}
 
@@ -75,19 +74,19 @@ public class DispatchedPromise<TResult> extends Promise<TResult> {
 			}
 		}
 
-		static class DispatchedCallable<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+		static class DispatchedFunction<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
 
-			private final Callable<TResult> callable;
+			private final CarelessFunction<TResult> callable;
 			private final Handler handler;
 
-			DispatchedCallable(Callable<TResult> callable, Handler handler) {
+			DispatchedFunction(CarelessFunction<TResult> callable, Handler handler) {
 				this.callable = callable;
 				this.handler = handler;
 			}
 
 			@Override
 			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
-				this.handler.post(new WrappedCallable<>(callable, resolve, reject));
+				this.handler.post(new WrappedFunction<>(callable, resolve, reject));
 			}
 		}
 	}

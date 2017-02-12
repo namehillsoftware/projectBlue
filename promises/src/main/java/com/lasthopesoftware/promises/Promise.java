@@ -1,11 +1,10 @@
 package com.lasthopesoftware.promises;
 
+import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-
-import java.util.concurrent.Callable;
 
 public class Promise<TResult> extends DependentCancellablePromise<Void, TResult> {
 
@@ -19,7 +18,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 		this(new Execution.InternalPromiseExecutor<>(executor));
 	}
 
-	public Promise(Callable<TResult> executor) {
+	public Promise(CarelessFunction<TResult> executor) {
 		this(new Execution.InternalExpectedPromiseExecutor<>(executor));
 	}
 
@@ -33,9 +32,6 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	private static class Execution {
 
-		/**
-		 * Created by david on 10/30/16.
-		 */
 		static class InternalCancellablePromiseExecutor<TResult> implements FiveParameterAction<Void, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 			private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
@@ -66,23 +62,23 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 		}
 
 		private static class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
-			private final Callable<TResult> executor;
+			private final CarelessFunction<TResult> executor;
 
-			InternalExpectedPromiseExecutor(Callable<TResult> executor) {
+			InternalExpectedPromiseExecutor(CarelessFunction<TResult> executor) {
 				this.executor = executor;
 			}
 
 			@Override
 			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 				try {
-					resolve.withResult(executor.call());
+					resolve.withResult(executor.result());
 				} catch (Exception e) {
 					reject.withError(e);
 				}
 			}
 		}
 
-		private static class PassThroughCallable<TPassThroughResult> implements Callable<TPassThroughResult> {
+		private static class PassThroughCallable<TPassThroughResult> implements CarelessFunction<TPassThroughResult> {
 			private final TPassThroughResult passThroughResult;
 
 			PassThroughCallable(TPassThroughResult passThroughResult) {
@@ -90,7 +86,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 			}
 
 			@Override
-			public TPassThroughResult call() throws Exception {
+			public TPassThroughResult result() throws Exception {
 				return passThroughResult;
 			}
 		}

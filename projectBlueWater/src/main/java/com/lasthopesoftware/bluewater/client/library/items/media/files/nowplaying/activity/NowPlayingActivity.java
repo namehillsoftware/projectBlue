@@ -68,7 +68,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		context.startActivity(viewIntent);
 	}
 
-	private ILazy<Handler> messageHandler = new Lazy<>(Handler::new);
+	private ILazy<Handler> messageHandler = new Lazy<>(() -> new Handler(getMainLooper()));
 
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
 	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
@@ -228,7 +228,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				LibrarySession
 					.getActiveLibrary(v.getContext())
-					.then(VoidFunc.runningCarelessly(result -> {
+					.thenPromise(result -> new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
 						final boolean isRepeating = !result.isRepeating();
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -236,7 +236,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 							PlaybackService.setCompleting(v.getContext());
 
 						setRepeatingIcon(shuffleButton, isRepeating);
-					})));
+					}), this)));
 		}
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
@@ -281,7 +281,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return
 					FileStringListUtilities
 						.promiseParsedFileStringList(savedTracksString)
-						.then(VoidFunc.runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())));
+						.thenPromise(files ->
+							new DispatchedPromise<>(
+								VoidFunc.runningCarelessly(() -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
+								this));
 			});
 	}
 
@@ -314,17 +317,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 		LibrarySession
 			.getActiveLibrary(this)
 			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
-			.thenPromise(files -> {
-				return
-					new DispatchedPromise<Void>(() -> {
-						setView(files.get(playlistPosition), viewStructure.filePosition);
+			.thenPromise(files ->
+				new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
+					setView(files.get(playlistPosition), viewStructure.filePosition);
 
-						playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
-						pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
-
-						return null;
-					}, this);
-			});
+					playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
+					pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
+				}), this));
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {

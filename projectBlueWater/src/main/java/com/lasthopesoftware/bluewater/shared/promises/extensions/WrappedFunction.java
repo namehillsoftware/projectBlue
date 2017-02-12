@@ -2,18 +2,17 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-
-import java.util.concurrent.Callable;
+import com.vedsoft.futures.callables.CarelessFunction;
 
 /**
  * Created by david on 2/12/17.
  */
-class WrappedCallable<TResult> implements Runnable {
-	private final Callable<TResult> callable;
+class WrappedFunction<TResult> implements Runnable {
+	private final CarelessFunction<TResult> callable;
 	private final IRejectedPromise reject;
 	private final IResolvedPromise<TResult> resolve;
 
-	WrappedCallable(Callable<TResult> callable, IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
+	WrappedFunction(CarelessFunction<TResult> callable, IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 		this.callable = callable;
 		this.reject = reject;
 		this.resolve = resolve;
@@ -22,7 +21,7 @@ class WrappedCallable<TResult> implements Runnable {
 	@Override
 	public void run() {
 		try {
-			resolve.withResult(this.callable.call());
+			resolve.withResult(this.callable.result());
 		} catch (Exception e) {
 			reject.withError(e);
 		}
