@@ -515,10 +515,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager
 				.addFile(new File(fileKey))
-				.then(library -> {
+				.thenPromise(library -> new DispatchedPromise<>(() -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
-				});
+				}, this));
 
 			return;
 		}
@@ -544,7 +544,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private IPromise<Observable<PositionedPlaybackFile>> observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
 		return
-			new DispatchedPromise<Observable<PositionedPlaybackFile>>(() -> {
+			new DispatchedPromise<>(() -> {
 				if (playbackFileChangedSubscription != null)
 					playbackFileChangedSubscription.dispose();
 
