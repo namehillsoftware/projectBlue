@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -44,7 +44,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private final IConnectionProvider connectionProvider;
 	private final IFileUriProvider fileUriProvider;
 	private final INowPlayingRepository nowPlayingRepository;
-	private final int libraryId;
+	private final ILibraryProvider libraryProvider;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
@@ -56,12 +56,12 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
 	private float volume;
 
-	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, int libraryId, float initialVolume) {
+	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ILibraryProvider libraryProvider, float initialVolume) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.fileUriProvider = fileUriProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
-		this.libraryId = libraryId;
+		this.libraryProvider = libraryProvider;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
 		volume = initialVolume;
 	}
@@ -331,8 +331,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 				: positionedFileQueueProvider::getCompletableQueue;
 
 		return
-			LibrarySession
-				.getLibrary(context, libraryId)
+			libraryProvider
+				.getLibrary()
 				.then(library -> {
 					preparedPlaybackQueue =
 						new PreparedPlaybackQueue(

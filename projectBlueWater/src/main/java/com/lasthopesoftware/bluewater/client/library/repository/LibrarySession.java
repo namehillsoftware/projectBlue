@@ -7,8 +7,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
@@ -32,7 +32,7 @@ public class LibrarySession {
 
 	@SuppressLint("NewApi")
 	public static IPromise<Library> saveLibrary(final Context context, final Library library) {
-		return new LibraryProvider(context).saveLibrary(library);
+		return new LibraryRepository(context).saveLibrary(library);
 	}
 
 	public static void getActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
@@ -49,7 +49,7 @@ public class LibrarySession {
 	}
 
 	public static IPromise<Library> getLibrary(final Context context, final int libraryId) {
-		return new LibraryProvider(context).getLibrary(libraryId);
+		return new LibraryRepository(context).getLibrary(libraryId);
 	}
 
 	public static void getLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {

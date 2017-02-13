@@ -55,6 +55,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.repository.access.ChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.access.IChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
@@ -202,6 +207,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyPlaybackBroadcaster.getObject()));
+	private final ILazy<IChosenLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new ChosenLibraryIdentifierProvider(this));
+	private final ILazy<ILibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 
 	private Bitmap remoteClientBitmap = null;
 	private int numberOfErrors = 0;
@@ -425,7 +432,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new BestMatchUriProvider(this, connectionProvider, library),
 				new PositionedFileQueueProvider(),
 				new NowPlayingRepository(this, library),
-				library.getId(),
+				new LibraryProvider(
+					lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(),
+					lazyLibraryRepository.getObject()),
 				1.0f);
 
 		return playbackPlaylistStateManager;

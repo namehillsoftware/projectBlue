@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.client.library.repository;
+package com.lasthopesoftware.bluewater.client.library.repository.access;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
 
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -21,10 +22,10 @@ import org.slf4j.LoggerFactory;
  * Created by david on 2/11/17.
  */
 
-public class LibraryProvider implements ILibraryProvider {
+public class LibraryRepository implements ILibraryRepository {
 	private final Context context;
 
-	public LibraryProvider(Context context) {
+	public LibraryRepository(Context context) {
 		this.context = context;
 	}
 
