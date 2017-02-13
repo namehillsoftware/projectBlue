@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
@@ -17,8 +16,6 @@ import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.Callable;
 
 /**
  * Created by david on 2/11/17.
@@ -41,7 +38,7 @@ public class LibraryProvider implements ILibraryProvider {
 		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static class GetLibraryTask implements Callable<Library> {
+	private static class GetLibraryTask implements CarelessFunction<Library> {
 
 		private int libraryId;
 		private Context context;
@@ -53,7 +50,7 @@ public class LibraryProvider implements ILibraryProvider {
 
 		@SuppressLint("NewApi")
 		@Override
-		public Library call() throws Exception {
+		public Library result() throws Exception {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -66,7 +63,7 @@ public class LibraryProvider implements ILibraryProvider {
 		}
 	}
 
-	private static class SaveLibraryTask implements Callable<Library> {
+	private static class SaveLibraryTask implements CarelessFunction<Library> {
 
 		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryTask.class);
 
@@ -122,7 +119,7 @@ public class LibraryProvider implements ILibraryProvider {
 
 		@SuppressLint("NewApi")
 		@Override
-		public Library call() throws Exception {
+		public Library result() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;

@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -23,8 +23,8 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 		super(new Executors.QueuedTask<>(task, executor));
 	}
 
-	public QueuedPromise(Callable<TResult> task, Executor executor) {
-		super(new Executors.QueuedCallable<>(task, executor));
+	public QueuedPromise(CarelessFunction<TResult> task, Executor executor) {
+		super(new Executors.QueuedFunction<>(task, executor));
 	}
 
 	private static class Executors {
@@ -60,12 +60,12 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 			}
 		}
 
-		static class QueuedCallable<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+		static class QueuedFunction<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
 
-			private final Callable<TResult> callable;
+			private final CarelessFunction<TResult> callable;
 			private final Executor executor;
 
-			QueuedCallable(Callable<TResult> callable, Executor executor) {
+			QueuedFunction(CarelessFunction<TResult> callable, Executor executor) {
 				this.callable = callable;
 				this.executor = executor;
 			}
