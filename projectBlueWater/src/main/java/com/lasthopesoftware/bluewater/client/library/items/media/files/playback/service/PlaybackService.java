@@ -352,8 +352,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				return START_NOT_STICKY;
 			}
 
-			LibrarySession
-				.getActiveLibrary(this)
+			lazyLibraryRepository.getObject()
+				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary())
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intent)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
@@ -409,8 +409,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
-			LibrarySession
-				.getActiveLibrary(this)
+
+			lazyLibraryRepository.getObject()
+				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary())
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intentToRun)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
