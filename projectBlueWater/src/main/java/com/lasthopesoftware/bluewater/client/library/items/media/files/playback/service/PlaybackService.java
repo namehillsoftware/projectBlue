@@ -402,7 +402,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-			return;
+			break;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
 			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
 			stopSelf(startId);
