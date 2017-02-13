@@ -424,6 +424,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (playbackPlaylistStateManager != null)
 			playbackPlaylistStateManager.close();
 
+		final LibraryProvider libraryProvider =
+			new LibraryProvider(
+				lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(),
+				lazyLibraryRepository.getObject());
+
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		playbackPlaylistStateManager =
 			new PlaybackPlaylistStateManager(
@@ -431,10 +436,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				connectionProvider,
 				new BestMatchUriProvider(this, connectionProvider, library),
 				new PositionedFileQueueProvider(),
-				new NowPlayingRepository(this, library),
-				new LibraryProvider(
-					lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(),
-					lazyLibraryRepository.getObject()),
+				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
+				libraryProvider,
 				1.0f);
 
 		return playbackPlaylistStateManager;

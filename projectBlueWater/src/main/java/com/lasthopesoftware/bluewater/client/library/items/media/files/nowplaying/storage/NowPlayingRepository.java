@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
-import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryRepository;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -18,12 +16,14 @@ public class NowPlayingRepository implements INowPlayingRepository {
 
 	private static final Map<Integer, NowPlaying> nowPlayingCache = new ConcurrentHashMap<>();
 
-	private final Context context;
-	private final int libraryId;
+	private final ILibraryProvider libraryProvider;
+	private final ILibraryRepository libraryRepository;
 
-	public NowPlayingRepository(Context context, Library library) {
-		this.context = context;
-		this.libraryId = library.getId();
+	private volatile int libraryId = -1;
+
+	public NowPlayingRepository(ILibraryProvider libraryProvider, ILibraryRepository libraryRepository) {
+		this.libraryProvider = libraryProvider;
+		this.libraryRepository = libraryRepository;
 	}
 
 	@Override
@@ -32,31 +32,38 @@ public class NowPlayingRepository implements INowPlayingRepository {
 			return new Promise<>(nowPlayingCache.get(libraryId));
 
 		return
-			LibrarySession
-				.getLibrary(context, libraryId)
-				.thenPromise(library ->
-					FileStringListUtilities
-						.promiseParsedFileStringList(library.getSavedTracksString())
-						.then(files -> {
-							final NowPlaying nowPlaying =
-								new NowPlaying(
-									files,
-									library.getNowPlayingId(),
-									library.getNowPlayingProgress(),
-									library.isRepeating());
+			libraryProvider
+				.getLibrary()
+				.thenPromise(library -> {
+					libraryId = library.getId();
 
-							nowPlayingCache.put(libraryId, nowPlaying);
+					return
+						FileStringListUtilities
+							.promiseParsedFileStringList(library.getSavedTracksString())
+							.then(files -> {
+								final NowPlaying nowPlaying =
+									new NowPlaying(
+										files,
+										library.getNowPlayingId(),
+										library.getNowPlayingProgress(),
+										library.isRepeating());
 
-							return nowPlaying;
-						}));
+								nowPlayingCache.put(libraryId, nowPlaying);
+
+								return nowPlaying;
+							});
+				});
 	}
 
 	@Override
 	public IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying) {
+		if (libraryId < 0)
+			return getNowPlaying().thenPromise(np -> updateNowPlaying(nowPlaying));
+
 		nowPlayingCache.put(libraryId, nowPlaying);
 
-		LibrarySession
-			.getLibrary(context, libraryId)
+		libraryProvider
+			.getLibrary()
 			.thenPromise(library -> {
 				library.setNowPlayingId(nowPlaying.playlistPosition);
 				library.setNowPlayingProgress(nowPlaying.filePosition);
@@ -68,7 +75,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 						.thenPromise(serializedPlaylist -> {
 							library.setSavedTracksString(serializedPlaylist);
 
-							return LibrarySession.saveLibrary(context, library);
+							return libraryRepository.saveLibrary(library);
 						});
 			});
 
