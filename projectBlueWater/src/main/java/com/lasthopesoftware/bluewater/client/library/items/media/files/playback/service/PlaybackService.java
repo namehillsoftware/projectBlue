@@ -147,7 +147,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	public static void setCompleting(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.repeating));
+		context.startService(getNewSelfIntent(context, Action.completing));
 	}
 
 	public static void addFileToPlaylist(final Context context, int fileKey) {
