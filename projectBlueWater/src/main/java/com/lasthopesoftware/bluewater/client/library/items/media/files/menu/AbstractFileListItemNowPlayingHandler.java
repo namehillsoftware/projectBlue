@@ -6,7 +6,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 
 /**
  * Created by david on 4/14/15.
@@ -24,7 +24,7 @@ public abstract class AbstractFileListItemNowPlayingHandler extends BroadcastRec
 
         localBroadcastManager = LocalBroadcastManager.getInstance(fileTextViewContainer.getContext());
 
-        localBroadcastManager.registerReceiver(this, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
+        localBroadcastManager.registerReceiver(this, new IntentFilter(PlaylistEvents.onPlaylistChange));
 
         onAttachStateChangeListener = new View.OnAttachStateChangeListener() {
 

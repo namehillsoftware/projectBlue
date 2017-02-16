@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
@@ -105,10 +105,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
 
-			final int playlistPosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
+			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
-			final boolean isPlaying = intent.getBooleanExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.isPlaying, false);
+			final boolean isPlaying = intent.getBooleanExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, false);
 
 			setView(playlistPosition, isPlaying);
 		}
@@ -127,12 +127,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final int fileDuration = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileDuration,-1);
-			if (fileDuration > -1) setTrackDuration(fileDuration);
-
-			final int filePosition = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.filePosition, -1);
-			if (filePosition > -1) setTrackProgress(filePosition);
-
 			playButton.findView().setVisibility(View.VISIBLE);
 			pauseButton.findView().setVisibility(View.INVISIBLE);
 
@@ -180,13 +174,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 		nowPlayingToggledVisibilityControls.getObject().toggleVisibility(false);
 
 		final IntentFilter playbackStoppedIntentFilter = new IntentFilter();
-		playbackStoppedIntentFilter.addAction(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause);
-		playbackStoppedIntentFilter.addAction(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStop);
+		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistPause);
+		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistStop);
 
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
-		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
-		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange));
+		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, new IntentFilter(PlaylistEvents.onPlaylistStart));
+		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaylistEvents.onPlaylistChange));
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);

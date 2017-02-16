@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.repository.access.IChosenLibraryIdentifierProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import io.reactivex.Observable;
@@ -16,8 +17,8 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 	private final PositionedPlaybackFileConsumer positionedPlaybackFileConsumer;
 	private Disposable subscription;
 
-	public PlaybackStartedBroadcaster(IPlaybackBroadcaster playbackBroadcaster) {
-		positionedPlaybackFileConsumer = new PositionedPlaybackFileConsumer(playbackBroadcaster);
+	public PlaybackStartedBroadcaster(IChosenLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
+		positionedPlaybackFileConsumer = new PositionedPlaybackFileConsumer(libraryIdentifierProvider, playbackBroadcaster);
 	}
 
 	@Override
@@ -31,15 +32,17 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 	}
 
 	private static class PositionedPlaybackFileConsumer implements Consumer<PositionedPlaybackFile> {
+		private final IChosenLibraryIdentifierProvider libraryIdentifierProvider;
 		private final IPlaybackBroadcaster playbackBroadcaster;
 
-		private PositionedPlaybackFileConsumer(IPlaybackBroadcaster playbackBroadcaster) {
+		private PositionedPlaybackFileConsumer(IChosenLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
+			this.libraryIdentifierProvider = libraryIdentifierProvider;
 			this.playbackBroadcaster = playbackBroadcaster;
 		}
 
 		@Override
 		public void accept(PositionedPlaybackFile p) throws Exception {
-			playbackBroadcaster.sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart, p);
+			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getChosenLibrary(), p);
 		}
 	}
 }

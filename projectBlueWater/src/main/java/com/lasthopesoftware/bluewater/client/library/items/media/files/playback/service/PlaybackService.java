@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaybackStartedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -206,8 +207,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return new LocalPlaybackBroadcaster(PlaybackService.this);
 		}
 	};
-	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyPlaybackBroadcaster.getObject()));
 	private final ILazy<IChosenLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new ChosenLibraryIdentifierProvider(this));
+	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
 	private final ILazy<ILibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 
 	private Bitmap remoteClientBitmap = null;
@@ -592,7 +593,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playbackPlaylistStateManager.pause();
 
 		if (positionedPlaybackFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistPause, positionedPlaybackFile);
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
@@ -680,7 +681,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistChange, positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -699,7 +700,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playbackHandler
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
-				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onFileComplete, positionedPlaybackFile);
+				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
 				sendBroadcast(getScrobbleIntent(false));
 
 				localFilePositionSubscription.dispose();
@@ -783,7 +784,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void onPlaylistPlaybackComplete() {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStop, positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();

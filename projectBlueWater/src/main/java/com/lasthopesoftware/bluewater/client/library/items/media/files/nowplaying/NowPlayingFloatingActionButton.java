@@ -12,7 +12,7 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -69,7 +69,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
                     setVisibility(ViewUtils.getVisibility(true));
                     localBroadcastManager.unregisterReceiver(this);
                 }
-            }, new IntentFilter(IPlaybackBroadcaster.PlaylistEvents.onPlaylistStart));
+            }, new IntentFilter(PlaylistEvents.onPlaylistStart));
         }));
     }
 

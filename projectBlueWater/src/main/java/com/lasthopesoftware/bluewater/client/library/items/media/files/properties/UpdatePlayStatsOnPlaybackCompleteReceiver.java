@@ -6,7 +6,7 @@ import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 
 import org.slf4j.Logger;
@@ -23,10 +23,10 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final int libraryId = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileLibraryId, -1);
+		final int libraryId = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, -1);
 		if (libraryId < 0) return;
 
-		final int fileKey = intent.getIntExtra(IPlaybackBroadcaster.PlaylistEvents.PlaybackFileParameters.fileKey, -1);
+		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 		if (fileKey < 0) return;
 
 		LibrarySession.getLibrary(context, libraryId, library -> AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
