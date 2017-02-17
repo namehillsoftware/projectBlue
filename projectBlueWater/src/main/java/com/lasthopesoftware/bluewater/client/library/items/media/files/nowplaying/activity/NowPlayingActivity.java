@@ -216,7 +216,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			});
 		}
 
-		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
+		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.repeatButton);
 		setRepeatingIcon(shuffleButton);
 
 		if (shuffleButton != null) {
