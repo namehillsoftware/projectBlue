@@ -64,6 +64,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryRe
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -529,7 +530,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager
 				.addFile(new File(fileKey))
-				.thenPromise(library -> new DispatchedPromise<>(() -> {
+				.then(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
 				}, this));

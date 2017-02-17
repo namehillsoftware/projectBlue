@@ -3,6 +3,9 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 import android.content.Context;
 import android.os.Handler;
 
+import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
+import com.lasthopesoftware.bluewater.shared.promises.WrappedExecutor;
+import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;

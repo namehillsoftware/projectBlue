@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions;
+package com.lasthopesoftware.bluewater.shared.promises;
 
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -14,7 +14,7 @@ public class WrappedCancellableExecutor<TResult> implements Runnable {
 	private final IRejectedPromise reject;
 	private final IResolvedPromise<TResult> resolve;
 
-	WrappedCancellableExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	public WrappedCancellableExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		this.task = task;
 		this.onCancelled = onCancelled;
 		this.reject = reject;

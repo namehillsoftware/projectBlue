@@ -74,7 +74,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.thenPromise(this::initializePreparedPlaybackQueue)
-				.thenPromise(q -> startPlayback(q, filePosition));
+				.then(q -> startPlayback(q, filePosition));
 
 		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
@@ -116,7 +116,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 				nowPlayingPromise
 					.thenPromise(this::initializePreparedPlaybackQueue)
-					.thenPromise(q -> startPlayback(q, filePosition));
+					.then(q -> startPlayback(q, filePosition));
 
 			observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
@@ -195,7 +195,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			restorePlaylistFromStorage()
-				.thenPromise(np -> initializePreparedPlaybackQueue(np).thenPromise(queue -> startPlayback(queue, np.filePosition)));
+				.thenPromise(np -> initializePreparedPlaybackQueue(np).then(queue -> startPlayback(queue, np.filePosition)));
 
 		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
 
@@ -213,32 +213,29 @@ class PlaybackPlaylistStateManager implements Closeable {
 		return playlistPlayer != null && playlistPlayer.isPlaying();
 	}
 
-	private IPromise<Observable<PositionedPlaybackFile>> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
-		return
-			new DispatchedPromise<>(() -> {
-				if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
-					fileChangedObservableConnection.dispose();
+	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
+		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
+			fileChangedObservableConnection.dispose();
 
-				if (playlistPlayer != null)
-					playlistPlayer.close();
+		if (playlistPlayer != null)
+			playlistPlayer.close();
 
-				playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
-				playlistPlayer.setVolume(volume);
+		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
+		playlistPlayer.setVolume(volume);
 
-				observableProxy = Observable.create(playlistPlayer).publish();
+		observableProxy = Observable.create(playlistPlayer).publish();
 
-				observableProxy.subscribe(
-					p -> {
-						positionedPlaybackFile = p;
-						saveStateToLibrary();
-					},
-					this::uncaughtExceptionHandler,
-					this::saveStateToLibrary);
+		observableProxy.subscribe(
+			p -> {
+				positionedPlaybackFile = p;
+				saveStateToLibrary();
+			},
+			this::uncaughtExceptionHandler,
+			this::saveStateToLibrary);
 
-				fileChangedObservableConnection = observableProxy.connect();
+		fileChangedObservableConnection = observableProxy.connect();
 
-				return observableProxy;
-			}, context);
+		return observableProxy;
 	}
 
 	IPromise<NowPlaying> addFile(IFile file) {

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions;
+package com.lasthopesoftware.bluewater.shared.promises;
 
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -9,12 +9,12 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 2/12/17.
  */
-class WrappedExecutor<TResult> implements Runnable {
+public class WrappedExecutor<TResult> implements Runnable {
 	private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> task;
 	private final IRejectedPromise reject;
 	private final IResolvedPromise<TResult> resolve;
 
-	WrappedExecutor(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> task, IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
+	public WrappedExecutor(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> task, IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 		this.task = task;
 		this.reject = reject;
 		this.resolve = resolve;

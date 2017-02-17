@@ -39,8 +39,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.DispatchResolution;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
@@ -223,7 +222,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				LibrarySession
 					.getActiveLibrary(v.getContext())
-					.then(DispatchResolution.toHandler(result -> {
+					.then(Dispatch.toHandler(result -> {
 						final boolean isRepeating = !result.isRepeating();
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -278,9 +277,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return
 					FileStringListUtilities
 						.promiseParsedFileStringList(savedTracksString)
-						.thenPromise(files ->
-							new DispatchedPromise<>(
-								VoidFunc.runningCarelessly(() -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
+						.then(Dispatch.toHandler(
+								VoidFunc.runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
 								messageHandler.getObject()));
 			});
 	}
@@ -289,7 +287,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		LibrarySession
 			.getActiveLibrary(this)
-			.thenPromise(result -> new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
+			.then(Dispatch.toHandler(VoidFunc.runningCarelessly(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating());
 			}), messageHandler.getObject()));
@@ -316,8 +314,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		LibrarySession
 			.getActiveLibrary(this)
 			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
-			.thenPromise(files ->
-				new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
+			.then(Dispatch.toHandler(VoidFunc.runningCarelessly(files -> {
 					setView(files.get(playlistPosition), viewStructure.filePosition);
 
 					playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));

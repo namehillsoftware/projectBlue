@@ -14,13 +14,13 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
  * Created by david on 2/16/17.
  */
 
-public class DispatchResolution {
+public class Dispatch {
 	public static <TResult, TNewResult> ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> toContext(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> task, Context context) {
 		return toHandler(task, new Handler(context.getMainLooper()));
 	}
 
 	public static <TResult, TNewResult> ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> toHandler(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> task, Handler handler) {
-		return new Executors.DispatchedTask<>(task, handler);
+		return new OneParameterExecutors.DispatchedTask<>(task, handler);
 	}
 
 	public static <TResult, TNewResult> ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> toContext(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
@@ -28,18 +28,18 @@ public class DispatchResolution {
 	}
 
 	public static <TResult, TNewResult> ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> toHandler(CarelessOneParameterFunction<TResult, TNewResult> task, Handler handler) {
-		return new Executors.DispatchedFunction<>(task, handler);
+		return new OneParameterExecutors.DispatchedFunction<>(task, handler);
 	}
 
 	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toContext(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Context context) {
 		return toHandler(task, new Handler(context.getMainLooper()));
 	}
 
-	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toContext(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Handler handler) {
-		return new Executors.DispatchedCancellableTask<>(task, handler);
+	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toHandler(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Handler handler) {
+		return new OneParameterExecutors.DispatchedCancellableTask<>(task, handler);
 	}
 
-	private static class Executors {
+	private static class OneParameterExecutors {
 		static class DispatchedCancellableTask<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> task;
