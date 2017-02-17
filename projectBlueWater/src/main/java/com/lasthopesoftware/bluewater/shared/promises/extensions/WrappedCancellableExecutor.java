@@ -8,7 +8,7 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 /**
  * Created by david on 2/12/17.
  */
-class WrappedCancellableExecutor<TResult> implements Runnable {
+public class WrappedCancellableExecutor<TResult> implements Runnable {
 	private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task;
 	private final OneParameterAction<Runnable> onCancelled;
 	private final IRejectedPromise reject;

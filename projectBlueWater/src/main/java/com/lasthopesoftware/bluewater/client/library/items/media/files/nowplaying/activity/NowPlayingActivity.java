@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.DispatchResolution;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
@@ -222,7 +223,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				LibrarySession
 					.getActiveLibrary(v.getContext())
-					.thenPromise(result -> new DispatchedPromise<>(VoidFunc.runningCarelessly(() -> {
+					.then(DispatchResolution.toHandler(result -> {
 						final boolean isRepeating = !result.isRepeating();
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -230,7 +231,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 							PlaybackService.setCompleting(v.getContext());
 
 						setRepeatingIcon(shuffleButton, isRepeating);
-					}), messageHandler.getObject())));
+
+						return result;
+					}, messageHandler.getObject())));
 		}
 
 		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
