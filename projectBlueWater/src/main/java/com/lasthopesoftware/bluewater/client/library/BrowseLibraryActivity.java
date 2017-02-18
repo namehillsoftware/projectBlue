@@ -58,6 +58,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
+
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
@@ -190,7 +192,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		chosenLibraryProvider
 			.getLibrary()
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(runningCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -208,7 +210,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 				displayLibrary(library);
 			}), this));
-
 	}
 
 	private void displayLibrary(final Library library) {
@@ -284,7 +285,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		chosenLibraryProvider
 			.getLibrary()
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(runningCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);
