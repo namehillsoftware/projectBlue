@@ -44,6 +44,8 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
 
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
+
 public class MainApplication extends Application {
 	
 	private static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
@@ -71,9 +73,12 @@ public class MainApplication extends Application {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
 				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+				if (libraryId < 0)
+					return;
+
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
-					.then(VoidFunc.runningCarelessly(library -> {
+					.then(runningCarelessly(library -> {
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;
