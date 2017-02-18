@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -16,12 +16,12 @@ public class NowPlayingRepository implements INowPlayingRepository {
 
 	private static final Map<Integer, NowPlaying> nowPlayingCache = new ConcurrentHashMap<>();
 
-	private final ILibraryProvider libraryProvider;
-	private final ILibraryRepository libraryRepository;
+	private final ISpecificLibraryProvider libraryProvider;
+	private final ILibraryStorage libraryRepository;
 
 	private volatile int libraryId = -1;
 
-	public NowPlayingRepository(ILibraryProvider libraryProvider, ILibraryRepository libraryRepository) {
+	public NowPlayingRepository(ISpecificLibraryProvider libraryProvider, ILibraryStorage libraryRepository) {
 		this.libraryProvider = libraryProvider;
 		this.libraryRepository = libraryRepository;
 	}

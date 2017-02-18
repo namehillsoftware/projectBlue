@@ -222,7 +222,7 @@ public class StoredFileAccess {
 							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, connectionProvider);
 
 							final MediaFileUriProvider mediaFileUriProvider =
-									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, true);
+									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
 
 							final Uri localUri = mediaFileUriProvider.getFileUri(file);
 							if (localUri != null) {

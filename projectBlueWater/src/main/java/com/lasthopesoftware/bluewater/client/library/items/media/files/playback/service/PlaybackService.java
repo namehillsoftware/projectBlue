@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -56,11 +57,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.library.repository.access.ChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.access.IChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
@@ -210,7 +210,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	};
 	private final ILazy<IChosenLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new ChosenLibraryIdentifierProvider(this));
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
-	private final ILazy<ILibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
+	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 
 	private Bitmap remoteClientBitmap = null;
 	private int numberOfErrors = 0;
@@ -427,8 +427,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (playbackPlaylistStateManager != null)
 			playbackPlaylistStateManager.close();
 
-		final LibraryProvider libraryProvider =
-			new LibraryProvider(
+		final SpecificLibraryProvider libraryProvider =
+			new SpecificLibraryProvider(
 				lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(),
 				lazyLibraryRepository.getObject());
 

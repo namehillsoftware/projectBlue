@@ -40,7 +40,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 			return fileUri;
 
 		if (library.isUsingExistingFiles()) {
-			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, connectionProvider), externalStorageReadPermissionsArbitrator);
+			final MediaFileUriProvider mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, connectionProvider), externalStorageReadPermissionsArbitrator, library);
 			fileUri = mediaFileUriProvider.getFileUri(file);
 			if (fileUri != null)
 				return fileUri;

@@ -10,6 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -28,6 +29,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	public static final String mediaFileFoundMediaId = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundMediaId");
 	public static final String mediaFileFoundFileKey = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundFileKey");
 	public static final String mediaFileFoundPath = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundPath");
+	public static final String mediaFileFoundLibraryId = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundLibraryId");
 
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 
@@ -36,10 +38,11 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	private final Context context;
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
+	private final Library library;
 	private final boolean isSilent;
 
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
-		this (context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, false);
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, Library library) {
+		this (context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, false);
 	}
 
 	/**
@@ -47,10 +50,11 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	 * @param context the application context under which to operate
 	 * @param isSilent if true, will not emit broadcast events when media files are found
 	 */
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, boolean isSilent) {
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, Library library, boolean isSilent) {
 		this.context = context;
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
+		this.library = library;
 		this.isSilent = isSilent;
 	}
 
@@ -82,6 +86,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 					logger.info("Illegal column name.", ie);
 				}
 				broadcastIntent.putExtra(mediaFileFoundFileKey, file.getKey());
+				broadcastIntent.putExtra(mediaFileFoundLibraryId, library.getId());
 				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 			}
 

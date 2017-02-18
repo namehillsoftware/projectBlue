@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.repository.access;
+package com.lasthopesoftware.bluewater.client.library.access;
 
 /**
  * Created by david on 2/12/17.

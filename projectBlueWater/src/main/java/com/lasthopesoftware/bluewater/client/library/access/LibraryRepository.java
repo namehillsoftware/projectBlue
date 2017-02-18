@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.repository.access;
+package com.lasthopesoftware.bluewater.client.library.access;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -12,17 +12,21 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
+import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Created by david on 2/11/17.
  */
 
-public class LibraryRepository implements ILibraryRepository {
+public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 	private final Context context;
 
 	public LibraryRepository(Context context) {
@@ -35,8 +39,33 @@ public class LibraryRepository implements ILibraryRepository {
 	}
 
 	@Override
+	public IPromise<Collection<Library>> getAllLibraries() {
+		return new QueuedPromise<>(new GetAllLibrariesTask(context), RepositoryAccessHelper.databaseExecutor);
+	}
+
+	@Override
 	public IPromise<Library> saveLibrary(Library library) {
 		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
+	}
+
+	private static class GetAllLibrariesTask implements CarelessFunction<Collection<Library>> {
+
+		private Context context;
+
+		private GetAllLibrariesTask(Context context) {
+			this.context = context;
+		}
+
+		@SuppressLint("NewApi")
+		@Override
+		public Collection<Library> result() throws Exception {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				return
+					repositoryAccessHelper
+						.mapSql("SELECT * FROM " + Library.tableName)
+						.fetch(Library.class);
+			}
+		}
 	}
 
 	private static class GetLibraryTask implements CarelessFunction<Library> {

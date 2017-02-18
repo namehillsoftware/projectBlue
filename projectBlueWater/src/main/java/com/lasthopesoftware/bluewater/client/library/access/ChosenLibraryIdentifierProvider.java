@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.repository.access;
+package com.lasthopesoftware.bluewater.client.library.access;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

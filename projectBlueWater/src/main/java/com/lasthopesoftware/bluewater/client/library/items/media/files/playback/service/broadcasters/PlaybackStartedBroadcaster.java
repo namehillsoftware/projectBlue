@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.repository.access.IChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import io.reactivex.Observable;

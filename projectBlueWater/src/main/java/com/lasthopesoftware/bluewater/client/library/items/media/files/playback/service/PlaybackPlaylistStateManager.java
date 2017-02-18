@@ -18,8 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.repository.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
@@ -44,7 +43,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private final IConnectionProvider connectionProvider;
 	private final IFileUriProvider fileUriProvider;
 	private final INowPlayingRepository nowPlayingRepository;
-	private final ILibraryProvider libraryProvider;
+	private final ISpecificLibraryProvider libraryProvider;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
@@ -56,7 +55,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
 	private float volume;
 
-	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ILibraryProvider libraryProvider, float initialVolume) {
+	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ISpecificLibraryProvider libraryProvider, float initialVolume) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.fileUriProvider = fileUriProvider;
