@@ -56,6 +56,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
 
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
+
 public class NowPlayingActivity extends AppCompatActivity {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
@@ -278,7 +280,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					FileStringListUtilities
 						.promiseParsedFileStringList(savedTracksString)
 						.then(Dispatch.toHandler(
-								VoidFunc.runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
+								runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
 								messageHandler.getObject()));
 			});
 	}
@@ -287,7 +289,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		LibrarySession
 			.getActiveLibrary(this)
-			.then(Dispatch.toHandler(VoidFunc.runningCarelessly(result -> {
+			.then(Dispatch.toHandler(runningCarelessly(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating());
 			}), messageHandler.getObject()));
@@ -314,7 +316,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		LibrarySession
 			.getActiveLibrary(this)
 			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
-			.then(Dispatch.toHandler(VoidFunc.runningCarelessly(files -> {
+			.then(Dispatch.toHandler(runningCarelessly(files -> {
 					setView(files.get(playlistPosition), viewStructure.filePosition);
 
 					playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
