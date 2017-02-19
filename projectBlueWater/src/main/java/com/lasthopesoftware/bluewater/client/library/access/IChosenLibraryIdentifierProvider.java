@@ -5,5 +5,5 @@ package com.lasthopesoftware.bluewater.client.library.access;
  */
 
 public interface IChosenLibraryIdentifierProvider {
-	int getChosenLibrary();
+	int getChosenLibraryId();
 }

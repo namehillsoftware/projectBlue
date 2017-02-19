@@ -17,7 +17,7 @@ public class ChosenLibraryIdentifierProvider implements IChosenLibraryIdentifier
 	}
 
 	@Override
-	public int getChosenLibrary() {
+	public int getChosenLibraryId() {
 		return PreferenceManager.getDefaultSharedPreferences(context).getInt(chosenLibraryInt, -1);
 	}
 }

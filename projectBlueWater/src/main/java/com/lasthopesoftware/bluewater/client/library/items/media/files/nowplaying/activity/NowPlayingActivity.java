@@ -96,7 +96,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		protected ISpecificLibraryProvider initialize() throws Exception {
 			return
 				new SpecificLibraryProvider(
-					new ChosenLibraryIdentifierProvider(NowPlayingActivity.this).getChosenLibrary(),
+					new ChosenLibraryIdentifierProvider(NowPlayingActivity.this).getChosenLibraryId(),
 					new LibraryRepository(NowPlayingActivity.this));
 		}
 	};

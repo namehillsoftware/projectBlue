@@ -34,7 +34,10 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -57,10 +60,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
@@ -355,7 +354,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			}
 
 			lazyLibraryRepository.getObject()
-				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary())
+				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intent)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
@@ -413,7 +412,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			stopNotification();
 
 			lazyLibraryRepository.getObject()
-				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary())
+				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intentToRun)))
 				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
@@ -429,7 +428,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		final SpecificLibraryProvider libraryProvider =
 			new SpecificLibraryProvider(
-				lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(),
+				lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId(),
 				lazyLibraryRepository.getObject());
 
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
@@ -594,7 +593,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playbackPlaylistStateManager.pause();
 
 		if (positionedPlaybackFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId(), positionedPlaybackFile);
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
@@ -682,7 +681,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId(), positionedPlaybackFile);
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -701,7 +700,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playbackHandler
 			.promisePlayback()
 			.then(VoidFunc.runningCarelessly(handler -> {
-				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
+				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId(), positionedPlaybackFile);
 				sendBroadcast(getScrobbleIntent(false));
 
 				localFilePositionSubscription.dispose();
@@ -785,7 +784,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void onPlaylistPlaybackComplete() {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibrary(), positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getChosenLibraryId(), positionedPlaybackFile);
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();

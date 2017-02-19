@@ -46,9 +46,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.callables.TwoParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -187,7 +184,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		chosenLibraryProvider =
 			new SpecificLibraryProvider(
-				chosenLibraryIdentifierProviderLazy.getObject().getChosenLibrary(),
+				chosenLibraryIdentifierProviderLazy.getObject().getChosenLibraryId(),
 				lazyLibraryRepository.getObject());
 
 		chosenLibraryProvider
