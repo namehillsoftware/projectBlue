@@ -65,9 +65,9 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		libraryProvider
 			.getAllLibraries()
 			.then(Dispatch.toContext(runningCarelessly(libraries -> {
-				final ChosenLibraryIdentifierProvider chosenLibraryIdentifierProvider = new ChosenLibraryIdentifierProvider(this);
+				final int chosenLibraryId = new ChosenLibraryIdentifierProvider(this).getChosenLibraryId();
 
-				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryIdentifierProvider.getChosenLibraryId()).findFirst();
+				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
 				if (!selectedBrowserLibrary.isPresent()) return;
 
 				serverListView.findView().setAdapter(
