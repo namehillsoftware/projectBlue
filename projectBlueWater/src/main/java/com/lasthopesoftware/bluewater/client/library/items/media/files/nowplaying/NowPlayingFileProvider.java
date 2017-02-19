@@ -17,13 +17,16 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 
 	private final INowPlayingRepository nowPlayingRepository;
 
-	public NowPlayingFileProvider(Context context) {
-		this(
-			new NowPlayingRepository(
-				new SpecificLibraryProvider(
-					new ChosenLibraryIdentifierProvider(context).getChosenLibraryId(),
-					new LibraryRepository(context)),
-				new LibraryRepository(context)));
+	public static NowPlayingFileProvider fromActiveLibrary(Context context) {
+		final LibraryRepository libraryRepository = new LibraryRepository(context);
+
+		return
+			new NowPlayingFileProvider(
+				new NowPlayingRepository(
+					new SpecificLibraryProvider(
+						new ChosenLibraryIdentifierProvider(context).getChosenLibraryId(),
+						libraryRepository),
+					libraryRepository));
 	}
 
 	public NowPlayingFileProvider(INowPlayingRepository nowPlayingRepository) {

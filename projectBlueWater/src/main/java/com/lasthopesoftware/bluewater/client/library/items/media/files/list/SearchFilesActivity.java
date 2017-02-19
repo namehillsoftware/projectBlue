@@ -15,16 +15,12 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.SearchFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -79,15 +75,13 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         final OneParameterAction<List<IFile>> onSearchFilesComplete = result -> {
 			if (result == null) return;
 
-			final LibraryRepository libraryRepository = new LibraryRepository(this);
-
 			final FileListAdapter fileListAdapter =
 				new FileListAdapter(
-					SearchFilesActivity.this,
+					this,
 					R.id.tvStandard,
 					result,
 					new ItemListMenuChangeHandler(this),
-					new NowPlayingFileProvider(new NowPlayingRepository(new SpecificLibraryProvider(new ChosenLibraryIdentifierProvider(this).getChosenLibraryId(), libraryRepository), libraryRepository)));
+					NowPlayingFileProvider.fromActiveLibrary(this));
 
 			fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			fileListView.setAdapter(fileListAdapter);

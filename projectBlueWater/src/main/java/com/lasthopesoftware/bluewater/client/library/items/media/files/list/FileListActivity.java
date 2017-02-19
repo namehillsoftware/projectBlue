@@ -72,7 +72,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 					R.id.tvStandard,
 					result,
 					new ItemListMenuChangeHandler(this),
-					new NowPlayingFileProvider(this));
+					NowPlayingFileProvider.fromActiveLibrary(this));
 
 			fileListView.setAdapter(fileListAdapter);
 
