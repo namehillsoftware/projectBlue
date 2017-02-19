@@ -65,17 +65,15 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		libraryProvider
 			.getAllLibraries()
 			.then(Dispatch.toContext(runningCarelessly(libraries -> {
-				final Stream<Library> libraryStream = Stream.of(libraries);
-
 				final ChosenLibraryIdentifierProvider chosenLibraryIdentifierProvider = new ChosenLibraryIdentifierProvider(this);
 
-				final Optional<Library> selectedBrowserLibrary = libraryStream.filter(l -> l.getId() == chosenLibraryIdentifierProvider.getChosenLibraryId()).findFirst();
+				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryIdentifierProvider.getChosenLibraryId()).findFirst();
 				if (!selectedBrowserLibrary.isPresent()) return;
 
 				serverListView.findView().setAdapter(
 					new ServerListAdapter(
 						activity,
-						libraryStream.sortBy(Library::getId).collect(Collectors.toList()),
+						Stream.of(libraries).sortBy(Library::getId).collect(Collectors.toList()),
 						selectedBrowserLibrary.get(), new BrowserLibrarySelection(this, libraryProvider)));
 
 				progressBar.findView().setVisibility(View.INVISIBLE);
