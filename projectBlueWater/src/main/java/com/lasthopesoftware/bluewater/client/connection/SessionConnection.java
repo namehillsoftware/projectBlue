@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -25,6 +27,7 @@ import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class SessionConnection {
 
@@ -54,31 +57,36 @@ public class SessionConnection {
 		if (isRunning) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.getActiveLibrary(context).then(VoidFunc.runningCarelessly(library -> {
-			if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
-				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
-				isRunning = false;
-				return;
-			}
+		final IChosenLibraryIdentifierProvider libraryIdentifierProvider = new ChosenLibraryIdentifierProvider(context);
 
-			doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
-
-			AccessConfigurationBuilder.buildConfiguration(context, library, (result) -> {
-				if (result == null) {
-					doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+		final LibraryRepository libraryRepository = new LibraryRepository(context);
+		libraryRepository
+			.getLibrary(libraryIdentifierProvider.getChosenLibraryId())
+				.then(runningCarelessly(library -> {
+				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
+					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+					isRunning = false;
 					return;
 				}
 
-				sessionConnectionProvider = new ConnectionProvider(result);
+				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-				if (library.getSelectedView() >= 0) {
-					doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-					return;
-				}
+				AccessConfigurationBuilder.buildConfiguration(context, library, (result) -> {
+					if (result == null) {
+						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+						return;
+					}
 
-				doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+					sessionConnectionProvider = new ConnectionProvider(result);
 
-				LibraryViewsProvider.provide(sessionConnectionProvider)
+					if (library.getSelectedView() >= 0) {
+						doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+						return;
+					}
+
+					doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+
+					LibraryViewsProvider.provide(sessionConnectionProvider)
 						.onComplete((result1) -> {
 
 							if (result1 == null || result1.size() == 0) {
@@ -91,11 +99,13 @@ public class SessionConnection {
 							library.setSelectedView(selectedView);
 							library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-							LibrarySession.saveLibrary(context, library, (savedLibrary) -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete));
+							libraryRepository
+								.saveLibrary(library)
+								.then(runningCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 						})
 						.execute();
-			});
-		}));
+				});
+			}));
 		
 		return buildingStatus;
 	}

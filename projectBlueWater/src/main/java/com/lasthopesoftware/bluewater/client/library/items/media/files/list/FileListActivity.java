@@ -68,11 +68,11 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 			fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
 			final FileListAdapter fileListAdapter =
 				new FileListAdapter(
-					FileListActivity.this,
+					this,
 					R.id.tvStandard,
 					result,
-					new ItemListMenuChangeHandler(FileListActivity.this),
-					new NowPlayingFileProvider(FileListActivity.this));
+					new ItemListMenuChangeHandler(this),
+					new NowPlayingFileProvider(this));
 
 			fileListView.setAdapter(fileListAdapter);
 
