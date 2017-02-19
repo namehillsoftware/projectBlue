@@ -10,15 +10,15 @@ import com.lasthopesoftware.promises.IPromise;
 public class SpecificLibraryProvider implements ISpecificLibraryProvider {
 
 	private final int libraryId;
-	private final ILibraryProvider libraryRepository;
+	private final ILibraryProvider libraryProvider;
 
-	public SpecificLibraryProvider(int libraryId, ILibraryProvider libraryRepository) {
+	public SpecificLibraryProvider(int libraryId, ILibraryProvider libraryProvider) {
 		this.libraryId = libraryId;
-		this.libraryRepository = libraryRepository;
+		this.libraryProvider = libraryProvider;
 	}
 
 	@Override
 	public IPromise<Library> getLibrary() {
-		return libraryRepository.getLibrary(libraryId);
+		return libraryProvider.getLibrary(libraryId);
 	}
 }
