@@ -105,7 +105,7 @@ public class ServerListAdapter extends BaseAdapter {
 			}
 		};
 
-		localBroadcastManager.registerReceiver(viewHolder.broadcastReceiver, new IntentFilter(LibrarySession.libraryChosenEvent));
+		localBroadcastManager.registerReceiver(viewHolder.broadcastReceiver, new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 
 		if (viewHolder.onAttachStateChangeListener != null)
 			parent.removeOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);

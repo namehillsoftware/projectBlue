@@ -16,7 +16,6 @@ import java.util.List;
 
 public class LibrarySession {
 
-	public static final String libraryChosenEvent = MagicPropertyBuilder.buildMagicPropertyName(LibrarySession.class, "libraryChosenEvent");
 	public static final String chosenLibraryInt = "chosen_library";
 
 	public static void saveLibrary(final Context context, final Library library, final OneParameterAction<Library> onSaveComplete) {
