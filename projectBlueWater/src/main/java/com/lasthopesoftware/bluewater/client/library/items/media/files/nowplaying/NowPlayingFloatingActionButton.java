@@ -54,23 +54,26 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.getActiveLibrary(getContext()).then(VoidFunc.runningCarelessly(result -> {
-            isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
-            setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
+        NowPlayingFileProvider
+            .fromActiveLibrary(getContext())
+            .getNowPlayingFile()
+            .then(VoidFunc.runningCarelessly(result -> {
+                isNowPlayingFileSet = result != null;
+                setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
-            if (isNowPlayingFileSet) return;
+                if (isNowPlayingFileSet) return;
 
-            final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
+                final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
 
-            localBroadcastManager.registerReceiver(new BroadcastReceiver() {
-                @Override
-                public synchronized void onReceive(Context context, Intent intent) {
-                    isNowPlayingFileSet = true;
-                    setVisibility(ViewUtils.getVisibility(true));
-                    localBroadcastManager.unregisterReceiver(this);
-                }
-            }, new IntentFilter(PlaylistEvents.onPlaylistStart));
-        }));
+                localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public synchronized void onReceive(Context context, Intent intent) {
+                        isNowPlayingFileSet = true;
+                        setVisibility(ViewUtils.getVisibility(true));
+                        localBroadcastManager.unregisterReceiver(this);
+                    }
+                }, new IntentFilter(PlaylistEvents.onPlaylistStart));
+            }));
     }
 
     @Override

@@ -18,9 +18,13 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.selection.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.library.selection.IBrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.lazyj.ILazy;
+import com.vedsoft.lazyj.Lazy;
 
 import java.util.List;
 
@@ -28,16 +32,17 @@ public class ServerListAdapter extends BaseAdapter {
 
 	private final List<Library> libraries;
 	private final Library activeLibrary;
+	private final IBrowserLibrarySelection browserLibrarySelection;
 	private final Activity activity;
 
 	private static class ViewHolder {
-		public final TextView textView;
-		public final Button btnSelectServer;
-		public final ImageButton btnConfigureServer;
+		final TextView textView;
+		final Button btnSelectServer;
+		final ImageButton btnConfigureServer;
 
-		public BroadcastReceiver broadcastReceiver;
+		BroadcastReceiver broadcastReceiver;
 
-		public View.OnAttachStateChangeListener onAttachStateChangeListener;
+		View.OnAttachStateChangeListener onAttachStateChangeListener;
 
 		private ViewHolder(TextView textView, Button btnSelectServer, ImageButton btnConfigureServer) {
 			this.textView = textView;
@@ -46,12 +51,13 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 	}
 
-	public ServerListAdapter(Activity activity, List<Library> libraries, Library activeLibrary) {
+	public ServerListAdapter(Activity activity, List<Library> libraries, Library activeLibrary, IBrowserLibrarySelection browserLibrarySelection) {
 		super();
 
 		this.activity = activity;
 		this.libraries = libraries;
 		this.activeLibrary = activeLibrary;
+		this.browserLibrarySelection = browserLibrarySelection;
 	}
 
 	@Override
@@ -118,7 +124,7 @@ public class ServerListAdapter extends BaseAdapter {
 
 		parent.addOnAttachStateChangeListener(viewHolder.onAttachStateChangeListener);
 
-		btnSelectServer.setOnClickListener(new SelectServerOnClickListener(library));
+		btnSelectServer.setOnClickListener(new SelectServerOnClickListener(library, browserLibrarySelection));
 
 		viewHolder.btnConfigureServer.setOnClickListener(new EditServerClickListener(activity, library.getId()));
 

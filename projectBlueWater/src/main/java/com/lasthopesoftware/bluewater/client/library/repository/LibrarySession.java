@@ -2,15 +2,11 @@ package com.lasthopesoftware.bluewater.client.library.repository;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -42,10 +38,6 @@ public class LibrarySession {
 				return getActiveLibraryInternal(context);
 			}
 		}, onGetLibraryComplete);
-	}
-
-	public static IPromise<Library> getActiveLibrary(final Context context) {
-		return new QueuedPromise<>(() -> getActiveLibraryInternal(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	public static IPromise<Library> getLibrary(final Context context, final int libraryId) {
@@ -103,19 +95,4 @@ public class LibrarySession {
 		}.onComplete(onGetLibrariesComplete).execute(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	public synchronized static IPromise<Library> changeActiveLibrary(final Context context, final int libraryKey) {
-
-        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		if (libraryKey != sharedPreferences.getInt(chosenLibraryInt, -1))
-            sharedPreferences.edit().putInt(chosenLibraryInt, libraryKey).apply();
-
-		return
-			getActiveLibrary(context).then(library -> {
-				final Intent broadcastIntent = new Intent(libraryChosenEvent);
-				broadcastIntent.putExtra(chosenLibraryInt, libraryKey);
-				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-
-				return library;
-			});
-	}
 }

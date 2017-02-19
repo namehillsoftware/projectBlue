@@ -10,25 +10,35 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Optional;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.vedsoft.futures.callables.VoidFunc;
+
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
-	private ProgressBar progressBar;
-	private ListView serverListView;
+	private LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
+	private LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.lvServerList);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_select_server);
 
-		serverListView = (ListView) findViewById(R.id.lvServerList);
-		progressBar = (ProgressBar) findViewById(R.id.pbLoadingServerList);
-
-		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, serverListView, false);
-		serverListView.addHeaderView(editAppSettingsView);
+		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, serverListView.findView(), false);
+		serverListView.findView().addHeaderView(editAppSettingsView);
 
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, (CheckBox) findViewById(R.id.syncOnPowerCheckbox));
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, (CheckBox) findViewById(R.id.syncOnWifiCheckbox));
@@ -47,14 +57,29 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 	private void updateServerList() {
 		final Activity activity = this;
 
-		serverListView.setVisibility(View.INVISIBLE);
-		progressBar.setVisibility(View.VISIBLE);
+		serverListView.findView().setVisibility(View.INVISIBLE);
+		progressBar.findView().setVisibility(View.VISIBLE);
 
-		LibrarySession.getLibraries(activity, libraries -> LibrarySession.getActiveLibrary(activity, library -> {
-			serverListView.setAdapter(new ServerListAdapter(activity, libraries, library));
+		final ILibraryProvider libraryProvider = new LibraryRepository(this);
 
-			progressBar.setVisibility(View.INVISIBLE);
-			serverListView.setVisibility(View.VISIBLE);
-		}));
+		libraryProvider
+			.getAllLibraries()
+			.then(Dispatch.toContext(runningCarelessly(libraries -> {
+				final Stream<Library> libraryStream = Stream.of(libraries);
+
+				final ChosenLibraryIdentifierProvider chosenLibraryIdentifierProvider = new ChosenLibraryIdentifierProvider(this);
+
+				final Optional<Library> selectedBrowserLibrary = libraryStream.filter(l -> l.getId() == chosenLibraryIdentifierProvider.getChosenLibraryId()).findFirst();
+				if (!selectedBrowserLibrary.isPresent()) return;
+
+				serverListView.findView().setAdapter(
+					new ServerListAdapter(
+						activity,
+						libraryStream.sortBy(Library::getId).collect(Collectors.toList()),
+						selectedBrowserLibrary.get(), new BrowserLibrarySelection(this, libraryProvider)));
+
+				progressBar.findView().setVisibility(View.INVISIBLE);
+				serverListView.findView().setVisibility(View.VISIBLE);
+			}), this));
 	}
 }
