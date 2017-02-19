@@ -59,7 +59,7 @@ public class ServerListAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
+	public View getView(final int position, View convertView, ViewGroup parent) {
 		final Context parentContext = parent.getContext();
 		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(parentContext);
 		if (position == 0) {
@@ -86,7 +86,7 @@ public class ServerListAdapter extends BaseAdapter {
 		}
 
 		final ViewHolder viewHolder = (ViewHolder) convertView.getTag();
-		final Library library = libraries.get(--position);
+		final Library library = libraries.get(position - 1);
 		viewHolder.textView.setText(library.getAccessCode());
 
 		final Button btnSelectServer = viewHolder.btnSelectServer;
