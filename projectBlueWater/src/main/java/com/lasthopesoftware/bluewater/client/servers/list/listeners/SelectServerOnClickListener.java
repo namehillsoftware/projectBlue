@@ -6,9 +6,7 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.library.selection.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.library.selection.IBrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.servers.selection.IBrowserLibrarySelection;
 
 /**
  * Created by david on 1/24/16.

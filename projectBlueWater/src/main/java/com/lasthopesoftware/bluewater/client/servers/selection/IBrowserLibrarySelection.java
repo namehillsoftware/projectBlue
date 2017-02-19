@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.selection;
+package com.lasthopesoftware.bluewater.client.servers.selection;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.promises.IPromise;

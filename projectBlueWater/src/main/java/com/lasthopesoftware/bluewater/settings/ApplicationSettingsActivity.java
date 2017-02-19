@@ -19,12 +19,10 @@ import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentif
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.library.selection.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
