@@ -15,12 +15,19 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.promises.IPromise;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
@@ -86,7 +93,8 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
 		};
 
-		LibrarySession.getActiveLibrary(getContext(), activeLibrary ->
+		getSelectedBrowserLibrary()
+			.then(Dispatch.toContext(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 					.onComplete(onGetVisibleViewsCompleteListener)
@@ -101,7 +109,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 									.execute();
 						}
 					}))
-					.execute());
+					.execute(), getContext()));
 
 
 		return tabbedItemsLayout;
@@ -140,10 +148,12 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		outState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.getActiveLibrary(getContext(), library -> {
-			if (library != null)
-				outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-		});
+
+		getSelectedBrowserLibrary()
+			.then(VoidFunc.runningCarelessly(library -> {
+				if (library != null)
+					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+			}));
 	}
 
 	@Override
@@ -152,17 +162,25 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		if (savedInstanceState == null || viewPager == null) return;
 
-		LibrarySession.getActiveLibrary(getContext(), library -> {
-			final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-			if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+		getSelectedBrowserLibrary()
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 
-			final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-			if (savedTabKey > -1)
-				viewPager.setCurrentItem(savedTabKey);
+				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+				if (savedTabKey > -1)
+					viewPager.setCurrentItem(savedTabKey);
 
-			final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-			if (savedScrollPosition > -1)
-				viewPager.setScrollY(savedScrollPosition);
-		});
+				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+				if (savedScrollPosition > -1)
+					viewPager.setScrollY(savedScrollPosition);
+			}), getContext()));
+	}
+
+	private IPromise<Library> getSelectedBrowserLibrary() {
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
+
+		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
 }

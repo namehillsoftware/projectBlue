@@ -6,7 +6,6 @@ import android.preference.PreferenceManager;
 
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -28,19 +27,6 @@ public class LibrarySession {
 	@SuppressLint("NewApi")
 	public static IPromise<Library> saveLibrary(final Context context, final Library library) {
 		return new LibraryRepository(context).saveLibrary(library);
-	}
-
-	public static void getActiveLibrary(final Context context, final OneParameterAction<Library> onGetLibraryComplete) {
-		executeGetLibrary(new FluentSpecifiedTask<Integer, Void, Library>() {
-			@Override
-			protected Library executeInBackground(Integer... params) {
-				return getActiveLibraryInternal(context);
-			}
-		}, onGetLibraryComplete);
-	}
-
-	public static IPromise<Library> getLibrary(final Context context, final int libraryId) {
-		return new LibraryRepository(context).getLibrary(libraryId);
 	}
 
 	public static void getLibrary(final Context context, final int libraryId, final OneParameterAction<Library> onGetLibraryComplete) {
