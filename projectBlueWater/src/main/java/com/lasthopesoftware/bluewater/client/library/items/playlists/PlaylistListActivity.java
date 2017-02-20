@@ -52,8 +52,8 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 			}
 		};
 
-	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.lvItems);
-	private final LazyViewFinder<ListView> playlistView = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final LazyViewFinder<ListView> playlistView = new LazyViewFinder<>(this, R.id.lvItems);
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
