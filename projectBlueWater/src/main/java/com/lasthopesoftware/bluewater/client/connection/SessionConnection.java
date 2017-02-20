@@ -5,12 +5,12 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -57,11 +57,11 @@ public class SessionConnection {
 		if (isRunning) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		final IChosenLibraryIdentifierProvider libraryIdentifierProvider = new ChosenLibraryIdentifierProvider(context);
+		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
 
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
-			.getLibrary(libraryIdentifierProvider.getChosenLibraryId())
+			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
 				.then(runningCarelessly(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);

@@ -18,8 +18,6 @@ public class BrowserLibrarySelection implements IBrowserLibrarySelection {
 
 	public static final String libraryChosenEvent = MagicPropertyBuilder.buildMagicPropertyName(BrowserLibrarySelection.class, "libraryChosenEvent");
 
-	private static final String chosenLibraryInt = "chosen_library";
-
 	private final Context context;
 	private final LocalBroadcastManager localBroadcastManager;
 	private final ILibraryProvider libraryProvider;
@@ -33,12 +31,12 @@ public class BrowserLibrarySelection implements IBrowserLibrarySelection {
 	@Override
 	public IPromise<Library> selectBrowserLibrary(int libraryId) {
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		if (libraryId == sharedPreferences.getInt(chosenLibraryInt, -1)) return libraryProvider.getLibrary(libraryId);
+		if (libraryId == sharedPreferences.getInt(LibrarySelectionKey.chosenLibraryKey, -1)) return libraryProvider.getLibrary(libraryId);
 
-		sharedPreferences.edit().putInt(chosenLibraryInt, libraryId).apply();
+		sharedPreferences.edit().putInt(LibrarySelectionKey.chosenLibraryKey, libraryId).apply();
 
 		final Intent broadcastIntent = new Intent(libraryChosenEvent);
-		broadcastIntent.putExtra(chosenLibraryInt, libraryId);
+		broadcastIntent.putExtra(LibrarySelectionKey.chosenLibraryKey, libraryId);
 		localBroadcastManager.sendBroadcast(broadcastIntent);
 
 		return libraryProvider.getLibrary(libraryId);

@@ -13,15 +13,21 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
+
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class ItemListFragment extends Fragment {
 
@@ -50,32 +56,37 @@ public class ItemListFragment extends Fragment {
     	pbLoading.setLayoutParams(pbParams);
     	layout.addView(pbLoading);
 
-    	LibrarySession.getActiveLibrary(activity, activeLibrary -> {
-		    final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = result -> {
-			    if (result == null || result.size() == 0) return;
+		final ILibraryProvider libraryProvider = new LibraryRepository(activity);
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(activity);
 
-			    final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
-			    final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
+    	libraryProvider
+			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+			.then(Dispatch.toContext(runningCarelessly(activeLibrary -> {
+				final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = result -> {
+					if (result == null || result.size() == 0) return;
 
-			    layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
-		    };
+					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
+					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-		    ItemProvider
-				    .provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-				    .onComplete(onGetVisibleViewsCompleteListener)
-				    .onError(new HandleViewIoException<>(activity, new Runnable() {
+					layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
+				};
 
-					    @Override
-					    public void run() {
-						    ItemProvider
-								    .provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								    .onComplete(onGetVisibleViewsCompleteListener)
-								    .onError(new HandleViewIoException<>(activity, this))
-								    .execute();
-					    }
-				    }))
-				    .execute();
-	    });
+				ItemProvider
+					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+					.onComplete(onGetVisibleViewsCompleteListener)
+					.onError(new HandleViewIoException<>(activity, new Runnable() {
+
+						@Override
+						public void run() {
+							ItemProvider
+								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+								.onComplete(onGetVisibleViewsCompleteListener)
+								.onError(new HandleViewIoException<>(activity, this))
+								.execute();
+						}
+					}))
+					.execute();
+	    }), activity));
 
         return layout;
     }
@@ -108,5 +119,4 @@ public class ItemListFragment extends Fragment {
 	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {
 		this.itemListMenuChangeHandler = itemListMenuChangeHandler;
 	}
-
 }

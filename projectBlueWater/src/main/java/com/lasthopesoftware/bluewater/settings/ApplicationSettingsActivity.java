@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.settings;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.CheckBox;
@@ -15,12 +16,12 @@ import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 
@@ -63,7 +64,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		libraryProvider
 			.getAllLibraries()
 			.then(Dispatch.toContext(runningCarelessly(libraries -> {
-				final int chosenLibraryId = new ChosenLibraryIdentifierProvider(this).getChosenLibraryId();
+				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
 				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
 				if (!selectedBrowserLibrary.isPresent()) return;
@@ -72,7 +73,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 					new ServerListAdapter(
 						activity,
 						Stream.of(libraries).sortBy(Library::getId).collect(Collectors.toList()),
-						selectedBrowserLibrary.get(), new BrowserLibrarySelection(this, libraryProvider)));
+						selectedBrowserLibrary.get(), new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
 
 				progressBar.findView().setVisibility(View.INVISIBLE);
 				serverListView.findView().setVisibility(View.VISIBLE);

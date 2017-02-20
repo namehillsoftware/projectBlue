@@ -13,24 +13,56 @@ import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.FluentCallable;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
-
-import java.util.ArrayList;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
-	private ListView mFileListView;
-	private ProgressBar mLoadingProgressBar;
+	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
+	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final AbstractThreadLocalLazy<ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise>> lazyDispatchedLibraryCompleteResolution =
+		new AbstractThreadLocalLazy<ThreeParameterAction<NowPlaying,IResolvedPromise<Void>,IRejectedPromise>>() {
+			@Override
+			protected ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise> initialize() throws Exception {
+				return
+					Dispatch.toContext(
+						VoidFunc.runningCarelessly(
+							new OnGetLibraryNowComplete(
+								NowPlayingFilesListActivity.this,
+								fileListView.findView(),
+								mLoadingProgressBar.findView())),
+						NowPlayingFilesListActivity.this);
+			}
+		};
+	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository =
+		new AbstractThreadLocalLazy<INowPlayingRepository>() {
+			@Override
+			protected INowPlayingRepository initialize() throws Exception {
+				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
+				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
+				final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId(), libraryRepository);
+				return new NowPlayingRepository(specificLibraryProvider, libraryRepository);
+			}
+		};
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -43,12 +75,12 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_items);
-        mFileListView = (ListView)findViewById(R.id.lvItems);
-        mLoadingProgressBar = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         this.setTitle(R.string.title_view_now_playing_files);
-		
-		LibrarySession.getActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
+			.then(lazyDispatchedLibraryCompleteResolution.getObject());
 		
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
@@ -64,15 +96,16 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) return;
 		
-		mFileListView.setVisibility(View.INVISIBLE);
-		mLoadingProgressBar.setVisibility(View.VISIBLE);		
+		fileListView.findView().setVisibility(View.INVISIBLE);
+		mLoadingProgressBar.findView().setVisibility(View.VISIBLE);
 	}
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
-		
-		LibrarySession.getActiveLibrary(this, new OnGetLibraryNowComplete(this, mFileListView, mLoadingProgressBar));
+
+		lazyNowPlayingRepository.getObject().getNowPlaying()
+			.then(lazyDispatchedLibraryCompleteResolution.getObject());
 	}
 	
 	@Override
@@ -90,45 +123,34 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements OneParameterAction<Library> {
+	private static class OnGetLibraryNowComplete implements OneParameterAction<NowPlaying> {
 		
-		private final NowPlayingFilesListActivity mNowPlayingFilesListActivity;
-		private final ListView mFileListView;
-		private final ProgressBar mLoadingProgressBar;
+		private final NowPlayingFilesListActivity nowPlayingFilesListActivity;
+		private final ListView fileListView;
+		private final ProgressBar loadingProgressBar;
 		
 		OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar) {
-            mNowPlayingFilesListActivity = nowPlayingFilesListActivity;
-			mFileListView = fileListView;
-			mLoadingProgressBar = loadingProgressBar;
+            this.nowPlayingFilesListActivity = nowPlayingFilesListActivity;
+			this.fileListView = fileListView;
+			this.loadingProgressBar = loadingProgressBar;
 		}
 		
 		@Override
-		public void runWith(final Library library) {
-			if (library == null) return;
+		public void runWith(final NowPlaying nowPlaying) {
+			if (nowPlaying == null) return;
 
-	        final FluentCallable<ArrayList<IFile>> getFileStringTask = new FluentCallable<ArrayList<IFile>>() {
 
-		        @Override
-		        protected ArrayList<IFile> executeInBackground() {
-			        return FileStringListUtilities.parseFileStringList(library.getSavedTracksString());
-		        }
-	        };
-	        
-	        getFileStringTask.onComplete((result) -> {
-		        final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(mNowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(mNowPlayingFilesListActivity), result, library.getNowPlayingId());
-		        mFileListView.setAdapter(nowPlayingFilesListAdapter);
+			final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(nowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(nowPlayingFilesListActivity), nowPlaying.playlist, nowPlaying.playlistPosition);
+			fileListView.setAdapter(nowPlayingFilesListAdapter);
 
-		        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-		        mFileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+			fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
 
-		        if (library.getNowPlayingId() < result.size())
-			        mFileListView.setSelection(library.getNowPlayingId());
+			if (nowPlaying.playlistPosition < nowPlaying.playlist.size())
+				fileListView.setSelection(nowPlaying.playlistPosition);
 
-		        mFileListView.setVisibility(View.VISIBLE);
-		        mLoadingProgressBar.setVisibility(View.INVISIBLE);
-	        });
-	        
-	        getFileStringTask.execute();
+			fileListView.setVisibility(View.VISIBLE);
+			loadingProgressBar.setVisibility(View.INVISIBLE);
 		}
 	}
 

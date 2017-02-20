@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters;
 
-import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import io.reactivex.Observable;
@@ -17,7 +17,7 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 	private final PositionedPlaybackFileConsumer positionedPlaybackFileConsumer;
 	private Disposable subscription;
 
-	public PlaybackStartedBroadcaster(IChosenLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
+	public PlaybackStartedBroadcaster(ISelectedLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
 		positionedPlaybackFileConsumer = new PositionedPlaybackFileConsumer(libraryIdentifierProvider, playbackBroadcaster);
 	}
 
@@ -32,17 +32,17 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 	}
 
 	private static class PositionedPlaybackFileConsumer implements Consumer<PositionedPlaybackFile> {
-		private final IChosenLibraryIdentifierProvider libraryIdentifierProvider;
+		private final ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
 		private final IPlaybackBroadcaster playbackBroadcaster;
 
-		private PositionedPlaybackFileConsumer(IChosenLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
+		private PositionedPlaybackFileConsumer(ISelectedLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
 			this.libraryIdentifierProvider = libraryIdentifierProvider;
 			this.playbackBroadcaster = playbackBroadcaster;
 		}
 
 		@Override
 		public void accept(PositionedPlaybackFile p) throws Exception {
-			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getChosenLibraryId(), p);
+			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), p);
 		}
 	}
 }

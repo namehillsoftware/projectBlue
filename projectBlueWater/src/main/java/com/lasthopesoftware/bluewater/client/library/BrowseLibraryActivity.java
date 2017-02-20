@@ -23,8 +23,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.library.access.IChosenLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
@@ -42,6 +40,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
@@ -71,10 +71,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private final LazyViewFinder<ListView> specialLibraryItemsListView = new LazyViewFinder<>(this, R.id.specialLibraryItemsListView);
 	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.drawer_layout);
 	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
-	private final ILazy<IChosenLibraryIdentifierProvider> chosenLibraryIdentifierProviderLazy = new AbstractThreadLocalLazy<IChosenLibraryIdentifierProvider>() {
+	private final ILazy<ISelectedLibraryIdentifierProvider> chosenLibraryIdentifierProviderLazy = new AbstractThreadLocalLazy<ISelectedLibraryIdentifierProvider>() {
 		@Override
-		protected IChosenLibraryIdentifierProvider initialize() throws Exception {
-			return new ChosenLibraryIdentifierProvider(BrowseLibraryActivity.this);
+		protected ISelectedLibraryIdentifierProvider initialize() throws Exception {
+			return new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this);
 		}
 	};
 	private final ILazy<LibraryRepository> lazyLibraryRepository = new AbstractThreadLocalLazy<LibraryRepository>() {
@@ -184,7 +184,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		chosenLibraryProvider =
 			new SpecificLibraryProvider(
-				chosenLibraryIdentifierProviderLazy.getObject().getChosenLibraryId(),
+				chosenLibraryIdentifierProviderLazy.getObject().getSelectedLibraryId(),
 				lazyLibraryRepository.getObject());
 
 		chosenLibraryProvider

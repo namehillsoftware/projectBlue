@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnec
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
@@ -41,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
@@ -96,7 +96,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		protected ISpecificLibraryProvider initialize() throws Exception {
 			return
 				new SpecificLibraryProvider(
-					new ChosenLibraryIdentifierProvider(NowPlayingActivity.this).getChosenLibraryId(),
+					new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this).getSelectedLibraryId(),
 					new LibraryRepository(NowPlayingActivity.this));
 		}
 	};
