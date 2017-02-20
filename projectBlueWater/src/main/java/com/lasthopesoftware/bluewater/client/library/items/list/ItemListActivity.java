@@ -14,13 +14,22 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.futures.callables.VoidFunc;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +44,16 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final ILazy<ISpecificLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractThreadLocalLazy<ISpecificLibraryProvider>() {
+			@Override
+			protected ISpecificLibraryProvider initialize() throws Exception {
+				return new SpecificLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this).getSelectedLibraryId(),
+					new LibraryRepository(ItemListActivity.this));
+			}
+		};
+
     private ViewAnimator viewAnimator;
     private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
@@ -75,12 +94,16 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     }
 
     private void BuildItemListView(final List<Item> items) {
-        final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this));
+		lazySpecificLibraryProvider.getObject().getLibrary()
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
+				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 
-	    final ListView localItemListView = this.itemListView.findView();
-        localItemListView.setAdapter(itemListAdapter);
-        localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
-        localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+				final ListView localItemListView = this.itemListView.findView();
+				localItemListView.setAdapter(itemListAdapter);
+				localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+			}), this));
     }
 
     @Override

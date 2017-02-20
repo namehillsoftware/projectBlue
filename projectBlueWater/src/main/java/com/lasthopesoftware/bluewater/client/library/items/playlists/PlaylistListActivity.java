@@ -14,15 +14,25 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 
 import java.util.List;
 
@@ -32,8 +42,18 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
 	private int mPlaylistId;
 
-	private ProgressBar pbLoading;
-	private ListView playlistView;
+	private final ILazy<ISpecificLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractThreadLocalLazy<ISpecificLibraryProvider>() {
+			@Override
+			protected ISpecificLibraryProvider initialize() throws Exception {
+				return new SpecificLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this).getSelectedLibraryId(),
+					new LibraryRepository(PlaylistListActivity.this));
+			}
+		};
+
+	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.lvItems);
+	private final LazyViewFinder<ListView> playlistView = new LazyViewFinder<>(this, R.id.pbLoadingItems);
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
@@ -43,15 +63,13 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
         setContentView(R.layout.activity_view_items);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        playlistView = (ListView)findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
         mPlaylistId = 0;
         if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
         if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
         
-        playlistView.setVisibility(View.INVISIBLE);
-    	pbLoading.setVisibility(View.VISIBLE);
+        playlistView.findView().setVisibility(View.INVISIBLE);
+    	pbLoading.findView().setVisibility(View.VISIBLE);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
@@ -60,8 +78,8 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 			BuildPlaylistView(result);
 
-			playlistView.setVisibility(View.VISIBLE);
-			pbLoading.setVisibility(View.INVISIBLE);
+			playlistView.findView().setVisibility(View.VISIBLE);
+			pbLoading.findView().setVisibility(View.INVISIBLE);
 		};
 
 		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
@@ -89,11 +107,17 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
-        playlistView.setAdapter(itemListAdapter);
-        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
-        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-        playlistView.setOnItemLongClickListener(longClickViewAnimatorListener);
+		lazySpecificLibraryProvider.getObject().getLibrary()
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
+				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+
+				final ListView localPlaylistView = playlistView.findView();
+				localPlaylistView.setAdapter(itemListAdapter);
+				localPlaylistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
+				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+				localPlaylistView.setOnItemLongClickListener(longClickViewAnimatorListener);
+			}), this));
 	}
 	
 	@Override

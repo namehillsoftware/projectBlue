@@ -50,7 +50,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
         if (result == null) return;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-        listView.setAdapter(new ItemListAdapter<T>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
+        listView.setAdapter(new ItemListAdapter<T>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
         loadingView.setVisibility(View.INVISIBLE);
         listView.setVisibility(View.VISIBLE);
 
