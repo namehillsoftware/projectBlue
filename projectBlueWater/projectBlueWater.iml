@@ -131,7 +131,7 @@
     <orderEntry type="library" exported="" name="library-5.0.0" level="project" />
     <orderEntry type="library" exported="" name="support-core-ui-25.1.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="objenesis-2.5" level="project" />
-    <orderEntry type="library" exported="" name="rxjava-2.0.5" level="project" />
+    <orderEntry type="library" exported="" name="rxjava-2.0.6" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-1.6.5" level="project" />
     <orderEntry type="library" exported="" name="support-core-utils-25.1.1" level="project" />
@@ -139,7 +139,7 @@
     <orderEntry type="library" exported="" name="commons-digester-1.8" level="project" />
     <orderEntry type="library" exported="" name="reactive-streams-1.0.0" level="project" />
     <orderEntry type="library" exported="" name="stream-1.1.0" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.7.2" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.7.10" level="project" />
     <orderEntry type="library" exported="" name="apktool-lib-1.4.4-3" level="project" />
     <orderEntry type="library" exported="" name="joda-time-2.4" level="project" />
     <orderEntry type="library" exported="" name="support-v4-25.1.1" level="project" />

@@ -9,6 +9,8 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by david on 10/25/16.
@@ -17,9 +19,9 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	private final FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
-	private final List<DependentCancellablePromise<TResult, ?>> resolutions = new ArrayList<>();
+	private final Queue<DependentCancellablePromise<TResult, ?>> resolutions = new ConcurrentLinkedQueue<>();
 
-	private volatile boolean isResolved;
+	private boolean isResolved;
 
 	private TResult fulfilledResult;
 	private Exception fulfilledError;
@@ -43,23 +45,32 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		cancellation.cancel();
 	}
 
-	private void resolve(TResult result, Exception error) {
+	private synchronized void resolve(TResult result, Exception error) {
+		if (isResolved) return;
+
 		fulfilledResult = result;
 		fulfilledError = error;
 
 		isResolved = true;
 
-		for (DependentCancellablePromise<TResult, ?> resolution : resolutions)
+		processQueue(result, error);
+	}
+
+	private synchronized void processQueue(TResult result, Exception error) {
+		if (!isResolved) return;
+
+		while (resolutions.size() > 0) {
+			final DependentCancellablePromise<TResult, ?> resolution = resolutions.poll();
 			resolution.provide(result, error);
+		}
 	}
 
 	private <TNewResult> DependentCancellablePromise<TResult, TNewResult> thenCreateCancellablePromise(FiveParameterAction<TResult, Exception, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled);
 
-		resolutions.add(newResolution);
+		resolutions.offer(newResolution);
 
-		if (isResolved)
-			newResolution.provide(fulfilledResult, fulfilledError);
+		processQueue(fulfilledResult, fulfilledError);
 
 		return newResolution;
 	}

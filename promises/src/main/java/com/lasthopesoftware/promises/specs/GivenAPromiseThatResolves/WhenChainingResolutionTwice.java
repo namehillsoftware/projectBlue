@@ -2,9 +2,11 @@ package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
 
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.mockito.Mockito.any;
@@ -18,32 +20,32 @@ import static org.mockito.Mockito.verify;
 
 public class WhenChainingResolutionTwice {
 
-	private OneParameterFunction firstResultHandler;
-	private OneParameterFunction<String, ?> secondResultHandler;
+	private static CarelessOneParameterFunction<String, ?> firstResultHandler;
+	private static CarelessOneParameterFunction<String, ?> secondResultHandler;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		final IPromise<String> rootPromise =
 			new Promise<>(() -> "test");
 
-		firstResultHandler = mock(OneParameterFunction.class);
+		firstResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
 			.then(firstResultHandler);
 
-		secondResultHandler = mock(OneParameterFunction.class);
+		secondResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
 			.then(secondResultHandler);
 	}
 
 	@Test
-	public void thenTheFirstResolutionIsCalled() {
-		verify(firstResultHandler, times(1)).expectedUsing(any());
+	public void thenTheFirstResolutionIsCalled() throws Exception {
+		verify(firstResultHandler, times(1)).resultFrom(any());
 	}
 
 	@Test
-	public void thenTheSecondResolutionIsCalled() {
-		verify(secondResultHandler, times(1)).expectedUsing(any());
+	public void thenTheSecondResolutionIsCalled() throws Exception {
+		verify(secondResultHandler, times(1)).resultFrom(any());
 	}
 }
