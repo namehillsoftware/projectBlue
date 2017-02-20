@@ -24,8 +24,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import org.slf4j.Logger;
@@ -186,23 +188,22 @@ public class FileDetailsActivity extends AppCompatActivity {
 //		getRatingsTask.execute();
 
         ImageProvider
-		        .getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
-		        .onComplete((result) -> {
-			        if (mFileImage != null) mFileImage.recycle();
+			.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(result -> {
+				if (mFileImage != null) mFileImage.recycle();
 
-			        if (isDestroyed) {
-				        if (result != null) result.recycle();
-				        return;
-			        }
+				if (isDestroyed) {
+					if (result != null) result.recycle();
+					return;
+				}
 
-			        mFileImage = result;
+				mFileImage = result;
 
-			        imgFileThumbnailBuilder.getObject().setImageBitmap(result);
+				imgFileThumbnailBuilder.getObject().setImageBitmap(result);
 
-			        pbLoadingFileThumbnail.findView().setVisibility(View.INVISIBLE);
-			        imgFileThumbnailBuilder.getObject().setVisibility(View.VISIBLE);
-		        })
-		        .execute();
+				pbLoadingFileThumbnail.findView().setVisibility(View.INVISIBLE);
+				imgFileThumbnailBuilder.getObject().setVisibility(View.VISIBLE);
+			}), this));
 	}
 
 	private void setFileNameFromProperties(Map<String, String> fileProperties) {

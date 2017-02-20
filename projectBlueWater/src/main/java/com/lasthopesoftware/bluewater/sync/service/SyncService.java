@@ -26,6 +26,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -38,11 +40,11 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -51,12 +53,16 @@ import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArb
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 /**
  * Created by david on 7/26/15.
@@ -128,11 +134,19 @@ public class SyncService extends Service {
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
+	private final ILazy<ILibraryProvider> lazyLibraryProvider = new AbstractThreadLocalLazy<ILibraryProvider>() {
+		@Override
+		protected ILibraryProvider initialize() throws Exception {
+			return new LibraryRepository(SyncService.this);
+		}
+	};
+
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-		LibrarySession.getLibrary(SyncService.this, storedFile.getLibraryId(),
-			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
+		lazyLibraryProvider.getObject()
+			.getLibrary(storedFile.getLibraryId())
+			.then(Dispatch.toContext(runningCarelessly(library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
 				if (urlProvider == null) return;
 
 				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
@@ -145,7 +159,7 @@ public class SyncService extends Service {
 							return true;
 						})
 						.execute();
-			}));
+			})), this));
 	};
 
 	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
@@ -231,7 +245,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.getLibraries(context, libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().then(Dispatch.toContext(runningCarelessly(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {
@@ -263,7 +277,7 @@ public class SyncService extends Service {
 					librarySyncHandlers.add(librarySyncHandler);
 				});
 			}
-		});
+		}), this));
 
 		return result;
 	}

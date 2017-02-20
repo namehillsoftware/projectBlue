@@ -19,16 +19,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
+
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -45,6 +50,13 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
+
+	private final ILazy<LibraryRepository> lazyLibraryProvider = new AbstractThreadLocalLazy<LibraryRepository>() {
+		@Override
+		protected LibraryRepository initialize() throws Exception {
+			return new LibraryRepository(EditClientSettingsActivity.this);
+		}
+	};
 
 	private static final int permissionsRequestInteger = 1;
 
@@ -131,41 +143,43 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		syncFilesRadioGroup.setOnCheckedChangeListener((group, checkedId) -> syncPathTextView.setEnabled(checkedId == R.id.rbCustomLocation));
 
 		final int libraryId = intent.getIntExtra(serverIdExtra, -1);
-		LibrarySession.getLibrary(this, libraryId, result -> {
-			if (result == null) return;
+		lazyLibraryProvider.getObject()
+			.getLibrary(libraryId)
+			.then(Dispatch.toContext(runningCarelessly(result -> {
+				if (result == null) return;
 
-			library = result;
+				library = result;
 
-			chkLocalOnly.findView().setChecked(library.isLocalOnly());
-			chkIsUsingExistingFiles.findView().setChecked(library.isUsingExistingFiles());
-			chkIsUsingLocalConnectionForSync.findView().setChecked(library.isSyncLocalConnectionsOnly());
+				chkLocalOnly.findView().setChecked(library.isLocalOnly());
+				chkIsUsingExistingFiles.findView().setChecked(library.isUsingExistingFiles());
+				chkIsUsingLocalConnectionForSync.findView().setChecked(library.isSyncLocalConnectionsOnly());
 
-			final String customSyncPath = library.getCustomSyncedFilesPath();
-			if (customSyncPath != null && !customSyncPath.isEmpty())
-				syncPathTextView.setText(customSyncPath);
+				final String customSyncPath = library.getCustomSyncedFilesPath();
+				if (customSyncPath != null && !customSyncPath.isEmpty())
+					syncPathTextView.setText(customSyncPath);
 
-			switch (library.getSyncedFileLocation()) {
-				case EXTERNAL:
-					syncFilesRadioGroup.check(R.id.rbPublicLocation);
-					break;
-				case INTERNAL:
-					syncFilesRadioGroup.check(R.id.rbPrivateToApp);
-					break;
-				case CUSTOM:
-					syncFilesRadioGroup.check(R.id.rbCustomLocation);
-					break;
-			}
+				switch (library.getSyncedFileLocation()) {
+					case EXTERNAL:
+						syncFilesRadioGroup.check(R.id.rbPublicLocation);
+						break;
+					case INTERNAL:
+						syncFilesRadioGroup.check(R.id.rbPrivateToApp);
+						break;
+					case CUSTOM:
+						syncFilesRadioGroup.check(R.id.rbCustomLocation);
+						break;
+				}
 
-			txtAccessCode.findView().setText(library.getAccessCode());
-			if (library.getAuthKey() == null) return;
+				txtAccessCode.findView().setText(library.getAccessCode());
+				if (library.getAuthKey() == null) return;
 
-			final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
-			if (decryptedUserAuth.isEmpty()) return;
+				final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
+				if (decryptedUserAuth.isEmpty()) return;
 
-			final String[] userDetails = decryptedUserAuth.split(":", 2);
-			txtUserName.findView().setText(userDetails[0]);
-			txtPassword.findView().setText(userDetails[1] != null ? userDetails[1] : "");
-		});
+				final String[] userDetails = decryptedUserAuth.split(":", 2);
+				txtUserName.findView().setText(userDetails[0]);
+				txtPassword.findView().setText(userDetails[1] != null ? userDetails[1] : "");
+			}), this));
 	}
 
 	@Override
@@ -184,9 +198,9 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	private void saveLibraryAndFinish() {
-		LibrarySession.saveLibrary(this, library, result -> {
+		lazyLibraryProvider.getObject().saveLibrary(library).then(Dispatch.toContext(runningCarelessly(result -> {
 			saveButton.findView().setText(getText(R.string.btn_saved));
 			finish();
-		});
+		}), this));
 	}
 }

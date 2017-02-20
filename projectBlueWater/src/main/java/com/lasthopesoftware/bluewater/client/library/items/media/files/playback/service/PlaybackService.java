@@ -84,6 +84,8 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
+
 
 /**
  * @author david
@@ -760,8 +762,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (Build.VERSION.SDK_INT < 19) return;
 
 			ImageProvider
-				.getImage(PlaybackService.this, SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey())
-				.onComplete((bitmap) -> {
+				.getImage(this, SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey())
+				.then(Dispatch.toContext(runningCarelessly(bitmap -> {
 					// Track the remote client bitmap and recycle it in case the remote control client
 					// does not properly recycle the bitmap
 					if (remoteClientBitmap != null) remoteClientBitmap.recycle();
@@ -769,8 +771,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 					final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
 					metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
-				})
-				.execute();
+				}), this));
 		}).onError(exception -> {
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);

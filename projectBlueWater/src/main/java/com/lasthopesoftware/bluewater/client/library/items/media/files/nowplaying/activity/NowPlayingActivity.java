@@ -45,8 +45,8 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -65,7 +65,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private static IFluentTask<Void, Void, Bitmap> getFileImageTask;
+	private static IPromise<Bitmap> getFileImageTask;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
@@ -361,18 +361,18 @@ public class NowPlayingActivity extends AppCompatActivity {
 				
 				getFileImageTask =
 					ImageProvider
-						.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey())
-						.onComplete((result) -> {
-							if (viewStructure.nowPlayingImage != null)
-								viewStructure.nowPlayingImage.recycle();
-							viewStructure.nowPlayingImage = result;
+						.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey());
 
-							nowPlayingImage.setImageBitmap(result);
+				getFileImageTask
+					.then(Dispatch.toContext(runningCarelessly(bitmap -> {
+						if (viewStructure.nowPlayingImage != null)
+							viewStructure.nowPlayingImage.recycle();
+						viewStructure.nowPlayingImage = bitmap;
 
-							displayImageBitmap();
-						});
+						nowPlayingImage.setImageBitmap(bitmap);
 
-				getFileImageTask.execute();
+						displayImageBitmap();
+					}), this));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);

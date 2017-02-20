@@ -22,11 +22,8 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -122,7 +119,7 @@ public class MainApplication extends Application {
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 
-		localBroadcastManager.registerReceiver(new UpdatePlayStatsOnPlaybackCompleteReceiver(), new IntentFilter(PlaylistEvents.onFileComplete));
+		localBroadcastManager.registerReceiver(new UpdatePlayStatsOnPlaybackCompleteReceiver(new LibraryRepository(this)), new IntentFilter(PlaylistEvents.onFileComplete));
 	}
 
 	private void initializeLogging() {
