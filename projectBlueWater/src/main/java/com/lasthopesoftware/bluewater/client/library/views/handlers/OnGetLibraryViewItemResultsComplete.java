@@ -8,6 +8,8 @@ import android.widget.ListView;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.ClickItemListener;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,7 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
     private final ListView listView;
     private final Activity activity;
 
-    public OnGetLibraryViewItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler) {
+    public OnGetLibraryViewItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, StoredItemAccess storedItemAccess, Library library) {
         super(activity, container, listView, loadingView, position, itemListMenuChangeHandler, storedItemAccess, library);
 
         this.listView = listView;

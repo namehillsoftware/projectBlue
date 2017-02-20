@@ -19,10 +19,12 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
@@ -95,23 +97,39 @@ public class ItemListFragment extends Fragment {
 		final ListView listView = new ListView(activity);
     	listView.setVisibility(View.INVISIBLE);
 
-		final OnGetLibraryViewItemResultsComplete onGetLibraryViewItemResultsComplete = new OnGetLibraryViewItemResultsComplete(activity, container, listView, loadingView, position, itemListMenuChangeHandler);
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
 
-		ItemProvider
-				.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-				.onComplete(onGetLibraryViewItemResultsComplete)
-				.onError(new HandleViewIoException<>(activity, new Runnable() {
+		libraryProvider
+			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+				final OnGetLibraryViewItemResultsComplete onGetLibraryViewItemResultsComplete =
+					new OnGetLibraryViewItemResultsComplete(
+						activity,
+						container,
+						listView,
+						loadingView,
+						position,
+						itemListMenuChangeHandler,
+						new StoredItemAccess(activity, library),
+						library);
 
-					@Override
-					public void run() {
-						ItemProvider
+				ItemProvider
+					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
+					.onComplete(onGetLibraryViewItemResultsComplete)
+					.onError(new HandleViewIoException<>(activity, new Runnable() {
+
+						@Override
+						public void run() {
+							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.onComplete(onGetLibraryViewItemResultsComplete)
 								.onError(new HandleViewIoException<>(activity, this))
 								.execute();
-					}
-				}))
-				.execute();
+						}
+					}))
+					.execute();
+			}), activity));
 
 		return listView;
 	}
