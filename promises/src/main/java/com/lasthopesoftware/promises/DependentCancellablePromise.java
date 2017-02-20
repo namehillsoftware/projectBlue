@@ -7,10 +7,10 @@ import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by david on 10/25/16.
@@ -28,6 +28,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 
 	private final Cancellation cancellation = new Cancellation();
 
+	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
+
 	DependentCancellablePromise(FiveParameterAction<TInput, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		this.executor = executor;
 	}
@@ -42,26 +44,42 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	public final void cancel() {
-		cancellation.cancel();
+		resolveSync.readLock().lock();
+		try {
+			if (!isResolved)
+				cancellation.cancel();
+		} finally {
+			resolveSync.readLock().unlock();
+		}
 	}
 
-	private synchronized void resolve(TResult result, Exception error) {
-		if (isResolved) return;
+	private void resolve(TResult result, Exception error) {
+		resolveSync.writeLock().lock();
+		try {
+			if (isResolved) return;
 
-		fulfilledResult = result;
-		fulfilledError = error;
+			fulfilledResult = result;
+			fulfilledError = error;
 
-		isResolved = true;
+			isResolved = true;
+		} finally {
+			resolveSync.writeLock().unlock();
+		}
 
 		processQueue(result, error);
 	}
 
-	private synchronized void processQueue(TResult result, Exception error) {
-		if (!isResolved) return;
+	private void processQueue(TResult result, Exception error) {
+		resolveSync.readLock().lock();
+		try {
+			if (!isResolved) return;
 
-		while (resolutions.size() > 0) {
-			final DependentCancellablePromise<TResult, ?> resolution = resolutions.poll();
-			resolution.provide(result, error);
+			while (resolutions.size() > 0) {
+				final DependentCancellablePromise<TResult, ?> resolution = resolutions.poll();
+				resolution.provide(result, error);
+			}
+		} finally {
+			resolveSync.readLock().unlock();
 		}
 	}
 
