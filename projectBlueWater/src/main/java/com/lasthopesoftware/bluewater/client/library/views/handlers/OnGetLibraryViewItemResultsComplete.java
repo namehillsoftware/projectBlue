@@ -20,7 +20,7 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
     private final Activity activity;
 
     public OnGetLibraryViewItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler) {
-        super(activity, container, listView, loadingView, position, itemListMenuChangeHandler);
+        super(activity, container, listView, loadingView, position, itemListMenuChangeHandler, storedItemAccess, library);
 
         this.listView = listView;
         this.activity = activity;

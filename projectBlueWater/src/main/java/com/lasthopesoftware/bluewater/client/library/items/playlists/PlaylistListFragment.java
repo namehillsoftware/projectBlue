@@ -13,12 +13,17 @@ import android.widget.RelativeLayout;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewIItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
-
-import java.util.List;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.vedsoft.futures.callables.VoidFunc;
 
 /**
  * Created by david on 11/29/15.
@@ -37,24 +42,40 @@ public class PlaylistListFragment extends Fragment {
 
 		playlistView.setVisibility(View.INVISIBLE);
 
-		final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete = new OnGetLibraryViewPlaylistResultsComplete(getActivity(), container, playlistView, loadingView, 0, itemListMenuChangeHandler);
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
 
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-		playlistsProvider
-				.onComplete(onGetLibraryViewPlaylistResultsComplete)
-				.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), new Runnable() {
+		libraryProvider
+			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+				final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete =
+					new OnGetLibraryViewPlaylistResultsComplete(
+						getActivity(),
+						container,
+						playlistView,
+						loadingView,
+						0,
+						itemListMenuChangeHandler,
+						new StoredItemAccess(getContext(), library),
+						library);
 
-					@Override
-					public void run() {
-						final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+				final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+				playlistsProvider
+					.onComplete(onGetLibraryViewPlaylistResultsComplete)
+					.onError(new HandleViewIoException<>(getActivity(), new Runnable() {
 
-						playlistsProvider
+						@Override
+						public void run() {
+							final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+
+							playlistsProvider
 								.onComplete(onGetLibraryViewPlaylistResultsComplete)
-								.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), this))
+								.onError(new HandleViewIoException<>(getActivity(), this))
 								.execute();
-					}
-				}))
-				.execute();
+						}
+					}))
+					.execute();
+			}), getContext()));
 
 		return itemListLayout;
 	}
