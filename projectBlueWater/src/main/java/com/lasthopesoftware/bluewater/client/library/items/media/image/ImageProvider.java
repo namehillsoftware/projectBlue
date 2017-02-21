@@ -62,11 +62,10 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 	}
 
 	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final int fileKey) {
-		super(new ImageDiscTask(context, connectionProvider, new FillerBitmap(context), fileKey), imageAccessExecutor);
-
+		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileKey), imageAccessExecutor);
 	}
 
-	private static class ImageDiscTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
 		private final Context context;
 		private final ConnectionProvider connectionProvider;
 		private final FillerBitmap fillerBitmap;
@@ -76,7 +75,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 		private volatile boolean isCancelled;
 
-		ImageDiscTask(Context context, ConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
+		ImageMemoryTask(Context context, ConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.fillerBitmap = fillerBitmap;
