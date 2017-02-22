@@ -10,16 +10,16 @@ import com.lasthopesoftware.promises.IPromise;
 
 public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryProvider {
 
+	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
-	private final int selectedLibraryId;
 
 	public SelectedBrowserLibraryProvider(ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider) {
-		this.selectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
+		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
 	}
 
 	@Override
 	public IPromise<Library> getBrowserLibrary() {
-		return libraryProvider.getLibrary(selectedLibraryId);
+		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
 }

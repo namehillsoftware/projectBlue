@@ -145,10 +145,6 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			return imageBytes;
 		}
-
-		private static Bitmap getBitmapFromBytes(final byte[] imageBytes) {
-			return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-		}
 	}
 
 	private static class ImageHttpTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
@@ -252,10 +248,6 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 			}
 		}
 
-		private static Bitmap getBitmapFromBytes(final byte[] imageBytes) {
-			return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-		}
-
 		private static void putBitmapIntoMemory(final String uniqueKey, final byte[] imageBytes) {
 			final Byte[] memoryImageBytes = new Byte[imageBytes.length];
 
@@ -320,5 +312,9 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		private static Bitmap getBitmapCopy(final Bitmap src) {
 			return src.copy(src.getConfig(), false);
 		}
+	}
+
+	private static Bitmap getBitmapFromBytes(final byte[] imageBytes) {
+		return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 	}
 }
