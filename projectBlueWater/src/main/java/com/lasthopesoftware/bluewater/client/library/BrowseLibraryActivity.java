@@ -23,10 +23,10 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -40,7 +40,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
@@ -71,12 +70,6 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private final LazyViewFinder<ListView> specialLibraryItemsListView = new LazyViewFinder<>(this, R.id.specialLibraryItemsListView);
 	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.drawer_layout);
 	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
-	private final ILazy<ISelectedLibraryIdentifierProvider> chosenLibraryIdentifierProviderLazy = new AbstractThreadLocalLazy<ISelectedLibraryIdentifierProvider>() {
-		@Override
-		protected ISelectedLibraryIdentifierProvider initialize() throws Exception {
-			return new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this);
-		}
-	};
 	private final ILazy<LibraryRepository> lazyLibraryRepository = new AbstractThreadLocalLazy<LibraryRepository>() {
 		@Override
 		protected LibraryRepository initialize() throws Exception {
@@ -84,7 +77,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		}
 	};
 
-	private ISpecificLibraryProvider chosenLibraryProvider;
+	private ILazy<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
+		@Override
+		protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+			return new SelectedBrowserLibraryProvider(
+				new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this),
+				lazyLibraryRepository.getObject());
+		}
+	};
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -182,13 +182,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		chosenLibraryProvider =
-			new SpecificLibraryProvider(
-				chosenLibraryIdentifierProviderLazy.getObject().getSelectedLibraryId(),
-				lazyLibraryRepository.getObject());
-
-		chosenLibraryProvider
-			.getLibrary()
+		lazySelectedBrowserLibraryProvider.getObject()
+			.getBrowserLibrary()
 			.then(Dispatch.toContext(runningCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
@@ -275,13 +270,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void updateSelectedView(final Library.ViewType selectedViewType, final int selectedViewKey) {
-		if (chosenLibraryProvider == null) return;
-
 		drawerLayout.findView().closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		chosenLibraryProvider
-			.getLibrary()
+		lazySelectedBrowserLibraryProvider.getObject()
+			.getBrowserLibrary()
 			.then(Dispatch.toContext(runningCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 

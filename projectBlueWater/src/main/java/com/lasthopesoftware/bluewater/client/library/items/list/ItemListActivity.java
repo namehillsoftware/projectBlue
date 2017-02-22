@@ -14,9 +14,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -39,17 +40,19 @@ import java.util.List;
  */
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer {
 
-    public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
-    public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
+
+    public static final String KEY = magicPropertyBuilder.buildProperty("key");
+    public static final String VALUE = magicPropertyBuilder.buildProperty("value");
 
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final ILazy<ISpecificLibraryProvider> lazySpecificLibraryProvider =
-		new AbstractThreadLocalLazy<ISpecificLibraryProvider>() {
+	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISpecificLibraryProvider initialize() throws Exception {
-				return new SpecificLibraryProvider(
-					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this).getSelectedLibraryId(),
+			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+				return new SelectedBrowserLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this),
 					new LibraryRepository(ItemListActivity.this));
 			}
 		};
@@ -94,7 +97,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     }
 
     private void BuildItemListView(final List<Item> items) {
-		lazySpecificLibraryProvider.getObject().getLibrary()
+		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);

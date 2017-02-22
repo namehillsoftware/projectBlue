@@ -27,12 +27,12 @@ import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnec
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
@@ -46,8 +46,6 @@ import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -91,13 +89,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
 		}
 	};
-	private final ILazy<ISpecificLibraryProvider> lazySpecificLibraryProvider = new AbstractSynchronousLazy<ISpecificLibraryProvider>() {
+	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository = new AbstractThreadLocalLazy<INowPlayingRepository>() {
 		@Override
-		protected ISpecificLibraryProvider initialize() throws Exception {
+		protected INowPlayingRepository initialize() throws Exception {
+			final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingActivity.this);
+
 			return
-				new SpecificLibraryProvider(
-					new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this).getSelectedLibraryId(),
-					new LibraryRepository(NowPlayingActivity.this));
+				new NowPlayingRepository(
+					new SpecificLibraryProvider(
+						new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this).getSelectedLibraryId(),
+						libraryRepository),
+					libraryRepository);
 		}
 	};
 
@@ -234,10 +236,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (shuffleButton != null) {
 			shuffleButton.setOnClickListener(v ->
-				lazySpecificLibraryProvider.getObject()
-					.getLibrary()
+				lazyNowPlayingRepository.getObject()
+					.getNowPlaying()
 					.then(Dispatch.toHandler(result -> {
-						final boolean isRepeating = !result.isRepeating();
+						final boolean isRepeating = !result.isRepeating;
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
 						else
@@ -282,28 +284,18 @@ public class NowPlayingActivity extends AppCompatActivity {
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
-		lazySpecificLibraryProvider.getObject()
-			.getLibrary()
-			.thenPromise(library -> {
-				final String savedTracksString = library.getSavedTracksString();
-				if (savedTracksString == null || savedTracksString.isEmpty()) return Promise.empty();
-
-				return
-					FileStringListUtilities
-						.promiseParsedFileStringList(savedTracksString)
-						.then(Dispatch.toHandler(
-							runningCarelessly(files -> setView(files.get(library.getNowPlayingId()), library.getNowPlayingProgress())),
-							messageHandler.getObject()));
-			});
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
+			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlist.get(np.playlistPosition), np.filePosition)), messageHandler.getObject()));
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
 		setRepeatingIcon(imageButton, false);
-		lazySpecificLibraryProvider.getObject()
-			.getLibrary()
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
 			.then(Dispatch.toHandler(runningCarelessly(result -> {
 				if (result != null)
-					setRepeatingIcon(imageButton, result.isRepeating());
+					setRepeatingIcon(imageButton, result.isRepeating);
 			}), messageHandler.getObject()));
 	}
 	
@@ -325,11 +317,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	private void setView(final int playlistPosition, final boolean isPlaying) {
-		lazySpecificLibraryProvider.getObject()
-			.getLibrary()
-			.thenPromise(library -> FileStringListUtilities.promiseParsedFileStringList(library.getSavedTracksString()))
-			.then(Dispatch.toHandler(runningCarelessly(files -> {
-				setView(files.get(playlistPosition), viewStructure.filePosition);
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
+			.then(Dispatch.toHandler(runningCarelessly(np -> {
+				setView(np.playlist.get(playlistPosition), viewStructure.filePosition);
 
 				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
