@@ -320,11 +320,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
 			.then(Dispatch.toHandler(runningCarelessly(np -> {
-				setView(np.playlist.get(playlistPosition), viewStructure.filePosition);
+				if (playlistPosition >= np.playlist.size()) return;
+
+				setView(np.playlist.get(playlistPosition), 0);
 
 				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
-			}), messageHandler.getObject()));
+			}), messageHandler.getObject()))
+			.error(runningCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
