@@ -118,11 +118,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			showNowPlayingControls();
-			updateKeepScreenOnStatus();
-
 			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
+
+			showNowPlayingControls();
+			updateKeepScreenOnStatus();
 
 			final boolean isPlaying = intent.getBooleanExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, false);
 
@@ -286,7 +286,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlist.get(np.playlistPosition), np.filePosition)), messageHandler.getObject()));
+			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlistPosition, false)), messageHandler.getObject()));
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
@@ -322,7 +322,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.then(Dispatch.toHandler(runningCarelessly(np -> {
 				if (playlistPosition >= np.playlist.size()) return;
 
-				setView(np.playlist.get(playlistPosition), 0);
+				final IFile file = np.playlist.get(playlistPosition);
+
+				final int filePosition =
+					viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey()))
+						? viewStructure.filePosition
+						: 0;
+
+				setView(file, filePosition);
 
 				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
 				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
