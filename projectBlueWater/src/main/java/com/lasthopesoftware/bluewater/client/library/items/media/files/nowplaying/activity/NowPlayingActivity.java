@@ -163,14 +163,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static class ViewStructure {
 		final UrlKeyHolder<Integer> urlKeyHolder;
+		final IFile file;
 		Map<String, String> fileProperties;
 		Bitmap nowPlayingImage;
-
 		int filePosition;
 		int fileDuration;
 		
-		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder) {
+		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, IFile file) {
 			this.urlKeyHolder = urlKeyHolder;
+			this.file = file;
 		}
 		
 		void release() {
@@ -284,9 +285,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
+		if (viewStructure != null) {
+			setView(viewStructure.file, viewStructure.filePosition);
+			return;
+		}
+
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlistPosition, false)), messageHandler.getObject()));
+			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlist.get(np.playlistPosition), np.filePosition)), messageHandler.getObject()));
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
@@ -346,7 +352,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 		
 		if (viewStructure == null)
-			viewStructure = new ViewStructure(urlKeyHolder);
+			viewStructure = new ViewStructure(urlKeyHolder, file);
 		
 		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
 
