@@ -32,7 +32,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	private static class Execution {
 
-		static class InternalCancellablePromiseExecutor<TResult> implements FiveParameterAction<Void, Exception, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static class InternalCancellablePromiseExecutor<TResult> implements FiveParameterAction<Void, Throwable, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 			private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
 			InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
@@ -40,7 +40,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 			}
 
 			@Override
-			public void runWith(Void result, Exception exception, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			public void runWith(Void result, Throwable exception, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 				executor.runWith(resolve, reject, onCancelled);
 			}
 		}

@@ -134,7 +134,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 	}
 
-	private void handlePlaybackException(Exception exception) {
+	private void handlePlaybackException(Throwable exception) {
 		emitter.onError(exception);
 
 		haltPlayback();
