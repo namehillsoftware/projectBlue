@@ -16,15 +16,15 @@ public interface IPromise<TResult> {
 	<TNewResult> IPromise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled);
 	<TNewResult> IPromise<TNewResult> then(CarelessOneParameterFunction<TResult, TNewResult> onFulfilled);
 
-	<TNewRejectedResult> IPromise<TNewRejectedResult> error(ThreeParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected);
-	<TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessOneParameterFunction<Exception, TNewRejectedResult> onRejected);
+	<TNewRejectedResult> IPromise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected);
+	<TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected);
 
 	<TNewResult> IPromise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled);
 	<TNewResult> IPromise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled);
 	<TNewResult> IPromise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled);
 
-	<TNewRejectedResult> IPromise<TNewRejectedResult> error(FourParameterAction<Exception, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected);
-	<TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessTwoParameterFunction<Exception, OneParameterAction<Runnable>, TNewRejectedResult> onRejected);
+	<TNewRejectedResult> IPromise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected);
+	<TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected);
 
 	void cancel();
 }

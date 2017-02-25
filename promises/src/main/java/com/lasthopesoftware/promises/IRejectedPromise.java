@@ -5,5 +5,5 @@ package com.lasthopesoftware.promises;
  */
 
 public interface IRejectedPromise {
-	void withError(Exception exception);
+	void withError(Throwable error);
 }

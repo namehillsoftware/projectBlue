@@ -29,11 +29,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
+
+import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 class PlaybackPlaylistStateManager implements Closeable {
 
@@ -75,30 +78,44 @@ class PlaybackPlaylistStateManager implements Closeable {
 				.thenPromise(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
 
-		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+		observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
+		if (positionedPlaybackFile != null && playlist != null)
+			return changePosition(getNextPosition(positionedPlaybackFile.getPosition(), playlist), 0);
+
 		return
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
 					final int position =  np.playlistPosition;
 
-					return changePosition(position < np.playlist.size() - 1 ? position + 1 : 0, 0);
+					return changePosition(getNextPosition(position, np.playlist), 0);
 				});
 	}
 
+	private static int getNextPosition(int startingPosition, Collection<IFile> playlist) {
+		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
+	}
+
 	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
+		if (positionedPlaybackFile != null && playlist != null)
+			return changePosition(getPreviousPosition(positionedPlaybackFile.getPosition()), 0);
+
 		return
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
 					final int position =  np.playlistPosition;
-					return changePosition(position > 0 ? position - 1 : 0, 0);
+					return changePosition(getPreviousPosition(position), 0);
 				});
+	}
+
+	private static int getPreviousPosition(int startingPosition) {
+		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
@@ -117,7 +134,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 					.thenPromise(this::initializePreparedPlaybackQueue)
 					.then(q -> startPlayback(q, filePosition));
 
-			observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+			observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
 
 			return observablePromise;
 		}
@@ -166,7 +183,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 					filePropertiesProvider.execute();
 				});
 
-		singleFileChangeObservablePromise.error(VoidFunc.runningCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
+		singleFileChangeObservablePromise.error(runningCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
 
 		return singleFileChangeObservablePromise;
 	}
@@ -196,7 +213,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			restorePlaylistFromStorage()
 				.thenPromise(np -> initializePreparedPlaybackQueue(np).then(queue -> startPlayback(queue, np.filePosition)));
 
-		observablePromise.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+		observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
