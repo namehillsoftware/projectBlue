@@ -84,9 +84,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
-		if (positionedPlaybackFile != null && playlist != null)
-			return changePosition(getNextPosition(positionedPlaybackFile.getPosition(), playlist), 0);
-
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -102,9 +99,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
-		if (positionedPlaybackFile != null && playlist != null)
-			return changePosition(getPreviousPosition(positionedPlaybackFile.getPosition()), 0);
-
 		return
 			nowPlayingRepository
 				.getNowPlaying()
