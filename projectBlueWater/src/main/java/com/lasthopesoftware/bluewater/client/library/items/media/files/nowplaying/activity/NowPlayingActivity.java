@@ -286,10 +286,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
-			@SuppressWarnings("unchecked")
+
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
-				togglePlayingButtons(((GenericBinder<PlaybackService>)service).getService().isPlaying());
+				togglePlayingButtons(((PlaybackService)(((GenericBinder<?>)service).getService())).isPlaying());
 				unbindService(this);
 			}
 
