@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,24 +46,26 @@ public class PlaylistListFragment extends Fragment {
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
 
+		final FragmentActivity activity = getActivity();
+
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
 				final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete =
 					new OnGetLibraryViewPlaylistResultsComplete(
-						getActivity(),
+						activity,
 						container,
 						playlistView,
 						loadingView,
 						0,
 						itemListMenuChangeHandler,
-						new StoredItemAccess(getContext(), library),
+						new StoredItemAccess(activity, library),
 						library);
 
 				final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 				playlistsProvider
 					.onComplete(onGetLibraryViewPlaylistResultsComplete)
-					.onError(new HandleViewIoException<>(getActivity(), new Runnable() {
+					.onError(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
 						public void run() {
@@ -70,12 +73,12 @@ public class PlaylistListFragment extends Fragment {
 
 							playlistsProvider
 								.onComplete(onGetLibraryViewPlaylistResultsComplete)
-								.onError(new HandleViewIoException<>(getActivity(), this))
+								.onError(new HandleViewIoException<>(activity, this))
 								.execute();
 						}
 					}))
 					.execute();
-			}), getContext()));
+			}), activity));
 
 		return itemListLayout;
 	}

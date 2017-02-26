@@ -263,6 +263,19 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
+
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
+			.then(Dispatch.toHandler(runningCarelessly(np -> {
+				final IFile file = np.playlist.get(np.playlistPosition);
+
+				if (viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey()))) {
+					setView(viewStructure.file, viewStructure.filePosition);
+					return;
+				}
+
+				setView(np.playlist.get(np.playlistPosition), np.filePosition);
+			}), messageHandler.getObject()));
 	}
 	
 	@Override
@@ -285,14 +298,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
-		if (viewStructure != null) {
+		if (viewStructure != null)
 			setView(viewStructure.file, viewStructure.filePosition);
-			return;
-		}
-
-		lazyNowPlayingRepository.getObject()
-			.getNowPlaying()
-			.then(Dispatch.toHandler(runningCarelessly(np -> setView(np.playlist.get(np.playlistPosition), np.filePosition)), messageHandler.getObject()));
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
