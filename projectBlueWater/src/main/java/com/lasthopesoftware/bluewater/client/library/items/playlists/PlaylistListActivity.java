@@ -14,9 +14,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -42,12 +42,12 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
 	private int mPlaylistId;
 
-	private final ILazy<ISpecificLibraryProvider> lazySpecificLibraryProvider =
-		new AbstractThreadLocalLazy<ISpecificLibraryProvider>() {
+	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISpecificLibraryProvider initialize() throws Exception {
-				return new SpecificLibraryProvider(
-					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this).getSelectedLibraryId(),
+			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+				return new SelectedBrowserLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this),
 					new LibraryRepository(PlaylistListActivity.this));
 			}
 		};
@@ -107,7 +107,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-		lazySpecificLibraryProvider.getObject().getLibrary()
+		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);

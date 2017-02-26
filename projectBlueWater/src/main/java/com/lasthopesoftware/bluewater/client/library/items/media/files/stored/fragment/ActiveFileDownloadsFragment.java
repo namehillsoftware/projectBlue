@@ -19,9 +19,9 @@ import android.widget.RelativeLayout;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
@@ -47,12 +47,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
     private BroadcastReceiver onFileDownloadedReceiver;
     private LocalBroadcastManager localBroadcastManager;
 
-	private ILazy<ISpecificLibraryProvider> lazyLibraryProvider = new AbstractThreadLocalLazy<ISpecificLibraryProvider>() {
+	private ILazy<ISelectedBrowserLibraryProvider> lazyLibraryProvider = new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
 		@Override
-		protected ISpecificLibraryProvider initialize() throws Exception {
+		protected ISelectedBrowserLibraryProvider initialize() throws Exception {
 			final LibraryRepository libraryRepository = new LibraryRepository(getActivity());
-			return new SpecificLibraryProvider(
-				new SelectedBrowserLibraryIdentifierProvider(getActivity()).getSelectedLibraryId(),
+			return new SelectedBrowserLibraryProvider(
+				new SelectedBrowserLibraryIdentifierProvider(getActivity()),
 				libraryRepository);
 		}
 	};
@@ -77,7 +77,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		lazyLibraryProvider
 			.getObject()
-			.getLibrary()
+			.getBrowserLibrary()
 			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
 				storedFileAccess.getDownloadingStoredFiles()
