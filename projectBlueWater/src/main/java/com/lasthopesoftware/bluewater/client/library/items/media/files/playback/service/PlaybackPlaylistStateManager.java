@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
@@ -18,11 +19,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.ILazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,25 +48,32 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private final IConnectionProvider connectionProvider;
 	private final IFileUriProvider fileUriProvider;
 	private final INowPlayingRepository nowPlayingRepository;
-	private final ISpecificLibraryProvider libraryProvider;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
+	private final ILazy<IPromise<Library>> lazyLibraryPromise;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
 	private List<IFile> playlist;
+	private float volume;
+
 	private PreparedPlaybackQueue preparedPlaybackQueue;
+	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
+
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
-	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
-	private float volume;
 
 	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ISpecificLibraryProvider libraryProvider, float initialVolume) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.fileUriProvider = fileUriProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
-		this.libraryProvider = libraryProvider;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
+		this.lazyLibraryPromise = new AbstractSynchronousLazy<IPromise<Library>>() {
+			@Override
+			protected IPromise<Library> initialize() throws Exception {
+				return libraryProvider.getLibrary();
+			}
+		};
 		volume = initialVolume;
 	}
 
@@ -261,8 +270,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		playlist.add(file);
 
-		if (preparedPlaybackQueue == null) return nowPlayingPromise;
-
 		updatePreparedFileQueueFromState();
 		return nowPlayingPromise;
 	}
@@ -279,8 +286,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (playlist == null) return libraryUpdatePromise;
 
 		playlist.remove(position);
-
-		if (preparedPlaybackQueue == null) return libraryUpdatePromise;
 
 		updatePreparedFileQueueFromState();
 
@@ -338,8 +343,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 				: positionedFileQueueProvider::getCompletableQueue;
 
 		return
-			libraryProvider
-				.getLibrary()
+			lazyLibraryPromise
+				.getObject()
 				.then(library -> {
 					preparedPlaybackQueue =
 						new PreparedPlaybackQueue(
