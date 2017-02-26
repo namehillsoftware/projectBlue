@@ -275,6 +275,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(np.playlist.get(np.playlistPosition), np.filePosition);
 			}), messageHandler.getObject()));
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+
+		updateKeepScreenOnStatus();
+
+		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
 			@SuppressWarnings("unchecked")
@@ -288,15 +297,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 			public void onServiceDisconnected(ComponentName name) {
 			}
 		}, BIND_AUTO_CREATE);
-	}
-	
-	@Override
-	public void onStart() {
-		super.onStart();
-
-		updateKeepScreenOnStatus();
-
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
 	}
 
 	@Override
