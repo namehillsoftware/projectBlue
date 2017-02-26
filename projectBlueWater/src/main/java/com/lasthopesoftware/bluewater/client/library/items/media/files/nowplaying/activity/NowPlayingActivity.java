@@ -1,14 +1,17 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.annotation.StringRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
@@ -124,17 +128,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
 
-			final boolean isPlaying = intent.getBooleanExtra(PlaylistEvents.PlaybackFileParameters.isPlaying, false);
-
-			setView(playlistPosition, isPlaying);
+			setView(playlistPosition);
 		}
 	};
 
 	private final BroadcastReceiver onPlaybackStartedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			playButton.findView().setVisibility(View.INVISIBLE);
-			pauseButton.findView().setVisibility(View.VISIBLE);
+			togglePlayingButtons(true);
 
 			updateKeepScreenOnStatus();
 		}
@@ -143,9 +144,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			playButton.findView().setVisibility(View.VISIBLE);
-			pauseButton.findView().setVisibility(View.INVISIBLE);
-
+			togglePlayingButtons(false);
 			disableKeepScreenOn();
 		}
 	};
@@ -276,6 +275,19 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(np.playlist.get(np.playlistPosition), np.filePosition);
 			}), messageHandler.getObject()));
+
+		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				togglePlayingButtons(((GenericBinder<PlaybackService>)service).getService().isPlaying());
+				unbindService(this);
+			}
+
+			@Override
+			public void onServiceDisconnected(ComponentName name) {
+			}
+		}, BIND_AUTO_CREATE);
 	}
 	
 	@Override
@@ -329,7 +341,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	private void setView(final int playlistPosition, final boolean isPlaying) {
+	private void togglePlayingButtons(boolean isPlaying) {
+		playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
+		pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
+	}
+
+	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
 			.then(Dispatch.toHandler(runningCarelessly(np -> {
@@ -343,9 +360,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 						: 0;
 
 				setView(file, filePosition);
-
-				playButton.findView().setVisibility(ViewUtils.getVisibility(!isPlaying));
-				pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
 			}), messageHandler.getObject()))
 			.error(runningCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}

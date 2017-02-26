@@ -15,7 +15,7 @@ public class GenericBinder<TService extends Service> extends Binder {
 		this.service = service;
 	}
 
-	TService getService() {
+	public TService getService() {
 		return service;
 	}
 }

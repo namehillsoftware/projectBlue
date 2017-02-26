@@ -23,7 +23,6 @@ import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -223,6 +222,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
 	private PositionedPlaybackFile positionedPlaybackFile;
+	private boolean isPlaying;
 	private Disposable playbackFileChangedSubscription;
 	private Disposable filePositionSubscription;
 	private Disposable playbackFileChangesConnection;
@@ -268,6 +268,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			playbackPlaylistStateManager = null;
 		}
 	};
+
+	public boolean isPlaying() {
+		return isPlaying;
+	}
 
 	private void notifyForeground(Builder notificationBuilder) {
 		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
@@ -475,7 +479,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
 				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
 				.thenPromise(this::observePlaybackFileChanges)
-				.then(lazyPlaybackStartedBroadcaster.getObject());
+				.then(lazyPlaybackStartedBroadcaster.getObject())
+				.then(f -> isPlaying = true);
 
 			return;
         }
@@ -487,7 +492,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         	playbackPlaylistStateManager
 				.resume()
 				.thenPromise(this::restartObservable)
-				.then(lazyPlaybackStartedBroadcaster.getObject());
+				.then(lazyPlaybackStartedBroadcaster.getObject())
+				.then(f -> isPlaying = true);;
 
         	return;
         }
@@ -587,6 +593,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void pausePlayback(boolean isUserInterrupted) {
+		isPlaying = false;
+
 		stopNotification();
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
