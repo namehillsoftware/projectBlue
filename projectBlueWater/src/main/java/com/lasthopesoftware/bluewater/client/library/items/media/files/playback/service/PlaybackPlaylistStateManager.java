@@ -55,6 +55,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private PlaylistPlayer playlistPlayer;
 	private List<IFile> playlist;
 	private float volume;
+	private int currentPosition = -1;
 
 	private PreparedPlaybackQueue preparedPlaybackQueue;
 	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
@@ -93,14 +94,13 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
+		if (currentPosition > -1 && playlist != null)
+			return changePosition(getNextPosition(currentPosition, playlist), 0);
+
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.thenPromise(np -> {
-					final int position =  np.playlistPosition;
-
-					return changePosition(getNextPosition(position, np.playlist), 0);
-				});
+				.thenPromise(np -> changePosition(getNextPosition(np.playlistPosition, np.playlist), 0));
 	}
 
 	private static int getNextPosition(int startingPosition, Collection<IFile> playlist) {
@@ -108,13 +108,13 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
+		if (currentPosition > -1)
+			return changePosition(getPreviousPosition(currentPosition), 0);
+
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.thenPromise(np -> {
-					final int position =  np.playlistPosition;
-					return changePosition(getPreviousPosition(position), 0);
-				});
+				.thenPromise(np -> changePosition(getPreviousPosition(np.playlistPosition), 0));
 	}
 
 	private static int getPreviousPosition(int startingPosition) {
@@ -123,6 +123,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
 		final boolean wasPlaying = isPlaying();
+
+		currentPosition = filePosition;
 
 		final IPromise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
@@ -247,6 +249,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		observableProxy.subscribe(
 			p -> {
 				positionedPlaybackFile = p;
+				currentPosition = p.getPosition();
 				saveStateToLibrary();
 			},
 			this::uncaughtExceptionHandler,
