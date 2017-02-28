@@ -122,6 +122,22 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
+		if (preparedPlaybackQueue != null) {
+			try {
+				preparedPlaybackQueue.close();
+			} catch (IOException e) {
+				logger.error("There was an error closing the prepared playback queue", e);
+			}
+		}
+
+		if (playlistPlayer != null) {
+			try {
+				playlistPlayer.close();
+			} catch (IOException e) {
+				logger.error("There was an error closing the playlist player", e);
+			}
+		}
+
 		final boolean wasPlaying = isPlaying();
 
 		currentPosition = filePosition;

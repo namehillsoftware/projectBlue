@@ -102,7 +102,7 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(runningCarelessly(library -> {
 				final OnGetLibraryViewItemResultsComplete onGetLibraryViewItemResultsComplete =
 					new OnGetLibraryViewItemResultsComplete(
 						activity,
