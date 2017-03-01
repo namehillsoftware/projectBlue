@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -57,6 +58,8 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 	private static final LruCache<String, Byte[]> imageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 
+	private static final String cancellationMessage = "The image task was cancelled";
+
 	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey) {
 		return new ImageProvider(context, connectionProvider, fileKey);
 	}
@@ -73,8 +76,6 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		private final ILibraryProvider libraryProvider;
 		private final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 
-		private volatile boolean isCancelled;
-
 		ImageMemoryTask(Context context, ConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
@@ -86,12 +87,11 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 		@Override
 		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			onCancelled.runWith(() -> {
-				isCancelled = true;
-				resolve.withResult(fillerBitmap.getFillerBitmap());
-			});
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
 
-			if (isCancelled) return;
+			onCancelled.runWith(rejectingCancellationHandler);
+
+			if (rejectingCancellationHandler.isCancelled()) return;
 
 			String uniqueKey;
 			try {
@@ -114,6 +114,8 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				return;
 			}
 
+			if (rejectingCancellationHandler.isCancelled()) return;
+
 			final byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) {
 				resolve.withResult(getBitmapFromBytes(imageBytes));
@@ -124,7 +126,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 				.thenPromise(library -> {
 					final IPromise<Bitmap> httpAccessPromise =
-						new QueuedPromise<>(new ImageHttpTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
+						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
 
 					onCancelled.runWith(httpAccessPromise::cancel);
 
@@ -147,7 +149,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		}
 	}
 
-	private static class ImageHttpTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageIoAccessTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 		private final String uniqueKey;
 		private final Context context;
@@ -156,9 +158,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		private final FillerBitmap fillerBitmap;
 		private final int fileKey;
 
-		private volatile boolean isCancelled;
-
-		ImageHttpTask(String uniqueKey, Context context, Library library, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
+		ImageIoAccessTask(String uniqueKey, Context context, Library library, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
 			this.uniqueKey = uniqueKey;
 			this.context = context;
 			this.library = library;
@@ -175,10 +175,8 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				return;
 			}
 
-			onCancelled.runWith(() -> {
-				isCancelled = true;
-				resolve.withResult(fillerBitmap.getFillerBitmap());
-			});
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
+			onCancelled.runWith(rejectingCancellationHandler);
 
 			final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
@@ -206,16 +204,13 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					}
 
 					try {
-						//isCancelled was called, return an empty bitmap but do not put it into the cache
-						if (isCancelled) {
-							return;
-						}
+						if (rejectingCancellationHandler.isCancelled()) return;
 
 						try (InputStream is = connection.getInputStream()) {
 							imageBytes = IOUtils.toByteArray(is);
 						} catch (InterruptedIOException interruptedIoException) {
 							logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
-							resolve.withResult(fillerBitmap.getFillerBitmap());
+							reject.withError(interruptedIoException);
 							return;
 						}
 
@@ -236,6 +231,9 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					}
 
 					putBitmapIntoMemory(uniqueKey, imageBytes);
+
+					if (rejectingCancellationHandler.isCancelled()) return;
+
 					resolve.withResult(getBitmapFromBytes(imageBytes));
 				} catch (Exception e) {
 					logger.error(e.toString(), e);

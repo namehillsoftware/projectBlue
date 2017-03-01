@@ -400,7 +400,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 						nowPlayingImage.setImageBitmap(bitmap);
 
 						displayImageBitmap();
-					}), this));
+					}), this))
+					.error(runningCarelessly(e -> logger.error("There was an error retrieving file details", e)));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);

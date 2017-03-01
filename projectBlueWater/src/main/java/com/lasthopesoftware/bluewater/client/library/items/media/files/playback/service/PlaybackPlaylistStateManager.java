@@ -163,21 +163,6 @@ class PlaybackPlaylistStateManager implements Closeable {
 		final IPromise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
 				.then((np, resolve, reject, onCancelled) -> {
-					try {
-						if (preparedPlaybackQueue != null) {
-							preparedPlaybackQueue.close();
-							preparedPlaybackQueue = null;
-						}
-
-						if (playlistPlayer != null) {
-							playlistPlayer.close();
-							playlistPlayer = null;
-						}
-					} catch (IOException e) {
-						reject.withError(e);
-						return;
-					}
-
 					final IFile file = np.playlist.get(playlistPosition);
 					final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
 					onCancelled.runWith(() -> {
