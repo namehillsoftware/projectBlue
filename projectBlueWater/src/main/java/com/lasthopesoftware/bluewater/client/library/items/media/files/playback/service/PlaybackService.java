@@ -65,6 +65,8 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.promises.IPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
@@ -269,6 +271,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 
+	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = runningCarelessly(this::uncaughtExceptionHandler);
+
 	public boolean isPlaying() {
 		return isPlaying;
 	}
@@ -363,8 +367,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intent)))
-				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+				.then(runningCarelessly(m -> actOnIntent(intent)))
+				.error(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
 		}
@@ -422,7 +426,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intentToRun)))
-				.error(VoidFunc.runningCarelessly(this::uncaughtExceptionHandler));
+				.error(UnhandledRejectionHandler);
 
 			return;
 		}
@@ -480,7 +484,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
 				.thenPromise(this::observePlaybackFileChanges)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(f -> isPlaying = true);
+				.then(f -> isPlaying = true)
+				.error(UnhandledRejectionHandler);
 
 			return;
         }
@@ -493,7 +498,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.resume()
 				.thenPromise(this::restartObservable)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(f -> isPlaying = true);;
+				.then(f -> isPlaying = true)
+				.error(UnhandledRejectionHandler);
 
         	return;
         }
@@ -512,18 +518,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager
 				.changePosition(playlistPosition, filePosition)
-				.thenPromise(this::observePlaybackFileChanges);
+				.thenPromise(this::observePlaybackFileChanges)
+				.error(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playbackPlaylistStateManager.skipToPrevious().thenPromise(this::observePlaybackFileChanges);
+			playbackPlaylistStateManager.skipToPrevious().thenPromise(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playbackPlaylistStateManager.skipToNext().thenPromise(this::observePlaybackFileChanges);
+			playbackPlaylistStateManager.skipToNext().thenPromise(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -541,7 +548,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.then(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
-				}, this));
+				}, this))
+				.error(UnhandledRejectionHandler);
 
 			return;
 		}
@@ -550,7 +558,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			playbackPlaylistStateManager.removeFileAtPosition(filePosition);
+			playbackPlaylistStateManager.removeFileAtPosition(filePosition).error(UnhandledRejectionHandler);
 		}
 	}
 
