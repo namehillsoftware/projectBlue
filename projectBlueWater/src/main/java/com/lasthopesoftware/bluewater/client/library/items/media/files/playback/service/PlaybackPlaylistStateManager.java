@@ -122,6 +122,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 	}
 
 	synchronized IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
+		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
+			fileChangedObservableConnection.dispose();
+
 		if (preparedPlaybackQueue != null) {
 			try {
 				preparedPlaybackQueue.close();
