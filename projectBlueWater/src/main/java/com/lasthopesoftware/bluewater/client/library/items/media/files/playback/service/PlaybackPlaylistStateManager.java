@@ -400,6 +400,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		if (playlistPlayer != null)	playlistPlayer.close();
 
+		isPlaying = false;
+
 		if (preparedPlaybackQueue != null) preparedPlaybackQueue.close();
 	}
 }
