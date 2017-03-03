@@ -53,9 +53,9 @@ public class PreparedPlaybackQueue implements
 					continue;
 				}
 
-				positionedPreparingFile.positionedBufferingPlaybackHandlerPromise.cancel();
+				positionedPreparingFile.bufferingPlaybackHandlerPromise.cancel();
 				while (bufferingMediaPlayerPromises.size() > 0)
-					bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
+					bufferingMediaPlayerPromises.poll().bufferingPlaybackHandlerPromise.cancel();
 
 				while (newPositionedPreparingMediaPlayerPromises.size() > 0)
 					bufferingMediaPlayerPromises.offer(newPositionedPreparingMediaPlayerPromises.poll());
@@ -64,8 +64,7 @@ public class PreparedPlaybackQueue implements
 					enqueuePositionedPreparingFile(
 						new PositionedPreparingFile(
 							positionedFile,
-							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, 0)
-								.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler))));
+							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, 0)));
 				}
 
 				break;
@@ -88,7 +87,7 @@ public class PreparedPlaybackQueue implements
 
 		return
 			currentPreparingPlaybackHandlerPromise != null ?
-				currentPreparingPlaybackHandlerPromise.positionedBufferingPlaybackHandlerPromise.then(this) :
+				currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.then(handler -> new PositionedBufferingPlaybackHandler(currentPreparingPlaybackHandlerPromise.positionedFile, handler)).then(this) :
 				null;
 	}
 
@@ -108,8 +107,7 @@ public class PreparedPlaybackQueue implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, preparedAt)
-					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler)));
+				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, preparedAt));
 	}
 
 	@Override
@@ -135,7 +133,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	private void enqueuePositionedPreparingFile(PositionedPreparingFile positionedPreparingFile) {
-		positionedPreparingFile.positionedBufferingPlaybackHandlerPromise.then(this);
+		positionedPreparingFile.bufferingPlaybackHandlerPromise.then(handler -> new PositionedBufferingPlaybackHandler(currentPreparingPlaybackHandlerPromise.positionedFile, handler)).then(this);
 
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
@@ -149,13 +147,13 @@ public class PreparedPlaybackQueue implements
 	@Override
 	public void close() throws IOException {
 		if (currentPreparingPlaybackHandlerPromise != null)
-			currentPreparingPlaybackHandlerPromise.positionedBufferingPlaybackHandlerPromise.cancel();
+			currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
 
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
 			while (bufferingMediaPlayerPromises.size() > 0)
-				bufferingMediaPlayerPromises.poll().positionedBufferingPlaybackHandlerPromise.cancel();
+				bufferingMediaPlayerPromises.poll().bufferingPlaybackHandlerPromise.cancel();
 		} finally {
 			writeLock.unlock();
 		}
@@ -163,11 +161,11 @@ public class PreparedPlaybackQueue implements
 
 	private static class PositionedPreparingFile {
 		final PositionedFile positionedFile;
-		final IPromise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise;
+		final IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise;
 
-		private PositionedPreparingFile(PositionedFile positionedFile, IPromise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise) {
+		private PositionedPreparingFile(PositionedFile positionedFile, IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise) {
 			this.positionedFile = positionedFile;
-			this.positionedBufferingPlaybackHandlerPromise = positionedBufferingPlaybackHandlerPromise;
+			this.bufferingPlaybackHandlerPromise = bufferingPlaybackHandlerPromise;
 		}
 	}
 }

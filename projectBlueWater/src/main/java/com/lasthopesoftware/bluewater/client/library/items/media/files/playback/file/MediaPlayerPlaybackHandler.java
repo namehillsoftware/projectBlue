@@ -71,8 +71,13 @@ public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public synchronized IPromise<IPlaybackHandler> promisePlayback() {
-		if (!isPlaying())
-			mediaPlayer.start();
+		if (!isPlaying()) {
+			try {
+				mediaPlayer.start();
+			} catch (IllegalStateException e) {
+				mediaPlayer.release();
+			}
+		}
 
 		return playbackPromise;
 	}

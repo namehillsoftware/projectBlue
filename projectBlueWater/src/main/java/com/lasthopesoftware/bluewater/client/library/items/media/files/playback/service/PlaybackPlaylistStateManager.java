@@ -62,6 +62,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
+	private Disposable subscription;
 
 	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ISpecificLibraryProvider libraryProvider, float initialVolume) {
 		this.context = context;
@@ -119,21 +120,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
-		if (preparedPlaybackQueue != null) {
-			try {
-				preparedPlaybackQueue.close();
-			} catch (IOException e) {
-				logger.error("There was an error closing the prepared playback queue", e);
-			}
-		}
-
-		if (playlistPlayer != null) {
-			try {
-				playlistPlayer.close();
-			} catch (IOException e) {
-				logger.error("There was an error closing the playlist player", e);
-			}
-		}
+		if (subscription != null)
+			subscription.dispose();
 
 		final IPromise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
@@ -203,6 +191,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (playlistPlayer != null) {
 			playlistPlayer.resume();
 
+			isPlaying = true;
+
 			saveStateToLibrary();
 
 			return new Promise<>(observableProxy);
@@ -221,6 +211,8 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (playlistPlayer != null)
 			playlistPlayer.pause();
 
+		isPlaying = false;
+
 		saveStateToLibrary();
 	}
 
@@ -232,6 +224,9 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
+		if (subscription != null)
+			subscription.dispose();
+
 		if (playlistPlayer != null)
 			playlistPlayer.close();
 
@@ -240,7 +235,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		observableProxy = Observable.create(playlistPlayer).publish();
 
-		observableProxy.subscribe(
+		subscription = observableProxy.subscribe(
 			p -> {
 				isPlaying = true;
 				positionedPlaybackFile = p;
@@ -337,10 +332,12 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final int startPosition = Math.max(nowPlaying.playlistPosition, 0);
 
-		positionedFileQueueGenerator =
-			nowPlaying.isRepeating
-				? positionedFileQueueProvider::getCyclicalQueue
-				: positionedFileQueueProvider::getCompletableQueue;
+		if (positionedFileQueueGenerator == null) {
+			positionedFileQueueGenerator =
+				nowPlaying.isRepeating
+					? positionedFileQueueProvider::getCyclicalQueue
+					: positionedFileQueueProvider::getCompletableQueue;
+		}
 
 		return
 			lazyLibraryPromise

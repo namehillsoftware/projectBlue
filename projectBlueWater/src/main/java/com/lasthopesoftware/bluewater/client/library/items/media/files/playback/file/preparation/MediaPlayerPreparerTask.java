@@ -63,8 +63,20 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 		});
 
 		mediaPlayer.setOnPreparedListener(mp -> {
+			if (isCancelled) {
+				reject.withError(new CancellationException());
+				return;
+			}
+
 			if (prepareAt > 0) {
-				mediaPlayer.setOnSeekCompleteListener(seekMp -> resolve.withResult(new MediaPlayerPlaybackHandler(seekMp)));
+				mediaPlayer.setOnSeekCompleteListener(seekMp -> {
+					if (isCancelled) {
+						reject.withError(new CancellationException());
+						return;
+					}
+
+					resolve.withResult(new MediaPlayerPlaybackHandler(seekMp));
+				});
 				mediaPlayer.seekTo(prepareAt);
 				return;
 			}
