@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service;
+package com.lasthopesoftware.bluewater.client.playback.service;
 
 
 import android.app.Notification;
@@ -45,12 +45,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.IPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaybackStartedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -66,7 +66,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromi
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.OneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;

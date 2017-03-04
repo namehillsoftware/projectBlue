@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service;
+package com.lasthopesoftware.bluewater.client.playback.service;
 
 import android.content.Context;
 

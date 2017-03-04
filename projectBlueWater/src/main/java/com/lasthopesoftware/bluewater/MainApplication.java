@@ -12,7 +12,7 @@ import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnPlaybackCompleteReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;

@@ -7,7 +7,7 @@ import android.content.Intent;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;

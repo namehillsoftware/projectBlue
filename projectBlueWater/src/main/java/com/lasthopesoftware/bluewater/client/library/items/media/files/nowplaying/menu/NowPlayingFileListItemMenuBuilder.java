@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.File
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;

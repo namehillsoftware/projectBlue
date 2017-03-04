@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayC
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;

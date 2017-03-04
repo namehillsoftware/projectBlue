@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 /**

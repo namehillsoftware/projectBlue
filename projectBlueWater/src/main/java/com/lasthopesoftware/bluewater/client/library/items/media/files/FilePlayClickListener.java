@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
 
