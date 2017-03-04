@@ -58,8 +58,8 @@ public class WhenThePromiseIsCancelledAfterResolution {
 	}
 
 	@Test
-	public void thenTheCancellableIsCalled() {
-		verify(cancellationRunnable, times(1)).run();
+	public void thenTheCancellableIsNotCalled() {
+		verify(cancellationRunnable, times(0)).run();
 	}
 
 	private static class ThreadCanceller implements Runnable {

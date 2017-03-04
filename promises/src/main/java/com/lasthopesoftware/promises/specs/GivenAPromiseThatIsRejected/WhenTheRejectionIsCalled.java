@@ -13,7 +13,7 @@ import org.junit.Test;
 public class WhenTheRejectionIsCalled {
 
 	private Exception thrownException;
-	private Exception caughtException;
+	private Throwable caughtException;
 
 	@Before
 	public void before() {

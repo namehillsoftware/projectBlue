@@ -12,7 +12,7 @@ import org.junit.Test;
 
 public class WhenTheCancellationIsCalled {
 
-	private Exception caughtException;
+	private Throwable caughtException;
 
 	@Before
 	public void before() {

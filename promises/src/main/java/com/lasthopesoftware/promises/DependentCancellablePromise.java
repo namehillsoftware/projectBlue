@@ -44,13 +44,16 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 	}
 
 	public final void cancel() {
+		final boolean isResolvedLocally;
 		resolveSync.readLock().lock();
 		try {
-			if (!isResolved)
-				cancellation.cancel();
+			isResolvedLocally = isResolved;
 		} finally {
 			resolveSync.readLock().unlock();
 		}
+
+		if (!isResolvedLocally)
+			cancellation.cancel();
 	}
 
 	private void resolve(TResult result, Throwable error) {

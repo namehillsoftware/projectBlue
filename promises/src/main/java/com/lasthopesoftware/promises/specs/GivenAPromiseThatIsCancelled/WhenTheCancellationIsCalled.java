@@ -12,8 +12,8 @@ import org.junit.Test;
 
 public class WhenTheCancellationIsCalled {
 
-	private Exception thrownException;
-	private Exception caughtException;
+	private Throwable thrownException;
+	private Throwable caughtException;
 
 	@Before
 	public void before() {

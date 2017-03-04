@@ -9,10 +9,10 @@ sourceSets {
     }
 
     test {
-//        java {
-//            srcDir 'src/main/java/com/lasthopesoftware/promises'
-//            include '**/specs/**'
-//        }
+        java {
+            srcDir 'src/main/java'
+            include '**/specs/**'
+        }
     }
 }
 
