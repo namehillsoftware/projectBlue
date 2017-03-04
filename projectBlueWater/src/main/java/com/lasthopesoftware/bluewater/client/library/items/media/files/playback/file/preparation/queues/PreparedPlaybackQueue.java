@@ -86,9 +86,11 @@ public class PreparedPlaybackQueue implements
 				: getNextPreparingMediaPlayerPromise(preparedAt);
 
 		return
-			currentPreparingPlaybackHandlerPromise != null ?
-				currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.then(handler -> new PositionedBufferingPlaybackHandler(currentPreparingPlaybackHandlerPromise.positionedFile, handler)).then(this) :
-				null;
+			currentPreparingPlaybackHandlerPromise != null
+				? currentPreparingPlaybackHandlerPromise
+					.promisePositionedBufferingPlaybackHandler()
+					.then(this)
+				: null;
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
@@ -166,6 +168,12 @@ public class PreparedPlaybackQueue implements
 		private PositionedPreparingFile(PositionedFile positionedFile, IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise) {
 			this.positionedFile = positionedFile;
 			this.bufferingPlaybackHandlerPromise = bufferingPlaybackHandlerPromise;
+		}
+
+		IPromise<PositionedBufferingPlaybackHandler> promisePositionedBufferingPlaybackHandler() {
+			return
+				bufferingPlaybackHandlerPromise
+					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
 		}
 	}
 }
