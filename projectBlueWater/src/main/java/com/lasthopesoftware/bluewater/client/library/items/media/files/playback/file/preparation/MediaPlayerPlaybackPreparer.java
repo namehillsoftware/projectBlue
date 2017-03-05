@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 

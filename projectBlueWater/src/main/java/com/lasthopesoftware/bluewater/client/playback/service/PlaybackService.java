@@ -62,9 +62,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -476,7 +474,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
 				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
-				.thenPromise(this::observePlaybackFileChanges)
+				.then(this::observePlaybackFileChanges)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
 				.then(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
@@ -490,7 +488,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action.equals(Action.play)) {
         	playbackPlaylistStateManager
 				.resume()
-				.thenPromise(this::restartObservable)
+				.then(this::restartObservable)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
 				.then(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
@@ -512,19 +510,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager
 				.changePosition(playlistPosition, filePosition)
-				.thenPromise(this::observePlaybackFileChanges)
+				.then(this::observePlaybackFileChanges)
 				.error(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playbackPlaylistStateManager.skipToPrevious().thenPromise(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playbackPlaylistStateManager.skipToPrevious().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playbackPlaylistStateManager.skipToNext().thenPromise(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playbackPlaylistStateManager.skipToNext().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -563,7 +561,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return positionedPlaybackFileObservable;
 	}
 
-	private IPromise<Observable<PositionedPlaybackFile>> restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+	private Observable<PositionedPlaybackFile> restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
 		if (positionedPlaybackFile != null) {
 			positionedPlaybackFileObservable =
 				Observable
@@ -574,31 +572,28 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return observePlaybackFileChanges(positionedPlaybackFileObservable);
 	}
 
-	private IPromise<Observable<PositionedPlaybackFile>> observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
-		return
-			new DispatchedPromise<>(() -> {
-				if (playbackFileChangedSubscription != null)
-					playbackFileChangedSubscription.dispose();
+	private Observable<PositionedPlaybackFile> observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
+		if (playbackFileChangedSubscription != null)
+			playbackFileChangedSubscription.dispose();
 
-				if (playbackFileChangesConnection != null)
-					playbackFileChangesConnection.dispose();
+		if (playbackFileChangesConnection != null)
+			playbackFileChangesConnection.dispose();
 
-				final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesPublisher = observable.publish();
+		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesPublisher = observable.publish();
 
-				final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesReplayer = playbackFileChangesPublisher.replay(1);
+		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesReplayer = playbackFileChangesPublisher.replay(1);
 
-				playbackFileChangedSubscription =
-					playbackFileChangesPublisher.subscribe(
-						this::changePositionedPlaybackFile,
-						this::uncaughtExceptionHandler,
-						this::onPlaylistPlaybackComplete);
+		playbackFileChangedSubscription =
+			playbackFileChangesPublisher.subscribe(
+				this::changePositionedPlaybackFile,
+				this::uncaughtExceptionHandler,
+				this::onPlaylistPlaybackComplete);
 
-				playbackFileChangesConnection = playbackFileChangesPublisher.connect();
+		playbackFileChangesConnection = playbackFileChangesPublisher.connect();
 
-				playbackFileChangesReplayer.connect();
+		playbackFileChangesReplayer.connect();
 
-				return playbackFileChangesReplayer;
-			}, this);
+		return playbackFileChangesReplayer;
 	}
 
 	private void pausePlayback(boolean isUserInterrupted) {
