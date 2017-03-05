@@ -45,12 +45,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -58,6 +52,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -87,11 +87,6 @@ import io.reactivex.observables.ConnectableObservable;
 
 import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
-
-/**
- * @author david
- *
- */
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
@@ -307,7 +302,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
-		wifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
+		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
         wifiLock.acquire();
 		
         registerRemoteClientControl();
@@ -483,7 +478,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
 				.thenPromise(this::observePlaybackFileChanges)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(f -> isPlaying = true)
+				.then(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
 
 			return;
@@ -497,7 +492,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.resume()
 				.thenPromise(this::restartObservable)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(f -> isPlaying = true)
+				.then(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
 
         	return;
@@ -559,6 +554,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playbackPlaylistStateManager.removeFileAtPosition(filePosition).error(UnhandledRejectionHandler);
 		}
+	}
+
+	private Observable<PositionedPlaybackFile> handlePlaybackStarted(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+		isPlaying = true;
+		NowPlayingActivity.startNowPlayingActivity(this);
+
+		return positionedPlaybackFileObservable;
 	}
 
 	private IPromise<Observable<PositionedPlaybackFile>> restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
