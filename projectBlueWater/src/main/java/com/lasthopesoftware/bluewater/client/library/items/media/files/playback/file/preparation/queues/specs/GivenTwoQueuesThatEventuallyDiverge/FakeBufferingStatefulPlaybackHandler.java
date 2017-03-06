@@ -11,6 +11,6 @@ import com.lasthopesoftware.promises.Promise;
 class FakeBufferingStatefulPlaybackHandler extends StatefulPlaybackHandler {
 	@Override
 	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
-		return new Promise<>(FakeBufferingStatefulPlaybackHandler.this);
+		return new Promise<>(this);
 	}
 }

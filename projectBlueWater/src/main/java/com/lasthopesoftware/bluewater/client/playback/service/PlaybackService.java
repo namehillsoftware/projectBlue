@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -437,12 +438,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		playbackPlaylistStateManager =
 			new PlaybackPlaylistStateManager(
-				this,
 				connectionProvider,
-				new BestMatchUriProvider(this, connectionProvider, library),
+				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				new PositionedFileQueueProvider(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-				libraryProvider,
 				1.0f);
 
 		return playbackPlaylistStateManager;

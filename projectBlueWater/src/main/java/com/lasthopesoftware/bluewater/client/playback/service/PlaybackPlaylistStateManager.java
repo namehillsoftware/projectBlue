@@ -1,30 +1,22 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
-import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.MediaPlayerInitializer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +25,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -40,16 +33,14 @@ import io.reactivex.observables.ConnectableObservable;
 
 import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
-class PlaybackPlaylistStateManager implements Closeable {
+public class PlaybackPlaylistStateManager implements Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
-	private final Context context;
 	private final IConnectionProvider connectionProvider;
-	private final IFileUriProvider fileUriProvider;
+	private final IPlaybackPreparerProvider playbackPreparerProvider;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
-	private final ILazy<IPromise<Library>> lazyLibraryPromise;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
@@ -64,29 +55,22 @@ class PlaybackPlaylistStateManager implements Closeable {
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
 
-	PlaybackPlaylistStateManager(Context context, IConnectionProvider connectionProvider, IFileUriProvider fileUriProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, ISpecificLibraryProvider libraryProvider, float initialVolume) {
-		this.context = context;
+	public PlaybackPlaylistStateManager(IConnectionProvider connectionProvider, IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, float initialVolume) {
 		this.connectionProvider = connectionProvider;
-		this.fileUriProvider = fileUriProvider;
+		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
-		this.lazyLibraryPromise = new AbstractSynchronousLazy<IPromise<Library>>() {
-			@Override
-			protected IPromise<Library> initialize() throws Exception {
-				return libraryProvider.getLibrary();
-			}
-		};
 		volume = initialVolume;
 	}
 
-	IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
+	public IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
 		this.playlist = playlist;
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
-				.thenPromise(this::initializePreparedPlaybackQueue)
+				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
 
 		observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
@@ -94,7 +78,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		return observablePromise;
 	}
 
-	IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
+	public IPromise<Observable<PositionedPlaybackFile>> skipToNext() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -105,7 +89,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
 	}
 
-	IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
+	public IPromise<Observable<PositionedPlaybackFile>> skipToPrevious() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -116,7 +100,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
 
-	synchronized IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
+	public synchronized IPromise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
@@ -133,7 +117,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 		if (isPlaying) {
 			final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 				nowPlayingPromise
-					.thenPromise(this::initializePreparedPlaybackQueue)
+					.then(this::initializePreparedPlaybackQueue)
 					.then(q -> startPlayback(q, filePosition));
 
 			observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
@@ -146,9 +130,10 @@ class PlaybackPlaylistStateManager implements Closeable {
 				.then((np, resolve, reject, onCancelled) -> {
 					final IFile file = np.playlist.get(playlistPosition);
 					final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
+
 					onCancelled.runWith(() -> {
 						filePropertiesProvider.cancel();
-						reject.withError(new InterruptedException());
+						reject.withError(new CancellationException());
 					});
 
 					filePropertiesProvider
@@ -200,7 +185,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 
 		final IPromise<Observable<PositionedPlaybackFile>> observablePromise =
 			restorePlaylistFromStorage()
-				.thenPromise(np -> initializePreparedPlaybackQueue(np).then(queue -> startPlayback(queue, np.filePosition)));
+				.then(np -> startPlayback(initializePreparedPlaybackQueue(np), np.filePosition));
 
 		observablePromise.error(runningCarelessly(this::uncaughtExceptionHandler));
 
@@ -310,6 +295,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
+					np.playlist = playlist;
 					np.playlistPosition = playlistPosition;
 					np.filePosition = filePosition;
 					return nowPlayingRepository.updateNowPlaying(np);
@@ -326,7 +312,7 @@ class PlaybackPlaylistStateManager implements Closeable {
 				});
 	}
 
-	private IPromise<PreparedPlaybackQueue> initializePreparedPlaybackQueue(NowPlaying nowPlaying) throws IOException {
+	private PreparedPlaybackQueue initializePreparedPlaybackQueue(NowPlaying nowPlaying) throws IOException {
 		if (preparedPlaybackQueue != null)
 			preparedPlaybackQueue.close();
 
@@ -340,18 +326,10 @@ class PlaybackPlaylistStateManager implements Closeable {
 		}
 
 		return
-			lazyLibraryPromise
-				.getObject()
-				.then(library -> {
-					preparedPlaybackQueue =
-						new PreparedPlaybackQueue(
-							new MediaPlayerPlaybackPreparer(
-								fileUriProvider,
-								new MediaPlayerInitializer(context, library)),
-							positionedFileQueueGenerator.resultFrom(playlist, startPosition));
-
-					return preparedPlaybackQueue;
-				});
+			preparedPlaybackQueue =
+				new PreparedPlaybackQueue(
+					this.playbackPreparerProvider.providePlaybackPreparer(),
+					positionedFileQueueGenerator.resultFrom(playlist, startPosition));
 	}
 
 	private IPromise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {
