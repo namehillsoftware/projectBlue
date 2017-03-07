@@ -21,13 +21,13 @@ import java.util.concurrent.CancellationException;
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+class MediaPlayerPreparerTask implements
+	ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private final IFile file;
 	private final int prepareAt;
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
-	private boolean isCancelled;
 
 	MediaPlayerPreparerTask(IFile file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.file = file;
@@ -46,48 +46,89 @@ class MediaPlayerPreparerTask implements ThreeParameterAction<IResolvedPromise<I
 			return;
 		}
 
-		onCancelled.runWith(() -> {
-			isCancelled = true;
+		final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
+			new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, resolve, reject);
 
-			mediaPlayer.release();
-		});
+		onCancelled.runWith(mediaPlayerPreparationHandler);
 
-		if (isCancelled) {
+		if (mediaPlayerPreparationHandler.isCancelled()) {
 			reject.withError(new CancellationException());
 			return;
 		}
 
-		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+		mediaPlayer.setOnErrorListener(mediaPlayerPreparationHandler);
+
+		mediaPlayer.setOnPreparedListener(mediaPlayerPreparationHandler);
+
+		try {
+			mediaPlayer.prepare();
+		} catch (IOException e) {
+			reject.withError(e);
+		}
+	}
+
+	private static class MediaPlayerPreparationHandler
+		implements
+			MediaPlayer.OnErrorListener,
+			MediaPlayer.OnPreparedListener,
+			MediaPlayer.OnSeekCompleteListener,
+			Runnable
+	{
+		private final MediaPlayer mediaPlayer;
+		private final IResolvedPromise<IBufferingPlaybackHandler> resolve;
+		private final IRejectedPromise reject;
+		private final int prepareAt;
+
+		private boolean isCancelled;
+
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject) {
+			this.mediaPlayer = mediaPlayer;
+			this.resolve = resolve;
+			this.reject = reject;
+			this.prepareAt = prepareAt;
+		}
+
+		@Override
+		public boolean onError(MediaPlayer mp, int what, int extra) {
 			reject.withError(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
 			return true;
-		});
+		}
 
-		mediaPlayer.setOnPreparedListener(mp -> {
+		@Override
+		public void onPrepared(MediaPlayer mp) {
 			if (isCancelled) {
 				reject.withError(new CancellationException());
 				return;
 			}
 
 			if (prepareAt > 0) {
-				mediaPlayer.setOnSeekCompleteListener(seekMp -> {
-					if (isCancelled) {
-						reject.withError(new CancellationException());
-						return;
-					}
-
-					resolve.withResult(new MediaPlayerPlaybackHandler(seekMp));
-				});
+				mediaPlayer.setOnSeekCompleteListener(this);
 				mediaPlayer.seekTo(prepareAt);
 				return;
 			}
 
 			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
-		});
+		}
 
-		try {
-			mediaPlayer.prepare();
-		} catch (IOException e) {
-			reject.withError(e);
+		@Override
+		public void onSeekComplete(MediaPlayer mp) {
+			if (isCancelled) {
+				reject.withError(new CancellationException());
+				return;
+			}
+
+			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
+		}
+
+		@Override
+		public void run() {
+			isCancelled = true;
+
+			mediaPlayer.release();
+		}
+
+		public boolean isCancelled() {
+			return isCancelled;
 		}
 	}
 }
