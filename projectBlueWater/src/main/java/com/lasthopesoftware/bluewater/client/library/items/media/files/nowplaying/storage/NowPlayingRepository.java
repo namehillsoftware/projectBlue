@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -37,9 +37,22 @@ public class NowPlayingRepository implements INowPlayingRepository {
 				.thenPromise(library -> {
 					libraryId = library.getId();
 
+					final String savedTracksString = library.getSavedTracksString();
+					if (savedTracksString == null) {
+						final NowPlaying nowPlaying =
+							new NowPlaying(
+								library.getNowPlayingId(),
+								library.getNowPlayingProgress(),
+								library.isRepeating());
+
+						nowPlayingCache.put(libraryId, nowPlaying);
+
+						return new Promise<>(nowPlaying);
+					}
+
 					return
 						FileStringListUtilities
-							.promiseParsedFileStringList(library.getSavedTracksString())
+							.promiseParsedFileStringList(savedTracksString)
 							.then(files -> {
 								final NowPlaying nowPlaying =
 									new NowPlaying(

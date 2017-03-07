@@ -1,13 +1,17 @@
 package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAStandardPlaylistStateManager.AndAPlaylistIsPreparing;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
+import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -20,41 +24,68 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import io.reactivex.Observable;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class WhenATrackIsSwitched {
+
+	private static Observable<PositionedPlaybackFile> originalPlayedFiles;
+	private static Observable<PositionedPlaybackFile> trackSwitchedFiles;
 
 	@BeforeClass
 	public static void before() {
 		FakePlaybackPreparerProvider fakePlaybackPreparerProvider = new FakePlaybackPreparerProvider();
+
+		final Library library = new Library();
+		library.setId(1);
+
+		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
+		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
+
+		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
+		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager =
 			new PlaybackPlaylistStateManager(
 				mock(IConnectionProvider.class),
 				fakePlaybackPreparerProvider,
 				mock(IPositionedFileQueueProvider.class),
-				mock(INowPlayingRepository.class),
+				new NowPlayingRepository(libraryProvider, libraryStorage),
 				1.0f);
 
-		playbackPlaylistStateManager.startPlaylist(
-			Arrays.asList(
-				new File(1),
-				new File(2),
-				new File(3),
-				new File(4),
-				new File(5)), 0, 0);
 
+		playbackPlaylistStateManager
+			.startPlaylist(
+				Arrays.asList(
+					new File(1),
+					new File(2),
+					new File(3),
+					new File(4),
+					new File(5)), 0, 0)
+			.then(o -> originalPlayedFiles = o);
+
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		playbackPlaylistStateManager
+			.changePosition(3, 0)
+			.then(o -> trackSwitchedFiles = o);
+
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}
 
 	@Test
 	public void thenThePreviousPlaylistPreparationIsCancelled() {
-
+		assertThat(originalPlayedFiles.toList().blockingGet().size()).isEqualTo(1);
 	}
 
 	@Test
 	public void thenTheNextPlaylistIsPrepared() {
-
+		assertThat(trackSwitchedFiles.toList().blockingGet().size()).isEqualTo(2);
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
@@ -73,7 +104,8 @@ public class WhenATrackIsSwitched {
 
 		public IBufferingPlaybackHandler resolve() {
 			final IBufferingPlaybackHandler playbackHandler = new StatefulPlaybackHandler();
-			this.resolve.withResult(playbackHandler);
+			if (resolve != null)
+				resolve.withResult(playbackHandler);
 			return playbackHandler;
 		}
 
