@@ -21,7 +21,7 @@ import java.util.concurrent.CancellationException;
 /**
  * Created by david on 10/3/16.
  */
-class MediaPlayerPreparerTask implements
+final class MediaPlayerPreparerTask implements
 	ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 	private final IFile file;
@@ -67,7 +67,7 @@ class MediaPlayerPreparerTask implements
 		}
 	}
 
-	private static class MediaPlayerPreparationHandler
+	private static final class MediaPlayerPreparationHandler
 		implements
 			MediaPlayer.OnErrorListener,
 			MediaPlayer.OnPreparedListener,

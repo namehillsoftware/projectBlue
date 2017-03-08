@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Created by david on 9/24/16.
  */
-public class MediaPlayerInitializer implements IPlaybackInitialization<MediaPlayer> {
+public final class MediaPlayerInitializer implements IPlaybackInitialization<MediaPlayer> {
 	private Context context;
 	private final Library library;
 

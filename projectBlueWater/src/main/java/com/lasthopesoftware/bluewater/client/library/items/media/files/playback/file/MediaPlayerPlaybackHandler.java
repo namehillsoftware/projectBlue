@@ -13,7 +13,7 @@ import java.io.IOException;
  * Created by david on 9/20/16.
  */
 
-public class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
+public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
 	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;

@@ -10,7 +10,7 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 10/4/16.
  */
-class MediaPlayerPlaybackCompletedTask implements TwoParameterAction<IResolvedPromise<IPlaybackHandler>, IRejectedPromise> {
+final class MediaPlayerPlaybackCompletedTask implements TwoParameterAction<IResolvedPromise<IPlaybackHandler>, IRejectedPromise> {
 
 	private final IPlaybackHandler playbackHandler;
 	private final MediaPlayer mediaPlayer;

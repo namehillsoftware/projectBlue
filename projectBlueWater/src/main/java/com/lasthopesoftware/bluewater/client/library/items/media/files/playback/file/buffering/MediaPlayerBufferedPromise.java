@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 10/23/16.
  */
-public class MediaPlayerBufferedPromise implements TwoParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise> {
+public final class MediaPlayerBufferedPromise implements TwoParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
 

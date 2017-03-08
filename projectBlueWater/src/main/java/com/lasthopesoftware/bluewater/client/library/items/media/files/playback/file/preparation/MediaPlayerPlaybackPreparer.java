@@ -15,14 +15,14 @@ import java.util.concurrent.Executors;
 /**
  * Created by david on 11/6/16.
  */
-public class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
+final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 
 	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newSingleThreadExecutor();
 
 	private final IFileUriProvider fileUriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	public MediaPlayerPlaybackPreparer(IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+	MediaPlayerPlaybackPreparer(IFileUriProvider fileUriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.fileUriProvider = fileUriProvider;
 		this.playbackInitialization = playbackInitialization;
 	}
