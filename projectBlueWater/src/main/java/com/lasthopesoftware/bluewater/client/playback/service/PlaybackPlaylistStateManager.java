@@ -28,12 +28,14 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
 import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
-public class PlaybackPlaylistStateManager implements Closeable {
+public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<PositionedPlaybackFile>, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
@@ -381,5 +383,10 @@ public class PlaybackPlaylistStateManager implements Closeable {
 		isPlaying = false;
 
 		if (preparedPlaybackQueue != null) preparedPlaybackQueue.close();
+	}
+
+	@Override
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
+
 	}
 }

@@ -27,14 +27,13 @@ import java.util.Arrays;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class WhenATrackIsSwitched {
 
-	private static Observable<PositionedPlaybackFile> originalPlayedFiles;
-	private static Observable<PositionedPlaybackFile> trackSwitchedFiles;
+	private static PositionedPlaybackFile nextSwitchedFile;
 
 	@BeforeClass
 	public static void before() {
@@ -49,13 +48,14 @@ public class WhenATrackIsSwitched {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackPlaylistStateManager playbackPlaylistStateManager =
-			new PlaybackPlaylistStateManager(
-				mock(IConnectionProvider.class),
-				fakePlaybackPreparerProvider,
-				mock(IPositionedFileQueueProvider.class),
-				new NowPlayingRepository(libraryProvider, libraryStorage),
-				1.0f);
+		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+			mock(IConnectionProvider.class),
+			fakePlaybackPreparerProvider,
+			mock(IPositionedFileQueueProvider.class),
+			new NowPlayingRepository(libraryProvider, libraryStorage),
+			1.0f);
+
+		final Observable<PositionedPlaybackFile> trackChanges = Observable.create(playbackPlaylistStateManager);
 
 
 		playbackPlaylistStateManager
@@ -65,27 +65,18 @@ public class WhenATrackIsSwitched {
 					new File(2),
 					new File(3),
 					new File(4),
-					new File(5)), 0, 0)
-			.then(o -> originalPlayedFiles = o);
+					new File(5)), 0, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
-		playbackPlaylistStateManager
-			.changePosition(3, 0)
-			.then(o -> trackSwitchedFiles = o);
+		playbackPlaylistStateManager.changePosition(3, 0);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		nextSwitchedFile = trackChanges.blockingFirst();
 	}
 
 	@Test
-	public void thenThePreviousPlaylistPreparationIsCancelled() {
-		assertThat(originalPlayedFiles.toList().blockingGet().size()).isEqualTo(1);
-	}
-
-	@Test
-	public void thenTheNextPlaylistIsPrepared() {
-		assertThat(trackSwitchedFiles.toList().blockingGet().size()).isEqualTo(2);
+	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
+		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
