@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -24,12 +24,12 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTheVolume {
 
-	private StatefulPlaybackHandler playbackHandlerUnderTest;
+	private FakeBufferingPlaybackHandler playbackHandlerUnderTest;
 
 	@Before
 	public void before() {
 		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
-		playbackHandlerUnderTest = new StatefulPlaybackHandler();
+		playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new File(1)));

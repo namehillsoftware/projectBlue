@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.promises.IPromise;
@@ -23,11 +24,11 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTheVolume {
 
-	private StatefulPlaybackHandler playbackHandler;
+	private FakeBufferingPlaybackHandler playbackHandler;
 
 	@Before
 	public void before() {
-		playbackHandler = new StatefulPlaybackHandler();
+		playbackHandler = new FakeBufferingPlaybackHandler();
 		playbackHandler.promisePlayback();
 
 		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =

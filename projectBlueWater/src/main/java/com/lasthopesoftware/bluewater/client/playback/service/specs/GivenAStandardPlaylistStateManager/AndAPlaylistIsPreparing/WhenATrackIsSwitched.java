@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.StatefulPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -71,6 +71,8 @@ public class WhenATrackIsSwitched {
 
 		playbackPlaylistStateManager.changePosition(3, 0);
 
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
 		nextSwitchedFile = trackChanges.blockingFirst();
 	}
 
@@ -94,7 +96,7 @@ public class WhenATrackIsSwitched {
 		private IResolvedPromise<IBufferingPlaybackHandler> resolve;
 
 		public IBufferingPlaybackHandler resolve() {
-			final IBufferingPlaybackHandler playbackHandler = new StatefulPlaybackHandler();
+			final IBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
 			if (resolve != null)
 				resolve.withResult(playbackHandler);
 			return playbackHandler;

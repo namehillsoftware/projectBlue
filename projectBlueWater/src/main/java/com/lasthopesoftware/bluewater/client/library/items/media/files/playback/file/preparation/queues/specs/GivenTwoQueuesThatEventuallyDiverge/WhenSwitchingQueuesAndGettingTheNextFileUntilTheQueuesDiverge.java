@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -45,7 +46,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
-				(file, preparedAt) -> new Promise<>(new FakeBufferingStatefulPlaybackHandler()),
+				(file, preparedAt) -> new Promise<>(new FakeBufferingPlaybackHandler()),
 				positionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);
@@ -68,13 +69,4 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 	public void thenTheQueueContinues() {
 		assertThat(positionedPlaybackFile).isEqualTo(expectedPositionedPlaybackFile);
 	}
-
-	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
-
-		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			resolve.withResult(new FakeBufferingStatefulPlaybackHandler());
-		}
-	}
-
 }
