@@ -24,7 +24,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +59,7 @@ public class WhenObservingPlayback {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		final Maybe<PositionedPlaybackFile> firstElement = Observable.create(playbackPlaylistStateManager).firstElement();
+		Observable.create(playbackPlaylistStateManager).subscribe(p -> firstSwitchedFile = p);
 
 		playbackPlaylistStateManager
 			.startPlaylist(
@@ -72,13 +71,11 @@ public class WhenObservingPlayback {
 					new File(5)), 0, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		firstSwitchedFile = firstElement.blockingGet();
 	}
 
 	@Test
 	public void thenTheFirstTrackIsBroadcast() {
-		assertThat(firstSwitchedFile.getPosition()).isEqualTo(1);
+		assertThat(firstSwitchedFile.getPosition()).isEqualTo(0);
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
