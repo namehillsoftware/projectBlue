@@ -56,6 +56,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
+	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 
 	public PlaybackPlaylistStateManager(IConnectionProvider connectionProvider, IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, float initialVolume) {
 		this.connectionProvider = connectionProvider;
@@ -63,6 +64,13 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
 		volume = initialVolume;
+	}
+
+
+
+	@Override
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
+		observableEmitter = e;
 	}
 
 	public IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
@@ -226,6 +234,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			p -> {
 				isPlaying = true;
 				positionedPlaybackFile = p;
+				this.observableEmitter.onNext(p);
 				saveStateToLibrary();
 			},
 			this::uncaughtExceptionHandler,
@@ -383,10 +392,5 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		isPlaying = false;
 
 		if (preparedPlaybackQueue != null) preparedPlaybackQueue.close();
-	}
-
-	@Override
-	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
-
 	}
 }

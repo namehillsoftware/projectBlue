@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAStandardPlaylistStateManager.AndAPlaylistIsPreparing;
+package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAStandardPlaylistStateManager.AndPlaybackIsStarted;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
@@ -24,20 +24,25 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenATrackIsSwitched {
+/**
+ * Created by david on 3/11/17.
+ */
 
-	private static PositionedPlaybackFile nextSwitchedFile;
+public class WhenObservingPlayback {
+
+	private static PositionedPlaybackFile firstSwitchedFile;
 
 	@BeforeClass
-	public static void before() {
-		FakePlaybackPreparerProvider fakePlaybackPreparerProvider = new FakePlaybackPreparerProvider();
+	public static void context() {
+		final FakePlaybackPreparerProvider fakePlaybackPreparerProvider = new FakePlaybackPreparerProvider();
 
 		final Library library = new Library();
 		library.setId(1);
@@ -51,11 +56,11 @@ public class WhenATrackIsSwitched {
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			mock(IConnectionProvider.class),
 			fakePlaybackPreparerProvider,
-			mock(IPositionedFileQueueProvider.class),
+			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		final Observable<PositionedPlaybackFile> trackChanges = Observable.create(playbackPlaylistStateManager);
+		final Maybe<PositionedPlaybackFile> firstElement = Observable.create(playbackPlaylistStateManager).firstElement();
 
 		playbackPlaylistStateManager
 			.startPlaylist(
@@ -68,16 +73,12 @@ public class WhenATrackIsSwitched {
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
-		playbackPlaylistStateManager.changePosition(3, 0);
-
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		nextSwitchedFile = trackChanges.blockingFirst();
+		firstSwitchedFile = firstElement.blockingGet();
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
+	public void thenTheFirstTrackIsBroadcast() {
+		assertThat(firstSwitchedFile.getPosition()).isEqualTo(1);
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
