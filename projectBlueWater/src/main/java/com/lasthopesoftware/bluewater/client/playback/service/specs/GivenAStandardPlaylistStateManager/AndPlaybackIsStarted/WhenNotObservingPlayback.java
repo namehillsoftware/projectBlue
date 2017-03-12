@@ -34,13 +34,15 @@ import static org.mockito.Mockito.when;
 
 public class WhenNotObservingPlayback {
 	private static Throwable caughtException;
+	private static Library library;
 
 	@BeforeClass
 	public static void context() {
 		final FakePlaybackPreparerProvider fakePlaybackPreparerProvider = new FakePlaybackPreparerProvider();
 
-		final Library library = new Library();
+		library = new Library();
 		library.setId(1);
+		library.setNowPlayingId(5);
 
 		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
@@ -74,6 +76,11 @@ public class WhenNotObservingPlayback {
 	@Test
 	public void thenAnExceptionIsNotThrown() {
 		assertThat(caughtException).isNull();
+	}
+
+	@Test
+	public void thenTheSavedTrackPositionIsZero() {
+		assertThat(library.getNowPlayingId()).isEqualTo(0);
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
