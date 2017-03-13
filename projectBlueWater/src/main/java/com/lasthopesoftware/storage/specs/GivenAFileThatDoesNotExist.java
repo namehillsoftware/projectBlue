@@ -85,8 +85,6 @@ public class GivenAFileThatDoesNotExist {
 					when(childFile.exists()).thenReturn(false);
 					when(childFile.getParentFile()).thenReturn(parentFile);
 
-					when(mockCallable.resultFrom(any())).thenReturn(true);
-
 					fileAssertionResult = RecursiveFileAssertionTester.recursivelyTestAssertion(childFile, mockCallable);
 				}
 

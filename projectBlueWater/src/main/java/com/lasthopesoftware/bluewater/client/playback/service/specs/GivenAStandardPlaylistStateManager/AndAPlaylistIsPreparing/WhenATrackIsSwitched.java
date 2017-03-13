@@ -59,7 +59,7 @@ public class WhenATrackIsSwitched {
 					new File(4),
 					new File(5)), 0, 0);
 
-		
+
 		playbackPlaylistStateManager.changePosition(3, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
