@@ -6,18 +6,11 @@ import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProv
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +30,7 @@ public class WhenATrackIsSwitched {
 
 	@BeforeClass
 	public static void before() {
-		FakePlaybackPreparerProvider fakePlaybackPreparerProvider = new FakePlaybackPreparerProvider();
+		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
 		final Library library = new Library();
 		library.setId(1);
@@ -55,7 +48,7 @@ public class WhenATrackIsSwitched {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		final Observable<PositionedPlaybackFile> trackChanges = Observable.create(playbackPlaylistStateManager);
+		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
 
 		playbackPlaylistStateManager
 			.startPlaylist(
@@ -71,39 +64,10 @@ public class WhenATrackIsSwitched {
 		playbackPlaylistStateManager.changePosition(3, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		nextSwitchedFile = trackChanges.blockingFirst();
 	}
 
 	@Test
 	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
 		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
-	}
-
-	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
-
-		final DeferredResolution deferredResolution = new DeferredResolution();
-
-		@Override
-		public IPlaybackPreparer providePlaybackPreparer() {
-			return (file, preparedAt) -> new Promise<>(deferredResolution);
-		}
-	}
-
-	private static class DeferredResolution implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
-
-		private IResolvedPromise<IBufferingPlaybackHandler> resolve;
-
-		public IBufferingPlaybackHandler resolve() {
-			final IBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
-			if (resolve != null)
-				resolve.withResult(playbackHandler);
-			return playbackHandler;
-		}
-
-		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			this.resolve = resolve;
-		}
 	}
 }
