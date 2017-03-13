@@ -1,11 +1,10 @@
-package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAStandardPlaylistStateManager.AndAPlaylistIsPreparing;
+package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAPlayingPlaylistStateManager;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -17,16 +16,18 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenATrackIsSwitched {
+/**
+ * Created by david on 3/12/17.
+ */
 
-	private static PositionedPlaybackFile nextSwitchedFile;
+public class WhenPlaybackIsPaused {
+
+	private static PlaybackPlaylistStateManager playbackPlaylistStateManager;
 
 	@BeforeClass
 	public static void before() {
@@ -41,14 +42,12 @@ public class WhenATrackIsSwitched {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+		playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			mock(IConnectionProvider.class),
 			fakePlaybackPreparerProvider,
 			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
-
-		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
 
 		playbackPlaylistStateManager
 			.startPlaylist(
@@ -59,14 +58,13 @@ public class WhenATrackIsSwitched {
 					new File(4),
 					new File(5)), 0, 0);
 
-
-		playbackPlaylistStateManager.changePosition(3, 0);
-
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		playbackPlaylistStateManager.pause();
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
+	public void thenThePlaybackStateIsNotPlaying() {
+		assertThat(playbackPlaylistStateManager.isPlaying()).isFalse();
 	}
 }

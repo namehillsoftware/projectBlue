@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAStandardPlaylistStateManager.AndPlaybackIsStarted;
+package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAHaltedPlaylistStateManager.AndAPlaylistIsPreparing;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
@@ -20,20 +20,16 @@ import java.util.Arrays;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 3/11/17.
- */
+public class WhenATrackIsSwitched {
 
-public class WhenObservingPlayback {
-
-	private static PositionedPlaybackFile firstSwitchedFile;
+	private static PositionedPlaybackFile nextSwitchedFile;
 
 	@BeforeClass
-	public static void context() {
+	public static void before() {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
 		final Library library = new Library();
@@ -52,7 +48,7 @@ public class WhenObservingPlayback {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		Observable.create(playbackPlaylistStateManager).subscribe(p -> firstSwitchedFile = p);
+		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
 
 		playbackPlaylistStateManager
 			.startPlaylist(
@@ -63,11 +59,13 @@ public class WhenObservingPlayback {
 					new File(4),
 					new File(5)), 0, 0);
 
+		playbackPlaylistStateManager.changePosition(3, 0);
+
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}
 
 	@Test
-	public void thenTheFirstTrackIsBroadcast() {
-		assertThat(firstSwitchedFile.getPosition()).isEqualTo(0);
+	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
+		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
 	}
 }
