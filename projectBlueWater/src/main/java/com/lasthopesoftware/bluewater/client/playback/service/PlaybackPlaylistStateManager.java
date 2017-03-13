@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.Pl
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +32,8 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<PositionedPlaybackFile>, Closeable {
 
@@ -65,8 +66,6 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		volume = initialVolume;
 	}
 
-
-
 	@Override
 	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
 		observableEmitter = e;
@@ -82,7 +81,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
 
-		observablePromise.error(VoidFunc.runCarelessly(this::uncaughtExceptionHandler));
+		observablePromise.error(runCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
@@ -129,7 +128,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 					.then(this::initializePreparedPlaybackQueue)
 					.then(q -> startPlayback(q, filePosition));
 
-			observablePromise.error(VoidFunc.runCarelessly(this::uncaughtExceptionHandler));
+			observablePromise.error(runCarelessly(this::uncaughtExceptionHandler));
 
 			return observablePromise;
 		}
@@ -164,7 +163,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 					filePropertiesProvider.execute();
 				});
 
-		singleFileChangeObservablePromise.error(VoidFunc.runCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
+		singleFileChangeObservablePromise.error(runCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
 
 		return singleFileChangeObservablePromise;
 	}
@@ -196,7 +195,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			restorePlaylistFromStorage()
 				.then(np -> startPlayback(initializePreparedPlaybackQueue(np), np.filePosition));
 
-		observablePromise.error(VoidFunc.runCarelessly(this::uncaughtExceptionHandler));
+		observablePromise.error(runCarelessly(this::uncaughtExceptionHandler));
 
 		return observablePromise;
 	}
@@ -246,6 +245,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			});
 
 		fileChangedObservableConnection = observableProxy.connect();
+		isPlaying = true;
 
 		return observableProxy;
 	}

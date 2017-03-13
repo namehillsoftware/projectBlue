@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProv
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
@@ -44,7 +44,7 @@ public class WhenATrackIsSwitched {
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			mock(IConnectionProvider.class),
 			fakePlaybackPreparerProvider,
-			mock(IPositionedFileQueueProvider.class),
+			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
@@ -59,8 +59,7 @@ public class WhenATrackIsSwitched {
 					new File(4),
 					new File(5)), 0, 0);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
+		
 		playbackPlaylistStateManager.changePosition(3, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
