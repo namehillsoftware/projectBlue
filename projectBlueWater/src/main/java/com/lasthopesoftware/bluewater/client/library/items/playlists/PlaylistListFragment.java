@@ -50,7 +50,7 @@ public class PlaylistListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete =
 					new OnGetLibraryViewPlaylistResultsComplete(
 						activity,

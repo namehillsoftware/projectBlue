@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -40,8 +41,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class ImageProvider extends QueuedPromise<Bitmap> {
 	
@@ -132,8 +131,8 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 					return httpAccessPromise;
 				})
-				.then(runningCarelessly(resolve::withResult))
-				.error(runningCarelessly(reject::withError));
+				.then(VoidFunc.runCarelessly(resolve::withResult))
+				.error(VoidFunc.runCarelessly(reject::withError));
 		}
 
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {

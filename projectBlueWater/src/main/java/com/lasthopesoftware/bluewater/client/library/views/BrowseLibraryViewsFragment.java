@@ -150,7 +150,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
 
 		getSelectedBrowserLibrary()
-			.then(VoidFunc.runningCarelessly(library -> {
+			.then(VoidFunc.runCarelessly(library -> {
 				if (library != null)
 					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}));
@@ -163,7 +163,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		if (savedInstanceState == null || viewPager == null) return;
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

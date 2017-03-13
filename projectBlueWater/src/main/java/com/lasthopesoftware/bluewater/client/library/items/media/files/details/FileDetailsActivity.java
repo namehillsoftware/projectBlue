@@ -189,7 +189,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         ImageProvider
 			.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(result -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.IPromise;
+import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +13,6 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import io.reactivex.ObservableEmitter;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 /**
  * Created by david on 11/8/16.
@@ -89,7 +88,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		preparingPlaybackFile
 			.then(this::changePlaybackFile)
 			.thenPromise(this::startFilePlayback)
-			.error(runningCarelessly(this::handlePlaybackException));
+			.error(VoidFunc.runCarelessly(this::handlePlaybackException));
 	}
 
 	private PositionedPlaybackFile changePlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
@@ -107,8 +106,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 		final IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
-		promisedPlayback
-			.then(runningCarelessly(this::closeAndStartNextFile));
+		promisedPlayback.then(VoidFunc.runCarelessly(this::closeAndStartNextFile));
 
 		return promisedPlayback;
 	}

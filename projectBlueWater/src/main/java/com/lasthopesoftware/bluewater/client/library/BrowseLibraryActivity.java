@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -53,8 +54,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -184,7 +183,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -275,7 +274,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

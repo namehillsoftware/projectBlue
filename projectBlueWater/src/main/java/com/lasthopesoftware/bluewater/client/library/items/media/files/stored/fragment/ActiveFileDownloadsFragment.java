@@ -78,7 +78,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		lazyLibraryProvider
 			.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
 				storedFileAccess.getDownloadingStoredFiles()
 					.onComplete((storedFiles) -> {

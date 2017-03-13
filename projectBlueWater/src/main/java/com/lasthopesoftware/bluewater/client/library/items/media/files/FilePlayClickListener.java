@@ -4,9 +4,9 @@ import android.content.Context;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.vedsoft.futures.callables.VoidFunc;
 
@@ -29,7 +29,7 @@ public class FilePlayClickListener extends AbstractMenuClickHandler {
 
 		FileStringListUtilities
 			.promiseSerializedFileStringList(files)
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(files))), context));
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(files))), context));
 
         super.onClick(v);
 	}

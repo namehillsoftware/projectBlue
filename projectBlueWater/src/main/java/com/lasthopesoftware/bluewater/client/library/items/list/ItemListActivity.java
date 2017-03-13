@@ -98,7 +98,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
     private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

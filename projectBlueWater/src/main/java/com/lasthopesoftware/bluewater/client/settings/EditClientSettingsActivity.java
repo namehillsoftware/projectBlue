@@ -27,13 +27,12 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -145,7 +144,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		final int libraryId = intent.getIntExtra(serverIdExtra, -1);
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
-			.then(Dispatch.toContext(runningCarelessly(result -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (result == null) return;
 
 				library = result;
@@ -198,7 +197,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	private void saveLibraryAndFinish() {
-		lazyLibraryProvider.getObject().saveLibrary(library).then(Dispatch.toContext(runningCarelessly(result -> {
+		lazyLibraryProvider.getObject().saveLibrary(library).then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 			saveButton.findView().setText(getText(R.string.btn_saved));
 			finish();
 		}), this));

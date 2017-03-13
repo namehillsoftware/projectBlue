@@ -50,6 +50,7 @@ import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissi
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -61,8 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 /**
  * Created by david on 7/26/15.
@@ -146,7 +145,7 @@ public class SyncService extends Service {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(storedFile.getLibraryId())
-			.then(Dispatch.toContext(runningCarelessly(library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
 				if (urlProvider == null) return;
 
 				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
@@ -245,7 +244,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().then(Dispatch.toContext(runningCarelessly(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().then(Dispatch.toContext(VoidFunc.runCarelessly(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {

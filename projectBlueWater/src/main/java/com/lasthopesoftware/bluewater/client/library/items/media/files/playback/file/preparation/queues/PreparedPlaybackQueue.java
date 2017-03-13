@@ -114,7 +114,7 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public PositionedPlaybackFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runningCarelessly(this));
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runCarelessly(this));
 
 		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFile.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile.file);
 	}

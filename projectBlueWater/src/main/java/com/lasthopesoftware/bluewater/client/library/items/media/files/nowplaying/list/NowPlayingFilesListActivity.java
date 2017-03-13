@@ -45,7 +45,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 			protected ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise> initialize() throws Exception {
 				return
 					Dispatch.toContext(
-						VoidFunc.runningCarelessly(
+						VoidFunc.runCarelessly(
 							new OnGetLibraryNowComplete(
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),

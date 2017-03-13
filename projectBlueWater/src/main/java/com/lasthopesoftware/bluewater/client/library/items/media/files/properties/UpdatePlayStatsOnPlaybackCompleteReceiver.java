@@ -37,7 +37,7 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 
 		libraryProvider
 			.getLibrary(libraryId)
-			.then(VoidFunc.runningCarelessly(library -> AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
+			.then(VoidFunc.runCarelessly(library -> AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
 				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 				try {
 					final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, fileKey);

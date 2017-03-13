@@ -84,8 +84,6 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
-
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
@@ -264,7 +262,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 
-	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = runningCarelessly(this::uncaughtExceptionHandler);
+	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = VoidFunc.runCarelessly(this::uncaughtExceptionHandler);
 
 	public boolean isPlaying() {
 		return isPlaying;
@@ -360,7 +358,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(runningCarelessly(m -> actOnIntent(intent)))
+				.then(VoidFunc.runCarelessly(m -> actOnIntent(intent)))
 				.error(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
@@ -418,7 +416,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(VoidFunc.runningCarelessly(m -> actOnIntent(intentToRun)))
+				.then(VoidFunc.runCarelessly(m -> actOnIntent(intentToRun)))
 				.error(UnhandledRejectionHandler);
 
 			return;
@@ -713,7 +711,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackHandler
 			.promisePlayback()
-			.then(VoidFunc.runningCarelessly(handler -> {
+			.then(VoidFunc.runCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
 				sendBroadcast(getScrobbleIntent(false));
 
@@ -775,7 +773,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			ImageProvider
 				.getImage(this, SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey())
-				.then(Dispatch.toContext(runningCarelessly(bitmap -> {
+				.then(Dispatch.toContext(VoidFunc.runCarelessly(bitmap -> {
 					// Track the remote client bitmap and recycle it in case the remote control client
 					// does not properly recycle the bitmap
 					if (remoteClientBitmap != null) remoteClientBitmap.recycle();

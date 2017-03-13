@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -27,7 +28,6 @@ import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class SessionConnection {
 
@@ -62,7 +62,7 @@ public class SessionConnection {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
 			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
-				.then(runningCarelessly(library -> {
+				.then(VoidFunc.runCarelessly(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning = false;
@@ -101,7 +101,7 @@ public class SessionConnection {
 
 							libraryRepository
 								.saveLibrary(library)
-								.then(runningCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+								.then(VoidFunc.runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 						})
 						.execute();
 				});

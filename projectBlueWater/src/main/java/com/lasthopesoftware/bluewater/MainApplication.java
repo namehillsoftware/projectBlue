@@ -12,7 +12,6 @@ import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnPlaybackCompleteReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
@@ -22,8 +21,10 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -40,8 +41,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 public class MainApplication extends Application {
 	
@@ -75,7 +74,7 @@ public class MainApplication extends Application {
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
-					.then(runningCarelessly(library -> {
+					.then(VoidFunc.runCarelessly(library -> {
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;

@@ -29,8 +29,6 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
-
 public class ItemListFragment extends Fragment {
 
     private static final String ARG_CATEGORY_POSITION = "category_position";
@@ -63,7 +61,7 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(runningCarelessly(activeLibrary -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(activeLibrary -> {
 				final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = result -> {
 					if (result == null || result.size() == 0) return;
 
@@ -102,7 +100,7 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(runningCarelessly(library -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final OnGetLibraryViewItemResultsComplete onGetLibraryViewItemResultsComplete =
 					new OnGetLibraryViewItemResultsComplete(
 						activity,

@@ -16,19 +16,18 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayC
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
-
-import static com.vedsoft.futures.callables.VoidFunc.runningCarelessly;
 
 /**
  * Created by david on 11/7/15.
@@ -97,7 +96,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider
             .getNowPlayingFile()
-            .then(runningCarelessly(f ->
+            .then(VoidFunc.runCarelessly(f ->
                 textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == f.getKey()))));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
