@@ -234,7 +234,10 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			p -> {
 				isPlaying = true;
 				positionedPlaybackFile = p;
-				this.observableEmitter.onNext(p);
+
+				if (observableEmitter != null)
+					observableEmitter.onNext(p);
+
 				saveStateToLibrary();
 			},
 			this::uncaughtExceptionHandler,

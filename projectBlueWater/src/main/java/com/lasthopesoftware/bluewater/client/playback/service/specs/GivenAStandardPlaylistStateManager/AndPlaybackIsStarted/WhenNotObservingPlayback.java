@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -33,8 +33,8 @@ import static org.mockito.Mockito.when;
  */
 
 public class WhenNotObservingPlayback {
-	private static Throwable caughtException;
 	private static Library library;
+	private static PlaybackPlaylistStateManager playbackPlaylistStateManager;
 
 	@BeforeClass
 	public static void context() {
@@ -50,37 +50,36 @@ public class WhenNotObservingPlayback {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+		playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			mock(IConnectionProvider.class),
 			fakePlaybackPreparerProvider,
 			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		try {
-			playbackPlaylistStateManager
-				.startPlaylist(
-					Arrays.asList(
-						new File(1),
-						new File(2),
-						new File(3),
-						new File(4),
-						new File(5)), 0, 0);
+		playbackPlaylistStateManager
+			.startPlaylist(
+				Arrays.asList(
+					new File(1),
+					new File(2),
+					new File(3),
+					new File(4),
+					new File(5)), 0, 0);
 
-			fakePlaybackPreparerProvider.deferredResolution.resolve();
-		} catch (NullPointerException e) {
-			caughtException = e;
-		}
-	}
+		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		resolveablePlaybackHandler.resolve();
 
-	@Test
-	public void thenAnExceptionIsNotThrown() {
-		assertThat(caughtException).isNull();
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}
 
 	@Test
 	public void thenTheSavedTrackPositionIsZero() {
-		assertThat(library.getNowPlayingId()).isEqualTo(0);
+		assertThat(library.getNowPlayingId()).isEqualTo(1);
+	}
+
+	@Test
+	public void thenTheManagerIsPlaying() {
+		assertThat(playbackPlaylistStateManager.isPlaying()).isTrue();
 	}
 
 	private static class FakePlaybackPreparerProvider implements IPlaybackPreparerProvider {
@@ -97,8 +96,8 @@ public class WhenNotObservingPlayback {
 
 		private IResolvedPromise<IBufferingPlaybackHandler> resolve;
 
-		public IBufferingPlaybackHandler resolve() {
-			final IBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
+		public ResolveablePlaybackHandler resolve() {
+			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
 			if (resolve != null)
 				resolve.withResult(playbackHandler);
 			return playbackHandler;
