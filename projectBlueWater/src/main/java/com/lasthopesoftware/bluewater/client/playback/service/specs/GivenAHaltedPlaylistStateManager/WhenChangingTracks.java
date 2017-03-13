@@ -32,12 +32,13 @@ import static org.mockito.Mockito.when;
 public class WhenChangingTracks {
 
 	private static PositionedPlaybackFile nextSwitchedFile;
+	private static Library library;
 
 	@BeforeClass
 	public static void before() {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
-		final Library library = new Library();
+		library = new Library();
 		library.setId(1);
 		library.setSavedTracksString(FileStringListUtilities.serializeFileStringList(Arrays.asList(
 			new File(1),
@@ -69,5 +70,10 @@ public class WhenChangingTracks {
 	@Test
 	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
 		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
+	}
+
+	@Test
+	public void thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
+		assertThat(library.getNowPlayingId()).isEqualTo(3);
 	}
 }
