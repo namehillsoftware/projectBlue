@@ -148,12 +148,16 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 						.onComplete(properties -> {
 							final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(properties);
 
+							final PositionedPlaybackFile positionedPlaybackFile = new PositionedPlaybackFile(
+								playlistPosition,
+								new EmptyPlaybackHandler(duration),
+								file);
+
+							observableEmitter.onNext(positionedPlaybackFile);
+
 							resolve.withResult(
 								Observable.just(
-									new PositionedPlaybackFile(
-										playlistPosition,
-										new EmptyPlaybackHandler(duration),
-										file)));
+									positionedPlaybackFile));
 						})
 						.onError(e -> {
 							reject.withError(e);
@@ -304,9 +308,13 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	}
 
 	private IPromise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
+		final IPromise<NowPlaying> nowPlayingPromise =
+			playlist != null
+				? nowPlayingRepository.getNowPlaying()
+				: restorePlaylistFromStorage();
+
 		return
-			nowPlayingRepository
-				.getNowPlaying()
+			nowPlayingPromise
 				.thenPromise(np -> {
 					np.playlist = playlist;
 					np.playlistPosition = playlistPosition;

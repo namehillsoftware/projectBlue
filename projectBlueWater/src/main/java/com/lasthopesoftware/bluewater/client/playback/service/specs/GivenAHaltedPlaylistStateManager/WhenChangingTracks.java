@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAHaltedPlaylistStateManager;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
@@ -16,7 +17,12 @@ import com.lasthopesoftware.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 
@@ -35,7 +41,7 @@ public class WhenChangingTracks {
 	private static Library library;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws IOException, InterruptedException {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
 		library = new Library();
@@ -51,7 +57,17 @@ public class WhenChangingTracks {
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
 
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
-		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
+		when(libraryStorage.saveLibrary(any())).then(Promise::new);
+
+		final IUrlProvider urlProvider = mock(IUrlProvider.class);
+		when(urlProvider.getBaseUrl()).thenReturn("");
+
+		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
+		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
+
+		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+		when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+		when(connectionProvider.getConnection(any())).thenReturn(urlConnection);
 
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			mock(IConnectionProvider.class),
@@ -60,11 +76,15 @@ public class WhenChangingTracks {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			1.0f);
 
-		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		Observable.create(playbackPlaylistStateManager).subscribe(p -> {
+			nextSwitchedFile = p;
+			countDownLatch.countDown();
+		});
 
 		playbackPlaylistStateManager.changePosition(3, 0);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 	}
 
 	@Test
