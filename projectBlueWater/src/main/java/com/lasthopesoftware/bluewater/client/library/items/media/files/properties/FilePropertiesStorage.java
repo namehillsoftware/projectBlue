@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractInputStreamProvider;
 

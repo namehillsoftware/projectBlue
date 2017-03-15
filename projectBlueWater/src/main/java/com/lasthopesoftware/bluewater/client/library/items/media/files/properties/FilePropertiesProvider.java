@@ -4,11 +4,14 @@ import android.annotation.SuppressLint;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
-import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -28,29 +31,34 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-public class FilePropertiesProvider {
+public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 	private final IConnectionProvider connectionProvider;
-	
+	private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
+
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 
 
-	public FilePropertiesProvider(IConnectionProvider connectionProvider) {
+	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
 		this.connectionProvider = connectionProvider;
+		this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 	}
 
-	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
-		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, fileKey), filePropertiesExecutor);
+	@Override
+	public IPromise<Map<String, String>> promiseFileProperties(int fileKey) {
+		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
 	}
 
 	private static final class FilePropertiesTask implements ThreeParameterAction<IResolvedPromise<Map<String, String>>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 		private final IConnectionProvider connectionProvider;
+		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 		private final Integer fileKey;
 		private volatile boolean isCancelled;
 
-		private FilePropertiesTask(IConnectionProvider connectionProvider, Integer fileKey) {
+		private FilePropertiesTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey) {
 			this.connectionProvider = connectionProvider;
+			this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 			this.fileKey = fileKey;
 		}
 
@@ -69,7 +77,7 @@ public class FilePropertiesProvider {
 
 			if (isCancelled) return;
 
-			final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
+			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
 				resolve.withResult(new HashMap<>(filePropertiesContainer.getProperties()));
 
@@ -91,7 +99,7 @@ public class FilePropertiesProvider {
 						for (XmlElement el : parent)
 							returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertyCache.FilePropertiesContainer(revision, returnProperties));
+						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
 
 						resolve.withResult(returnProperties);
 					}
