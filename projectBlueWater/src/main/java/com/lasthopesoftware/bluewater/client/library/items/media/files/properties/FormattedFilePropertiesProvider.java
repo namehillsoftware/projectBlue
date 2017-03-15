@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.lazyj.Lazy;
 
 import org.joda.time.DateTime;
@@ -65,13 +67,16 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 									DATE_IMPORTED,
 									DATE_MODIFIED}))));
 	
-	public FormattedFilePropertiesProvider(ConnectionProvider connectionProvider, int fileKey) {
-		super(connectionProvider, fileKey);
+	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
+		super(connectionProvider, filePropertiesContainerProvider);
 	}
 
 	@Override
-	protected Map<String, String> executeInBackground(Integer[] params) {
-		return buildFormattedReadonlyProperties(super.executeInBackground(params));
+	public IPromise<Map<String, String>> promiseFileProperties(int fileKey) {
+		return
+			super
+				.promiseFileProperties(fileKey)
+				.then(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
 	}
 
 	/* Formatted properties helpers */
