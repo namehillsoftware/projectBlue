@@ -25,7 +25,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -43,6 +42,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private final IPlaybackPreparerProvider playbackPreparerProvider;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
+	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
@@ -58,11 +58,12 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private Disposable subscription;
 	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 
-	public PlaybackPlaylistStateManager(IConnectionProvider connectionProvider, IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, float initialVolume) {
+	public PlaybackPlaylistStateManager(IConnectionProvider connectionProvider, IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
 		this.connectionProvider = connectionProvider;
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
+		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		volume = initialVolume;
 	}
 
@@ -135,36 +136,24 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 		final IPromise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
-				.then((np, resolve, reject, onCancelled) -> {
+				.thenPromise(np -> {
 					final IFile file = np.playlist.get(playlistPosition);
-					final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
 
-					onCancelled.runWith(() -> {
-						filePropertiesProvider.cancel();
-						reject.withError(new CancellationException());
-					});
+					return
+						this.cachedFilePropertiesProvider
+							.promiseFileProperties(file.getKey())
+							.then(fileProperties -> {
+								final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-					filePropertiesProvider
-						.onComplete(properties -> {
-							final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(properties);
+								final PositionedPlaybackFile positionedPlaybackFile = new PositionedPlaybackFile(
+									playlistPosition,
+									new EmptyPlaybackHandler(duration),
+									file);
 
-							final PositionedPlaybackFile positionedPlaybackFile = new PositionedPlaybackFile(
-								playlistPosition,
-								new EmptyPlaybackHandler(duration),
-								file);
+								observableEmitter.onNext(positionedPlaybackFile);
 
-							observableEmitter.onNext(positionedPlaybackFile);
-
-							resolve.withResult(
-								Observable.just(
-									positionedPlaybackFile));
-						})
-						.onError(e -> {
-							reject.withError(e);
-							return true;
-						});
-
-					filePropertiesProvider.execute();
+								return Observable.just(positionedPlaybackFile);
+							});
 				});
 
 		singleFileChangeObservablePromise.error(runCarelessly(e -> logger.warn("There was an error getting the file properties", e)));
