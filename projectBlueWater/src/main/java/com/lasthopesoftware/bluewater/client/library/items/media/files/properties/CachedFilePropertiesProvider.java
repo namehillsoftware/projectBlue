@@ -18,7 +18,7 @@ public class CachedFilePropertiesProvider implements IFilePropertiesProvider {
 	private final IFilePropertiesProvider filePropertiesProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 
-	public CachedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, IFilePropertiesProvider filePropertiesProvider, int fileKey) {
+	public CachedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, IFilePropertiesProvider filePropertiesProvider) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesContainerRepository = filePropertiesContainerRepository;
 		this.filePropertiesProvider = filePropertiesProvider;

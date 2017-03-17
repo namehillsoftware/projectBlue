@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayC
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
@@ -25,9 +24,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by david on 11/7/15.
@@ -49,7 +50,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
 
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public CachedFilePropertiesProvider filePropertiesProvider;
+        public IPromise<Map<String, String>> filePropertiesProvider;
 
         final ImageButton getAddButton() {
             return addButtonFinder.findView();
@@ -90,7 +91,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
 
         final TextView textView = fileListItem.getTextViewFinder();
 
-        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
+        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
         viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
 
         textView.setTypeface(null, Typeface.NORMAL);
