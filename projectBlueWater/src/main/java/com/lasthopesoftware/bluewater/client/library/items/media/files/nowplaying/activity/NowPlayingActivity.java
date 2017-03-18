@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -50,7 +51,6 @@ import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.IPromise;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -61,6 +61,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class NowPlayingActivity extends AppCompatActivity {
 
@@ -264,7 +266,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(VoidFunc.runCarelessly(np -> {
+			.then(Dispatch.toHandler(runCarelessly(np -> {
 				final IFile file = np.playlist.get(np.playlistPosition);
 
 				if (viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey()))) {
@@ -317,7 +319,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(VoidFunc.runCarelessly(result -> {
+			.then(Dispatch.toHandler(runCarelessly(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating);
 			}), messageHandler.getObject()));
@@ -348,7 +350,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(VoidFunc.runCarelessly(np -> {
+			.then(Dispatch.toHandler(runCarelessly(np -> {
 				if (playlistPosition >= np.playlist.size()) return;
 
 				final IFile file = np.playlist.get(playlistPosition);
@@ -360,7 +362,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(file, filePosition);
 			}), messageHandler.getObject()))
-			.error(VoidFunc.runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
+			.error(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final IFile file, final int initialFilePosition) {
@@ -391,7 +393,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 						.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey());
 
 				getFileImageTask
-					.then(Dispatch.toContext(VoidFunc.runCarelessly(bitmap -> {
+					.then(Dispatch.toContext(runCarelessly(bitmap -> {
 						if (viewStructure.nowPlayingImage != null)
 							viewStructure.nowPlayingImage.recycle();
 						viewStructure.nowPlayingImage = bitmap;
@@ -400,7 +402,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 						displayImageBitmap();
 					}), this))
-					.error(VoidFunc.runCarelessly(e -> logger.error("There was an error retrieving file details", e)));
+					.error(runCarelessly(e -> logger.error("There was an error retrieving file details", e)));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);
@@ -417,14 +419,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		disableViewWithMessage(R.string.lbl_loading);
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), file.getKey());
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 		filePropertiesProvider
-			.onComplete(fileProperties -> {
+			.promiseFileProperties(file.getKey())
+			.then(Dispatch.toHandler(runCarelessly(fileProperties -> {
 				viewStructure.fileProperties = fileProperties;
 				setFileProperties(file, initialFilePosition, fileProperties);
-			})
-			.onError(exception -> handleIoException(file, initialFilePosition, exception))
-			.execute();
+			}), messageHandler.getObject()))
+			.error(Dispatch.toHandler(exception -> handleIoException(file, initialFilePosition, exception), messageHandler.getObject()));
 	}
 
 	private void setFileProperties(final IFile file, final int initialFilePosition, Map<String, String> fileProperties) {
@@ -488,7 +490,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return true;
 	}
 	
-	private boolean handleIoException(IFile file, int position, Exception exception) {
+	private boolean handleIoException(IFile file, int position, Throwable exception) {
 		if (exception instanceof FileNotFoundException)
 			return handleFileNotFoundException(file, (FileNotFoundException)exception);
 
