@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
-import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
@@ -39,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 /**
  * Created by david on 7/14/15.
@@ -222,28 +223,29 @@ public class StoredFileAccess {
 					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 
 					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
-						try {
-							final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
-							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
+						final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
+						final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 
-							final MediaFileUriProvider mediaFileUriProvider =
-									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
+						final MediaFileUriProvider mediaFileUriProvider =
+								new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
 
-							final Uri localUri = mediaFileUriProvider.getFileUri(file);
-							if (localUri != null) {
-								storedFile.setPath(localUri.getPath());
-								storedFile.setIsDownloadComplete(true);
-								storedFile.setIsOwner(false);
-								try {
-									final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator);
-									storedFile.setStoredMediaId(mediaFileIdProvider.getMediaId());
-								} catch (IOException e) {
-									logger.error("Error retrieving media file ID", e);
+						mediaFileUriProvider.getFileUri(file)
+							.then(localUri -> {
+								if (localUri != null) {
+									storedFile.setPath(localUri.getPath());
+									storedFile.setIsDownloadComplete(true);
+									storedFile.setIsOwner(false);
+									try {
+										final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator);
+										mediaFileIdProvider
+											.getMediaId()
+											.then(runCarelessly(mediaId -> storedFile.setStoredMediaId(mediaId)));
+									} catch (IOException e) {
+										logger.error("Error retrieving media file ID", e);
+									}
 								}
-							}
-						} catch (IOException e) {
-							logger.error("Error retrieving media file URI", e);
-						}
+							})
+							.error(runCarelessly(e -> logger.error("Error retrieving media file URI", e)));
 					}
 
 					if (storedFile.getPath() == null) {
