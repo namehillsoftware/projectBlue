@@ -160,6 +160,7 @@ public class LibrarySyncHandler {
 									return;
 								}
 
+								// TODO Wait on all promises to complete before starting file downloader
 								storedFileAccess
 									.createOrUpdateFile(connectionProvider, file)
 									.then(runCarelessly(storedFile -> {
