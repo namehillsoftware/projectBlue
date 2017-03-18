@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
@@ -216,10 +218,13 @@ public class StoredFileAccess {
 						storedFile = getStoredFile(repositoryAccessHelper, file);
 					}
 
+					final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
+					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
+
 					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
 						try {
 							final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
-							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, connectionProvider);
+							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 
 							final MediaFileUriProvider mediaFileUriProvider =
 									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
@@ -245,7 +250,6 @@ public class StoredFileAccess {
 						try {
 							String fullPath = library.getSyncDir(context).getPath();
 
-							final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
 							final Map<String, String> fileProperties = filePropertiesProvider.get();
 
 							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);

@@ -4,6 +4,8 @@ import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +20,7 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Uri getFileUri(IFile file) {
+	public IPromise<Uri> getFileUri(IFile file) {
 		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning file URL from server.");
 
 		/* Playback:
@@ -37,6 +39,6 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 					"Conversion=Android",
 					"Playback=0");
 
-		return Uri.parse(itemUrl);
+		return new Promise<>(Uri.parse(itemUrl));
 	}
 }
