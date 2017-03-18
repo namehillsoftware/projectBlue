@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -65,7 +66,6 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -83,6 +83,8 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
@@ -214,6 +216,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private boolean isNotificationForeground = false;
 
 	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
+	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private boolean isPlaying;
 	private Disposable playbackFileChangedSubscription;
@@ -259,10 +262,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			}
 
 			playbackPlaylistStateManager = null;
+			cachedFilePropertiesProvider = null;
 		}
 	};
 
-	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = VoidFunc.runCarelessly(this::uncaughtExceptionHandler);
+	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = runCarelessly(this::uncaughtExceptionHandler);
 
 	public boolean isPlaying() {
 		return isPlaying;
@@ -358,7 +362,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(VoidFunc.runCarelessly(m -> actOnIntent(intent)))
+				.then(runCarelessly(m -> actOnIntent(intent)))
 				.error(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
@@ -416,7 +420,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(VoidFunc.runCarelessly(m -> actOnIntent(intentToRun)))
+				.then(runCarelessly(m -> actOnIntent(intentToRun)))
 				.error(UnhandledRejectionHandler);
 
 			return;
@@ -434,12 +438,16 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				lazyLibraryRepository.getObject());
 
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+
+		cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
+
 		playbackPlaylistStateManager =
 			new PlaybackPlaylistStateManager(
 				connectionProvider,
 				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				new PositionedFileQueueProvider(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
+				cachedFilePropertiesProvider,
 				1.0f);
 
 		return playbackPlaylistStateManager;
@@ -711,7 +719,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackHandler
 			.promisePlayback()
-			.then(VoidFunc.runCarelessly(handler -> {
+			.then(runCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
 				sendBroadcast(getScrobbleIntent(false));
 
@@ -726,63 +734,66 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey());
-		filePropertiesProvider.onComplete(fileProperties -> {
-			final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-			final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-			final Builder builder = new Builder(this);
-			builder.setOngoing(true);
-			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-			builder.setContentText(artist + " - " + name);
-			builder.setContentIntent(pi);
-			notifyForeground(builder);
+		cachedFilePropertiesProvider
+			.promiseFileProperties(positionedPlaybackFile.getKey())
+			.then(Dispatch.toContext(runCarelessly(fileProperties -> {
+				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-			final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-			final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-			final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
-			final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
+				final Builder builder = new Builder(this);
+				builder.setOngoing(true);
+				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
+				builder.setContentText(artist + " - " + name);
+				builder.setContentIntent(pi);
+				notifyForeground(builder);
 
-			final Intent scrobbleDroidIntent = getScrobbleIntent(true);
-			scrobbleDroidIntent.putExtra("artist", artist);
-			scrobbleDroidIntent.putExtra("album", album);
-			scrobbleDroidIntent.putExtra("track", name);
-			scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
-			if (trackNumber != null)
-				scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
+				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+				final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
+				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
-			sendBroadcast(scrobbleDroidIntent);
+				final Intent scrobbleDroidIntent = getScrobbleIntent(true);
+				scrobbleDroidIntent.putExtra("artist", artist);
+				scrobbleDroidIntent.putExtra("album", album);
+				scrobbleDroidIntent.putExtra("track", name);
+				scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
+				if (trackNumber != null)
+					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
 
-			final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
-			pebbleIntent.putExtra("artist", artist);
-			pebbleIntent.putExtra("album", album);
-			pebbleIntent.putExtra("track", name);
+				sendBroadcast(scrobbleDroidIntent);
 
-			sendBroadcast(pebbleIntent);
+				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
+				pebbleIntent.putExtra("artist", artist);
+				pebbleIntent.putExtra("album", album);
+				pebbleIntent.putExtra("track", name);
 
-			final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(true);
-			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
-			metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-			metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
-			metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
-			if (trackNumber != null)
-				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
-			metaData.apply();
+				sendBroadcast(pebbleIntent);
 
-			if (Build.VERSION.SDK_INT < 19) return;
+				final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(true);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
+				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
+				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
+				if (trackNumber != null)
+					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
+				metaData.apply();
 
-			ImageProvider
-				.getImage(this, SessionConnection.getSessionConnectionProvider(), positionedPlaybackFile.getKey())
-				.then(Dispatch.toContext(VoidFunc.runCarelessly(bitmap -> {
-					// Track the remote client bitmap and recycle it in case the remote control client
-					// does not properly recycle the bitmap
-					if (remoteClientBitmap != null) remoteClientBitmap.recycle();
-					remoteClientBitmap = bitmap;
+				if (Build.VERSION.SDK_INT < 19) return;
 
-					final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
-					metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
-				}), this));
-		}).onError(exception -> {
+				ImageProvider
+					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getKey())
+					.then(Dispatch.toContext(runCarelessly(bitmap -> {
+						// Track the remote client bitmap and recycle it in case the remote control client
+						// does not properly recycle the bitmap
+						if (remoteClientBitmap != null) remoteClientBitmap.recycle();
+						remoteClientBitmap = bitmap;
+
+						final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
+						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
+					}), this));
+			}), this))
+		.error(Dispatch.toContext(exception -> {
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
 			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -791,7 +802,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			notifyForeground(builder);
 
 			return true;
-		}).execute();
+		}, this));
 	}
 
 	private void onPlaylistPlaybackComplete() {
