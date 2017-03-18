@@ -37,6 +37,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+
 /**
  * Created by david on 8/30/15.
  */
@@ -158,9 +160,13 @@ public class LibrarySyncHandler {
 									return;
 								}
 
-								final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
-								if (storedFile != null && !storedFile.isDownloadComplete())
-									storedFileDownloader.queueFileForDownload(file, storedFile);
+								storedFileAccess
+									.createOrUpdateFile(connectionProvider, file)
+									.then(runCarelessly(storedFile -> {
+										if (storedFile != null && !storedFile.isDownloadComplete())
+											storedFileDownloader.queueFileForDownload(file, storedFile);
+									}));
+
 							}
 						} catch (ExecutionException | InterruptedException e) {
 
@@ -195,8 +201,6 @@ public class LibrarySyncHandler {
 					storedFileDownloader.process();
 				}));
 	}
-
-
 
 	private void handleQueueProcessingCompleted() {
 		if (onQueueProcessingCompleted != null)
