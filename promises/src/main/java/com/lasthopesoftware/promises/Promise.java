@@ -37,7 +37,11 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	@SafeVarargs
 	public static <TResult> IPromise<Collection<TResult>> whenAll(IPromise<TResult>... promises) {
-		return new Promise<>(new Resolution.AggregatePromiseResolver<>(Arrays.asList(promises)));
+		return whenAll(Arrays.asList(promises));
+	}
+
+	public static <TResult> IPromise<Collection<TResult>> whenAll(Collection<IPromise<TResult>> promises) {
+		return new Promise<>(new Resolution.AggregatePromiseResolver<>(promises));
 	}
 
 	private static class Execution {

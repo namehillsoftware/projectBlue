@@ -21,6 +21,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -140,6 +143,8 @@ public class LibrarySyncHandler {
 						fileProviders.offer(new AbstractMap.SimpleImmutableEntry<>(item, fileProvider));
 					}
 
+					final List<IPromise<StoredFile>> upsertStoredFilePromises = new ArrayList<>(fileProviders.size());
+
 					Map.Entry<IItem, FileProvider> fileProviderEntry;
 					while ((fileProviderEntry = fileProviders.poll()) != null) {
 						if (isCancelled) {
@@ -160,14 +165,17 @@ public class LibrarySyncHandler {
 									return;
 								}
 
-								// TODO Wait on all promises to complete before starting file downloader
-								storedFileAccess
-									.createOrUpdateFile(connectionProvider, file)
+								final IPromise<StoredFile> upsertStoredFilePromise =
+									storedFileAccess
+										.createOrUpdateFile(connectionProvider, file);
+
+								upsertStoredFilePromises.add(upsertStoredFilePromise);
+
+								upsertStoredFilePromise
 									.then(runCarelessly(storedFile -> {
 										if (storedFile != null && !storedFile.isDownloadComplete())
 											storedFileDownloader.queueFileForDownload(file, storedFile);
 									}));
-
 							}
 						} catch (ExecutionException | InterruptedException e) {
 
@@ -199,7 +207,8 @@ public class LibrarySyncHandler {
 						return;
 					}
 
-					storedFileDownloader.process();
+					Promise.whenAll(upsertStoredFilePromises)
+						.then(runCarelessly(files -> storedFileDownloader.process()));
 				}));
 	}
 

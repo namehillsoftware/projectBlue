@@ -1,13 +1,14 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
+package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -20,13 +21,22 @@ import static org.mockito.Mockito.verify;
 
 public class WhenChainingResolutionTwice {
 
-	private static CarelessOneParameterFunction<String, ?> firstResultHandler;
-	private static CarelessOneParameterFunction<String, ?> secondResultHandler;
+	private CarelessOneParameterFunction<String, ?> firstResultHandler;
+	private CarelessOneParameterFunction<String, ?> secondResultHandler;
 
-	@BeforeClass
-	public static void before() {
+	@Before
+	public void before() throws InterruptedException {
+		final CountDownLatch latch = new CountDownLatch(1);
 		final IPromise<String> rootPromise =
-			new Promise<>(() -> "test");
+			new Promise<>((resolve, reject) -> new Thread(() -> {
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				resolve.withResult("test");
+				latch.countDown();
+			}).start());
 
 		firstResultHandler = mock(CarelessOneParameterFunction.class);
 
@@ -37,6 +47,8 @@ public class WhenChainingResolutionTwice {
 
 		rootPromise
 			.then(secondResultHandler);
+
+		latch.await(1000, TimeUnit.MILLISECONDS);
 	}
 
 	@Test
