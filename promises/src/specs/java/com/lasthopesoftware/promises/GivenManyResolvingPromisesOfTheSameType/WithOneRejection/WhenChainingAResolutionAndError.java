@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenManyResolvingPromisesOfTheSameType.WithOneRejection;
+package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType.WithOneRejection;
 
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;

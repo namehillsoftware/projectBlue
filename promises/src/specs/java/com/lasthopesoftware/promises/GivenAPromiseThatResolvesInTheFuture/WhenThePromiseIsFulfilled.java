@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolvesInTheFuture;
+package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.lasthopesoftware.promises.Promise;
 

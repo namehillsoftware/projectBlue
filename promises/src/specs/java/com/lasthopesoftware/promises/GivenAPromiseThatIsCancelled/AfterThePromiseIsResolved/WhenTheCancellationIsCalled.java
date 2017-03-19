@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsCancelled.AfterThePromiseIsResolved;
+package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.AfterThePromiseIsResolved;
 
 import com.lasthopesoftware.promises.Promise;
 

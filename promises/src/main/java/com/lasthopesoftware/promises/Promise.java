@@ -8,8 +8,8 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class Promise<TResult> extends DependentCancellablePromise<Void, TResult> {
 
@@ -37,12 +37,7 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	@SafeVarargs
 	public static <TResult> IPromise<Collection<TResult>> whenAll(IPromise<TResult>... promises) {
-		final Resolution.CollectedResultsTask<TResult> collectedResultsTask = new Resolution.CollectedResultsTask<>(promises.length);
-
-		for (final IPromise<TResult> promise : promises)
-			promise.then(collectedResultsTask);
-
-		return new Promise<>(collectedResultsTask);
+		return new Promise<>(new Resolution.AggregatePromiseResolver<>(Arrays.asList(promises)));
 	}
 
 	private static class Execution {
@@ -108,33 +103,138 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 	}
 
 	private static class Resolution {
-		private static class CollectedResultsTask<TResult> implements
-			CarelessOneParameterFunction<TResult, TResult>,
-			ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>> {
+		private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
+			private final Collection<TResult> results;
 
-			private final int expectedResolutions;
-			private final List<TResult> results;
-			private IResolvedPromise<Collection<TResult>> resolve;
-
-			CollectedResultsTask(int expectedResolutions) {
-				results = new ArrayList<>(expectedResolutions);
-				this.expectedResolutions = expectedResolutions;
+			ResultCollector(Collection<IPromise<TResult>> promises) {
+				this.results = new ArrayList<>(promises.size());
+				for (IPromise<TResult> promise : promises)
+					promise.then(this);
 			}
 
 			@Override
 			public TResult resultFrom(TResult result) throws Exception {
 				results.add(result);
-
-				if (results.size() == expectedResolutions) resolve.withResult(results);
-
 				return result;
+			}
+
+			Collection<TResult> getResults() {
+				return results;
+			}
+		}
+
+		private static class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
+			private final int expectedResultSize;
+			private IResolvedPromise<Collection<TResult>> resolve;
+
+			CollectedResultsResolver(Collection<IPromise<TResult>> promises) {
+				super(promises);
+
+				this.expectedResultSize = promises.size();
+			}
+
+			@Override
+			public TResult resultFrom(TResult result) throws Exception {
+				final TResult resultFrom = super.resultFrom(result);
+
+				attemptResolve();
+
+				return resultFrom;
+			}
+
+			CollectedResultsResolver resolveWith(IResolvedPromise<Collection<TResult>> resolve) {
+				this.resolve = resolve;
+
+				attemptResolve();
+
+				return this;
+			}
+
+			private void attemptResolve() {
+				if (resolve == null) return;
+
+				final Collection<TResult> results = getResults();
+				if (results.size() < expectedResultSize) return;
+
+				resolve.withResult(results);
+			}
+		}
+
+		private static class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
+
+			private IRejectedPromise reject;
+			private Throwable error;
+
+			ErrorHandler(Collection<IPromise<TResult>> promises) {
+				for (IPromise<TResult> promise : promises) promise.error(this);
+			}
+
+			@Override
+			public Throwable resultFrom(Throwable throwable) throws Exception {
+				this.error = throwable;
+				attemptRejection();
+				return throwable;
+			}
+
+			boolean rejectWith(IRejectedPromise reject) {
+				this.reject = reject;
+
+				return attemptRejection();
+			}
+
+			private boolean attemptRejection() {
+				if (reject != null && error != null) {
+					reject.withError(error);
+					return true;
+				}
+
+				return false;
+			}
+		}
+
+		private static class AggregatePromiseResolver<TResult> implements ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>>  {
+
+			private final CollectedPromiseCanceller<TResult> canceller;
+			private final CollectedResultsResolver<TResult> resolver;
+			private final ErrorHandler errorHandler;
+
+			AggregatePromiseResolver(Collection<IPromise<TResult>> promises) {
+				resolver = new CollectedResultsResolver<>(promises);
+				errorHandler = new ErrorHandler<>(promises);
+				canceller = new CollectedPromiseCanceller<>(promises, resolver);
 			}
 
 			@Override
 			public void runWith(IResolvedPromise<Collection<TResult>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				this.resolve = resolve;
+				if (errorHandler.rejectWith(reject)) return;
 
-				if (results.size() == expectedResolutions) resolve.withResult(results);
+				resolver.resolveWith(resolve);
+
+				onCancelled.runWith(canceller.rejection(reject));
+			}
+		}
+
+		private static class CollectedPromiseCanceller<TResult> implements Runnable {
+
+			private IRejectedPromise reject;
+			private final Collection<IPromise<TResult>> promises;
+			private final ResultCollector<TResult> resultCollector;
+
+			CollectedPromiseCanceller(Collection<IPromise<TResult>> promises, ResultCollector<TResult> resultCollector) {
+				this.promises = promises;
+				this.resultCollector = resultCollector;
+			}
+
+			Runnable rejection(IRejectedPromise reject) {
+				this.reject = reject;
+				return this;
+			}
+
+			@Override
+			public void run() {
+				for (IPromise<TResult> promise : promises) promise.cancel();
+
+				reject.withError(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
 			}
 		}
 	}

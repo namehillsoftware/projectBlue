@@ -2,16 +2,9 @@ apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
 
 sourceSets {
-    main {
-        java {
-            exclude '**/specs/**'
-        }
-    }
-
     test {
         java {
-            srcDir 'src/main/java'
-            include '**/specs/**'
+            srcDir 'src/specs/java'
         }
     }
 }

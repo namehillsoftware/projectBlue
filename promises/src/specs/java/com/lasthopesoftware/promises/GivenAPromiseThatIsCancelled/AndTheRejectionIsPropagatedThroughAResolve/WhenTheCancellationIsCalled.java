@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsCancelled.AndTheRejectionIsPropagatedThroughAResolve;
+package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.AndTheRejectionIsPropagatedThroughAResolve;
 
 import com.lasthopesoftware.promises.Promise;
 

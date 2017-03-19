@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves.WithANullResult;
+package com.lasthopesoftware.promises.GivenAPromiseThatResolves.WithANullResult;
 
 import com.lasthopesoftware.promises.Promise;
 

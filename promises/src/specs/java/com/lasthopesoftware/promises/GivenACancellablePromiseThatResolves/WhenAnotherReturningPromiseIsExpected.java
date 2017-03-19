@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolves;
+package com.lasthopesoftware.promises.GivenACancellablePromiseThatResolves;
 
 import com.lasthopesoftware.promises.Promise;
 
@@ -16,7 +16,7 @@ public class WhenAnotherReturningPromiseIsExpected {
 
 	@Before
 	public void before() {
-		new Promise<>(() -> "test")
+		new Promise<>((resolve, reject, onCancelled) -> resolve.withResult("test"))
 				.then(result -> 330 + result.hashCode())
 				.then(nextResult -> nextReturningPromiseResult = nextResult)
 				.error(err -> isCalled = true);

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsCancelled;
+package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled;
 
 import com.lasthopesoftware.promises.Promise;
 

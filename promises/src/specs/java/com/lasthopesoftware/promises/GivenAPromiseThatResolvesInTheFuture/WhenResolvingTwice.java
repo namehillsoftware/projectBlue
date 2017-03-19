@@ -1,8 +1,6 @@
 package specs.GivenAPromiseThatResolvesInTheFuture;
 
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.callables.OneParameterFunction;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -10,8 +8,6 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Created by david on 2/20/17.

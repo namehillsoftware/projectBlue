@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatResolvesInTheFuture;
+package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.lasthopesoftware.promises.Promise;
 
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.verify;
  * Created by david on 10/30/16.
  */
 
-public class WhenThePromiseIsCancelledBeforeResolution {
+public class WhenThePromiseIsCancelledAfterResolution {
 	private Object result;
 	private Object expectedResult;
 	private Runnable cancellationRunnable;
@@ -45,21 +45,21 @@ public class WhenThePromiseIsCancelledBeforeResolution {
 			myNewThread.start();
 		});
 
-		promise.cancel();
-
 		promise.then(result -> this.result = result);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
+
+		promise.cancel();
 	}
 
 	@Test
-	public void thenTheExpectedResultIsNotPresent() {
-		Assert.assertNotEquals(expectedResult, result);
+	public void thenTheExpectedResultIsPresent() {
+		Assert.assertEquals(expectedResult, result);
 	}
 
 	@Test
-	public void thenTheCancellableIsCalled() {
-		verify(cancellationRunnable, times(1)).run();
+	public void thenTheCancellableIsNotCalled() {
+		verify(cancellationRunnable, times(0)).run();
 	}
 
 	private static class ThreadCanceller implements Runnable {

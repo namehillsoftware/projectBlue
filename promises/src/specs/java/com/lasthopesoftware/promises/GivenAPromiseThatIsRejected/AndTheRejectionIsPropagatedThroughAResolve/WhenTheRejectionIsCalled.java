@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.specs.GivenAPromiseThatIsRejected;
+package com.lasthopesoftware.promises.GivenAPromiseThatIsRejected.AndTheRejectionIsPropagatedThroughAResolve;
 
 import com.lasthopesoftware.promises.Promise;
 
@@ -18,10 +18,9 @@ public class WhenTheRejectionIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		new Promise<String>(
-				() -> {
-					throw thrownException;
-				}).error(exception -> caughtException = exception);
+		new Promise<String>(() -> { throw thrownException; })
+				.then(result -> null)
+				.error(exception -> caughtException = exception);
 	}
 
 	@Test
