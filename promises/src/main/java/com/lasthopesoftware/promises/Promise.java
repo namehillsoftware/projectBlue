@@ -1,10 +1,15 @@
 package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessFunction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class Promise<TResult> extends DependentCancellablePromise<Void, TResult> {
 
@@ -28,6 +33,16 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	public static <TResult> Promise<TResult> empty() {
 		return new Promise<>((TResult)null);
+	}
+
+	@SafeVarargs
+	public static <TResult> IPromise<Collection<TResult>> whenAll(IPromise<TResult>... promises) {
+		final Resolution.CollectedResultsTask<TResult> collectedResultsTask = new Resolution.CollectedResultsTask<>(promises.length);
+
+		for (final IPromise<TResult> promise : promises)
+			promise.then(collectedResultsTask);
+
+		return new Promise<>(collectedResultsTask);
 	}
 
 	private static class Execution {
@@ -88,6 +103,38 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 			@Override
 			public TPassThroughResult result() throws Exception {
 				return passThroughResult;
+			}
+		}
+	}
+
+	private static class Resolution {
+		private static class CollectedResultsTask<TResult> implements
+			CarelessOneParameterFunction<TResult, TResult>,
+			ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>> {
+
+			private final int expectedResolutions;
+			private final List<TResult> results;
+			private IResolvedPromise<Collection<TResult>> resolve;
+
+			CollectedResultsTask(int expectedResolutions) {
+				results = new ArrayList<>(expectedResolutions);
+				this.expectedResolutions = expectedResolutions;
+			}
+
+			@Override
+			public TResult resultFrom(TResult result) throws Exception {
+				results.add(result);
+
+				if (results.size() == expectedResolutions) resolve.withResult(results);
+
+				return result;
+			}
+
+			@Override
+			public void runWith(IResolvedPromise<Collection<TResult>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				this.resolve = resolve;
+
+				if (results.size() == expectedResolutions) resolve.withResult(results);
 			}
 		}
 	}
