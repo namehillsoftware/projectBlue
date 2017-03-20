@@ -20,9 +20,11 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -187,8 +189,14 @@ public class FileDetailsActivity extends AppCompatActivity {
 //		getRatingsTask.onError(new HandleViewIoException(this, onConnectionRegainedListener));
 //		getRatingsTask.execute();
 
+		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+
+		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+			new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+
         ImageProvider
-			.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
+			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, fileKey)
 			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 

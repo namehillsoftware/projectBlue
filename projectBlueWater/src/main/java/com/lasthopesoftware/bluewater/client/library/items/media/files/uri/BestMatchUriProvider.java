@@ -18,8 +18,6 @@ import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
-import java.io.IOException;
-
 /**
  * Created by david on 7/24/15.
  * Will get the best URI for access speed.
@@ -52,7 +50,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(IFile file) throws IOException {
+	public IPromise<Uri> getFileUri(IFile file) {
 		return
 			storedFileUriProvider
 				.getFileUri(file)

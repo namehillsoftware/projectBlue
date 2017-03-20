@@ -16,7 +16,6 @@ import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbit
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -32,7 +31,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(IFile file) throws IOException {
+	public IPromise<Uri> getFileUri(IFile file) {
 		try {
 			final StoredFile storedFile = storedFileAccess.getStoredFile(file);
 			if (storedFile == null || !storedFile.isDownloadComplete()) return Promise.empty();
