@@ -8,6 +8,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.Promise;
@@ -41,11 +45,23 @@ public class WhenATrackIsSwitched {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
+		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
+
+		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+			new CachedFilePropertiesProvider(
+				connectionProvider,
+				filePropertiesContainerRepository,
+				new FilePropertiesProvider(
+					connectionProvider,
+					filePropertiesContainerRepository));
+
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
-			mock(IConnectionProvider.class),
+			connectionProvider,
 			fakePlaybackPreparerProvider,
 			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
+			cachedFilePropertiesProvider,
 			1.0f);
 
 		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
