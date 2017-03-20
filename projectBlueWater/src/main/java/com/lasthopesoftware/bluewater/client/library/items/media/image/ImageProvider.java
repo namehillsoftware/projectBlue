@@ -8,7 +8,6 @@ import android.support.v4.util.LruCache;
 import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -58,27 +57,27 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 	private static final String cancellationMessage = "The image task was cancelled";
 
-	public static IPromise<Bitmap> getImage(final Context context, ConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
+	public static IPromise<Bitmap> getImage(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)
 				.thenPromise(fileProperties -> new ImageProvider(context, connectionProvider, fileProperties, fileKey));
 	}
 
-	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, Map<String, String> fileProperties, final int fileKey) {
+	private ImageProvider(final Context context, final IConnectionProvider connectionProvider, Map<String, String> fileProperties, final int fileKey) {
 		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileProperties, fileKey), imageAccessExecutor);
 	}
 
 	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
 		private final Context context;
-		private final ConnectionProvider connectionProvider;
+		private final IConnectionProvider connectionProvider;
 		private final Map<String, String> fileProperties;
 		private final FillerBitmap fillerBitmap;
 		private final int fileKey;
 		private final ILibraryProvider libraryProvider;
 		private final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 
-		ImageMemoryTask(Context context, ConnectionProvider connectionProvider, FillerBitmap fillerBitmap, Map<String, String> fileProperties, int fileKey) {
+		ImageMemoryTask(Context context, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, Map<String, String> fileProperties, int fileKey) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.fileProperties = fileProperties;

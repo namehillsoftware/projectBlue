@@ -26,6 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
@@ -36,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -387,10 +389,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 				
 				nowPlayingImage.setVisibility(View.INVISIBLE);
 				loadingImg.findView().setVisibility(View.VISIBLE);
-				
+
+				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+
 				getFileImageTask =
 					ImageProvider
-						.getImage(this, SessionConnection.getSessionConnectionProvider(), file.getKey());
+						.getImage(
+							this,
+							connectionProvider,
+							new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)),
+							file.getKey());
 
 				getFileImageTask
 					.then(Dispatch.toContext(runCarelessly(bitmap -> {
