@@ -66,13 +66,13 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
 				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
-				if (!selectedBrowserLibrary.isPresent()) return;
 
 				serverListView.findView().setAdapter(
 					new ServerListAdapter(
 						activity,
 						Stream.of(libraries).sortBy(Library::getId).collect(Collectors.toList()),
-						selectedBrowserLibrary.get(), new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
+						selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
+						new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
 
 				progressBar.findView().setVisibility(View.INVISIBLE);
 				serverListView.findView().setVisibility(View.VISIBLE);
