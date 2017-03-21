@@ -12,10 +12,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -25,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +75,12 @@ public class WhenChangingTracks {
 		when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 		when(connectionProvider.getConnection(any())).thenReturn(urlConnection);
 
-		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
+		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
+		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", 4)))
+			.thenReturn(new FilePropertiesContainer(1, new HashMap<String, String>() {{
+					put(FilePropertiesProvider.DURATION, "100");
+			}}));
+
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
 			new CachedFilePropertiesProvider(
 				connectionProvider,
