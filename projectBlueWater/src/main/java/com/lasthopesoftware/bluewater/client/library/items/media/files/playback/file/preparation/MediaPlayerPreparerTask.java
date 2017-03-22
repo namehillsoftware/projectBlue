@@ -16,7 +16,6 @@ import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -63,12 +62,7 @@ final class MediaPlayerPreparerTask implements
 		@Override
 		public Void resultFrom(Uri uri) throws Exception {
 			final MediaPlayer mediaPlayer;
-			try {
-				mediaPlayer = playbackInitialization.initializeMediaPlayer(uri);
-			} catch (IOException e) {
-				reject.withError(e);
-				return null;
-			}
+			mediaPlayer = playbackInitialization.initializeMediaPlayer(uri);
 
 			final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
 				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, resolve, reject);
@@ -84,11 +78,7 @@ final class MediaPlayerPreparerTask implements
 
 			mediaPlayer.setOnPreparedListener(mediaPlayerPreparationHandler);
 
-			try {
-				mediaPlayer.prepare();
-			} catch (IOException e) {
-				reject.withError(e);
-			}
+			mediaPlayer.prepare();
 
 			return null;
 		}

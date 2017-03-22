@@ -38,7 +38,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 					libraryId = library.getId();
 
 					final String savedTracksString = library.getSavedTracksString();
-					if (savedTracksString == null) {
+					if (savedTracksString == null || savedTracksString.isEmpty()) {
 						final NowPlaying nowPlaying =
 							new NowPlaying(
 								library.getNowPlayingId(),

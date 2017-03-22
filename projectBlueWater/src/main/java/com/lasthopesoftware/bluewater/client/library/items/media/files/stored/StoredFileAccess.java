@@ -29,7 +29,6 @@ import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissi
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.lazyj.Lazy;
 
 import org.apache.commons.io.FilenameUtils;
@@ -95,8 +94,8 @@ public class StoredFileAccess {
 		return getStoredFileTask;
 	}
 
-	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return getStoredFileTask(serviceFile).get(RepositoryAccessHelper.databaseExecutor);
+	public IPromise<StoredFile> getStoredFile(final IFile serviceFile) {
+		return getStoredFileTask(serviceFile);
 	}
 
 	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
@@ -115,15 +114,14 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile> getStoredFileTask(final IFile serviceFile) {
-		return new FluentSpecifiedTask<Void, Void, StoredFile>() {
-			@Override
-			public StoredFile executeInBackground(Void... params) {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					return getStoredFile(repositoryAccessHelper, serviceFile);
-				}
+	private IPromise<StoredFile> getStoredFileTask(final IFile serviceFile) {
+		return new QueuedPromise<>((resolve, reject) -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceFile));
+			} catch(SQLException e) {
+				reject.withError(e);
 			}
-		};
+		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@SuppressLint("NewApi")

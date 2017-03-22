@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist;
 
+import android.support.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
@@ -7,6 +9,7 @@ import com.lasthopesoftware.promises.IPromise;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,12 +21,14 @@ public class FileStringListUtilities {
 
 	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
 
-	public static IPromise<ArrayList<IFile>> promiseParsedFileStringList(String fileList) {
+	public static IPromise<List<IFile>> promiseParsedFileStringList(@NonNull String fileList) {
 		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
 	}
 
-	public static ArrayList<IFile> parseFileStringList(String fileList) {
+	public static List<IFile> parseFileStringList(@NonNull String fileList) {
 		final String[] keys = fileList.split(";");
+
+		if (keys.length < 2) return Collections.emptyList();
 
 		final int offset = Integer.parseInt(keys[0]) + 1;
 		final ArrayList<IFile> files = new ArrayList<>(Integer.parseInt(keys[1]));
