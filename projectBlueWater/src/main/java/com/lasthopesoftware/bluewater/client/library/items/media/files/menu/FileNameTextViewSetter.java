@@ -12,12 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.promises.IPromise;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.Map;
 
@@ -37,31 +34,21 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 
 		fileNameTextViewSetter.setLoading();
 
-		return new Promise<>(new ThreeParameterAction<IResolvedPromise<Map<String, String>>, IRejectedPromise, OneParameterAction<Runnable>>() {
-			boolean isCancelled;
+		return new Promise<>((resolve, reject, onCancelled) -> {
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-			@Override
-			public void runWith(IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				onCancelled.runWith(() -> isCancelled = true);
+			final IPromise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(file.getKey());
+			promise.then(runCarelessly(resolve::withResult));
+			promise.error(runCarelessly(reject::withError));
 
-				if (isCancelled) return;
+			final IPromise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
 
-				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
-
-				final IPromise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(file.getKey());
-				promise.then(runCarelessly(resolve::withResult));
-				promise.error(runCarelessly(reject::withError));
-
-				final IPromise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
-
-				onCancelled.runWith(() -> {
-					isCancelled = true;
-					promise.cancel();
-					textViewUpdatePromise.cancel();
-				});
-			}
+			onCancelled.runWith(() -> {
+				promise.cancel();
+				textViewUpdatePromise.cancel();
+			});
 		});
 	}
 
