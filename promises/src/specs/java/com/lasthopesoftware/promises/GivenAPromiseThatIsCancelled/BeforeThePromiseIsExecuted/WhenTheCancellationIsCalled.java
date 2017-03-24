@@ -38,7 +38,7 @@ public class WhenTheCancellationIsCalled {
 
 	@Test
 	public void thenTheRejectionIsCorrect() {
-		assertThat(thrownException).isEqualTo(caughtException);
+		assertThat(caughtException).isEqualTo(thrownException);
 	}
 
 	private static class ExternallyResolvableTask<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
