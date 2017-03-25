@@ -171,12 +171,21 @@ public class LibrarySyncHandler {
 										.then(runCarelessly(storedFile -> {
 											if (storedFile != null && !storedFile.isDownloadComplete())
 												storedFileDownloader.queueFileForDownload(file, storedFile);
+										}))
+										.error(runCarelessly(e -> {
+											if (e instanceof FileNotFoundException) {
+												logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+												storedItemAccess.toggleSync(item, false);
+												return;
+											}
+
+											isFaulted = true;
+											logger.warn("There was an error retrieving the files", e);
 										}));
 
 								upsertStoredFilePromises.add(upsertStoredFilePromise);
 							}
 						} catch (ExecutionException | InterruptedException e) {
-
 							if (e.getCause() instanceof FileNotFoundException) {
 								logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 								storedItemAccess.toggleSync(item, false);
@@ -193,20 +202,22 @@ public class LibrarySyncHandler {
 						}
 					}
 
-					storedFileDownloader.setOnQueueProcessingCompleted(() -> {
-						if (!isCancelled && !isFaulted)
-							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
-
-						handleQueueProcessingCompleted();
-					});
-
-					if (isCancelled) {
-						handleQueueProcessingCompleted();
-						return;
-					}
-
 					Promise.whenAll(upsertStoredFilePromises)
-						.then(runCarelessly(files -> storedFileDownloader.process()));
+						.then(runCarelessly(files -> {
+							storedFileDownloader.setOnQueueProcessingCompleted(() -> {
+								if (!isCancelled && !isFaulted)
+									storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
+
+								handleQueueProcessingCompleted();
+							});
+
+							if (isCancelled) {
+								handleQueueProcessingCompleted();
+								return;
+							}
+
+							storedFileDownloader.process();
+						}));
 				}));
 	}
 
