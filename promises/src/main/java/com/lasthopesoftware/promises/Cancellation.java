@@ -13,13 +13,17 @@ class Cancellation implements OneParameterAction<Runnable> {
 
 	public void cancel() {
 		isCancelled = true;
-		(reaction != null ? reaction : NoOpRunnable.getInstance()).run();
+
+		if (reaction != null)
+			reaction.run();
+
+		reaction = null;
 	}
 
 	@Override
 	public void runWith(Runnable reaction) {
 		this.reaction = reaction;
 		if (isCancelled)
-			reaction.run();
+			cancel();
 	}
 }
