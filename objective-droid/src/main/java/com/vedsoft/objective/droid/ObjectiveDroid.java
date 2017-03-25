@@ -181,7 +181,15 @@ public class ObjectiveDroid {
 
 		final SQLiteStatement sqLiteStatement = database.compileStatement(sqlQuery);
 		try {
-			sqLiteStatement.bindAllArgsAsStrings(compatibleSqlQuery.getValue());
+			final String[] args = compatibleSqlQuery.getValue();
+			for (int i = 0; i < args.length; i++) {
+				final String arg = args[i];
+				if (arg != null)
+					sqLiteStatement.bindString(i + 1, arg);
+				else
+					sqLiteStatement.bindNull(i + 1);
+			}
+
 			return executeSpecial(sqLiteStatement, sqlQuery);
 		} finally {
 			sqLiteStatement.close();
@@ -200,7 +208,7 @@ public class ObjectiveDroid {
 	private static class QueryCache {
 		private static final Map<String, Map.Entry<String, String[]>> queryCache = new HashMap<>();
 
-		public static synchronized Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
+		static synchronized Map.Entry<String, String[]> getSqlQuery(String sqlQuery, Map<String, String> parameters) {
 			sqlQuery = sqlQuery.trim();
 			if (queryCache.containsKey(sqlQuery))
 				return getOrderedSqlParameters(queryCache.get(sqlQuery), parameters);
@@ -253,7 +261,7 @@ public class ObjectiveDroid {
 				if (!parameters.containsKey(parameterName)) continue;
 
 				final String parameterValue = parameters.get(parameterName);
-				newParameters[i] = parameterValue != null ? parameterValue : "NULL";
+				newParameters[i] = parameterValue;
 			}
 
 			return new AbstractMap.SimpleImmutableEntry<>(cachedQuery.getKey(), newParameters);
@@ -263,7 +271,7 @@ public class ObjectiveDroid {
 	private static class ClassCache {
 		private static final Map<Class<?>, ClassReflections> classCache = new HashMap<>();
 
-		public static synchronized <T extends Class<?>> ClassReflections getReflections(T cls) {
+		static synchronized <T extends Class<?>> ClassReflections getReflections(T cls) {
 			if (!classCache.containsKey(cls))
 				classCache.put(cls, new ClassReflections(cls));
 

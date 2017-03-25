@@ -16,13 +16,18 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
@@ -33,10 +38,10 @@ import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -126,34 +131,31 @@ public class FileDetailsActivity extends AppCompatActivity {
         imgFileThumbnailBuilder.getObject().setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.findView().setVisibility(View.VISIBLE);
 
-        final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), fileKey);
+        final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 
         fileNameTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		formattedFilePropertiesProvider
-				.onComplete(fileProperties -> {
-					setFileNameFromProperties(fileProperties);
+			.promiseFileProperties(fileKey)
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
+				setFileNameFromProperties(fileProperties);
 
-					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-					if (artist != null)
-						this.artistTextViewFinder.findView().setText(artist);
+				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+				if (artist != null)
+					this.artistTextViewFinder.findView().setText(artist);
 
-					final ArrayList<Entry<String, String>> filePropertyList = new ArrayList<>(fileProperties.size());
+				final List<Entry<String, String>> filePropertyList =
+					Stream.of(fileProperties.entrySet())
+						.filter(e -> !PROPERTIES_TO_SKIP.contains(e.getKey()))
+						.sortBy(Entry::getKey)
+						.collect(Collectors.toList());
 
-					for (Entry<String, String> entry : fileProperties.entrySet()) {
-						if (!PROPERTIES_TO_SKIP.contains(entry.getKey()))
-							filePropertyList.add(entry);
-					}
-
-					Collections.sort(filePropertyList, (lhs, rhs) -> lhs.getKey().compareTo(rhs.getKey()));
-
-					lvFileDetails.findView().setAdapter(new FileDetailsAdapter(FileDetailsActivity.this, R.id.linFileDetailsRow, filePropertyList));
-					pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
-					lvFileDetails.findView().setVisibility(View.VISIBLE);
-				})
-				.onError(new HandleViewIoException<>(this, () -> setView(fileKey)))
-				.execute();
+				lvFileDetails.findView().setAdapter(new FileDetailsAdapter(FileDetailsActivity.this, R.id.linFileDetailsRow, filePropertyList));
+				pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
+				lvFileDetails.findView().setVisibility(View.VISIBLE);
+			}), this))
+			.error(new HandleViewIoException<>(this, () -> setView(fileKey)));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //
@@ -187,8 +189,14 @@ public class FileDetailsActivity extends AppCompatActivity {
 //		getRatingsTask.onError(new HandleViewIoException(this, onConnectionRegainedListener));
 //		getRatingsTask.execute();
 
+		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+
+		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+			new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+
         ImageProvider
-			.getImage(this, SessionConnection.getSessionConnectionProvider(), fileKey)
+			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, fileKey)
 			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 

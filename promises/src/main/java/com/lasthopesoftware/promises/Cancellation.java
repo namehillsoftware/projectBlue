@@ -9,13 +9,21 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 class Cancellation implements OneParameterAction<Runnable> {
 
 	private Runnable reaction;
+	private boolean isCancelled;
 
 	public void cancel() {
-		(reaction != null ? reaction : NoOpRunnable.getInstance()).run();
+		isCancelled = true;
+
+		if (reaction != null)
+			reaction.run();
+
+		reaction = null;
 	}
 
 	@Override
 	public void runWith(Runnable reaction) {
 		this.reaction = reaction;
+		if (isCancelled)
+			cancel();
 	}
 }

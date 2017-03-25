@@ -11,8 +11,10 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnPlaybackCompleteReceiver;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestNotificationBuilder;
@@ -21,7 +23,6 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
 
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
@@ -118,7 +120,9 @@ public class MainApplication extends Application {
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 
-		localBroadcastManager.registerReceiver(new UpdatePlayStatsOnPlaybackCompleteReceiver(new LibraryRepository(this)), new IntentFilter(PlaylistEvents.onFileComplete));
+		localBroadcastManager.registerReceiver(
+			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, Collections.singletonList(new UpdatePlayStatsOnCompleteRegistration(new LibraryRepository(this)))),
+			new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	private void initializeLogging() {

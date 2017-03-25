@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
@@ -13,12 +12,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Created by david on 7/24/15.
@@ -59,41 +58,45 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Uri getFileUri(IFile file) throws IOException {
+	public IPromise<Uri> getFileUri(IFile file) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
-			return null;
+			return Promise.empty();
 
-		final Cursor cursor = this.mediaQueryCursorProvider.getMediaQueryCursor(file);
-		if (cursor == null) return null;
+		return
+			mediaQueryCursorProvider
+				.getMediaQueryCursor(file)
+				.then(cursor -> {
+					if (cursor == null) return null;
 
-		try {
-			if (!cursor.moveToFirst()) return null;
+					try {
+						if (!cursor.moveToFirst()) return null;
 
-			final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-			if (fileUriString == null || fileUriString.isEmpty()) return null;
+						final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+						if (fileUriString == null || fileUriString.isEmpty()) return null;
 
-			// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
-			final java.io.File systemFile = new java.io.File(fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", ""));
+						// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
+						final java.io.File systemFile = new java.io.File(fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", ""));
 
-			if (!systemFile.exists()) return null;
+						if (!systemFile.exists()) return null;
 
-			if (!isSilent) {
-				final Intent broadcastIntent = new Intent(mediaFileFoundEvent);
-				broadcastIntent.putExtra(mediaFileFoundPath, systemFile.getPath());
-				try {
-					broadcastIntent.putExtra(mediaFileFoundMediaId, cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey)));
-				} catch (IllegalArgumentException ie) {
-					logger.info("Illegal column name.", ie);
-				}
-				broadcastIntent.putExtra(mediaFileFoundFileKey, file.getKey());
-				broadcastIntent.putExtra(mediaFileFoundLibraryId, library.getId());
-				LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-			}
+						if (!isSilent) {
+							final Intent broadcastIntent = new Intent(mediaFileFoundEvent);
+							broadcastIntent.putExtra(mediaFileFoundPath, systemFile.getPath());
+							try {
+								broadcastIntent.putExtra(mediaFileFoundMediaId, cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey)));
+							} catch (IllegalArgumentException ie) {
+								logger.info("Illegal column name.", ie);
+							}
+							broadcastIntent.putExtra(mediaFileFoundFileKey, file.getKey());
+							broadcastIntent.putExtra(mediaFileFoundLibraryId, library.getId());
+							LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+						}
 
-			logger.info("Returning file URI from local disk.");
-			return Uri.fromFile(systemFile);
-		} finally {
-			cursor.close();
-		}
+						logger.info("Returning file URI from local disk.");
+						return Uri.fromFile(systemFile);
+					} finally {
+						cursor.close();
+					}
+				});
 	}
 }

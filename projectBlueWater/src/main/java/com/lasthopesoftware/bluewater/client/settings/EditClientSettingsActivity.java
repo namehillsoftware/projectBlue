@@ -142,6 +142,8 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		syncFilesRadioGroup.setOnCheckedChangeListener((group, checkedId) -> syncPathTextView.setEnabled(checkedId == R.id.rbCustomLocation));
 
 		final int libraryId = intent.getIntExtra(serverIdExtra, -1);
+		if (libraryId < 0) return;
+
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
 			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {

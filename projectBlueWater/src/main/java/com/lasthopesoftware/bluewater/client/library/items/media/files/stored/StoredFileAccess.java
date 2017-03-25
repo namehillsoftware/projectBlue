@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
@@ -20,21 +22,21 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.fluent.FluentSpecifiedTask;
-import com.vedsoft.fluent.IFluentTask;
 import com.vedsoft.lazyj.Lazy;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -92,8 +94,8 @@ public class StoredFileAccess {
 		return getStoredFileTask;
 	}
 
-	public StoredFile getStoredFile(final IFile serviceFile) throws ExecutionException, InterruptedException {
-		return getStoredFileTask(serviceFile).get(RepositoryAccessHelper.databaseExecutor);
+	public IPromise<StoredFile> getStoredFile(final IFile serviceFile) {
+		return getStoredFileTask(serviceFile);
 	}
 
 	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
@@ -112,15 +114,14 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private IFluentTask<Void,Void,com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile> getStoredFileTask(final IFile serviceFile) {
-		return new FluentSpecifiedTask<Void, Void, StoredFile>() {
-			@Override
-			public StoredFile executeInBackground(Void... params) {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					return getStoredFile(repositoryAccessHelper, serviceFile);
-				}
+	private IPromise<StoredFile> getStoredFileTask(final IFile serviceFile) {
+		return new QueuedPromise<>((resolve, reject) -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceFile));
+			} catch(SQLException e) {
+				reject.withError(e);
 			}
-		};
+		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@SuppressLint("NewApi")
@@ -202,95 +203,96 @@ public class StoredFileAccess {
 		});
 	}
 
-	public StoredFile createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
-		final FluentCallable<StoredFile> createOrUpdateStoredFileTask = new FluentCallable<StoredFile>() {
+	@SuppressLint("NewApi")
+	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
+		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
+		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
+		final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 
-			@Override
-			@SuppressLint("NewApi")
-			public StoredFile executeInBackground() {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
-					if (storedFile == null) {
-						logger.info("Stored file was not found for " + file.getKey() + ", creating file");
-						createStoredFile(repositoryAccessHelper, file);
-						storedFile = getStoredFile(repositoryAccessHelper, file);
+		final MediaFileUriProvider mediaFileUriProvider =
+			new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
+
+		return
+			new QueuedPromise<StoredFile>((resolve, reject) -> {
+					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+						StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
+						if (storedFile == null) {
+							logger.info("Stored file was not found for " + file.getKey() + ", creating file");
+							createStoredFile(repositoryAccessHelper, file);
+							storedFile = getStoredFile(repositoryAccessHelper, file);
+						}
+
+						resolve.withResult(storedFile);
+					} catch (Exception e) {
+						reject.withError(e);
 					}
+				}, RepositoryAccessHelper.databaseExecutor)
+				.thenPromise(storedFile -> {
+					if (storedFile.getPath() != null || !library.isUsingExistingFiles())
+						return new Promise<>(storedFile);
 
-					if (storedFile.getPath() == null && library.isUsingExistingFiles()) {
-						try {
-							final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
-							final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, connectionProvider);
+					final IPromise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(file);
 
-							final MediaFileUriProvider mediaFileUriProvider =
-									new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
+					return
+						fileUriPromise
+							.thenPromise(localUri -> {
+								if (localUri == null)
+									return new Promise<>(storedFile);
 
-							final Uri localUri = mediaFileUriProvider.getFileUri(file);
-							if (localUri != null) {
 								storedFile.setPath(localUri.getPath());
 								storedFile.setIsDownloadComplete(true);
 								storedFile.setIsOwner(false);
 								try {
 									final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator);
-									storedFile.setStoredMediaId(mediaFileIdProvider.getMediaId());
+									return
+										mediaFileIdProvider
+											.getMediaId()
+											.then(mediaId -> {
+												storedFile.setStoredMediaId(mediaId);
+												return storedFile;
+											});
 								} catch (IOException e) {
 									logger.error("Error retrieving media file ID", e);
+									return new Promise<>(storedFile);
 								}
-							}
-						} catch (IOException e) {
-							logger.error("Error retrieving media file URI", e);
-						}
-					}
+							});
+					})
+					.thenPromise(storedFile -> {
+						if (storedFile.getPath() != null)
+							return new Promise<>(storedFile);
 
-					if (storedFile.getPath() == null) {
-						try {
-							String fullPath = library.getSyncDir(context).getPath();
+						return
+							cachedFilePropertiesProvider
+								.promiseFileProperties(file.getKey())
+								.then(fileProperties -> {
+									String fullPath = library.getSyncDir(context).getPath();
 
-							final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, file.getKey());
-							final Map<String, String> fileProperties = filePropertiesProvider.get();
+									String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+									if (artist == null)
+										artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-							if (artist == null)
-								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+									if (artist != null)
+										fullPath = FilenameUtils.concat(fullPath, artist);
 
-							if (artist != null)
-								fullPath = FilenameUtils.concat(fullPath, artist);
+									final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+									if (album != null)
+										fullPath = FilenameUtils.concat(fullPath, album);
 
-							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-							if (album != null)
-								fullPath = FilenameUtils.concat(fullPath, album);
+									String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
+									fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
-							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
-							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+									final int extensionIndex = fileName.lastIndexOf('.');
+									if (extensionIndex > -1)
+										fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
-							final int extensionIndex = fileName.lastIndexOf('.');
-							if (extensionIndex > -1)
-								fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
+									// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
+									fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
+									storedFile.setPath(fullPath);
 
-							// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
-							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
-							storedFile.setPath(fullPath);
-						} catch (InterruptedException | ExecutionException e) {
-							logger.error("Error getting file properties for file " + file.getKey(), e);
-						}
-					}
-
-					final File systemFile = new File(storedFile.getPath());
-					if (!systemFile.exists())
-						storedFile.setIsDownloadComplete(false);
-
-					updateStoredFile(repositoryAccessHelper, storedFile);
-
-					return storedFile;
-				}
-			}
-		};
-
-		try {
-			return createOrUpdateStoredFileTask.get(RepositoryAccessHelper.databaseExecutor);
-		} catch (ExecutionException | InterruptedException e) {
-			logger.error("There was an error creating or updating the stored file for service file " + file.getKey(), e);
-			return null;
-		}
+									return storedFile;
+								});
+					});
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {

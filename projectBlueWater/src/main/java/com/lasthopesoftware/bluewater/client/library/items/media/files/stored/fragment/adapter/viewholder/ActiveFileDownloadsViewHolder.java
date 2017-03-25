@@ -2,7 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.f
 
 import android.widget.TextView;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.promises.IPromise;
+
+import java.util.Map;
 
 /**
  * Created by david on 8/23/15.
@@ -10,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 public class ActiveFileDownloadsViewHolder {
 
 	public final TextView textView;
-	public CachedFilePropertiesProvider filePropertiesProvider;
+	public IPromise<Map<String, String>> filePropertiesProvider;
 
 	public ActiveFileDownloadsViewHolder(TextView textView) {
 

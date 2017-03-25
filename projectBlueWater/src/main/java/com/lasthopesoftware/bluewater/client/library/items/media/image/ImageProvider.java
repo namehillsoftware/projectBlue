@@ -8,7 +8,6 @@ import android.support.v4.util.LruCache;
 import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -38,7 +37,6 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,25 +57,30 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 	private static final String cancellationMessage = "The image task was cancelled";
 
-	public static ImageProvider getImage(final Context context, ConnectionProvider connectionProvider, final int fileKey) {
-		return new ImageProvider(context, connectionProvider, fileKey);
+	public static IPromise<Bitmap> getImage(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
+		return
+			cachedFilePropertiesProvider
+				.promiseFileProperties(fileKey)
+				.thenPromise(fileProperties -> new ImageProvider(context, connectionProvider, fileProperties, fileKey));
 	}
 
-	private ImageProvider(final Context context, final ConnectionProvider connectionProvider, final int fileKey) {
-		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileKey), imageAccessExecutor);
+	private ImageProvider(final Context context, final IConnectionProvider connectionProvider, Map<String, String> fileProperties, final int fileKey) {
+		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileProperties, fileKey), imageAccessExecutor);
 	}
 
 	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
 		private final Context context;
-		private final ConnectionProvider connectionProvider;
+		private final IConnectionProvider connectionProvider;
+		private final Map<String, String> fileProperties;
 		private final FillerBitmap fillerBitmap;
 		private final int fileKey;
 		private final ILibraryProvider libraryProvider;
 		private final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 
-		ImageMemoryTask(Context context, ConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
+		ImageMemoryTask(Context context, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, Map<String, String> fileProperties, int fileKey) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
+			this.fileProperties = fileProperties;
 			this.fillerBitmap = fillerBitmap;
 			this.fileKey = fileKey;
 			this.libraryProvider = new LibraryRepository(context);
@@ -92,26 +95,17 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			if (rejectingCancellationHandler.isCancelled()) return;
 
-			String uniqueKey;
-			try {
-				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, fileKey);
-				final Map<String, String> fileProperties = filePropertiesProvider.get();
-				// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
-				// artists), and then by artist if that field is empty
-				String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-				if (artist == null || artist.isEmpty())
-					artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+			// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
+			// artists), and then by artist if that field is empty
+			String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+			if (artist == null || artist.isEmpty())
+				artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-				String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
-				if (albumOrTrackName == null)
-					albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
+			String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
+			if (albumOrTrackName == null)
+				albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
 
-				uniqueKey = artist + ":" + albumOrTrackName;
-			} catch (InterruptedException | ExecutionException e) {
-				logger.error("Error getting file properties.", e);
-				resolve.withResult(fillerBitmap.getFillerBitmap());
-				return;
-			}
+			final String uniqueKey = artist + ":" + albumOrTrackName;
 
 			if (rejectingCancellationHandler.isCancelled()) return;
 

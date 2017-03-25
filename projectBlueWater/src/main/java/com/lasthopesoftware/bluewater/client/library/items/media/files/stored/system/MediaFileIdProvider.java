@@ -4,7 +4,10 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +17,7 @@ import java.io.IOException;
 /**
  * Created by david on 6/13/16.
  */
-public class MediaFileIdProvider {
+public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor, Integer> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaFileIdProvider.class);
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
@@ -29,11 +32,18 @@ public class MediaFileIdProvider {
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public int getMediaId() throws IOException {
+	public IPromise<Integer> getMediaId() throws IOException {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
-			return -1;
+			return new Promise<>(-1);
 
-		final Cursor cursor = mediaQueryCursorProvider.getMediaQueryCursor(file);
+		return
+			mediaQueryCursorProvider
+				.getMediaQueryCursor(file)
+				.then(this);
+	}
+
+	@Override
+	public Integer resultFrom(Cursor cursor) throws Exception {
 		if (cursor == null) return -1;
 
 		try {

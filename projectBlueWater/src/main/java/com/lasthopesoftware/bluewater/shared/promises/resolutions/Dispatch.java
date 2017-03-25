@@ -6,6 +6,7 @@ import android.os.Handler;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -37,6 +38,10 @@ public class Dispatch {
 
 	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toHandler(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Handler handler) {
 		return new OneParameterExecutors.DispatchedCancellableTask<>(task, handler);
+	}
+
+	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toHandler(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, Handler handler) {
+		return new OneParameterExecutors.DispatchedCancellableFunction<>(task, handler);
 	}
 
 	private static class OneParameterExecutors {
@@ -85,6 +90,46 @@ public class Dispatch {
 			@Override
 			public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 				this.handler.post(new WrappedFunction<>(callable, result, resolve, reject));
+			}
+		}
+
+		static class DispatchedCancellableFunction<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task;
+			private final Handler handler;
+
+			DispatchedCancellableFunction(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, Handler handler) {
+				this.task = task;
+				this.handler = handler;
+			}
+
+			@Override
+			public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				this.handler.post(new WrappedCancellableFunction<>(this.task, result, resolve, reject, onCancelled));
+			}
+
+			private static class WrappedCancellableFunction<TResult, TNewResult> implements Runnable {
+				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task;
+				private final TResult result;
+				private final IResolvedPromise<TNewResult> resolve;
+				private final IRejectedPromise reject;
+				private final OneParameterAction<Runnable> onCancelled;
+
+				WrappedCancellableFunction(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+					this.task = task;
+					this.result = result;
+					this.resolve = resolve;
+					this.reject = reject;
+					this.onCancelled = onCancelled;
+				}
+
+				@Override
+				public void run() {
+					try {
+						this.resolve.withResult(this.task.resultFrom(result, onCancelled));
+					} catch (Exception e) {
+						this.reject.withError(e);
+					}
+				}
 			}
 		}
 
