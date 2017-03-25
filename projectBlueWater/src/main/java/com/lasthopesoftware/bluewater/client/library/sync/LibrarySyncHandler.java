@@ -143,7 +143,7 @@ public class LibrarySyncHandler {
 						fileProviders.offer(new AbstractMap.SimpleImmutableEntry<>(item, fileProvider));
 					}
 
-					final List<IPromise<StoredFile>> upsertStoredFilePromises = new ArrayList<>(fileProviders.size());
+					final List<IPromise<Void>> upsertStoredFilePromises = new ArrayList<>(fileProviders.size());
 
 					Map.Entry<IItem, FileProvider> fileProviderEntry;
 					while ((fileProviderEntry = fileProviders.poll()) != null) {
@@ -165,17 +165,15 @@ public class LibrarySyncHandler {
 									return;
 								}
 
-								final IPromise<StoredFile> upsertStoredFilePromise =
+								final IPromise<Void> upsertStoredFilePromise =
 									storedFileAccess
-										.createOrUpdateFile(connectionProvider, file);
+										.createOrUpdateFile(connectionProvider, file)
+										.then(runCarelessly(storedFile -> {
+											if (storedFile != null && !storedFile.isDownloadComplete())
+												storedFileDownloader.queueFileForDownload(file, storedFile);
+										}));
 
 								upsertStoredFilePromises.add(upsertStoredFilePromise);
-
-								upsertStoredFilePromise
-									.then(runCarelessly(storedFile -> {
-										if (storedFile != null && !storedFile.isDownloadComplete())
-											storedFileDownloader.queueFileForDownload(file, storedFile);
-									}));
 							}
 						} catch (ExecutionException | InterruptedException e) {
 
