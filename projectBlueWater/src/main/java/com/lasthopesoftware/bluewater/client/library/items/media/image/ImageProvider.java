@@ -188,7 +188,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 			}
 
 			try {
-				final HttpURLConnection connection = connectionProvider.getConnection("ServiceFile/GetImage", "ServiceFile=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
+				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 				try {
 					// Connection failed to build
 					if (connection == null) {
