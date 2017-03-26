@@ -15,8 +15,8 @@ public final class ServiceFileUriQueryParamsProvider implements IServiceFileUriQ
 	@Override
 	public String[] getServiceFileUriQueryParams(ServiceFile serviceFile) {
 		return new String[]{
-			"ServiceFile/GetFile",
-			"ServiceFile=" + Integer.toString(serviceFile.getKey()),
+			"File/GetFile",
+			"File=" + Integer.toString(serviceFile.getKey()),
 			"Quality=medium",
 			"Conversion=Android",
 			"Playback=0"};

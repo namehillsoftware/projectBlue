@@ -84,7 +84,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			try {
 				if (isCancelled) return;
 
-				final HttpURLConnection conn = connectionProvider.getConnection("ServiceFile/GetInfo", "ServiceFile=" + fileKey);
+				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
 				conn.setReadTimeout(45000);
 				try {
 					if (isCancelled) return;
