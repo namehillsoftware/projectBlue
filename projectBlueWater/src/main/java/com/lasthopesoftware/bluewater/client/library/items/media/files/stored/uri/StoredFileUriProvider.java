@@ -31,7 +31,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 			storedFileAccess
 				.getStoredFile(serviceFile)
 				.then(storedFile -> {
-					if (storedFile == null || !storedFile.isDownloadComplete()) return null;
+					if (storedFile == null || !storedFile.isDownloadComplete() || storedFile.getPath() == null || storedFile.getPath().isEmpty()) return null;
 
 					final File systemFile = new File(storedFile.getPath());
 					if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
