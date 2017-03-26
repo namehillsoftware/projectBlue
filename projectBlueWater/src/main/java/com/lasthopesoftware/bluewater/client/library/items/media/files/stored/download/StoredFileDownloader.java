@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -14,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
@@ -24,10 +25,14 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class StoredFileDownloader {
 
@@ -97,38 +102,65 @@ public class StoredFileDownloader {
 
 		isProcessing = true;
 
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-			try {
-				StoredFileJob storedFileJob;
-				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
-					if (isCancelled) return;
+		final Collection<IPromise<StoredFileJobResult>> storedFileJobPromises = new ArrayList<>(storedFileJobQueue.size());
+		try {
+			StoredFileJob storedFileJob;
+			while ((storedFileJob = storedFileJobQueue.poll()) != null) {
+				if (isCancelled) return;
 
-					final StoredFile storedFile = storedFileJob.getStoredFile();
+				final StoredFile storedFile = storedFileJob.getStoredFile();
 
-					if (onFileDownloading != null)
-						onFileDownloading.runWith(storedFile);
+				if (onFileDownloading != null)
+					onFileDownloading.runWith(storedFile);
 
-					try {
-						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
+				try {
+					final IPromise<StoredFileJobResult> storedFileJobPromise = storedFileJob.processJob();
 
-						if (onFileDownloaded != null)
-							onFileDownloaded.runWith(storedFileJobResult);
-					} catch (StoredFileWriteException se) {
-						if (onFileWriteError != null)
-							onFileWriteError.runWith(se.getStoredFile());
-					} catch (StoredFileReadException se) {
-						if (onFileReadError != null)
-							onFileReadError.runWith(se.getStoredFile());
-					} catch (StoredFileJobException e) {
-						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
-					} catch (StorageCreatePathException e) {
-						logger.error("There was an error creating the path for a file", e);
-					}
+					storedFileJobPromises.add(storedFileJobPromise);
+
+					if (onFileDownloaded != null)
+						storedFileJobPromise.then(runCarelessly(onFileDownloaded));
+
+					storedFileJobPromise
+						.error(runCarelessly(e -> {
+							if (onFileWriteError != null && e instanceof StoredFileWriteException) {
+								onFileWriteError.runWith(((StoredFileWriteException)e).getStoredFile());
+								return;
+							}
+
+							if (onFileReadError != null && e instanceof StoredFileReadException) {
+								onFileReadError.runWith(((StoredFileReadException)e).getStoredFile());
+								return;
+							}
+
+							if (e instanceof StoredFileJobException) {
+								logger.error("There was an error downloading the stored file " + ((StoredFileJobException)e).getStoredFile(), e);
+								return;
+							}
+
+							if (e instanceof StorageCreatePathException) {
+								logger.error("There was an error creating the path for a file", e);
+							}
+						}));
+
+				} catch (StoredFileWriteException se) {
+					if (onFileWriteError != null)
+						onFileWriteError.runWith(se.getStoredFile());
+				} catch (StoredFileReadException se) {
+					if (onFileReadError != null)
+						onFileReadError.runWith(se.getStoredFile());
+				} catch (StoredFileJobException e) {
+					logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
+				} catch (StorageCreatePathException e) {
+					logger.error("There was an error creating the path for a file", e);
 				}
-			} finally {
-				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 			}
-		});
+		} finally {
+			if (onQueueProcessingCompleted != null)
+				Promise
+					.whenAll(storedFileJobPromises)
+					.then(runCarelessly(results -> onQueueProcessingCompleted.run()));
+		}
 	}
 
 	public void setOnFileQueued(@Nullable OneParameterAction<StoredFile> onFileQueued) {

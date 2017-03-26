@@ -171,17 +171,15 @@ public class LibrarySyncHandler {
 										.then(runCarelessly(storedFile -> {
 											if (storedFile != null && !storedFile.isDownloadComplete())
 												storedFileDownloader.queueFileForDownload(file, storedFile);
-										}))
-										.error(runCarelessly(e -> {
-											if (e instanceof FileNotFoundException) {
-												logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-												storedItemAccess.toggleSync(item, false);
-												return;
-											}
-
-											isFaulted = true;
-											logger.warn("There was an error retrieving the files", e);
 										}));
+
+								upsertStoredFilePromise
+									.error(runCarelessly(e -> {
+										if (e instanceof FileNotFoundException) {
+											logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+											storedItemAccess.toggleSync(item, false);
+										}
+									}));
 
 								upsertStoredFilePromises.add(upsertStoredFilePromise);
 							}
@@ -217,6 +215,10 @@ public class LibrarySyncHandler {
 							}
 
 							storedFileDownloader.process();
+						}))
+						.error(runCarelessly(e -> {
+							isFaulted = true;
+							logger.warn("There was an error retrieving the files", e);
 						}));
 				}));
 	}
