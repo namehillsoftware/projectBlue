@@ -4,7 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.promises.IPromise;
@@ -31,13 +31,13 @@ public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, Care
 	}
 
 	@Override
-	public IPromise<Cursor> getMediaQueryCursor(File file) {
+	public IPromise<Cursor> getMediaQueryCursor(ServiceFile serviceFile) {
 		if (context == null)
-			throw new IllegalArgumentException("The file player's context cannot be null");
+			throw new IllegalArgumentException("The serviceFile player's context cannot be null");
 
 		return
 			cachedFilePropertiesProvider
-				.promiseFileProperties(file.getKey())
+				.promiseFileProperties(serviceFile.getKey())
 				.then(this);
 	}
 

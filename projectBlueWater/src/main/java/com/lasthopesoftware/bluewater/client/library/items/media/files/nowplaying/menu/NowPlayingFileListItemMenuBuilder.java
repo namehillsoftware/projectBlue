@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileListItemContainer;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * Created by david on 11/7/15.
  */
-public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
+public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
     private static final class ViewHolder extends BaseMenuViewHolder {
 
@@ -55,18 +55,18 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 	    }
     }
 
-    private final List<File> files;
+    private final List<ServiceFile> serviceFiles;
     private final int nowPlayingPosition;
 
     private OneParameterAction<Integer> onPlaylistFileRemovedListener;
 
-    public NowPlayingFileListItemMenuBuilder(final List<File> files, final int nowPlayingPosition) {
-        this.files = files;
+    public NowPlayingFileListItemMenuBuilder(final List<ServiceFile> serviceFiles, final int nowPlayingPosition) {
+        this.serviceFiles = serviceFiles;
         this.nowPlayingPosition = nowPlayingPosition;
     }
 
     @Override
-    public View getView(final int position, final File file, View convertView, ViewGroup parent) {
+    public View getView(final int position, final ServiceFile serviceFile, View convertView, ViewGroup parent) {
         if (convertView == null) {
             final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
             final NotifyOnFlipViewAnimator viewFlipper = fileItemMenu.getViewAnimator();
@@ -94,7 +94,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         final TextView textView = fileListItem.getTextViewFinder();
 
         if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
+        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(serviceFile, textView);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
 
@@ -110,7 +110,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
         final NotifyOnFlipViewAnimator viewFlipper = fileListItem.getViewAnimator();
         LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper);
         viewHolder.getPlayButton().setOnClickListener(new FileSeekToClickListener(viewFlipper, position));
-        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
+        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, serviceFile));
         viewHolder.getRemoveButton().setOnClickListener(new RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener));
 
         return viewFlipper;

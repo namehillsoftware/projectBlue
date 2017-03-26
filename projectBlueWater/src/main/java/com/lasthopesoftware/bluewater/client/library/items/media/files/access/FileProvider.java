@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.providers.AbstractInputStreamProvider;
 
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by david on 11/25/15.
  */
-public class FileProvider extends AbstractInputStreamProvider<List<File>> {
+public class FileProvider extends AbstractInputStreamProvider<List<ServiceFile>> {
 	private static final Logger logger = LoggerFactory.getLogger(FileProvider.class);
 
 	public FileProvider(ConnectionProvider connectionProvider, IFileListParameterProvider item) {
@@ -33,11 +33,11 @@ public class FileProvider extends AbstractInputStreamProvider<List<File>> {
 	}
 
 	@Override
-	protected List<File> getData(InputStream is) {
+	protected List<ServiceFile> getData(InputStream is) {
 		try {
 			return FileStringListUtilities.parseFileStringList(IOUtils.toString(is));
 		} catch (IOException e) {
-			logger.warn("There was an error getting the file list", e);
+			logger.warn("There was an error getting the serviceFile list", e);
 			setException(e);
 		}
 

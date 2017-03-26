@@ -10,7 +10,7 @@ import android.widget.TextView;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
@@ -24,7 +24,7 @@ import java.util.List;
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
 	public ActiveFileDownloadsAdapter(Context context, List<StoredFile> storedFiles) {
-		super(context, R.id.tvStandard, Stream.of(storedFiles).map(s -> new File(s.getServiceId())).collect(Collectors.toList()));
+		super(context, R.id.tvStandard, Stream.of(storedFiles).map(s -> new ServiceFile(s.getServiceId())).collect(Collectors.toList()));
 	}
 
 	@NonNull

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.media.MediaPlayer;
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
@@ -24,13 +24,13 @@ import java.util.concurrent.CancellationException;
 final class MediaPlayerPreparerTask implements
 	ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
-	private final File file;
+	private final ServiceFile serviceFile;
 	private final int prepareAt;
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	MediaPlayerPreparerTask(File file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
-		this.file = file;
+	MediaPlayerPreparerTask(ServiceFile serviceFile, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+		this.serviceFile = serviceFile;
 		this.prepareAt = prepareAt;
 		this.uriProvider = uriProvider;
 		this.playbackInitialization = playbackInitialization;
@@ -39,7 +39,7 @@ final class MediaPlayerPreparerTask implements
 	@Override
 	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		uriProvider
-			.getFileUri(file)
+			.getFileUri(serviceFile)
 			.then(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, resolve, reject, onCancelled))
 			.error(new UriProviderErrorHandler(reject));
 	}

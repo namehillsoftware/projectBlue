@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +10,12 @@ import java.util.List;
  */
 
 public class NowPlaying {
-	public List<File> playlist = new ArrayList<>();
+	public List<ServiceFile> playlist = new ArrayList<>();
 	public int playlistPosition;
 	public int filePosition;
 	public boolean isRepeating;
 
-	NowPlaying(List<File> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
+	NowPlaying(List<ServiceFile> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
 		this(playlistPosition, filePosition, isRepeating);
 
 		this.playlist = playlist;

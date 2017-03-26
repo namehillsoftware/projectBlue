@@ -14,6 +14,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
@@ -61,7 +62,7 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		// Kick off a file sync if one isn't scheduled on start-up
+		// Kick off a serviceFile sync if one isn't scheduled on start-up
 		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
 	}
 
@@ -87,7 +88,7 @@ public class MainApplication extends Application {
 						final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 						if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-						storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.client.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
+						storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
 					}));
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));

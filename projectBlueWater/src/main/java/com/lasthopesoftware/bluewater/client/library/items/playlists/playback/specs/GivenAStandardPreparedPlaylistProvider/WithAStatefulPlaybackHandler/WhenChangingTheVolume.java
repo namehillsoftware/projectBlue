@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
@@ -31,8 +31,8 @@ public class WhenChangingTheVolume {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 		playbackHandler.promisePlayback();
 
-		final IPromise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new File(1)));
+		final IPromise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
+			new Promise<>(new PositionedPlaybackServiceFile(0, playbackHandler, new ServiceFile(1)));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))

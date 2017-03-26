@@ -36,13 +36,13 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection.Buildi
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -217,7 +217,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
-	private PositionedPlaybackFile positionedPlaybackFile;
+	private PositionedPlaybackServiceFile positionedPlaybackFile;
 	private boolean isPlaying;
 	private Disposable playbackFileChangedSubscription;
 	private Disposable filePositionSubscription;
@@ -540,7 +540,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (fileKey < 0) return;
 
 			playbackPlaylistStateManager
-				.addFile(new File(fileKey))
+				.addFile(new ServiceFile(fileKey))
 				.then(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
@@ -558,14 +558,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	}
 
-	private Observable<PositionedPlaybackFile> handlePlaybackStarted(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+	private Observable<PositionedPlaybackServiceFile> handlePlaybackStarted(Observable<PositionedPlaybackServiceFile> positionedPlaybackFileObservable) {
 		isPlaying = true;
 		NowPlayingActivity.startNowPlayingActivity(this);
 
 		return positionedPlaybackFileObservable;
 	}
 
-	private Observable<PositionedPlaybackFile> restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+	private Observable<PositionedPlaybackServiceFile> restartObservable(Observable<PositionedPlaybackServiceFile> positionedPlaybackFileObservable) {
 		if (positionedPlaybackFile != null) {
 			positionedPlaybackFileObservable =
 				Observable
@@ -576,16 +576,16 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return observePlaybackFileChanges(positionedPlaybackFileObservable);
 	}
 
-	private Observable<PositionedPlaybackFile> observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
+	private Observable<PositionedPlaybackServiceFile> observePlaybackFileChanges(Observable<PositionedPlaybackServiceFile> observable) {
 		if (playbackFileChangedSubscription != null)
 			playbackFileChangedSubscription.dispose();
 
 		if (playbackFileChangesConnection != null)
 			playbackFileChangesConnection.dispose();
 
-		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesPublisher = observable.publish();
+		final ConnectableObservable<PositionedPlaybackServiceFile> playbackFileChangesPublisher = observable.publish();
 
-		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesReplayer = playbackFileChangesPublisher.replay(1);
+		final ConnectableObservable<PositionedPlaybackServiceFile> playbackFileChangesReplayer = playbackFileChangesPublisher.replay(1);
 
 		playbackFileChangedSubscription =
 			playbackFileChangesPublisher.subscribe(
@@ -697,7 +697,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return scrobbleDroidIntent;
 	}
 
-	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
+	private void changePositionedPlaybackFile(PositionedPlaybackServiceFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);

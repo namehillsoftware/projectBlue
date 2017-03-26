@@ -184,11 +184,11 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					}
 				}
 			} catch (IOException e) {
-				logger.error("There was an error getting the cached file", e);
+				logger.error("There was an error getting the cached serviceFile", e);
 			}
 
 			try {
-				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
+				final HttpURLConnection connection = connectionProvider.getConnection("ServiceFile/GetImage", "ServiceFile=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 				try {
 					// Connection failed to build
 					if (connection == null) {
@@ -220,7 +220,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					try {
 						imageDiskCache.put(uniqueKey, imageBytes);
 					} catch (IOException ioe) {
-						logger.error("Error writing file!", ioe);
+						logger.error("Error writing serviceFile!", ioe);
 					}
 
 					putBitmapIntoMemory(uniqueKey, imageBytes);
@@ -262,10 +262,10 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					fis.close();
 				}
 			} catch (FileNotFoundException e) {
-				logger.error("Could not find file.", e);
+				logger.error("Could not find serviceFile.", e);
 				return new byte[0];
 			} catch (IOException e) {
-				logger.error("Error reading file.", e);
+				logger.error("Error reading serviceFile.", e);
 				return new byte[0];
 			}
 

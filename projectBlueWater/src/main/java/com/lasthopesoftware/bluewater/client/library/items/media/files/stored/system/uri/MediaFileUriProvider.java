@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -58,13 +58,13 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(File file) {
+	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return Promise.empty();
 
 		return
 			mediaQueryCursorProvider
-				.getMediaQueryCursor(file)
+				.getMediaQueryCursor(serviceFile)
 				.then(cursor -> {
 					if (cursor == null) return null;
 
@@ -74,7 +74,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 						final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
 						if (fileUriString == null || fileUriString.isEmpty()) return null;
 
-						// The file object will produce a properly escaped File URI, as opposed to what is stored in the DB
+						// The serviceFile object will produce a properly escaped ServiceFile URI, as opposed to what is stored in the DB
 						final java.io.File systemFile = new java.io.File(fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", ""));
 
 						if (!systemFile.exists()) return null;
@@ -87,12 +87,12 @@ public class MediaFileUriProvider implements IFileUriProvider {
 							} catch (IllegalArgumentException ie) {
 								logger.info("Illegal column name.", ie);
 							}
-							broadcastIntent.putExtra(mediaFileFoundFileKey, file.getKey());
+							broadcastIntent.putExtra(mediaFileFoundFileKey, serviceFile.getKey());
 							broadcastIntent.putExtra(mediaFileFoundLibraryId, library.getId());
 							LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 						}
 
-						logger.info("Returning file URI from local disk.");
+						logger.info("Returning serviceFile URI from local disk.");
 						return Uri.fromFile(systemFile);
 					} finally {
 						cursor.close();

@@ -111,7 +111,7 @@ public class DiskFileCache {
 						putIntoDatabase(uniqueKey, file);
 						return;
 					} catch (IOException e) {
-						logger.error("Unable to write to file!", e);
+						logger.error("Unable to write to serviceFile!", e);
 
 						// Check if free space is too low and then attempt to free up enough space
 						// to store image
@@ -141,9 +141,9 @@ public class DiskFileCache {
 			if (cause instanceof IOException)
 				throw (IOException)cause;
 
-			logger.error("There was an error putting the file with the unique key " + uniqueKey + " into the cache.", e);
+			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
 		} catch (InterruptedException e) {
-			logger.warn("Putting the file with the unique key " + uniqueKey + " into the cache was interrupted.", e);
+			logger.warn("Putting the serviceFile with the unique key " + uniqueKey + " into the cache was interrupted.", e);
 		}
 	}
 
@@ -162,7 +162,7 @@ public class DiskFileCache {
 			try {
 				cachedFile = getCachedFile(uniqueKey);
 			} catch (IOException e) {
-				logger.error("There was an error getting the cached file with unique key " + uniqueKey, e);
+				logger.error("There was an error getting the cached serviceFile with unique key " + uniqueKey, e);
 				return;
 			}
 
@@ -179,7 +179,7 @@ public class DiskFileCache {
 				return;
 			}
 
-			logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
+			logger.info("ServiceFile with unique key " + uniqueKey + " doesn't exist. Creating...");
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
@@ -198,7 +198,7 @@ public class DiskFileCache {
 
 					closeableTransaction.setTransactionSuccessful();
 				} catch (SQLException sqlException) {
-					logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
+					logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
 				}
 			} finally {
 				new CacheFlusherTask(context, cacheName, maxSize).execute();
@@ -211,7 +211,7 @@ public class DiskFileCache {
 
 			@Override
 			protected File executeInBackground() {
-				logger.info("Getting cached file " + uniqueKey);
+				logger.info("Getting cached serviceFile " + uniqueKey);
 				try {
 					final CachedFile cachedFile;
 					try {
@@ -226,33 +226,33 @@ public class DiskFileCache {
 					final File returnFile = new File(cachedFile.getFileName());
 					logger.info("Checking if " + cachedFile.getFileName() + " exists.");
 					if (!returnFile.exists()) {
-						logger.warn("Cached file `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
+						logger.warn("Cached serviceFile `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
 						if (deleteCachedFile(cachedFile.getId()) <= 0)
-							setException(new SQLDataException("Unable to delete file with ID " + cachedFile.getId()));
+							setException(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
 
 						return null;
 					}
 
-					// Remove the file and return null if it's past its expired time
+					// Remove the serviceFile and return null if it's past its expired time
 					if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
-						logger.info("Cached file " + uniqueKey + " expired. Deleting.");
+						logger.info("Cached serviceFile " + uniqueKey + " expired. Deleting.");
 						if (!returnFile.delete()) {
-							setException(new IOException("Unable to delete file " + returnFile.getAbsolutePath()));
+							setException(new IOException("Unable to delete serviceFile " + returnFile.getAbsolutePath()));
 							return null;
 						}
 
 						if (deleteCachedFile(cachedFile.getId()) <= 0)
-							setException(new SQLDataException("Unable to delete file with ID " + cachedFile.getId()));
+							setException(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
 
 						return null;
 					}
 
 					doFileAccessedUpdate(cachedFile.getId());
 
-					logger.info("Returning cached file " + uniqueKey);
+					logger.info("Returning cached serviceFile " + uniqueKey);
 					return returnFile;
 				} catch (SQLException sqlException) {
-					logger.error("There was an error attempting to get the cached file " + uniqueKey, sqlException);
+					logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
 					return null;
 				}
 			}
@@ -281,7 +281,7 @@ public class DiskFileCache {
 	private void updateFilePath(final long cachedFileId, final String filePath) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				logger.info("Updating file name of cached file with ID " + cachedFileId + " to " + filePath);
+				logger.info("Updating serviceFile name of cached serviceFile with ID " + cachedFileId + " to " + filePath);
 
 				repositoryAccessHelper
 						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
@@ -291,7 +291,7 @@ public class DiskFileCache {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException sqlException) {
-				logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
+				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
 				throw sqlException;
 			}
 		}
@@ -300,7 +300,7 @@ public class DiskFileCache {
 	@SuppressLint("NewApi")
 	private void doFileAccessedUpdate(final long cachedFileId) {
 		final long updateTime = System.currentTimeMillis();
-		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
+		logger.info("Updating accessed time on cached serviceFile with ID " + cachedFileId + " to " + new Date(updateTime));
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
@@ -312,7 +312,7 @@ public class DiskFileCache {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException sqlException) {
-				logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
+				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
 				throw sqlException;
 			}
 		}
@@ -332,7 +332,7 @@ public class DiskFileCache {
 				closeableNonExclusiveTransaction.setTransactionSuccessful();
 				return cachedFile;
 			} catch (SQLException sqlException) {
-				logger.error("There was an error getting the file with unique key " + uniqueKey, sqlException);
+				logger.error("There was an error getting the serviceFile with unique key " + uniqueKey, sqlException);
 				return null;
 			} catch (IOException e) {
 				logger.error("There was an error opening the non exclusive transaction", e);
@@ -345,10 +345,10 @@ public class DiskFileCache {
 	private long deleteCachedFile(final long cachedFileId) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				logger.info("Deleting cached file with id " + cachedFileId);
+				logger.info("Deleting cached serviceFile with id " + cachedFileId);
 
 				if (logger.isDebugEnabled())
-					logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
+					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
 
 				final long executionResult =
 						repositoryAccessHelper
@@ -357,13 +357,13 @@ public class DiskFileCache {
 								.execute();
 
 				if (logger.isDebugEnabled())
-					logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
+					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
 
 				closeableTransaction.setTransactionSuccessful();
 
 				return executionResult;
 			} catch (SQLException sqlException) {
-				logger.warn("There was an error trying to delete the cached file with id " + cachedFileId, sqlException);
+				logger.warn("There was an error trying to delete the cached serviceFile with id " + cachedFileId, sqlException);
 			}
 		}
 

@@ -1,18 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenTwoQueuesThatEventuallyDiverge;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,21 +22,21 @@ import static org.mockito.Mockito.when;
 
 public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
-	private static PositionedPlaybackFile positionedPlaybackFile;
-	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
+	private static PositionedPlaybackServiceFile positionedPlaybackFile;
+	private static PositionedPlaybackServiceFile expectedPositionedPlaybackFile;
 
 	@BeforeClass
 	public static void before() {
-		expectedPositionedPlaybackFile = new PositionedPlaybackFile(6, mock(IPlaybackHandler.class), new File(6));
+		expectedPositionedPlaybackFile = new PositionedPlaybackServiceFile(6, mock(IPlaybackHandler.class), new ServiceFile(6));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
 			.thenReturn(
-				new PositionedFile(1, new File(1)),
-				new PositionedFile(2, new File(2)),
-				new PositionedFile(3, new File(3)),
-				new PositionedFile(4, new File(4)),
-				new PositionedFile(5, new File(5)),
+				new PositionedFile(1, new ServiceFile(1)),
+				new PositionedFile(2, new ServiceFile(2)),
+				new PositionedFile(3, new ServiceFile(3)),
+				new PositionedFile(4, new ServiceFile(4)),
+				new PositionedFile(5, new ServiceFile(5)),
 				null);
 
 		final PreparedPlaybackQueue queue =
@@ -55,8 +50,8 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		final IPositionedFileQueue newPositionedFileQueue = mock(IPositionedFileQueue.class);
 		when(newPositionedFileQueue.poll())
 			.thenReturn(
-				new PositionedFile(3, new File(3)),
-				new PositionedFile(6, new File(6)),
+				new PositionedFile(3, new ServiceFile(3)),
+				new PositionedFile(6, new ServiceFile(6)),
 				null);
 
 		queue.updateQueue(newPositionedFileQueue);

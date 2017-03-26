@@ -34,7 +34,7 @@ public final class MediaPlayerInitializer implements IPlaybackInitialization<Med
 
 		final Map<String, String> headers = new HashMap<>();
 		if (context == null)
-			throw new NullPointerException("The file player's context cannot be null");
+			throw new NullPointerException("The serviceFile player's context cannot be null");
 
 		if (!uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)) {
 			final String authKey = library.getAuthKey();

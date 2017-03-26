@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 
 /**
  * Created by david on 1/17/17.
@@ -19,7 +19,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
     }
 
     @Override
-    public void sendPlaybackBroadcast(final String broadcastMessage, final int libraryId, final PositionedPlaybackFile positionedPlaybackFile) {
+    public void sendPlaybackBroadcast(final String broadcastMessage, final int libraryId, final PositionedPlaybackServiceFile positionedPlaybackFile) {
         final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
         final int currentPlaylistPosition = positionedPlaybackFile.getPosition();

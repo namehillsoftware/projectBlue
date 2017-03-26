@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -50,10 +50,10 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(File file) {
+	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
 		return
 			storedFileUriProvider
-				.getFileUri(file)
+				.getFileUri(serviceFile)
 				.thenPromise(storedFileUri -> {
 					if (storedFileUri != null)
 						return new Promise<>(storedFileUri);
@@ -61,17 +61,17 @@ public class BestMatchUriProvider implements IFileUriProvider {
 					if (library.isUsingExistingFiles()) {
 						return
 							mediaFileUriProvider
-								.getFileUri(file)
+								.getFileUri(serviceFile)
 								.thenPromise(mediaFileUri -> {
 									if (mediaFileUri != null)
 										return new Promise<>(mediaFileUri);
 
 									final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
-									return remoteFileUriProvider.getFileUri(file);
+									return remoteFileUriProvider.getFileUri(serviceFile);
 								});
 					}
 
-					return remoteFileUriProvider.getFileUri(file);
+					return remoteFileUriProvider.getFileUri(serviceFile);
 				});
 	}
 }

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 import android.database.Cursor;
 import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -23,12 +23,12 @@ public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor,
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
-	private final File file;
+	private final ServiceFile serviceFile;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, File file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
+	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, ServiceFile serviceFile, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
-		this.file = file;
+		this.serviceFile = serviceFile;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
@@ -38,7 +38,7 @@ public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor,
 
 		return
 			mediaQueryCursorProvider
-				.getMediaQueryCursor(file)
+				.getMediaQueryCursor(serviceFile)
 				.then(this);
 	}
 

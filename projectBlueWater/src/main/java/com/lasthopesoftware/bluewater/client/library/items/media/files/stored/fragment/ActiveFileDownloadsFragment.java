@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -99,12 +99,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								for (StoredFile storedFile : localStoredFiles) {
 									if (storedFile.getId() != storedFileId) continue;
 
-									final List<File> files = activeFileDownloadsAdapter.getFiles();
-									for (File file : files) {
-										if (file.getKey() != storedFile.getServiceId()) continue;
+									final List<ServiceFile> serviceFiles = activeFileDownloadsAdapter.getFiles();
+									for (ServiceFile serviceFile : serviceFiles) {
+										if (serviceFile.getKey() != storedFile.getServiceId()) continue;
 
-										activeFileDownloadsAdapter.remove(file);
-										files.remove(file);
+										activeFileDownloadsAdapter.remove(serviceFile);
+										serviceFiles.remove(serviceFile);
 										break;
 									}
 
@@ -134,7 +134,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 											if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
 
 											localStoredFiles.add(storedFile);
-											activeFileDownloadsAdapter.add(new File(storedFile.getServiceId()));
+											activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
 										});
 							}
 						};

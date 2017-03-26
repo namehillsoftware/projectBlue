@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenTwoQueuesThatEventuallyDiverge;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
@@ -21,18 +21,18 @@ import static org.mockito.Mockito.when;
  */
 
 public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
-	private static IPromise<PositionedPlaybackFile> nextPreparedPlaybackFilePromise;
+	private static IPromise<PositionedPlaybackServiceFile> nextPreparedPlaybackFilePromise;
 
 	@BeforeClass
 	public static void before() {
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
 			.thenReturn(
-				new PositionedFile(1, new File(1)),
-				new PositionedFile(2, new File(2)),
-				new PositionedFile(3, new File(3)),
-				new PositionedFile(4, new File(4)),
-				new PositionedFile(5, new File(5)),
+				new PositionedFile(1, new ServiceFile(1)),
+				new PositionedFile(2, new ServiceFile(2)),
+				new PositionedFile(3, new ServiceFile(3)),
+				new PositionedFile(4, new ServiceFile(4)),
+				new PositionedFile(5, new ServiceFile(5)),
 				null);
 
 		final PreparedPlaybackQueue queue =

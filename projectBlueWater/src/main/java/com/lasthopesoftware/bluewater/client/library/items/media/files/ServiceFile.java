@@ -4,11 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.shared.IIntKey;
 
-public class File implements IIntKey<File> {
+public class ServiceFile implements IIntKey<ServiceFile> {
 
 	private int key;
 
-	public File(int key) {
+	public ServiceFile(int key) {
 		this.setKey(key);
 	}
 	
@@ -23,7 +23,7 @@ public class File implements IIntKey<File> {
 	}
 
 	@Override
-	public int compareTo(@NonNull File another) {
+	public int compareTo(@NonNull ServiceFile another) {
 		return getKey() - another.getKey();
 	}
 
@@ -34,6 +34,6 @@ public class File implements IIntKey<File> {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof File ? compareTo((File)obj) == 0 : super.equals(obj);
+		return obj instanceof ServiceFile ? compareTo((ServiceFile)obj) == 0 : super.equals(obj);
 	}
 }

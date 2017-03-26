@@ -41,7 +41,7 @@ public final class PruneFilesTask extends FluentSpecifiedTask<Void, Void, Void> 
 
 			for (StoredFile storedFile : allStoredFiles) {
 				final String filePath = storedFile.getPath();
-				// It doesn't make sense to create a stored file without a file path
+				// It doesn't make sense to create a stored serviceFile without a serviceFile path
 				if (filePath == null) {
 					storedFileAccess.deleteStoredFile(storedFile);
 					continue;
@@ -49,7 +49,7 @@ public final class PruneFilesTask extends FluentSpecifiedTask<Void, Void, Void> 
 
 				final File systemFile = new File(filePath);
 
-				// Remove files that are marked as downloaded but the file doesn't actually exist
+				// Remove files that are marked as downloaded but the serviceFile doesn't actually exist
 				if (storedFile.isDownloadComplete() && !systemFile.exists()) {
 					storedFileAccess.deleteStoredFile(storedFile);
 					continue;

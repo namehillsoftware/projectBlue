@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnec
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.SearchFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
@@ -72,7 +72,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final OneParameterAction<List<File>> onSearchFilesComplete = result -> {
+        final OneParameterAction<List<ServiceFile>> onSearchFilesComplete = result -> {
 			if (result == null) return;
 
 			final FileListAdapter fileListAdapter =

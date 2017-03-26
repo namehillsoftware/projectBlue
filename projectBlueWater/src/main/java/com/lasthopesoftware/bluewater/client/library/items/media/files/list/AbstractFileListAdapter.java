@@ -3,21 +3,21 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.list;
 import android.content.Context;
 import android.widget.ArrayAdapter;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 import java.util.List;
 
-public abstract class AbstractFileListAdapter extends ArrayAdapter<File> {
+public abstract class AbstractFileListAdapter extends ArrayAdapter<ServiceFile> {
 
-	private final List<File> mFiles;
+	private final List<ServiceFile> mServiceFiles;
 
-	protected AbstractFileListAdapter(Context context, int resource, List<File> files) {
-		super(context, resource, files);
+	protected AbstractFileListAdapter(Context context, int resource, List<ServiceFile> serviceFiles) {
+		super(context, resource, serviceFiles);
 		
-		mFiles = files;
+		mServiceFiles = serviceFiles;
 	}
 
-	public final List<File> getFiles() {
-		return mFiles;
+	public final List<ServiceFile> getFiles() {
+		return mServiceFiles;
 	}
 }

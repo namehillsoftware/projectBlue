@@ -6,7 +6,7 @@ import android.database.SQLException;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -94,8 +94,8 @@ public class StoredFileAccess {
 		return getStoredFileTask;
 	}
 
-	public IPromise<StoredFile> getStoredFile(final File serviceFile) {
-		return getStoredFileTask(serviceFile);
+	public IPromise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
+		return getStoredFileTask(serviceServiceFile);
 	}
 
 	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
@@ -114,10 +114,10 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private IPromise<StoredFile> getStoredFileTask(final File serviceFile) {
+	private IPromise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
 		return new QueuedPromise<>((resolve, reject) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceFile));
+				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceServiceFile));
 			} catch(SQLException e) {
 				reject.withError(e);
 			}
@@ -167,10 +167,10 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	public void addMediaFile(final File file, final int mediaFileId, final String filePath) {
+	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
+				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 				if (storedFile == null) {
 					storedFile =
 							repositoryAccessHelper
@@ -191,8 +191,8 @@ public class StoredFileAccess {
 				}
 
 				if (storedFile == null) {
-					createStoredFile(repositoryAccessHelper, file);
-					storedFile = getStoredFile(repositoryAccessHelper, file);
+					createStoredFile(repositoryAccessHelper, serviceFile);
+					storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 					storedFile.setIsOwner(false);
 					storedFile.setIsDownloadComplete(true);
 				}
@@ -204,7 +204,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final File file) {
+	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
@@ -216,11 +216,11 @@ public class StoredFileAccess {
 		return
 			new QueuedPromise<StoredFile>((resolve, reject) -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
+						StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 						if (storedFile == null) {
-							logger.info("Stored file was not found for " + file.getKey() + ", creating file");
-							createStoredFile(repositoryAccessHelper, file);
-							storedFile = getStoredFile(repositoryAccessHelper, file);
+							logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
+							createStoredFile(repositoryAccessHelper, serviceFile);
+							storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 						}
 
 						resolve.withResult(storedFile);
@@ -232,7 +232,7 @@ public class StoredFileAccess {
 					if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 						return new Promise<>(storedFile);
 
-					final IPromise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(file);
+					final IPromise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
 
 					return
 						fileUriPromise
@@ -244,7 +244,7 @@ public class StoredFileAccess {
 								storedFile.setIsDownloadComplete(true);
 								storedFile.setIsOwner(false);
 								try {
-									final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, file, externalStorageReadPermissionsArbitrator);
+									final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
 									return
 										mediaFileIdProvider
 											.getMediaId()
@@ -253,7 +253,7 @@ public class StoredFileAccess {
 												return storedFile;
 											});
 								} catch (IOException e) {
-									logger.error("Error retrieving media file ID", e);
+									logger.error("Error retrieving media serviceFile ID", e);
 									return new Promise<>(storedFile);
 								}
 							});
@@ -264,7 +264,7 @@ public class StoredFileAccess {
 
 						return
 							cachedFilePropertiesProvider
-								.promiseFileProperties(file.getKey())
+								.promiseFileProperties(serviceFile.getKey())
 								.then(fileProperties -> {
 									String fullPath = library.getSyncDir(context).getPath();
 
@@ -303,7 +303,7 @@ public class StoredFileAccess {
 		}
 	}
 
-	private StoredFile getStoredFile(RepositoryAccessHelper helper, File file) {
+	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {
 		return
 			helper
 				.mapSql(
@@ -311,7 +311,7 @@ public class StoredFileAccess {
 					" FROM " + StoredFileEntityInformation.tableName + " " +
 					" WHERE " + StoredFileEntityInformation.serviceIdColumnName + " = @" + StoredFileEntityInformation.serviceIdColumnName +
 					" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
+				.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.getKey())
 				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 				.fetchFirst(StoredFile.class);
 	}
@@ -325,11 +325,11 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, File file) {
+	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
 					.mapSql(insertSql.getObject())
-					.addParameter(StoredFileEntityInformation.serviceIdColumnName, file.getKey())
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.getKey())
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
 					.execute();
@@ -368,7 +368,7 @@ public class StoredFileAccess {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException e) {
-				logger.error("There was an error deleting file " + storedFile.getId(), e);
+				logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
 			} finally {
 				closeableTransaction.close();
 				repositoryAccessHelper.close();

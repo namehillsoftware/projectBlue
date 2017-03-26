@@ -1,17 +1,17 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 /**
  * Created by david on 11/13/16.
  */
 
-public class PositionedPlaybackFile extends File {
+public class PositionedPlaybackServiceFile extends ServiceFile {
 	private final int position;
 	private final IPlaybackHandler playbackHandler;
 
-	public PositionedPlaybackFile(int position, IPlaybackHandler playbackHandler, File file) {
-		super(file.getKey());
+	public PositionedPlaybackServiceFile(int position, IPlaybackHandler playbackHandler, ServiceFile serviceFile) {
+		super(serviceFile.getKey());
 		this.position = position;
 		this.playbackHandler = playbackHandler;
 	}
@@ -31,9 +31,9 @@ public class PositionedPlaybackFile extends File {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof PositionedPlaybackFile)) return false;
+		if (!(obj instanceof PositionedPlaybackServiceFile)) return false;
 
-		final PositionedPlaybackFile other = (PositionedPlaybackFile)obj;
+		final PositionedPlaybackServiceFile other = (PositionedPlaybackServiceFile)obj;
 
 		return position == other.position && super.equals(obj);
 	}

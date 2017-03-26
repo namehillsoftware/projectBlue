@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -20,8 +20,8 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(File file) {
-		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning file URL from server.");
+	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
+		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning serviceFile URL from server.");
 
 		/* Playback:
 		 * 0: Downloading (not real-time playback);
@@ -33,8 +33,8 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 			connectionProvider
 				.getUrlProvider()
 				.getUrl(
-					"File/GetFile",
-					"File=" + Integer.toString(file.getKey()),
+					"ServiceFile/GetFile",
+					"ServiceFile=" + Integer.toString(serviceFile.getKey()),
 					"Quality=medium",
 					"Conversion=Android",
 					"Playback=0");

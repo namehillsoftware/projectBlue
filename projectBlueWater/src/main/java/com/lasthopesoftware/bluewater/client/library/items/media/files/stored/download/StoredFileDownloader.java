@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
@@ -71,14 +71,14 @@ public class StoredFileDownloader {
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 	}
 
-	public void queueFileForDownload(@NonNull final File serviceFile, @NonNull final StoredFile storedFile) {
+	public void queueFileForDownload(@NonNull final ServiceFile serviceServiceFile, @NonNull final StoredFile storedFile) {
 		if (isProcessing || isCancelled)
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
-		final int fileKey = serviceFile.getKey();
+		final int fileKey = serviceServiceFile.getKey();
 		if (!queuedFileKeys.add(fileKey)) return;
 
-		storedFileJobQueue.add(new StoredFileJob(connectionProvider, storedFileAccess, fileReadPossibleArbitrator, fileWritePossibleArbitrator, serviceFile, storedFile));
+		storedFileJobQueue.add(new StoredFileJob(connectionProvider, storedFileAccess, fileReadPossibleArbitrator, fileWritePossibleArbitrator, serviceServiceFile, storedFile));
 		if (onFileQueued != null)
 			onFileQueued.runWith(storedFile);
 	}
@@ -95,7 +95,7 @@ public class StoredFileDownloader {
 
 	public void process() {
 		if (isCancelled)
-			throw new IllegalStateException("Processing cannot be started once the stored file downloader has been cancelled.");
+			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
 		if (isProcessing)
 			throw new IllegalStateException("Processing has already begun");
@@ -134,12 +134,12 @@ public class StoredFileDownloader {
 							}
 
 							if (e instanceof StoredFileJobException) {
-								logger.error("There was an error downloading the stored file " + ((StoredFileJobException)e).getStoredFile(), e);
+								logger.error("There was an error downloading the stored serviceFile " + ((StoredFileJobException)e).getStoredFile(), e);
 								return;
 							}
 
 							if (e instanceof StorageCreatePathException) {
-								logger.error("There was an error creating the path for a file", e);
+								logger.error("There was an error creating the path for a serviceFile", e);
 							}
 						}));
 
@@ -150,9 +150,9 @@ public class StoredFileDownloader {
 					if (onFileReadError != null)
 						onFileReadError.runWith(se.getStoredFile());
 				} catch (StoredFileJobException e) {
-					logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
+					logger.error("There was an error downloading the stored serviceFile " + e.getStoredFile(), e);
 				} catch (StorageCreatePathException e) {
-					logger.error("There was an error creating the path for a file", e);
+					logger.error("There was an error creating the path for a serviceFile", e);
 				}
 			}
 		} finally {

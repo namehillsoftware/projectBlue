@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAHalte
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
-	private static PositionedPlaybackFile firstSwitchedFile;
+	private static PositionedPlaybackServiceFile firstSwitchedFile;
 
 	@BeforeClass
 	public static void context() {
@@ -72,11 +72,11 @@ public class WhenObservingPlayback {
 		playbackPlaylistStateManager
 			.startPlaylist(
 				Arrays.asList(
-					new File(1),
-					new File(2),
-					new File(3),
-					new File(4),
-					new File(5)), 0, 0);
+					new ServiceFile(1),
+					new ServiceFile(2),
+					new ServiceFile(3),
+					new ServiceFile(4),
+					new ServiceFile(5)), 0, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

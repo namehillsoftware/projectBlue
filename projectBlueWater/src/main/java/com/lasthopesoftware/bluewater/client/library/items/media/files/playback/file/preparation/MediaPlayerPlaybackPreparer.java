@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
@@ -28,10 +28,10 @@ final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public IPromise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(File file, int preparedAt) {
+	public IPromise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
 		return
 			new QueuedPromise<>(
-				new MediaPlayerPreparerTask(file, preparedAt, fileUriProvider, playbackInitialization),
+				new MediaPlayerPreparerTask(serviceFile, preparedAt, fileUriProvider, playbackInitialization),
 				mediaPlayerPreparerExecutor);
 	}
 }

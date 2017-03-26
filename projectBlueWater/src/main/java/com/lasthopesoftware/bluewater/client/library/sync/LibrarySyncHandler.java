@@ -6,7 +6,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
@@ -156,9 +156,9 @@ public class LibrarySyncHandler {
 						final FileProvider fileProvider = fileProviderEntry.getValue();
 
 						try {
-							final List<File> files = fileProvider.get();
-							for (final File file : files) {
-								allSyncedFileKeys.add(file.getKey());
+							final List<ServiceFile> serviceFiles = fileProvider.get();
+							for (final ServiceFile serviceFile : serviceFiles) {
+								allSyncedFileKeys.add(serviceFile.getKey());
 
 								if (isCancelled) {
 									handleQueueProcessingCompleted();
@@ -167,10 +167,10 @@ public class LibrarySyncHandler {
 
 								final IPromise<Void> upsertStoredFilePromise =
 									storedFileAccess
-										.createOrUpdateFile(connectionProvider, file)
+										.createOrUpdateFile(connectionProvider, serviceFile)
 										.then(runCarelessly(storedFile -> {
 											if (storedFile != null && !storedFile.isDownloadComplete())
-												storedFileDownloader.queueFileForDownload(file, storedFile);
+												storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
 										}));
 
 								upsertStoredFilePromise

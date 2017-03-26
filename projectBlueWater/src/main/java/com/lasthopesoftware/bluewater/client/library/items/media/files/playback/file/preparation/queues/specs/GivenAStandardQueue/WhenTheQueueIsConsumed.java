@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenTheQueueIsConsumed {
 
-	private static Map<File, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
+	private static Map<ServiceFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
 	private static int returnedPromiseCount;
 	private static int expectedNumberOfFiles;
 
@@ -46,15 +46,15 @@ public class WhenTheQueueIsConsumed {
 		final Random random = new Random(System.currentTimeMillis());
 		expectedNumberOfFiles = random.nextInt(500);
 
-		final List<File> files =
+		final List<ServiceFile> serviceFiles =
 			Stream
 				.range(0, expectedNumberOfFiles)
-				.map(i -> new File(random.nextInt()))
+				.map(i -> new ServiceFile(random.nextInt()))
 				.collect(Collectors.toList());
 
 		fileActionMap =
 			Stream
-				.of(files)
+				.of(serviceFiles)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
 		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider
@@ -63,14 +63,14 @@ public class WhenTheQueueIsConsumed {
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
-				bufferingPlaybackQueuesProvider.getCompletableQueue(files, 0));
+				bufferingPlaybackQueuesProvider.getCompletableQueue(serviceFiles, 0));
 
 		final int expectedCycles = random.nextInt(100);
 
 		final int expectedNumberAbsolutePromises = expectedCycles * expectedNumberOfFiles;
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
-			final IPromise<PositionedPlaybackFile> positionedPlaybackFilePromise =
+			final IPromise<PositionedPlaybackServiceFile> positionedPlaybackFilePromise =
 				queue.promiseNextPreparedPlaybackFile(0);
 
 			if (positionedPlaybackFilePromise != null)

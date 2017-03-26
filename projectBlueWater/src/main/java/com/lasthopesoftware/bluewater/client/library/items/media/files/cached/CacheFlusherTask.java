@@ -67,7 +67,7 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null)
 						continue;
 				} catch (IOException e) {
-					logger.warn("Issue getting canonical file path.");
+					logger.warn("Issue getting canonical serviceFile path.");
 				}
 				fileInCacheDir.delete();
 			}
@@ -97,7 +97,7 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 //			
 //			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
 //		} catch (SQLException e) {
-//			logger.error("Error getting file size", e);
+//			logger.error("Error getting serviceFile size", e);
 //			return -1;
 //		}
 //	}

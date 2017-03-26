@@ -4,10 +4,10 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTracks {
 
-	private static PositionedPlaybackFile nextSwitchedFile;
+	private static PositionedPlaybackServiceFile nextSwitchedFile;
 	private static Library library;
 
 	@BeforeClass
@@ -53,11 +53,11 @@ public class WhenChangingTracks {
 		library = new Library();
 		library.setId(1);
 		library.setSavedTracksString(FileStringListUtilities.serializeFileStringList(Arrays.asList(
-			new File(1),
-			new File(2),
-			new File(3),
-			new File(4),
-			new File(5))));
+			new ServiceFile(1),
+			new ServiceFile(2),
+			new ServiceFile(3),
+			new ServiceFile(4),
+			new ServiceFile(5))));
 
 		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));

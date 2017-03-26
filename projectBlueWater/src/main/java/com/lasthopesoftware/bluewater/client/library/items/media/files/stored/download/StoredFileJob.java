@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
@@ -39,7 +40,7 @@ class StoredFileJob {
 
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	private final com.lasthopesoftware.bluewater.client.library.items.media.files.File serviceFile;
+	private final ServiceFile serviceServiceFile;
 	private final StoredFile storedFile;
 	private boolean isCancelled;
 	private IConnectionProvider connectionProvider;
@@ -47,13 +48,13 @@ class StoredFileJob {
 	private final RemoteFileUriProvider remoteFileUriProvider;
 	private StoredFileAccess storedFileAccess;
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull com.lasthopesoftware.bluewater.client.library.items.media.files.File serviceFile, @NonNull StoredFile storedFile) {
+	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceServiceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
 		this.remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
-		this.serviceFile = serviceFile;
+		this.serviceServiceFile = serviceServiceFile;
 		this.storedFile = storedFile;
 	}
 
@@ -78,7 +79,7 @@ class StoredFileJob {
 
 		return
 			remoteFileUriProvider
-				.getFileUri(serviceFile)
+				.getFileUri(serviceServiceFile)
 				.thenPromise(uri -> {
 					final HttpURLConnection connection;
 					try {
@@ -115,7 +116,7 @@ class StoredFileJob {
 
 								return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.Downloaded);
 							} catch (IOException ioe) {
-								logger.error("Error writing file!", ioe);
+								logger.error("Error writing serviceFile!", ioe);
 								throw new StoredFileWriteException(file, storedFile, ioe);
 							} finally {
 								if (is != null) {

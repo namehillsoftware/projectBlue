@@ -12,8 +12,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayClickListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
@@ -33,9 +33,9 @@ import java.util.Map;
 /**
  * Created by david on 11/7/15.
  */
-public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
+public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
-    private final List<File> files;
+    private final List<ServiceFile> serviceFiles;
     private final INowPlayingFileProvider nowPlayingFileProvider;
 
     private static final class ViewHolder extends BaseMenuViewHolder {
@@ -57,13 +57,13 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
         }
     }
 
-    public FileListItemMenuBuilder(final List<File> files, INowPlayingFileProvider nowPlayingFileProvider) {
-        this.files = files;
+    public FileListItemMenuBuilder(final List<ServiceFile> serviceFiles, INowPlayingFileProvider nowPlayingFileProvider) {
+        this.serviceFiles = serviceFiles;
         this.nowPlayingFileProvider = nowPlayingFileProvider;
     }
 
     @Override
-    public View getView(int position, final File file, View convertView, ViewGroup parent) {
+    public View getView(int position, final ServiceFile serviceFile, View convertView, ViewGroup parent) {
         if (convertView == null) {
             final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
             final NotifyOnFlipViewAnimator notifyOnFlipViewAnimator = fileItemMenu.getViewAnimator();
@@ -92,43 +92,43 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
         final TextView textView = fileListItem.getTextViewFinder();
 
         if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
+        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(serviceFile, textView);
 
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider
             .getNowPlayingFile()
             .then(VoidFunc.runCarelessly(f ->
-                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == f.getKey()))));
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.getKey() == f.getKey()))));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(file.getKey() == fileKey));
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.getKey() == fileKey));
             }
         };
 
         final NotifyOnFlipViewAnimator viewAnimator = fileListItem.getViewAnimator();
         LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-        viewHolder.getPlayButton().setOnClickListener(new FilePlayClickListener(viewAnimator, position, files));
-        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewAnimator, file));
-        viewHolder.getAddButton().setOnClickListener(new AddClickListener(viewAnimator, file));
+        viewHolder.getPlayButton().setOnClickListener(new FilePlayClickListener(viewAnimator, position, serviceFiles));
+        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewAnimator, serviceFile));
+        viewHolder.getAddButton().setOnClickListener(new AddClickListener(viewAnimator, serviceFile));
 
         return viewAnimator;
     }
 
     private static class AddClickListener extends AbstractMenuClickHandler {
-        private final File mFile;
+        private final ServiceFile mServiceFile;
 
-        AddClickListener(NotifyOnFlipViewAnimator viewFlipper, File file) {
+        AddClickListener(NotifyOnFlipViewAnimator viewFlipper, ServiceFile serviceFile) {
             super(viewFlipper);
-            mFile = file;
+            mServiceFile = serviceFile;
         }
 
         @Override
         public void onClick(final View view) {
-	        PlaybackService.addFileToPlaylist(view.getContext(), mFile.getKey());
+	        PlaybackService.addFileToPlaylist(view.getContext(), mServiceFile.getKey());
 
             super.onClick(view);
         }

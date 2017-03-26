@@ -13,14 +13,14 @@ import com.vedsoft.futures.callables.VoidFunc;
 import java.util.List;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private final List<File> files;
+	private final List<ServiceFile> serviceFiles;
 	private final int position;
 	
-	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<File> files) {
+	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<ServiceFile> serviceFiles) {
         super(parent);
 
 		this.position = position;
-		this.files = files;
+		this.serviceFiles = serviceFiles;
 	}
 	
 	@Override
@@ -28,8 +28,8 @@ public class FilePlayClickListener extends AbstractMenuClickHandler {
 		final Context context = v.getContext();
 
 		FileStringListUtilities
-			.promiseSerializedFileStringList(files)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(files))), context));
+			.promiseSerializedFileStringList(serviceFiles)
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
 
         super.onClick(v);
 	}

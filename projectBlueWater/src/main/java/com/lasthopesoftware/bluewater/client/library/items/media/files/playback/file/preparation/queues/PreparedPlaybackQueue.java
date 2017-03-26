@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
 	OneParameterAction<IBufferingPlaybackHandler>,
-	CarelessOneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
+	CarelessOneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackServiceFile>
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
@@ -64,7 +64,7 @@ public class PreparedPlaybackQueue implements
 					enqueuePositionedPreparingFile(
 						new PositionedPreparingFile(
 							positionedFile,
-							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, 0)));
+							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.serviceFile, 0)));
 				}
 
 				break;
@@ -79,7 +79,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public IPromise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
+	public IPromise<PositionedPlaybackServiceFile> promiseNextPreparedPlaybackFile(int preparedAt) {
 		currentPreparingPlaybackHandlerPromise =
 			bufferingMediaPlayerPromises.size() > 0
 				? bufferingMediaPlayerPromises.poll()
@@ -109,14 +109,14 @@ public class PreparedPlaybackQueue implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.file, preparedAt));
+				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.serviceFile, preparedAt));
 	}
 
 	@Override
-	public PositionedPlaybackFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
+	public PositionedPlaybackServiceFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
 		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runCarelessly(this));
 
-		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.positionedFile.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile.file);
+		return new PositionedPlaybackServiceFile(positionedBufferingPlaybackHandler.positionedFile.playlistPosition, positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile.serviceFile);
 	}
 
 	@Override
