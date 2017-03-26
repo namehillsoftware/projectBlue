@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
@@ -60,7 +60,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterAction<List<IFile>> onFileProviderComplete = result -> {
+		final OneParameterAction<List<File>> onFileProviderComplete = result -> {
 			if (result == null) return;
 
 			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

@@ -6,7 +6,7 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
@@ -156,8 +156,8 @@ public class LibrarySyncHandler {
 						final FileProvider fileProvider = fileProviderEntry.getValue();
 
 						try {
-							final List<IFile> files = fileProvider.get();
-							for (final IFile file : files) {
+							final List<File> files = fileProvider.get();
+							for (final File file : files) {
 								allSyncedFileKeys.add(file.getKey());
 
 								if (isCancelled) {

@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
@@ -18,7 +18,7 @@ class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OnePa
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
-	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<IFile> files, int nowPlayingFilePos) {
+	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<File> files, int nowPlayingFilePos) {
 		super(context, resource, files);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();

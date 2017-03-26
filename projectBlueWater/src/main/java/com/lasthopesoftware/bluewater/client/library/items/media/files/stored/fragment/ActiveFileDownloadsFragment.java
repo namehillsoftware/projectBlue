@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibr
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -100,8 +99,8 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								for (StoredFile storedFile : localStoredFiles) {
 									if (storedFile.getId() != storedFileId) continue;
 
-									final List<IFile> files = activeFileDownloadsAdapter.getFiles();
-									for (IFile file : files) {
+									final List<File> files = activeFileDownloadsAdapter.getFiles();
+									for (File file : files) {
 										if (file.getKey() != storedFile.getServiceId()) continue;
 
 										activeFileDownloadsAdapter.remove(file);

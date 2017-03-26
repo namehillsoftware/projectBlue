@@ -90,7 +90,6 @@ public class WhenChangingTracks {
 					filePropertiesContainerRepository));
 
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
-			connectionProvider,
 			fakePlaybackPreparerProvider,
 			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),

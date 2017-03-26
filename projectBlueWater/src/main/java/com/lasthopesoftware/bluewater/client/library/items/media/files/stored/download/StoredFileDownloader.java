@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
@@ -71,7 +71,7 @@ public class StoredFileDownloader {
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 	}
 
-	public void queueFileForDownload(@NonNull final IFile serviceFile, @NonNull final StoredFile storedFile) {
+	public void queueFileForDownload(@NonNull final File serviceFile, @NonNull final StoredFile storedFile) {
 		if (isProcessing || isCancelled)
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 

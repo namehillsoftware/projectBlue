@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -58,7 +58,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(IFile file) {
+	public IPromise<Uri> getFileUri(File file) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return Promise.empty();
 

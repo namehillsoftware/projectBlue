@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenTheQueueIsConsumed {
 
-	private static Map<IFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
+	private static Map<File, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
 	private static int returnedPromiseCount;
 	private static int expectedNumberOfFiles;
 
@@ -47,7 +46,7 @@ public class WhenTheQueueIsConsumed {
 		final Random random = new Random(System.currentTimeMillis());
 		expectedNumberOfFiles = random.nextInt(500);
 
-		final List<IFile> files =
+		final List<File> files =
 			Stream
 				.range(0, expectedNumberOfFiles)
 				.map(i -> new File(random.nextInt()))

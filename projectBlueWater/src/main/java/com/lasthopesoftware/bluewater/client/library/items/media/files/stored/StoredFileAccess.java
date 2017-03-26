@@ -6,7 +6,7 @@ import android.database.SQLException;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -94,7 +94,7 @@ public class StoredFileAccess {
 		return getStoredFileTask;
 	}
 
-	public IPromise<StoredFile> getStoredFile(final IFile serviceFile) {
+	public IPromise<StoredFile> getStoredFile(final File serviceFile) {
 		return getStoredFileTask(serviceFile);
 	}
 
@@ -114,7 +114,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private IPromise<StoredFile> getStoredFileTask(final IFile serviceFile) {
+	private IPromise<StoredFile> getStoredFileTask(final File serviceFile) {
 		return new QueuedPromise<>((resolve, reject) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceFile));
@@ -167,7 +167,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	public void addMediaFile(final IFile file, final int mediaFileId, final String filePath) {
+	public void addMediaFile(final File file, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, file);
@@ -204,7 +204,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final IFile file) {
+	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final File file) {
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
@@ -303,7 +303,7 @@ public class StoredFileAccess {
 		}
 	}
 
-	private StoredFile getStoredFile(RepositoryAccessHelper helper, IFile file) {
+	private StoredFile getStoredFile(RepositoryAccessHelper helper, File file) {
 		return
 			helper
 				.mapSql(
@@ -325,7 +325,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, IFile file) {
+	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, File file) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
 					.mapSql(insertSql.getObject())

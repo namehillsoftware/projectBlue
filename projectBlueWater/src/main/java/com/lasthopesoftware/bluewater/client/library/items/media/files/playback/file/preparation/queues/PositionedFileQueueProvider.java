@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
 
 import java.util.ArrayList;
@@ -12,12 +12,12 @@ import java.util.List;
 public class PositionedFileQueueProvider implements IPositionedFileQueueProvider {
 
 	@Override
-	public IPositionedFileQueue getCompletableQueue(List<IFile> playlist, int startingAt) {
+	public IPositionedFileQueue getCompletableQueue(List<File> playlist, int startingAt) {
 		return new CompletingPositionedFileQueue(getTruncatedList(playlist, startingAt));
 	}
 
 	@Override
-	public IPositionedFileQueue getCyclicalQueue(List<IFile> playlist, int startingAt) {
+	public IPositionedFileQueue getCyclicalQueue(List<File> playlist, int startingAt) {
 		final List<PositionedFile> truncatedList = getTruncatedList(playlist, startingAt);
 
 		final int endingPosition = playlist.size() - truncatedList.size();
@@ -27,7 +27,7 @@ public class PositionedFileQueueProvider implements IPositionedFileQueueProvider
 		return new RepeatingPositionedFileQueue(truncatedList);
 	}
 
-	private static List<PositionedFile> getTruncatedList(List<IFile> playlist, int startingAt) {
+	private static List<PositionedFile> getTruncatedList(List<File> playlist, int startingAt) {
 		final List<PositionedFile> positionedFiles = new ArrayList<>(playlist.size());
 
 		for (int i = startingAt; i < playlist.size(); i++)

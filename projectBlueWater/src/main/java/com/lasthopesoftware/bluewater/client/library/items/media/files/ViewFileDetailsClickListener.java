@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.Abstrac
 
 public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 
-	private final IFile mFile;
+	private final File mFile;
 	
-	public ViewFileDetailsClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
+	public ViewFileDetailsClickListener(NotifyOnFlipViewAnimator viewFlipper, File file) {
         super(viewFlipper);
 		mFile = file;
 	}

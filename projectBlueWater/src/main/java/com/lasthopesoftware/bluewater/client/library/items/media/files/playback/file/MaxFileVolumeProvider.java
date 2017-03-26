@@ -4,7 +4,7 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 
 import com.lasthopesoftware.bluewater.ApplicationConstants;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.promises.IPromise;
@@ -39,7 +39,7 @@ public class MaxFileVolumeProvider {
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
-	protected IPromise<Float> getMaxFileVolume(IFile file) {
+	protected IPromise<Float> getMaxFileVolume(File file) {
 		final boolean isVolumeLevelingEnabled =
 				PreferenceManager
 						.getDefaultSharedPreferences(context)

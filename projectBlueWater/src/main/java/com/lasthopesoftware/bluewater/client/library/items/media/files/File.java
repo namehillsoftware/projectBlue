@@ -2,7 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
 import android.support.annotation.NonNull;
 
-public class File implements IFile {
+import com.lasthopesoftware.bluewater.shared.IIntKey;
+
+public class File implements IIntKey<File> {
 
 	private int key;
 
@@ -21,7 +23,7 @@ public class File implements IFile {
 	}
 
 	@Override
-	public int compareTo(@NonNull IFile another) {
+	public int compareTo(@NonNull File another) {
 		return getKey() - another.getKey();
 	}
 
@@ -32,6 +34,6 @@ public class File implements IFile {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof IFile ? compareTo((IFile)obj) == 0 : super.equals(obj);
+		return obj instanceof File ? compareTo((File)obj) == 0 : super.equals(obj);
 	}
 }

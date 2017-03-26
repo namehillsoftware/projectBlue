@@ -60,7 +60,6 @@ public class WhenNotObservingPlayback {
 					filePropertiesContainerRepository));
 
 		playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
-			connectionProvider,
 			fakePlaybackPreparerProvider,
 			new PositionedFileQueueProvider(),
 			new NowPlayingRepository(libraryProvider, libraryStorage),

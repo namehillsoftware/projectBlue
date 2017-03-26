@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -29,12 +29,12 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 					libraryRepository));
 	}
 
-	public NowPlayingFileProvider(INowPlayingRepository nowPlayingRepository) {
+	private NowPlayingFileProvider(INowPlayingRepository nowPlayingRepository) {
 		this.nowPlayingRepository = nowPlayingRepository;
 	}
 
 	@Override
-	public IPromise<IFile> getNowPlayingFile() {
+	public IPromise<File> getNowPlayingFile() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 
 import java.util.List;
 
@@ -9,6 +9,6 @@ import java.util.List;
  */
 
 public interface IPositionedFileQueueProvider {
-	IPositionedFileQueue getCompletableQueue(List<IFile> playlist, int startingAt);
-	IPositionedFileQueue getCyclicalQueue(List<IFile> playlist, int startingAt);
+	IPositionedFileQueue getCompletableQueue(List<File> playlist, int startingAt);
+	IPositionedFileQueue getCyclicalQueue(List<File> playlist, int startingAt);
 }

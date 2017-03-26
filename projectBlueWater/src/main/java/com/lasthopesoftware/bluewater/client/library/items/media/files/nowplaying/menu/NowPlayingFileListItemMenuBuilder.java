@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileListItemContainer;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * Created by david on 11/7/15.
  */
-public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> {
+public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
 
     private static final class ViewHolder extends BaseMenuViewHolder {
 
@@ -55,18 +55,18 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 	    }
     }
 
-    private final List<IFile> files;
+    private final List<File> files;
     private final int nowPlayingPosition;
 
     private OneParameterAction<Integer> onPlaylistFileRemovedListener;
 
-    public NowPlayingFileListItemMenuBuilder(final List<IFile> files, final int nowPlayingPosition) {
+    public NowPlayingFileListItemMenuBuilder(final List<File> files, final int nowPlayingPosition) {
         this.files = files;
         this.nowPlayingPosition = nowPlayingPosition;
     }
 
     @Override
-    public View getView(final int position, final IFile file, View convertView, ViewGroup parent) {
+    public View getView(final int position, final File file, View convertView, ViewGroup parent) {
         if (convertView == null) {
             final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
             final NotifyOnFlipViewAnimator viewFlipper = fileItemMenu.getViewAnimator();

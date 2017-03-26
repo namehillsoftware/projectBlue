@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
@@ -38,7 +37,6 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
-	private final IConnectionProvider connectionProvider;
 	private final IPlaybackPreparerProvider playbackPreparerProvider;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final IPositionedFileQueueProvider positionedFileQueueProvider;
@@ -46,20 +44,19 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
-	private List<IFile> playlist;
+	private List<File> playlist;
 	private float volume;
 	private boolean isPlaying;
 
 	private PreparedPlaybackQueue preparedPlaybackQueue;
-	private TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
+	private TwoParameterFunction<List<File>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
 
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
 	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 
-	public PlaybackPlaylistStateManager(IConnectionProvider connectionProvider, IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
-		this.connectionProvider = connectionProvider;
+	public PlaybackPlaylistStateManager(IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
@@ -72,7 +69,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		observableEmitter = e;
 	}
 
-	public IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<IFile> playlist, final int playlistPosition, final int filePosition) {
+	public IPromise<Observable<PositionedPlaybackFile>> startPlaylist(final List<File> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
 		this.playlist = playlist;
@@ -94,7 +91,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 				.thenPromise(np -> changePosition(getNextPosition(np.playlistPosition, np.playlist), 0));
 	}
 
-	private static int getNextPosition(int startingPosition, Collection<IFile> playlist) {
+	private static int getNextPosition(int startingPosition, Collection<File> playlist) {
 		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
 	}
 
@@ -137,7 +134,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		final IPromise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
 				.thenPromise(np -> {
-					final IFile file = np.playlist.get(playlistPosition);
+					final File file = np.playlist.get(playlistPosition);
 
 					return
 						this.cachedFilePropertiesProvider
@@ -243,7 +240,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return observableProxy;
 	}
 
-	IPromise<NowPlaying> addFile(IFile file) {
+	IPromise<NowPlaying> addFile(File file) {
 		final IPromise<NowPlaying> nowPlayingPromise =
 			nowPlayingRepository
 				.getNowPlaying()
@@ -285,7 +282,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			playlistPlayer.setVolume(volume);
 	}
 
-	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<IFile>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
+	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<File>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
 		positionedFileQueueGenerator = newFileQueueGenerator;
 
 		updatePreparedFileQueueFromState();

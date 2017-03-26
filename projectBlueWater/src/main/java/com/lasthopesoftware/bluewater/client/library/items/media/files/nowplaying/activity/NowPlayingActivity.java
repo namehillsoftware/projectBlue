@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -165,13 +165,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static class ViewStructure {
 		final UrlKeyHolder<Integer> urlKeyHolder;
-		final IFile file;
+		final File file;
 		Map<String, String> fileProperties;
 		Bitmap nowPlayingImage;
 		int filePosition;
 		int fileDuration;
 		
-		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, IFile file) {
+		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, File file) {
 			this.urlKeyHolder = urlKeyHolder;
 			this.file = file;
 		}
@@ -269,7 +269,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
 			.then(Dispatch.toHandler(runCarelessly(np -> {
-				final IFile file = np.playlist.get(np.playlistPosition);
+				final File file = np.playlist.get(np.playlistPosition);
 
 				if (viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey()))) {
 					setView(viewStructure.file, viewStructure.filePosition);
@@ -355,7 +355,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.then(Dispatch.toHandler(runCarelessly(np -> {
 				if (playlistPosition >= np.playlist.size()) return;
 
-				final IFile file = np.playlist.get(playlistPosition);
+				final File file = np.playlist.get(playlistPosition);
 
 				final int filePosition =
 					viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey()))
@@ -367,7 +367,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.error(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
-	private void setView(final IFile file, final int initialFilePosition) {
+	private void setView(final File file, final int initialFilePosition) {
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), file.getKey());
 
 		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
@@ -438,7 +438,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.error(Dispatch.toHandler(exception -> handleIoException(file, initialFilePosition, exception), messageHandler.getObject()));
 	}
 
-	private void setFileProperties(final IFile file, final int initialFilePosition, Map<String, String> fileProperties) {
+	private void setFileProperties(final File file, final int initialFilePosition, Map<String, String> fileProperties) {
 		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
@@ -463,7 +463,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setTrackProgress(initialFilePosition);
 	}
 
-	private void setFileRating(IFile file, Float rating) {
+	private void setFileRating(File file, Float rating) {
 		final RatingBar songRatingBar = songRating.findView();
 		songRatingBar.setRating(rating != null ? rating : 0f);
 
@@ -493,13 +493,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 			viewStructure.filePosition = progress;
 	}
 
-	private boolean handleFileNotFoundException(IFile file, FileNotFoundException fe) {
+	private boolean handleFileNotFoundException(File file, FileNotFoundException fe) {
 		logger.error(String.format(fileNotFoundError, file), fe);
 		disableViewWithMessage(R.string.file_not_found);
 		return true;
 	}
 	
-	private boolean handleIoException(IFile file, int position, Throwable exception) {
+	private boolean handleIoException(File file, int position, Throwable exception) {
 		if (exception instanceof FileNotFoundException)
 			return handleFileNotFoundException(file, (FileNotFoundException)exception);
 
@@ -541,7 +541,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		messageHandler.getObject().postDelayed(timerTask, 5000);
 	}
 	
-	private void resetViewOnReconnect(final IFile file, final int position) {
+	private void resetViewOnReconnect(final File file, final int position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> setView(file, position));
 		WaitForConnectionDialog.show(this);
 	}

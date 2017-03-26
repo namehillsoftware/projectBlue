@@ -15,6 +15,7 @@ public class ConnectionProvider implements IConnectionProvider {
 		this.urlProvider = urlProvider;
 	}
 
+	@Override
 	public HttpURLConnection getConnection(String... params) throws IOException {
 		if (urlProvider == null) return null;
 

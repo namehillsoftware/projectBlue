@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.promises.IPromise;
 
 /**
@@ -8,5 +8,5 @@ import com.lasthopesoftware.promises.IPromise;
  */
 
 public interface INowPlayingFileProvider {
-	IPromise<IFile> getNowPlayingFile();
+	IPromise<File> getNowPlayingFile();
 }

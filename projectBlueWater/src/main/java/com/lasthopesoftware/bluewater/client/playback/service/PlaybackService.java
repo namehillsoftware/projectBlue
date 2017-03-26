@@ -443,7 +443,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackPlaylistStateManager =
 			new PlaybackPlaylistStateManager(
-				connectionProvider,
 				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				new PositionedFileQueueProvider(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),

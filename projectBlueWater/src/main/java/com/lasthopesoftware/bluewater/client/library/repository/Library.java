@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
@@ -13,7 +11,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class Library implements IEntityCreator, IEntityUpdater {
@@ -123,10 +120,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public void setSavedTracksString(String savedTracksString) {
 		this.savedTracksString = savedTracksString;
 	}
-		
-	public void setSavedTracks(List<IFile> files) {
-		savedTracksString = FileStringListUtilities.serializeFileStringList(files);
-	}
+
 	/**
 	 * @return the id
 	 */

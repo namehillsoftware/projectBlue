@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -50,7 +50,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(IFile file) {
+	public IPromise<Uri> getFileUri(File file) {
 		return
 			storedFileUriProvider
 				.getFileUri(file)

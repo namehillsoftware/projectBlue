@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.media.MediaPlayer;
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
@@ -24,12 +24,12 @@ import java.util.concurrent.CancellationException;
 final class MediaPlayerPreparerTask implements
 	ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 
-	private final IFile file;
+	private final File file;
 	private final int prepareAt;
 	private final IFileUriProvider uriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	MediaPlayerPreparerTask(IFile file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+	MediaPlayerPreparerTask(File file, int prepareAt, IFileUriProvider uriProvider, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.file = file;
 		this.prepareAt = prepareAt;
 		this.uriProvider = uriProvider;

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -26,7 +25,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(IFile file) {
+	public IPromise<Uri> getFileUri(com.lasthopesoftware.bluewater.client.library.items.media.files.File file) {
 		return
 			storedFileAccess
 				.getStoredFile(file)

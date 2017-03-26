@@ -13,10 +13,10 @@ import com.vedsoft.futures.callables.VoidFunc;
 import java.util.List;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private final List<IFile> files;
+	private final List<File> files;
 	private final int position;
 	
-	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<IFile> files) {
+	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<File> files) {
         super(parent);
 
 		this.position = position;

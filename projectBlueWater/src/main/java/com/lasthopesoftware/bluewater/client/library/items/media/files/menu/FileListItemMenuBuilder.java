@@ -12,8 +12,8 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayClickListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
@@ -33,9 +33,9 @@ import java.util.Map;
 /**
  * Created by david on 11/7/15.
  */
-public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> {
+public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<File> {
 
-    private final List<IFile> files;
+    private final List<File> files;
     private final INowPlayingFileProvider nowPlayingFileProvider;
 
     private static final class ViewHolder extends BaseMenuViewHolder {
@@ -57,13 +57,13 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
         }
     }
 
-    public FileListItemMenuBuilder(final List<IFile> files, INowPlayingFileProvider nowPlayingFileProvider) {
+    public FileListItemMenuBuilder(final List<File> files, INowPlayingFileProvider nowPlayingFileProvider) {
         this.files = files;
         this.nowPlayingFileProvider = nowPlayingFileProvider;
     }
 
     @Override
-    public View getView(int position, final IFile file, View convertView, ViewGroup parent) {
+    public View getView(int position, final File file, View convertView, ViewGroup parent) {
         if (convertView == null) {
             final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
             final NotifyOnFlipViewAnimator notifyOnFlipViewAnimator = fileItemMenu.getViewAnimator();
@@ -119,9 +119,9 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> 
     }
 
     private static class AddClickListener extends AbstractMenuClickHandler {
-        private final IFile mFile;
+        private final File mFile;
 
-        AddClickListener(NotifyOnFlipViewAnimator viewFlipper, IFile file) {
+        AddClickListener(NotifyOnFlipViewAnimator viewFlipper, File file) {
             super(viewFlipper);
             mFile = file;
         }

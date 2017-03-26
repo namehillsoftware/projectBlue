@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -40,13 +39,13 @@ public class WhenTheQueueIsStarted {
 		final Random random = new Random(System.currentTimeMillis());
 		final int numberOfFiles = random.nextInt(500);
 
-		final List<IFile> files =
+		final List<File> files =
 			Stream
 				.range(0, numberOfFiles)
 				.map(i -> new File(random.nextInt()))
 				.collect(Collectors.toList());
 
-		Map<IFile, MockResolveAction> fileActionMap =
+		Map<File, MockResolveAction> fileActionMap =
 			Stream
 				.of(files)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
