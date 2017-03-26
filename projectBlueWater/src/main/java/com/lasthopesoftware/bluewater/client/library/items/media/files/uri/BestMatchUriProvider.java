@@ -5,6 +5,7 @@ import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
@@ -23,10 +24,7 @@ import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbit
  * Will get the best URI for access speed.
  */
 public class BestMatchUriProvider implements IFileUriProvider {
-	private final Context context;
 	private final Library library;
-	private final IConnectionProvider connectionProvider;
-	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 	private final StoredFileUriProvider storedFileUriProvider;
 	private final MediaFileUriProvider mediaFileUriProvider;
 	private final RemoteFileUriProvider remoteFileUriProvider;
@@ -36,17 +34,14 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	private BestMatchUriProvider(Context context, IConnectionProvider connectionProvider, Library library, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
-		this.context = context;
 		this.library = library;
-		this.connectionProvider = connectionProvider;
-		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 		storedFileUriProvider = new StoredFileUriProvider(context, library, externalStorageReadPermissionsArbitrator);
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 		mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, cachedFilePropertiesProvider), externalStorageReadPermissionsArbitrator, library);
 
-		remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
+		remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider.getInstance());
 	}
 
 	@Override
@@ -66,7 +61,6 @@ public class BestMatchUriProvider implements IFileUriProvider {
 									if (mediaFileUri != null)
 										return new Promise<>(mediaFileUri);
 
-									final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider);
 									return remoteFileUriProvider.getFileUri(serviceFile);
 								});
 					}

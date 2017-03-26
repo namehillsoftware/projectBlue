@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -14,9 +15,11 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteFileUriProvider implements IFileUriProvider {
 	private final IConnectionProvider connectionProvider;
+	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 
-	public RemoteFileUriProvider(IConnectionProvider connectionProvider) {
+	public RemoteFileUriProvider(IConnectionProvider connectionProvider, IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider) {
 		this.connectionProvider = connectionProvider;
+		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 	}
 
 	@Override
@@ -32,12 +35,7 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 		final String itemUrl =
 			connectionProvider
 				.getUrlProvider()
-				.getUrl(
-					"ServiceFile/GetFile",
-					"ServiceFile=" + Integer.toString(serviceFile.getKey()),
-					"Quality=medium",
-					"Conversion=Android",
-					"Playback=0");
+				.getUrl(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
 
 		return new Promise<>(Uri.parse(itemUrl));
 	}
