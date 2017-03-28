@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.writ
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -168,10 +169,7 @@ public class LibrarySyncHandler {
 								final IPromise<Void> upsertStoredFilePromise =
 									storedFileAccess
 										.createOrUpdateFile(connectionProvider, serviceFile)
-										.then(runCarelessly(storedFile -> {
-											if (storedFile != null && !storedFile.isDownloadComplete())
-												storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
-										}));
+										.then(new DownloadGuard(storedFileDownloader, serviceFile));
 
 								upsertStoredFilePromise
 									.error(runCarelessly(e -> {
@@ -226,5 +224,23 @@ public class LibrarySyncHandler {
 	private void handleQueueProcessingCompleted() {
 		if (onQueueProcessingCompleted != null)
 			onQueueProcessingCompleted.runWith(LibrarySyncHandler.this);
+	}
+
+	private static class DownloadGuard implements CarelessOneParameterFunction<StoredFile, Void> {
+		private final ServiceFile serviceFile;
+		private StoredFileDownloader storedFileDownloader;
+
+		DownloadGuard(StoredFileDownloader storedFileDownloader, ServiceFile serviceFile) {
+			this.storedFileDownloader = storedFileDownloader;
+			this.serviceFile = serviceFile;
+		}
+
+		@Override
+		public Void resultFrom(StoredFile storedFile) {
+			if (storedFile != null && !storedFile.isDownloadComplete())
+				storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+
+			return null;
+		}
 	}
 }
