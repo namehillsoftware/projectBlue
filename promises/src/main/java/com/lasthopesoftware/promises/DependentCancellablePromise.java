@@ -367,6 +367,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		private boolean isResolved;
 		private Resolution resolution;
 		private Throwable rejection;
+		private final Cancellation cancellation = new Cancellation();
 
 		@Override
 		public void sendResolution(Resolution resolution) {
@@ -379,8 +380,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		}
 
 		@Override
-		public void cancellationReceived(OneParameterAction<Runnable> response) {
-
+		public void cancellationReceived(Runnable response) {
+			cancellation.runWith(response);
 		}
 
 		void awaitResolution(DependentCancellablePromise<Resolution, ?> response) {
