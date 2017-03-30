@@ -357,4 +357,64 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 		}
 	}
+
+	private static class PersonalMessenger<Resolution> implements Messenger<Resolution> {
+
+		private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
+
+		private final Queue<DependentCancellablePromise<Resolution, ?>> responses = new ConcurrentLinkedQueue<>();
+
+		private boolean isResolved;
+		private Resolution resolution;
+		private Throwable rejection;
+
+		@Override
+		public void sendResolution(Resolution resolution) {
+			resolve(resolution, null);
+		}
+
+		@Override
+		public void sendRejection(Throwable rejection) {
+			resolve(null, rejection);
+		}
+
+		@Override
+		public void cancellationReceived(OneParameterAction<Runnable> response) {
+
+		}
+
+		void awaitResolution(DependentCancellablePromise<Resolution, ?> response) {
+			responses.offer(response);
+
+			processQueue(resolution, rejection);
+		}
+
+		private void resolve(Resolution resolution, Throwable rejection) {
+			resolveSync.writeLock().lock();
+			try {
+				if (isResolved) return;
+
+				this.resolution = resolution;
+				this.rejection = rejection;
+
+				isResolved = true;
+			} finally {
+				resolveSync.writeLock().unlock();
+			}
+
+			processQueue(resolution, rejection);
+		}
+
+		private void processQueue(Resolution resolution, Throwable rejection) {
+			resolveSync.readLock().lock();
+			try {
+				if (!isResolved) return;
+			} finally {
+				resolveSync.readLock().unlock();
+			}
+
+			while (responses.size() > 0)
+				responses.poll().provide(resolution, rejection);
+		}
+	}
 }
