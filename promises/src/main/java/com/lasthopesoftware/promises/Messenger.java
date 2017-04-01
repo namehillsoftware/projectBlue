@@ -17,18 +17,18 @@ abstract class Messenger<Input, Resolution> implements
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
 
-	private final Queue<Messenger<Resolution, ?>> responders = new ConcurrentLinkedQueue<>();
+	private final Queue<Messenger<Resolution, ?>> responses = new ConcurrentLinkedQueue<>();
 
 	private boolean isResolved;
 	private Resolution resolution;
 	private Throwable rejection;
 	private final Cancellation cancellation = new Cancellation();
 
-	public abstract void sendInput(Input input, Throwable throwable);
+	public abstract void message(Input input, Throwable throwable);
 
 	@Override
 	public void withError(Throwable error) {
-		resolve(null, rejection);
+		resolve(null, error);
 	}
 
 	@Override
@@ -55,7 +55,7 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	void awaitResolution(Messenger<Resolution, ?> response) {
-		responders.offer(response);
+		responses.offer(response);
 
 		processQueue(resolution, rejection);
 	}
@@ -84,7 +84,7 @@ abstract class Messenger<Input, Resolution> implements
 			resolveSync.readLock().unlock();
 		}
 
-		while (responders.size() > 0)
-			responders.poll().sendInput(resolution, rejection);
+		while (responses.size() > 0)
+			responses.poll().message(resolution, rejection);
 	}
 }
