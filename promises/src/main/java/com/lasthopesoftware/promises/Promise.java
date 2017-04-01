@@ -121,11 +121,11 @@ public class Promise<TResult> implements IPromise<TResult> {
 
 			InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 				this.executor = executor;
-				message(null, null);
+				deliverMessage(null, null);
 			}
 
 			@Override
-			public void message(Void result, Throwable throwable) {
+			public void deliverMessage(Void result, Throwable throwable) {
 				executor.runWith(this, this, this);
 			}
 		}
@@ -210,7 +210,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 
 
 				@Override
-				public void message(TResult result, Throwable exception) {
+				public void deliverMessage(TResult result, Throwable exception) {
 					if (exception != null) {
 						withError(exception);
 						return;
@@ -235,7 +235,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 				}
 
 				@Override
-				public void message(TResult result, Throwable throwable) {
+				public void deliverMessage(TResult result, Throwable throwable) {
 					if (throwable != null)
 						onRejected.runWith(throwable, this, this, this);
 				}
@@ -273,7 +273,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 			}
 
 			@Override
-			public void message(TResult result, Throwable throwable) {
+			public void deliverMessage(TResult result, Throwable throwable) {
 				onFulfilled.runWith(result, throwable, this, this);
 			}
 		}
