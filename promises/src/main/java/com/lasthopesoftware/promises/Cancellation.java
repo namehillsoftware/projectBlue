@@ -11,7 +11,7 @@ class Cancellation implements OneParameterAction<Runnable> {
 	private Runnable reaction;
 	private boolean isCancelled;
 
-	public void cancel() {
+	public final void cancel() {
 		isCancelled = true;
 
 		if (reaction != null)
@@ -21,7 +21,7 @@ class Cancellation implements OneParameterAction<Runnable> {
 	}
 
 	@Override
-	public void runWith(Runnable reaction) {
+	public final void runWith(Runnable reaction) {
 		this.reaction = reaction;
 		if (isCancelled)
 			cancel();
