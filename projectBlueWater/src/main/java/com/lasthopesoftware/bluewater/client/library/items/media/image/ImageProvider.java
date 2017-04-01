@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -57,7 +58,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 	private static final String cancellationMessage = "The image task was cancelled";
 
-	public static IPromise<Bitmap> getImage(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
+	public static Promise<Bitmap> getImage(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)

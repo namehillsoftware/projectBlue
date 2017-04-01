@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.lazyj.Lazy;
 
 import org.joda.time.DateTime;
@@ -72,7 +72,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	}
 
 	@Override
-	public IPromise<Map<String, String>> promiseFileProperties(int fileKey) {
+	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
 		return
 			super
 				.promiseFileProperties(fileKey)

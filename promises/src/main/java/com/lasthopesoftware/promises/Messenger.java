@@ -13,15 +13,14 @@ abstract class Messenger<Input, Resolution> implements
 	OneParameterAction<Runnable> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-
 	private final Queue<Messenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
+	private final Cancellation cancellation = new Cancellation();
 
 	private boolean isResolved;
 	private Resolution resolution;
 	private Throwable rejection;
-	private final Cancellation cancellation = new Cancellation();
 
-	public abstract void deliverMessage(Input input, Throwable throwable);
+	public abstract void receiveResolution(Input input, Throwable throwable);
 
 	@Override
 	public final void withError(Throwable error) {
@@ -82,6 +81,6 @@ abstract class Messenger<Input, Resolution> implements
 		}
 
 		while (recipients.size() > 0)
-			recipients.poll().deliverMessage(resolution, rejection);
+			recipients.poll().receiveResolution(resolution, rejection);
 	}
 }

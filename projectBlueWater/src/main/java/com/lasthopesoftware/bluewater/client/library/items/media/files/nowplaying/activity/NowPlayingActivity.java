@@ -52,7 +52,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -70,7 +70,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private static IPromise<Bitmap> getFileImageTask;
+	private static Promise<Bitmap> getFileImageTask;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);

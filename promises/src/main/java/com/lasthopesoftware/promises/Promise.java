@@ -40,64 +40,64 @@ public class Promise<TResult> implements IPromise<TResult> {
 		messenger.cancel();
 	}
 
-	private <TNewResult> IPromise<TNewResult> thenCreateCancellablePromise(Messenger<TResult, TNewResult> onFulfilled) {
+	private <TNewResult> Promise<TNewResult> thenCreateCancellablePromise(Messenger<TResult, TNewResult> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
 
-	private <TNewResult> IPromise<TNewResult> thenCreatePromise(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	private <TNewResult> Promise<TNewResult> thenCreatePromise(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return
 			thenCreateCancellablePromise(new Execution.NonCancellableExecutor<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> then(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
 		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
 	@Override
-	public final <TNewRejectedResult> IPromise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
 		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
 	@Override
-	public final <TNewResult> IPromise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
 		return then(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
 	}
 
@@ -121,11 +121,11 @@ public class Promise<TResult> implements IPromise<TResult> {
 
 			InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 				this.executor = executor;
-				deliverMessage(null, null);
+				receiveResolution(null, null);
 			}
 
 			@Override
-			public void deliverMessage(Void result, Throwable throwable) {
+			public void receiveResolution(Void result, Throwable throwable) {
 				executor.runWith(this, this, this);
 			}
 		}
@@ -210,7 +210,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 
 
 				@Override
-				public void deliverMessage(TResult result, Throwable exception) {
+				public void receiveResolution(TResult result, Throwable exception) {
 					if (exception != null) {
 						withError(exception);
 						return;
@@ -235,7 +235,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 				}
 
 				@Override
-				public void deliverMessage(TResult result, Throwable throwable) {
+				public void receiveResolution(TResult result, Throwable throwable) {
 					if (throwable != null)
 						onRejected.runWith(throwable, this, this, this);
 				}
@@ -273,7 +273,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 			}
 
 			@Override
-			public void deliverMessage(TResult result, Throwable throwable) {
+			public void receiveResolution(TResult result, Throwable throwable) {
 				onFulfilled.runWith(result, throwable, this, this);
 			}
 		}
