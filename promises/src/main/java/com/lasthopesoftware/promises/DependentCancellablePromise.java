@@ -2,98 +2,29 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
  * Created by david on 10/25/16.
  */
-class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> {
+class DependentCancellablePromise<TResult> implements IPromise<TResult> {
 
-	private final FiveParameterAction<TInput, Throwable, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
+	private final Messenger<?, TResult> messenger;
 
-	private final Queue<DependentCancellablePromise<TResult, ?>> resolutions = new ConcurrentLinkedQueue<>();
-
-	private boolean isResolved;
-
-	private TResult fulfilledResult;
-	private Throwable fulfilledError;
-
-	private final Cancellation cancellation = new Cancellation();
-
-	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-
-	DependentCancellablePromise(FiveParameterAction<TInput, Throwable, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
-		this.executor = executor;
-	}
-
-	final void provide(TInput input, Throwable exception) {
-		executor.runWith(
-			input,
-			exception,
-			result -> resolve(result, null),
-			error -> resolve(null, error),
-			cancellation);
+	DependentCancellablePromise(Messenger<?, TResult> messenger) {
+		this.messenger = messenger;
 	}
 
 	public void cancel() {
-		final boolean isResolvedLocally;
-		resolveSync.readLock().lock();
-		try {
-			isResolvedLocally = isResolved;
-		} finally {
-			resolveSync.readLock().unlock();
-		}
-
-		if (!isResolvedLocally)
-			cancellation.cancel();
+		messenger.cancel();
 	}
 
-	private void resolve(TResult result, Throwable error) {
-		resolveSync.writeLock().lock();
-		try {
-			if (isResolved) return;
+	private <TNewResult> IPromise<TNewResult> thenCreateCancellablePromise(Messenger<TResult, TNewResult> onFulfilled) {
+		messenger.awaitResolution(onFulfilled);
 
-			fulfilledResult = result;
-			fulfilledError = error;
-
-			isResolved = true;
-		} finally {
-			resolveSync.writeLock().unlock();
-		}
-
-		processQueue(result, error);
-	}
-
-	private void processQueue(TResult result, Throwable error) {
-		resolveSync.readLock().lock();
-		try {
-			if (!isResolved) return;
-
-			while (resolutions.size() > 0) {
-				final DependentCancellablePromise<TResult, ?> resolution = resolutions.poll();
-				resolution.provide(result, error);
-			}
-		} finally {
-			resolveSync.readLock().unlock();
-		}
-	}
-
-	private <TNewResult> DependentCancellablePromise<TResult, TNewResult> thenCreateCancellablePromise(FiveParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		final DependentCancellablePromise<TResult, TNewResult> newResolution = new DependentCancellablePromise<>(onFulfilled);
-
-		resolutions.offer(newResolution);
-
-		processQueue(fulfilledResult, fulfilledError);
-
-		return newResolution;
+		return new DependentCancellablePromise<>(onFulfilled);
 	}
 
 	@Override
@@ -177,28 +108,33 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			/**
 			 * Created by david on 10/30/16.
 			 */
-			static class ErrorPropagatingCancellableExecutor<TResult, TNewResult> implements FiveParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+			static class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
 				private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
 
 				ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 					this.onFulfilled = onFulfilled;
 				}
 
+
 				@Override
-				public final void runWith(TResult result, Throwable exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				public void sendInput(TResult result, Throwable exception) {
 					if (exception != null) {
-						reject.withError(exception);
+						withError(exception);
 						return;
 					}
 
-					onFulfilled.runWith(result, resolve, reject, onCancelled);
+					onFulfilled.runWith(
+						result,
+						this,
+						this,
+						this);
 				}
 			}
 
 			/**
 			 * Created by david on 10/30/16.
 			 */
-			static class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> implements FiveParameterAction<TResult, Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+			static class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends Messenger<TResult, TNewRejectedResult> {
 				private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
 				RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
@@ -206,9 +142,10 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				}
 
 				@Override
-				public final void runWith(TResult result, Throwable error, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-					if (error != null)
-						onRejected.runWith(error, resolve, reject, onCancelled);
+				public void sendInput(TResult result, Throwable throwable) {
+					if (throwable == null) return;
+
+					onRejected.runWith(throwable, this, this, this);
 				}
 			}
 
@@ -236,7 +173,7 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static class NonCancellableExecutor<TResult, TNewResult> implements FiveParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static class NonCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
 			private final FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 			NonCancellableExecutor(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
@@ -244,8 +181,8 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 			}
 
 			@Override
-			public final void runWith(TResult result, Throwable exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				onFulfilled.runWith(result, exception, resolve, reject);
+			public void sendInput(TResult result, Throwable throwable) {
+				onFulfilled.runWith(result, throwable, this, this);
 			}
 		}
 
@@ -355,67 +292,6 @@ class DependentCancellablePromise<TInput, TResult> implements IPromise<TResult> 
 				reject.withError(exception);
 				return null;
 			}
-		}
-	}
-
-	private static class PersonalMessenger<Resolution> implements Messenger<Resolution> {
-
-		private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-
-		private final Queue<DependentCancellablePromise<Resolution, ?>> responses = new ConcurrentLinkedQueue<>();
-
-		private boolean isResolved;
-		private Resolution resolution;
-		private Throwable rejection;
-		private final Cancellation cancellation = new Cancellation();
-
-		@Override
-		public void sendResolution(Resolution resolution) {
-			resolve(resolution, null);
-		}
-
-		@Override
-		public void sendRejection(Throwable rejection) {
-			resolve(null, rejection);
-		}
-
-		@Override
-		public void cancellationReceived(Runnable response) {
-			cancellation.runWith(response);
-		}
-
-		void awaitResolution(DependentCancellablePromise<Resolution, ?> response) {
-			responses.offer(response);
-
-			processQueue(resolution, rejection);
-		}
-
-		private void resolve(Resolution resolution, Throwable rejection) {
-			resolveSync.writeLock().lock();
-			try {
-				if (isResolved) return;
-
-				this.resolution = resolution;
-				this.rejection = rejection;
-
-				isResolved = true;
-			} finally {
-				resolveSync.writeLock().unlock();
-			}
-
-			processQueue(resolution, rejection);
-		}
-
-		private void processQueue(Resolution resolution, Throwable rejection) {
-			resolveSync.readLock().lock();
-			try {
-				if (!isResolved) return;
-			} finally {
-				resolveSync.readLock().unlock();
-			}
-
-			while (responses.size() > 0)
-				responses.poll().provide(resolution, rejection);
 		}
 	}
 }

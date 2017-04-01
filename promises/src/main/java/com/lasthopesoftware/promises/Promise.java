@@ -2,7 +2,6 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.FiveParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
@@ -15,8 +14,6 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	public Promise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		super(new Execution.InternalCancellablePromiseExecutor<>(executor));
-
-		provide(null, null);
 	}
 
 	public Promise(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
@@ -46,16 +43,17 @@ public class Promise<TResult> extends DependentCancellablePromise<Void, TResult>
 
 	private static class Execution {
 
-		static class InternalCancellablePromiseExecutor<TResult> implements FiveParameterAction<Void, Throwable, IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static class InternalCancellablePromiseExecutor<TResult> extends Messenger<Void, TResult> {
 			private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
 			InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 				this.executor = executor;
+				sendInput(null, null);
 			}
 
 			@Override
-			public void runWith(Void result, Throwable exception, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				executor.runWith(resolve, reject, onCancelled);
+			public void sendInput(Void result, Throwable throwable) {
+				executor.runWith(this, this, this);
 			}
 		}
 
