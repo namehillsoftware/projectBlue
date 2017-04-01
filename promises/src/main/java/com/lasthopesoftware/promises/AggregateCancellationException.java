@@ -10,7 +10,7 @@ import java.util.concurrent.CancellationException;
 public class AggregateCancellationException extends CancellationException {
 	private final Collection<?> results;
 
-	public <TResult> AggregateCancellationException(Collection<TResult> results) {
+	<TResult> AggregateCancellationException(Collection<TResult> results) {
 		super();
 		this.results = results;
 	}
