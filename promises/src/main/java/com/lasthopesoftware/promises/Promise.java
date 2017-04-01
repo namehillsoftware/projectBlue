@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Promise<TResult> extends DependentCancellablePromise<Void, TResult> {
+public class Promise<TResult> extends DependentCancellablePromise<TResult> {
 
 	public Promise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 		super(new Execution.InternalCancellablePromiseExecutor<>(executor));

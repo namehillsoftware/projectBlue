@@ -143,9 +143,8 @@ class DependentCancellablePromise<TResult> implements IPromise<TResult> {
 
 				@Override
 				public void sendInput(TResult result, Throwable throwable) {
-					if (throwable == null) return;
-
-					onRejected.runWith(throwable, this, this, this);
+					if (throwable != null)
+						onRejected.runWith(throwable, this, this, this);
 				}
 			}
 
