@@ -7,9 +7,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Created by david on 3/31/17.
- */
 abstract class Messenger<Input, Resolution> implements
 	IResolvedPromise<Resolution>,
 	IRejectedPromise,
@@ -27,21 +24,21 @@ abstract class Messenger<Input, Resolution> implements
 	public abstract void message(Input input, Throwable throwable);
 
 	@Override
-	public void withError(Throwable error) {
+	public final void withError(Throwable error) {
 		resolve(null, error);
 	}
 
 	@Override
-	public void withResult(Resolution resolution) {
+	public final void withResult(Resolution resolution) {
 		resolve(resolution, null);
 	}
 
 	@Override
-	public void runWith(Runnable response) {
+	public final void runWith(Runnable response) {
 		cancellation.runWith(response);
 	}
 
-	void cancel() {
+	final void cancel() {
 		final boolean isResolvedLocally;
 		resolveSync.readLock().lock();
 		try {
@@ -54,7 +51,7 @@ abstract class Messenger<Input, Resolution> implements
 			cancellation.cancel();
 	}
 
-	void awaitResolution(Messenger<Resolution, ?> response) {
+	final void awaitResolution(Messenger<Resolution, ?> response) {
 		responses.offer(response);
 
 		processQueue(resolution, rejection);
