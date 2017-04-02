@@ -20,7 +20,7 @@ abstract class Messenger<Input, Resolution> implements
 	private Resolution resolution;
 	private Throwable rejection;
 
-	public abstract void receiveResolution(Input input, Throwable throwable);
+	protected abstract void requestResolution(Input input, Throwable throwable);
 
 	@Override
 	public final void withError(Throwable error) {
@@ -81,6 +81,6 @@ abstract class Messenger<Input, Resolution> implements
 		}
 
 		while (recipients.size() > 0)
-			recipients.poll().receiveResolution(resolution, rejection);
+			recipients.poll().requestResolution(resolution, rejection);
 	}
 }

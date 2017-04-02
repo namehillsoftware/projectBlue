@@ -3,14 +3,12 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import com.lasthopesoftware.promises.EmptyMessenger;
 
 /**
  * Created by david on 10/4/16.
  */
-final class MediaPlayerPlaybackCompletedTask implements TwoParameterAction<IResolvedPromise<IPlaybackHandler>, IRejectedPromise> {
+final class MediaPlayerPlaybackCompletedTask extends EmptyMessenger<IPlaybackHandler> {
 
 	private final IPlaybackHandler playbackHandler;
 	private final MediaPlayer mediaPlayer;
@@ -21,10 +19,10 @@ final class MediaPlayerPlaybackCompletedTask implements TwoParameterAction<IReso
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<IPlaybackHandler> resolve, IRejectedPromise reject) {
-		mediaPlayer.setOnCompletionListener(mp -> resolve.withResult(playbackHandler));
+	protected void requestResolution() {
+		mediaPlayer.setOnCompletionListener(mp -> withResult(playbackHandler));
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			reject.withError(new MediaPlayerException(playbackHandler, mp, what, extra));
+			withError(new MediaPlayerException(playbackHandler, mp, what, extra));
 			return true;
 		});
 	}
