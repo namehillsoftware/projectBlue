@@ -59,7 +59,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
-		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
+		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<TResult, TNewRejectedResult>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
@@ -84,7 +84,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
-		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
+		return thenCreatePromise(new Execution.RejectionDependentExecutor<TResult, TNewRejectedResult>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {

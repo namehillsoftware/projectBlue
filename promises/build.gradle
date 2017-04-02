@@ -1,6 +1,12 @@
 apply plugin: 'java'
 
 sourceSets {
+
+    main {
+        sourceCompatibility = 1.7
+        targetCompatibility = 1.7
+    }
+
     test {
         java {
             srcDir 'src/specs/java'
