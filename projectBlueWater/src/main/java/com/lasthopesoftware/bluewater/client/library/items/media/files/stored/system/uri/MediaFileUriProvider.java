@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
@@ -58,7 +57,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return Promise.empty();
 

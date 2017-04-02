@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> promisePlayback() {
+	public Promise<IPlaybackHandler> promisePlayback() {
 		isPlaying = true;
 		return new Promise<>((resolve, reject) -> {});
 	}
@@ -57,7 +56,7 @@ public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
 		return new Promise<>(this);
 	}
 }

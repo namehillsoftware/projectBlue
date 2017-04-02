@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,7 +28,7 @@ final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public IPromise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+	public Promise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
 		return
 			new QueuedPromise<>(
 				new MediaPlayerPreparerTask(serviceFile, preparedAt, fileUriProvider, playbackInitialization),

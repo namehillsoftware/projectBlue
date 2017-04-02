@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -177,7 +177,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}), getContext()));
 	}
 
-	private IPromise<Library> getSelectedBrowserLibrary() {
+	private Promise<Library> getSelectedBrowserLibrary() {
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
 

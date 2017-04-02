@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -45,7 +44,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
 		return
 			storedFileUriProvider
 				.getFileUri(serviceFile)

@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -144,7 +143,7 @@ public class LibrarySyncHandler {
 						fileProviders.offer(new AbstractMap.SimpleImmutableEntry<>(item, fileProvider));
 					}
 
-					final List<IPromise<Void>> upsertStoredFilePromises = new ArrayList<>(fileProviders.size());
+					final List<Promise<Void>> upsertStoredFilePromises = new ArrayList<>(fileProviders.size());
 
 					Map.Entry<IItem, FileProvider> fileProviderEntry;
 					while ((fileProviderEntry = fileProviders.poll()) != null) {
@@ -166,7 +165,7 @@ public class LibrarySyncHandler {
 									return;
 								}
 
-								final IPromise<Void> upsertStoredFilePromise =
+								final Promise<Void> upsertStoredFilePromise =
 									storedFileAccess
 										.createOrUpdateFile(connectionProvider, serviceFile)
 										.then(new DownloadGuard(storedFileDownloader, serviceFile));

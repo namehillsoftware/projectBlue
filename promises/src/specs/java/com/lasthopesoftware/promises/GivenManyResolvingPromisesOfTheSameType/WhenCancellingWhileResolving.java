@@ -1,7 +1,6 @@
 package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType;
 
 import com.lasthopesoftware.promises.AggregateCancellationException;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -26,12 +25,12 @@ public class WhenCancellingWhileResolving {
 	public static void before() {
 		final List<IResolvedPromise<String>> resolutions = new ArrayList<>();
 
-		final IPromise<String> firstPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final IPromise<String> secondPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final IPromise<String> thirdPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final IPromise<String> fourthPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
+		final Promise<String> firstPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
+		final Promise<String> secondPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
+		final Promise<String> thirdPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
+		final Promise<String> fourthPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
 
-		final IPromise<Collection<String>> aggregatePromise = Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise);
+		final Promise<Collection<String>> aggregatePromise = Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		aggregatePromise
 			.error(runCarelessly(e -> {
 				if (e instanceof AggregateCancellationException)

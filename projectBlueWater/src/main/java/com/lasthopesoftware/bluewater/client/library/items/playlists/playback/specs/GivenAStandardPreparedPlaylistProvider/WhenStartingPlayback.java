@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
@@ -25,15 +24,14 @@ import static org.mockito.Mockito.when;
 
 public class WhenStartingPlayback {
 
-	private IPlaybackHandler playbackHandler;
 	private List<PositionedPlaybackServiceFile> positionedPlaybackFiles;
 
 	@Before
 	public void before() {
-		playbackHandler = mock(IPlaybackHandler.class);
+		IPlaybackHandler playbackHandler = mock(IPlaybackHandler.class);
 		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mock(IPlaybackHandler.class)));
 
-		final IPromise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
+		final Promise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlaybackServiceFile(0, playbackHandler, new ServiceFile(1)));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);

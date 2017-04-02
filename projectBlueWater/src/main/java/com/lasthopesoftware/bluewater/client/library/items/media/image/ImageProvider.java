@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -119,7 +118,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 			libraryProvider
 				.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 				.thenPromise(library -> {
-					final IPromise<Bitmap> httpAccessPromise =
+					final Promise<Bitmap> httpAccessPromise =
 						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
 
 					onCancelled.runWith(httpAccessPromise::cancel);

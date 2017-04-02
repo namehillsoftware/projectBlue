@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.access;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 /**
  * Created by david on 2/12/17.
  */
 
 public interface ISpecificLibraryProvider {
-	IPromise<Library> getLibrary();
+	Promise<Library> getLibrary();
 }

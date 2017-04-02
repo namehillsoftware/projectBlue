@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
 
@@ -69,12 +68,12 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		observableEmitter = e;
 	}
 
-	public IPromise<Observable<PositionedPlaybackServiceFile>> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
+	public Promise<Observable<PositionedPlaybackServiceFile>> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
 		this.playlist = playlist;
 
-		final IPromise<Observable<PositionedPlaybackServiceFile>> observablePromise =
+		final Promise<Observable<PositionedPlaybackServiceFile>> observablePromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.then(this::initializePreparedPlaybackQueue)
 				.then(q -> startPlayback(q, filePosition));
@@ -84,7 +83,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return observablePromise;
 	}
 
-	public IPromise<Observable<PositionedPlaybackServiceFile>> skipToNext() {
+	public Promise<Observable<PositionedPlaybackServiceFile>> skipToNext() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -95,7 +94,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
 	}
 
-	public IPromise<Observable<PositionedPlaybackServiceFile>> skipToPrevious() {
+	public Promise<Observable<PositionedPlaybackServiceFile>> skipToPrevious() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -106,14 +105,14 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
 
-	public synchronized IPromise<Observable<PositionedPlaybackServiceFile>> changePosition(final int playlistPosition, final int filePosition) {
+	public synchronized Promise<Observable<PositionedPlaybackServiceFile>> changePosition(final int playlistPosition, final int filePosition) {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
 		if (subscription != null)
 			subscription.dispose();
 
-		final IPromise<NowPlaying> nowPlayingPromise =
+		final Promise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.then(np -> {
 					logger.info("Position changed");
@@ -121,7 +120,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 				});
 
 		if (isPlaying) {
-			final IPromise<Observable<PositionedPlaybackServiceFile>> observablePromise =
+			final Promise<Observable<PositionedPlaybackServiceFile>> observablePromise =
 				nowPlayingPromise
 					.then(this::initializePreparedPlaybackQueue)
 					.then(q -> startPlayback(q, filePosition));
@@ -131,7 +130,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			return observablePromise;
 		}
 
-		final IPromise<Observable<PositionedPlaybackServiceFile>> singleFileChangeObservablePromise =
+		final Promise<Observable<PositionedPlaybackServiceFile>> singleFileChangeObservablePromise =
 			nowPlayingPromise
 				.thenPromise(np -> {
 					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
@@ -170,7 +169,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCompletableQueue);
 	}
 
-	IPromise<Observable<PositionedPlaybackServiceFile>> resume() {
+	Promise<Observable<PositionedPlaybackServiceFile>> resume() {
 		if (playlistPlayer != null) {
 			playlistPlayer.resume();
 
@@ -181,7 +180,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			return new Promise<>(observableProxy);
 		}
 
-		final IPromise<Observable<PositionedPlaybackServiceFile>> observablePromise =
+		final Promise<Observable<PositionedPlaybackServiceFile>> observablePromise =
 			restorePlaylistFromStorage()
 				.then(np -> startPlayback(initializePreparedPlaybackQueue(np), np.filePosition));
 
@@ -240,8 +239,8 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return observableProxy;
 	}
 
-	IPromise<NowPlaying> addFile(ServiceFile serviceFile) {
-		final IPromise<NowPlaying> nowPlayingPromise =
+	Promise<NowPlaying> addFile(ServiceFile serviceFile) {
+		final Promise<NowPlaying> nowPlayingPromise =
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
@@ -257,8 +256,8 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return nowPlayingPromise;
 	}
 
-	IPromise<NowPlaying> removeFileAtPosition(int position) {
-		final IPromise<NowPlaying> libraryUpdatePromise =
+	Promise<NowPlaying> removeFileAtPosition(int position) {
+		final Promise<NowPlaying> libraryUpdatePromise =
 			nowPlayingRepository
 				.getNowPlaying()
 				.thenPromise(np -> {
@@ -293,8 +292,8 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPosition() + 1));
 	}
 
-	private IPromise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
-		final IPromise<NowPlaying> nowPlayingPromise =
+	private Promise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
+		final Promise<NowPlaying> nowPlayingPromise =
 			playlist != null
 				? nowPlayingRepository.getNowPlaying()
 				: restorePlaylistFromStorage();
@@ -309,7 +308,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 				});
 	}
 
-	private IPromise<NowPlaying> restorePlaylistFromStorage() {
+	private Promise<NowPlaying> restorePlaylistFromStorage() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -339,7 +338,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 					positionedFileQueueGenerator.resultFrom(playlist, startPosition));
 	}
 
-	private IPromise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {
+	private Promise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {
 		return
 			nowPlayingRepository
 				.getNowPlaying()

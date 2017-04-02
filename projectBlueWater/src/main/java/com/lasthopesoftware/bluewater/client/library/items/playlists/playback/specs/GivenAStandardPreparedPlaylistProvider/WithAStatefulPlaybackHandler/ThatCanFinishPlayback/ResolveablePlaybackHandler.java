@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 
@@ -22,7 +21,7 @@ public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> promisePlayback() {
+	public Promise<IPlaybackHandler> promisePlayback() {
 		super.promisePlayback();
 		return new Promise<>((resolve, reject) -> this.resolve = resolve);
 	}

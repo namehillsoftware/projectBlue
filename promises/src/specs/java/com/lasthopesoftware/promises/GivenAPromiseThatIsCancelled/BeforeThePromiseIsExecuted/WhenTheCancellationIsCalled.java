@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted;
 
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -26,7 +25,7 @@ public class WhenTheCancellationIsCalled {
 		final ExternallyResolvableTask<String> resolvableTask = new ExternallyResolvableTask<>();
 		final Promise<String> promise = new Promise<>(resolvableTask);
 
-		IPromise<Object> cancellablePromise = promise.then(
+		Promise<Object> cancellablePromise = promise.then(
 			(result, resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)));
 
 		cancellablePromise.error((exception, onCancelled) -> caughtException = exception);

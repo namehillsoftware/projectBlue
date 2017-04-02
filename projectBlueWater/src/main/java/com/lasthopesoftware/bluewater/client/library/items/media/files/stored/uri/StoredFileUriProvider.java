@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
 import java.io.File;
@@ -26,7 +26,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
 		return
 			storedFileAccess
 				.getStoredFile(serviceFile)

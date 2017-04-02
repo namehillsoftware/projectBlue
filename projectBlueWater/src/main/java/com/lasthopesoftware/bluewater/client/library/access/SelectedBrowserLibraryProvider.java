@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.access;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 /**
  * Created by david on 2/12/17.
@@ -19,7 +19,7 @@ public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryPr
 	}
 
 	@Override
-	public IPromise<Library> getBrowserLibrary() {
+	public Promise<Library> getBrowserLibrary() {
 		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
 }

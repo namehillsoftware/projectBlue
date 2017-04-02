@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Promise<TResult> implements IPromise<TResult> {
+public class Promise<TResult> {
 
 	private final Messenger<?, TResult> messenger;
 
@@ -46,22 +46,18 @@ public class Promise<TResult> implements IPromise<TResult> {
 		return new Promise<>(onFulfilled);
 	}
 
-	@Override
 	public final <TNewResult> Promise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
-	@Override
 	public final <TNewResult> Promise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
-	@Override
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
-	@Override
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
@@ -71,33 +67,27 @@ public class Promise<TResult> implements IPromise<TResult> {
 			thenCreateCancellablePromise(new Execution.NonCancellableExecutor<>(onFulfilled));
 	}
 
-	@Override
-	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
-	@Override
 	public final <TNewResult> Promise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
-	@Override
 	public final <TNewResult> Promise<TNewResult> then(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
-	@Override
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
 		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
-	@Override
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
 		return error(new Execution.ExpectedResultExecutor<>(onRejected));
 	}
 
-	@Override
-	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
 		return then(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
 	}
 
@@ -106,11 +96,11 @@ public class Promise<TResult> implements IPromise<TResult> {
 	}
 
 	@SafeVarargs
-	public static <TResult> IPromise<Collection<TResult>> whenAll(IPromise<TResult>... promises) {
+	public static <TResult> Promise<Collection<TResult>> whenAll(Promise<TResult>... promises) {
 		return whenAll(Arrays.asList(promises));
 	}
 
-	public static <TResult> IPromise<Collection<TResult>> whenAll(Collection<IPromise<TResult>> promises) {
+	public static <TResult> Promise<Collection<TResult>> whenAll(Collection<Promise<TResult>> promises) {
 		return new Promise<>(new Resolution.AggregatePromiseResolver<>(promises));
 	}
 
@@ -242,9 +232,9 @@ public class Promise<TResult> implements IPromise<TResult> {
 			}
 
 			static class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled;
+				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled;
 
-				ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, IPromise<TNewResult>> onFulfilled) {
+				ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
 					this.onFulfilled = onFulfilled;
 				}
 
@@ -337,9 +327,9 @@ public class Promise<TResult> implements IPromise<TResult> {
 		}
 
 		static class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
-			private final CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled;
+			private final CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled;
 
-			PromisedResolution(CarelessOneParameterFunction<TResult, IPromise<TNewResult>> onFulfilled) {
+			PromisedResolution(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 
@@ -389,9 +379,9 @@ public class Promise<TResult> implements IPromise<TResult> {
 		private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
 			private final Collection<TResult> results;
 
-			ResultCollector(Collection<IPromise<TResult>> promises) {
+			ResultCollector(Collection<Promise<TResult>> promises) {
 				this.results = new ArrayList<>(promises.size());
-				for (IPromise<TResult> promise : promises)
+				for (Promise<TResult> promise : promises)
 					promise.then(this);
 			}
 
@@ -410,7 +400,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 			private final int expectedResultSize;
 			private IResolvedPromise<Collection<TResult>> resolve;
 
-			CollectedResultsResolver(Collection<IPromise<TResult>> promises) {
+			CollectedResultsResolver(Collection<Promise<TResult>> promises) {
 				super(promises);
 
 				this.expectedResultSize = promises.size();
@@ -448,8 +438,8 @@ public class Promise<TResult> implements IPromise<TResult> {
 			private IRejectedPromise reject;
 			private Throwable error;
 
-			ErrorHandler(Collection<IPromise<TResult>> promises) {
-				for (IPromise<TResult> promise : promises) promise.error(this);
+			ErrorHandler(Collection<Promise<TResult>> promises) {
+				for (Promise<TResult> promise : promises) promise.error(this);
 			}
 
 			@Override
@@ -481,7 +471,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 			private final CollectedResultsResolver<TResult> resolver;
 			private final ErrorHandler errorHandler;
 
-			AggregatePromiseResolver(Collection<IPromise<TResult>> promises) {
+			AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
 				resolver = new CollectedResultsResolver<>(promises);
 				errorHandler = new ErrorHandler<>(promises);
 				canceller = new CollectedPromiseCanceller<>(promises, resolver);
@@ -500,10 +490,10 @@ public class Promise<TResult> implements IPromise<TResult> {
 		private static class CollectedPromiseCanceller<TResult> implements Runnable {
 
 			private IRejectedPromise reject;
-			private final Collection<IPromise<TResult>> promises;
+			private final Collection<Promise<TResult>> promises;
 			private final ResultCollector<TResult> resultCollector;
 
-			CollectedPromiseCanceller(Collection<IPromise<TResult>> promises, ResultCollector<TResult> resultCollector) {
+			CollectedPromiseCanceller(Collection<Promise<TResult>> promises, ResultCollector<TResult> resultCollector) {
 				this.promises = promises;
 				this.resultCollector = resultCollector;
 			}
@@ -515,7 +505,7 @@ public class Promise<TResult> implements IPromise<TResult> {
 
 			@Override
 			public void run() {
-				for (IPromise<TResult> promise : promises) promise.cancel();
+				for (Promise<TResult> promise : promises) promise.cancel();
 
 				reject.withError(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
 			}

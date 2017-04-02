@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.f
 
 import android.widget.TextView;
 
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import java.util.Map;
 
@@ -12,7 +12,7 @@ import java.util.Map;
 public class ActiveFileDownloadsViewHolder {
 
 	public final TextView textView;
-	public IPromise<Map<String, String>> filePropertiesProvider;
+	public Promise<Map<String, String>> filePropertiesProvider;
 
 	public ActiveFileDownloadsViewHolder(TextView textView) {
 

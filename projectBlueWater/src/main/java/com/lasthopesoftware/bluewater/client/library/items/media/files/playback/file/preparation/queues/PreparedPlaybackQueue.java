@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -79,7 +79,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public IPromise<PositionedPlaybackServiceFile> promiseNextPreparedPlaybackFile(int preparedAt) {
+	public Promise<PositionedPlaybackServiceFile> promiseNextPreparedPlaybackFile(int preparedAt) {
 		currentPreparingPlaybackHandlerPromise =
 			bufferingMediaPlayerPromises.size() > 0
 				? bufferingMediaPlayerPromises.poll()
@@ -163,14 +163,14 @@ public class PreparedPlaybackQueue implements
 
 	private static class PositionedPreparingFile {
 		final PositionedFile positionedFile;
-		final IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise;
+		final Promise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise;
 
-		private PositionedPreparingFile(PositionedFile positionedFile, IPromise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise) {
+		private PositionedPreparingFile(PositionedFile positionedFile, Promise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise) {
 			this.positionedFile = positionedFile;
 			this.bufferingPlaybackHandlerPromise = bufferingPlaybackHandlerPromise;
 		}
 
-		IPromise<PositionedBufferingPlaybackHandler> promisePositionedBufferingPlaybackHandler() {
+		Promise<PositionedBufferingPlaybackHandler> promisePositionedBufferingPlaybackHandler() {
 			return
 				bufferingPlaybackHandlerPromise
 					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));

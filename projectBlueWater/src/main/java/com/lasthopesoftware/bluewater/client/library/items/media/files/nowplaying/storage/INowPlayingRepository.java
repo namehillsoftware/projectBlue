@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 /**
  * Created by david on 1/29/17.
  */
 
 public interface INowPlayingRepository {
-	IPromise<NowPlaying> getNowPlaying();
+	Promise<NowPlaying> getNowPlaying();
 
-	IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying);
+	Promise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying);
 }

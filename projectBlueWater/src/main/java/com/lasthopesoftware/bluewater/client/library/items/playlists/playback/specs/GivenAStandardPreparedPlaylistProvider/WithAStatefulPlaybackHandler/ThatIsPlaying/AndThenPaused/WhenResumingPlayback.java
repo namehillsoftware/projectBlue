@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
@@ -31,7 +30,7 @@ public class WhenResumingPlayback {
 	public void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final IPromise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
+		final Promise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlaybackServiceFile(0, playbackHandler, new ServiceFile(1)));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);

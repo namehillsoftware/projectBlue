@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -70,7 +69,7 @@ public class WhenTheQueueIsConsumed {
 		final int expectedNumberAbsolutePromises = expectedCycles * expectedNumberOfFiles;
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
-			final IPromise<PositionedPlaybackServiceFile> positionedPlaybackFilePromise =
+			final Promise<PositionedPlaybackServiceFile> positionedPlaybackFilePromise =
 				queue.promiseNextPreparedPlaybackFile(0);
 
 			if (positionedPlaybackFilePromise != null)

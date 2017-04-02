@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
@@ -76,7 +76,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		final IPromise<PositionedPlaybackServiceFile> preparingPlaybackFile =
+		final Promise<PositionedPlaybackServiceFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
@@ -99,12 +99,12 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		return positionedPlaybackFile;
 	}
 
-	private IPromise<IPlaybackHandler> startFilePlayback(PositionedPlaybackServiceFile positionedPlaybackFile) {
+	private Promise<IPlaybackHandler> startFilePlayback(PositionedPlaybackServiceFile positionedPlaybackFile) {
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);
 
-		final IPromise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
+		final Promise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
 		promisedPlayback.then(VoidFunc.runCarelessly(this::closeAndStartNextFile));
 

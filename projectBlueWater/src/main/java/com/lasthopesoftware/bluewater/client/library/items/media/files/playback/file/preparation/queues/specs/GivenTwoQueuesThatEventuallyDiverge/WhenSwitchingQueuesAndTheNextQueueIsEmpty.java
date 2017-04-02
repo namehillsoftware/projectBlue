@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.when;
  */
 
 public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
-	private static IPromise<PositionedPlaybackServiceFile> nextPreparedPlaybackFilePromise;
+	private static Promise<PositionedPlaybackServiceFile> nextPreparedPlaybackFilePromise;
 
 	@BeforeClass
 	public static void before() {
