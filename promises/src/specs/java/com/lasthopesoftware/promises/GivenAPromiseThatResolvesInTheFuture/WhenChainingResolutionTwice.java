@@ -33,7 +33,7 @@ public class WhenChainingResolutionTwice {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				resolve.withResult("test");
+				resolve.sendResolution("test");
 				latch.countDown();
 			}).start());
 

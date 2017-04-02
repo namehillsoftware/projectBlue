@@ -23,7 +23,7 @@ public class RejectingCancellationHandler implements Runnable {
 	@Override
 	public void run() {
 		isCancelled = true;
-		this.reject.withError(new CancellationException(cancellationMessage));
+		this.reject.sendRejection(new CancellationException(cancellationMessage));
 	}
 
 	public boolean isCancelled() {

@@ -116,9 +116,9 @@ public class StoredFileAccess {
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
 		return new QueuedPromise<>((resolve, reject) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceServiceFile));
+				resolve.sendResolution(getStoredFile(repositoryAccessHelper, serviceServiceFile));
 			} catch(SQLException e) {
-				reject.withError(e);
+				reject.sendRejection(e);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
@@ -222,9 +222,9 @@ public class StoredFileAccess {
 							storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 						}
 
-						resolve.withResult(storedFile);
+						resolve.sendResolution(storedFile);
 					} catch (Exception e) {
-						reject.withError(e);
+						reject.sendRejection(e);
 					}
 				}, RepositoryAccessHelper.databaseExecutor)
 				.thenPromise(storedFile -> {

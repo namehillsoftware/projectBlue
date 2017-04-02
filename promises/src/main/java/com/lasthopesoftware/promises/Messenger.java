@@ -23,12 +23,12 @@ abstract class Messenger<Input, Resolution> implements
 	protected abstract void requestResolution(Input input, Throwable throwable);
 
 	@Override
-	public final void withError(Throwable error) {
+	public final void sendRejection(Throwable error) {
 		resolve(null, error);
 	}
 
 	@Override
-	public final void withResult(Resolution resolution) {
+	public final void sendResolution(Resolution resolution) {
 		resolve(resolution, null);
 	}
 

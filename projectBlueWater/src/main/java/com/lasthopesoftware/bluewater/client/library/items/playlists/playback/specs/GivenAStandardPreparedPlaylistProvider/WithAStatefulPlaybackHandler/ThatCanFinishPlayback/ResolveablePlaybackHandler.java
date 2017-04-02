@@ -15,7 +15,7 @@ public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
 	public void resolve() {
 		if (this.resolve != null)
-			this.resolve.withResult(this);
+			this.resolve.sendResolution(this);
 
 		this.resolve = null;
 	}

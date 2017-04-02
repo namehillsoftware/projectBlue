@@ -90,7 +90,7 @@ public class WhenTheQueueIsConsumed {
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			resolve.withResult(mock(IBufferingPlaybackHandler.class));
+			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}
 }

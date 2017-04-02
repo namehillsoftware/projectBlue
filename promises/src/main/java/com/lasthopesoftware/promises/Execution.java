@@ -52,9 +52,9 @@ class Execution {
 		@Override
 		public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 			try {
-				resolve.withResult(executor.result());
+				resolve.sendResolution(executor.result());
 			} catch (Exception e) {
-				reject.withError(e);
+				reject.sendRejection(e);
 			}
 		}
 	}
@@ -87,9 +87,9 @@ class Execution {
 			@Override
 			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 				try {
-					resolve.withResult(onFulfilled.resultFrom(result, onCancelled));
+					resolve.sendResolution(onFulfilled.resultFrom(result, onCancelled));
 				} catch (Exception e) {
-					reject.withError(e);
+					reject.sendRejection(e);
 				}
 			}
 		}
@@ -108,7 +108,7 @@ class Execution {
 			@Override
 			public void requestResolution(TResult result, Throwable exception) {
 				if (exception != null) {
-					withError(exception);
+					sendRejection(exception);
 					return;
 				}
 
@@ -152,7 +152,7 @@ class Execution {
 						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 						.error(new Resolution.RejectWithPromiseError(reject));
 				} catch (Exception e) {
-					reject.withError(e);
+					reject.sendRejection(e);
 				}
 			}
 		}
@@ -204,9 +204,9 @@ class Execution {
 		@Override
 		public final void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 			try {
-				newResolve.withResult(onFulfilled.resultFrom(originalResult));
+				newResolve.sendResolution(onFulfilled.resultFrom(originalResult));
 			} catch (Exception e) {
-				newReject.withError(e);
+				newReject.sendRejection(e);
 			}
 		}
 	}
@@ -224,7 +224,7 @@ class Execution {
 		@Override
 		public final void runWith(TResult result, Throwable exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 			if (exception != null) {
-				reject.withError(exception);
+				reject.sendRejection(exception);
 				return;
 			}
 
@@ -247,7 +247,7 @@ class Execution {
 					.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 					.error(new Resolution.RejectWithPromiseError(reject));
 			} catch (Exception e) {
-				reject.withError(e);
+				reject.sendRejection(e);
 			}
 		}
 	}

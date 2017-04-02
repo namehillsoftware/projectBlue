@@ -20,7 +20,7 @@ class Resolution {
 
 		@Override
 		public final Void resultFrom(TNewResult result) {
-			resolve.withResult(result);
+			resolve.sendResolution(result);
 			return null;
 		}
 	}
@@ -34,7 +34,7 @@ class Resolution {
 
 		@Override
 		public final Void resultFrom(Throwable exception) {
-			reject.withError(exception);
+			reject.sendRejection(exception);
 			return null;
 		}
 	}
@@ -92,7 +92,7 @@ class Resolution {
 			final Collection<TResult> results = getResults();
 			if (results.size() < expectedResultSize) return;
 
-			resolve.withResult(results);
+			resolve.sendResolution(results);
 		}
 	}
 
@@ -120,7 +120,7 @@ class Resolution {
 
 		private boolean attemptRejection() {
 			if (reject != null && error != null) {
-				reject.withError(error);
+				reject.sendRejection(error);
 				return true;
 			}
 
@@ -170,7 +170,7 @@ class Resolution {
 		public void run() {
 			for (Promise<TResult> promise : promises) promise.cancel();
 
-			reject.withError(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
+			reject.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
 		}
 	}
 }

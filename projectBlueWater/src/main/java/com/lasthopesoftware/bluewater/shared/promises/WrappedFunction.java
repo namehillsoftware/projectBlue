@@ -21,9 +21,9 @@ public class WrappedFunction<TResult> implements Runnable {
 	@Override
 	public void run() {
 		try {
-			resolve.withResult(this.callable.result());
+			resolve.sendResolution(this.callable.result());
 		} catch (Exception e) {
-			reject.withError(e);
+			reject.sendRejection(e);
 		}
 	}
 }

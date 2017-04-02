@@ -25,7 +25,7 @@ public class WhenTheCancellationIsCalled {
 		final Promise<Object> cancellablePromise = new Promise<>(
 			(resolve, reject, onCancelled) -> {
 				onCancelled.runWith(mockCancel);
-				resolve.withResult(expectedResult);
+				resolve.sendResolution(expectedResult);
 			});
 
 		cancellablePromise.then(result -> WhenTheCancellationIsCalled.result = result);

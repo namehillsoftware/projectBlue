@@ -70,7 +70,7 @@ final class MediaPlayerPreparerTask implements
 			onCancelled.runWith(mediaPlayerPreparationHandler);
 
 			if (mediaPlayerPreparationHandler.isCancelled()) {
-				reject.withError(new CancellationException());
+				reject.sendRejection(new CancellationException());
 				return null;
 			}
 
@@ -94,7 +94,7 @@ final class MediaPlayerPreparerTask implements
 
 		@Override
 		public Void resultFrom(Throwable throwable) throws Exception {
-			reject.withError(throwable);
+			reject.sendRejection(throwable);
 			return null;
 		}
 	}
@@ -122,14 +122,14 @@ final class MediaPlayerPreparerTask implements
 
 		@Override
 		public boolean onError(MediaPlayer mp, int what, int extra) {
-			reject.withError(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
+			reject.sendRejection(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
 			return true;
 		}
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
 			if (isCancelled) {
-				reject.withError(new CancellationException());
+				reject.sendRejection(new CancellationException());
 				return;
 			}
 
@@ -139,17 +139,17 @@ final class MediaPlayerPreparerTask implements
 				return;
 			}
 
-			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
+			resolve.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
 			if (isCancelled) {
-				reject.withError(new CancellationException());
+				reject.sendRejection(new CancellationException());
 				return;
 			}
 
-			resolve.withResult(new MediaPlayerPlaybackHandler(mp));
+			resolve.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override

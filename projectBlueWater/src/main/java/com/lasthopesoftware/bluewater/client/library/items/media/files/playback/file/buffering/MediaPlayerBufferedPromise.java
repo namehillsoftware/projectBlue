@@ -30,7 +30,7 @@ public final class MediaPlayerBufferedPromise extends EmptyMessenger<IBufferingP
 	@Override
 	public void requestResolution() {
 		if (isBuffered()) {
-			withResult(bufferingPlaybackHandler);
+			sendResolution(bufferingPlaybackHandler);
 			return;
 		}
 
@@ -48,7 +48,7 @@ public final class MediaPlayerBufferedPromise extends EmptyMessenger<IBufferingP
 			// remove the listener
 			mp.setOnBufferingUpdateListener(null);
 
-			withResult(bufferingPlaybackHandler);
+			sendResolution(bufferingPlaybackHandler);
 		});
 	}
 

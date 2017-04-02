@@ -111,7 +111,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			final byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) {
-				resolve.withResult(getBitmapFromBytes(imageBytes));
+				resolve.sendResolution(getBitmapFromBytes(imageBytes));
 				return;
 			}
 
@@ -125,8 +125,8 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 					return httpAccessPromise;
 				})
-				.then(VoidFunc.runCarelessly(resolve::withResult))
-				.error(VoidFunc.runCarelessly(reject::withError));
+				.then(VoidFunc.runCarelessly(resolve::sendResolution))
+				.error(VoidFunc.runCarelessly(reject::sendRejection));
 		}
 
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
@@ -164,7 +164,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		@Override
 		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 			if (library == null) {
-				resolve.withResult(fillerBitmap.getFillerBitmap());
+				resolve.sendResolution(fillerBitmap.getFillerBitmap());
 				return;
 			}
 
@@ -179,7 +179,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				if (imageCacheFile != null) {
 					imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 					if (imageBytes.length > 0) {
-						resolve.withResult(getBitmapFromBytes(imageBytes));
+						resolve.sendResolution(getBitmapFromBytes(imageBytes));
 						return;
 					}
 				}
@@ -192,7 +192,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				try {
 					// Connection failed to build
 					if (connection == null) {
-						resolve.withResult(fillerBitmap.getFillerBitmap());
+						resolve.sendResolution(fillerBitmap.getFillerBitmap());
 						return;
 					}
 
@@ -203,17 +203,17 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 							imageBytes = IOUtils.toByteArray(is);
 						} catch (InterruptedIOException interruptedIoException) {
 							logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
-							reject.withError(interruptedIoException);
+							reject.sendRejection(interruptedIoException);
 							return;
 						}
 
 						if (imageBytes.length == 0) {
-							resolve.withResult(fillerBitmap.getFillerBitmap());
+							resolve.sendResolution(fillerBitmap.getFillerBitmap());
 							return;
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						resolve.withResult(fillerBitmap.getFillerBitmap());
+						resolve.sendResolution(fillerBitmap.getFillerBitmap());
 						return;
 					}
 
@@ -227,7 +227,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 					if (rejectingCancellationHandler.isCancelled()) return;
 
-					resolve.withResult(getBitmapFromBytes(imageBytes));
+					resolve.sendResolution(getBitmapFromBytes(imageBytes));
 				} catch (Exception e) {
 					logger.error(e.toString(), e);
 				} finally {

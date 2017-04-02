@@ -26,7 +26,7 @@ public class WhenTheCancellationIsCalled {
 		final Promise<String> promise = new Promise<>(resolvableTask);
 
 		Promise<Object> cancellablePromise = promise.then(
-			(result, resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.withError(thrownException)));
+			(result, resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.sendRejection(thrownException)));
 
 		cancellablePromise.error((exception, onCancelled) -> caughtException = exception);
 
@@ -46,7 +46,7 @@ public class WhenTheCancellationIsCalled {
 
 		public void resolve(TResult resolution) {
 			if (resolve != null)
-				resolve.withResult(resolution);
+				resolve.sendResolution(resolution);
 		}
 
 		@Override

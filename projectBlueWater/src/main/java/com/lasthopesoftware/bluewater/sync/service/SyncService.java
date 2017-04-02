@@ -162,8 +162,8 @@ public class SyncService extends Service {
 				onCancelled.runWith(filePropertiesPromise::cancel);
 
 				filePropertiesPromise
-					.then(runCarelessly(resolve::withResult))
-					.error(runCarelessly(reject::withError));
+					.then(runCarelessly(resolve::sendResolution))
+					.error(runCarelessly(reject::sendRejection));
 			}))
 			.then(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.error(Dispatch.toContext(exception -> {
