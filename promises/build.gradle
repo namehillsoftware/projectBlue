@@ -1,12 +1,7 @@
 apply plugin: 'java'
+apply plugin: 'me.tatarka.retrolambda'
 
 sourceSets {
-
-    main {
-        sourceCompatibility = 1.7
-        targetCompatibility = 1.7
-    }
-
     test {
         java {
             srcDir 'src/specs/java'
