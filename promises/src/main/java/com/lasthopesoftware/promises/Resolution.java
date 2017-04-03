@@ -10,8 +10,8 @@ import java.util.Collection;
 /**
  * Created by david on 4/2/17.
  */
-class Resolution {
-	static class ResolveWithPromiseResult<TNewResult> implements CarelessOneParameterFunction<TNewResult, Void> {
+final class Resolution {
+	static final class ResolveWithPromiseResult<TNewResult> implements CarelessOneParameterFunction<TNewResult, Void> {
 		private final IResolvedPromise<TNewResult> resolve;
 
 		ResolveWithPromiseResult(IResolvedPromise<TNewResult> resolve) {
@@ -25,7 +25,7 @@ class Resolution {
 		}
 	}
 
-	static class RejectWithPromiseError implements CarelessOneParameterFunction<Throwable, Void> {
+	static final class RejectWithPromiseError implements CarelessOneParameterFunction<Throwable, Void> {
 		private final IRejectedPromise reject;
 
 		RejectWithPromiseError(IRejectedPromise reject) {
@@ -59,7 +59,7 @@ class Resolution {
 		}
 	}
 
-	private static class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
+	private static final class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
 		private final int expectedResultSize;
 		private IResolvedPromise<Collection<TResult>> resolve;
 
@@ -96,7 +96,7 @@ class Resolution {
 		}
 	}
 
-	private static class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
+	private static final class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
 
 		private IRejectedPromise reject;
 		private Throwable error;
@@ -128,7 +128,7 @@ class Resolution {
 		}
 	}
 
-	static class AggregatePromiseResolver<TResult> implements ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>> {
+	static final class AggregatePromiseResolver<TResult> implements ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 		private final CollectedPromiseCanceller<TResult> canceller;
 		private final CollectedResultsResolver<TResult> resolver;
@@ -150,7 +150,7 @@ class Resolution {
 		}
 	}
 
-	private static class CollectedPromiseCanceller<TResult> implements Runnable {
+	private static final class CollectedPromiseCanceller<TResult> implements Runnable {
 
 		private IRejectedPromise reject;
 		private final Collection<Promise<TResult>> promises;

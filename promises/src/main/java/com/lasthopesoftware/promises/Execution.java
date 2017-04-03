@@ -11,9 +11,9 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 /**
  * Created by david on 4/2/17.
  */
-class Execution {
+final class Execution {
 
-	static class InternalCancellablePromiseExecutor<TResult> extends EmptyMessenger<TResult> {
+	static final class InternalCancellablePromiseExecutor<TResult> extends EmptyMessenger<TResult> {
 		private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
 		InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
@@ -29,7 +29,7 @@ class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static class InternalPromiseExecutor<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+	static final class InternalPromiseExecutor<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 		private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor;
 
 		InternalPromiseExecutor(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
@@ -42,7 +42,7 @@ class Execution {
 		}
 	}
 
-	static class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+	static final class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
 		private final CarelessFunction<TResult> executor;
 
 		InternalExpectedPromiseExecutor(CarelessFunction<TResult> executor) {
@@ -59,7 +59,7 @@ class Execution {
 		}
 	}
 
-	static class PassThroughCallable<TPassThroughResult> implements CarelessFunction<TPassThroughResult> {
+	static final class PassThroughCallable<TPassThroughResult> implements CarelessFunction<TPassThroughResult> {
 		private final TPassThroughResult passThroughResult;
 
 		PassThroughCallable(TPassThroughResult passThroughResult) {
@@ -72,12 +72,12 @@ class Execution {
 		}
 	}
 
-	static class Cancellable {
+	static final class Cancellable {
 
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static class ExpectedResultCancellableExecutor<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static final class ExpectedResultCancellableExecutor<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled;
 
 			ExpectedResultCancellableExecutor(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
@@ -97,7 +97,7 @@ class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
+		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
 			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
 
 			ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
@@ -123,7 +123,7 @@ class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends Messenger<TResult, TNewRejectedResult> {
+		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends Messenger<TResult, TNewRejectedResult> {
 			private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
 			RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
@@ -137,7 +137,7 @@ class Execution {
 			}
 		}
 
-		static class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static final class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
 			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled;
 
 			ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
@@ -161,7 +161,7 @@ class Execution {
 	/**
 	 * Created by david on 10/30/16.
 	 */
-	static class NonCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
+	static final class NonCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
 		private final FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 		NonCancellableExecutor(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
@@ -177,7 +177,7 @@ class Execution {
 	/**
 	 * Created by david on 10/19/16.
 	 */
-	static class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> {
+	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> {
 		private final ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
 
 		RejectionDependentExecutor(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
@@ -194,7 +194,7 @@ class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
 		private final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled;
 
 		ExpectedResultExecutor(CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
@@ -214,7 +214,7 @@ class Execution {
 	/**
 	 * Created by david on 10/18/16.
 	 */
-	static class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> {
 		private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 		ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
@@ -232,7 +232,7 @@ class Execution {
 		}
 	}
 
-	static class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
 		private final CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled;
 
 		PromisedResolution(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {

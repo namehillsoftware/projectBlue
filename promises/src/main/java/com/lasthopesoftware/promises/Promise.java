@@ -40,18 +40,18 @@ public class Promise<TResult> {
 		this.messenger = messenger;
 	}
 
-	public void cancel() {
+	public final void cancel() {
 		messenger.cancel();
 	}
 
-	private <TNewResult> Promise<TNewResult> thenCreateCancellablePromise(Messenger<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(Messenger<TResult, TNewResult> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		return thenCreateCancellablePromise(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
+		return then(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
@@ -59,7 +59,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
-		return thenCreateCancellablePromise(new Execution.Cancellable.RejectionDependentCancellableExecutor<TResult, TNewRejectedResult>(onRejected));
+		return then(new Execution.Cancellable.RejectionDependentCancellableExecutor<TResult, TNewRejectedResult>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
@@ -68,7 +68,7 @@ public class Promise<TResult> {
 
 	private <TNewResult> Promise<TNewResult> thenCreatePromise(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return
-			thenCreateCancellablePromise(new Execution.NonCancellableExecutor<>(onFulfilled));
+			then(new Execution.NonCancellableExecutor<>(onFulfilled));
 	}
 
 	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
