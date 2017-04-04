@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
 
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public IPromise<Map<String, String>> filePropertiesProvider;
+        public Promise<Map<String, String>> filePropertiesProvider;
 
         final ImageButton getAddButton() {
             return addButtonFinder.findView();

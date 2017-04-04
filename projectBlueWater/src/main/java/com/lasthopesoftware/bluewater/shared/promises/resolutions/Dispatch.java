@@ -125,9 +125,9 @@ public class Dispatch {
 				@Override
 				public void run() {
 					try {
-						this.resolve.withResult(this.task.resultFrom(result, onCancelled));
+						this.resolve.sendResolution(this.task.resultFrom(result, onCancelled));
 					} catch (Exception e) {
-						this.reject.withError(e);
+						this.reject.sendRejection(e);
 					}
 				}
 			}
@@ -168,9 +168,9 @@ public class Dispatch {
 			@Override
 			public void run() {
 				try {
-					resolve.withResult(this.callable.resultFrom(result));
+					resolve.sendResolution(this.callable.resultFrom(result));
 				} catch (Exception e) {
-					reject.withError(e);
+					reject.sendRejection(e);
 				}
 			}
 		}

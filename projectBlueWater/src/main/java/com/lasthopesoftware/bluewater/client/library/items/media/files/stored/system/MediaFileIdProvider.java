@@ -4,7 +4,6 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -32,7 +31,7 @@ public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor,
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public IPromise<Integer> getMediaId() throws IOException {
+	public Promise<Integer> getMediaId() throws IOException {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return new Promise<>(-1);
 

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
@@ -27,14 +26,14 @@ public class WhenChainingResolutionTwice {
 	@Before
 	public void before() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
-		final IPromise<String> rootPromise =
+		final Promise<String> rootPromise =
 			new Promise<>((resolve, reject) -> new Thread(() -> {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				resolve.withResult("test");
+				resolve.sendResolution("test");
 				latch.countDown();
 			}).start());
 

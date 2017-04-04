@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import java.util.Map;
 
@@ -9,5 +9,5 @@ import java.util.Map;
  */
 
 public interface IFilePropertiesProvider {
-	IPromise<Map<String, String>> promiseFileProperties(int fileKey);
+	Promise<Map<String, String>> promiseFileProperties(int fileKey);
 }

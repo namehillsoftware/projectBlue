@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
@@ -48,20 +48,18 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public IPromise<Map<String, String>> filePropertiesProvider;
+        public Promise<Map<String, String>> filePropertiesProvider;
 
 	    final ImageButton getRemoveButton() {
 		    return removeButtonFinder.findView();
 	    }
     }
 
-    private final List<ServiceFile> serviceFiles;
     private final int nowPlayingPosition;
 
     private OneParameterAction<Integer> onPlaylistFileRemovedListener;
 
     public NowPlayingFileListItemMenuBuilder(final List<ServiceFile> serviceFiles, final int nowPlayingPosition) {
-        this.serviceFiles = serviceFiles;
         this.nowPlayingPosition = nowPlayingPosition;
     }
 

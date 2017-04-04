@@ -30,7 +30,7 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		public ResolveablePlaybackHandler resolve() {
 			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
 			if (resolve != null)
-				resolve.withResult(playbackHandler);
+				resolve.sendResolution(playbackHandler);
 			return playbackHandler;
 		}
 

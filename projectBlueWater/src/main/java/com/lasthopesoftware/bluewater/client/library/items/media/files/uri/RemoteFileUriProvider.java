@@ -5,7 +5,6 @@ import android.net.Uri;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.LoggerFactory;
@@ -13,17 +12,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 7/24/15.
  */
-public class RemoteFileUriProvider implements IFileUriProvider {
+class RemoteFileUriProvider implements IFileUriProvider {
 	private final IConnectionProvider connectionProvider;
 	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 
-	public RemoteFileUriProvider(IConnectionProvider connectionProvider, IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider) {
+	RemoteFileUriProvider(IConnectionProvider connectionProvider, IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider) {
 		this.connectionProvider = connectionProvider;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 	}
 
 	@Override
-	public IPromise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
 		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning serviceFile URL from server.");
 
 		/* Playback:

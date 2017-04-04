@@ -4,7 +4,6 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.MediaPlayerBufferedPromise;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
@@ -16,9 +15,9 @@ import java.io.IOException;
 public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
-	private final IPromise<IBufferingPlaybackHandler> bufferingPromise;
+	private final Promise<IBufferingPlaybackHandler> bufferingPromise;
 	private float volume;
-	private final IPromise<IPlaybackHandler> playbackPromise;
+	private final Promise<IPlaybackHandler> playbackPromise;
 
 	private int previousMediaPlayerPosition;
 
@@ -70,7 +69,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 	}
 
 	@Override
-	public synchronized IPromise<IPlaybackHandler> promisePlayback() {
+	public synchronized Promise<IPlaybackHandler> promisePlayback() {
 		if (!isPlaying()) {
 			try {
 				mediaPlayer.start();
@@ -89,7 +88,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 	}
 
 	@Override
-	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
 		return bufferingPromise;
 	}
 }

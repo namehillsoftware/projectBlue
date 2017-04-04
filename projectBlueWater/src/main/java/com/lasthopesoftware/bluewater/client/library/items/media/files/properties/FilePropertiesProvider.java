@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
@@ -45,7 +45,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 	}
 
 	@Override
-	public IPromise<Map<String, String>> promiseFileProperties(int fileKey) {
+	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
 		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
 	}
 
@@ -67,7 +67,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		public void runWith(IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 			onCancelled.runWith(() -> {
 				isCancelled = true;
-				reject.withError(new CancellationException());
+				reject.sendRejection(new CancellationException());
 			});
 
 			if (isCancelled) return;
@@ -79,7 +79,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
-				resolve.withResult(new HashMap<>(filePropertiesContainer.getProperties()));
+				resolve.sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
 
 			try {
 				if (isCancelled) return;
@@ -101,14 +101,14 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
 
-						resolve.withResult(returnProperties);
+						resolve.sendResolution(returnProperties);
 					}
 				} finally {
 					conn.disconnect();
 				}
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-				reject.withError(e);
+				reject.sendRejection(e);
 			}
 		}
 	}

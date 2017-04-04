@@ -48,9 +48,9 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
@@ -157,13 +157,13 @@ public class SyncService extends Service {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-				final IPromise<Map<String, String>> filePropertiesPromise = filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
+				final Promise<Map<String, String>> filePropertiesPromise = filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
 
 				onCancelled.runWith(filePropertiesPromise::cancel);
 
 				filePropertiesPromise
-					.then(runCarelessly(resolve::withResult))
-					.error(runCarelessly(reject::withError));
+					.then(runCarelessly(resolve::sendResolution))
+					.error(runCarelessly(reject::sendRejection));
 			}))
 			.then(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.error(Dispatch.toContext(exception -> {

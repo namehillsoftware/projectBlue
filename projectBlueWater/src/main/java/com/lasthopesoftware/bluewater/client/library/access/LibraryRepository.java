@@ -10,9 +10,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by david on 2/11/17.
@@ -34,17 +32,17 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 	}
 
 	@Override
-	public IPromise<Library> getLibrary(int libraryId) {
+	public Promise<Library> getLibrary(int libraryId) {
 		return new QueuedPromise<>(new GetLibraryTask(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@Override
-	public IPromise<Collection<Library>> getAllLibraries() {
+	public Promise<Collection<Library>> getAllLibraries() {
 		return new QueuedPromise<>(new GetAllLibrariesTask(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@Override
-	public IPromise<Library> saveLibrary(Library library) {
+	public Promise<Library> saveLibrary(Library library) {
 		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 

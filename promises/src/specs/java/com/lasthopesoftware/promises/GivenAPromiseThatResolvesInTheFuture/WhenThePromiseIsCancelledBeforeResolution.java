@@ -32,10 +32,10 @@ public class WhenThePromiseIsCancelledBeforeResolution {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					reject.withError(e);
+					reject.sendRejection(e);
 					return;
 				}
-				resolve.withResult(expectedResult);
+				resolve.sendResolution(expectedResult);
 				latch.countDown();
 			});
 

@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.util.Map;
@@ -25,7 +24,7 @@ public class CachedFilePropertiesProvider implements IFilePropertiesProvider {
 	}
 
 	@Override
-	public IPromise<Map<String, String>> promiseFileProperties(int fileKey) {
+	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
 		final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder);

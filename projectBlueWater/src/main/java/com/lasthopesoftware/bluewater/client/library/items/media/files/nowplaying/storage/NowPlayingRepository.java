@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.util.Map;
@@ -27,7 +26,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 	}
 
 	@Override
-	public IPromise<NowPlaying> getNowPlaying() {
+	public Promise<NowPlaying> getNowPlaying() {
 		if (nowPlayingCache.containsKey(libraryId))
 			return new Promise<>(nowPlayingCache.get(libraryId));
 
@@ -69,7 +68,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 	}
 
 	@Override
-	public IPromise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying) {
+	public Promise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying) {
 		if (libraryId < 0)
 			return getNowPlaying().thenPromise(np -> updateNowPlaying(nowPlaying));
 

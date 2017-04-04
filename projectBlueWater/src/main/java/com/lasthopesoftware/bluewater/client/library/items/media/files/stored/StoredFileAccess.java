@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
@@ -94,7 +93,7 @@ public class StoredFileAccess {
 		return getStoredFileTask;
 	}
 
-	public IPromise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
+	public Promise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
 		return getStoredFileTask(serviceServiceFile);
 	}
 
@@ -114,12 +113,12 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	private IPromise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
+	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
 		return new QueuedPromise<>((resolve, reject) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				resolve.withResult(getStoredFile(repositoryAccessHelper, serviceServiceFile));
+				resolve.sendResolution(getStoredFile(repositoryAccessHelper, serviceServiceFile));
 			} catch(SQLException e) {
-				reject.withError(e);
+				reject.sendRejection(e);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
@@ -204,7 +203,7 @@ public class StoredFileAccess {
 	}
 
 	@SuppressLint("NewApi")
-	public IPromise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
+	public Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
@@ -223,16 +222,16 @@ public class StoredFileAccess {
 							storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 						}
 
-						resolve.withResult(storedFile);
+						resolve.sendResolution(storedFile);
 					} catch (Exception e) {
-						reject.withError(e);
+						reject.sendRejection(e);
 					}
 				}, RepositoryAccessHelper.databaseExecutor)
 				.thenPromise(storedFile -> {
 					if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 						return new Promise<>(storedFile);
 
-					final IPromise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
+					final Promise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
 
 					return
 						fileUriPromise

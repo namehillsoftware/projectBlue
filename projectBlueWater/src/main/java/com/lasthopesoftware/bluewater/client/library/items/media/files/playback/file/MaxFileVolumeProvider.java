@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;
@@ -28,7 +27,7 @@ public class MaxFileVolumeProvider {
 
 	private static final float UnityVolume = 1.0f;
 
-	private static final IPromise<Float> promisedUnityVolume = new Promise<Float>(UnityVolume);
+	private static final Promise<Float> promisedUnityVolume = new Promise<>(UnityVolume);
 
 	private final Context context;
 
@@ -39,7 +38,7 @@ public class MaxFileVolumeProvider {
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
-	protected IPromise<Float> getMaxFileVolume(ServiceFile serviceFile) {
+	protected Promise<Float> getMaxFileVolume(ServiceFile serviceFile) {
 		final boolean isVolumeLevelingEnabled =
 				PreferenceManager
 						.getDefaultSharedPreferences(context)

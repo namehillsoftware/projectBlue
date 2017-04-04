@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -23,7 +22,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenTheQueueIsClosed {
 
-	private static final IPromise<IBufferingPlaybackHandler> mockPromise = spy(new Promise<>(mock(IBufferingPlaybackHandler.class)));
+	private static final Promise<IBufferingPlaybackHandler> mockPromise = spy(new Promise<>(mock(IBufferingPlaybackHandler.class)));
 
 	@BeforeClass
 	public static void before() throws IOException {

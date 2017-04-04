@@ -29,9 +29,9 @@ public class WhenResolvingTwice {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			resolve.withResult(expectedResult);
+			resolve.sendResolution(expectedResult);
 			latch.countDown();
-			resolve.withResult(unexpectedResult);
+			resolve.sendResolution(unexpectedResult);
 			latch.countDown();
 		}).start())
 		.then(result -> WhenResolvingTwice.result = result);;

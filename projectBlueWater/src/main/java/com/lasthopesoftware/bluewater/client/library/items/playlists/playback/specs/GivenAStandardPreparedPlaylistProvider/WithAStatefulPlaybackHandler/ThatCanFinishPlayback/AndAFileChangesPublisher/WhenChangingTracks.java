@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
@@ -32,10 +31,10 @@ public class WhenChangingTracks {
 		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
 		final FakeBufferingPlaybackHandler playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
 
-		final IPromise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
+		final Promise<PositionedPlaybackServiceFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlaybackServiceFile(0, playbackHandler, new ServiceFile(1)));
 
-		final IPromise<PositionedPlaybackServiceFile> secondPositionedPlaybackHandlerContainer =
+		final Promise<PositionedPlaybackServiceFile> secondPositionedPlaybackHandlerContainer =
 			new Promise<>((this.expectedPositionedPlaybackFile = new PositionedPlaybackServiceFile(0, playbackHandlerUnderTest, new ServiceFile(1))));
 
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);

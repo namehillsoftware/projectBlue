@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;
@@ -50,7 +49,7 @@ public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IPlaybackHandler> promisePlayback() {
+	public Promise<IPlaybackHandler> promisePlayback() {
 		return new Promise<>(this);
 	}
 
@@ -60,7 +59,7 @@ public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public IPromise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
 		return new Promise<>(this);
 	}
 }

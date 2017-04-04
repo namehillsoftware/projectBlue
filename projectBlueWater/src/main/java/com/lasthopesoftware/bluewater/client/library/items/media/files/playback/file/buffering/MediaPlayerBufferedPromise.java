@@ -2,9 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import com.lasthopesoftware.promises.EmptyMessenger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +10,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 10/23/16.
  */
-public final class MediaPlayerBufferedPromise implements TwoParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise> {
+public final class MediaPlayerBufferedPromise extends EmptyMessenger<IBufferingPlaybackHandler> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
 
@@ -30,9 +28,9 @@ public final class MediaPlayerBufferedPromise implements TwoParameterAction<IRes
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject) {
+	public void requestResolution() {
 		if (isBuffered()) {
-			resolve.withResult(bufferingPlaybackHandler);
+			sendResolution(bufferingPlaybackHandler);
 			return;
 		}
 
@@ -50,7 +48,7 @@ public final class MediaPlayerBufferedPromise implements TwoParameterAction<IRes
 			// remove the listener
 			mp.setOnBufferingUpdateListener(null);
 
-			resolve.withResult(bufferingPlaybackHandler);
+			sendResolution(bufferingPlaybackHandler);
 		});
 	}
 

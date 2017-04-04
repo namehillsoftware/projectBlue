@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -28,7 +27,7 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 	private final TextView textView;
 	private boolean isCancelled;
 
-	public static IPromise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
+	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
 		final FileNameTextViewSetter fileNameTextViewSetter = new FileNameTextViewSetter(textView);
 		final Handler handler = new Handler(textView.getContext().getMainLooper());
 
@@ -39,11 +38,11 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-			final IPromise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
-			promise.then(runCarelessly(resolve::withResult));
-			promise.error(runCarelessly(reject::withError));
+			final Promise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+			promise.then(runCarelessly(resolve::sendResolution));
+			promise.error(runCarelessly(reject::sendRejection));
 
-			final IPromise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
+			final Promise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
 
 			onCancelled.runWith(() -> {
 				promise.cancel();

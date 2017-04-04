@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises.GivenAPromiseThatResolves;
 
-import com.lasthopesoftware.promises.IPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
@@ -23,7 +22,7 @@ public class WhenChainingResolutionTwice {
 
 	@BeforeClass
 	public static void before() {
-		final IPromise<String> rootPromise =
+		final Promise<String> rootPromise =
 			new Promise<>(() -> "test");
 
 		firstResultHandler = mock(CarelessOneParameterFunction.class);

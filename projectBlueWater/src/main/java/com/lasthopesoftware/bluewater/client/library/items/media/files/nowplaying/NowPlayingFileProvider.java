@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 
 /**
  * Created by david on 11/2/16.
@@ -34,7 +34,7 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 	}
 
 	@Override
-	public IPromise<ServiceFile> getNowPlayingFile() {
+	public Promise<ServiceFile> getNowPlayingFile() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()

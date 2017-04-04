@@ -15,6 +15,4 @@ dependencies {
     testCompile 'org.mockito:mockito-core:2.+'
     testCompile 'junit:junit:4.+'
     testCompile 'org.assertj:assertj-core:2.+'
-    compile 'com.annimon:stream:1.1.0'
-    compile project(path: ':lazy-j')
 }

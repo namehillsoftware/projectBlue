@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ public class FileStringListUtilities {
 
 	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
 
-	public static IPromise<List<ServiceFile>> promiseParsedFileStringList(@NonNull String fileList) {
+	public static Promise<List<ServiceFile>> promiseParsedFileStringList(@NonNull String fileList) {
 		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
 	}
 
@@ -41,7 +41,7 @@ public class FileStringListUtilities {
 		return serviceFiles;
 	}
 
-	public static IPromise<String> promiseSerializedFileStringList(List<ServiceFile> serviceFiles) {
+	public static Promise<String> promiseSerializedFileStringList(List<ServiceFile> serviceFiles) {
 		return new QueuedPromise<>(() -> serializeFileStringList(serviceFiles), fileParsingExecutor.getObject());
 	}
 
