@@ -231,6 +231,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			() -> {
 				isPlaying = false;
 				saveStateToLibrary();
+				changePosition(0, 0);
 			});
 
 		fileChangedObservableConnection = observableProxy.connect();
