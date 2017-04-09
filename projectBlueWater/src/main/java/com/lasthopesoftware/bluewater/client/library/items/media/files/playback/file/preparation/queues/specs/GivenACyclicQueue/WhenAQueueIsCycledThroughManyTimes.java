@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
@@ -70,7 +70,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		expectedNumberAbsolutePromises = expectedCycles * numberOfFiles;
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
-			final Promise<PositionedPlaybackServiceFile> positionedPlaybackFilePromise =
+			final Promise<PositionedPlaybackFile> positionedPlaybackFilePromise =
 				queue.promiseNextPreparedPlaybackFile(0);
 
 			if (positionedPlaybackFilePromise != null)

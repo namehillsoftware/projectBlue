@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.specs.GivenTwoQueuesThatEventuallyDiverge;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
  */
 
 public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
-	private static Promise<PositionedPlaybackServiceFile> nextPreparedPlaybackFilePromise;
+	private static Promise<PositionedPlaybackFile> nextPreparedPlaybackFilePromise;
 
 	@BeforeClass
 	public static void before() {

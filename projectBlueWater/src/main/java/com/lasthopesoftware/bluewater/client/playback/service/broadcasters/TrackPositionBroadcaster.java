@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -17,9 +17,9 @@ import io.reactivex.functions.Consumer;
 
 public class TrackPositionBroadcaster implements Consumer<Integer> {
 	private ILazy<LocalBroadcastManager> lazyLocalBroadcastManager;
-	private final PositionedPlaybackServiceFile positionedPlaybackFile;
+	private final PositionedPlaybackFile positionedPlaybackFile;
 
-	public TrackPositionBroadcaster(Context context, PositionedPlaybackServiceFile positionedPlaybackFile) {
+	public TrackPositionBroadcaster(Context context, PositionedPlaybackFile positionedPlaybackFile) {
 		lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(context));
 		this.positionedPlaybackFile = positionedPlaybackFile;
 	}

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.Closeable;
@@ -10,5 +10,5 @@ import java.io.Closeable;
  */
 
 public interface IPreparedPlaybackFileQueue extends Closeable {
-	Promise<PositionedPlaybackServiceFile> promiseNextPreparedPlaybackFile(int preparedAt);
+	Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt);
 }

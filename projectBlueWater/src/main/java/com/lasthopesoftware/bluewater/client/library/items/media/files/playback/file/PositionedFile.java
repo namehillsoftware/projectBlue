@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
 import android.support.annotation.Nullable;
 
@@ -8,13 +8,22 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
  * Created by david on 11/6/16.
  */
 
-public class PositionedFile {
-	public final int playlistPosition;
-	public final ServiceFile serviceFile;
+public class PositionedFile extends ServiceFile {
+	private final int playlistPosition;
 
 	public PositionedFile(int playlistPosition, ServiceFile serviceFile) {
+		super(serviceFile.getKey());
+
 		this.playlistPosition = playlistPosition;
-		this.serviceFile = serviceFile;
+	}
+
+	public int getPlaylistPosition() {
+		return playlistPosition;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() * 31 + playlistPosition;
 	}
 
 	@Override
@@ -25,6 +34,6 @@ public class PositionedFile {
 
 		return
 			playlistPosition == other.playlistPosition &&
-			serviceFile.equals(other.serviceFile);
+			super.equals(obj);
 	}
 }

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -22,11 +22,11 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private final int preparedPosition;
-	private PositionedPlaybackServiceFile positionedPlaybackFile;
+	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
 	private volatile boolean isStarted;
-	private ObservableEmitter<PositionedPlaybackServiceFile> emitter;
+	private ObservableEmitter<PositionedPlaybackFile> emitter;
 
 	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
@@ -34,7 +34,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@Override
-	public void subscribe(ObservableEmitter<PositionedPlaybackServiceFile> e) throws Exception {
+	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
 		emitter = e;
 
 		if (!isStarted) {
@@ -66,7 +66,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public void setVolume(float volume) {
 		this.volume = volume;
 
-		final PositionedPlaybackServiceFile positionedPlaybackFile = this.positionedPlaybackFile;
+		final PositionedPlaybackFile positionedPlaybackFile = this.positionedPlaybackFile;
 		if (positionedPlaybackFile != null)
 			positionedPlaybackFile.getPlaybackHandler().setVolume(volume);
 	}
@@ -76,7 +76,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void setupNextPreparedFile(int preparedPosition) {
-		final Promise<PositionedPlaybackServiceFile> preparingPlaybackFile =
+		final Promise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);
 
@@ -91,7 +91,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 			.error(VoidFunc.runCarelessly(this::handlePlaybackException));
 	}
 
-	private PositionedPlaybackServiceFile changePlaybackFile(PositionedPlaybackServiceFile positionedPlaybackFile) {
+	private PositionedPlaybackFile changePlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		emitter.onNext(this.positionedPlaybackFile);
@@ -99,7 +99,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		return positionedPlaybackFile;
 	}
 
-	private Promise<IPlaybackHandler> startFilePlayback(PositionedPlaybackServiceFile positionedPlaybackFile) {
+	private Promise<IPlaybackHandler> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		playbackHandler.setVolume(volume);

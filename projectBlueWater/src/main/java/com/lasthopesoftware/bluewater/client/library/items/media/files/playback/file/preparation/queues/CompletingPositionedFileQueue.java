@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
 
 import java.util.ArrayDeque;
 import java.util.List;

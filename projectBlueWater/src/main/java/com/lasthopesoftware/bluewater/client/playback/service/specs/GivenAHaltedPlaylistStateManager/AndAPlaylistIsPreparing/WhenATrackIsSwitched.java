@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenATrackIsSwitched {
 
-	private static PositionedPlaybackServiceFile nextSwitchedFile;
+	private static PositionedPlaybackFile nextSwitchedFile;
 
 	@BeforeClass
 	public static void before() {
@@ -81,6 +81,6 @@ public class WhenATrackIsSwitched {
 
 	@Test
 	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPosition()).isEqualTo(3);
+		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
 	}
 }

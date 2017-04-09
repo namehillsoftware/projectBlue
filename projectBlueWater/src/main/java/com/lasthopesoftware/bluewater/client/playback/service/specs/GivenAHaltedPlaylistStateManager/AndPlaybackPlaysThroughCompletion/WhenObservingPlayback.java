@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
-	private static PositionedPlaybackServiceFile firstSwitchedFile;
+	private static PositionedPlaybackFile firstSwitchedFile;
 
 	@BeforeClass
 	public static void context() throws IOException, InterruptedException {
@@ -111,6 +111,6 @@ public class WhenObservingPlayback {
 
 	@Test
 	public void thenTheFirstTrackIsBroadcast() {
-		assertThat(firstSwitchedFile.getPosition()).isEqualTo(0);
+		assertThat(firstSwitchedFile.getPlaylistPosition()).isEqualTo(0);
 	}
 }

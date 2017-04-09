@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.PositionedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
@@ -22,12 +22,12 @@ import static org.mockito.Mockito.when;
 
 public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
-	private static PositionedPlaybackServiceFile positionedPlaybackFile;
-	private static PositionedPlaybackServiceFile expectedPositionedPlaybackFile;
+	private static PositionedPlaybackFile positionedPlaybackFile;
+	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
 
 	@BeforeClass
 	public static void before() {
-		expectedPositionedPlaybackFile = new PositionedPlaybackServiceFile(6, mock(IPlaybackHandler.class), new ServiceFile(6));
+		expectedPositionedPlaybackFile = new PositionedPlaybackFile(6, mock(IPlaybackHandler.class), new ServiceFile(6));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
