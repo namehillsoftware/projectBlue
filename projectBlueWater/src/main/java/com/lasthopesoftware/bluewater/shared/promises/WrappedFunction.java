@@ -4,9 +4,6 @@ import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
 
-/**
- * Created by david on 2/12/17.
- */
 public class WrappedFunction<TResult> implements Runnable {
 	private final CarelessFunction<TResult> callable;
 	private final IRejectedPromise reject;
