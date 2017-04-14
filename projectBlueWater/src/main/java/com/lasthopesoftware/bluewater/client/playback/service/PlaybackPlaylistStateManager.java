@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
@@ -14,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
-import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.TwoParameterFunction;
 
@@ -107,7 +105,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
 
-	public synchronized Promise<PositionedFile> changePosition(final int playlistPosition, final int filePosition) {
+	public synchronized Promise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
 			fileChangedObservableConnection.dispose();
 
@@ -122,23 +120,14 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 				});
 
 		if (isPlaying) {
-			final Promise<PositionedFile> positionedFilePromise = new Promise<>(new EmptyMessenger<PositionedFile>() {
-				@Override
-				protected void requestResolution() {
-					final Promise<Observable<PositionedPlaybackFile>> observablePromise =
-						nowPlayingPromise
-							.then(PlaybackPlaylistStateManager.this::initializePreparedPlaybackQueue)
-							.then(q -> startPlayback(q, filePosition));
+			final Promise<Observable<PositionedPlaybackFile>> observablePromise =
+				nowPlayingPromise
+					.then(this::initializePreparedPlaybackQueue)
+					.then(q -> startPlayback(q, filePosition));
 
-					observablePromise
-						.then(observable -> observable.firstElement().subscribe(this::sendResolution))
-						.error(runCarelessly(this::sendRejection));
-				}
-			});
+			observablePromise.error(runCarelessly(this::uncaughtExceptionHandler));
 
-			positionedFilePromise.error(runCarelessly(this::uncaughtExceptionHandler));
-
-			return positionedFilePromise;
+			return observablePromise;
 		}
 
 		final Promise<Observable<PositionedPlaybackFile>> singleFileChangeObservablePromise =

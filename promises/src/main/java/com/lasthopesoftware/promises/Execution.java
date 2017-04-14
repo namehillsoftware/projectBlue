@@ -21,7 +21,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void requestResolution() {
+		public void requestResolution() {
 			executor.runWith(this, this, this);
 		}
 	}

@@ -19,7 +19,7 @@ final class MediaPlayerPlaybackCompletedTask extends EmptyMessenger<IPlaybackHan
 	}
 
 	@Override
-	protected void requestResolution() {
+	public void requestResolution() {
 		mediaPlayer.setOnCompletionListener(mp -> sendResolution(playbackHandler));
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
 			sendRejection(new MediaPlayerException(playbackHandler, mp, what, extra));

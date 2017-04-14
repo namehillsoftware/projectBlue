@@ -106,7 +106,7 @@ class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
 
 		final Promise<PositionedFile> positionedFilePromise = new Promise<>(new EmptyMessenger<PositionedFile>() {
 			@Override
-			protected void requestResolution() {
+			public void requestResolution() {
 				final Promise<Observable<PositionedPlaybackFile>> observablePromise =
 					nowPlayingPromise
 						.then(PlayingPlaylistTrackChanger.this::initializePreparedPlaybackQueue)

@@ -11,5 +11,5 @@ public abstract class EmptyMessenger<Resolution> extends Messenger<Void, Resolut
 		requestResolution();
 	}
 
-	protected abstract void requestResolution();
+	public abstract void requestResolution();
 }
