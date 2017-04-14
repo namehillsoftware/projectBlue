@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.EmptyMessenger;
@@ -25,14 +24,12 @@ import java.io.IOException;
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
+public final class ActivePlaylist implements IStartedPlaylist, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
 
@@ -50,35 +47,36 @@ class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
 
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
-	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
+	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 
-	PlayingPlaylistTrackChanger(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, IPositionedFileQueueProvider positionedFileQueueProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public ActivePlaylist(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, IPositionedFileQueueProvider positionedFileQueueProvider, List<ServiceFile> playlist) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProvider = positionedFileQueueProvider;
+		this.playlist = playlist;
 	}
 
 	@Override
 	public Promise<IPausedPlaylist> pause() {
-		return null;
+		return Promise.empty();
 	}
 
 	@Override
-	public IStartedPlaylist playRepeatedly() {
-		persistLibraryRepeating(true);
+	public Promise<IStartedPlaylist> playRepeatedly() {
+		final Promise<?> persistLibraryRepeating = persistLibraryRepeating(true);
 
 		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCyclicalQueue);
 
-		return this;
+		return persistLibraryRepeating.then(o -> this);
 	}
 
 	@Override
-	public IStartedPlaylist playToCompletion() {
-		persistLibraryRepeating(false);
+	public Promise<IStartedPlaylist> playToCompletion() {
+		final Promise<?> persistLibraryRepeating = persistLibraryRepeating(false);
 
 		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCompletableQueue);
 
-		return this;
+		return persistLibraryRepeating.then(o -> this);
 	}
 
 	@Override
@@ -109,7 +107,7 @@ class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
 			public void requestResolution() {
 				final Promise<Observable<PositionedPlaybackFile>> observablePromise =
 					nowPlayingPromise
-						.then(PlayingPlaylistTrackChanger.this::initializePreparedPlaybackQueue)
+						.then(ActivePlaylist.this::initializePreparedPlaybackQueue)
 						.then(q -> startPlayback(q, filePosition));
 
 				observablePromise
@@ -124,8 +122,8 @@ class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
 	}
 
 	@Override
-	public void subscribe(@NonNull ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
-		observableEmitter = e;
+	public Observable<PositionedPlaybackFile> observePosition() {
+		return this.observableProxy;
 	}
 
 	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<ServiceFile>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
@@ -165,14 +163,11 @@ class PlayingPlaylistTrackChanger implements IStartedPlaylist, Closeable {
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
 		playlistPlayer.setVolume(volume);
 
-		final ConnectableObservable<PositionedPlaybackFile> observableProxy = Observable.create(playlistPlayer).publish();
+		observableProxy = Observable.create(playlistPlayer).publish();
 
 		subscription = observableProxy.subscribe(
 			p -> {
 				positionedPlaybackFile = p;
-
-				if (observableEmitter != null)
-					observableEmitter.onNext(p);
 
 				saveStateToLibrary();
 			},
