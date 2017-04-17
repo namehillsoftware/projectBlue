@@ -45,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
@@ -54,6 +53,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;

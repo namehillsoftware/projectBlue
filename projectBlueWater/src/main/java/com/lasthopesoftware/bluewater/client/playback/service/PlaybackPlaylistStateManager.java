@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;

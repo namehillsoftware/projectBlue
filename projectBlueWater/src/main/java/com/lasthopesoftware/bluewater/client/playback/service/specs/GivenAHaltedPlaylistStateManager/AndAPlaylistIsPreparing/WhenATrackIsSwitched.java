@@ -6,13 +6,13 @@ import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProv
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.Promise;
 
