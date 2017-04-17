@@ -9,6 +9,7 @@ import java.util.List;
  */
 
 public interface IPositionedFileQueueProvider {
-	IPositionedFileQueue getCompletableQueue(List<ServiceFile> playlist, int startingAt);
-	IPositionedFileQueue getCyclicalQueue(List<ServiceFile> playlist, int startingAt);
+	IPositionedFileQueue provideQueue(List<ServiceFile> playlist, int startingAt);
+
+	boolean isRepeating();
 }

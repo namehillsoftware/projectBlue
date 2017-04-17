@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.playback
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.Promise;
 
@@ -26,12 +26,12 @@ public class WhenTheQueueIsClosed {
 
 	@BeforeClass
 	public static void before() throws IOException {
-		final PositionedFileQueueProvider bufferingPlaybackQueuesProvider = new PositionedFileQueueProvider();
+		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
 				(file, preparedAt) -> mockPromise,
-				bufferingPlaybackQueuesProvider.getCompletableQueue(Collections.singletonList(new ServiceFile(1)), 0));
+				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));
 
 		queue.promiseNextPreparedPlaybackFile(0);
 

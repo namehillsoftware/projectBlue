@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
@@ -7,14 +9,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.callables.TwoParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -38,7 +39,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 	private final IPlaybackPreparerProvider playbackPreparerProvider;
 	private final INowPlayingRepository nowPlayingRepository;
-	private final IPositionedFileQueueProvider positionedFileQueueProvider;
+	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
@@ -48,17 +49,17 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private boolean isPlaying;
 
 	private PreparedPlaybackQueue preparedPlaybackQueue;
-	private TwoParameterFunction<List<ServiceFile>, Integer, IPositionedFileQueue> positionedFileQueueGenerator;
+	private IPositionedFileQueueProvider positionedFileQueueProvider;
 
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
 	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 
-	public PlaybackPlaylistStateManager(IPlaybackPreparerProvider playbackPreparerProvider, IPositionedFileQueueProvider positionedFileQueueProvider, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
+	public PlaybackPlaylistStateManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
-		this.positionedFileQueueProvider = positionedFileQueueProvider;
+		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		volume = initialVolume;
 	}
@@ -160,13 +161,13 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	void playRepeatedly() {
 		persistLibraryRepeating(true);
 
-		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCyclicalQueue);
+		updatePreparedFileQueueUsingState(positionedFileQueueProviders.get(true));
 	}
 
 	void playToCompletion() {
 		persistLibraryRepeating(false);
 
-		updatePreparedFileQueueUsingState(positionedFileQueueProvider::getCompletableQueue);
+		updatePreparedFileQueueUsingState(positionedFileQueueProviders.get(false));
 	}
 
 	Promise<Observable<PositionedPlaybackFile>> resume() {
@@ -282,15 +283,15 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			playlistPlayer.setVolume(volume);
 	}
 
-	private void updatePreparedFileQueueUsingState(TwoParameterFunction<List<ServiceFile>, Integer, IPositionedFileQueue> newFileQueueGenerator) {
-		positionedFileQueueGenerator = newFileQueueGenerator;
+	private void updatePreparedFileQueueUsingState(IPositionedFileQueueProvider fileQueueProvider) {
+		positionedFileQueueProvider = fileQueueProvider;
 
 		updatePreparedFileQueueFromState();
 	}
 
 	private void updatePreparedFileQueueFromState() {
 		if (preparedPlaybackQueue != null && playlist != null && positionedPlaybackFile != null)
-			preparedPlaybackQueue.updateQueue(positionedFileQueueGenerator.resultFrom(playlist, positionedPlaybackFile.getPlaylistPosition() + 1));
+			preparedPlaybackQueue.updateQueue(positionedFileQueueProvider.provideQueue(playlist, positionedPlaybackFile.getPlaylistPosition() + 1));
 	}
 
 	private Promise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
@@ -325,18 +326,15 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 		final int startPosition = Math.max(nowPlaying.playlistPosition, 0);
 
-		if (positionedFileQueueGenerator == null) {
-			positionedFileQueueGenerator =
-				nowPlaying.isRepeating
-					? positionedFileQueueProvider::getCyclicalQueue
-					: positionedFileQueueProvider::getCompletableQueue;
+		if (positionedFileQueueProvider == null) {
+			positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 		}
 
 		return
 			preparedPlaybackQueue =
 				new PreparedPlaybackQueue(
 					this.playbackPreparerProvider.providePlaybackPreparer(),
-					positionedFileQueueGenerator.resultFrom(playlist, startPosition));
+					positionedFileQueueProvider.provideQueue(playlist, startPosition));
 	}
 
 	private Promise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {

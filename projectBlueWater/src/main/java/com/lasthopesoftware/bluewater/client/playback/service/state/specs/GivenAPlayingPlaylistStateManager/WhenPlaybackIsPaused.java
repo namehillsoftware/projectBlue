@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PositionedFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.service.state.ActivePlaylist;
@@ -48,7 +48,7 @@ public class WhenPlaybackIsPaused {
 		final ActivePlaylist activePlaylist = new ActivePlaylist(
 			fakePlaybackPreparerProvider,
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PositionedFileQueueProvider(),
+			new CompletingFileQueueProvider(),
 			Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
