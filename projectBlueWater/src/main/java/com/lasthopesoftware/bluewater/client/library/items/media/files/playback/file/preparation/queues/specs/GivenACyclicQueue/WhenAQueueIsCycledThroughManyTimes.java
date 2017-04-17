@@ -5,7 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CompletingFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
@@ -57,13 +57,13 @@ public class WhenAQueueIsCycledThroughManyTimes {
 				.of(serviceFiles)
 				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
 
-		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
-			= new CompletingFileQueueProvider();
+		final CyclicalFileQueueProvider bufferingPlaybackQueuesProvider
+			= new CyclicalFileQueueProvider();
 
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
-				bufferingPlaybackQueuesProvider.getCyclicalQueue(serviceFiles, 0));
+				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0));
 
 		expectedCycles = random.nextInt(100);
 
