@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import io.reactivex.Observable;
 
@@ -58,7 +59,7 @@ public class WhenATrackIsSwitched {
 
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			fakePlaybackPreparerProvider,
-			new CompletingFileQueueProvider(),
+			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			cachedFilePropertiesProvider,
 			1.0f);

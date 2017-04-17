@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class WhenObservingPlayback {
 
 		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
 			fakePlaybackPreparerProvider,
-			new CompletingFileQueueProvider(),
+			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			cachedFilePropertiesProvider,
 			1.0f);
