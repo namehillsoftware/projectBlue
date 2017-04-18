@@ -9,11 +9,13 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.ActivePlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.IPausedPlaylist;
+import com.lasthopesoftware.bluewater.client.playback.state.InitialPlaylistState;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -34,7 +36,7 @@ public class WhenPlaybackIsPaused {
 	private static IPausedPlaylist pausedPlaylist;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, IOException {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
 		final Library library = new Library();
@@ -46,22 +48,27 @@ public class WhenPlaybackIsPaused {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final ActivePlaylist activePlaylist = new ActivePlaylist(
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		ActivePlaylist.start(
 			fakePlaybackPreparerProvider,
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			Collections.singletonList(new CompletingFileQueueProvider()),
-			Arrays.asList(
-				new ServiceFile(1),
-				new ServiceFile(2),
-				new ServiceFile(3),
-				new ServiceFile(4),
-				new ServiceFile(5)));
-
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		activePlaylist
-			.pause()
+			new InitialPlaylistState(
+				Arrays.asList(
+					new ServiceFile(1),
+					new ServiceFile(2),
+					new ServiceFile(3),
+					new ServiceFile(4),
+					new ServiceFile(5)),
+				0,
+				0,
+				false,
+				1))
+			.thenPromise(startedPlaylist -> {
+				fakePlaybackPreparerProvider.deferredResolution.resolve();
+				return startedPlaylist.pause();
+			})
 			.then(runCarelessly(paused -> {
 				pausedPlaylist = paused;
 				countDownLatch.countDown();

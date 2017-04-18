@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.Promise;
 
@@ -30,31 +29,35 @@ import io.reactivex.observables.ConnectableObservable;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-public final class ActivePlaylist implements IStartedPlaylist, Closeable {
+public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBehavior, Closeable {
 
-	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(ActivePlaylist.class);
 
 	private final IPlaybackPreparerProvider playbackPreparerProvider;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
-	private IPositionedFileQueueProvider positionedFileQueueProvider;
 
+	private IPositionedFileQueueProvider positionedFileQueueProvider;
+	private PreparedPlaybackQueue preparedPlaybackQueue;
+
+	private List<ServiceFile> playlist;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
-	private List<ServiceFile> playlist;
 	private float volume;
-
-	private PreparedPlaybackQueue preparedPlaybackQueue;
 
 	private Disposable fileChangedObservableConnection;
 	private Disposable subscription;
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 
-	public ActivePlaylist(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, List<ServiceFile> playlist) {
+	public static Promise<ActivePlaylist> start(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, InitialPlaylistState initialPlaylistState) {
+		final ActivePlaylist activePlaylist = new ActivePlaylist(playbackPreparerProvider, nowPlayingRepository, positionedFileQueueProviders);
+		return activePlaylist.initialize(initialPlaylistState);
+	}
+
+	private ActivePlaylist(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
-		this.playlist = playlist;
 	}
 
 	@Override
@@ -88,6 +91,21 @@ public final class ActivePlaylist implements IStartedPlaylist, Closeable {
 			playlistPlayer.setVolume(volume);
 	}
 
+	private Promise<ActivePlaylist> initialize(InitialPlaylistState initialPlaylistState) {
+		this.playlist = playlist;
+		setVolume(initialPlaylistState.volume);
+
+		return
+			updateLibraryPlaylistPositions(initialPlaylistState.playlistPosition, initialPlaylistState.filePosition)
+				.thenPromise(np -> persistLibraryRepeating(initialPlaylistState.isRepeating))
+				.then(np -> {
+					positionedFileQueueProvider = positionedFileQueueProviders.get(initialPlaylistState.isRepeating);
+					return initializePreparedPlaybackQueue(initialPlaylistState.playlistPosition);
+				})
+				.then(queue -> startPlayback(queue, initialPlaylistState.filePosition))
+				.then(o -> this);
+	}
+
 	@Override
 	public Promise<PositionedFile> changePosition(int playlistPosition, int filePosition) {
 		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
@@ -105,10 +123,10 @@ public final class ActivePlaylist implements IStartedPlaylist, Closeable {
 
 		final Promise<PositionedFile> positionedFilePromise = new Promise<>(new EmptyMessenger<PositionedFile>() {
 			@Override
-			public void requestResolution() {
+			public final void requestResolution() {
 				final Promise<Observable<PositionedPlaybackFile>> observablePromise =
 					nowPlayingPromise
-						.then(ActivePlaylist.this::initializePreparedPlaybackQueue)
+						.then(np -> ActivePlaylist.this.initializePreparedPlaybackQueue(playlistPosition))
 						.then(q -> startPlayback(q, filePosition));
 
 				observablePromise
@@ -182,14 +200,11 @@ public final class ActivePlaylist implements IStartedPlaylist, Closeable {
 		return observableProxy;
 	}
 
-	private PreparedPlaybackQueue initializePreparedPlaybackQueue(NowPlaying nowPlaying) throws IOException {
+	private PreparedPlaybackQueue initializePreparedPlaybackQueue(int playlistPosition) throws IOException {
 		if (preparedPlaybackQueue != null)
 			preparedPlaybackQueue.close();
 
-		final int startPosition = Math.max(nowPlaying.playlistPosition, 0);
-
-		if (positionedFileQueueProvider == null)
-			positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
+		final int startPosition = Math.max(playlistPosition, 0);
 
 		return
 			preparedPlaybackQueue =

@@ -8,7 +8,5 @@ import com.lasthopesoftware.promises.Promise;
 
 public interface IStartedPlaylist extends IPlaylistPosition {
 	Promise<IPausedPlaylist> pause();
-	Promise<IStartedPlaylist> playRepeatedly();
-	Promise<IStartedPlaylist> playToCompletion();
 	void setVolume(float volume);
 }
