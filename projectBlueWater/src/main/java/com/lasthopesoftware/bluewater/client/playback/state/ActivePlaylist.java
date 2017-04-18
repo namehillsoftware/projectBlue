@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.state;
 
 import com.annimon.stream.Collectors;
+import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
@@ -10,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.EmptyMessenger;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +43,7 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 	private IPositionedFileQueueProvider positionedFileQueueProvider;
 	private PreparedPlaybackQueue preparedPlaybackQueue;
 
-	private List<ServiceFile> playlist;
+	private List<ServiceFile> playlist = Collections.emptyList();
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private PlaylistPlayer playlistPlayer;
 	private float volume;
@@ -49,15 +52,14 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 	private Disposable subscription;
 	private ConnectableObservable<PositionedPlaybackFile> observableProxy;
 
-	public static Promise<ActivePlaylist> start(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, InitialPlaylistState initialPlaylistState) {
-		final ActivePlaylist activePlaylist = new ActivePlaylist(playbackPreparerProvider, nowPlayingRepository, positionedFileQueueProviders);
-		return activePlaylist.initialize(initialPlaylistState);
-	}
-
-	private ActivePlaylist(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders) {
+	public ActivePlaylist(IPlaybackPreparerProvider playbackPreparerProvider, INowPlayingRepository nowPlayingRepository, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
+
+		Optional<IPositionedFileQueueProvider> optionalProvider = Stream.of(positionedFileQueueProviders).findFirst();
+		if (optionalProvider.isPresent())
+			positionedFileQueueProvider = optionalProvider.get();
 	}
 
 	@Override
@@ -91,8 +93,8 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 			playlistPlayer.setVolume(volume);
 	}
 
-	private Promise<ActivePlaylist> initialize(InitialPlaylistState initialPlaylistState) {
-		this.playlist = playlist;
+	public Promise<ActivePlaylist> start(InitialPlaylistState initialPlaylistState) {
+		this.playlist = initialPlaylistState.playlist;
 		setVolume(initialPlaylistState.volume);
 
 		return
@@ -100,7 +102,7 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 				.thenPromise(np -> persistLibraryRepeating(initialPlaylistState.isRepeating))
 				.then(np -> {
 					positionedFileQueueProvider = positionedFileQueueProviders.get(initialPlaylistState.isRepeating);
-					return initializePreparedPlaybackQueue(initialPlaylistState.playlistPosition);
+					return initializePreparedPlaybackQueue(getNewPositionedFileQueue(initialPlaylistState.playlistPosition));
 				})
 				.then(queue -> startPlayback(queue, initialPlaylistState.filePosition))
 				.then(o -> this);
@@ -126,7 +128,8 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 			public final void requestResolution() {
 				final Promise<Observable<PositionedPlaybackFile>> observablePromise =
 					nowPlayingPromise
-						.then(np -> ActivePlaylist.this.initializePreparedPlaybackQueue(playlistPosition))
+						.then(np -> ActivePlaylist.this.getNewPositionedFileQueue(playlistPosition))
+						.then(ActivePlaylist.this::initializePreparedPlaybackQueue)
 						.then(q -> startPlayback(q, filePosition));
 
 				observablePromise
@@ -190,27 +193,26 @@ public final class ActivePlaylist implements IStartedPlaylist, IPlaybackQueueBeh
 				saveStateToLibrary();
 			},
 			this::uncaughtExceptionHandler,
-			() -> {
-				saveStateToLibrary();
-				changePosition(0, 0);
-			});
+			() -> changePosition(0, 0));
 
 		fileChangedObservableConnection = observableProxy.connect();
 
 		return observableProxy;
 	}
 
-	private PreparedPlaybackQueue initializePreparedPlaybackQueue(int playlistPosition) throws IOException {
+	private IPositionedFileQueue getNewPositionedFileQueue(int playlistPosition) {
+		return positionedFileQueueProvider.provideQueue(playlist, Math.max(playlistPosition, 0));
+	}
+
+	private PreparedPlaybackQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
 		if (preparedPlaybackQueue != null)
 			preparedPlaybackQueue.close();
-
-		final int startPosition = Math.max(playlistPosition, 0);
 
 		return
 			preparedPlaybackQueue =
 				new PreparedPlaybackQueue(
 					this.playbackPreparerProvider.providePlaybackPreparer(),
-					positionedFileQueueProvider.provideQueue(playlist, startPosition));
+					positionedFileQueue);
 	}
 
 	private Promise<NowPlaying> persistLibraryRepeating(boolean isRepeating) {

@@ -50,21 +50,14 @@ public class WhenPlaybackIsPaused {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		ActivePlaylist.start(
-			fakePlaybackPreparerProvider,
-			new NowPlayingRepository(libraryProvider, libraryStorage),
-			Collections.singletonList(new CompletingFileQueueProvider()),
-			new InitialPlaylistState(
+		new ActivePlaylist(fakePlaybackPreparerProvider, new NowPlayingRepository(libraryProvider, libraryStorage), Collections.singletonList(new CompletingFileQueueProvider()))
+			.start(new InitialPlaylistState(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)),
-				0,
-				0,
-				false,
-				1))
+					new ServiceFile(5)), 0, 0, false, 1))
 			.thenPromise(startedPlaylist -> {
 				fakePlaybackPreparerProvider.deferredResolution.resolve();
 				return startedPlaylist.pause();
