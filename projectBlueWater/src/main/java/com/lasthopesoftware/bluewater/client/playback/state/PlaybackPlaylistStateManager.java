@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service;
+package com.lasthopesoftware.bluewater.client.playback.state;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -236,7 +236,13 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 				saveStateToLibrary();
 			},
-			this::uncaughtExceptionHandler,
+			e -> {
+				try {
+					uncaughtExceptionHandler(e);
+				} catch (Throwable t) {
+					logger.warn("An unhandled exception occurred while handling an error!", t);
+				}
+			},
 			() -> {
 				isPlaying = false;
 				saveStateToLibrary();
@@ -355,13 +361,12 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 			});
 	}
 
-	private void uncaughtExceptionHandler(Throwable exception) {
+	private void uncaughtExceptionHandler(Throwable exception) throws Throwable {
 		if (exception instanceof MediaPlayerException) {
 			saveStateToLibrary();
-			return;
 		}
 
-		logger.error("An uncaught error has occurred!", exception);
+		throw exception;
 	}
 
 	@Override

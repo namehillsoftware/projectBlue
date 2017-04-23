@@ -3,10 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAPlaying
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.ActivePlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.IPausedPlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.InitialPlaylistState;
@@ -17,7 +15,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +47,7 @@ public class WhenPlaybackIsPaused {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		new ActivePlaylist(fakePlaybackPreparerProvider, new NowPlayingRepository(libraryProvider, libraryStorage), Collections.singletonList(new CompletingFileQueueProvider()))
+		new ActivePlaylist()
 			.start(new InitialPlaylistState(
 				Arrays.asList(
 					new ServiceFile(1),

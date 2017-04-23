@@ -60,6 +60,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;

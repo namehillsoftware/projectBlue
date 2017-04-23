@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.specs.GivenAHaltedPlaylistStateManager.AndPlaybackIsStarted;
+package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAHaltedPlaylistStateManager.AndPlaybackIsStarted;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;

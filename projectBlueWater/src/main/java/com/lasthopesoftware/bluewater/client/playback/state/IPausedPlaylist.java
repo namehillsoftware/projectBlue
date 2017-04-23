@@ -5,7 +5,7 @@ import com.lasthopesoftware.promises.Promise;
 
 import java.util.List;
 
-public interface IPausedPlaylist extends IPlaylistPosition {
+public interface IPausedPlaylist extends IChangePlaylistPosition {
 	Promise<IStartedPlaylist> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition);
 	Promise<IStartedPlaylist> resume();
 }
