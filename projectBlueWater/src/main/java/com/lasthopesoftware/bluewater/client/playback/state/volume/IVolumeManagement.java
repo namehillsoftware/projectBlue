@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.state;
+package com.lasthopesoftware.bluewater.client.playback.state.volume;
 
 
 public interface IVolumeManagement {

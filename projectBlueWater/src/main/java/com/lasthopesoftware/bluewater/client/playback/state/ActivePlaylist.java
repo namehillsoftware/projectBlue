@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.state;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -11,15 +13,15 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-public final class ActivePlaylist implements IStartPlayback, IVolumeManagement, Closeable {
+public final class ActivePlaylist implements IStartPlayback, Closeable {
+
+	private final PlaylistVolumeManager volumeManagement;
 
 	private PlaylistPlayer playlistPlayer;
-	private float volume;
-
 	private Disposable fileChangedObservableConnection;
 
-	public ActivePlaylist(float initialVolume) {
-		volume = initialVolume;
+	public ActivePlaylist(PlaylistVolumeManager volumeManagement) {
+		this.volumeManagement = volumeManagement;
 	}
 
 //	@Override
@@ -66,7 +68,7 @@ public final class ActivePlaylist implements IStartPlayback, IVolumeManagement, 
 			playlistPlayer.close();
 
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
-		playlistPlayer.setVolume(volume);
+		volumeManagement.managePlayer(playlistPlayer);
 
 		final ConnectableObservable<PositionedPlaybackFile> observableProxy = Observable.create(playlistPlayer).replay(1);
 
@@ -77,7 +79,7 @@ public final class ActivePlaylist implements IStartPlayback, IVolumeManagement, 
 
 	@Override
 	public IVolumeManagement manageVolume() {
-		return this;
+		return volumeManagement;
 	}
 
 	@Override
@@ -86,14 +88,5 @@ public final class ActivePlaylist implements IStartPlayback, IVolumeManagement, 
 			fileChangedObservableConnection.dispose();
 
 		if (playlistPlayer != null)	playlistPlayer.close();
-	}
-
-	@Override
-	public float setVolume(float volume) {
-		this.volume = volume;
-		if (playlistPlayer != null)
-			playlistPlayer.setVolume(this.volume);
-
-		return this.volume;
 	}
 }
