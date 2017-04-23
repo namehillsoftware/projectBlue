@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProv
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.state.ActivePlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.IPausedPlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.InitialPlaylistState;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistPlaybackIgniter;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -47,7 +47,7 @@ public class WhenPlaybackIsPaused {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		new ActivePlaylist()
+		new PlaylistPlaybackIgniter()
 			.start(new InitialPlaylistState(
 				Arrays.asList(
 					new ServiceFile(1),
