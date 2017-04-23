@@ -16,8 +16,7 @@ public class PreparedPlaybackQueueResourceManagement implements Closeable {
 	}
 
 	public PreparedPlaybackQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
-		if (preparedPlaybackQueue != null)
-			preparedPlaybackQueue.close();
+		close();
 
 		return
 			preparedPlaybackQueue =

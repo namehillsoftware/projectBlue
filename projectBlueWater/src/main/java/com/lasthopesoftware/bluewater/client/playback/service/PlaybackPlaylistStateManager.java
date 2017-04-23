@@ -296,8 +296,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private void updatePreparedFileQueueUsingState(IPositionedFileQueueProvider fileQueueProvider) {
 		if (playlist != null && positionedPlaybackFile != null)
 			preparedPlaybackQueueResourceManagement
-				.tryUpdateQueue(
-					fileQueueProvider.provideQueue(playlist, positionedPlaybackFile.getPlaylistPosition() + 1));
+				.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlaybackFile.getPlaylistPosition() + 1));
 	}
 
 	private Promise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
