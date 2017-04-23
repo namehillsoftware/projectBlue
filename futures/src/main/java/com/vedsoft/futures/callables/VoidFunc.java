@@ -1,5 +1,7 @@
 package com.vedsoft.futures.callables;
 
+import com.vedsoft.futures.runnables.CarelessOneParameterAction;
+import com.vedsoft.futures.runnables.CarelessTwoParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -19,14 +21,14 @@ public final class VoidFunc {
 	}
 
 	public static CarelessFunction<Void> runCarelessly(Runnable action) {
-		return new CarelessVoidFunction<>(action);
+		return new CarelessVoidFunction(action);
 	}
 
-	public static <ParameterOne> CarelessOneParameterFunction<ParameterOne, Void> runCarelessly(OneParameterAction<ParameterOne> action) {
+	public static <ParameterOne> CarelessOneParameterFunction<ParameterOne, Void> runCarelessly(CarelessOneParameterAction<ParameterOne> action) {
 		return new CarelessVoidOneParameterFunction<>(action);
 	}
 
-	public static <ParameterOne, ParameterTwo> CarelessTwoParameterFunction<ParameterOne, ParameterTwo, Void> runCarelessly(TwoParameterAction<ParameterOne, ParameterTwo> action) {
+	public static <ParameterOne, ParameterTwo> CarelessTwoParameterFunction<ParameterOne, ParameterTwo, Void> runCarelessly(CarelessTwoParameterAction<ParameterOne, ParameterTwo> action) {
 		return new CarelessVoidTwoParameterFunction<>(action);
 	}
 }
