@@ -19,8 +19,8 @@ public class WrappedFunction<TResult> implements Runnable {
 	public void run() {
 		try {
 			resolve.sendResolution(this.callable.result());
-		} catch (Exception e) {
-			reject.sendRejection(e);
+		} catch (Throwable rejection) {
+			reject.sendRejection(rejection);
 		}
 	}
 }
