@@ -20,41 +20,6 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 		this.volumeManagement = volumeManagement;
 	}
 
-//	@Override
-//	public Promise<PositionedFile> changePosition(int playlistPosition, int filePosition) {
-//		if (fileChangedObservableConnection != null && !fileChangedObservableConnection.isDisposed())
-//			fileChangedObservableConnection.dispose();
-//
-//		if (subscription != null)
-//			subscription.dispose();
-//
-//		final Promise<NowPlaying> nowPlayingPromise =
-//			updateLibraryPlaylistPositions(playlistPosition, filePosition)
-//				.then(np -> {
-//					logger.info("Position changed");
-//					return np;
-//				});
-//
-//		final Promise<PositionedFile> positionedFilePromise = new Promise<>(new EmptyMessenger<PositionedFile>() {
-//			@Override
-//			public final void requestResolution() {
-//				final Promise<Observable<PositionedPlaybackFile>> observablePromise =
-//					nowPlayingPromise
-//						.then(np -> ActivePlaylist.this.getNewPositionedFileQueue(playlistPosition))
-//						.then(preparedPlaybackQueueResourceManagement::initializePreparedPlaybackQueue)
-//						.then(q -> startPlayback(q, filePosition));
-//
-//				observablePromise
-//					.then(observable -> observable.firstElement().subscribe(this::sendResolution))
-//					.error(runCarelessly(this::sendRejection));
-//			}
-//		});
-//
-//		positionedFilePromise.error(runCarelessly(this::uncaughtExceptionHandler));
-//
-//		return positionedFilePromise;
-//	}
-
 	@Override
 	public IActivePlayer startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
 		close();
