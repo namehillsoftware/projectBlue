@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.CarelessOneParameterAction;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
-	OneParameterAction<IBufferingPlaybackHandler>,
+	CarelessOneParameterAction<IBufferingPlaybackHandler>,
 	CarelessOneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
 	private static final int bufferingPlaybackQueueSize = 1;

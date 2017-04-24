@@ -65,7 +65,6 @@ public class WhenNotObservingPlayback {
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			cachedFilePropertiesProvider,
 			new PlaylistVolumeManager(1.0f));
 
 		playlistManager

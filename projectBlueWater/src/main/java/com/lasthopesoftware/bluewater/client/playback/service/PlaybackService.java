@@ -22,7 +22,6 @@ import android.media.RemoteControlClient;
 import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -42,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
@@ -449,7 +449,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-				cachedFilePropertiesProvider,
 				lazyPlaylistVolumeManager.getObject());
 
 		return playlistManager;
@@ -517,19 +516,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.then(this::observePlaybackFileChanges)
+				.then(this::broadcastChangedFile)
 				.error(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playlistManager.skipToPrevious().then(this::broadcastChangedFile).error(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playlistManager.skipToNext().then(this::broadcastChangedFile).error(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -703,7 +702,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
+		broadcastChangedFile(positionedPlaybackFile);
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -735,7 +734,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
-
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getKey())
@@ -781,8 +779,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
 
-				if (Build.VERSION.SDK_INT < 19) return;
-
 				ImageProvider
 					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getKey())
 					.then(Dispatch.toContext(runCarelessly(bitmap -> {
@@ -805,6 +801,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return true;
 		}, this));
+	}
+
+	private Void broadcastChangedFile(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+		return null;
 	}
 
 	private void onPlaylistPlaybackComplete() {

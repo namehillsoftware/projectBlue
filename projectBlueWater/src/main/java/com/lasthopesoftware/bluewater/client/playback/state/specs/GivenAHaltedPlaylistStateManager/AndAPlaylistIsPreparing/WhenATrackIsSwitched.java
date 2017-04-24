@@ -62,7 +62,6 @@ public class WhenATrackIsSwitched {
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			cachedFilePropertiesProvider,
 			new PlaylistVolumeManager(1.0f));
 
 		Observable.create(playlistManager).subscribe(p -> nextSwitchedFile = p);
