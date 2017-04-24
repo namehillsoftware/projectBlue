@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
 
@@ -84,7 +85,7 @@ public class WhenObservingPlayback {
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			cachedFilePropertiesProvider,
-			1.0f);
+			new PlaylistVolumeManager(1.0f));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(5);
 		Observable.create(playlistManager).subscribe(p -> {
