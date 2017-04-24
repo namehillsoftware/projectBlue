@@ -7,14 +7,14 @@ import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolum
 import java.io.Closeable;
 import java.io.IOException;
 
-public final class PlaylistPlaybackIgniter implements IStartPlayback, Closeable {
+public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Closeable {
 
 	private final PlaylistVolumeManager volumeManagement;
 
 	private PlaylistPlayer playlistPlayer;
 	private ActivePlayer activePlayer;
 
-	public PlaylistPlaybackIgniter(PlaylistVolumeManager volumeManagement) {
+	public PlaylistPlaybackBootstrapper(PlaylistVolumeManager volumeManagement) {
 		this.volumeManagement = volumeManagement;
 	}
 

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.state.IPausedPlaylist;
 import com.lasthopesoftware.bluewater.client.playback.state.InitialPlaylistState;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaylistPlaybackIgniter;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -47,7 +47,7 @@ public class WhenPlaybackIsPaused {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		new PlaylistPlaybackIgniter()
+		new PlaylistPlaybackBootstrapper()
 			.start(new InitialPlaylistState(
 				Arrays.asList(
 					new ServiceFile(1),
