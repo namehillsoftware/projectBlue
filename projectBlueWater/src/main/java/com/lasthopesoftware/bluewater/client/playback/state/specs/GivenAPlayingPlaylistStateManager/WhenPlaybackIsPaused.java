@@ -1,24 +1,27 @@
 package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAPlayingPlaylistStateManager;
 
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.state.IPausedPlaylist;
-import com.lasthopesoftware.bluewater.client.playback.state.InitialPlaylistState;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaylistPlaybackBootstrapper;
+import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -30,10 +33,10 @@ import static org.mockito.Mockito.when;
 
 public class WhenPlaybackIsPaused {
 
-	private static IPausedPlaylist pausedPlaylist;
+	private static PlaylistManager playlistManager;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, IOException {
+	public static void before() {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
 		final Library library = new Library();
@@ -45,30 +48,40 @@ public class WhenPlaybackIsPaused {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
 
-		new PlaylistPlaybackBootstrapper()
-			.start(new InitialPlaylistState(
+		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+			new CachedFilePropertiesProvider(
+				connectionProvider,
+				filePropertiesContainerRepository,
+				new FilePropertiesProvider(
+					connectionProvider,
+					filePropertiesContainerRepository));
+
+		playlistManager = new PlaylistManager(
+			fakePlaybackPreparerProvider,
+			Collections.singletonList(new CompletingFileQueueProvider()),
+			new NowPlayingRepository(libraryProvider, libraryStorage),
+			cachedFilePropertiesProvider,
+			new PlaylistVolumeManager(1.0f));
+
+		playlistManager
+			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0, false, 1))
-			.thenPromise(startedPlaylist -> {
-				fakePlaybackPreparerProvider.deferredResolution.resolve();
-				return startedPlaylist.pause();
-			})
-			.then(runCarelessly(paused -> {
-				pausedPlaylist = paused;
-				countDownLatch.countDown();
-			}));
+					new ServiceFile(5)), 0, 0);
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		playlistManager.pause();
 	}
 
 	@Test
-	public void thenThePausedPlaylistIsReturned() {
-		assertThat(pausedPlaylist).isNotNull();
+	public void thenThePlaybackStateIsNotPlaying() {
+		assertThat(playlistManager.isPlaying()).isFalse();
 	}
 }

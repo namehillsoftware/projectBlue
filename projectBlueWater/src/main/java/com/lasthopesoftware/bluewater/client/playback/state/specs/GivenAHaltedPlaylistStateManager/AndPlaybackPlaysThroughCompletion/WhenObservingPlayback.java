@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
 
@@ -79,7 +79,7 @@ public class WhenObservingPlayback {
 					connectionProvider,
 					filePropertiesContainerRepository));
 
-		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+		final PlaylistManager playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
@@ -87,12 +87,12 @@ public class WhenObservingPlayback {
 			1.0f);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(5);
-		Observable.create(playbackPlaylistStateManager).subscribe(p -> {
+		Observable.create(playlistManager).subscribe(p -> {
 			firstSwitchedFile = p;
 			countDownLatch.countDown();
 		});
 
-		playbackPlaylistStateManager
+		playlistManager
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),

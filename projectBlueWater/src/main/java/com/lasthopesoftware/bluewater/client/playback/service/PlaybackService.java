@@ -60,7 +60,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -208,6 +209,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
 	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
+	private final ILazy<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 
 	private Bitmap remoteClientBitmap = null;
 	private int numberOfErrors = 0;
@@ -216,7 +218,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private boolean areListenersRegistered = false;
 	private boolean isNotificationForeground = false;
 
-	private PlaybackPlaylistStateManager playbackPlaylistStateManager;
+	private PlaylistManager playlistManager;
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private boolean isPlaying;
@@ -228,12 +230,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		@Override
 		protected final Runnable initialize() throws Exception {
 			return () -> {
-				if (playbackPlaylistStateManager == null) {
+				if (playlistManager == null) {
 					stopSelf(startId);
 					return;
 				}
 
-				playbackPlaylistStateManager.resume().then(observable -> observePlaybackFileChanges(observable));
+				playlistManager.resume().then(observable -> observePlaybackFileChanges(observable));
 			};
 		}
 	};
@@ -257,12 +259,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (chosenLibrary < 0) return;
 
 			try {
-				playbackPlaylistStateManager.close();
+				playlistManager.close();
 			} catch (IOException e) {
 				logger.error("There was an error closing the playbackPlaylistStateManager", e);
 			}
 
-			playbackPlaylistStateManager = null;
+			playlistManager = null;
 			cachedFilePropertiesProvider = null;
 		}
 	};
@@ -351,11 +353,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return START_NOT_STICKY;
 		}
 
-		if ((playbackPlaylistStateManager == null || !playbackPlaylistStateManager.isPlaying()) && Action.playbackStartingActions.contains(intent.getAction()))
+		if ((playlistManager == null || !playlistManager.isPlaying()) && Action.playbackStartingActions.contains(intent.getAction()))
 			notifyStartingService();
 		
 		if (SessionConnection.isBuilt()) {
-			if (playbackPlaylistStateManager != null) {
+			if (playlistManager != null) {
 				actOnIntent(intent);
 				return START_NOT_STICKY;
 			}
@@ -429,9 +431,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		notifyForeground(notifyBuilder);
 	}
 
-	private PlaybackPlaylistStateManager initializePlaybackPlaylistStateManager(Library library) throws IOException {
-		if (playbackPlaylistStateManager != null)
-			playbackPlaylistStateManager.close();
+	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws IOException {
+		if (playlistManager != null)
+			playlistManager.close();
 
 		final SpecificLibraryProvider libraryProvider =
 			new SpecificLibraryProvider(
@@ -442,15 +444,15 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 
-		playbackPlaylistStateManager =
-			new PlaybackPlaylistStateManager(
+		playlistManager =
+			new PlaylistManager(
 				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				cachedFilePropertiesProvider,
-				1.0f);
+				lazyPlaylistVolumeManager.getObject());
 
-		return playbackPlaylistStateManager;
+		return playlistManager;
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -463,12 +465,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action == null) return;
 
 		if (action.equals(Action.repeating)) {
-			playbackPlaylistStateManager.playRepeatedly();
+			playlistManager.playRepeatedly();
 			return;
 		}
 
 		if (action.equals(Action.completing)) {
-			playbackPlaylistStateManager.playToCompletion();
+			playlistManager.playToCompletion();
 			return;
 		}
 
@@ -478,7 +480,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.thenPromise(playlist -> playbackPlaylistStateManager.startPlaylist(playlist, playlistPosition, 0))
+				.thenPromise(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
 				.then(this::observePlaybackFileChanges)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
 				.then(this::handlePlaybackStarted)
@@ -488,10 +490,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         }
 
 		if (action.equals(Action.togglePlayPause))
-			action = playbackPlaylistStateManager.isPlaying() ? Action.pause : Action.play;
+			action = playlistManager.isPlaying() ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
-        	playbackPlaylistStateManager
+        	playlistManager
 				.resume()
 				.then(this::restartObservable)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
@@ -513,7 +515,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
 			if (filePosition < 0) return;
 
-			playbackPlaylistStateManager
+			playlistManager
 				.changePosition(playlistPosition, filePosition)
 				.then(this::observePlaybackFileChanges)
 				.error(UnhandledRejectionHandler);
@@ -522,12 +524,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.previous)) {
-			playbackPlaylistStateManager.skipToPrevious().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playlistManager.skipToPrevious().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playbackPlaylistStateManager.skipToNext().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
+			playlistManager.skipToNext().then(this::observePlaybackFileChanges).error(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -540,7 +542,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (fileKey < 0) return;
 
-			playbackPlaylistStateManager
+			playlistManager
 				.addFile(new ServiceFile(fileKey))
 				.then(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
@@ -555,7 +557,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			playbackPlaylistStateManager.removeFileAtPosition(filePosition).error(UnhandledRejectionHandler);
+			playlistManager.removeFileAtPosition(filePosition).error(UnhandledRejectionHandler);
 		}
 	}
 
@@ -608,9 +610,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		if (playbackPlaylistStateManager == null) return;
+		if (playlistManager == null) return;
 
-		playbackPlaylistStateManager.pause();
+		playlistManager.pause();
 
 		if (positionedPlaybackFile != null)
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
@@ -668,14 +670,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			playbackPlaylistStateManager.setVolume(1.0f);
-			if (!playbackPlaylistStateManager.isPlaying())
-				playbackPlaylistStateManager.resume().then(this::restartObservable);
+			playlistManager.setVolume(1.0f);
+			if (!playlistManager.isPlaying())
+				playlistManager.resume().then(this::restartObservable);
 
 			return;
 		}
 		
-		if (playbackPlaylistStateManager == null || !playbackPlaylistStateManager.isPlaying()) return;
+		if (playlistManager == null || !playlistManager.isPlaying()) return;
 
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_LOSS:
@@ -687,7 +689,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 				// Lost focus for a short time, but it's ok to keep playing
 				// at an attenuated level
-				playbackPlaylistStateManager.setVolume(0.2f);
+				playlistManager.setVolume(0.2f);
 	    }
 	}
 
@@ -811,7 +813,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
 
-		playbackPlaylistStateManager.changePosition(0, 0);
+		playlistManager.changePosition(0, 0);
 
 		sendBroadcast(getScrobbleIntent(false));
 	}
@@ -822,9 +824,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 
-		if (playbackPlaylistStateManager!= null) {
+		if (playlistManager != null) {
 			try {
-				playbackPlaylistStateManager.close();
+				playlistManager.close();
 			} catch (IOException e) {
 				logger.warn("There was an error closing the prepared playback queue", e);
 			}

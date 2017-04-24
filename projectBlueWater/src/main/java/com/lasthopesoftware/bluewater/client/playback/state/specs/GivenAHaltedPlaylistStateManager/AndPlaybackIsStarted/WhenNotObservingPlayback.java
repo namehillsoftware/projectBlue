@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenNotObservingPlayback {
 	private static Library library;
-	private static PlaybackPlaylistStateManager playbackPlaylistStateManager;
+	private static PlaylistManager playlistManager;
 
 	@BeforeClass
 	public static void context() {
@@ -60,14 +61,14 @@ public class WhenNotObservingPlayback {
 					connectionProvider,
 					filePropertiesContainerRepository));
 
-		playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+		playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			cachedFilePropertiesProvider,
-			1.0f);
+			new PlaylistVolumeManager(1.0f));
 
-		playbackPlaylistStateManager
+		playlistManager
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -89,6 +90,6 @@ public class WhenNotObservingPlayback {
 
 	@Test
 	public void thenTheManagerIsPlaying() {
-		assertThat(playbackPlaylistStateManager.isPlaying()).isTrue();
+		assertThat(playlistManager.isPlaying()).isTrue();
 	}
 }

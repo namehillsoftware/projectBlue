@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -14,8 +15,10 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueu
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
+import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;
@@ -33,9 +36,9 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<PositionedPlaybackFile>, Closeable {
+public class PlaylistManager implements ObservableOnSubscribe<PositionedPlaybackFile>, IChangePlaylistPosition, Closeable {
 
-	private static final Logger logger = LoggerFactory.getLogger(PlaybackPlaylistStateManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlaylistManager.class);
 
 	private final PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement;
 	private final PlaylistPlaybackBootstrapper playbackBootstrapper;
@@ -52,12 +55,11 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 	private IActivePlayer activePlayer;
 
-	public PlaybackPlaylistStateManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, float initialVolume) {
+	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, CachedFilePropertiesProvider cachedFilePropertiesProvider, PlaylistVolumeManager playlistVolumeManager) {
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(playbackPreparerProvider);
-		final PlaylistVolumeManager playlistVolumeManager = new PlaylistVolumeManager(initialVolume);
 		volumeManager = playlistVolumeManager;
 		playbackBootstrapper = new PlaylistPlaybackBootstrapper(playlistVolumeManager);
 	}
@@ -75,7 +77,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return updateLibraryPlaylistPositions(playlistPosition, filePosition).then(this::startPlaybackFromNowPlaying);
 	}
 
-	public Promise<Observable<PositionedPlaybackFile>> skipToNext() {
+	public Promise<PositionedFile> skipToNext() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -86,7 +88,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
 	}
 
-	public Promise<Observable<PositionedPlaybackFile>> skipToPrevious() {
+	public Promise<PositionedFile> skipToPrevious() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
@@ -97,7 +99,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
 
-	public synchronized Promise<Observable<PositionedPlaybackFile>> changePosition(final int playlistPosition, final int filePosition) {
+	public synchronized Promise<PositionedFile> changePosition(final int playlistPosition, final int filePosition) {
 		if (subscription != null)
 			subscription.dispose();
 
@@ -110,10 +112,19 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 		if (isPlaying) {
 			return nowPlayingPromise
-				.then(np -> {
-					final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(np.isRepeating);
-					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
-					return startPlayback(preparedPlaybackQueue, filePosition);
+				.then(new Messenger<NowPlaying, PositionedFile>() {
+					@Override
+					protected void requestResolution(NowPlaying nowPlaying, Throwable throwable) {
+						final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
+						try {
+							final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
+							startPlayback(preparedPlaybackQueue, filePosition)
+								.firstElement()
+								.subscribe(this::sendResolution);
+						} catch (IOException e) {
+							sendRejection(e);
+						}
+					}
 				});
 		}
 
@@ -135,7 +146,7 @@ public class PlaybackPlaylistStateManager implements ObservableOnSubscribe<Posit
 
 								observableEmitter.onNext(positionedPlaybackFile1);
 
-								return Observable.just(positionedPlaybackFile1);
+								return positionedPlaybackFile1;
 							});
 				});
 	}

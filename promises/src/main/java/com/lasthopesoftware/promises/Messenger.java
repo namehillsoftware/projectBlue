@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-abstract class Messenger<Input, Resolution> implements
+public abstract class Messenger<Input, Resolution> implements
 	IResolvedPromise<Resolution>,
 	IRejectedPromise,
 	OneParameterAction<Runnable> {

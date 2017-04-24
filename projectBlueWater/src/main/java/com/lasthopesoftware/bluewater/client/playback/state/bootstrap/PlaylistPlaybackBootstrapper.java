@@ -1,7 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.state;
+package com.lasthopesoftware.bluewater.client.playback.state.bootstrap;
 
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.state.ActivePlayer;
+import com.lasthopesoftware.bluewater.client.playback.state.IActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 
 import java.io.Closeable;

@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaybackPlaylistStateManager;
+import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -57,16 +58,16 @@ public class WhenATrackIsSwitched {
 					connectionProvider,
 					filePropertiesContainerRepository));
 
-		final PlaybackPlaylistStateManager playbackPlaylistStateManager = new PlaybackPlaylistStateManager(
+		final PlaylistManager playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			cachedFilePropertiesProvider,
-			1.0f);
+			new PlaylistVolumeManager(1.0f));
 
-		Observable.create(playbackPlaylistStateManager).subscribe(p -> nextSwitchedFile = p);
+		Observable.create(playlistManager).subscribe(p -> nextSwitchedFile = p);
 
-		playbackPlaylistStateManager
+		playlistManager
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -75,7 +76,7 @@ public class WhenATrackIsSwitched {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		playbackPlaylistStateManager.changePosition(3, 0);
+		playlistManager.changePosition(3, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}
