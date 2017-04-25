@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.observables.ConnectableObservable;
 
 public class PlaylistManager implements IChangePlaylistPosition, Closeable {
@@ -47,7 +47,6 @@ public class PlaylistManager implements IChangePlaylistPosition, Closeable {
 	private boolean isPlaying;
 
 	private Disposable subscription;
-	private ObservableEmitter<PositionedPlaybackFile> observableEmitter;
 	private IActivePlayer activePlayer;
 
 	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, PlaylistVolumeManager playlistVolumeManager) {
@@ -182,17 +181,10 @@ public class PlaylistManager implements IChangePlaylistPosition, Closeable {
 				isPlaying = true;
 				positionedPlaybackFile = p;
 
-				if (observableEmitter != null)
-					observableEmitter.onNext(p);
-
 				saveStateToLibrary(p);
-			});
-
-		observable.doOnComplete(
-			() -> {
-				isPlaying = false;
-				changePosition(0, 0);
-			});
+			},
+			Functions.ON_ERROR_MISSING,
+			() -> isPlaying = false);
 
 		return observable;
 	}
