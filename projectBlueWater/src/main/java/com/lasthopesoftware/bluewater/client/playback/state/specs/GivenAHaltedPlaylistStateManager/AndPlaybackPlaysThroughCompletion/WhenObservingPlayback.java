@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -87,10 +85,6 @@ public class WhenObservingPlayback {
 			new PlaylistVolumeManager(1.0f));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(5);
-		Observable.create(playlistManager).subscribe(p -> {
-			firstSwitchedFile = p;
-			countDownLatch.countDown();
-		});
 
 		playlistManager
 			.startPlaylist(
@@ -99,7 +93,11 @@ public class WhenObservingPlayback {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, 0)
+			.then(obs ->  obs.subscribe(p -> {
+				firstSwitchedFile = p;
+				countDownLatch.countDown();
+			}));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();

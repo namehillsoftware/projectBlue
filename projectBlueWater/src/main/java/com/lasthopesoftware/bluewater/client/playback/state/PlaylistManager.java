@@ -17,8 +17,6 @@ import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManage
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.lazyj.ILazy;
-import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +29,10 @@ import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-public class PlaylistManager implements ObservableOnSubscribe<PositionedPlaybackFile>, IChangePlaylistPosition, Closeable {
+public class PlaylistManager implements IChangePlaylistPosition, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistManager.class);
 
@@ -44,7 +41,6 @@ public class PlaylistManager implements ObservableOnSubscribe<PositionedPlayback
 	private final INowPlayingRepository nowPlayingRepository;
 	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
 	private final IVolumeManagement volumeManager;
-	private final ILazy<Observable<PositionedPlaybackFile>> selfObservable = new Lazy<>(() -> Observable.create(this));
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private List<ServiceFile> playlist;
@@ -60,11 +56,6 @@ public class PlaylistManager implements ObservableOnSubscribe<PositionedPlayback
 		preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(playbackPreparerProvider);
 		volumeManager = playlistVolumeManager;
 		playbackBootstrapper = new PlaylistPlaybackBootstrapper(playlistVolumeManager);
-	}
-
-	@Override
-	public void subscribe(ObservableEmitter<PositionedPlaybackFile> e) throws Exception {
-		observableEmitter = e;
 	}
 
 	public Promise<Observable<PositionedPlaybackFile>> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
@@ -203,7 +194,7 @@ public class PlaylistManager implements ObservableOnSubscribe<PositionedPlayback
 				changePosition(0, 0);
 			});
 
-		return selfObservable.getObject();
+		return observable;
 	}
 
 	public Promise<NowPlaying> addFile(ServiceFile serviceFile) {

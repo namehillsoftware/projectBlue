@@ -14,9 +14,6 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Created by david on 9/26/16.
- */
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
 	CarelessOneParameterAction<IBufferingPlaybackHandler>,

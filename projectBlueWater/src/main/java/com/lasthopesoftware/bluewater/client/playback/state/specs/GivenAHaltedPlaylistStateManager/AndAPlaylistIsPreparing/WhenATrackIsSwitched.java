@@ -1,16 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAHaltedPlaylistStateManager.AndAPlaylistIsPreparing;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
@@ -23,8 +18,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenATrackIsSwitched {
 
-	private static PositionedPlaybackFile nextSwitchedFile;
+	private static PositionedFile nextSwitchedFile;
 
 	@BeforeClass
 	public static void before() {
@@ -47,24 +40,11 @@ public class WhenATrackIsSwitched {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-
-		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-			new CachedFilePropertiesProvider(
-				connectionProvider,
-				filePropertiesContainerRepository,
-				new FilePropertiesProvider(
-					connectionProvider,
-					filePropertiesContainerRepository));
-
 		final PlaylistManager playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistVolumeManager(1.0f));
-
-		Observable.create(playlistManager).subscribe(p -> nextSwitchedFile = p);
 
 		playlistManager
 			.startPlaylist(
@@ -75,7 +55,7 @@ public class WhenATrackIsSwitched {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		playlistManager.changePosition(3, 0);
+		playlistManager.changePosition(3, 0).then(p -> nextSwitchedFile = p);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

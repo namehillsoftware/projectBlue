@@ -126,8 +126,8 @@ public class Dispatch {
 				public void run() {
 					try {
 						this.resolve.sendResolution(this.task.resultFrom(result, onCancelled));
-					} catch (Exception e) {
-						this.reject.sendRejection(e);
+					} catch (Throwable rejection) {
+						this.reject.sendRejection(rejection);
 					}
 				}
 			}
@@ -169,8 +169,8 @@ public class Dispatch {
 			public void run() {
 				try {
 					resolve.sendResolution(this.callable.resultFrom(result));
-				} catch (Exception e) {
-					reject.sendRejection(e);
+				} catch (Throwable rejection) {
+					reject.sendRejection(rejection);
 				}
 			}
 		}
