@@ -20,7 +20,7 @@ public class WhenGivenASourceObservable {
 	public static void before() {
 		replayedSource =
 			Observable
-				.create(new SwitchableObservableSource<Integer>(Observable.just(1, 2, 3)))
+				.create(new SwitchableObservableSource<>(Observable.just(1, 2, 3)))
 				.toList()
 				.blockingGet();
 	}

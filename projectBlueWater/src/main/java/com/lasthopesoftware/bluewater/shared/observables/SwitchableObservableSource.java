@@ -26,6 +26,10 @@ public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T> {
 		subscription = observable.subscribeWith(new Subscriber<>(e)).disposable;
 	}
 
+	public void switchSource(Observable<T> newSource) {
+
+	}
+
 	private static class Subscriber<T> implements Observer<T> {
 
 		private final ObservableEmitter<T> emitter;
