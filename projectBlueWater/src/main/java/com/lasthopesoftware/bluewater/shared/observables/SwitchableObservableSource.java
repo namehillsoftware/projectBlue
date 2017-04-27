@@ -10,9 +10,9 @@ import io.reactivex.disposables.Disposable;
 
 public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T> {
 
-	private Disposable subscription;
-	private Observable<T> observable;
-	private Subscriber<T> subscriber;
+	private volatile Disposable subscription;
+	private volatile Observable<T> observable;
+	private volatile Subscriber<T> subscriber;
 
 	public SwitchableObservableSource(Observable<T> source) {
 		observable = source;
@@ -20,14 +20,24 @@ public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T> {
 
 	@Override
 	public void subscribe(@NonNull ObservableEmitter<T> e) throws Exception {
-		if (subscription != null)
-			subscription.dispose();
-
-		subscription = observable.subscribeWith(new Subscriber<>(e)).disposable;
+		subscriber = new Subscriber<>(e);
+		if (subscriber != null)
+			updateSubscription(subscriber);
 	}
 
 	public void switchSource(Observable<T> newSource) {
+		observable = newSource;
 
+		if (subscriber != null)
+			updateSubscription(subscriber);
+	}
+
+	private void updateSubscription(Subscriber<T> subscriber) {
+		final Disposable newSubscription = observable.subscribeWith(subscriber).disposable;
+		if (subscription != null)
+			subscription.dispose();
+
+		subscription = newSubscription;
 	}
 
 	private static class Subscriber<T> implements Observer<T> {
