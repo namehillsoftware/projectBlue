@@ -76,7 +76,6 @@ import com.vedsoft.lazyj.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -260,7 +259,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			try {
 				playlistManager.close();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				logger.error("There was an error closing the playbackPlaylistStateManager", e);
 			}
 
@@ -431,7 +430,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		notifyForeground(notifyBuilder);
 	}
 
-	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws IOException {
+	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
 		if (playlistManager != null)
 			playlistManager.close();
 
@@ -828,7 +827,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (playlistManager != null) {
 			try {
 				playlistManager.close();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				logger.warn("There was an error closing the prepared playback queue", e);
 			}
 		}

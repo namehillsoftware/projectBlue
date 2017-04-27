@@ -8,7 +8,7 @@ import io.reactivex.Observer;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 
-public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T> {
+public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T>, AutoCloseable {
 
 	private volatile Disposable subscription;
 	private volatile Observable<T> observable;
@@ -38,6 +38,12 @@ public class SwitchableObservableSource<T> implements ObservableOnSubscribe<T> {
 			subscription.dispose();
 
 		subscription = newSubscription;
+	}
+
+	@Override
+	public void close() {
+		if (subscription != null)
+			subscription.dispose();
 	}
 
 	private static class Subscriber<T> implements Observer<T> {
