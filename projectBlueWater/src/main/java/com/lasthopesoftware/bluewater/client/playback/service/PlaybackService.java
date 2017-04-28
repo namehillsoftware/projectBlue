@@ -670,7 +670,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			// resume playback
 			playlistManager.setVolume(1.0f);
 			if (!playlistManager.isPlaying())
-				playlistManager.resume().then(this::restartObservable);
+				playlistManager
+					.resume()
+					.then(this::restartObservable)
+					.then(lazyPlaybackStartedBroadcaster.getObject());
 
 			return;
 		}
