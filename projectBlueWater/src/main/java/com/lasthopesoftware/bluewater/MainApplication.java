@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileChangedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
@@ -129,7 +130,8 @@ public class MainApplication extends Application {
 			Arrays.asList(
 				new UpdatePlayStatsOnCompleteRegistration(new LibraryRepository(this)),
 				new PlaybackFileChangedScrobblerRegistration(),
-				new PlaybackFileStoppedScrobblerRegistration());
+				new PlaybackFileStoppedScrobblerRegistration(),
+				new PebbleFileChangedNotificationRegistration());
 
 		localBroadcastManager.registerReceiver(
 			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, connectionDependentReceiverRegistrations),

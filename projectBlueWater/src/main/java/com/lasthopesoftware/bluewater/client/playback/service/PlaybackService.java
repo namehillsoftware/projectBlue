@@ -743,13 +743,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
 				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
-				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
-				pebbleIntent.putExtra("artist", artist);
-				pebbleIntent.putExtra("album", album);
-				pebbleIntent.putExtra("track", name);
-
-				sendBroadcast(pebbleIntent);
-
 				final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(true);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
