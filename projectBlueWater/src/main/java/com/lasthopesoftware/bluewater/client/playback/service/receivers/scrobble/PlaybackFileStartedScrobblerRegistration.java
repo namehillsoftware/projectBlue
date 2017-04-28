@@ -19,9 +19,9 @@ import java.util.Collections;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-public class PlaybackFileChangedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
+public class PlaybackFileStartedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
 
-	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onPlaylistChange));
+	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onFileStart));
 
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
