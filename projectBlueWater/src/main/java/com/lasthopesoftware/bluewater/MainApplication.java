@@ -12,6 +12,7 @@ import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -24,6 +25,8 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileChangedScrobblerRegistration;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -33,7 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
@@ -121,8 +125,14 @@ public class MainApplication extends Application {
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 
+		final Collection<IConnectionDependentReceiverRegistration> connectionDependentReceiverRegistrations =
+			Arrays.asList(
+				new UpdatePlayStatsOnCompleteRegistration(new LibraryRepository(this)),
+				new PlaybackFileChangedScrobblerRegistration(),
+				new PlaybackFileStoppedScrobblerRegistration());
+
 		localBroadcastManager.registerReceiver(
-			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, Collections.singletonList(new UpdatePlayStatsOnCompleteRegistration(new LibraryRepository(this)))),
+			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, connectionDependentReceiverRegistrations),
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 

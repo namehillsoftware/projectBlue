@@ -165,7 +165,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	/* Miscellaneous programming related string constants */
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
-	private static final String SCROBBLE_DROID_INTENT = "net.jjc1138.android.scrobbler.action.MUSIC_STATUS";
 
 	private static final int notificationId = 42;
 	private static int startId;
@@ -617,8 +616,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
-
-		sendBroadcast(getScrobbleIntent(false));
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
@@ -694,13 +691,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	    }
 	}
 
-	private static Intent getScrobbleIntent(final boolean isPlaying) {
-		final Intent scrobbleDroidIntent = new Intent(SCROBBLE_DROID_INTENT);
-		scrobbleDroidIntent.putExtra("playing", isPlaying);
-		
-		return scrobbleDroidIntent;
-	}
-
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
@@ -724,8 +714,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.promisePlayback()
 			.then(runCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
-				sendBroadcast(getScrobbleIntent(false));
-
 				localFilePositionSubscription.dispose();
 			}));
 		
@@ -754,16 +742,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
 				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
-
-				final Intent scrobbleDroidIntent = getScrobbleIntent(true);
-				scrobbleDroidIntent.putExtra("artist", artist);
-				scrobbleDroidIntent.putExtra("album", album);
-				scrobbleDroidIntent.putExtra("track", name);
-				scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
-				if (trackNumber != null)
-					scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
-
-				sendBroadcast(scrobbleDroidIntent);
 
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);
@@ -817,8 +795,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (areListenersRegistered) unregisterListeners();
 
 		playlistManager.changePosition(0, 0);
-
-		sendBroadcast(getScrobbleIntent(false));
 	}
 		
 	@Override
