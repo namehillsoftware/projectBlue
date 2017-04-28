@@ -37,12 +37,12 @@ public class WhenChainingResolutionTwice {
 	}
 
 	@Test
-	public void thenTheFirstResolutionIsCalled() throws Exception {
+	public void thenTheFirstResolutionIsCalled() throws Throwable {
 		verify(firstResultHandler, times(1)).resultFrom(any());
 	}
 
 	@Test
-	public void thenTheSecondResolutionIsCalled() throws Exception {
+	public void thenTheSecondResolutionIsCalled() throws Throwable {
 		verify(secondResultHandler, times(1)).resultFrom(any());
 	}
 }

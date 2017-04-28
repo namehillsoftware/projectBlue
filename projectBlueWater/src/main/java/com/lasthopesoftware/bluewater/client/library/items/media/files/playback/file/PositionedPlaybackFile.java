@@ -15,6 +15,10 @@ public class PositionedPlaybackFile extends PositionedFile {
 		this.playbackHandler = playbackHandler;
 	}
 
+	public PositionedPlaybackFile(IPlaybackHandler playbackHandler, PositionedFile positionedFile) {
+		this(positionedFile.getPlaylistPosition(), playbackHandler, positionedFile);
+	}
+
 	public IPlaybackHandler getPlaybackHandler() {
 		return playbackHandler;
 	}

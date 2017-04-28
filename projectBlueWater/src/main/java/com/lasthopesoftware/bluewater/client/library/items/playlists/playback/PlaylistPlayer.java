@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 

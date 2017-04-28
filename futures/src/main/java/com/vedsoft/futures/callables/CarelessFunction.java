@@ -5,5 +5,5 @@ package com.vedsoft.futures.callables;
  */
 
 public interface CarelessFunction<TResult> {
-	TResult result() throws Exception;
+	TResult result() throws Throwable;
 }

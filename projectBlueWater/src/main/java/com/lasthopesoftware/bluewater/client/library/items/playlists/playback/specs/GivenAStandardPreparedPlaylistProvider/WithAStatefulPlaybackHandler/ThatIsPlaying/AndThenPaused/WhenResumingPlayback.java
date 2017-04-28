@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;

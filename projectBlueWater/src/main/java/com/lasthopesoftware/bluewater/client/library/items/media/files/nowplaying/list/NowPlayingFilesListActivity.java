@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.CarelessOneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -123,7 +123,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements OneParameterAction<NowPlaying> {
+	private static class OnGetLibraryNowComplete implements CarelessOneParameterAction<NowPlaying> {
 		
 		private final NowPlayingFilesListActivity nowPlayingFilesListActivity;
 		private final ListView fileListView;

@@ -4,7 +4,7 @@ package com.vedsoft.futures.callables;
  * Created by david on 11/8/16.
  */
 
-final class CarelessVoidFunction<ParameterOne> implements CarelessFunction<Void> {
+final class CarelessVoidFunction implements CarelessFunction<Void> {
 
 	private final Runnable action;
 
@@ -13,7 +13,7 @@ final class CarelessVoidFunction<ParameterOne> implements CarelessFunction<Void>
 	}
 
 	@Override
-	public Void result() throws Exception {
+	public Void result() throws Throwable {
 		action.run();
 		return null;
 	}

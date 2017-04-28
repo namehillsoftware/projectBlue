@@ -21,7 +21,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void requestResolution() {
+		public void requestResolution() {
 			executor.runWith(this, this, this);
 		}
 	}
@@ -53,8 +53,8 @@ final class Execution {
 		public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
 			try {
 				resolve.sendResolution(executor.result());
-			} catch (Exception e) {
-				reject.sendRejection(e);
+			} catch (Throwable rejection) {
+				reject.sendRejection(rejection);
 			}
 		}
 	}
@@ -88,8 +88,8 @@ final class Execution {
 			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 				try {
 					resolve.sendResolution(onFulfilled.resultFrom(result, onCancelled));
-				} catch (Exception e) {
-					reject.sendRejection(e);
+				} catch (Throwable rejection) {
+					reject.sendRejection(rejection);
 				}
 			}
 		}
@@ -151,8 +151,8 @@ final class Execution {
 						.resultFrom(result, onCancelled)
 						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 						.error(new Resolution.RejectWithPromiseError(reject));
-				} catch (Exception e) {
-					reject.sendRejection(e);
+				} catch (Throwable rejection) {
+					reject.sendRejection(rejection);
 				}
 			}
 		}
@@ -205,8 +205,8 @@ final class Execution {
 		public final void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
 			try {
 				newResolve.sendResolution(onFulfilled.resultFrom(originalResult));
-			} catch (Exception e) {
-				newReject.sendRejection(e);
+			} catch (Throwable rejection) {
+				newReject.sendRejection(rejection);
 			}
 		}
 	}
@@ -246,8 +246,8 @@ final class Execution {
 					.resultFrom(result)
 					.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 					.error(new Resolution.RejectWithPromiseError(reject));
-			} catch (Exception e) {
-				reject.sendRejection(e);
+			} catch (Throwable rejection) {
+				reject.sendRejection(rejection);
 			}
 		}
 	}
