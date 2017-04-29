@@ -44,10 +44,14 @@ public class Promise<TResult> {
 		messenger.cancel();
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(Messenger<TResult, TNewResult> onFulfilled) {
+	protected final <TNewResult> Promise<TNewResult> then(Messenger<TResult, TNewResult> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
+	}
+
+	public final <NewResult> Promise<NewResult> then(ResolutionProcessor<TResult, NewResult> onFulfilled) {
+		return then((Messenger<TResult, NewResult>)onFulfilled);
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
@@ -58,6 +62,10 @@ public class Promise<TResult> {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorProcessor<TResult, TNewRejectedResult> errorProcessor) {
+		return then(errorProcessor);
+	}
+
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return then(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
@@ -66,17 +74,12 @@ public class Promise<TResult> {
 		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
 	}
 
-	private <TNewResult> Promise<TNewResult> thenCreatePromise(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-		return
-			then(new Execution.NonCancellableExecutor<>(onFulfilled));
-	}
-
 	public final <TNewResult> Promise<TNewResult> thenPromise(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
 		return then(new Execution.PromisedResolution<>(onFulfilled));
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-		return thenCreatePromise(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
+		return then(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
@@ -84,7 +87,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
-		return thenCreatePromise(new Execution.RejectionDependentExecutor<>(onRejected));
+		return then(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {

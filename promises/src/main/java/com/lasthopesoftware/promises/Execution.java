@@ -97,33 +97,23 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
+		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
 			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
 
 			ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 
-
 			@Override
-			public void requestResolution(TResult result, Throwable exception) {
-				if (exception != null) {
-					sendRejection(exception);
-					return;
-				}
-
-				onFulfilled.runWith(
-					result,
-					this,
-					this,
-					this);
+			protected void processResolution(TResult result) {
+				onFulfilled.runWith(result, this, this, this);
 			}
 		}
 
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends Messenger<TResult, TNewRejectedResult> {
+		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
 			private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
 			RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
@@ -131,9 +121,8 @@ final class Execution {
 			}
 
 			@Override
-			public void requestResolution(TResult result, Throwable throwable) {
-				if (throwable != null)
-					onRejected.runWith(throwable, this, this, this);
+			protected void processError(Throwable throwable) {
+				onRejected.runWith(throwable, this, this, this);
 			}
 		}
 
@@ -159,25 +148,9 @@ final class Execution {
 	}
 
 	/**
-	 * Created by david on 10/30/16.
-	 */
-	static final class NonCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
-		private final FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
-
-		NonCancellableExecutor(FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-			this.onFulfilled = onFulfilled;
-		}
-
-		@Override
-		public void requestResolution(TResult result, Throwable throwable) {
-			onFulfilled.runWith(result, throwable, this, this);
-		}
-	}
-
-	/**
 	 * Created by david on 10/19/16.
 	 */
-	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> {
+	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
 		private final ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
 
 		RejectionDependentExecutor(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
@@ -185,9 +158,8 @@ final class Execution {
 		}
 
 		@Override
-		public final void runWith(TResult result, Throwable exception, IResolvedPromise<TNewRejectedResult> resolve, IRejectedPromise reject) {
-			if (exception != null)
-				onRejected.runWith(exception, resolve, reject);
+		protected void processError(Throwable throwable) {
+			onRejected.runWith(throwable, this, this);
 		}
 	}
 
@@ -214,7 +186,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/18/16.
 	 */
-	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> implements FourParameterAction<TResult, Throwable, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
 		private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 		ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
@@ -222,13 +194,8 @@ final class Execution {
 		}
 
 		@Override
-		public final void runWith(TResult result, Throwable exception, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
-			if (exception != null) {
-				reject.sendRejection(exception);
-				return;
-			}
-
-			onFulfilled.runWith(result, resolve, reject);
+		protected void processResolution(TResult result) {
+			onFulfilled.runWith(result, this, this);
 		}
 	}
 
