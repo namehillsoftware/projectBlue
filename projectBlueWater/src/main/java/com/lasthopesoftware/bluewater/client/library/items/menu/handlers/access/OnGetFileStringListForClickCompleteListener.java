@@ -3,12 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
-/**
- * Created by david on 4/3/15.
- */
-public class OnGetFileStringListForClickCompleteListener implements OneParameterAction<String> {
+public final class OnGetFileStringListForClickCompleteListener implements CarelessOneParameterFunction<String, Void> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -16,7 +13,8 @@ public class OnGetFileStringListForClickCompleteListener implements OneParameter
     }
 
     @Override
-    public void runWith(String result) {
+    public Void resultFrom(String result) throws Throwable {
         PlaybackService.launchMusicService(mContext, result);
+        return null;
     }
 }

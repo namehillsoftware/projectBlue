@@ -12,9 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Created by david on 11/26/15.
- */
 public class FileStringListProvider extends AbstractInputStreamProvider<String> {
 	private static final Logger logger = LoggerFactory.getLogger(FileStringListProvider.class);
 

@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPl
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.observables.SwitchableObservableSource;
-import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.ResolutionProcessor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,9 +105,9 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		if (isPlaying) {
 			return nowPlayingPromise
-				.then(new Messenger<NowPlaying, PositionedFile>() {
+				.then(new ResolutionProcessor<NowPlaying, PositionedFile>() {
 					@Override
-					protected void requestResolution(NowPlaying nowPlaying, Throwable throwable) {
+					protected void processResolution(NowPlaying nowPlaying) {
 						final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 						try {
 							final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));

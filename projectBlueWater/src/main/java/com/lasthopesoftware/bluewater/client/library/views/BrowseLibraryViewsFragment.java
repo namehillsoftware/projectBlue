@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.views;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -26,9 +27,11 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
@@ -75,41 +78,44 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
-		final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = (result) -> {
-			if (result == null) return;
+		final Handler handler = new Handler(getContext().getMainLooper());
 
-			final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
-			viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
+		final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetVisibleViewsCompleteListener =
+			Dispatch.toHandler((result) -> {
+				if (result == null) return null;
 
-			viewChildPagerAdapter.setLibraryViews(result);
+				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
+				viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
 
-			// Set up the ViewPager with the sections adapter.
-			viewPager.setAdapter(viewChildPagerAdapter);
-			libraryViewsTabs.setViewPager(viewPager);
+				viewChildPagerAdapter.setLibraryViews(result);
 
-			libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
+				// Set up the ViewPager with the sections adapter.
+				viewPager.setAdapter(viewChildPagerAdapter);
+				libraryViewsTabs.setViewPager(viewPager);
 
-			loadingView.setVisibility(View.INVISIBLE);
-			tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
-		};
+				libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
+
+				loadingView.setVisibility(View.INVISIBLE);
+				tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
+
+				return null;
+			}, handler);
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toContext(activeLibrary ->
+			.then(Dispatch.toHandler(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.onComplete(onGetVisibleViewsCompleteListener)
-					.onError(new HandleViewIoException<>(getContext(), new Runnable() {
+					.then(onGetVisibleViewsCompleteListener)
+					.error(new HandleViewIoException<>(getContext(), new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
-									.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-									.onComplete(onGetVisibleViewsCompleteListener)
-									.onError(new HandleViewIoException<>(getContext(), this))
-									.execute();
+								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+								.then(onGetVisibleViewsCompleteListener)
+								.error(new HandleViewIoException<>(getContext(), this));
 						}
-					}))
-					.execute(), getContext()));
+					})), handler));
 
 
 		return tabbedItemsLayout;

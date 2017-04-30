@@ -9,9 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 
-/**
- * Created by david on 4/3/15.
- */
 public final class PlayClickHandler extends AbstractMenuClickHandler {
     private final IFileListParameterProvider item;
 
@@ -24,9 +21,9 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
     @Override
     public void onClick(final View v) {
 	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider(), item))
-			    .onComplete(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			    .onError(new OnGetFileStringListForClickErrorListener(v, this))
-	            .execute();
+				.promiseData()
+			    .then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
+			    .error(new OnGetFileStringListForClickErrorListener(v, this));
 
         super.onClick(v);
     }

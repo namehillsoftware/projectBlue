@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
 
 import org.slf4j.Logger;
@@ -39,8 +40,8 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 
 	private final ConnectionProvider connectionProvider;
 
-	public static ItemProvider provide(ConnectionProvider connectionProvider, int itemKey) {
-		return new ItemProvider(connectionProvider, itemKey);
+	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider, int itemKey) {
+		return new ItemProvider(connectionProvider, itemKey).promiseData();
 	}
 	
 	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
@@ -51,7 +52,7 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 	}
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection) {
+    protected List<Item> getData(HttpURLConnection connection) throws IOException {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
@@ -82,8 +83,7 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
             }
         } catch (IOException e) {
             logger.error("There was an error getting the inputstream", e);
-            setException(e);
-            return new ArrayList<>();
+            throw e;
         }
 	}
 }
