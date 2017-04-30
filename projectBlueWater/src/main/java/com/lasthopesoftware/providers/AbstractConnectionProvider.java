@@ -8,9 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 11/26/15.
- */
 public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractConnectionProvider.class);
@@ -20,7 +17,7 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 	}
 
 	@Override
-	protected final T getData(IConnectionProvider connectionProvider, String[] params) {
+	protected final T getData(IConnectionProvider connectionProvider, String... params) throws Exception {
 		if (isCancelled()) return null;
 
 		try {
@@ -32,11 +29,10 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 			}
 		} catch (IOException ioe) {
 			logger.error("There was an error opening the connection", ioe);
-			setException(ioe);
 		}
 
 		return null;
 	}
 
-	protected abstract T getData(HttpURLConnection connection);
+	protected abstract T getData(HttpURLConnection connection) throws Exception;
 }

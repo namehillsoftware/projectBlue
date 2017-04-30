@@ -12,19 +12,15 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 
-/**
- * Created by david on 3/5/16.
- */
 public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorage.class);
-
 	private final IConnectionProvider connectionProvider;
 	private final int fileKey;
 	private final String property;
 	private final String value;
 
 	public static void storeFileProperty(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		new FilePropertiesStorage(connectionProvider, fileKey, property, value).execute();
+		new FilePropertiesStorage(connectionProvider, fileKey, property, value).promiseData();
 	}
 
 	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {

@@ -11,12 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 11/25/15.
- */
 public class FileProvider extends AbstractInputStreamProvider<List<ServiceFile>> {
 	private static final Logger logger = LoggerFactory.getLogger(FileProvider.class);
 
@@ -33,14 +29,12 @@ public class FileProvider extends AbstractInputStreamProvider<List<ServiceFile>>
 	}
 
 	@Override
-	protected List<ServiceFile> getData(InputStream is) {
+	protected List<ServiceFile> getData(InputStream is) throws IOException {
 		try {
 			return FileStringListUtilities.parseFileStringList(IOUtils.toString(is));
 		} catch (IOException e) {
 			logger.warn("There was an error getting the serviceFile list", e);
-			setException(e);
+			throw e;
 		}
-
-		return new ArrayList<>();
 	}
 }

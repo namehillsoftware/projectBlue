@@ -11,9 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 11/26/15.
- */
 public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionProvider<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractInputStreamProvider.class);
@@ -23,18 +20,17 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 	}
 
 	@SuppressLint("NewApi")
-	protected final T getData(HttpURLConnection connection) {
+	@Override
+	protected final T getData(HttpURLConnection connection) throws Exception {
 		try {
 			try (InputStream is = connection.getInputStream()) {
 				return getData(is);
 			}
 		} catch (IOException e) {
 			logger.error("There was an error opening the input stream", e);
-			setException(e);
+			throw e;
 		}
-
-		return null;
 	}
 
-	protected abstract T getData(InputStream inputStream);
+	protected abstract T getData(InputStream inputStream) throws IOException;
 }
