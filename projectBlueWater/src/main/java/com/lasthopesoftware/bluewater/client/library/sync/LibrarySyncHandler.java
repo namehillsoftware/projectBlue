@@ -145,7 +145,11 @@ public class LibrarySyncHandler {
 
 										if (isCancelled) {
 											LibrarySyncHandler.this.handleQueueProcessingCompleted();
-											return Promise.whenAll(upsertStoredFilePromises);
+
+											final Promise<Collection<Void>> aggregateUpsertPromises = Promise.whenAll(upsertStoredFilePromises);
+											aggregateUpsertPromises.cancel();
+
+											return aggregateUpsertPromises;
 										}
 
 										final Promise<Void> upsertStoredFilePromise =
