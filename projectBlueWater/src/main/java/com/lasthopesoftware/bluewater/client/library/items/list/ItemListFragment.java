@@ -24,10 +24,13 @@ import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibrary
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class ItemListFragment extends Fragment {
 
@@ -61,32 +64,32 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(activeLibrary -> {
-				final OneParameterAction<List<Item>> onGetVisibleViewsCompleteListener = result -> {
-					if (result == null || result.size() == 0) return;
+			.then(runCarelessly(activeLibrary -> {
+				final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetVisibleViewsCompleteListener = Dispatch.toContext(result -> {
+					if (result == null || result.size() == 0) return null;
 
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
 					layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
-				};
+
+					return null;
+				}, activity);
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.onComplete(onGetVisibleViewsCompleteListener)
-					.onError(new HandleViewIoException<>(activity, new Runnable() {
+					.then(onGetVisibleViewsCompleteListener)
+					.error(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.onComplete(onGetVisibleViewsCompleteListener)
-								.onError(new HandleViewIoException<>(activity, this))
-								.execute();
+								.then(onGetVisibleViewsCompleteListener)
+								.error(new HandleViewIoException<>(activity, this));
 						}
-					}))
-					.execute();
-	    }), activity));
+					}));
+	    }));
 
         return layout;
     }
@@ -100,34 +103,31 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
-				final OnGetLibraryViewItemResultsComplete onGetLibraryViewItemResultsComplete =
-					new OnGetLibraryViewItemResultsComplete(
-						activity,
-						container,
-						listView,
-						loadingView,
-						position,
-						itemListMenuChangeHandler,
-						new StoredItemAccess(activity, library),
-						library);
+			.then(runCarelessly(library -> {
+				ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetLibraryViewItemResultsComplete = Dispatch.toContext(new OnGetLibraryViewItemResultsComplete(
+					activity,
+					container,
+					listView,
+					loadingView,
+					position,
+					itemListMenuChangeHandler,
+					new StoredItemAccess(activity, library),
+					library), activity);
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-					.onComplete(onGetLibraryViewItemResultsComplete)
-					.onError(new HandleViewIoException<>(activity, new Runnable() {
+					.then(onGetLibraryViewItemResultsComplete)
+					.error(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-								.onComplete(onGetLibraryViewItemResultsComplete)
-								.onError(new HandleViewIoException<>(activity, this))
-								.execute();
+								.then(onGetLibraryViewItemResultsComplete)
+								.error(new HandleViewIoException<>(activity, this));
 						}
-					}))
-					.execute();
-			}), activity));
+					}));
+			}));
 
 		return listView;
 	}

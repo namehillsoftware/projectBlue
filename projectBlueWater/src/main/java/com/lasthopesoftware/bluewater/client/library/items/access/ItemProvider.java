@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 	}
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection) throws IOException {
+    protected List<Item> getData(HttpURLConnection connection, Cancellation cancellation) throws IOException {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
         final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
@@ -64,11 +65,10 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
         if (itemHolder != null && itemHolder.revision.equals(serverRevision))
             return itemHolder.items;
 
-        if (isCancelled()) return new ArrayList<>();
+        if (cancellation.isCancelled()) return new ArrayList<>();
 
         try {
-            final InputStream is = connection.getInputStream();
-            try {
+            try (InputStream is = connection.getInputStream()) {
                 final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
                 itemHolder = new ItemHolder(serverRevision, items);
@@ -78,8 +78,6 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
                 }
 
                 return items;
-            } finally {
-                is.close();
             }
         } catch (IOException e) {
             logger.error("There was an error getting the inputstream", e);

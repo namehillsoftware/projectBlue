@@ -29,10 +29,11 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
     }
 
     @Override
-    public void runWith(List<Item> result) {
-        super.runWith(result);
-        if (result == null) return;
+    public Void resultFrom(List<Item> result) {
+        super.resultFrom(result);
+        if (result != null)
+            listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
 
-        listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
+        return null;
     }
 }
