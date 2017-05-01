@@ -29,8 +29,10 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -73,28 +75,32 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterAction<List<Playlist>> onPlaylistProviderComplete = result -> {
-			if (result == null) return;
+		final ThreeParameterAction<List<Playlist>, IResolvedPromise<Void>, IRejectedPromise> onPlaylistProviderComplete = Dispatch.toContext(result -> {
+			if (result == null) return null;
 
 			BuildPlaylistView(result);
 
 			playlistView.findView().setVisibility(View.VISIBLE);
 			pbLoading.findView().setVisibility(View.INVISIBLE);
-		};
 
-		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
-		        .onComplete(onPlaylistProviderComplete)
-		        .onError(new HandleViewIoException<>(PlaylistListActivity.this, new Runnable() {
+			return null;
+		}, this);
 
-			        @Override
-			        public void run() {
-				        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
-						        .onComplete(onPlaylistProviderComplete)
-						        .onError(new HandleViewIoException<>(PlaylistListActivity.this, this))
-						        .execute();
-			        }
-		        }))
-		        .execute();
+		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId);
+
+		playlistsProvider
+			.promiseData()
+			.then(onPlaylistProviderComplete)
+			.error(new HandleViewIoException<>(PlaylistListActivity.this, new Runnable() {
+
+				@Override
+				public void run() {
+					playlistsProvider
+						.promiseData()
+						.then(onPlaylistProviderComplete)
+						.error(new HandleViewIoException<>(PlaylistListActivity.this, this));
+				}
+			}));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}

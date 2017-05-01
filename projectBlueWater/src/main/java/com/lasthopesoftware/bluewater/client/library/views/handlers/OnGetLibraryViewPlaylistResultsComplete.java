@@ -13,9 +13,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import java.util.List;
 
-/**
- * Created by david on 11/5/15.
- */
 public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIItemResultsComplete<Playlist> {
 
     private final ListView listView;
@@ -29,10 +26,12 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
     }
 
     @Override
-    public void runWith(List<Playlist> result) {
-        super.runWith(result);
-        if (result == null) return;
+    public Void resultFrom(List<Playlist> result) {
+        super.resultFrom(result);
 
-        listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
+        if (result != null)
+            listView.setOnItemClickListener(new ClickPlaylistListener(activity, result));
+
+        return null;
     }
 }

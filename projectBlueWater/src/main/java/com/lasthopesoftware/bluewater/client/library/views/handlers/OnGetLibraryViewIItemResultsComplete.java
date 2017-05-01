@@ -18,14 +18,11 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.List;
 
-/**
- * Created by david on 11/5/15.
- */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements OneParameterAction<List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements CarelessOneParameterFunction<List<T>, Void> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -52,8 +49,8 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     }
 
     @Override
-    public void runWith(List<T> result) {
-        if (result == null) return;
+    public Void resultFrom(List<T> result) {
+        if (result == null) return null;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
         listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
@@ -61,6 +58,8 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
         listView.setVisibility(View.VISIBLE);
 
         if (position == 0) buildTutorialView(activity, container, listView);
+
+        return null;
     }
 
     private final static boolean DEBUGGING_TUTORIAL = false;

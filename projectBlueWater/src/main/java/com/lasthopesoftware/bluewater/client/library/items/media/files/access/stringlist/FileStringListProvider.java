@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
 import com.lasthopesoftware.providers.AbstractInputStreamProvider;
+import com.lasthopesoftware.providers.Cancellation;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ public class FileStringListProvider extends AbstractInputStreamProvider<String> 
 	}
 
 	@Override
-	protected String getData(InputStream inputStream) {
+	protected String getData(InputStream inputStream, Cancellation cancellation) {
 		try {
 			return IOUtils.toString(inputStream);
 		} catch (IOException e) {

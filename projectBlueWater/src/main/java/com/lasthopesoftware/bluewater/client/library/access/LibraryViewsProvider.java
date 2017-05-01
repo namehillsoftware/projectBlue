@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
+import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +16,6 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 3/17/15.
- */
 public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
@@ -28,8 +27,8 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
 
     private final ConnectionProvider connectionProvider;
 
-    public static LibraryViewsProvider provide(ConnectionProvider connectionProvider) {
-        return new LibraryViewsProvider(connectionProvider);
+    public static Promise<List<Item>> provide(ConnectionProvider connectionProvider) {
+        return new LibraryViewsProvider(connectionProvider).promiseData();
     }
 
     public LibraryViewsProvider(ConnectionProvider connectionProvider) {
@@ -39,7 +38,7 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
     }
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection) {
+    protected List<Item> getData(HttpURLConnection connection, Cancellation cancellation) throws IOException {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {
@@ -47,11 +46,10 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
                 return cachedFileSystemItems;
         }
 
-        if (isCancelled()) return new ArrayList<>();
+        if (cancellation.isCancelled()) return new ArrayList<>();
 
         try {
-            final InputStream is = connection.getInputStream();
-            try {
+            try (InputStream is = connection.getInputStream()) {
                 final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
                 synchronized (browseLibraryParameter) {
@@ -60,13 +58,10 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
                 }
 
                 return items;
-            } finally {
-                is.close();
             }
         } catch (IOException e) {
             logger.error("There was an error getting the inputstream", e);
-            setException(e);
-            return new ArrayList<>();
+            throw e;
         }
     }
 }

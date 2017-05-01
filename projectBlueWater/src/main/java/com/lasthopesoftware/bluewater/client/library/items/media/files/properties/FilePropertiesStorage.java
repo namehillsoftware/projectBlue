@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractInputStreamProvider;
+import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 	}
 
 	@Override
-	protected Void getData(InputStream inputStream) {
+	protected Void getData(InputStream inputStream, Cancellation cancellation) {
 		final RevisionChecker revisionChecker = new RevisionChecker(connectionProvider);
 		revisionChecker.execute();
 

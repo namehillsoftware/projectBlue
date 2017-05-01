@@ -21,10 +21,10 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 
 	@SuppressLint("NewApi")
 	@Override
-	protected final T getData(HttpURLConnection connection) throws Exception {
+	protected final T getData(HttpURLConnection connection, Cancellation cancellation) throws Exception {
 		try {
 			try (InputStream is = connection.getInputStream()) {
-				return getData(is);
+				return getData(is, cancellation);
 			}
 		} catch (IOException e) {
 			logger.error("There was an error opening the input stream", e);
@@ -32,5 +32,5 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 		}
 	}
 
-	protected abstract T getData(InputStream inputStream) throws IOException;
+	protected abstract T getData(InputStream inputStream, Cancellation cancellation) throws IOException;
 }

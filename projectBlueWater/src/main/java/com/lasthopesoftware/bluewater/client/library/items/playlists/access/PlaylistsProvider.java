@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,36 +44,32 @@ public class PlaylistsProvider extends AbstractConnectionProvider<List<Playlist>
 	}
 
     @Override
-    protected List<Playlist> getData(final HttpURLConnection connection) {
+    protected List<Playlist> getData(final HttpURLConnection connection, Cancellation cancellation) throws IOException {
 
         final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), RevisionChecker.getRevision(connectionProvider));
         if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
             return getPlaylists(playlistId);
 
-        if (isCancelled()) return new ArrayList<>();
+        if (cancellation.isCancelled()) return new ArrayList<>();
 
 	    try {
-		    final InputStream is = connection.getInputStream();
-		    try {
-			    final List<Playlist> streamResult = PlaylistRequest.GetItems(is);
+			try (InputStream is = connection.getInputStream()) {
+				final List<Playlist> streamResult = PlaylistRequest.GetItems(is);
 
-			    int i = 0;
-			    while (i < streamResult.size()) {
-				    if (streamResult.get(i).getParent() != null) streamResult.remove(i);
-				    else i++;
-			    }
+				int i = 0;
+				while (i < streamResult.size()) {
+					if (streamResult.get(i).getParent() != null) streamResult.remove(i);
+					else i++;
+				}
 
-			    PlaylistsProvider.urlKeyHolder = urlKeyHolder;
-			    cachedPlaylists = streamResult;
-			    mappedPlaylists = null;
-			    return getPlaylists(playlistId);
-		    } finally {
-			    is.close();
-		    }
+				PlaylistsProvider.urlKeyHolder = urlKeyHolder;
+				cachedPlaylists = streamResult;
+				mappedPlaylists = null;
+				return getPlaylists(playlistId);
+			}
 	    } catch (IOException e) {
 		    logger.error("There was an error getting the inputstream", e);
-		    setException(e);
-		    return new ArrayList<>();
+		    throw e;
 	    }
     }
 

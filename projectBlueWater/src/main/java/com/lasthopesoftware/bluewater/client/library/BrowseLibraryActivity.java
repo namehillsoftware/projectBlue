@@ -45,8 +45,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -54,6 +55,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -183,7 +186,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.then(Dispatch.toContext(runCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -208,13 +211,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
-		OneParameterAction<List<Item>> onCompleteAction =
-			(items) -> {
+		ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onCompleteAction =
+			Dispatch.toContext(runCarelessly(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-				selectViewsListView.findView().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
+				selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedViewType, library.getSelectedView()));
 				selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
 
 				hideAllViews();
@@ -246,15 +249,15 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
 				browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
 				swapFragments(browseLibraryViewsFragment);
-			};
+			}), this);
 
 		final Runnable getLibraryViewsRunnable = new Runnable() {
 			@Override
 			public void run() {
 				new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-					.onComplete(onCompleteAction)
-					.onError(new HandleViewIoException<>(BrowseLibraryActivity.this, this))
-					.execute();
+					.promiseData()
+					.then(onCompleteAction)
+					.error(new HandleViewIoException<>(BrowseLibraryActivity.this, this));
 			}
 		};
 
@@ -274,7 +277,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.then(Dispatch.toContext(runCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

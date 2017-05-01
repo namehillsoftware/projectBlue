@@ -17,9 +17,7 @@ abstract class AbstractProvider<Data> {
 
 	private final ProvideDataTask<Data> provideDataTask;
 
-	private boolean isCancelled;
-
-	protected AbstractProvider(IConnectionProvider connectionProvider, String... params) {
+	AbstractProvider(IConnectionProvider connectionProvider, String... params) {
 		provideDataTask = new ProvideDataTask<>(this, connectionProvider, params);
 	}
 
@@ -27,11 +25,7 @@ abstract class AbstractProvider<Data> {
 		return new QueuedPromise<>(provideDataTask, providerExecutor);
 	}
 
-	protected final boolean isCancelled() {
-		return isCancelled;
-	}
-
-	protected abstract Data getData(IConnectionProvider connectionProvider, String[] params) throws Throwable;
+	protected abstract Data getData(IConnectionProvider connectionProvider, Cancellation cancellation, String[] params) throws Throwable;
 
 	private static class ProvideDataTask<Data> implements
 		ThreeParameterAction<IResolvedPromise<Data>, IRejectedPromise, OneParameterAction<Runnable>>,
@@ -39,6 +33,7 @@ abstract class AbstractProvider<Data> {
 		private final AbstractProvider<Data> provider;
 		private final IConnectionProvider connectionProvider;
 		private final String[] params;
+		private final Cancellation cancellation = new Cancellation();
 
 		ProvideDataTask(AbstractProvider<Data> provider, IConnectionProvider connectionProvider, String... params) {
 			this.provider = provider;
@@ -51,7 +46,7 @@ abstract class AbstractProvider<Data> {
 			onCancelled.runWith(this);
 
 			try {
-				resolve.sendResolution(provider.getData(connectionProvider, params));
+				resolve.sendResolution(provider.getData(connectionProvider, cancellation, params));
 			} catch (Throwable e) {
 				reject.sendRejection(e);
 			}
@@ -59,7 +54,7 @@ abstract class AbstractProvider<Data> {
 
 		@Override
 		public void run() {
-			provider.isCancelled = true;
+			cancellation.cancel();
 		}
 	}
 }

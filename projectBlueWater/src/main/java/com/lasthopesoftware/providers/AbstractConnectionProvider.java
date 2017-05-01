@@ -17,13 +17,13 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 	}
 
 	@Override
-	protected final T getData(IConnectionProvider connectionProvider, String... params) throws Exception {
-		if (isCancelled()) return null;
+	protected final T getData(IConnectionProvider connectionProvider, Cancellation cancellation, String... params) throws Exception {
+		if (cancellation.isCancelled()) return null;
 
 		try {
 			final HttpURLConnection connection = connectionProvider.getConnection(params);
 			try {
-				return getData(connection);
+				return getData(connection, cancellation);
 			} finally {
 				connection.disconnect();
 			}
@@ -34,5 +34,5 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 		return null;
 	}
 
-	protected abstract T getData(HttpURLConnection connection) throws Exception;
+	protected abstract T getData(HttpURLConnection connection, Cancellation cancellation) throws Exception;
 }
