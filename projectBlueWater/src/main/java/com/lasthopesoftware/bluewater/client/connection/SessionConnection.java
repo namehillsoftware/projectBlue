@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
@@ -88,11 +87,11 @@ public class SessionConnection {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
 					LibraryViewsProvider.provide(sessionConnectionProvider)
-						.then(Dispatch.toContext(result1 -> {
+						.then(result1 -> {
 
 							if (result1 == null || result1.size() == 0) {
 								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-								return;
+								return null;
 							}
 
 							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
@@ -105,7 +104,7 @@ public class SessionConnection {
 								.then(VoidFunc.runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 
 							return null;
-						}, context));
+						});
 				});
 			}));
 		
