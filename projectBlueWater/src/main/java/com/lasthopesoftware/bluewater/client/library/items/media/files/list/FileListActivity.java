@@ -23,12 +23,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<ServiceFile>, Void> {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -60,42 +64,47 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterAction<List<ServiceFile>> onFileProviderComplete = result -> {
-			if (result == null) return;
-
-			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-
-			fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-			final FileListAdapter fileListAdapter =
-				new FileListAdapter(
-					this,
-					R.id.tvStandard,
-					result,
-					new ItemListMenuChangeHandler(this),
-					NowPlayingFileProvider.fromActiveLibrary(this));
-
-			fileListView.setAdapter(fileListAdapter);
-
-			fileListView.setVisibility(View.VISIBLE);
-			pbLoading.setVisibility(View.INVISIBLE);
-		};
+		final ThreeParameterAction<List<ServiceFile>, IResolvedPromise<Void>, IRejectedPromise> onFileProviderComplete = Dispatch.toContext(this, this);
 
 		getNewFileProvider()
-			.onComplete(onFileProviderComplete)
-			.onError(new HandleViewIoException<>(this, new Runnable() {
+			.promiseData()
+			.then(onFileProviderComplete)
+			.error(new HandleViewIoException<>(this, new Runnable() {
 
-						@Override
-						public void run() {
-							getNewFileProvider()
-									.onComplete(onFileProviderComplete)
-									.onError(new HandleViewIoException<>(FileListActivity.this, this))
-									.execute();
-						}
-					})
-			)
-			.execute();
+					@Override
+					public void run() {
+						getNewFileProvider()
+							.promiseData()
+							.then(onFileProviderComplete)
+							.error(new HandleViewIoException<>(FileListActivity.this, this));
+					}
+				})
+			);
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+	}
+
+	@Override
+	public Void resultFrom(List<ServiceFile> serviceFiles) throws Throwable {
+		if (serviceFiles == null) return null;
+
+		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+
+		fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+		final FileListAdapter fileListAdapter =
+			new FileListAdapter(
+				this,
+				R.id.tvStandard,
+				serviceFiles,
+				new ItemListMenuChangeHandler(this),
+				NowPlayingFileProvider.fromActiveLibrary(this));
+
+		fileListView.setAdapter(fileListAdapter);
+
+		fileListView.setVisibility(View.VISIBLE);
+		pbLoading.setVisibility(View.INVISIBLE);
+
+		return null;
 	}
 
 	private FileProvider getNewFileProvider() {

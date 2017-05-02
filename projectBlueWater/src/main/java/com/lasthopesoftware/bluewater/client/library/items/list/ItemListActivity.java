@@ -28,7 +28,11 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -38,7 +42,7 @@ import java.util.List;
 /**
  * Created by david on 3/15/15.
  */
-public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer {
+public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<Item>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
 
@@ -73,30 +77,46 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = getIntent().getIntExtra(KEY, 0);
 
-	    final ListView localItemListView = itemListView.findView();
-	    localItemListView.setVisibility(View.INVISIBLE);
-
-	    final ProgressBar localLoadingProgressBar = pbLoading.findView();
-	    localLoadingProgressBar.setVisibility(View.VISIBLE);
+	    itemListView.findView().setVisibility(View.INVISIBLE);
+		pbLoading.findView().setVisibility(View.VISIBLE);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
+		final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> itemProviderComplete =
+			Dispatch.toContext(this, this);
+
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete((items) -> {
-            if (items == null) return;
-
-            BuildItemListView(items);
-
-	        localItemListView.setVisibility(View.VISIBLE);
-	        localLoadingProgressBar.setVisibility(View.INVISIBLE);
-        });
-        itemProvider.onError(new HandleViewIoException<>(this, itemProvider::execute));
-        itemProvider.execute();
+        itemProvider
+			.promiseData()
+			.then(itemProviderComplete)
+			.error(
+				new HandleViewIoException<>(this,
+					new Runnable() {
+						@Override
+						public void run() {
+							itemProvider
+								.promiseData()
+								.then(itemProviderComplete)
+								.error(new HandleViewIoException<>(ItemListActivity.this, this));
+						}
+					}));
 
         nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
-    private void BuildItemListView(final List<Item> items) {
+	@Override
+	public Void resultFrom(List<Item> items) throws Throwable {
+		if (items == null) return null;
+
+		ItemListActivity.this.BuildItemListView(items);
+
+		itemListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
+
+		return null;
+	}
+
+	private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);

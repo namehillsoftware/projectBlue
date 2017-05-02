@@ -16,18 +16,20 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
-import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.SearchFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
-public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer {
+public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<ServiceFile>, Void> {
 
 	private ProgressBar pbLoading;
 	private ListView fileListView;
@@ -72,33 +74,28 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-        final OneParameterAction<List<ServiceFile>> onSearchFilesComplete = result -> {
-			if (result == null) return;
-
-			final FileListAdapter fileListAdapter =
-				new FileListAdapter(
-					this,
-					R.id.tvStandard,
-					result,
-					new ItemListMenuChangeHandler(this),
-					NowPlayingFileProvider.fromActiveLibrary(this));
-
-			fileListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-			fileListView.setAdapter(fileListAdapter);
-		};
+		final ThreeParameterAction<List<ServiceFile>, IResolvedPromise<Void>, IRejectedPromise> onSearchFilesComplete =
+			Dispatch.toContext(this, this);
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
-            .onComplete(onSearchFilesComplete)
-            .onError(new HandleViewIoException<>(this, new Runnable() {
+			.promiseData()
+            .then(onSearchFilesComplete)
+            .error(new HandleViewIoException<>(this, new Runnable() {
 
-						@Override
-						public void run() {
-							SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
-									.onComplete(onSearchFilesComplete)
-									.onError(new HandleViewIoException<>(SearchFilesActivity.this, this));
-						}
-					})
-            ).execute();
+					@Override
+					public void run() {
+						SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
+							.promiseData()
+							.then(onSearchFilesComplete)
+							.error(new HandleViewIoException<>(SearchFilesActivity.this, this));
+					}
+				})
+            );
+	}
+
+	@Override
+	public Void resultFrom(List<ServiceFile> serviceFiles) throws Throwable {
+		return null;
 	}
 
 	@Override
