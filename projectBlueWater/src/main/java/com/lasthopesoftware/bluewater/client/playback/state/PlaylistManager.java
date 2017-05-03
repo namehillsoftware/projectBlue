@@ -269,7 +269,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	private void updatePreparedFileQueueUsingState(IPositionedFileQueueProvider fileQueueProvider) {
 		if (playlist != null && positionedPlaybackFile != null)
 			preparedPlaybackQueueResourceManagement
-				.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlaybackFile.asPositionedFile().getPlaylistPosition() + 1));
+				.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlaybackFile.getPlaylistPosition() + 1));
 	}
 
 	private Promise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
@@ -320,7 +320,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 				np.playlist = playlist;
 
 				if (positionedPlaybackFile != null) {
-					np.playlistPosition = positionedPlaybackFile.asPositionedFile().getPlaylistPosition();
+					np.playlistPosition = positionedPlaybackFile.getPlaylistPosition();
 					np.filePosition = positionedPlaybackFile.getPlaybackHandler().getCurrentPosition();
 				}
 

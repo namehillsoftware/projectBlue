@@ -65,6 +65,6 @@ public class WhenObservingPlayback {
 
 	@Test
 	public void thenTheFirstTrackIsBroadcast() {
-		assertThat(firstSwitchedFile.asPositionedFile().getPlaylistPosition()).isEqualTo(0);
+		assertThat(firstSwitchedFile.getPlaylistPosition()).isEqualTo(0);
 	}
 }

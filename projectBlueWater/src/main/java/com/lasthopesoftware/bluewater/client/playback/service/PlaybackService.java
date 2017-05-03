@@ -724,7 +724,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
 		cachedFilePropertiesProvider
-			.promiseFileProperties(positionedPlaybackFile.asPositionedFile().getServiceFile().getKey())
+			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
 			.then(Dispatch.toContext(runCarelessly(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
@@ -751,7 +751,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				metaData.apply();
 
 				ImageProvider
-					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.asPositionedFile().getServiceFile().getKey())
+					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
 					.then(Dispatch.toContext(runCarelessly(bitmap -> {
 						// Track the remote client bitmap and recycle it in case the remote control client
 						// does not properly recycle the bitmap
