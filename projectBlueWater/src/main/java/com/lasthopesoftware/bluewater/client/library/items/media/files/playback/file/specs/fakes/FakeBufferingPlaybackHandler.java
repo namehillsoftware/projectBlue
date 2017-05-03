@@ -13,6 +13,7 @@ import java.io.IOException;
 public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 	private boolean isPlaying;
 	private float volume;
+	private int currentPosition;
 
 	@Override
 	public boolean isPlaying() {
@@ -36,7 +37,11 @@ public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 
 	@Override
 	public int getCurrentPosition() {
-		return 0;
+		return this.currentPosition;
+	}
+
+	public void setCurrentPosition(int position) {
+		this.currentPosition = position;
 	}
 
 	@Override

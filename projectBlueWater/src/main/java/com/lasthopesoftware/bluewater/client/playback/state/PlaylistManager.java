@@ -166,6 +166,9 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 			activePlayer.pause();
 
 		isPlaying = false;
+
+		if (positionedPlaybackFile != null)
+			saveStateToLibrary(positionedPlaybackFile);
 	}
 
 	public boolean isPlaying() {
