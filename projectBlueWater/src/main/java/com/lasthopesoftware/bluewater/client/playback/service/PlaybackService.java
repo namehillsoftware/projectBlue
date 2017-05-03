@@ -611,7 +611,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playlistManager.pause();
 
 		if (positionedPlaybackFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
@@ -693,8 +693,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		broadcastChangedFile(positionedPlaybackFile);
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
+		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -711,7 +711,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playbackHandler
 			.promisePlayback()
 			.then(runCarelessly(handler -> {
-				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
+				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
 		
@@ -724,7 +724,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
 		cachedFilePropertiesProvider
-			.promiseFileProperties(positionedPlaybackFile.getKey())
+			.promiseFileProperties(positionedPlaybackFile.asPositionedFile().getServiceFile().getKey())
 			.then(Dispatch.toContext(runCarelessly(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
@@ -751,7 +751,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				metaData.apply();
 
 				ImageProvider
-					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getKey())
+					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.asPositionedFile().getServiceFile().getKey())
 					.then(Dispatch.toContext(runCarelessly(bitmap -> {
 						// Track the remote client bitmap and recycle it in case the remote control client
 						// does not properly recycle the bitmap
@@ -780,7 +780,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void onPlaylistPlaybackComplete() {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();

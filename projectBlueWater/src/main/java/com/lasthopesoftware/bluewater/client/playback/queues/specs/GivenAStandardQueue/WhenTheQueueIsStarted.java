@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 /**
  * Created by david on 11/13/16.
@@ -48,7 +47,7 @@ public class WhenTheQueueIsStarted {
 		Map<ServiceFile, MockResolveAction> fileActionMap =
 			Stream
 				.of(serviceFiles)
-				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
+				.collect(Collectors.toMap(file -> file, file -> new MockResolveAction()));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
@@ -57,7 +56,10 @@ public class WhenTheQueueIsStarted {
 
 		queue =
 			new PreparedPlaybackQueue(
-				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
+				(file, preparedAt) -> {
+					final MockResolveAction mockResolveAction = fileActionMap.get(file);
+					return new Promise<>(mockResolveAction);
+				},
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition));
 	}
 

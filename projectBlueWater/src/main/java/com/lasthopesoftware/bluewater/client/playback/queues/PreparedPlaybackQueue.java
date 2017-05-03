@@ -61,7 +61,7 @@ public class PreparedPlaybackQueue implements
 					enqueuePositionedPreparingFile(
 						new PositionedPreparingFile(
 							positionedFile,
-							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile, 0)));
+							playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0)));
 				}
 
 				break;
@@ -106,7 +106,7 @@ public class PreparedPlaybackQueue implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile, preparedAt));
+				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
 	}
 
 	@Override

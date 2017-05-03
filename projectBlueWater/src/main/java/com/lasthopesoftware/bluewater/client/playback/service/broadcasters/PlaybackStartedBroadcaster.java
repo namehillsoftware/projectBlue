@@ -42,7 +42,7 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 
 		@Override
 		public void accept(PositionedPlaybackFile p) throws Exception {
-			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), p);
+			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), p.asPositionedFile());
 		}
 	}
 }

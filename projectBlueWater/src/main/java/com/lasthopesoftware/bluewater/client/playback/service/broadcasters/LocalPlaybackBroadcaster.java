@@ -23,7 +23,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
 
         final int currentPlaylistPosition = positionedFile.getPlaylistPosition();
 
-        final int fileKey = positionedFile.getKey();
+        final int fileKey = positionedFile.getServiceFile().getKey();
 
         playbackBroadcastIntent
                 .putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)

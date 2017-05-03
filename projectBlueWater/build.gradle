@@ -70,8 +70,8 @@ dependencies {
     compile project(':objective-droid')
     compile files('libs/xmlwise-debug-1_2.jar')
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.7.17'
-    testCompile 'org.assertj:assertj-core:2.5.0'
+    testCompile 'org.mockito:mockito-core:2.+'
+    testCompile 'org.assertj:assertj-core:2.+'
     compile 'com.android.support:appcompat-v7:25.+'
     compile 'com.android.support:design:25.+'
     compile 'joda-time:joda-time:2.4'

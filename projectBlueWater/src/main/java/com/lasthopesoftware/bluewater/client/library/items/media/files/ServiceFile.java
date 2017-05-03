@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.shared.IIntKey;
 
-public class ServiceFile implements IIntKey<ServiceFile> {
+public final class ServiceFile implements IIntKey<ServiceFile> {
 
 	private int key;
 

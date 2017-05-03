@@ -90,6 +90,6 @@ public class WhenChangingTracks {
 
 	@Test
 	public void thenTheLatestObservedFileIsAtTheCorrectTrackPosition() {
-		assertThat(latestFile.getPlaylistPosition()).isEqualTo(3);
+		assertThat(latestFile.asPositionedFile().getPlaylistPosition()).isEqualTo(3);
 	}
 }
