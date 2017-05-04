@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
@@ -68,21 +67,17 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			.then(obs -> obs.subscribe(f -> mostRecentPositionedFile = f));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
-		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		resolveablePlaybackHandler.setCurrentPosition(30);
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
 		playlistManager.pause();
 
-		playlistManager.skipToNext();
-
-		playlistManager.resume();
-
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		nowPlayingRepository
-			.getNowPlaying()
+
+		playlistManager
+			.skipToNext()
+			.thenPromise(p -> playlistManager.resume())
+			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
+			.thenPromise(res -> nowPlayingRepository.getNowPlaying())
 			.then(np -> {
 				nowPlaying = np;
 				countDownLatch.countDown();
@@ -98,13 +93,8 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	}
 
 	@Test
-	public void thenTheSavedFilePositionIsCorrect() {
-		assertThat(nowPlaying.filePosition).isEqualTo(30);
-	}
-
-	@Test
 	public void thenTheSavedPlaylistPositionIsCorrect() {
-		assertThat(nowPlaying.playlistPosition).isEqualTo(3);
+		assertThat(nowPlaying.playlistPosition).isEqualTo(2);
 	}
 
 	@Test
@@ -119,6 +109,6 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 	@Test
 	public void thenTheObservedFileIsCorrect() {
-		assertThat(mostRecentPositionedFile.getPlaylistPosition()).isEqualTo(3);
+		assertThat(mostRecentPositionedFile.getPlaylistPosition()).isEqualTo(2);
 	}
 }

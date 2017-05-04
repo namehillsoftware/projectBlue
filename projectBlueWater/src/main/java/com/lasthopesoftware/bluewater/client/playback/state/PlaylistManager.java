@@ -46,7 +46,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	private List<ServiceFile> playlist;
 	private boolean isPlaying;
 
-	private Disposable subscription;
+	private Disposable playbackSubscription;
 	private IActivePlayer activePlayer;
 	private SwitchableObservableSource<PositionedPlaybackFile> switchableObservableSource;
 	private Observable<PositionedPlaybackFile> switchableObservable;
@@ -93,45 +93,48 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	}
 
 	public synchronized Promise<PositionedFile> changePosition(final int playlistPosition, final int filePosition) {
-		if (subscription != null)
-			subscription.dispose();
+		if (playbackSubscription != null)
+			playbackSubscription.dispose();
 
 		final Promise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.then(np -> {
+					playbackBootstrapper.close();
+					activePlayer = null;
+
 					logger.info("Position changed");
 					return np;
 				});
 
-		if (isPlaying) {
-			return nowPlayingPromise
-				.then(new ResolutionProcessor<NowPlaying, PositionedFile>() {
-					@Override
-					protected void processResolution(NowPlaying nowPlaying) {
-						final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
-						try {
-							final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
-							final Observable<PositionedPlaybackFile> playbackFileObservable =
-								startPlayback(preparedPlaybackQueue, filePosition);
-
-							playbackFileObservable
-								.firstElement()
-								.subscribe(playbackFile -> this.sendResolution(playbackFile.asPositionedFile()));
-
-							switchObservation(playbackFileObservable);
-						} catch (IOException e) {
-							sendRejection(e);
-						}
-					}
-				});
+		if (!isPlaying) {
+			return
+				nowPlayingPromise
+					.then(np -> {
+						final ServiceFile serviceFile = np.playlist.get(playlistPosition);
+						return new PositionedFile(playlistPosition, serviceFile);
+					});
 		}
 
-		return
-			nowPlayingPromise
-				.then(np -> {
-					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
-					return new PositionedFile(playlistPosition, serviceFile);
-				});
+		return nowPlayingPromise
+			.then(new ResolutionProcessor<NowPlaying, PositionedFile>() {
+				@Override
+				protected void processResolution(NowPlaying nowPlaying) {
+					final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
+					try {
+						final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
+						final Observable<PositionedPlaybackFile> playbackFileObservable =
+							startPlayback(preparedPlaybackQueue, filePosition);
+
+						playbackFileObservable
+							.firstElement()
+							.subscribe(playbackFile -> this.sendResolution(playbackFile.asPositionedFile()));
+
+						switchObservation(playbackFileObservable);
+					} catch (Exception e) {
+						sendRejection(e);
+					}
+				}
+			});
 	}
 
 	public void playRepeatedly() {
@@ -158,7 +161,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			restorePlaylistFromStorage()
 				.then(this::startPlaybackFromNowPlaying)
-				.then(this::startNewObservation);
+				.then(this::switchObservation);
 	}
 
 	public void pause() {
@@ -184,11 +187,9 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return switchableObservable;
 	}
 
-	private Observable<PositionedPlaybackFile> switchObservation(Observable<PositionedPlaybackFile> observable) {
+	private Observable<PositionedPlaybackFile> switchObservation(Observable<PositionedPlaybackFile> observable) throws Exception {
 		if (switchableObservableSource == null) {
-			switchableObservableSource = new SwitchableObservableSource<>(observable);
-			switchableObservable = Observable.create(switchableObservableSource);
-			return switchableObservable;
+			return startNewObservation(observable);
 		}
 
 		switchableObservableSource.switchSource(observable);
@@ -204,15 +205,15 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	}
 
 	private Observable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
-		if (subscription != null)
-			subscription.dispose();
+		if (playbackSubscription != null)
+			playbackSubscription.dispose();
 
 		activePlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition);
 		isPlaying = true;
 
 		final ConnectableObservable<PositionedPlaybackFile> observable = activePlayer.observe();
 
-		subscription = observable.subscribe(
+		playbackSubscription = observable.subscribe(
 			p -> {
 				isPlaying = true;
 				positionedPlaybackFile = p;
