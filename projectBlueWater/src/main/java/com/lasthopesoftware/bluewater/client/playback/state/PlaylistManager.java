@@ -96,12 +96,11 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		if (playbackSubscription != null)
 			playbackSubscription.dispose();
 
+		activePlayer = null;
+
 		final Promise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
 				.then(np -> {
-					playbackBootstrapper.close();
-					activePlayer = null;
-
 					logger.info("Position changed");
 					return np;
 				});
