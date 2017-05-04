@@ -12,9 +12,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by david on 3/2/17.
@@ -22,15 +20,19 @@ import static org.mockito.Mockito.verify;
 
 public class WhenTheQueueIsClosed {
 
-	private static final Promise<IBufferingPlaybackHandler> mockPromise = spy(new Promise<>(mock(IBufferingPlaybackHandler.class)));
+	private static boolean isCancelled;
 
 	@BeforeClass
 	public static void before() throws IOException {
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
 
+		final Promise<IBufferingPlaybackHandler> cancelRecordingPromise = new Promise<>((resolve, reject, onCancelled) -> {
+			onCancelled.runWith(() -> isCancelled = true);
+		});
+
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
-				(file, preparedAt) -> mockPromise,
+				(file, preparedAt) -> cancelRecordingPromise,
 				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));
 
 		queue.promiseNextPreparedPlaybackFile(0);
@@ -40,6 +42,6 @@ public class WhenTheQueueIsClosed {
 
 	@Test
 	public void thenThePreparedFilesAreCancelled() {
-		verify(mockPromise).cancel();
+		assertThat(isCancelled).isTrue();
 	}
 }

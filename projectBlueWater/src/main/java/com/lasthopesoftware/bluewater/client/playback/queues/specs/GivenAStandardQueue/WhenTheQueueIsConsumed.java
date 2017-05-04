@@ -23,11 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static org.mockito.Matchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 /**
  * Created by david on 11/13/16.
@@ -35,7 +32,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenTheQueueIsConsumed {
 
-	private static Map<ServiceFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
+	private static Map<ServiceFile, MockResolveAction> fileActionMap;
 	private static int returnedPromiseCount;
 	private static int expectedNumberOfFiles;
 
@@ -54,7 +51,7 @@ public class WhenTheQueueIsConsumed {
 		fileActionMap =
 			Stream
 				.of(serviceFiles)
-				.collect(Collectors.toMap(file -> file, file -> spy(new MockResolveAction())));
+				.collect(Collectors.toMap(file -> file, file -> new MockResolveAction()));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
@@ -79,7 +76,7 @@ public class WhenTheQueueIsConsumed {
 
 	@Test
 	public void thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		Stream.of(fileActionMap).forEach(entry -> verify(entry.getValue(), times(1)).runWith(any(), any(), any()));
+		assertThat(Stream.of(fileActionMap).map(entry -> entry.getValue().calls).distinct().collect(Collectors.toList())).containsOnly(1);
 	}
 
 	@Test
@@ -88,8 +85,11 @@ public class WhenTheQueueIsConsumed {
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+		private int calls;
+
 		@Override
 		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			++calls;
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}
