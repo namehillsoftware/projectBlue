@@ -1,16 +1,18 @@
-package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -20,7 +22,7 @@ import static org.mockito.Mockito.when;
  * Created by david on 11/12/16.
  */
 
-public class WhenPausingPlayback {
+public class WhenResumingPlayback {
 
 	private IPlaybackHandler playbackHandler;
 
@@ -37,11 +39,15 @@ public class WhenPausingPlayback {
 
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
+		Observable.create(playlistPlayback).subscribe();
+
 		playlistPlayback.pause();
+
+		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenPlaybackIsPaused() {
-		assertThat(playbackHandler.isPlaying()).isFalse();
+	public void thenPlaybackIsResumed() {
+		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
 }

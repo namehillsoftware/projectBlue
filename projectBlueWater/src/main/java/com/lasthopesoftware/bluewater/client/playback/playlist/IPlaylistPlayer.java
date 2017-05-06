@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
+package com.lasthopesoftware.bluewater.client.playback.playlist;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 

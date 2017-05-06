@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.playlists.playback;
+package com.lasthopesoftware.bluewater.client.playback.playlist;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
@@ -14,9 +14,6 @@ import java.io.IOException;
 
 import io.reactivex.ObservableEmitter;
 
-/**
- * Created by david on 11/8/16.
- */
 public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);

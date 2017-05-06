@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.state.volume;
 
-import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 
 
 public class PlaylistVolumeManager implements IVolumeManagement {
