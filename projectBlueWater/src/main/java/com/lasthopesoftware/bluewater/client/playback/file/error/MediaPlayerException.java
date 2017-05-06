@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error;
+package com.lasthopesoftware.bluewater.client.playback.file.error;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 

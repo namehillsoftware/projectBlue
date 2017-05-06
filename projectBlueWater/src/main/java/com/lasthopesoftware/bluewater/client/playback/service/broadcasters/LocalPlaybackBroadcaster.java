@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 
 /**
  * Created by david on 1/17/17.

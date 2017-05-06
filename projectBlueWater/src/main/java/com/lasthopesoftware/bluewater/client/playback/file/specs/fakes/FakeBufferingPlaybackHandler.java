@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes;
+package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 

@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.promises.EmptyMessenger;
 
 /**

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.queues;
 
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 
 import java.io.Closeable;
 import java.io.IOException;

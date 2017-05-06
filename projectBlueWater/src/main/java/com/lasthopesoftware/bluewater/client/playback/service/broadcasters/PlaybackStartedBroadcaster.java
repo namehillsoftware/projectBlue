@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 

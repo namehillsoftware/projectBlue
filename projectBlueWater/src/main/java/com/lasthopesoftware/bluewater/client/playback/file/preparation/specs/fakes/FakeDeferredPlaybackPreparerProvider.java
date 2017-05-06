@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.specs.fakes;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.playback.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;

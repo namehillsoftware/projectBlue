@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering;
+package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.promises.Promise;
 
 /**

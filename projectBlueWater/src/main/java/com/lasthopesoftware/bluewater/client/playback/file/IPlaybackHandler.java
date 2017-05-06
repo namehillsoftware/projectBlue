@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file;
 
 import com.lasthopesoftware.promises.Promise;
 

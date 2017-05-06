@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering;
+package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 
 import android.media.MediaPlayer;
 

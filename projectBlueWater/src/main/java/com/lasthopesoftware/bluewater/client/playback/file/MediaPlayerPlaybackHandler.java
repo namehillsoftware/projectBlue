@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.MediaPlayerBufferedPromise;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.MediaPlayerBufferedPromise;
 import com.lasthopesoftware.promises.Promise;
 
 import java.io.IOException;

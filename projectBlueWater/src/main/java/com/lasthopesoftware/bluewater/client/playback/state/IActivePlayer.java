@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.state;
 
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 
 import io.reactivex.observables.ConnectableObservable;
 

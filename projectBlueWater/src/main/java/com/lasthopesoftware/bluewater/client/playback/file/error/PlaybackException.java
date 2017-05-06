@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error;
+package com.lasthopesoftware.bluewater.client.playback.file.error;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 
 /**
  * Created by david on 11/4/16.

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 
 /**
  * Created by david on 11/6/16.

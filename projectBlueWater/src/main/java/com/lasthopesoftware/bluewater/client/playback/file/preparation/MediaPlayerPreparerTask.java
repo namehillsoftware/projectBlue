@@ -1,15 +1,15 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation;
 
 import android.media.MediaPlayer;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.MediaPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file.initialization;
+package com.lasthopesoftware.bluewater.client.playback.file.initialization;
 
 import android.content.Context;
 import android.media.AudioManager;
