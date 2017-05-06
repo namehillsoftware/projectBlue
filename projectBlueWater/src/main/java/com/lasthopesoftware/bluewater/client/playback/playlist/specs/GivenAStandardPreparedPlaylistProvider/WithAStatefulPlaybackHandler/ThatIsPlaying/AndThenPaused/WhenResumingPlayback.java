@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback;
+package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
@@ -18,40 +19,35 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Created by david on 12/7/16.
+ * Created by david on 11/12/16.
  */
 
-public class WhenChangingTheVolume {
+public class WhenResumingPlayback {
 
-	private FakeBufferingPlaybackHandler playbackHandlerUnderTest;
+	private IPlaybackHandler playbackHandler;
 
 	@Before
 	public void before() {
-		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
-		playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
+		playbackHandler = new FakeBufferingPlaybackHandler();
 
 		final Promise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new ServiceFile(1)));
 
-		final Promise<PositionedPlaybackFile> secondPositionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlaybackFile(0, playbackHandlerUnderTest, new ServiceFile(1)));
-
 		final IPreparedPlaybackFileQueue preparedPlaybackFileQueue = mock(IPreparedPlaybackFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
-			.thenReturn(positionedPlaybackHandlerContainer)
-			.thenReturn(secondPositionedPlaybackHandlerContainer);
+			.thenReturn(positionedPlaybackHandlerContainer);
 
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
 		Observable.create(playlistPlayback).subscribe();
 
-		playlistPlayback.setVolume(0.8f);
+		playlistPlayback.pause();
 
-		playbackHandler.resolve();
+		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenTheVolumeIsChanged() {
-		assertThat(playbackHandlerUnderTest.getVolume()).isEqualTo(0.8f);
+	public void thenPlaybackIsResumed() {
+		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
 }

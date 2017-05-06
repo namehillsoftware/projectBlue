@@ -1,12 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
-import android.content.Context;
-import android.preference.PreferenceManager;
-
-import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;
@@ -29,22 +26,16 @@ public class MaxFileVolumeProvider {
 
 	private static final Promise<Float> promisedUnityVolume = new Promise<>(UnityVolume);
 
-	private final Context context;
-
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final IVolumeLevelSettings volumeLevelSettings;
 
-	public MaxFileVolumeProvider(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
-		this.context = context;
+	public MaxFileVolumeProvider(IVolumeLevelSettings volumeLevelSettings, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+		this.volumeLevelSettings = volumeLevelSettings;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
-	protected Promise<Float> getMaxFileVolume(ServiceFile serviceFile) {
-		final boolean isVolumeLevelingEnabled =
-				PreferenceManager
-						.getDefaultSharedPreferences(context)
-						.getBoolean(ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled, false);
-
-		if (!isVolumeLevelingEnabled)
+	public Promise<Float> getMaxFileVolume(ServiceFile serviceFile) {
+		if (!volumeLevelSettings.isVolumeLevellingEnabled())
 			return promisedUnityVolume;
 
 		return

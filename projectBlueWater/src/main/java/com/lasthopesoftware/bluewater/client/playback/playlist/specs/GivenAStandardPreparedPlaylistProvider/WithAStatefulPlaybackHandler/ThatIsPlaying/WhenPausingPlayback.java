@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
+package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
@@ -12,8 +12,6 @@ import com.lasthopesoftware.promises.Promise;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.reactivex.Observable;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -22,7 +20,7 @@ import static org.mockito.Mockito.when;
  * Created by david on 11/12/16.
  */
 
-public class WhenResumingPlayback {
+public class WhenPausingPlayback {
 
 	private IPlaybackHandler playbackHandler;
 
@@ -39,15 +37,11 @@ public class WhenResumingPlayback {
 
 		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
 
-		Observable.create(playlistPlayback).subscribe();
-
 		playlistPlayback.pause();
-
-		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenPlaybackIsResumed() {
-		assertThat(playbackHandler.isPlaying()).isTrue();
+	public void thenPlaybackIsPaused() {
+		assertThat(playbackHandler.isPlaying()).isFalse();
 	}
 }
