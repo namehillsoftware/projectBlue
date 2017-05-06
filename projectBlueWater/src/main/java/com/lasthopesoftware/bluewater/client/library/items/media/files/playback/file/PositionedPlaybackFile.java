@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.playback.file;
 
+import android.support.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
-/**
- * Created by david on 11/13/16.
- */
-
-public final class PositionedPlaybackFile {
+public final class PositionedPlaybackFile implements Comparable<PositionedPlaybackFile> {
 	private final IPlaybackHandler playbackHandler;
 	private final PositionedFile positionedFile;
 
@@ -32,12 +30,13 @@ public final class PositionedPlaybackFile {
 	}
 
 	@Override
+	public int compareTo(@NonNull PositionedPlaybackFile other) {
+		return positionedFile.compareTo(other.positionedFile);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof PositionedPlaybackFile)) return false;
-
-		final PositionedPlaybackFile other = (PositionedPlaybackFile)obj;
-
-		return positionedFile.equals(other.positionedFile);
+		return obj instanceof PositionedPlaybackFile && compareTo((PositionedPlaybackFile)obj) == 0;
 	}
 
 	@Override
