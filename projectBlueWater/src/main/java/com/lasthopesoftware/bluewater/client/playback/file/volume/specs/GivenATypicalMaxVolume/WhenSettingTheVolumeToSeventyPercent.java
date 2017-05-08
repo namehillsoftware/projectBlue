@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenAT
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackFileVolumeController;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,8 +20,8 @@ public class WhenSettingTheVolumeToSeventyPercent {
 	public static void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final PlaybackFileVolumeController playbackFileVolumeController = new PlaybackFileVolumeController(playbackHandler, .9f);
-		returnedVolume = playbackFileVolumeController.setVolume(.7f);
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, .9f);
+		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(.7f);
 	}
 
 	@Test

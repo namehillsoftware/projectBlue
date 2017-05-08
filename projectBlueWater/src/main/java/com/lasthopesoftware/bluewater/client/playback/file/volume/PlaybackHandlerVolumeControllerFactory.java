@@ -18,6 +18,6 @@ public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerV
 		return
 			maxFileVolumeProvider
 				.getMaxFileVolume(positionedPlaybackFile.getServiceFile())
-				.then(maxFileVolume -> new PlaybackFileVolumeController(positionedPlaybackFile.getPlaybackHandler(), maxFileVolume));
+				.then(maxFileVolume -> new PlaybackHandlerMaxVolumeModifier(positionedPlaybackFile.getPlaybackHandler(), maxFileVolume));
 	}
 }

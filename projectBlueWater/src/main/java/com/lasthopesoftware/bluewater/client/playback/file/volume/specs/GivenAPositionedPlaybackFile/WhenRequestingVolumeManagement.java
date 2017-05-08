@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackFileVolumeController;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
@@ -75,6 +75,6 @@ public class WhenRequestingVolumeManagement {
 
 	@Test
 	public void thenAPlaybackFileVolumeHandlerIsReturned() {
-		assertThat(playbackFileVolumeController).isExactlyInstanceOf(PlaybackFileVolumeController.class);
+		assertThat(playbackFileVolumeController).isExactlyInstanceOf(PlaybackHandlerMaxVolumeModifier.class);
 	}
 }

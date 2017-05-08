@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenAT
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackFileVolumeController;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,8 +19,8 @@ public class WhenSettingTheVolumeToOne {
 	public static void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final PlaybackFileVolumeController playbackFileVolumeController = new PlaybackFileVolumeController(playbackHandler, .8f);
-		returnedVolume = playbackFileVolumeController.setVolume(1f);
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, .8f);
+		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(1f);
 	}
 
 	@Test
