@@ -14,8 +14,6 @@ import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-import junit.framework.Assert;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -25,10 +23,6 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-
-/**
- * Created by david on 11/13/16.
- */
 
 public class WhenTheQueueIsConsumed {
 
@@ -76,12 +70,12 @@ public class WhenTheQueueIsConsumed {
 
 	@Test
 	public void thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		assertThat(Stream.of(fileActionMap).map(entry -> entry.getValue().calls).distinct().collect(Collectors.toList())).containsOnly(1);
+		assertThat(Stream.of(fileActionMap).map(entry -> entry.getValue().calls).distinct().collect(Collectors.toList())).containsExactly(1);
 	}
 
 	@Test
 	public void thenTheCorrectNumberOfPromisesIsReturned() {
-		Assert.assertEquals(expectedNumberOfFiles, returnedPromiseCount);
+		assertThat(returnedPromiseCount).isEqualTo(expectedNumberOfFiles);
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
