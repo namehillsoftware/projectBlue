@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GiveVolumeLevellingIsEnabled.WithAVeryHighR128Level;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenVolumeLevellingIsEnabled.WithAVeryHighR128Level;
 
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;

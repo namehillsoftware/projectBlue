@@ -9,9 +9,6 @@ import com.lasthopesoftware.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by david on 5/8/16.
- */
 public class MaxFileVolumeProvider {
 
 	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GiveVolumeLevellingIsEnabled.WithAStandardR128Volume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenAPositionedPlaybackFile;
 
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -8,7 +8,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackFileVolumeController;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 
@@ -19,13 +24,12 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenGettingTheMaxVolume {
+public class WhenRequestingVolumeManagement {
 
-	private static float returnedVolume;
+	private static IVolumeManagement playbackFileVolumeController;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -52,15 +56,17 @@ public class WhenGettingTheMaxVolume {
 		final IVolumeLevelSettings volumeLevelSettings = mock(IVolumeLevelSettings.class);
 		when(volumeLevelSettings.isVolumeLevellingEnabled()).thenReturn(true);
 
-		final MaxFileVolumeProvider maxFileVolumeProvider =
-			new MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider);
+		final PlaybackHandlerVolumeControllerFactory playbackHandlerVolumeControllerFactory =
+			new PlaybackHandlerVolumeControllerFactory(new MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		maxFileVolumeProvider
-			.getMaxFileVolume(new ServiceFile(1))
-			.then(volume -> {
-				returnedVolume = volume;
+
+		playbackHandlerVolumeControllerFactory
+			.manageVolume(new PositionedPlaybackFile(1, mock(IPlaybackHandler.class), new ServiceFile(1)))
+			.then(volumeManagement -> {
+				playbackFileVolumeController = volumeManagement;
 				countDownLatch.countDown();
+
 				return null;
 			});
 
@@ -68,7 +74,7 @@ public class WhenGettingTheMaxVolume {
 	}
 
 	@Test
-	public void thenTheReturnedVolumeIsCorrect() {
-		assertThat(returnedVolume).isCloseTo(.674107143f, offset(.00001f));
+	public void thenAPlaybackFileVolumeHandlerIsReturned() {
+		assertThat(playbackFileVolumeController).isExactlyInstanceOf(PlaybackFileVolumeController.class);
 	}
 }
