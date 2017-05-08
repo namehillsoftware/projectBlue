@@ -52,6 +52,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
@@ -60,9 +62,12 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
+import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
@@ -75,6 +80,7 @@ import com.vedsoft.lazyj.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -207,6 +213,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
 	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 	private final ILazy<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
+	private final ILazy<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 
 	private Bitmap remoteClientBitmap = null;
 	private int numberOfErrors = 0;
@@ -222,6 +229,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private Disposable playbackFileChangedSubscription;
 	private Disposable filePositionSubscription;
 	private Disposable playbackFileChangesConnection;
+	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -441,12 +449,20 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 
+		if (playlistPlaybackBootstrapper != null)
+			playlistPlaybackBootstrapper.close();
+
+		playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
+			lazyPlaylistVolumeManager.getObject(),
+			new PlaybackHandlerVolumeControllerFactory(
+				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
+
 		playlistManager =
 			new PlaylistManager(
 				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-				lazyPlaylistVolumeManager.getObject());
+				playlistPlaybackBootstrapper);
 
 		return playlistManager;
 	}
@@ -664,7 +680,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			playlistManager.setVolume(1.0f);
+			if (lazyPlaylistVolumeManager.isInitialized())
+				lazyPlaylistVolumeManager.getObject().setVolume(1.0f);
+
 			if (!playlistManager.isPlaying())
 				playlistManager
 					.resume()
@@ -686,7 +704,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 				// Lost focus for a short time, but it's ok to keep playing
 				// at an attenuated level
-				playlistManager.setVolume(0.2f);
+				if (lazyPlaylistVolumeManager.isInitialized())
+					lazyPlaylistVolumeManager.getObject().setVolume(0.2f);
 	    }
 	}
 
@@ -793,6 +812,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopNotification();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
+
+		if (playlistPlaybackBootstrapper != null) {
+			try {
+				playlistPlaybackBootstrapper.close();
+			} catch (IOException e) {
+				logger.warn("There was an error closing the prepared playback bootstrapper", e);
+			}
+		}
 
 		if (playlistManager != null) {
 			try {

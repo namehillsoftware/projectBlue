@@ -13,8 +13,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
+import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
@@ -84,7 +86,7 @@ public class WhenChangingTracks {
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistVolumeManager(1.0f));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		playlistManager.changePosition(3, 0).then(p -> {

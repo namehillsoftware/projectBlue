@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
@@ -41,7 +42,7 @@ public class WhenChangingTheVolume {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0);
 
 		Observable.create(playlistPlayback).subscribe();
 

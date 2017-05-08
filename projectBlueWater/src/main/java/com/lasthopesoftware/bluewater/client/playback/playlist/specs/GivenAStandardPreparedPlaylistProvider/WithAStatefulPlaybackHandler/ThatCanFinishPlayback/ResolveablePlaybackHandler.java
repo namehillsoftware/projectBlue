@@ -5,10 +5,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBuffe
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 
-/**
- * Created by david on 12/7/16.
- */
-
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
 	private IResolvedPromise<IPlaybackHandler> resolve;

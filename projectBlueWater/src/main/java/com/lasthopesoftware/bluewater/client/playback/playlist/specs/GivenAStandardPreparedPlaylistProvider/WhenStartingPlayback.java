@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.promises.Promise;
@@ -44,7 +45,7 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0))
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, mock(IPlaybackHandlerVolumeControllerFactory.class), 0))
 			.toList().subscribe(positionedPlaybackFiles -> this.positionedPlaybackFiles = positionedPlaybackFiles);
 	}
 

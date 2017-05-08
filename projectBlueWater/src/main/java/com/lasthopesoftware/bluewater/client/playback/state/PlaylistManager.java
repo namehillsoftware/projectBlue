@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueu
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
+import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -37,10 +38,9 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistManager.class);
 
 	private final PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement;
-	private final PlaylistPlaybackBootstrapper playbackBootstrapper;
+	private final IStartPlayback playbackBootstrapper;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
-	private final IVolumeManagement volumeManager;
 
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private List<ServiceFile> playlist;
@@ -51,12 +51,11 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	private SwitchableObservableSource<PositionedPlaybackFile> switchableObservableSource;
 	private Observable<PositionedPlaybackFile> switchableObservable;
 
-	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, PlaylistVolumeManager playlistVolumeManager) {
+	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
 		preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(playbackPreparerProvider);
-		volumeManager = playlistVolumeManager;
-		playbackBootstrapper = new PlaylistPlaybackBootstrapper(playlistVolumeManager);
+		this.playbackBootstrapper = playbackBootstrapper;
 	}
 
 	public Promise<Observable<PositionedPlaybackFile>> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
@@ -262,10 +261,6 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 				});
 	}
 
-	public void setVolume(float volume) {
-		volumeManager.setVolume(volume);
-	}
-
 	private void updatePreparedFileQueueUsingState(IPositionedFileQueueProvider fileQueueProvider) {
 		if (playlist != null && positionedPlaybackFile != null)
 			preparedPlaybackQueueResourceManagement
@@ -330,8 +325,6 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		playbackBootstrapper.close();
-
 		isPlaying = false;
 
 		preparedPlaybackQueueResourceManagement.close();

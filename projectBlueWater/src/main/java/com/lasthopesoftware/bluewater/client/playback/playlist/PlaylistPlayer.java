@@ -2,7 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.playlist;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 
@@ -18,15 +20,18 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
+	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 	private final int preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
 	private volatile boolean isStarted;
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
+	private IVolumeManagement volumeManager;
 
-	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, int preparedPosition) {
+	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, int preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
+		this.volumeControllerFactory = volumeControllerFactory;
 		this.preparedPosition = preparedPosition;
 	}
 
@@ -63,9 +68,9 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public void setVolume(float volume) {
 		this.volume = volume;
 
-		final PositionedPlaybackFile positionedPlaybackFile = this.positionedPlaybackFile;
-		if (positionedPlaybackFile != null)
-			positionedPlaybackFile.getPlaybackHandler().setVolume(volume);
+		final IVolumeManagement volumeManager = this.volumeManager;
+		if (volumeManager != null)
+			volumeManager.setVolume(volume);
 	}
 
 	private void setupNextPreparedFile() {
@@ -83,9 +88,15 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
+			.then(this::changeVolumeManager)
 			.then(this::changePlaybackFile)
 			.thenPromise(this::startFilePlayback)
 			.error(VoidFunc.runCarelessly(this::handlePlaybackException));
+	}
+
+	private PositionedPlaybackFile changeVolumeManager(PositionedPlaybackFile positionedPlaybackFile) {
+		this.volumeManager = volumeControllerFactory.manageVolume(positionedPlaybackFile);
+		return positionedPlaybackFile;
 	}
 
 	private PositionedPlaybackFile changePlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
@@ -114,6 +125,8 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		} catch (IOException e) {
 			logger.error("There was an error releasing the media player", e);
 		}
+
+		volumeManager = null;
 
 		setupNextPreparedFile();
 	}

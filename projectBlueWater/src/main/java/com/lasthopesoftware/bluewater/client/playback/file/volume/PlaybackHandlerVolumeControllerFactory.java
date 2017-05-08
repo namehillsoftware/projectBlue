@@ -5,6 +5,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.promises.Promise;
 
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+
 public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {
 
 	private final MaxFileVolumeProvider maxFileVolumeProvider;
@@ -14,10 +16,14 @@ public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerV
 	}
 
 	@Override
-	public Promise<IVolumeManagement> manageVolume(PositionedPlaybackFile positionedPlaybackFile) {
-		return
-			maxFileVolumeProvider
-				.getMaxFileVolume(positionedPlaybackFile.getServiceFile())
-				.then(maxFileVolume -> new PlaybackHandlerMaxVolumeModifier(positionedPlaybackFile.getPlaybackHandler(), maxFileVolume));
+	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile) {
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier =
+			new PlaybackHandlerMaxVolumeModifier(positionedPlaybackFile.getPlaybackHandler());
+
+		maxFileVolumeProvider
+			.getMaxFileVolume(positionedPlaybackFile.getServiceFile())
+			.then(runCarelessly(playbackHandlerMaxVolumeModifier::setMaxFileVolume));
+
+		return playbackHandlerMaxVolumeModifier;
 	}
 }
