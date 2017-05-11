@@ -8,7 +8,7 @@ import com.lasthopesoftware.promises.Promise;
 
 public class FakeVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {
 	@Override
-	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile) {
+	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile, float initialVolume) {
 		return new FakeVolumeManager(positionedPlaybackFile);
 	}
 

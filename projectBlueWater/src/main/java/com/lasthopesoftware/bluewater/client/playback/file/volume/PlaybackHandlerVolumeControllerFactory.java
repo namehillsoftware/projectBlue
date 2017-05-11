@@ -16,9 +16,9 @@ public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerV
 	}
 
 	@Override
-	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile) {
+	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile, float initialHandlerVolume) {
 		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier =
-			new PlaybackHandlerMaxVolumeModifier(positionedPlaybackFile.getPlaybackHandler());
+			new PlaybackHandlerMaxVolumeModifier(positionedPlaybackFile.getPlaybackHandler(), initialHandlerVolume);
 
 		maxFileVolumeProvider
 			.getMaxFileVolume(positionedPlaybackFile.getServiceFile())

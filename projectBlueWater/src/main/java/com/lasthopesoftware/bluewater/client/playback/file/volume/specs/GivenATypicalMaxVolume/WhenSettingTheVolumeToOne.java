@@ -19,7 +19,7 @@ public class WhenSettingTheVolumeToOne {
 	public static void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler);
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, 1);
 		playbackHandlerMaxVolumeModifier.setMaxFileVolume(.8f);
 		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(1f);
 	}

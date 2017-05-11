@@ -5,5 +5,5 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 
 public interface IPlaybackHandlerVolumeControllerFactory {
-	IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile);
+	IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile, float initialHandlerVolume);
 }

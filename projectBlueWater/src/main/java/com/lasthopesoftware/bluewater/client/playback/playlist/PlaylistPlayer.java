@@ -95,7 +95,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private PositionedPlaybackFile changeVolumeManager(PositionedPlaybackFile positionedPlaybackFile) {
-		this.volumeManager = volumeControllerFactory.manageVolume(positionedPlaybackFile);
+		this.volumeManager = volumeControllerFactory.manageVolume(positionedPlaybackFile, volume);
 		return positionedPlaybackFile;
 	}
 
@@ -109,8 +109,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private Promise<IPlaybackHandler> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
-
-		playbackHandler.setVolume(volume);
 
 		final Promise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 

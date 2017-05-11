@@ -61,7 +61,7 @@ public class WhenRequestingVolumeManagement {
 
 		playbackFileVolumeController =
 			playbackHandlerVolumeControllerFactory
-				.manageVolume(new PositionedPlaybackFile(1, mock(IPlaybackHandler.class), new ServiceFile(1)));
+				.manageVolume(new PositionedPlaybackFile(1, mock(IPlaybackHandler.class), new ServiceFile(1)), 1);
 	}
 
 	@Test

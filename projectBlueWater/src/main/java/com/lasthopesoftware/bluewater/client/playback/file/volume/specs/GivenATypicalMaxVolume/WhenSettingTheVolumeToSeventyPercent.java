@@ -20,7 +20,7 @@ public class WhenSettingTheVolumeToSeventyPercent {
 	public static void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler);
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, 1);
 		playbackHandlerMaxVolumeModifier.setMaxFileVolume(.9f);
 		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(.7f);
 	}
