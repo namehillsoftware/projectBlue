@@ -271,12 +271,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.then(Dispatch.toHandler(runCarelessly(np -> {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
-				if (viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))) {
-					setView(viewStructure.serviceFile, viewStructure.filePosition);
-					return;
-				}
+				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+				final int filePosition =
+					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
+						? viewStructure.filePosition
+						: np.filePosition;
 
-				setView(np.playlist.get(np.playlistPosition), np.filePosition);
+				setView(serviceFile, filePosition);
 			}), messageHandler.getObject()));
 	}
 	
