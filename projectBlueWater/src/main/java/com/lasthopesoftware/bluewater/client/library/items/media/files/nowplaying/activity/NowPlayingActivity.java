@@ -265,20 +265,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
-
-		lazyNowPlayingRepository.getObject()
-			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(np -> {
-				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
-
-				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final int filePosition =
-					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
-						? viewStructure.filePosition
-						: np.filePosition;
-
-				setView(serviceFile, filePosition);
-			}), messageHandler.getObject()));
 	}
 	
 	@Override
@@ -288,19 +274,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		updateKeepScreenOnStatus();
 
 		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
-
-		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
-
-			@Override
-			public void onServiceConnected(ComponentName name, IBinder service) {
-				togglePlayingButtons(((PlaybackService)(((GenericBinder<?>)service).getService())).isPlaying());
-				unbindService(this);
-			}
-
-			@Override
-			public void onServiceDisconnected(ComponentName name) {
-			}
-		}, BIND_AUTO_CREATE);
 	}
 
 	@Override
@@ -314,8 +287,33 @@ public class NowPlayingActivity extends AppCompatActivity {
 		playButton.findView().setVisibility(View.VISIBLE);
 		pauseButton.findView().setVisibility(View.INVISIBLE);
 
-		if (viewStructure != null)
-			setView(viewStructure.serviceFile, viewStructure.filePosition);
+		lazyNowPlayingRepository.getObject()
+			.getNowPlaying()
+			.then(Dispatch.toHandler(runCarelessly(np -> {
+				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
+
+				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+				final int filePosition =
+					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
+						? viewStructure.filePosition
+						: np.filePosition;
+
+				setView(serviceFile, filePosition);
+			}), messageHandler.getObject()))
+			.error(runCarelessly(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
+
+		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
+
+			@Override
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				togglePlayingButtons(((PlaybackService)(((GenericBinder<?>)service).getService())).isPlaying());
+				unbindService(this);
+			}
+
+			@Override
+			public void onServiceDisconnected(ComponentName name) {
+			}
+		}, BIND_AUTO_CREATE);
 	}
 
 	private void setRepeatingIcon(final ImageButton imageButton) {
