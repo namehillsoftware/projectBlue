@@ -52,19 +52,18 @@ public class BestMatchUriProvider implements IFileUriProvider {
 					if (storedFileUri != null)
 						return new Promise<>(storedFileUri);
 
-					if (library.isUsingExistingFiles()) {
-						return
-							mediaFileUriProvider
-								.getFileUri(serviceFile)
-								.thenPromise(mediaFileUri -> {
-									if (mediaFileUri != null)
-										return new Promise<>(mediaFileUri);
+					if (!library.isUsingExistingFiles())
+						return remoteFileUriProvider.getFileUri(serviceFile);
 
-									return remoteFileUriProvider.getFileUri(serviceFile);
-								});
-					}
+					return
+						mediaFileUriProvider
+							.getFileUri(serviceFile)
+							.thenPromise(mediaFileUri -> {
+								if (mediaFileUri != null)
+									return new Promise<>(mediaFileUri);
 
-					return remoteFileUriProvider.getFileUri(serviceFile);
+								return remoteFileUriProvider.getFileUri(serviceFile);
+							});
 				});
 	}
 }
