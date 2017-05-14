@@ -291,7 +291,13 @@ public class StoredFileAccess {
 
 									return storedFile;
 								});
-					});
+					})
+					.thenPromise(storedFile -> new QueuedPromise<>(() -> {
+						try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+							updateStoredFile(repositoryAccessHelper, storedFile);
+							return storedFile;
+						}
+					}, RepositoryAccessHelper.databaseExecutor));
 	}
 
 	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
