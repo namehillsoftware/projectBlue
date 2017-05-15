@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.support.annotation.IdRes;
 import android.view.View;
 
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
 /**
@@ -30,12 +30,12 @@ public class LazyViewFinder<TView extends View> {
 		return lazyViewInitializer.getObject();
 	}
 
-	private static final class LazyActivityViewFinder<T extends View> extends AbstractThreadLocalLazy<T> {
+	private static final class LazyActivityViewFinder<T extends View> extends AbstractSynchronousLazy<T> {
 
 		private final Activity activity;
 		private final int viewId;
 
-		public LazyActivityViewFinder(Activity activity, @IdRes int viewId) {
+		LazyActivityViewFinder(Activity activity, @IdRes int viewId) {
 			this.activity = activity;
 			this.viewId = viewId;
 		}
@@ -46,12 +46,12 @@ public class LazyViewFinder<TView extends View> {
 		}
 	}
 
-	private static final class LazyViewBasedViewFinder<T extends View> extends AbstractThreadLocalLazy<T> {
+	private static final class LazyViewBasedViewFinder<T extends View> extends AbstractSynchronousLazy<T> {
 
 		private final View view;
 		private final int viewId;
 
-		public LazyViewBasedViewFinder(View view, @IdRes int viewId) {
+		LazyViewBasedViewFinder(View view, @IdRes int viewId) {
 			this.view = view;
 			this.viewId = viewId;
 		}
