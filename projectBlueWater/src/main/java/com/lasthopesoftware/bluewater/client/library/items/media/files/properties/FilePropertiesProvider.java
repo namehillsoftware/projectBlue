@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
-import android.annotation.SuppressLint;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
@@ -62,7 +60,6 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			this.fileKey = fileKey;
 		}
 
-		@SuppressLint("NewApi")
 		@Override
 		public void runWith(IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 			onCancelled.runWith(() -> {

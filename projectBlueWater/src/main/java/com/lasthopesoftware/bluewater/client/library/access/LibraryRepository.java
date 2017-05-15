@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.access;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
 
@@ -54,7 +53,6 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 			this.context = context;
 		}
 
-		@SuppressLint("NewApi")
 		@Override
 		public Collection<Library> result() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -76,7 +74,6 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 			this.context = context;
 		}
 
-		@SuppressLint("NewApi")
 		@Override
 		public Library result() throws Exception {
 			if (libraryId < 0) return null;
@@ -145,7 +142,6 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 			this.library = library;
 		}
 
-		@SuppressLint("NewApi")
 		@Override
 		public Library result() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

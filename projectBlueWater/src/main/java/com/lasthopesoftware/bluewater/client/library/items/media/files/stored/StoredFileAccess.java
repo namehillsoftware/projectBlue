@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.SQLException;
 import android.net.Uri;
@@ -91,7 +90,6 @@ public class StoredFileAccess {
 	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
 		return new FluentSpecifiedTask<Void, Void, List<StoredFile>>() {
 			@Override
-			@SuppressLint("NewApi")
 			public List<StoredFile> executeInBackground(Void... params) {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					return repositoryAccessHelper
@@ -103,7 +101,6 @@ public class StoredFileAccess {
 		}.get(RepositoryAccessHelper.databaseExecutor);
 	}
 
-	@SuppressLint("NewApi")
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
 		return new QueuedPromise<>((resolve, reject) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -126,7 +123,6 @@ public class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
-	@SuppressLint("NewApi")
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -148,7 +144,6 @@ public class StoredFileAccess {
 		});
 	}
 
-	@SuppressLint("NewApi")
 	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -185,7 +180,6 @@ public class StoredFileAccess {
 		});
 	}
 
-	@SuppressLint("NewApi")
 	public Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
@@ -309,7 +303,6 @@ public class StoredFileAccess {
 				.fetchFirst(StoredFile.class);
 	}
 
-	@SuppressLint("NewApi")
 	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
@@ -323,7 +316,6 @@ public class StoredFileAccess {
 		}
 	}
 
-	@SuppressLint("NewApi")
 	private static void updateStoredFile(RepositoryAccessHelper repositoryAccessHelper, StoredFile storedFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper

@@ -1,7 +1,5 @@
 package com.lasthopesoftware.providers;
 
-import android.annotation.SuppressLint;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 
 import org.slf4j.Logger;
@@ -19,7 +17,6 @@ public abstract class AbstractInputStreamProvider<T> extends AbstractConnectionP
 		super(connectionProvider, params);
 	}
 
-	@SuppressLint("NewApi")
 	@Override
 	protected final T getData(HttpURLConnection connection, Cancellation cancellation) throws Exception {
 		try {

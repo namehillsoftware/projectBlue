@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.image;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -160,7 +159,6 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 			this.fileKey = fileKey;
 		}
 
-		@SuppressLint("NewApi")
 		@Override
 		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 			if (library == null) {

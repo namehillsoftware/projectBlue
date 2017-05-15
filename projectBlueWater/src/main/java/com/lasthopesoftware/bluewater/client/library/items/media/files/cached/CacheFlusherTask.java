@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.cached;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
@@ -37,7 +36,6 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 		this.targetSize = targetSize;
 	}
 
-	@SuppressLint("NewApi")
 	@Override
 	protected Void executeInBackground(Void[] params) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

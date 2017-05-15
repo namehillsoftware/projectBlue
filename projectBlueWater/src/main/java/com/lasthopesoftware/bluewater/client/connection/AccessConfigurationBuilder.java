@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -73,7 +72,6 @@ public class AccessConfigurationBuilder {
 			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	@SuppressLint("NewApi")
 	private static void buildAccessConfiguration(final Library library, final int timeout, OneParameterAction<MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");

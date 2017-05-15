@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
@@ -42,7 +41,6 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-	@SuppressLint("NewApi")
     public FluentCallable<Boolean> isItemMarkedForSync(final IItem item) {
         final FluentCallable<Boolean> isItemSyncedTask = new FluentCallable<Boolean>() {
 
@@ -59,7 +57,6 @@ public class StoredItemAccess {
 		return isItemSyncedTask;
     }
 
-	@SuppressLint("NewApi")
     private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
         RepositoryAccessHelper.databaseExecutor.execute(() -> {
 	        try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -80,7 +77,6 @@ public class StoredItemAccess {
         });
     }
 
-	@SuppressLint("NewApi")
     private void disableItemSync(final IItem item, final StoredItem.ItemType itemType) {
         RepositoryAccessHelper.databaseExecutor.execute(() -> {
 	        try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -102,7 +98,6 @@ public class StoredItemAccess {
         });
     }
 
-	@SuppressLint("NewApi")
     public FluentCallable<List<StoredItem>> getStoredItems() {
         final FluentCallable<List<StoredItem>> getAllStoredItemsTasks = new FluentCallable<List<StoredItem>>() {
 
