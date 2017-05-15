@@ -1,8 +1,5 @@
 package com.vedsoft.lazyj;
 
-/**
- * Created by david on 11/28/15.
- */
 public abstract class AbstractSynchronousLazy<T> implements ILazy<T> {
 
 	private T object;
@@ -13,7 +10,7 @@ public abstract class AbstractSynchronousLazy<T> implements ILazy<T> {
 		return object != null || exception != null;
 	}
 
-	public T getObject() {
+	public final T getObject() {
 		return isInitialized() ? object : getValueSynchronized();
 	}
 
