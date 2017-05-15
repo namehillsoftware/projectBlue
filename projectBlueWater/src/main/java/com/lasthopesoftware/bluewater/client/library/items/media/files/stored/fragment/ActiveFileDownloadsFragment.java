@@ -20,7 +20,6 @@ import android.widget.RelativeLayout;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -30,8 +29,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
-import com.vedsoft.lazyj.ILazy;
 
 import java.util.List;
 
@@ -44,16 +41,6 @@ public class ActiveFileDownloadsFragment extends Fragment {
     private BroadcastReceiver onFileQueuedReceiver;
     private BroadcastReceiver onFileDownloadedReceiver;
     private LocalBroadcastManager localBroadcastManager;
-
-	private ILazy<ISelectedBrowserLibraryProvider> lazyLibraryProvider = new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
-		@Override
-		protected ISelectedBrowserLibraryProvider initialize() throws Exception {
-			final LibraryRepository libraryRepository = new LibraryRepository(getActivity());
-			return new SelectedBrowserLibraryProvider(
-				new SelectedBrowserLibraryIdentifierProvider(getActivity()),
-				libraryRepository);
-		}
-	};
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,8 +62,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		final FragmentActivity activity = getActivity();
 
-		lazyLibraryProvider
-			.getObject()
+		final LibraryRepository libraryRepository = new LibraryRepository(activity);
+		final SelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(
+			new SelectedBrowserLibraryIdentifierProvider(activity),
+			libraryRepository);
+
+		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
 			.then(runCarelessly(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
