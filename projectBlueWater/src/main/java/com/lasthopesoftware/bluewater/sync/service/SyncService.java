@@ -58,7 +58,6 @@ import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArb
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -140,12 +139,7 @@ public class SyncService extends Service {
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
-	private final ILazy<ILibraryProvider> lazyLibraryProvider = new AbstractThreadLocalLazy<ILibraryProvider>() {
-		@Override
-		protected ILibraryProvider initialize() throws Exception {
-			return new LibraryRepository(SyncService.this);
-		}
-	};
+	private final ILazy<ILibraryProvider> lazyLibraryProvider = new Lazy<ILibraryProvider>(() -> new LibraryRepository(SyncService.this));
 
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);

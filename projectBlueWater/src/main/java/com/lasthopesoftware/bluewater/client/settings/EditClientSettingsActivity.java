@@ -28,8 +28,6 @@ import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermiss
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
-import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
@@ -50,12 +48,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
 
-	private final ILazy<LibraryRepository> lazyLibraryProvider = new AbstractThreadLocalLazy<LibraryRepository>() {
-		@Override
-		protected LibraryRepository initialize() throws Exception {
-			return new LibraryRepository(EditClientSettingsActivity.this);
-		}
-	};
+	private final Lazy<LibraryRepository> lazyLibraryProvider = new Lazy<>(() -> new LibraryRepository(EditClientSettingsActivity.this));
 
 	private static final int permissionsRequestInteger = 1;
 

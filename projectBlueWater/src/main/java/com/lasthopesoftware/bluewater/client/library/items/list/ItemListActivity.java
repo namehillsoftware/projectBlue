@@ -33,7 +33,7 @@ import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
-		new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
+		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
 			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
 				return new SelectedBrowserLibraryProvider(

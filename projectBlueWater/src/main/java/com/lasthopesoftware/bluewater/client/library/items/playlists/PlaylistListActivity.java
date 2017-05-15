@@ -33,7 +33,7 @@ import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	private int mPlaylistId;
 
 	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
-		new AbstractThreadLocalLazy<ISelectedBrowserLibraryProvider>() {
+		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
 			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
 				return new SelectedBrowserLibraryProvider(

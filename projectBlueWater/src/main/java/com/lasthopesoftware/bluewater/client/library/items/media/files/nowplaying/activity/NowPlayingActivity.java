@@ -53,7 +53,7 @@ import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -90,13 +90,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
 	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
-	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractThreadLocalLazy<NowPlayingToggledVisibilityControls>() {
+	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
 		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
 			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
 		}
 	};
-	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository = new AbstractThreadLocalLazy<INowPlayingRepository>() {
+	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository = new AbstractSynchronousLazy<INowPlayingRepository>() {
 		@Override
 		protected INowPlayingRepository initialize() throws Exception {
 			final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingActivity.this);

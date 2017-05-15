@@ -32,15 +32,15 @@ import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.CarelessOneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
+import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final AbstractThreadLocalLazy<ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise>> lazyDispatchedLibraryCompleteResolution =
-		new AbstractThreadLocalLazy<ThreeParameterAction<NowPlaying,IResolvedPromise<Void>,IRejectedPromise>>() {
+	private final ILazy<ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise>> lazyDispatchedLibraryCompleteResolution =
+		new AbstractSynchronousLazy<ThreeParameterAction<NowPlaying,IResolvedPromise<Void>,IRejectedPromise>>() {
 			@Override
 			protected ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise> initialize() throws Exception {
 				return
@@ -54,7 +54,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 			}
 		};
 	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository =
-		new AbstractThreadLocalLazy<INowPlayingRepository>() {
+		new AbstractSynchronousLazy<INowPlayingRepository>() {
 			@Override
 			protected INowPlayingRepository initialize() throws Exception {
 				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);

@@ -73,7 +73,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
 
@@ -203,12 +202,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return remoteControlClient;
 		}
 	};
-	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new AbstractThreadLocalLazy<IPlaybackBroadcaster>() {
-		@Override
-		protected IPlaybackBroadcaster initialize() throws Exception {
-			return new LocalPlaybackBroadcaster(PlaybackService.this);
-		}
-	};
+	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
 	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
 	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
