@@ -292,6 +292,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopForeground(true);
 		isNotificationForeground = false;
 		notificationManagerLazy.getObject().cancel(notificationId);
+		updateClientBitmap(null);
 	}
 
 	private void notifyStartingService() {
@@ -616,9 +617,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		if (playlistManager == null) return;
+		updateClientBitmap(null);
 
-		playlistManager.pause();
+		if (playlistManager == null) return;
 
 		if (positionedPlaybackFile != null)
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
@@ -765,15 +766,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				ImageProvider
 					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
-					.then(Dispatch.toContext(runCarelessly(bitmap -> {
-						// Track the remote client bitmap and recycle it in case the remote control client
-						// does not properly recycle the bitmap
-						if (remoteClientBitmap != null) remoteClientBitmap.recycle();
-						remoteClientBitmap = bitmap;
-
-						final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
-						metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
-					}), this));
+					.then(Dispatch.toContext(this::updateClientBitmap, this));
 			}), this))
 		.error(Dispatch.toContext(exception -> {
 			final Builder builder = new Builder(this);
@@ -785,6 +778,20 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return true;
 		}, this));
+	}
+
+	private Void updateClientBitmap(Bitmap bitmap) {
+		if (remoteClientBitmap == bitmap) return null;
+
+		// Track the remote client bitmap and recycle it in case the remote control client
+		// does not properly recycle the bitmap
+		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
+		remoteClientBitmap = bitmap;
+
+		final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
+		metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
+
+		return null;
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {
@@ -829,7 +836,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
 		if (remoteControlClient.isInitialized())
 			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
-		
+
 		if (remoteClientBitmap != null) {
 			remoteClientBitmap.recycle();
 			remoteClientBitmap = null;
